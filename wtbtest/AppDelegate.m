@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#import <Parse.h>
 
 @interface AppDelegate ()
 
@@ -16,7 +17,42 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // Override point for customization after application launch.
+    
+    [Parse initializeWithConfiguration:[ParseClientConfiguration configurationWithBlock:^(id<ParseMutableClientConfiguration> configuration) {
+        
+        configuration.applicationId = @"jack1234";
+        configuration.clientKey = @"jack1234";
+        configuration.server = @"http://localhost:1337/parse";
+        
+        NSLog(@"config %@", configuration);
+        
+    }]];
+    
+    PFObject *object = [PFObject objectWithClassName:@"testClass"];
+    [object setValue:@"value1" forKey:@"key1"];
+
+    [object saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            NSLog(@"succeeded!");
+        }
+        else{
+            NSLog(@"failure");
+        }
+    }];
+    
+//    PFQuery *query = [PFQuery queryWithClassName:@"testClass"];
+//    [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//        if (!error) {
+//            if (objects) {
+//                NSLog(@"objects %@", objects);
+//            }
+//        }
+//        else{
+//            NSLog(@"error %@", error);
+//        }
+//        
+//    }];
+    
     return YES;
 }
 
