@@ -8,6 +8,8 @@
 
 #import "AppDelegate.h"
 #import <Parse.h>
+#import <FBSDKCoreKit/FBSDKCoreKit.h>
+
 
 @interface AppDelegate ()
 
@@ -23,37 +25,20 @@
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
         configuration.server = @"http://localhost:1337/parse";
-        
-        NSLog(@"config %@", configuration);
-        
     }]];
     
-    PFObject *object = [PFObject objectWithClassName:@"testClass"];
-    [object setValue:@"value1" forKey:@"key1"];
-
-    [object saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-        if (succeeded) {
-            NSLog(@"succeeded!");
-        }
-        else{
-            NSLog(@"failure");
-        }
-    }];
-    
-//    PFQuery *query = [PFQuery queryWithClassName:@"testClass"];
-//    [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//        if (!error) {
-//            if (objects) {
-//                NSLog(@"objects %@", objects);
-//            }
-//        }
-//        else{
-//            NSLog(@"error %@", error);
-//        }
-//        
-//    }];
-    
+    [[FBSDKApplicationDelegate sharedInstance] application:application
+                             didFinishLaunchingWithOptions:launchOptions];
+        
     return YES;
+}
+
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+    return [[FBSDKApplicationDelegate sharedInstance] application:application
+                                                          openURL:url
+                                                sourceApplication:sourceApplication
+                                                       annotation:annotation
+            ];
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {
@@ -71,7 +56,7 @@
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    [FBSDKAppEvents activateApp];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {

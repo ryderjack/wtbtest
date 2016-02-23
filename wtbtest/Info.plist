@@ -43,7 +43,27 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-    <key>NSAppTransportSecurity</key>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>fb955972104485652</string>
+            </array>
+        </dict>
+    </array>
+    <key>FacebookAppID</key>
+    <string>955972104485652</string>
+    <key>FacebookDisplayName</key>
+    <string>wtb</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>fbapi</string>
+        <string>fb-messenger-api</string>
+        <string>fbauth2</string>
+        <string>fbshareextension</string>
+    </array>
+    <key>NSAppTransportSecurity</key> <!--Need to update this upon release to specific URLs -->
     <dict>
         <!--Include to allow all connections (DANGER)-->
         <key>NSAllowsArbitraryLoads</key>
