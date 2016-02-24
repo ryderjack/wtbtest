@@ -8,7 +8,8 @@
 
 #import "RegisterViewController.h"
 #import "WelcomeViewController.h"
-
+#import "ContainerViewController.h"
+#import "NavigationController.h"
 
 #import "AppConstant.h"
 
@@ -20,6 +21,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    self.navigationController.navigationBarHidden = YES;
     
     //hide first table view header
     self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
@@ -250,9 +253,11 @@
                              if (error == nil)
                              {
                                  NSLog(@"saved new user! %@", [PFUser currentUser]);
-                                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"completedReg"];
+//                                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"completedReg"];
                                  
                                  //progress to tutorial
+                                 ContainerViewController *vc = [[ContainerViewController alloc]init];
+                                 [self.navigationController pushViewController:vc animated:YES];
                              }
                              else
                              {

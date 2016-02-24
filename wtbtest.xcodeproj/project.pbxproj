@@ -44,6 +44,24 @@
 		0472B6891C7DC41200529B2E /* exit@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0472B6861C7DC41200529B2E /* exit@1x.png */; };
 		0472B68A1C7DC41200529B2E /* exit@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0472B6871C7DC41200529B2E /* exit@2x.png */; };
 		0472B68B1C7DC41200529B2E /* exit@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0472B6881C7DC41200529B2E /* exit@3x.png */; };
+		0475A6C71C7E32D10049AD61 /* Tut1ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0475A6C51C7E32D10049AD61 /* Tut1ViewController.m */; };
+		0475A6C81C7E32D10049AD61 /* Tut1ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6C61C7E32D10049AD61 /* Tut1ViewController.xib */; };
+		0475A6CB1C7E3FCF0049AD61 /* ContainerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0475A6CA1C7E3FCF0049AD61 /* ContainerViewController.m */; };
+		0475A6CF1C7E48BD0049AD61 /* pic1.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6CC1C7E48BD0049AD61 /* pic1.png */; };
+		0475A6D01C7E48BD0049AD61 /* pic1@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6CD1C7E48BD0049AD61 /* pic1@2x.png */; };
+		0475A6D11C7E48BD0049AD61 /* pic1@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6CE1C7E48BD0049AD61 /* pic1@3x.png */; };
+		0475A6D81C7E4BEC0049AD61 /* pic3@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6D21C7E4BEC0049AD61 /* pic3@3x.png */; };
+		0475A6D91C7E4BEC0049AD61 /* pic3@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6D31C7E4BEC0049AD61 /* pic3@2x.png */; };
+		0475A6DA1C7E4BEC0049AD61 /* pic3.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6D41C7E4BEC0049AD61 /* pic3.png */; };
+		0475A6DB1C7E4BEC0049AD61 /* pic2@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6D51C7E4BEC0049AD61 /* pic2@3x.png */; };
+		0475A6DC1C7E4BEC0049AD61 /* pic2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6D61C7E4BEC0049AD61 /* pic2@2x.png */; };
+		0475A6DD1C7E4BEC0049AD61 /* pic2.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6D71C7E4BEC0049AD61 /* pic2.png */; };
+		0475A6E11C7E4C680049AD61 /* paypal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6DE1C7E4C680049AD61 /* paypal@2x.png */; };
+		0475A6E21C7E4C680049AD61 /* paypal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6DF1C7E4C680049AD61 /* paypal@3x.png */; };
+		0475A6E31C7E4C680049AD61 /* paypal.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6E01C7E4C680049AD61 /* paypal.png */; };
+		0475A6E71C7E4D910049AD61 /* startButton@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6E41C7E4D910049AD61 /* startButton@3x.png */; };
+		0475A6E81C7E4D910049AD61 /* startButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6E51C7E4D910049AD61 /* startButton@2x.png */; };
+		0475A6E91C7E4D910049AD61 /* startButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 0475A6E61C7E4D910049AD61 /* startButton.png */; };
 		049EF4291C776E49000A599F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 049EF4281C776E49000A599F /* main.m */; };
 		049EF42C1C776E49000A599F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 049EF42B1C776E49000A599F /* AppDelegate.m */; };
 		049EF42F1C776E49000A599F /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 049EF42E1C776E49000A599F /* ViewController.m */; };
@@ -115,6 +133,26 @@
 		0472B6871C7DC41200529B2E /* exit@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "exit@2x.png"; sourceTree = "<group>"; };
 		0472B6881C7DC41200529B2E /* exit@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "exit@3x.png"; sourceTree = "<group>"; };
 		0472B68C1C7DEFF600529B2E /* AppConstant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppConstant.h; sourceTree = "<group>"; };
+		0475A6C41C7E32D10049AD61 /* Tut1ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Tut1ViewController.h; sourceTree = "<group>"; };
+		0475A6C51C7E32D10049AD61 /* Tut1ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Tut1ViewController.m; sourceTree = "<group>"; };
+		0475A6C61C7E32D10049AD61 /* Tut1ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Tut1ViewController.xib; sourceTree = "<group>"; };
+		0475A6C91C7E3FCF0049AD61 /* ContainerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContainerViewController.h; sourceTree = "<group>"; };
+		0475A6CA1C7E3FCF0049AD61 /* ContainerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ContainerViewController.m; sourceTree = "<group>"; };
+		0475A6CC1C7E48BD0049AD61 /* pic1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pic1.png; sourceTree = "<group>"; };
+		0475A6CD1C7E48BD0049AD61 /* pic1@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pic1@2x.png"; sourceTree = "<group>"; };
+		0475A6CE1C7E48BD0049AD61 /* pic1@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pic1@3x.png"; sourceTree = "<group>"; };
+		0475A6D21C7E4BEC0049AD61 /* pic3@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pic3@3x.png"; sourceTree = "<group>"; };
+		0475A6D31C7E4BEC0049AD61 /* pic3@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pic3@2x.png"; sourceTree = "<group>"; };
+		0475A6D41C7E4BEC0049AD61 /* pic3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pic3.png; sourceTree = "<group>"; };
+		0475A6D51C7E4BEC0049AD61 /* pic2@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pic2@3x.png"; sourceTree = "<group>"; };
+		0475A6D61C7E4BEC0049AD61 /* pic2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pic2@2x.png"; sourceTree = "<group>"; };
+		0475A6D71C7E4BEC0049AD61 /* pic2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pic2.png; sourceTree = "<group>"; };
+		0475A6DE1C7E4C680049AD61 /* paypal@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "paypal@2x.png"; sourceTree = "<group>"; };
+		0475A6DF1C7E4C680049AD61 /* paypal@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "paypal@3x.png"; sourceTree = "<group>"; };
+		0475A6E01C7E4C680049AD61 /* paypal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = paypal.png; sourceTree = "<group>"; };
+		0475A6E41C7E4D910049AD61 /* startButton@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "startButton@3x.png"; sourceTree = "<group>"; };
+		0475A6E51C7E4D910049AD61 /* startButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "startButton@2x.png"; sourceTree = "<group>"; };
+		0475A6E61C7E4D910049AD61 /* startButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = startButton.png; sourceTree = "<group>"; };
 		049EF4241C776E49000A599F /* wtbtest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = wtbtest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		049EF4281C776E49000A599F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		049EF42A1C776E49000A599F /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -165,6 +203,21 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				0475A6E41C7E4D910049AD61 /* startButton@3x.png */,
+				0475A6E51C7E4D910049AD61 /* startButton@2x.png */,
+				0475A6E61C7E4D910049AD61 /* startButton.png */,
+				0475A6DE1C7E4C680049AD61 /* paypal@2x.png */,
+				0475A6DF1C7E4C680049AD61 /* paypal@3x.png */,
+				0475A6E01C7E4C680049AD61 /* paypal.png */,
+				0475A6D21C7E4BEC0049AD61 /* pic3@3x.png */,
+				0475A6D31C7E4BEC0049AD61 /* pic3@2x.png */,
+				0475A6D41C7E4BEC0049AD61 /* pic3.png */,
+				0475A6D51C7E4BEC0049AD61 /* pic2@3x.png */,
+				0475A6D61C7E4BEC0049AD61 /* pic2@2x.png */,
+				0475A6D71C7E4BEC0049AD61 /* pic2.png */,
+				0475A6CC1C7E48BD0049AD61 /* pic1.png */,
+				0475A6CD1C7E48BD0049AD61 /* pic1@2x.png */,
+				0475A6CE1C7E48BD0049AD61 /* pic1@3x.png */,
 				0472B6861C7DC41200529B2E /* exit@1x.png */,
 				0472B6871C7DC41200529B2E /* exit@2x.png */,
 				0472B6881C7DC41200529B2E /* exit@3x.png */,
@@ -218,6 +271,19 @@
 			name = "Explore Tab";
 			sourceTree = "<group>";
 		};
+		0475A6EA1C7E4FC10049AD61 /* Tutorial */ = {
+			isa = PBXGroup;
+			children = (
+				0475A6C41C7E32D10049AD61 /* Tut1ViewController.h */,
+				0475A6C51C7E32D10049AD61 /* Tut1ViewController.m */,
+				0475A6C61C7E32D10049AD61 /* Tut1ViewController.xib */,
+				0475A6C91C7E3FCF0049AD61 /* ContainerViewController.h */,
+				0475A6CA1C7E3FCF0049AD61 /* ContainerViewController.m */,
+			);
+			name = Tutorial;
+			path = ..;
+			sourceTree = "<group>";
+		};
 		049EF41B1C776E49000A599F = {
 			isa = PBXGroup;
 			children = (
@@ -252,6 +318,7 @@
 				0472B63F1C7CD85200529B2E /* RegisterViewController.h */,
 				0472B6401C7CD85200529B2E /* RegisterViewController.m */,
 				0472B6411C7CD85200529B2E /* RegisterViewController.xib */,
+				0475A6EA1C7E4FC10049AD61 /* Tutorial */,
 				0472B6261C7CCCAC00529B2E /* Explore Tab */,
 				0472B6091C7CC78500529B2E /* WelcomeViewController.h */,
 				0472B60A1C7CC78500529B2E /* WelcomeViewController.m */,
@@ -418,28 +485,42 @@
 				0472B67D1C7DB46800529B2E /* userIcon@3x.png in Resources */,
 				0472B63D1C7CD6ED00529B2E /* fblogin@2x.png in Resources */,
 				0472B6511C7DB21600529B2E /* chooseLibButton@2x.png in Resources */,
+				0475A6DD1C7E4BEC0049AD61 /* pic2.png in Resources */,
+				0475A6E71C7E4D910049AD61 /* startButton@3x.png in Resources */,
 				0472B65B1C7DB21600529B2E /* regButton.png in Resources */,
+				0475A6D01C7E48BD0049AD61 /* pic1@2x.png in Resources */,
 				0472B6381C7CD35D00529B2E /* page1@3x.png in Resources */,
+				0475A6E11C7E4C680049AD61 /* paypal@2x.png in Resources */,
+				0475A6D11C7E48BD0049AD61 /* pic1@3x.png in Resources */,
 				0472B6591C7DB21600529B2E /* regButton@2x.png in Resources */,
 				0472B6521C7DB21600529B2E /* chooseLibButton.png in Resources */,
+				0475A6D91C7E4BEC0049AD61 /* pic3@2x.png in Resources */,
 				0472B6891C7DC41200529B2E /* exit@1x.png in Resources */,
+				0475A6E31C7E4C680049AD61 /* paypal.png in Resources */,
 				0472B65A1C7DB21600529B2E /* profilepicTest.png in Resources */,
 				0472B6211C7CCBC000529B2E /* ExploreViewController.xib in Resources */,
 				0472B6551C7DB21600529B2E /* takepicButton.png in Resources */,
 				0472B67C1C7DB46800529B2E /* userIcon.png in Resources */,
+				0475A6D81C7E4BEC0049AD61 /* pic3@3x.png in Resources */,
+				0475A6CF1C7E48BD0049AD61 /* pic1.png in Resources */,
 				0472B6501C7DB21600529B2E /* takepicButton@3x.png in Resources */,
 				0472B6561C7DB21600529B2E /* takepicButton@2x.png in Resources */,
+				0475A6DB1C7E4BEC0049AD61 /* pic2@3x.png in Resources */,
 				0472B6371C7CD35D00529B2E /* page1@2x.png in Resources */,
 				0472B68B1C7DC41200529B2E /* exit@3x.png in Resources */,
 				0472B60D1C7CC78500529B2E /* WelcomeViewController.xib in Resources */,
 				0472B6531C7DB21600529B2E /* regButton@3x.png in Resources */,
+				0475A6E81C7E4D910049AD61 /* startButton@2x.png in Resources */,
 				0472B6791C7DB46800529B2E /* globeIcon@2x.png in Resources */,
 				0472B67E1C7DB46800529B2E /* emailIcon.png in Resources */,
 				0472B6781C7DB46800529B2E /* globeIcon.png in Resources */,
 				0472B6571C7DB21600529B2E /* profilepicTest@2x.png in Resources */,
 				0472B67B1C7DB46800529B2E /* globeIcon@3x.png in Resources */,
 				0472B63E1C7CD6ED00529B2E /* fblogin@3x.png in Resources */,
+				0475A6DA1C7E4BEC0049AD61 /* pic3.png in Resources */,
+				0475A6E91C7E4D910049AD61 /* startButton.png in Resources */,
 				0472B67F1C7DB46800529B2E /* emailIcon@2x.png in Resources */,
+				0475A6E21C7E4C680049AD61 /* paypal@3x.png in Resources */,
 				0472B6581C7DB21600529B2E /* profilepicTest@3x.png in Resources */,
 				0472B6771C7DB46800529B2E /* emailIcon@3x.png in Resources */,
 				0472B67A1C7DB46800529B2E /* userIcon@2x.png in Resources */,
@@ -447,8 +528,10 @@
 				0472B63C1C7CD6ED00529B2E /* fblogin.png in Resources */,
 				0472B68A1C7DC41200529B2E /* exit@2x.png in Resources */,
 				0472B6361C7CD35D00529B2E /* page1.png in Resources */,
+				0475A6C81C7E32D10049AD61 /* Tut1ViewController.xib in Resources */,
 				049EF4371C776E49000A599F /* LaunchScreen.storyboard in Resources */,
 				049EF4341C776E49000A599F /* Assets.xcassets in Resources */,
+				0475A6DC1C7E4BEC0049AD61 /* pic2@2x.png in Resources */,
 				049EF45B1C776E58000A599F /* Podfile in Resources */,
 				0472B6431C7CD85200529B2E /* RegisterViewController.xib in Resources */,
 			);
@@ -525,8 +608,10 @@
 			files = (
 				049EF42F1C776E49000A599F /* ViewController.m in Sources */,
 				0472B60C1C7CC78500529B2E /* WelcomeViewController.m in Sources */,
+				0475A6CB1C7E3FCF0049AD61 /* ContainerViewController.m in Sources */,
 				049EF42C1C776E49000A599F /* AppDelegate.m in Sources */,
 				0472B6201C7CCBC000529B2E /* ExploreViewController.m in Sources */,
+				0475A6C71C7E32D10049AD61 /* Tut1ViewController.m in Sources */,
 				0472B6421C7CD85200529B2E /* RegisterViewController.m in Sources */,
 				049EF4291C776E49000A599F /* main.m in Sources */,
 				0472B6241C7CCC9500529B2E /* NavigationController.m in Sources */,

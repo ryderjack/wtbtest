@@ -16,7 +16,7 @@
             <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="page1.png" translatesAutoresizingMaskIntoConstraints="NO" id="Iur-vO-F7d">
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="page1.png" translatesAutoresizingMaskIntoConstraints="NO" id="Iur-vO-F7d">
                     <rect key="frame" x="87" y="256" width="200" height="168"/>
                     <constraints>
                         <constraint firstAttribute="width" secondItem="Iur-vO-F7d" secondAttribute="height" multiplier="25:21" id="l23-y3-Y7s"/>
@@ -28,10 +28,10 @@
                         <constraint firstAttribute="height" constant="52" id="MC2-KU-tbG"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="AvenirNext-UltraLight" family="Avenir Next" pointSize="42"/>
-                    <color key="textColor" red="1" green="0.5" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                    <color key="textColor" red="0.96078431372549022" green="0.65098039215686276" blue="0.13725490196078433" alpha="1" colorSpace="calibratedRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Y4l-da-WYp">
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Y4l-da-WYp">
                     <rect key="frame" x="81" y="497" width="212" height="40"/>
                     <constraints>
                         <constraint firstAttribute="width" secondItem="Y4l-da-WYp" secondAttribute="height" multiplier="53:10" id="bxd-cO-jaQ"/>
@@ -50,9 +50,21 @@
                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4cP-pX-Quw">
+                    <rect key="frame" x="138" y="594" width="98" height="30"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="98" id="I8q-9v-khV"/>
+                    </constraints>
+                    <state key="normal" title="Tutorial test"/>
+                    <connections>
+                        <action selector="tutorialPressed:" destination="-1" eventType="touchUpInside" id="TrX-tH-Yp3"/>
+                    </connections>
+                </button>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
             <constraints>
+                <constraint firstItem="4cP-pX-Quw" firstAttribute="top" secondItem="Y4l-da-WYp" secondAttribute="bottom" constant="57" id="4Wq-nH-jGj"/>
+                <constraint firstItem="4cP-pX-Quw" firstAttribute="centerX" secondItem="Y4l-da-WYp" secondAttribute="centerX" id="BLR-lF-ppI"/>
                 <constraint firstItem="Y4l-da-WYp" firstAttribute="top" secondItem="Iur-vO-F7d" secondAttribute="bottom" constant="73" id="BmT-3X-rPM"/>
                 <constraint firstItem="BnC-1B-y19" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="Djy-Ib-o2k"/>
                 <constraint firstItem="BnC-1B-y19" firstAttribute="centerX" secondItem="Iur-vO-F7d" secondAttribute="centerX" id="R1l-Pk-PXh"/>

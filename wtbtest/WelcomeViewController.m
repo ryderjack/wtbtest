@@ -12,6 +12,7 @@
 #import <Parse.h>
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import <FBSDKLoginKit/FBSDKLoginKit.h>
+#import "ContainerViewController.h"
 
 @interface WelcomeViewController ()
 
@@ -21,7 +22,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-
+    self.navigationController.navigationBarHidden = YES;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -45,18 +46,22 @@
             NSLog(@"User logged in through Facebook!");
             //check if completed reg/tutorial via NSUserDefaults
             
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg"] == YES) {
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg1"] == YES) {//////////////////update before release (remove the 1)
                 //take to app
             }
             else{
                 //haven't completed it take them there
                 RegisterViewController *vc = [[RegisterViewController alloc]init];
                 vc.user = user;
-                [self presentViewController:vc animated:YES
-                                 completion:nil];
+                [self.navigationController pushViewController:vc animated:YES];
             }
         }
     }];
+}
+- (IBAction)tutorialPressed:(id)sender {
+    ContainerViewController *vc = [[ContainerViewController alloc]init];
+    [self presentViewController:vc animated:YES
+                     completion:nil];
 }
 
 
