@@ -7,11 +7,16 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "WelcomeViewController.h"
+#import "ExploreViewController.h"
+#import "ViewController.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, UITabBarControllerDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
-
+@property (strong, nonatomic) UITabBarController *tabBarController;
+@property (strong, nonatomic) WelcomeViewController *welcomeView;
+@property (strong, nonatomic) ViewController *testView;
 
 @end
 

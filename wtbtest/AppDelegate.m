@@ -9,7 +9,8 @@
 #import "AppDelegate.h"
 #import <Parse.h>
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
-
+#import "NavigationController.h"
+#import <ParseFacebookUtilsV4/PFFacebookUtils.h>
 
 @interface AppDelegate ()
 
@@ -20,16 +21,45 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     
+    //initial Parse & Fb set up
+    
     [Parse initializeWithConfiguration:[ParseClientConfiguration configurationWithBlock:^(id<ParseMutableClientConfiguration> configuration) {
         
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
         configuration.server = @"http://localhost:1337/parse";
+        
     }]];
     
-    [[FBSDKApplicationDelegate sharedInstance] application:application
-                             didFinishLaunchingWithOptions:launchOptions];
+    //needed?? 
+//    [[FBSDKApplicationDelegate sharedInstance] application:application
+//                             didFinishLaunchingWithOptions:launchOptions];
+    
+    [PFFacebookUtils initializeFacebookWithApplicationLaunchOptions:launchOptions];
+    
+    //set up tab bar
+    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    self.welcomeView = [[WelcomeViewController alloc] init];
+    self.testView = [[ViewController alloc] init];
         
+    [self.window setBackgroundColor:[UIColor whiteColor]];
+    
+    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:self.testView];
+    
+    self.tabBarController = [[UITabBarController alloc] init];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, nil];
+    self.tabBarController.tabBar.translucent = NO;
+    self.tabBarController.selectedIndex = 0;
+    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:116/255.0f green:205/255.0f blue:255/255.0f alpha:1.0f]];
+    
+//    UITabBarItem *tabBarItem1 = [self.tabBarController.tabBar.items objectAtIndex:0];
+//    tabBarItem1.image = [UIImage imageNamed:@"chatPic"];
+    
+    [self.tabBarController setDelegate:self];
+    
+    self.window.rootViewController = self.tabBarController;
+    [self.window makeKeyAndVisible];
+
     return YES;
 }
 

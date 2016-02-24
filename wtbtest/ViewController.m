@@ -10,7 +10,7 @@
 #import <Parse.h>
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import <FBSDKLoginKit/FBSDKLoginKit.h>
-
+#import "WelcomeViewController.h"
 
 @interface ViewController ()
 
@@ -20,22 +20,15 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+    self.title = @"Test";
+}
+
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
     
-    // Add a custom login button to your app
-    UIButton *myLoginButton=[UIButton buttonWithType:UIButtonTypeCustom];
-    myLoginButton.backgroundColor=[UIColor darkGrayColor];
-    myLoginButton.frame=CGRectMake(0,0,180,40);
-    myLoginButton.center = self.view.center;
-    [myLoginButton setTitle: @"My Login Button" forState: UIControlStateNormal];
-    
-    // Handle clicks on the button
-    [myLoginButton
-     addTarget:self
-     action:@selector(loginButtonClicked) forControlEvents:UIControlEventTouchUpInside];
-    
-    // Add the button to the view
-    [self.view addSubview:myLoginButton];
+    //present welcome view
+    WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+    [self presentViewController:vc animated:NO completion:nil];
 }
 
 - (void)didReceiveMemoryWarning {
