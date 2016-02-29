@@ -232,7 +232,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="155"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="m1m-sl-Qpn" id="w96-gw-7tI">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="155"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="154.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="QVT-Fd-dBr">

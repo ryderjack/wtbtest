@@ -12,6 +12,7 @@
 #import "NavigationController.h"
 #import <ParseFacebookUtilsV4/PFFacebookUtils.h>
 
+
 @interface AppDelegate ()
 
 @end
@@ -41,13 +42,16 @@
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.welcomeView = [[WelcomeViewController alloc] init];
     self.testView = [[ViewController alloc] init];
+    self.createView = [[CreateViewController alloc]init];
+    self.exploreView = [[ExploreVC alloc]init];
         
     [self.window setBackgroundColor:[UIColor whiteColor]];
     
-    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:self.testView];
+    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:self.exploreView];
+    NavigationController *navController1 = [[NavigationController alloc] initWithRootViewController:self.createView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
     [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:116/255.0f green:205/255.0f blue:255/255.0f alpha:1.0f]];
