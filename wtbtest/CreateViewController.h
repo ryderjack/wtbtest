@@ -7,15 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "DBCameraViewController.h"
-#import "DBCameraContainerViewController.h"
 #import "SelectViewController.h"
 #import "LocationView.h"
 #import "ListingCompleteView.h"
 #import <Parse/Parse.h>
+#import "CameraController.h"
 
-
-@interface CreateViewController : UITableViewController <DBCameraViewControllerDelegate, UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate>
+@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;

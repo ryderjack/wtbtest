@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		0472B60C1C7CC78500529B2E /* WelcomeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0472B60A1C7CC78500529B2E /* WelcomeViewController.m */; };
 		0472B60D1C7CC78500529B2E /* WelcomeViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0472B60B1C7CC78500529B2E /* WelcomeViewController.xib */; };
-		0472B6201C7CCBC000529B2E /* ExploreViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0472B61E1C7CCBC000529B2E /* ExploreViewController.m */; };
-		0472B6211C7CCBC000529B2E /* ExploreViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0472B61F1C7CCBC000529B2E /* ExploreViewController.xib */; };
 		0472B6241C7CCC9500529B2E /* NavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0472B6231C7CCC9500529B2E /* NavigationController.m */; };
 		0472B6361C7CD35D00529B2E /* page1.png in Resources */ = {isa = PBXBuildFile; fileRef = 0472B6331C7CD35D00529B2E /* page1.png */; };
 		0472B6371C7CD35D00529B2E /* page1@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0472B6341C7CD35D00529B2E /* page1@2x.png */; };
@@ -134,7 +132,30 @@
 		04C080641C84BDDF00B8682C /* filterButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C080611C84BDDF00B8682C /* filterButton@2x.png */; };
 		04C080651C84BDDF00B8682C /* filterButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C080621C84BDDF00B8682C /* filterButton.png */; };
 		04C080661C84BDDF00B8682C /* filterButton@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C080631C84BDDF00B8682C /* filterButton@3x.png */; };
-		04C080C01C84F68A00B8682C /* TGCameraViewController in Resources */ = {isa = PBXBuildFile; fileRef = 04C080BF1C84F68A00B8682C /* TGCameraViewController */; };
+		04C0812D1C85BFD600B8682C /* CameraController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04C0812B1C85BFD600B8682C /* CameraController.m */; };
+		04C0812E1C85BFD600B8682C /* CameraController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04C0812C1C85BFD600B8682C /* CameraController.xib */; };
+		04C081321C85C62700B8682C /* ConfirmController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04C081301C85C62700B8682C /* ConfirmController.m */; };
+		04C081331C85C62700B8682C /* ConfirmController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04C081311C85C62700B8682C /* ConfirmController.xib */; };
+		04C0813D1C85EA9C00B8682C /* cameraIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081341C85EA9C00B8682C /* cameraIcon.png */; };
+		04C0813F1C85EA9C00B8682C /* confirmButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081361C85EA9C00B8682C /* confirmButton@2x.png */; };
+		04C081401C85EA9C00B8682C /* cameraIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081371C85EA9C00B8682C /* cameraIcon@2x.png */; };
+		04C081411C85EA9C00B8682C /* cameraIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081381C85EA9C00B8682C /* cameraIcon@3x.png */; };
+		04C081441C85EA9C00B8682C /* confirmButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C0813B1C85EA9C00B8682C /* confirmButton.png */; };
+		04C081451C85EA9C00B8682C /* confirmButton@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C0813C1C85EA9C00B8682C /* confirmButton@3x.png */; };
+		04C081491C85EB5200B8682C /* switchIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081461C85EB5200B8682C /* switchIcon.png */; };
+		04C0814A1C85EB5200B8682C /* switchIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081471C85EB5200B8682C /* switchIcon@2x.png */; };
+		04C0814B1C85EB5200B8682C /* switchIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081481C85EB5200B8682C /* switchIcon@3x.png */; };
+		04C081551C85F1A600B8682C /* FilterVC.m in Sources */ = {isa = PBXBuildFile; fileRef = 04C081531C85F1A600B8682C /* FilterVC.m */; };
+		04C081561C85F1A600B8682C /* FilterVC.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04C081541C85F1A600B8682C /* FilterVC.xib */; };
+		04C0815D1C860B1400B8682C /* FlashOff.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081571C860B1400B8682C /* FlashOff.png */; };
+		04C0815E1C860B1400B8682C /* FlashOff@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081581C860B1400B8682C /* FlashOff@2x.png */; };
+		04C0815F1C860B1400B8682C /* FlashOff@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081591C860B1400B8682C /* FlashOff@3x.png */; };
+		04C081601C860B1400B8682C /* flashOn.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C0815A1C860B1400B8682C /* flashOn.png */; };
+		04C081611C860B1400B8682C /* flashOn@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C0815B1C860B1400B8682C /* flashOn@2x.png */; };
+		04C081621C860B1400B8682C /* flashOn@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C0815C1C860B1400B8682C /* flashOn@3x.png */; };
+		04C081671C86389700B8682C /* filterOn.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081641C86389700B8682C /* filterOn.png */; };
+		04C081681C86389700B8682C /* filterOn@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081651C86389700B8682C /* filterOn@2x.png */; };
+		04C081691C86389700B8682C /* filterOn@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081661C86389700B8682C /* filterOn@3x.png */; };
 		74B79C7A89FA97C17A39901B /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 327BDC9B7DD5E786D46C955D /* libPods.a */; };
 /* End PBXBuildFile section */
 
@@ -159,9 +180,6 @@
 		0472B6091C7CC78500529B2E /* WelcomeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WelcomeViewController.h; sourceTree = "<group>"; };
 		0472B60A1C7CC78500529B2E /* WelcomeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WelcomeViewController.m; sourceTree = "<group>"; };
 		0472B60B1C7CC78500529B2E /* WelcomeViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = WelcomeViewController.xib; sourceTree = "<group>"; };
-		0472B61D1C7CCBC000529B2E /* ExploreViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExploreViewController.h; path = ../ExploreViewController.h; sourceTree = "<group>"; };
-		0472B61E1C7CCBC000529B2E /* ExploreViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ExploreViewController.m; path = ../ExploreViewController.m; sourceTree = "<group>"; };
-		0472B61F1C7CCBC000529B2E /* ExploreViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = ExploreViewController.xib; path = ../ExploreViewController.xib; sourceTree = "<group>"; };
 		0472B6221C7CCC9500529B2E /* NavigationController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NavigationController.h; sourceTree = "<group>"; };
 		0472B6231C7CCC9500529B2E /* NavigationController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NavigationController.m; sourceTree = "<group>"; };
 		0472B6331C7CD35D00529B2E /* page1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = page1.png; sourceTree = "<group>"; };
@@ -304,7 +322,33 @@
 		04C080611C84BDDF00B8682C /* filterButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "filterButton@2x.png"; sourceTree = "<group>"; };
 		04C080621C84BDDF00B8682C /* filterButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filterButton.png; sourceTree = "<group>"; };
 		04C080631C84BDDF00B8682C /* filterButton@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "filterButton@3x.png"; sourceTree = "<group>"; };
-		04C080BF1C84F68A00B8682C /* TGCameraViewController */ = {isa = PBXFileReference; lastKnownFileType = folder; path = TGCameraViewController; sourceTree = "<group>"; };
+		04C0812A1C85BFD600B8682C /* CameraController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CameraController.h; sourceTree = "<group>"; };
+		04C0812B1C85BFD600B8682C /* CameraController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CameraController.m; sourceTree = "<group>"; };
+		04C0812C1C85BFD600B8682C /* CameraController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CameraController.xib; sourceTree = "<group>"; };
+		04C0812F1C85C62700B8682C /* ConfirmController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConfirmController.h; sourceTree = "<group>"; };
+		04C081301C85C62700B8682C /* ConfirmController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConfirmController.m; sourceTree = "<group>"; };
+		04C081311C85C62700B8682C /* ConfirmController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ConfirmController.xib; sourceTree = "<group>"; };
+		04C081341C85EA9C00B8682C /* cameraIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = cameraIcon.png; sourceTree = "<group>"; };
+		04C081361C85EA9C00B8682C /* confirmButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "confirmButton@2x.png"; sourceTree = "<group>"; };
+		04C081371C85EA9C00B8682C /* cameraIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cameraIcon@2x.png"; sourceTree = "<group>"; };
+		04C081381C85EA9C00B8682C /* cameraIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cameraIcon@3x.png"; sourceTree = "<group>"; };
+		04C0813B1C85EA9C00B8682C /* confirmButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = confirmButton.png; sourceTree = "<group>"; };
+		04C0813C1C85EA9C00B8682C /* confirmButton@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "confirmButton@3x.png"; sourceTree = "<group>"; };
+		04C081461C85EB5200B8682C /* switchIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = switchIcon.png; sourceTree = "<group>"; };
+		04C081471C85EB5200B8682C /* switchIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "switchIcon@2x.png"; sourceTree = "<group>"; };
+		04C081481C85EB5200B8682C /* switchIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "switchIcon@3x.png"; sourceTree = "<group>"; };
+		04C081521C85F1A600B8682C /* FilterVC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FilterVC.h; sourceTree = "<group>"; };
+		04C081531C85F1A600B8682C /* FilterVC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FilterVC.m; sourceTree = "<group>"; };
+		04C081541C85F1A600B8682C /* FilterVC.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FilterVC.xib; sourceTree = "<group>"; };
+		04C081571C860B1400B8682C /* FlashOff.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = FlashOff.png; sourceTree = "<group>"; };
+		04C081581C860B1400B8682C /* FlashOff@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "FlashOff@2x.png"; sourceTree = "<group>"; };
+		04C081591C860B1400B8682C /* FlashOff@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "FlashOff@3x.png"; sourceTree = "<group>"; };
+		04C0815A1C860B1400B8682C /* flashOn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flashOn.png; sourceTree = "<group>"; };
+		04C0815B1C860B1400B8682C /* flashOn@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "flashOn@2x.png"; sourceTree = "<group>"; };
+		04C0815C1C860B1400B8682C /* flashOn@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "flashOn@3x.png"; sourceTree = "<group>"; };
+		04C081641C86389700B8682C /* filterOn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filterOn.png; sourceTree = "<group>"; };
+		04C081651C86389700B8682C /* filterOn@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "filterOn@2x.png"; sourceTree = "<group>"; };
+		04C081661C86389700B8682C /* filterOn@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "filterOn@3x.png"; sourceTree = "<group>"; };
 		2A1CA57F790FE4384B22E1A7 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		327BDC9B7DD5E786D46C955D /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DBFE0CA73A57E5A95AFAD6A /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
@@ -340,6 +384,24 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				04C081641C86389700B8682C /* filterOn.png */,
+				04C081651C86389700B8682C /* filterOn@2x.png */,
+				04C081661C86389700B8682C /* filterOn@3x.png */,
+				04C081571C860B1400B8682C /* FlashOff.png */,
+				04C081581C860B1400B8682C /* FlashOff@2x.png */,
+				04C081591C860B1400B8682C /* FlashOff@3x.png */,
+				04C0815A1C860B1400B8682C /* flashOn.png */,
+				04C0815B1C860B1400B8682C /* flashOn@2x.png */,
+				04C0815C1C860B1400B8682C /* flashOn@3x.png */,
+				04C081461C85EB5200B8682C /* switchIcon.png */,
+				04C081471C85EB5200B8682C /* switchIcon@2x.png */,
+				04C081481C85EB5200B8682C /* switchIcon@3x.png */,
+				04C081341C85EA9C00B8682C /* cameraIcon.png */,
+				04C081361C85EA9C00B8682C /* confirmButton@2x.png */,
+				04C081371C85EA9C00B8682C /* cameraIcon@2x.png */,
+				04C081381C85EA9C00B8682C /* cameraIcon@3x.png */,
+				04C0813B1C85EA9C00B8682C /* confirmButton.png */,
+				04C0813C1C85EA9C00B8682C /* confirmButton@3x.png */,
 				04C080611C84BDDF00B8682C /* filterButton@2x.png */,
 				04C080621C84BDDF00B8682C /* filterButton.png */,
 				04C080631C84BDDF00B8682C /* filterButton@3x.png */,
@@ -449,16 +511,6 @@
 			name = Navbar;
 			sourceTree = "<group>";
 		};
-		0472B6261C7CCCAC00529B2E /* Explore Tab */ = {
-			isa = PBXGroup;
-			children = (
-				0472B61D1C7CCBC000529B2E /* ExploreViewController.h */,
-				0472B61E1C7CCBC000529B2E /* ExploreViewController.m */,
-				0472B61F1C7CCBC000529B2E /* ExploreViewController.xib */,
-			);
-			name = "Explore Tab";
-			sourceTree = "<group>";
-		};
 		0475A6EA1C7E4FC10049AD61 /* Tutorial */ = {
 			isa = PBXGroup;
 			children = (
@@ -515,17 +567,15 @@
 				049EF42A1C776E49000A599F /* AppDelegate.h */,
 				049EF42B1C776E49000A599F /* AppDelegate.m */,
 				0472B6251C7CCC9F00529B2E /* Navbar */,
+				04C0814C1C85EE4200B8682C /* Camera */,
 				049EF42D1C776E49000A599F /* ViewController.h */,
 				049EF42E1C776E49000A599F /* ViewController.m */,
-				04C080541C847E3800B8682C /* ExploreCell.h */,
-				04C080551C847E3800B8682C /* ExploreCell.m */,
-				04C080561C847E3800B8682C /* ExploreCell.xib */,
-				04C0805C1C8497AC00B8682C /* ExploreVC.h */,
-				04C0805D1C8497AC00B8682C /* ExploreVC.m */,
-				04C0805E1C8497AC00B8682C /* ExploreVC.xib */,
+				04C081631C86292C00B8682C /* Explore Tab */,
+				04C081521C85F1A600B8682C /* FilterVC.h */,
+				04C081531C85F1A600B8682C /* FilterVC.m */,
+				04C081541C85F1A600B8682C /* FilterVC.xib */,
 				04C080491C847C5400B8682C /* Create listing */,
 				0475A6F01C7F00FB0049AD61 /* Intro */,
-				0472B6261C7CCCAC00529B2E /* Explore Tab */,
 				0472B61C1C7CC8A800529B2E /* Images */,
 				049EF4331C776E49000A599F /* Assets.xcassets */,
 				049EF4351C776E49000A599F /* LaunchScreen.storyboard */,
@@ -538,7 +588,6 @@
 		049EF4271C776E49000A599F /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				04C080BF1C84F68A00B8682C /* TGCameraViewController */,
 				0472B68C1C7DEFF600529B2E /* AppConstant.h */,
 				049EF4281C776E49000A599F /* main.m */,
 			);
@@ -580,6 +629,32 @@
 				0475A7631C81F6880049AD61 /* ListingCompleteView.xib */,
 			);
 			name = "Create listing";
+			sourceTree = "<group>";
+		};
+		04C0814C1C85EE4200B8682C /* Camera */ = {
+			isa = PBXGroup;
+			children = (
+				04C0812A1C85BFD600B8682C /* CameraController.h */,
+				04C0812B1C85BFD600B8682C /* CameraController.m */,
+				04C0812C1C85BFD600B8682C /* CameraController.xib */,
+				04C0812F1C85C62700B8682C /* ConfirmController.h */,
+				04C081301C85C62700B8682C /* ConfirmController.m */,
+				04C081311C85C62700B8682C /* ConfirmController.xib */,
+			);
+			name = Camera;
+			sourceTree = "<group>";
+		};
+		04C081631C86292C00B8682C /* Explore Tab */ = {
+			isa = PBXGroup;
+			children = (
+				04C080541C847E3800B8682C /* ExploreCell.h */,
+				04C080551C847E3800B8682C /* ExploreCell.m */,
+				04C080561C847E3800B8682C /* ExploreCell.xib */,
+				04C0805C1C8497AC00B8682C /* ExploreVC.h */,
+				04C0805D1C8497AC00B8682C /* ExploreVC.m */,
+				04C0805E1C8497AC00B8682C /* ExploreVC.xib */,
+			);
+			name = "Explore Tab";
 			sourceTree = "<group>";
 		};
 		CC565124AB6D3044040DAB32 /* Pods */ = {
@@ -716,13 +791,15 @@
 				04C080381C8469DE00B8682C /* location@2x.png in Resources */,
 				04C0803B1C8469DE00B8682C /* plane.png in Resources */,
 				0475A6E71C7E4D910049AD61 /* startButton@3x.png in Resources */,
+				04C0814B1C85EB5200B8682C /* switchIcon@3x.png in Resources */,
 				04C0803F1C8469DE00B8682C /* expand@2x.png in Resources */,
-				04C080C01C84F68A00B8682C /* TGCameraViewController in Resources */,
 				0472B65B1C7DB21600529B2E /* regButton.png in Resources */,
 				0475A6D01C7E48BD0049AD61 /* pic1@2x.png in Resources */,
 				04C080351C8469DE00B8682C /* dots@2x.png in Resources */,
 				0472B6381C7CD35D00529B2E /* page1@3x.png in Resources */,
+				04C081601C860B1400B8682C /* flashOn.png in Resources */,
 				0475A7691C81F7D60049AD61 /* done.png in Resources */,
+				04C081491C85EB5200B8682C /* switchIcon.png in Resources */,
 				04C0803E1C8469DE00B8682C /* settings@2x.png in Resources */,
 				0475A7131C804B080049AD61 /* deleteIcon@2x.png in Resources */,
 				0475A6E11C7E4C680049AD61 /* paypal@2x.png in Resources */,
@@ -730,15 +807,20 @@
 				0475A7811C821D5E0049AD61 /* fb share@2x.png in Resources */,
 				04C080481C846B2C00B8682C /* expand.png in Resources */,
 				0475A6D11C7E48BD0049AD61 /* pic1@3x.png in Resources */,
+				04C081331C85C62700B8682C /* ConfirmController.xib in Resources */,
+				04C0814A1C85EB5200B8682C /* switchIcon@2x.png in Resources */,
 				0472B6591C7DB21600529B2E /* regButton@2x.png in Resources */,
 				04C0803C1C8469DE00B8682C /* settings.png in Resources */,
 				0472B6521C7DB21600529B2E /* chooseLibButton.png in Resources */,
+				04C0815D1C860B1400B8682C /* FlashOff.png in Resources */,
 				0475A7431C804DFE0049AD61 /* buyButton@2x.png in Resources */,
 				0475A7021C7F67400049AD61 /* addImage@2x.png in Resources */,
+				04C0813F1C85EA9C00B8682C /* confirmButton@2x.png in Resources */,
 				04C080401C8469DE00B8682C /* expand@3x.png in Resources */,
 				0475A6D91C7E4BEC0049AD61 /* pic3@2x.png in Resources */,
 				0475A7561C8119290049AD61 /* LocationView.xib in Resources */,
 				04C0803D1C8469DE00B8682C /* plane@2x.png in Resources */,
+				04C0815F1C860B1400B8682C /* FlashOff@3x.png in Resources */,
 				04C080601C8497AC00B8682C /* ExploreVC.xib in Resources */,
 				0472B6891C7DC41200529B2E /* exit@1x.png in Resources */,
 				04C080371C8469DE00B8682C /* filter@3x.png in Resources */,
@@ -746,17 +828,20 @@
 				0475A77A1C821D5E0049AD61 /* share@2x.png in Resources */,
 				0475A6E31C7E4C680049AD61 /* paypal.png in Resources */,
 				0472B65A1C7DB21600529B2E /* profilepicTest.png in Resources */,
-				0472B6211C7CCBC000529B2E /* ExploreViewController.xib in Resources */,
+				04C081681C86389700B8682C /* filterOn@2x.png in Resources */,
 				04C080581C847E3800B8682C /* ExploreCell.xib in Resources */,
 				0475A6FC1C7F67400049AD61 /* addImage@3x.png in Resources */,
 				0472B6551C7DB21600529B2E /* takepicButton.png in Resources */,
 				0472B67C1C7DB46800529B2E /* userIcon.png in Resources */,
 				0475A6D81C7E4BEC0049AD61 /* pic3@3x.png in Resources */,
+				04C081441C85EA9C00B8682C /* confirmButton.png in Resources */,
 				0475A6CF1C7E48BD0049AD61 /* pic1.png in Resources */,
 				04C080451C8469DE00B8682C /* tag.png in Resources */,
 				04C080341C8469DE00B8682C /* filter@2x.png in Resources */,
 				0472B6501C7DB21600529B2E /* takepicButton@3x.png in Resources */,
+				04C081611C860B1400B8682C /* flashOn@2x.png in Resources */,
 				0472B6561C7DB21600529B2E /* takepicButton@2x.png in Resources */,
+				04C0813D1C85EA9C00B8682C /* cameraIcon.png in Resources */,
 				0475A6EF1C7F00EE0049AD61 /* CreateViewController.xib in Resources */,
 				04C080411C8469DE00B8682C /* location.png in Resources */,
 				0475A6DB1C7E4BEC0049AD61 /* pic2@3x.png in Resources */,
@@ -765,7 +850,10 @@
 				0472B68B1C7DC41200529B2E /* exit@3x.png in Resources */,
 				0472B60D1C7CC78500529B2E /* WelcomeViewController.xib in Resources */,
 				0472B6531C7DB21600529B2E /* regButton@3x.png in Resources */,
+				04C0815E1C860B1400B8682C /* FlashOff@2x.png in Resources */,
 				0475A6E81C7E4D910049AD61 /* startButton@2x.png in Resources */,
+				04C081691C86389700B8682C /* filterOn@3x.png in Resources */,
+				04C081401C85EA9C00B8682C /* cameraIcon@2x.png in Resources */,
 				0472B6791C7DB46800529B2E /* globeIcon@2x.png in Resources */,
 				0472B67E1C7DB46800529B2E /* emailIcon.png in Resources */,
 				0475A7441C804DFE0049AD61 /* buyButton@3x.png in Resources */,
@@ -775,6 +863,7 @@
 				0475A77B1C821D5E0049AD61 /* create another@3x.png in Resources */,
 				0475A7821C821D5E0049AD61 /* create another.png in Resources */,
 				0472B6571C7DB21600529B2E /* profilepicTest@2x.png in Resources */,
+				04C081561C85F1A600B8682C /* FilterVC.xib in Resources */,
 				0472B67B1C7DB46800529B2E /* globeIcon@3x.png in Resources */,
 				0472B63E1C7CD6ED00529B2E /* fblogin@3x.png in Resources */,
 				04C080331C8469DE00B8682C /* dots.png in Resources */,
@@ -789,8 +878,11 @@
 				0472B67F1C7DB46800529B2E /* emailIcon@2x.png in Resources */,
 				04C080641C84BDDF00B8682C /* filterButton@2x.png in Resources */,
 				0475A6E21C7E4C680049AD61 /* paypal@3x.png in Resources */,
+				04C081671C86389700B8682C /* filterOn.png in Resources */,
 				04C080441C8469DE00B8682C /* tag@2x.png in Resources */,
 				0472B6581C7DB21600529B2E /* profilepicTest@3x.png in Resources */,
+				04C081451C85EA9C00B8682C /* confirmButton@3x.png in Resources */,
+				04C081411C85EA9C00B8682C /* cameraIcon@3x.png in Resources */,
 				0472B6771C7DB46800529B2E /* emailIcon@3x.png in Resources */,
 				04C080361C8469DE00B8682C /* filter.png in Resources */,
 				04C080461C8469DE00B8682C /* tag@3x.png in Resources */,
@@ -801,7 +893,9 @@
 				04C080391C8469DE00B8682C /* dots@3x.png in Resources */,
 				0472B63C1C7CD6ED00529B2E /* fblogin.png in Resources */,
 				0475A6FE1C7F67400049AD61 /* camHolder@2x.png in Resources */,
+				04C0812E1C85BFD600B8682C /* CameraController.xib in Resources */,
 				0475A7421C804DFE0049AD61 /* buyButton@1x.png in Resources */,
+				04C081621C860B1400B8682C /* flashOn@3x.png in Resources */,
 				0472B68A1C7DC41200529B2E /* exit@2x.png in Resources */,
 				0472B6361C7CD35D00529B2E /* page1.png in Resources */,
 				0475A6C81C7E32D10049AD61 /* Tut1ViewController.xib in Resources */,
@@ -891,12 +985,14 @@
 				049EF42F1C776E49000A599F /* ViewController.m in Sources */,
 				0472B60C1C7CC78500529B2E /* WelcomeViewController.m in Sources */,
 				0475A6EE1C7F00EE0049AD61 /* CreateViewController.m in Sources */,
+				04C081551C85F1A600B8682C /* FilterVC.m in Sources */,
+				04C081321C85C62700B8682C /* ConfirmController.m in Sources */,
 				0475A6CB1C7E3FCF0049AD61 /* ContainerViewController.m in Sources */,
 				0475A7481C8058D10049AD61 /* SelectViewController.m in Sources */,
 				04C080571C847E3800B8682C /* ExploreCell.m in Sources */,
 				049EF42C1C776E49000A599F /* AppDelegate.m in Sources */,
 				0475A7641C81F6880049AD61 /* ListingCompleteView.m in Sources */,
-				0472B6201C7CCBC000529B2E /* ExploreViewController.m in Sources */,
+				04C0812D1C85BFD600B8682C /* CameraController.m in Sources */,
 				0475A6C71C7E32D10049AD61 /* Tut1ViewController.m in Sources */,
 				04C0805F1C8497AC00B8682C /* ExploreVC.m in Sources */,
 				0472B6421C7CD85200529B2E /* RegisterViewController.m in Sources */,

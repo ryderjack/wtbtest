@@ -10,7 +10,6 @@
 #import "ExploreCell.h"
 #import <SVPullToRefresh/SVPullToRefresh.h>
 
-
 @interface ExploreVC ()
 
 @end
@@ -53,8 +52,10 @@
     //refresh setup
     self.pullFinished = YES;
     self.infinFinished = YES;
-    self.lastSkipped = 0;
+    self.lastInfinSkipped = 0;
     self.collectionView.pullToRefreshView.activityIndicatorViewStyle = UIActivityIndicatorViewStyleWhite;
+    
+    self.filtersArray = [NSMutableArray array];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -72,7 +73,7 @@
     }];
     
     [self.collectionView addInfiniteScrollingWithActionHandler:^{
-        self.infiniteQuery.skip = self.lastSkipped;
+        self.infiniteQuery.skip = self.lastInfinSkipped;
         if (self.infinFinished == YES) {
             [self queryParseInfinite];
         }
@@ -91,8 +92,8 @@
         self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     }
     
-    if (self.infinFinished == YES) {
-        [self queryParseInfinite];
+    if (self.pullFinished == YES) {
+        [self queryParsePull];
     }
 }
 
@@ -133,11 +134,42 @@
 }
 
 -(void)queryParseInfinite{
+    NSLog(@"infin called");
     self.infinFinished = NO;
     self.infiniteQuery.limit = 4;
+    NSLog(@"last skipped %d", self.lastInfinSkipped);
+    
+    //if filters enabled do this:
+    if (self.filtersArray.count > 0) {
+        NSLog(@"adding constraints infin");
+        if ([self.filtersArray containsObject:@"hightolow"]) {
+            [self.infiniteQuery orderByDescending:@"price"];
+            NSLog(@"price1");
+        }
+        else if ([self.filtersArray containsObject:@"lowtohigh"]){
+            [self.infiniteQuery orderByAscending:@"price"];
+             NSLog(@"price2");
+        }
+        else if ([self.filtersArray containsObject:@"new"]){
+            [self.infiniteQuery whereKey:@"condition" equalTo:@"New"];
+             NSLog(@"new");
+        }
+        else if ([self.filtersArray containsObject:@"used"]){
+            [self.infiniteQuery whereKey:@"condition" equalTo:@"Used"];
+        }
+        else if ([self.filtersArray containsObject:@"clothing"]){
+            [self.infiniteQuery whereKey:@"category" equalTo:@"Clothing"];
+        }
+        else if ([self.filtersArray containsObject:@"footwear"]){
+            [self.infiniteQuery whereKey:@"category" equalTo:@"Footwear"];
+        }
+    }
+    
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            self.lastSkipped = self.lastSkipped + 4;
+            NSLog(@"infin results %@", objects);
+            int count = (int)[objects count];
+            self.lastInfinSkipped = self.lastInfinSkipped + count;
             [self.results addObjectsFromArray:objects];
             [self.collectionView reloadData];
             
@@ -151,11 +183,43 @@
     }];
 }
 -(void)queryParsePull{
+    NSLog(@"pull called");
     self.pullFinished = NO;
     self.pullQuery.limit = 4;
+    
+    //if filters enabled do this:
+    if (self.filtersArray.count > 0) {
+        NSLog(@"adding constraints pull");
+        if ([self.filtersArray containsObject:@"hightolow"]) {
+            [self.pullQuery orderByDescending:@"price"];
+            NSLog(@"price1");
+        }
+        else if ([self.filtersArray containsObject:@"lowtohigh"]){
+            [self.pullQuery orderByAscending:@"price"];
+            NSLog(@"price2");
+        }
+        else if ([self.filtersArray containsObject:@"new"]){
+            [self.pullQuery whereKey:@"condition" equalTo:@"New"];
+            NSLog(@"new");
+        }
+        else if ([self.filtersArray containsObject:@"used"]){
+            [self.pullQuery whereKey:@"condition" equalTo:@"Used"];
+        }
+        else if ([self.filtersArray containsObject:@"clothing"]){
+            [self.pullQuery whereKey:@"category" equalTo:@"Clothing"];
+        }
+        else if ([self.filtersArray containsObject:@"footwear"]){
+            [self.pullQuery whereKey:@"category" equalTo:@"Footwear"];
+        }
+    }
+    else{
+    }
+    
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            self.lastSkipped = 4;
+            NSLog(@"pull results %@", objects);
+            int count = (int)[objects count];
+            self.lastInfinSkipped = count;
             [self.results removeAllObjects];
             [self.results addObjectsFromArray:objects];
             [self.collectionView reloadData];
@@ -240,5 +304,28 @@
     }];
 }
 - (IBAction)filterPressed:(id)sender {
+    FilterVC *vc = [[FilterVC alloc]init];
+    vc.delegate = self;
+    if (self.filtersArray.count > 0) {
+        vc.sendArray = [NSMutableArray arrayWithArray:self.filtersArray];
+    }
+    self.modalPresentationStyle = UIModalPresentationCurrentContext;
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+-(void)filtersReturned:(NSMutableArray *)filters{
+    self.filtersArray = filters;
+    if (self.filtersArray.count > 0) {
+        [self.filterButton setImage:[UIImage imageNamed:@"filterOn"] forState:UIControlStateNormal];
+    }
+    else{
+        [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
+    }
+    self.lastInfinSkipped = 0;
+    NSLog(@"filters array in explore %@", self.filtersArray);
+    //rest queries to remove constraints
+    self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
+    self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
+    [self queryParsePull];
 }
 @end

@@ -9,6 +9,7 @@
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="ExploreVC">
             <connections>
                 <outlet property="collectionView" destination="bab-Yf-eve" id="bNL-xA-4M6"/>
+                <outlet property="filterButton" destination="Nla-Xy-e7q" id="8FJ-c7-iYZ"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -33,7 +34,7 @@
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Nla-Xy-e7q">
                     <rect key="frame" x="157" y="577" width="60" height="60"/>
                     <constraints>
-                        <constraint firstAttribute="width" secondItem="Nla-Xy-e7q" secondAttribute="height" multiplier="1:1" id="rpw-G2-W3X"/>
+                        <constraint firstAttribute="width" secondItem="Nla-Xy-e7q" secondAttribute="height" multiplier="1:1" id="AYj-FS-NOU"/>
                     </constraints>
                     <state key="normal" image="filterButton.png"/>
                     <connections>
@@ -43,12 +44,12 @@
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
             <constraints>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="6Wz-yF-Qah"/>
-                <constraint firstItem="Nla-Xy-e7q" firstAttribute="centerX" secondItem="bab-Yf-eve" secondAttribute="centerX" id="DEn-Ci-3f4"/>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="NE4-hu-NeZ"/>
-                <constraint firstAttribute="bottom" secondItem="Nla-Xy-e7q" secondAttribute="bottom" constant="30" id="aq0-mg-DwC"/>
-                <constraint firstAttribute="trailing" secondItem="bab-Yf-eve" secondAttribute="trailing" id="luE-rM-rox"/>
-                <constraint firstAttribute="bottom" secondItem="bab-Yf-eve" secondAttribute="bottom" id="yPy-Do-G7s"/>
+                <constraint firstItem="Nla-Xy-e7q" firstAttribute="centerX" secondItem="bab-Yf-eve" secondAttribute="centerX" id="Hvx-pK-DrL"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="bfY-dm-ZVH"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="cS5-8t-4SM"/>
+                <constraint firstAttribute="bottom" secondItem="bab-Yf-eve" secondAttribute="bottom" id="pKa-ou-QJZ"/>
+                <constraint firstAttribute="bottom" secondItem="Nla-Xy-e7q" secondAttribute="bottom" constant="30" id="rrh-o3-B7x"/>
+                <constraint firstAttribute="trailing" secondItem="bab-Yf-eve" secondAttribute="trailing" id="wOT-f7-dkc"/>
             </constraints>
             <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
             <point key="canvasLocation" x="498.5" y="355.5"/>

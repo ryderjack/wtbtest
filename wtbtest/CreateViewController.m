@@ -7,9 +7,8 @@
 //
 
 #import "CreateViewController.h"
-#import "DBCameraView.h"
-#import <DBCameraLibraryViewController.h>
-
+#import "CameraController.h"
+#import <TWPhotoPickerController.h>
 
 @interface CreateViewController ()
 
@@ -208,7 +207,6 @@
     }
 }
 
-
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     
     if (indexPath.section ==2){
@@ -300,7 +298,6 @@
     }
 }
 -(NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section{
-
     return @"";
 
 }
@@ -366,15 +363,17 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//        [self openCameraWithForceQuad];
-//        TGCameraViewController *vc = [[TGCameraViewController alloc]init];
-//        [self presentViewController:vc animated:YES completion:^{
-//            
-//        }];
+        CameraController *vc = [[CameraController alloc]init];
+        vc.delegate = self;
+        [self presentViewController:vc animated:YES completion:nil];
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//        [self openLibrary];
+        TWPhotoPickerController *photoPicker = [[TWPhotoPickerController alloc] init];
+        photoPicker.cropBlock = ^(UIImage *image) {
+            [self finalImage:image];
+        };
+        [self presentViewController:photoPicker animated:YES completion:nil];
     }]];
     
     [self presentViewController:actionSheet animated:YES completion:nil];
@@ -382,11 +381,9 @@
 
 - (IBAction)firstCamPressed:(id)sender {
     if (self.firstCam.enabled == YES) {
-        //show action sheet for either picker, library or web (eventually)
         self.camButtonTapped = 1;
         self.photostotal ++;
-        [self alertSheet];
-        
+        [self alertSheet];        
     }
 }
 - (IBAction)secondCamPressed:(id)sender {
@@ -414,86 +411,7 @@
     }
 }
 
-- (void) openCameraWithForceQuad
-{
-    DBCameraViewController *cameraController = [DBCameraViewController initWithDelegate:self];
-    [cameraController setForceQuadCrop:YES];
-    
-    DBCameraContainerViewController *container = [[DBCameraContainerViewController alloc] initWithDelegate:self];
-    [container setCameraViewController:cameraController];
-    [container setFullScreenMode];
-    
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:container];
-    [nav setNavigationBarHidden:YES];
-    [self presentViewController:nav animated:YES completion:nil];
-}
-
-//Use your captured image
-#pragma mark - DBCameraViewControllerDelegate
-
-- (void) camera:(id)cameraViewController didFinishWithImage:(UIImage *)image withMetadata:(NSDictionary *)metadata
-{
-    if (self.camButtonTapped == 1) {
-        [self.firstImageView setHidden:NO];
-        [self.firstImageView setImage:image];
-        
-        [self.firstDelete setHidden:NO];
-        [self.secondCam setEnabled:YES];
-        [self.firstCam setEnabled:NO];
-        
-        [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
-    }
-    else if (self.camButtonTapped ==2){
-        [self.secondImageView setHidden:NO];
-        [self.secondImageView setImage:image];
-        
-        [self.secondDelete setHidden:NO];
-        [self.thirdCam setEnabled:YES];
-        [self.secondCam setEnabled:NO];
-        
-        [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
-    }
-    else if (self.camButtonTapped ==3){
-        [self.thirdImageView setHidden:NO];
-        [self.thirdImageView setImage:image];
-        
-        [self.thirdDelete setHidden:NO];
-        [self.fourthCam setEnabled:YES];
-        [self.thirdCam setEnabled:NO];
-        
-        [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
-    }
-    else if (self.camButtonTapped ==4){
-        [self.fourthImageView setHidden:NO];
-        [self.fourthImageView setImage:image];
-        
-        [self.fourthDelete setHidden:NO];
-        [self.fourthCam setEnabled:NO];
-    }
-    [cameraViewController restoreFullScreenMode];
-    [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void) dismissCamera:(id)cameraViewController{
-    [self dismissViewControllerAnimated:YES completion:nil];
-    [cameraViewController restoreFullScreenMode];
-}
-
-- (void) openLibrary
-{
-    DBCameraLibraryViewController *vc = [[DBCameraLibraryViewController alloc] init];
-    [vc setDelegate:self]; //DBCameraLibraryViewController must have a DBCameraViewControllerDelegate object
-    [vc setForceQuadCrop:YES]; //Optional
-    [vc setUseCameraSegue:YES]; //Optional
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-    [nav setNavigationBarHidden:YES];
-    [self presentViewController:nav animated:YES completion:nil];
-}
 - (IBAction)firstDeletePressed:(id)sender {
-    
     if (self.photostotal == 1) {
         self.photostotal--;
         [self.firstImageView setImage:[UIImage imageNamed:@"addImage"]];
@@ -733,62 +651,46 @@
     self.lastId = item;
 }
 
-
-
-//-(void)cameraDidTakePhoto:(UIImage *)image{
-//    
-//    NSLog(@"in here");
-//    
-//    if (self.camButtonTapped == 1) {
-//        [self.firstImageView setHidden:NO];
-//        [self.firstImageView setImage:image];
-//        
-//        [self.firstDelete setHidden:NO];
-//        [self.secondCam setEnabled:YES];
-//        [self.firstCam setEnabled:NO];
-//        
-//        [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
-//        [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
-//        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
-//    }
-//    else if (self.camButtonTapped ==2){
-//        [self.secondImageView setHidden:NO];
-//        [self.secondImageView setImage:image];
-//        
-//        [self.secondDelete setHidden:NO];
-//        [self.thirdCam setEnabled:YES];
-//        [self.secondCam setEnabled:NO];
-//        
-//        [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
-//        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
-//    }
-//    else if (self.camButtonTapped ==3){
-//        [self.thirdImageView setHidden:NO];
-//        [self.thirdImageView setImage:image];
-//        
-//        [self.thirdDelete setHidden:NO];
-//        [self.fourthCam setEnabled:YES];
-//        [self.thirdCam setEnabled:NO];
-//        
-//        [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
-//    }
-//    else if (self.camButtonTapped ==4){
-//        [self.fourthImageView setHidden:NO];
-//        [self.fourthImageView setImage:image];
-//        
-//        [self.fourthDelete setHidden:NO];
-//        [self.fourthCam setEnabled:NO];
-//    }
-//    [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
-//    
-//}
-//
-//-(void)cameraDidCancel{
-//    [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
-//}
-//
-//-(void)cameraDidSelectAlbumPhoto:(UIImage *)image{
-//    [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
-//
-//}
+-(void)finalImage:(UIImage *)image{
+    if (self.camButtonTapped == 1) {
+        [self.firstImageView setHidden:NO];
+        [self.firstImageView setImage:image];
+        
+        [self.firstDelete setHidden:NO];
+        [self.secondCam setEnabled:YES];
+        [self.firstCam setEnabled:NO];
+        
+        [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
+        [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+    }
+    else if (self.camButtonTapped ==2){
+        [self.secondImageView setHidden:NO];
+        [self.secondImageView setImage:image];
+        
+        [self.secondDelete setHidden:NO];
+        [self.thirdCam setEnabled:YES];
+        [self.secondCam setEnabled:NO];
+        
+        [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
+        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+    }
+    else if (self.camButtonTapped ==3){
+        [self.thirdImageView setHidden:NO];
+        [self.thirdImageView setImage:image];
+        
+        [self.thirdDelete setHidden:NO];
+        [self.fourthCam setEnabled:YES];
+        [self.thirdCam setEnabled:NO];
+        
+        [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
+    }
+    else if (self.camButtonTapped ==4){
+        [self.fourthImageView setHidden:NO];
+        [self.fourthImageView setImage:image];
+        
+        [self.fourthDelete setHidden:NO];
+        [self.fourthCam setEnabled:NO];
+    }
+}
 @end

@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "WelcomeViewController.h"
-#import "ExploreViewController.h"
 #import "ViewController.h"
 #import "CreateViewController.h"
 #import "ExploreVC.h"
