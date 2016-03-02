@@ -11,7 +11,7 @@
 @class SelectViewController;
 
 @protocol SelectViewControllerDelegate <NSObject>
-- (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)item;
+- (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)item withitem:(NSString *)item2;
 @end
 
 @interface SelectViewController : UITableViewController
@@ -33,6 +33,8 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *tenCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *elevenCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *selectCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *twelveCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *thirteenCell;
 
 //labels
 @property (weak, nonatomic) IBOutlet UILabel *firstLabel;
@@ -46,9 +48,11 @@
 @property (weak, nonatomic) IBOutlet UILabel *ninthLabel;
 @property (weak, nonatomic) IBOutlet UILabel *tenthLabel;
 @property (weak, nonatomic) IBOutlet UILabel *eleventhLabel;
-
+@property (weak, nonatomic) IBOutlet UILabel *twelveLabel;
+@property (weak, nonatomic) IBOutlet UILabel *thirteenLabel;
 
 @property (weak, nonatomic) IBOutlet UISegmentedControl *segmentContro;
+@property (strong, nonatomic) NSString *genderSelected;
 
 
 

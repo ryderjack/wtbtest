@@ -24,6 +24,7 @@
     }
     else if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"] ){
         self.title = @"Size UK";
+        self.genderSelected = @"male";
     }
     else if ([self.setting isEqualToString:@"delivery"]){
         self.title = @"Delivery";
@@ -57,7 +58,7 @@
         return 9;
     }
     else if ([self.setting isEqualToString:@"sizefoot"]){
-        return 10;
+        return 14;
     }
     else if ([self.setting isEqualToString:@"delivery"]){
         return 2;
@@ -128,90 +129,61 @@
     }
     else if ([self.setting isEqualToString:@"sizefoot"]){
         
-        if (self.segmentContro.selectedSegmentIndex == 0) {
-            //men selected
             if (indexPath.row == 0){
                 return self.selectCell;
             }
             else if (indexPath.row ==1){
-                self.firstLabel.text = @"UK 6";
+                self.firstLabel.text = @"2";
                 return self.oneCell;
             }
             else if (indexPath.row ==2){
-                self.secondLabel.text = @"UK 7";
+                self.secondLabel.text = @"3";
                 return self.twoCell;
             }
             else if (indexPath.row ==3){
-                self.thirdLabel.text = @"UK 8";
+                self.thirdLabel.text = @"4";
                 return self.threeCell;
             }
             else if (indexPath.row ==4){
-                self.fourthLabel.text = @"UK 9";
+                self.fourthLabel.text = @"5";
                 return self.fourCell;
             }
             else if (indexPath.row ==5){
-                self.fifthLabel.text = @"UK 10";
+                self.fifthLabel.text = @"6";
                 return self.fiveCell;
             }
             else if (indexPath.row ==6){
-                self.sixthLabel.text = @"UK 11";
+                self.sixthLabel.text = @"7";
                 return self.sixCell;
             }
             else if (indexPath.row ==7){
-                self.seventhLabel.text = @"UK 12";
+                self.seventhLabel.text = @"8";
                 return self.sevenCell;
             }
             else if (indexPath.row ==8){
-                self.eigthLabel.text = @"UK 13";
+                self.eigthLabel.text = @"9";
                 return self.eightCell;
             }
             else if (indexPath.row ==9){
-                self.ninthLabel.text = @"UK 14";
+                self.ninthLabel.text = @"10";
                 return self.nineCell;
             }
-        }
-        else{
-            //women selected
-            if (indexPath.row == 0){
-                return self.selectCell;
+            else if (indexPath.row ==10){
+                self.tenthLabel.text = @"11";
+                return self.tenCell;
             }
-            else if (indexPath.row ==1){
-                self.firstLabel.text = @"UK 2";
-                return self.oneCell;
+            else if (indexPath.row ==11){
+                self.eleventhLabel.text = @"12";
+                return self.elevenCell;
             }
-            else if (indexPath.row ==2){
-                self.secondLabel.text = @"UK 3";
-                return self.twoCell;
+            else if (indexPath.row ==12){
+                self.twelveLabel.text = @"13";
+                return self.twelveCell;
             }
-            else if (indexPath.row ==3){
-                self.thirdLabel.text = @"UK 4";
-                return self.threeCell;
+            else if (indexPath.row ==13){
+                self.thirteenLabel.text = @"14";
+                return self.thirteenCell;
             }
-            else if (indexPath.row ==4){
-                self.fourthLabel.text = @"UK 5";
-                return self.fourCell;
-            }
-            else if (indexPath.row ==5){
-                self.fifthLabel.text = @"UK 6";
-                return self.fiveCell;
-            }
-            else if (indexPath.row ==6){
-                self.sixthLabel.text = @"UK 7";
-                return self.sixCell;
-            }
-            else if (indexPath.row ==7){
-                self.seventhLabel.text = @"UK 8";
-                return self.sevenCell;
-            }
-            else if (indexPath.row ==8){
-                self.eigthLabel.text = @"UK 9";
-                return self.eightCell;
-            }
-            else if (indexPath.row ==9){
-                self.ninthLabel.text = @"UK 10";
-                return self.nineCell;
-            }
-        }
     }
     else if ([self.setting isEqualToString:@"delivery"]){
         if (indexPath.row == 0){
@@ -232,28 +204,11 @@
 }
 - (IBAction)genderSwitchChanged:(id)sender {
     if (self.segmentContro.selectedSegmentIndex == 0) {
-        //men selected
-        self.firstLabel.text = @"UK 6";
-        self.secondLabel.text = @"UK 7";
-        self.thirdLabel.text = @"UK 8";
-        self.fourthLabel.text = @"UK 9";
-        self.fifthLabel.text = @"UK 10";
-        self.sixthLabel.text = @"UK 11";
-        self.seventhLabel.text = @"UK 12";
-        self.eigthLabel.text = @"UK 13";
-        self.ninthLabel.text = @"UK 14";
+        //male
+        self.genderSelected = @"male";
     }
     else{
-        //women selected
-        self.firstLabel.text = @"UK 2";
-        self.secondLabel.text = @"UK 3";
-        self.thirdLabel.text = @"UK 4";
-        self.fourthLabel.text = @"UK 5";
-        self.fifthLabel.text = @"UK 6";
-        self.sixthLabel.text = @"UK 7";
-        self.seventhLabel.text = @"UK 8";
-        self.eigthLabel.text = @"UK 9";
-        self.ninthLabel.text = @"UK 10";
+        self.genderSelected = @"female";
     }
 }
 
@@ -370,7 +325,7 @@
     NSLog(@"selected %@", selectionString);
     
     if (![selectionString isEqualToString:@""]) {
-        [self.delegate addItemViewController:self didFinishEnteringItem:selectionString];
+        [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withitem:self.genderSelected];
     }
 }
 

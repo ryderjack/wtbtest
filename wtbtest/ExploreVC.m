@@ -134,40 +134,12 @@
 }
 
 -(void)queryParseInfinite{
-    NSLog(@"infin called");
     self.infinFinished = NO;
     self.infiniteQuery.limit = 4;
-    NSLog(@"last skipped %d", self.lastInfinSkipped);
-    
-    //if filters enabled do this:
-    if (self.filtersArray.count > 0) {
-        NSLog(@"adding constraints infin");
-        if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.infiniteQuery orderByDescending:@"price"];
-            NSLog(@"price1");
-        }
-        else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.infiniteQuery orderByAscending:@"price"];
-             NSLog(@"price2");
-        }
-        else if ([self.filtersArray containsObject:@"new"]){
-            [self.infiniteQuery whereKey:@"condition" equalTo:@"New"];
-             NSLog(@"new");
-        }
-        else if ([self.filtersArray containsObject:@"used"]){
-            [self.infiniteQuery whereKey:@"condition" equalTo:@"Used"];
-        }
-        else if ([self.filtersArray containsObject:@"clothing"]){
-            [self.infiniteQuery whereKey:@"category" equalTo:@"Clothing"];
-        }
-        else if ([self.filtersArray containsObject:@"footwear"]){
-            [self.infiniteQuery whereKey:@"category" equalTo:@"Footwear"];
-        }
-    }
+    [self setupInfinQuery];
     
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            NSLog(@"infin results %@", objects);
             int count = (int)[objects count];
             self.lastInfinSkipped = self.lastInfinSkipped + count;
             [self.results addObjectsFromArray:objects];
@@ -183,41 +155,12 @@
     }];
 }
 -(void)queryParsePull{
-    NSLog(@"pull called");
     self.pullFinished = NO;
     self.pullQuery.limit = 4;
-    
-    //if filters enabled do this:
-    if (self.filtersArray.count > 0) {
-        NSLog(@"adding constraints pull");
-        if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.pullQuery orderByDescending:@"price"];
-            NSLog(@"price1");
-        }
-        else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.pullQuery orderByAscending:@"price"];
-            NSLog(@"price2");
-        }
-        else if ([self.filtersArray containsObject:@"new"]){
-            [self.pullQuery whereKey:@"condition" equalTo:@"New"];
-            NSLog(@"new");
-        }
-        else if ([self.filtersArray containsObject:@"used"]){
-            [self.pullQuery whereKey:@"condition" equalTo:@"Used"];
-        }
-        else if ([self.filtersArray containsObject:@"clothing"]){
-            [self.pullQuery whereKey:@"category" equalTo:@"Clothing"];
-        }
-        else if ([self.filtersArray containsObject:@"footwear"]){
-            [self.pullQuery whereKey:@"category" equalTo:@"Footwear"];
-        }
-    }
-    else{
-    }
+    [self setupPullQuery];
     
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            NSLog(@"pull results %@", objects);
             int count = (int)[objects count];
             self.lastInfinSkipped = count;
             [self.results removeAllObjects];
@@ -327,5 +270,201 @@
     self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self queryParsePull];
+}
+
+-(void)setupInfinQuery{
+    if (self.filtersArray.count > 0) {
+        if ([self.filtersArray containsObject:@"hightolow"]) {
+            [self.infiniteQuery orderByDescending:@"price"];
+        }
+        else if ([self.filtersArray containsObject:@"lowtohigh"]){
+            [self.infiniteQuery orderByAscending:@"price"];
+        }
+        
+        if ([self.filtersArray containsObject:@"new"]){
+            [self.infiniteQuery whereKey:@"condition" equalTo:@"New"];
+        }
+        else if ([self.filtersArray containsObject:@"used"]){
+            [self.infiniteQuery whereKey:@"condition" equalTo:@"Used"];
+        }
+        
+        if ([self.filtersArray containsObject:@"clothing"]){
+            [self.infiniteQuery whereKey:@"category" equalTo:@"Clothing"];
+        }
+        else if ([self.filtersArray containsObject:@"footwear"]){
+            [self.infiniteQuery whereKey:@"category" equalTo:@"Footwear"];
+        }
+        
+        if ([self.filtersArray containsObject:@"male"]){
+            [self.infiniteQuery whereKey:@"sizegender" equalTo:@"male"];
+        }
+        else if ([self.filtersArray containsObject:@"female"]){
+            [self.infiniteQuery whereKey:@"sizegender" equalTo:@"female"];
+        }
+        
+        //footwear sizes
+        if ([self.filtersArray containsObject:@"2"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"2"];
+        }
+        else if ([self.filtersArray containsObject:@"3"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"3"];
+        }
+        else if ([self.filtersArray containsObject:@"4"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"4"];
+        }
+        else if ([self.filtersArray containsObject:@"5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"5"];
+        }
+        else if ([self.filtersArray containsObject:@"6"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"6"];
+        }
+        else if ([self.filtersArray containsObject:@"7"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"7"];
+        }
+        else if ([self.filtersArray containsObject:@"8"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"8"];
+        }
+        else if ([self.filtersArray containsObject:@"9"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"9"];
+        }
+        else if ([self.filtersArray containsObject:@"10"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"10"];
+        }
+        else if ([self.filtersArray containsObject:@"11"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"11"];
+        }
+        else if ([self.filtersArray containsObject:@"12"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"12"];
+        }
+        else if ([self.filtersArray containsObject:@"13"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"13"];
+        }
+        else if ([self.filtersArray containsObject:@"14"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"14"];
+        }
+        
+        if ([self.filtersArray containsObject:@"XXS"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"XXS"];
+        }
+        else if ([self.filtersArray containsObject:@"XS"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"XS"];
+        }
+        else if ([self.filtersArray containsObject:@"S"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"S"];
+        }
+        else if ([self.filtersArray containsObject:@"M"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"M"];
+        }
+        else if ([self.filtersArray containsObject:@"L"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"L"];
+        }
+        else if ([self.filtersArray containsObject:@"XL"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"XL"];
+        }
+        else if ([self.filtersArray containsObject:@"XXL"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"XXL"];
+        }
+        else if ([self.filtersArray containsObject:@"OS"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"OS"];
+        }
+    }
+}
+-(void)setupPullQuery{
+    if (self.filtersArray.count > 0) {
+        if ([self.filtersArray containsObject:@"hightolow"]) {
+            [self.pullQuery orderByDescending:@"price"];
+        }
+        else if ([self.filtersArray containsObject:@"lowtohigh"]){
+            [self.pullQuery orderByAscending:@"price"];
+        }
+        
+        if ([self.filtersArray containsObject:@"new"]){
+            [self.pullQuery whereKey:@"condition" equalTo:@"New"];
+        }
+        else if ([self.filtersArray containsObject:@"used"]){
+            [self.pullQuery whereKey:@"condition" equalTo:@"Used"];
+        }
+        
+        if ([self.filtersArray containsObject:@"clothing"]){
+            [self.pullQuery whereKey:@"category" equalTo:@"Clothing"];
+        }
+        else if ([self.filtersArray containsObject:@"footwear"]){
+            [self.pullQuery whereKey:@"category" equalTo:@"Footwear"];
+        }
+        
+        if ([self.filtersArray containsObject:@"male"]){
+            [self.pullQuery whereKey:@"sizegender" equalTo:@"male"];
+        }
+        else if ([self.filtersArray containsObject:@"female"]){
+            [self.pullQuery whereKey:@"sizegender" equalTo:@"female"];
+        }
+        
+        //footwear sizes
+        if ([self.filtersArray containsObject:@"2"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"2"];
+        }
+        else if ([self.filtersArray containsObject:@"3"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"3"];
+        }
+        else if ([self.filtersArray containsObject:@"4"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"4"];
+        }
+        else if ([self.filtersArray containsObject:@"5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"5"];
+        }
+        else if ([self.filtersArray containsObject:@"6"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"6"];
+        }
+        else if ([self.filtersArray containsObject:@"7"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"7"];
+        }
+        else if ([self.filtersArray containsObject:@"8"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"8"];
+        }
+        else if ([self.filtersArray containsObject:@"9"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"9"];
+        }
+        else if ([self.filtersArray containsObject:@"10"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"10"];
+        }
+        else if ([self.filtersArray containsObject:@"11"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"11"];
+        }
+        else if ([self.filtersArray containsObject:@"12"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"12"];
+        }
+        else if ([self.filtersArray containsObject:@"13"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"13"];
+        }
+        else if ([self.filtersArray containsObject:@"14"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"14"];
+        }
+       
+        //clothing sizes
+        if ([self.filtersArray containsObject:@"XXS"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"XXS"];
+        }
+        else if ([self.filtersArray containsObject:@"XS"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"XS"];
+        }
+        else if ([self.filtersArray containsObject:@"S"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"S"];
+        }
+        else if ([self.filtersArray containsObject:@"M"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"M"];
+        }
+        else if ([self.filtersArray containsObject:@"L"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"L"];
+        }
+        else if ([self.filtersArray containsObject:@"XL"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"XL"];
+        }
+        else if ([self.filtersArray containsObject:@"XXL"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"XXL"];
+        }
+        else if ([self.filtersArray containsObject:@"OS"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"OS"];
+        }
+    }
 }
 @end

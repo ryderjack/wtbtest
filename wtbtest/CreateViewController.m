@@ -509,7 +509,7 @@
     [self.fourthDelete setHidden:YES];
 }
 
-- (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)item
+- (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)item withitem:(NSString *)item2
 {
     if ([self.selection isEqualToString:@"condition"]) {
         self.chooseCondition.text = item;
@@ -519,6 +519,9 @@
     }
     else if ([self.selection isEqualToString:@"size"]){
         self.chooseSize.text = item;
+        if (![item2 isEqualToString:@""]) {
+            self.genderSize = item2;
+        }
     }
     else if ([self.selection isEqualToString:@"delivery"]){
         self.chooseDelivery.text = item;
@@ -562,6 +565,7 @@
         [self.listing setObject:self.chooseCondition.text forKey:@"condition"];
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
         [self.listing setObject:self.chooseSize.text forKey:@"size"];
+        [self.listing setObject:self.genderSize forKey:@"sizegender"];
         [self.listing setObject:self.chooseLocation.text forKey:@"location"];
         [self.listing setObject:self.geopoint forKey:@"geopoint"];
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];

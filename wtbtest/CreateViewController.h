@@ -72,4 +72,6 @@
 
 @property (nonatomic, strong) PFObject *listing;
 
+@property (nonatomic, strong) NSString *genderSize;
+
 @end

@@ -43,6 +43,11 @@
 
 //size
 @property (weak, nonatomic) IBOutlet UIScrollView *sizeScrollButton;
+@property (weak, nonatomic) IBOutlet UIButton *menButton;
+@property (weak, nonatomic) IBOutlet UIButton *womenButton;
+@property (strong, nonatomic) IBOutlet UIButton *lasttapped;
+@property (nonatomic) BOOL clothingEnabled;
+@property (nonatomic, strong) NSArray *sizeLabels;
 
 //apply
 @property (weak, nonatomic) IBOutlet UIButton *applyButton;
