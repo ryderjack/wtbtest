@@ -24,7 +24,6 @@
     }
     else if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"] ){
         self.title = @"Size UK";
-        self.genderSelected = @"male";
     }
     else if ([self.setting isEqualToString:@"delivery"]){
         self.title = @"Delivery";
@@ -58,6 +57,7 @@
         return 9;
     }
     else if ([self.setting isEqualToString:@"sizefoot"]){
+        self.genderSelected = @"Mens";
         return 14;
     }
     else if ([self.setting isEqualToString:@"delivery"]){
@@ -205,10 +205,10 @@
 - (IBAction)genderSwitchChanged:(id)sender {
     if (self.segmentContro.selectedSegmentIndex == 0) {
         //male
-        self.genderSelected = @"male";
+        self.genderSelected = @"Mens";
     }
     else{
-        self.genderSelected = @"female";
+        self.genderSelected = @"Womens";
     }
 }
 
@@ -325,7 +325,12 @@
     NSLog(@"selected %@", selectionString);
     
     if (![selectionString isEqualToString:@""]) {
-        [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withitem:self.genderSelected];
+        if ([self.setting isEqualToString:@"sizefoot"]) {
+            [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withitem:self.genderSelected];
+        }
+        else{
+            [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withitem:nil];
+        }
     }
 }
 

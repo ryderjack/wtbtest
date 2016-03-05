@@ -32,10 +32,6 @@
         
     }]];
     
-    //needed?? 
-//    [[FBSDKApplicationDelegate sharedInstance] application:application
-//                             didFinishLaunchingWithOptions:launchOptions];
-    
     [PFFacebookUtils initializeFacebookWithApplicationLaunchOptions:launchOptions];
     
     //set up tab bar
@@ -54,10 +50,12 @@
     self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
-    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:116/255.0f green:205/255.0f blue:255/255.0f alpha:1.0f]];
+    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
     
-//    UITabBarItem *tabBarItem1 = [self.tabBarController.tabBar.items objectAtIndex:0];
-//    tabBarItem1.image = [UIImage imageNamed:@"chatPic"];
+    UITabBarItem *tabBarItem1 = [self.tabBarController.tabBar.items objectAtIndex:0];
+    tabBarItem1.image = [UIImage imageNamed:@"exploreTabIcon"];
+    
+    tabBarItem1.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     [self.tabBarController setDelegate:self];
     

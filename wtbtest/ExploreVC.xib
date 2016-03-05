@@ -34,7 +34,7 @@
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Nla-Xy-e7q">
                     <rect key="frame" x="157" y="577" width="60" height="60"/>
                     <constraints>
-                        <constraint firstAttribute="width" secondItem="Nla-Xy-e7q" secondAttribute="height" multiplier="1:1" id="AYj-FS-NOU"/>
+                        <constraint firstAttribute="width" secondItem="Nla-Xy-e7q" secondAttribute="height" multiplier="1:1" id="aU3-7i-jIS"/>
                     </constraints>
                     <state key="normal" image="filterButton.png"/>
                     <connections>
@@ -44,12 +44,12 @@
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
             <constraints>
-                <constraint firstItem="Nla-Xy-e7q" firstAttribute="centerX" secondItem="bab-Yf-eve" secondAttribute="centerX" id="Hvx-pK-DrL"/>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="bfY-dm-ZVH"/>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="cS5-8t-4SM"/>
-                <constraint firstAttribute="bottom" secondItem="bab-Yf-eve" secondAttribute="bottom" id="pKa-ou-QJZ"/>
-                <constraint firstAttribute="bottom" secondItem="Nla-Xy-e7q" secondAttribute="bottom" constant="30" id="rrh-o3-B7x"/>
-                <constraint firstAttribute="trailing" secondItem="bab-Yf-eve" secondAttribute="trailing" id="wOT-f7-dkc"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="a35-iJ-y5m"/>
+                <constraint firstAttribute="bottom" secondItem="Nla-Xy-e7q" secondAttribute="bottom" constant="30" id="do1-Vy-8ap"/>
+                <constraint firstAttribute="trailing" secondItem="bab-Yf-eve" secondAttribute="trailing" id="fvi-tY-B8k"/>
+                <constraint firstAttribute="bottom" secondItem="bab-Yf-eve" secondAttribute="bottom" id="glm-sS-sfE"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="sGA-tk-M8P"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="centerX" secondItem="Nla-Xy-e7q" secondAttribute="centerX" id="zIO-FQ-FSk"/>
             </constraints>
             <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
             <point key="canvasLocation" x="498.5" y="355.5"/>

@@ -26,11 +26,7 @@
     
     //hide first table view header
     self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
-    
-//    UITapGestureRecognizer* tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(removeKeyboard)];
-//    tapGesture.numberOfTapsRequired = 1;
-//    [self.tableView addGestureRecognizer:tapGesture];
-    
+        
     //button setup
     [self.firstCam setEnabled:YES];
     [self.secondCam setEnabled:NO];
@@ -407,6 +403,7 @@
         //show action sheet for either picker, library or web (eventually)
         self.camButtonTapped = 4;
         self.photostotal ++;
+        NSLog(@"photos total %d", self.photostotal);
         [self alertSheet];
     }
 }
@@ -519,7 +516,8 @@
     }
     else if ([self.selection isEqualToString:@"size"]){
         self.chooseSize.text = item;
-        if (![item2 isEqualToString:@""]) {
+        if (item2) {
+            NSLog(@"gendersize being set %@", item2);
             self.genderSize = item2;
         }
     }
@@ -565,7 +563,9 @@
         [self.listing setObject:self.chooseCondition.text forKey:@"condition"];
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
         [self.listing setObject:self.chooseSize.text forKey:@"size"];
-        [self.listing setObject:self.genderSize forKey:@"sizegender"];
+        if (self.genderSize) {
+            [self.listing setObject:self.genderSize forKey:@"sizegender"];
+        }
         [self.listing setObject:self.chooseLocation.text forKey:@"location"];
         [self.listing setObject:self.geopoint forKey:@"geopoint"];
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
@@ -574,23 +574,54 @@
         
         if (self.photostotal == 1) {
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
-            PFFile *imageFile1 = [PFFile fileWithName:@"Image.jpg" data:data];
+            PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
             [self.listing setObject:imageFile1 forKey:@"image1"];
         }
         else if (self.photostotal == 2){
-            NSData* data = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
-            PFFile *imageFile2 = [PFFile fileWithName:@"Image.jpg" data:data];
+            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
+            [self.listing setObject:imageFile1 forKey:@"image1"];
+            
+            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+            PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
             [self.listing setObject:imageFile2 forKey:@"image2"];
         }
         else if (self.photostotal == 3){
-            NSData* data = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
-            PFFile *imageFile3 = [PFFile fileWithName:@"Image.jpg" data:data];
+            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
+            [self.listing setObject:imageFile1 forKey:@"image1"];
+            NSLog(@"file 1 %@", imageFile1);
+            
+            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+            PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
+            [self.listing setObject:imageFile2 forKey:@"image2"];
+            NSLog(@"file 2 %@", imageFile2);
+            
+            NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
+            PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
             [self.listing setObject:imageFile3 forKey:@"image3"];
+            NSLog(@"file 3 %@", imageFile3);
         }
         else if (self.photostotal == 4){
-            NSData* data = UIImageJPEGRepresentation(self.fourthImageView.image, 0.7f);
-            PFFile *imageFile4 = [PFFile fileWithName:@"Image.jpg" data:data];
+            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
+            [self.listing setObject:imageFile1 forKey:@"image1"];
+            NSLog(@"file 1 %@", imageFile1);
+            
+            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+            PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
+            [self.listing setObject:imageFile2 forKey:@"image2"];
+            NSLog(@"file 2 %@", imageFile2);
+            
+            NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
+            PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
+            [self.listing setObject:imageFile3 forKey:@"image3"];
+            NSLog(@"file 3 %@", imageFile3);
+            
+            NSData* data4 = UIImageJPEGRepresentation(self.fourthImageView.image, 0.7f);
+            PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
             [self.listing setObject:imageFile4 forKey:@"image4"];
+            NSLog(@"file 4 %@", imageFile4);
         }
         
         if ([self.extraField.text isEqualToString:@"eg. Must come with original box"]) {

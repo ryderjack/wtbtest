@@ -10,6 +10,7 @@
 #import <Parse/Parse.h>
 #import <CoreLocation/CoreLocation.h>
 #import "FilterVC.h"
+#import "ListingController.h"
 
 @interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate>
 

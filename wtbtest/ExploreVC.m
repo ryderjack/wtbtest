@@ -9,6 +9,8 @@
 #import "ExploreVC.h"
 #import "ExploreCell.h"
 #import <SVPullToRefresh/SVPullToRefresh.h>
+#import "ExplainViewController.h"
+
 
 @interface ExploreVC ()
 
@@ -25,6 +27,10 @@
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+    UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"question"] style:UIBarButtonItemStylePlain target:self action:@selector(showExtraInfo)];
+    
+    self.navigationItem.rightBarButtonItem = infoButton;
     
     //collection view/cell setup
     [self.collectionView registerClass:[ExploreCell class] forCellWithReuseIdentifier:@"Cell"];
@@ -107,6 +113,13 @@
     PFObject *listing = [self.results objectAtIndex:indexPath.row];
     cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
     cell.priceLabel.text = [NSString stringWithFormat:@"%@ £%@", [listing objectForKey:@"condition"],[listing objectForKey:@"price"]];
+    
+    if ([[listing objectForKey:@"size"] isEqualToString:@"One size"]) {
+        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"size"]];
+    }else{
+        cell.sizeLabel.text = [NSString stringWithFormat:@"UK %@", [listing objectForKey:@"size"]];
+    }
+    
     
     PFGeoPoint *location = [listing objectForKey:@"geopoint"];
     if (self.currentLocation && location) {
@@ -466,5 +479,17 @@
             [self.pullQuery whereKey:@"size" equalTo:@"OS"];
         }
     }
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    PFObject *selected = [self.results objectAtIndex:indexPath.item];
+    ListingController *vc = [[ListingController alloc]init];
+    vc.listingObject = selected;
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+-(void)showExtraInfo{
+    ExplainViewController *vc = [[ExplainViewController alloc]init];
+    [self presentViewController:vc animated:YES completion:nil];
 }
 @end

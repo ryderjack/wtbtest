@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="9532" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9530"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="ExplainViewController">
+            <connections>
+                <outlet property="cartCell" destination="jdO-vj-vHN" id="pOk-b3-N1Y"/>
+                <outlet property="chatCell" destination="346-AU-xj8" id="woa-6u-vfg"/>
+                <outlet property="firstImageView" destination="oii-hU-fN3" id="qPN-f1-jHB"/>
+                <outlet property="gridCell" destination="bbY-tr-ohK" id="qFi-rM-I1f"/>
+                <outlet property="labelOne" destination="8yR-iU-wbI" id="wl7-wb-sRJ"/>
+                <outlet property="labelThree" destination="c4A-nm-frf" id="2E4-ze-mx5"/>
+                <outlet property="labelTwo" destination="gU4-w5-rwD" id="HCl-qG-PHF"/>
+                <outlet property="segmentControl" destination="3yY-II-vze" id="xX8-Hk-9QT"/>
+                <outlet property="titleCell" destination="Y0P-kD-PVi" id="L0A-06-yfv"/>
+                <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableView opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" bouncesZoom="NO" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="i5M-Pr-FkT">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+            <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
+            <connections>
+                <outlet property="dataSource" destination="-1" id="Tng-2m-Rnh"/>
+                <outlet property="delegate" destination="-1" id="9aC-8N-iBw"/>
+            </connections>
+        </tableView>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="107" id="Y0P-kD-PVi">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="107"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Y0P-kD-PVi" id="qHB-sO-0kw">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="107"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="How does wantobuy work?" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sSa-tC-JcT">
+                        <rect key="frame" x="51" y="39" width="219" height="21"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="21" id="WqN-yU-ZY5"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
+                        <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="9No-TT-7K7">
+                        <rect key="frame" x="266" y="34" width="46" height="31"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="46" id="wFV-aA-qE1"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="AvenirNext-Medium" family="Avenir Next" pointSize="15"/>
+                        <state key="normal" title="X">
+                            <color key="titleColor" red="0.96078431369999995" green="0.65098039220000004" blue="0.13725490200000001" alpha="1" colorSpace="calibratedRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="dismissPressed:" destination="-1" eventType="touchUpInside" id="tWQ-h2-OSV"/>
+                        </connections>
+                    </button>
+                    <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="3yY-II-vze">
+                        <rect key="frame" x="8" y="70" width="304" height="29"/>
+                        <segments>
+                            <segment title="Buyers"/>
+                            <segment title="Sellers"/>
+                        </segments>
+                        <color key="tintColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <connections>
+                            <action selector="segmentPressed:" destination="-1" eventType="valueChanged" id="181-xJ-7je"/>
+                        </connections>
+                    </segmentedControl>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="9No-TT-7K7" firstAttribute="trailing" secondItem="3yY-II-vze" secondAttribute="trailing" id="5Lh-lL-dVn"/>
+                    <constraint firstItem="3yY-II-vze" firstAttribute="centerX" secondItem="sSa-tC-JcT" secondAttribute="centerX" id="5pb-qw-ORW"/>
+                    <constraint firstItem="9No-TT-7K7" firstAttribute="centerY" secondItem="sSa-tC-JcT" secondAttribute="centerY" id="6LJ-iE-1Gd"/>
+                    <constraint firstItem="9No-TT-7K7" firstAttribute="top" secondItem="qHB-sO-0kw" secondAttribute="topMargin" constant="26" id="Bdk-1C-5TG"/>
+                    <constraint firstItem="3yY-II-vze" firstAttribute="top" secondItem="sSa-tC-JcT" secondAttribute="bottom" constant="10" id="DNJ-4J-lSJ"/>
+                    <constraint firstItem="3yY-II-vze" firstAttribute="top" secondItem="9No-TT-7K7" secondAttribute="bottom" constant="5" id="ITR-cL-fxo"/>
+                    <constraint firstItem="3yY-II-vze" firstAttribute="trailing" secondItem="qHB-sO-0kw" secondAttribute="trailingMargin" id="JS2-H1-dJ8"/>
+                    <constraint firstItem="3yY-II-vze" firstAttribute="leading" secondItem="qHB-sO-0kw" secondAttribute="leadingMargin" id="TtI-gc-Gbr"/>
+                    <constraint firstItem="sSa-tC-JcT" firstAttribute="leading" secondItem="qHB-sO-0kw" secondAttribute="leadingMargin" constant="43" id="pem-lt-Czc"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="66" y="77.5"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="190" id="bbY-tr-ohK">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="bbY-tr-ohK" id="W7V-hF-gEE">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Browse through items people wantobuy" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8yR-iU-wbI">
+                        <rect key="frame" x="9" y="8" width="303" height="65"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="65" id="1gB-Y2-c5j"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="AvenirNext-UltraLight" family="Avenir Next" pointSize="16"/>
+                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="grid.png" translatesAutoresizingMaskIntoConstraints="NO" id="oii-hU-fN3">
+                        <rect key="frame" x="140" y="105" width="40" height="40"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="40" id="gCg-XD-Sf1"/>
+                            <constraint firstAttribute="width" secondItem="oii-hU-fN3" secondAttribute="height" multiplier="1:1" id="hXE-x9-gFM"/>
+                        </constraints>
+                    </imageView>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="oii-hU-fN3" firstAttribute="centerX" secondItem="8yR-iU-wbI" secondAttribute="centerX" id="0Nl-3C-c3G"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="oii-hU-fN3" secondAttribute="bottom" constant="37" id="1af-uc-yr8"/>
+                    <constraint firstItem="8yR-iU-wbI" firstAttribute="centerX" secondItem="W7V-hF-gEE" secondAttribute="centerX" id="BSU-K6-Qpo"/>
+                    <constraint firstItem="8yR-iU-wbI" firstAttribute="trailing" secondItem="W7V-hF-gEE" secondAttribute="trailingMargin" id="NUS-eF-hNK"/>
+                    <constraint firstItem="oii-hU-fN3" firstAttribute="top" secondItem="8yR-iU-wbI" secondAttribute="bottom" constant="32" id="Zbe-u2-QKf"/>
+                    <constraint firstItem="8yR-iU-wbI" firstAttribute="top" secondItem="W7V-hF-gEE" secondAttribute="topMargin" id="aB2-H2-pcI"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="66" y="345"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="190" id="346-AU-xj8">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="346-AU-xj8" id="3HW-v5-VFC">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Spot an item you’re selling? Send the buyer an offer to sell" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gU4-w5-rwD">
+                        <rect key="frame" x="39" y="8" width="243" height="65"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="65" id="6A6-7K-PjJ"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="AvenirNext-UltraLight" family="Avenir Next" pointSize="16"/>
+                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="chat.png" translatesAutoresizingMaskIntoConstraints="NO" id="sKK-eD-9CT">
+                        <rect key="frame" x="140" y="105" width="40" height="40"/>
+                        <constraints>
+                            <constraint firstAttribute="width" secondItem="sKK-eD-9CT" secondAttribute="height" multiplier="1:1" id="dP5-A3-wAu"/>
+                            <constraint firstAttribute="width" constant="40" id="i7u-sU-DFV"/>
+                        </constraints>
+                    </imageView>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="sKK-eD-9CT" firstAttribute="centerX" secondItem="gU4-w5-rwD" secondAttribute="centerX" id="0B0-Ow-cCG"/>
+                    <constraint firstItem="sKK-eD-9CT" firstAttribute="top" secondItem="gU4-w5-rwD" secondAttribute="bottom" constant="32" id="P7h-DO-KmA"/>
+                    <constraint firstItem="gU4-w5-rwD" firstAttribute="leading" secondItem="3HW-v5-VFC" secondAttribute="leadingMargin" constant="31" id="XLR-Rk-LRG"/>
+                    <constraint firstItem="sKK-eD-9CT" firstAttribute="centerX" secondItem="3HW-v5-VFC" secondAttribute="centerX" id="goW-fR-7ZH"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="sKK-eD-9CT" secondAttribute="bottom" constant="37" id="pfc-7J-CAy"/>
+                    <constraint firstItem="gU4-w5-rwD" firstAttribute="top" secondItem="3HW-v5-VFC" secondAttribute="topMargin" id="u1p-LV-dE5"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="66" y="618"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="190" id="jdO-vj-vHN">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="jdO-vj-vHN" id="45a-uM-Peu">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You choose to accept/reject offers until you reach a deal and the item is paid for then shipped!" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c4A-nm-frf">
+                        <rect key="frame" x="24" y="4" width="272" height="77"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="77" id="Gcg-GO-myU"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="AvenirNext-UltraLight" family="Avenir Next" pointSize="16"/>
+                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="cart.png" translatesAutoresizingMaskIntoConstraints="NO" id="MGI-3T-1d5">
+                        <rect key="frame" x="140" y="110" width="40" height="40"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="40" id="Rhs-ED-Pa9"/>
+                            <constraint firstAttribute="width" secondItem="MGI-3T-1d5" secondAttribute="height" multiplier="1:1" id="jdl-QH-9Td"/>
+                        </constraints>
+                    </imageView>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="bottomMargin" secondItem="MGI-3T-1d5" secondAttribute="bottom" constant="32" id="Hio-LD-lX2"/>
+                    <constraint firstItem="MGI-3T-1d5" firstAttribute="top" secondItem="c4A-nm-frf" secondAttribute="bottom" constant="29" id="aI7-Mz-ibP"/>
+                    <constraint firstItem="MGI-3T-1d5" firstAttribute="centerX" secondItem="c4A-nm-frf" secondAttribute="centerX" id="adr-1W-OdP"/>
+                    <constraint firstItem="c4A-nm-frf" firstAttribute="leading" secondItem="45a-uM-Peu" secondAttribute="leadingMargin" constant="16" id="f68-O3-B15"/>
+                    <constraint firstItem="c4A-nm-frf" firstAttribute="centerX" secondItem="45a-uM-Peu" secondAttribute="centerX" id="jSk-ju-o8e"/>
+                    <constraint firstItem="c4A-nm-frf" firstAttribute="top" secondItem="45a-uM-Peu" secondAttribute="topMargin" constant="-4" id="pVm-Bs-TmH"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="66" y="879"/>
+        </tableViewCell>
+    </objects>
+    <resources>
+        <image name="cart.png" width="72" height="72"/>
+        <image name="chat.png" width="72" height="68"/>
+        <image name="grid.png" width="72" height="72"/>
+    </resources>
+</document>
