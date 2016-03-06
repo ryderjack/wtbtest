@@ -54,8 +54,11 @@
     
     UITabBarItem *tabBarItem1 = [self.tabBarController.tabBar.items objectAtIndex:0];
     tabBarItem1.image = [UIImage imageNamed:@"exploreTabIcon"];
-    
     tabBarItem1.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
+    
+    UITabBarItem *tabBarItem2 = [self.tabBarController.tabBar.items objectAtIndex:1];
+    tabBarItem2.image = [UIImage imageNamed:@"createIcon"];
+    tabBarItem2.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     [self.tabBarController setDelegate:self];
     

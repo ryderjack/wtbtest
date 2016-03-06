@@ -162,14 +162,13 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="heo-GX-JcV" id="TRe-CM-LFS">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="expand.png" translatesAutoresizingMaskIntoConstraints="NO" id="XUR-3S-hPL">
                         <rect key="frame" x="18" y="14" width="15" height="15"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="15" id="ftj-po-1hO"/>
-                            <constraint firstAttribute="width" secondItem="XUR-3S-hPL" secondAttribute="height" multiplier="1:1" id="nb7-Gf-rgi"/>
+                            <constraint firstAttribute="width" constant="15" id="F3D-T4-MWc"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Size:" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="qDN-RW-lcw">
@@ -179,9 +178,9 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="sizeLabel" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HKy-Pd-Eab">
-                        <rect key="frame" x="212" y="11" width="100" height="22"/>
+                        <rect key="frame" x="136" y="11" width="176" height="22"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="100" id="qpP-pc-fnX"/>
+                            <constraint firstAttribute="width" constant="176" id="4nI-o1-WTx"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="16"/>
                         <color key="textColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
@@ -189,14 +188,15 @@
                     </label>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="HKy-Pd-Eab" firstAttribute="baseline" secondItem="qDN-RW-lcw" secondAttribute="baseline" id="Kg7-Vf-pzH"/>
-                    <constraint firstItem="XUR-3S-hPL" firstAttribute="centerY" secondItem="qDN-RW-lcw" secondAttribute="centerY" id="QRV-Pd-KNF"/>
-                    <constraint firstItem="XUR-3S-hPL" firstAttribute="leading" secondItem="TRe-CM-LFS" secondAttribute="leadingMargin" constant="10" id="T78-aH-TbC"/>
-                    <constraint firstItem="XUR-3S-hPL" firstAttribute="centerY" secondItem="TRe-CM-LFS" secondAttribute="centerY" id="jgd-cM-NDG"/>
-                    <constraint firstItem="HKy-Pd-Eab" firstAttribute="trailing" secondItem="TRe-CM-LFS" secondAttribute="trailingMargin" id="o2h-Lt-YLj"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="qDN-RW-lcw" secondAttribute="trailing" constant="91" id="wD7-eu-kg5"/>
-                    <constraint firstItem="qDN-RW-lcw" firstAttribute="leading" secondItem="XUR-3S-hPL" secondAttribute="trailing" constant="20" id="wHA-uC-1JD"/>
-                    <constraint firstItem="XUR-3S-hPL" firstAttribute="top" secondItem="TRe-CM-LFS" secondAttribute="topMargin" constant="6" id="z5a-nr-0Mo"/>
+                    <constraint firstItem="HKy-Pd-Eab" firstAttribute="centerY" secondItem="TRe-CM-LFS" secondAttribute="centerY" id="484-t9-QBa"/>
+                    <constraint firstItem="qDN-RW-lcw" firstAttribute="centerY" secondItem="XUR-3S-hPL" secondAttribute="centerY" id="Dh5-3v-ThO"/>
+                    <constraint firstItem="XUR-3S-hPL" firstAttribute="leading" secondItem="TRe-CM-LFS" secondAttribute="leadingMargin" constant="10" id="OFv-54-hFc"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="qDN-RW-lcw" secondAttribute="trailing" constant="91" id="UUb-Av-EAY"/>
+                    <constraint firstItem="HKy-Pd-Eab" firstAttribute="baseline" secondItem="qDN-RW-lcw" secondAttribute="firstBaseline" id="Z0M-bU-Yy5"/>
+                    <constraint firstItem="qDN-RW-lcw" firstAttribute="leading" secondItem="XUR-3S-hPL" secondAttribute="trailing" constant="20" id="dFs-Hv-NDj"/>
+                    <constraint firstItem="qDN-RW-lcw" firstAttribute="baseline" secondItem="HKy-Pd-Eab" secondAttribute="firstBaseline" id="dzq-cf-Lv5"/>
+                    <constraint firstItem="HKy-Pd-Eab" firstAttribute="trailing" secondItem="TRe-CM-LFS" secondAttribute="trailingMargin" id="qoP-28-KNC"/>
+                    <constraint firstItem="XUR-3S-hPL" firstAttribute="top" secondItem="TRe-CM-LFS" secondAttribute="topMargin" constant="6" id="vzl-m0-J5o"/>
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-180" y="543"/>

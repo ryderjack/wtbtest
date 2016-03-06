@@ -16,8 +16,11 @@
                 <outlet property="labelOne" destination="8yR-iU-wbI" id="wl7-wb-sRJ"/>
                 <outlet property="labelThree" destination="c4A-nm-frf" id="2E4-ze-mx5"/>
                 <outlet property="labelTwo" destination="gU4-w5-rwD" id="HCl-qG-PHF"/>
+                <outlet property="secondImageView" destination="sKK-eD-9CT" id="1TP-bC-CHP"/>
                 <outlet property="segmentControl" destination="3yY-II-vze" id="xX8-Hk-9QT"/>
+                <outlet property="thirdImageView" destination="MGI-3T-1d5" id="aqG-6Q-YCa"/>
                 <outlet property="titleCell" destination="Y0P-kD-PVi" id="L0A-06-yfv"/>
+                <outlet property="titleLabel" destination="sSa-tC-JcT" id="BhK-GK-rSb"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -36,7 +39,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="107"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Y0P-kD-PVi" id="qHB-sO-0kw">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="107"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="106.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="How does wantobuy work?" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sSa-tC-JcT">
@@ -91,7 +94,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="bbY-tr-ohK" id="W7V-hF-gEE">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="189.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Browse through items people wantobuy" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8yR-iU-wbI">
@@ -126,13 +129,13 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="346-AU-xj8" id="3HW-v5-VFC">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="189.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Spot an item you’re selling? Send the buyer an offer to sell" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gU4-w5-rwD">
-                        <rect key="frame" x="39" y="8" width="243" height="65"/>
+                        <rect key="frame" x="39" y="8" width="243" height="76"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="65" id="6A6-7K-PjJ"/>
+                            <constraint firstAttribute="height" constant="76" id="6A6-7K-PjJ"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="AvenirNext-UltraLight" family="Avenir Next" pointSize="16"/>
                         <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
@@ -148,7 +151,7 @@
                 </subviews>
                 <constraints>
                     <constraint firstItem="sKK-eD-9CT" firstAttribute="centerX" secondItem="gU4-w5-rwD" secondAttribute="centerX" id="0B0-Ow-cCG"/>
-                    <constraint firstItem="sKK-eD-9CT" firstAttribute="top" secondItem="gU4-w5-rwD" secondAttribute="bottom" constant="32" id="P7h-DO-KmA"/>
+                    <constraint firstItem="sKK-eD-9CT" firstAttribute="top" secondItem="gU4-w5-rwD" secondAttribute="bottom" constant="21" id="P7h-DO-KmA"/>
                     <constraint firstItem="gU4-w5-rwD" firstAttribute="leading" secondItem="3HW-v5-VFC" secondAttribute="leadingMargin" constant="31" id="XLR-Rk-LRG"/>
                     <constraint firstItem="sKK-eD-9CT" firstAttribute="centerX" secondItem="3HW-v5-VFC" secondAttribute="centerX" id="goW-fR-7ZH"/>
                     <constraint firstAttribute="bottomMargin" secondItem="sKK-eD-9CT" secondAttribute="bottom" constant="37" id="pfc-7J-CAy"/>
@@ -161,7 +164,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="jdO-vj-vHN" id="45a-uM-Peu">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="190"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="189.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You choose to accept/reject offers until you reach a deal and the item is paid for then shipped!" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c4A-nm-frf">

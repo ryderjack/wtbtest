@@ -16,6 +16,8 @@
                 <outlet property="firstLabel" destination="LEh-Gq-xTN" id="qSG-Rm-NFo"/>
                 <outlet property="fiveCell" destination="xZ2-04-9Yw" id="fSB-Hg-yLR"/>
                 <outlet property="fourCell" destination="kaq-EQ-Mg1" id="hcd-E9-Jfq"/>
+                <outlet property="fourteenCell" destination="GXy-zx-Tyg" id="Dsg-er-XXY"/>
+                <outlet property="fourteenthLabel" destination="oXK-6P-Oy4" id="Il2-7W-d7A"/>
                 <outlet property="fourthLabel" destination="Eps-3s-Ajr" id="KeC-fr-p5t"/>
                 <outlet property="nineCell" destination="EcO-K9-zLC" id="cYb-2a-f26"/>
                 <outlet property="ninthLabel" destination="ydh-9S-F2m" id="ASe-TC-4FT"/>
@@ -362,6 +364,28 @@
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-59" y="1191"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="GXy-zx-Tyg">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="GXy-zx-Tyg" id="4pE-4U-9PL">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="oXK-6P-Oy4">
+                        <rect key="frame" x="18" y="11" width="42" height="21"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="oXK-6P-Oy4" firstAttribute="leading" secondItem="4pE-4U-9PL" secondAttribute="leadingMargin" constant="10" id="3y9-Hc-ZIT"/>
+                    <constraint firstItem="oXK-6P-Oy4" firstAttribute="top" secondItem="4pE-4U-9PL" secondAttribute="topMargin" constant="3" id="bun-Pd-ech"/>
+                    <constraint firstItem="oXK-6P-Oy4" firstAttribute="centerY" secondItem="4pE-4U-9PL" secondAttribute="centerY" id="fhT-Ve-ckH"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-59" y="1288"/>
         </tableViewCell>
     </objects>
 </document>

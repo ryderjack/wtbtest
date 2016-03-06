@@ -490,6 +490,7 @@
 
 -(void)showExtraInfo{
     ExplainViewController *vc = [[ExplainViewController alloc]init];
+    vc.setting = @"process";
     [self presentViewController:vc animated:YES completion:nil];
 }
 @end

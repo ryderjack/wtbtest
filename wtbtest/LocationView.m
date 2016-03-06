@@ -61,13 +61,18 @@
 - (void)searchForText:(NSString*)searchText
 {
     NSMutableArray *searchResults = [[NSMutableArray alloc] init];
-    
+
     // Create a search request with a string
     MKLocalSearchRequest *searchRequest = [[MKLocalSearchRequest alloc] init];
     [searchRequest setNaturalLanguageQuery:searchText];
     
+    CLLocationCoordinate2D ukCenter = CLLocationCoordinate2DMake(53.323536, -1.488300);
+    MKCoordinateRegion uk = MKCoordinateRegionMakeWithDistance(ukCenter, 10000, 10000);
+    [searchRequest setRegion:uk];
+    
     // Create the local search to perform the search
     MKLocalSearch *localSearch = [[MKLocalSearch alloc] initWithRequest:searchRequest];
+    
     [localSearch startWithCompletionHandler:^(MKLocalSearchResponse *response, NSError *error) {
         if (!error) {
             for (MKMapItem *mapItem in [response mapItems]) {

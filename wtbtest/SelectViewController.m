@@ -47,21 +47,34 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
+    //if self.offer == yes then user is making an offer. Encourage specificity so remove 'Any' options
     if ([self.setting isEqualToString:@"condition"]) {
-        return 2;
+        if (self.offer == YES) {
+            return 2;
+        }
+        return 3;
     }
     else if ([self.setting isEqualToString:@"category"]){
         return 2;
     }
     else if ([self.setting isEqualToString:@"sizeclothing"]){
+        if (self.offer == YES) {
+            return 8;
+        }
         return 9;
     }
     else if ([self.setting isEqualToString:@"sizefoot"]){
         self.genderSelected = @"Mens";
-        return 14;
+        if (self.offer == YES) {
+            return 14;
+        }
+        return 15;
     }
     else if ([self.setting isEqualToString:@"delivery"]){
-        return 2;
+        if (self.offer == YES) {
+            return 2;
+        }
+        return 3;
     }
     else{
         return 1;
@@ -77,6 +90,10 @@
         else if (indexPath.row ==1){
             self.secondLabel.text = @"Used";
             return self.twoCell;
+        }
+        else if (indexPath.row ==2){
+            self.thirdLabel.text = @"Any";
+            return self.threeCell;
         }
     }
     else if ([self.setting isEqualToString:@"category"]){
@@ -123,7 +140,7 @@
             return self.eightCell;
         }
         else if (indexPath.row ==8){
-            self.ninthLabel.text = @"Other";
+            self.ninthLabel.text = @"Any";
             return self.nineCell;
         }
     }
@@ -184,6 +201,10 @@
                 self.thirteenLabel.text = @"14";
                 return self.thirteenCell;
             }
+            else if (indexPath.row ==14){
+                self.fourteenthLabel.text = @"Any";
+                return self.fourteenCell;
+            }
     }
     else if ([self.setting isEqualToString:@"delivery"]){
         if (indexPath.row == 0){
@@ -193,6 +214,10 @@
         else if (indexPath.row ==1){
             self.secondLabel.text = @"Courier";
             return self.twoCell;
+        }
+        else if (indexPath.row ==2){
+            self.thirdLabel.text = @"Any";
+            return self.threeCell;
         }
     }
     

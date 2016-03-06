@@ -7,7 +7,6 @@
 //
 
 #import "CreateViewController.h"
-#import "CameraController.h"
 #import <TWPhotoPickerController.h>
 
 @interface CreateViewController ()
@@ -210,6 +209,7 @@
             SelectViewController *vc = [[SelectViewController alloc]init];
             vc.delegate = self;
             vc.setting = @"condition";
+            vc.offer = NO;
             self.selection = @"condition";
             [self.navigationController pushViewController:vc animated:YES];
         }
@@ -217,6 +217,7 @@
             SelectViewController *vc = [[SelectViewController alloc]init];
             vc.delegate = self;
             vc.setting = @"category";
+            vc.offer = NO;
             self.selection = @"category";
             [self.navigationController pushViewController:vc animated:YES];
         }
@@ -230,6 +231,7 @@
                     SelectViewController *vc = [[SelectViewController alloc]init];
                     vc.delegate = self;
                     vc.setting = @"sizefoot";
+                    vc.offer = NO;
                     self.selection = @"size";
                     [self.navigationController pushViewController:vc animated:YES];
                 }
@@ -237,6 +239,7 @@
                     SelectViewController *vc = [[SelectViewController alloc]init];
                     vc.delegate = self;
                     vc.setting = @"sizeclothing";
+                    vc.offer = NO;
                     self.selection = @"size";
                     [self.navigationController pushViewController:vc animated:YES];
                 }
@@ -252,6 +255,7 @@
             SelectViewController *vc = [[SelectViewController alloc]init];
             vc.delegate = self;
             vc.setting = @"delivery";
+            vc.offer = NO;
             self.selection = @"delivery";
             [self.navigationController pushViewController:vc animated:YES];
         }
@@ -378,7 +382,6 @@
 - (IBAction)firstCamPressed:(id)sender {
     if (self.firstCam.enabled == YES) {
         self.camButtonTapped = 1;
-        self.photostotal ++;
         [self alertSheet];        
     }
 }
@@ -386,7 +389,6 @@
     if (self.secondCam.enabled == YES) {
         //show action sheet for either picker, library or web (eventually)
         self.camButtonTapped = 2;
-        self.photostotal ++;
         [self alertSheet];
     }
 }
@@ -394,7 +396,6 @@
     if (self.thirdCam.enabled == YES) {
         //show action sheet for either picker, library or web (eventually)
         self.camButtonTapped = 3;
-        self.photostotal ++;
         [self alertSheet];
     }
 }
@@ -402,8 +403,6 @@
     if (self.fourthCam.enabled == YES) {
         //show action sheet for either picker, library or web (eventually)
         self.camButtonTapped = 4;
-        self.photostotal ++;
-        NSLog(@"photos total %d", self.photostotal);
         [self alertSheet];
     }
 }
@@ -525,11 +524,9 @@
         self.chooseDelivery.text = item;
     }
 }
-
 -(void)addLocation:(LocationView *)controller didFinishEnteringItem:(NSString *)item longi:(CLLocationDegrees)item1 lati:(CLLocationDegrees)item2{
     self.chooseLocation.text = item;
     self.geopoint = [PFGeoPoint geoPointWithLatitude:item2 longitude:item1];
-
 }
 - (IBAction)wantobuyPressed:(id)sender {
     
@@ -727,5 +724,6 @@
         [self.fourthDelete setHidden:NO];
         [self.fourthCam setEnabled:NO];
     }
+    self.photostotal ++;
 }
 @end

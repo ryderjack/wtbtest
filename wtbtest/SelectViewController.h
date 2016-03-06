@@ -18,6 +18,7 @@
 
 @property (nonatomic, weak) id <SelectViewControllerDelegate> delegate;
 @property (nonatomic, strong) NSString *setting;
+@property (nonatomic) BOOL offer;
 @property (nonatomic, strong) NSIndexPath *lastSelectedPath;
 
 //cells
@@ -35,6 +36,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *selectCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *twelveCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *thirteenCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *fourteenCell;
 
 //labels
 @property (weak, nonatomic) IBOutlet UILabel *firstLabel;
@@ -50,6 +52,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *eleventhLabel;
 @property (weak, nonatomic) IBOutlet UILabel *twelveLabel;
 @property (weak, nonatomic) IBOutlet UILabel *thirteenLabel;
+@property (weak, nonatomic) IBOutlet UILabel *fourteenthLabel;
 
 @property (weak, nonatomic) IBOutlet UISegmentedControl *segmentContro;
 @property (strong, nonatomic) NSString *genderSelected;
