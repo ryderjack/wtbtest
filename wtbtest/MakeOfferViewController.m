@@ -656,6 +656,8 @@
     self.profileView.contentMode = UIViewContentModeScaleAspectFill;
 }
 - (IBAction)sendOfferPressed:(id)sender {
+    [self removeKeyboard];
+    
     if ([self.chooseCategory.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || [self.priceField.text isEqualToString:@""] || [self.deliveryField.text isEqualToString:@""] || self.photostotal == 0) {
         self.warningLabel.text = @"Fill out all the above fields";
     }

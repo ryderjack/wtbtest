@@ -530,6 +530,8 @@
 }
 - (IBAction)wantobuyPressed:(id)sender {
     
+    [self removeKeyboard];
+    
     if ([self.chooseCategroy.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0) {
         self.warningLabel.text = @"Fill out all the above fields";
     }

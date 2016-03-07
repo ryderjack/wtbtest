@@ -59,7 +59,6 @@
     self.pullFinished = YES;
     self.infinFinished = YES;
     self.lastInfinSkipped = 0;
-    self.collectionView.pullToRefreshView.activityIndicatorViewStyle = UIActivityIndicatorViewStyleWhite;
     
     self.filtersArray = [NSMutableArray array];
 }

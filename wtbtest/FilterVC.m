@@ -30,6 +30,7 @@
     self.sizeCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.applyCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
+    //sendarray containts the filters selected last time. Use to select previous search buttons & relevant sizing buttons
     self.filtersArray = [NSMutableArray array];
     NSLog(@"self.send %@", self.sendArray);
     if (self.sendArray) {
@@ -49,6 +50,9 @@
             if ([self.filtersArray containsObject:@"used"]){
                 [self.usedButton setSelected:YES];
             }
+            if ([self.filtersArray containsObject:@"any"]){
+                [self.anyButton setSelected:YES];
+            }
             
             if ([self.filtersArray containsObject:@"clothing"]){
                 [self.clothingButton setSelected:YES];
@@ -59,6 +63,10 @@
                 [self.footButton setSelected:YES];
                 self.clothingEnabled = NO;
                 [self setupFootwearSizes];
+            }
+            else{
+                self.clothingEnabled = YES;
+                [self setupclothingsizes];
             }
             
             if ([self.filtersArray containsObject:@"male"]){
@@ -94,7 +102,7 @@
     
     if (indexPath.section == 0){
         if (indexPath.row == 0) {
-            return 81;
+            return 70;
         }
         else if (indexPath.row == 1 || indexPath.row == 2 || indexPath.row == 3){
             return 120;
@@ -181,6 +189,7 @@
     [self.womenButton setSelected:NO];
     [self.lasttapped setSelected:NO];
     [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+    [self.anyButton setSelected:NO];
     
     [self.filtersArray removeAllObjects];
 }
@@ -230,6 +239,20 @@
         [self.filtersArray addObject:@"used"];
         [self.newconditionButton setSelected:NO];
         [self.filtersArray removeObject:@"new"];
+    }
+}
+- (IBAction)anyPressed:(id)sender {
+    if(self.anyButton.selected == YES){
+        [self.usedButton setSelected:NO];
+        [self.filtersArray removeObject:@"any"];
+    }
+    else{
+        [self.anyButton setSelected:YES];
+        [self.filtersArray addObject:@"any"];
+        [self.newconditionButton setSelected:NO];
+        [self.filtersArray removeObject:@"new"];
+        [self.usedButton setSelected:NO];
+        [self.filtersArray removeObject:@"used"];
     }
 }
 - (IBAction)clothingPressed:(id)sender {

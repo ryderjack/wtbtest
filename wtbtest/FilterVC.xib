@@ -9,6 +9,7 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="FilterVC">
             <connections>
+                <outlet property="anyButton" destination="gEW-lm-Cp5" id="SCy-e1-9OQ"/>
                 <outlet property="applyButton" destination="OB9-GK-tFP" id="cfT-yl-Kbh"/>
                 <outlet property="applyCell" destination="9JT-Jg-S3f" id="Bvm-uN-bt2"/>
                 <outlet property="categoryCell" destination="hZa-Zs-XNS" id="yJI-O0-j3T"/>
@@ -39,23 +40,23 @@
                 <outlet property="delegate" destination="-1" id="9aC-8N-iBw"/>
             </connections>
         </tableView>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="81" id="2Qb-lu-ryI">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="81"/>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="70" id="2Qb-lu-ryI">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="70"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2Qb-lu-ryI" id="TR9-oe-3vo">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="80.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="70"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Filters" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="kwi-7P-J9B">
-                        <rect key="frame" x="120" y="41" width="81" height="35"/>
+                        <rect key="frame" x="120" y="34" width="81" height="35"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Medium" family="Avenir Next" pointSize="19"/>
                         <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eRi-QV-Dxv">
-                        <rect key="frame" x="19" y="44" width="68" height="30"/>
+                        <rect key="frame" x="19" y="37" width="68" height="30"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="68" id="aW0-OA-UR2"/>
+                            <constraint firstAttribute="width" constant="68" id="7Jg-6S-oK0"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="AvenirNext-Medium" family="Avenir Next" pointSize="15"/>
                         <state key="normal" title="Clear all">
@@ -66,7 +67,7 @@
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="guW-Wa-HWb">
-                        <rect key="frame" x="244" y="42" width="68" height="33"/>
+                        <rect key="frame" x="244" y="35" width="68" height="33"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Medium" family="Avenir Next" pointSize="15"/>
                         <state key="normal" title="X">
                             <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
@@ -77,20 +78,20 @@
                     </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="guW-Wa-HWb" firstAttribute="trailing" secondItem="TR9-oe-3vo" secondAttribute="trailingMargin" id="5gD-fi-REy"/>
-                    <constraint firstItem="kwi-7P-J9B" firstAttribute="top" secondItem="TR9-oe-3vo" secondAttribute="topMargin" constant="33" id="9bN-5k-hee"/>
-                    <constraint firstItem="eRi-QV-Dxv" firstAttribute="leading" secondItem="TR9-oe-3vo" secondAttribute="leadingMargin" constant="11" id="FUW-Q3-ksU"/>
-                    <constraint firstItem="eRi-QV-Dxv" firstAttribute="top" secondItem="TR9-oe-3vo" secondAttribute="topMargin" constant="36" id="S29-PY-XdE"/>
-                    <constraint firstItem="guW-Wa-HWb" firstAttribute="centerY" secondItem="kwi-7P-J9B" secondAttribute="centerY" id="SzX-US-s6D"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="eRi-QV-Dxv" secondAttribute="bottom" constant="-1.5" id="ZKY-o8-ePa"/>
-                    <constraint firstItem="guW-Wa-HWb" firstAttribute="leading" secondItem="kwi-7P-J9B" secondAttribute="trailing" constant="43" id="nIu-kS-rEp"/>
-                    <constraint firstItem="eRi-QV-Dxv" firstAttribute="centerY" secondItem="kwi-7P-J9B" secondAttribute="centerY" id="sEA-gd-7Co"/>
-                    <constraint firstItem="kwi-7P-J9B" firstAttribute="leading" secondItem="eRi-QV-Dxv" secondAttribute="trailing" constant="33" id="wiT-iR-CPO"/>
-                    <constraint firstItem="kwi-7P-J9B" firstAttribute="centerX" secondItem="TR9-oe-3vo" secondAttribute="centerX" id="ypF-No-Ysc"/>
+                    <constraint firstItem="guW-Wa-HWb" firstAttribute="centerY" secondItem="kwi-7P-J9B" secondAttribute="centerY" id="4BC-LC-7lL"/>
+                    <constraint firstItem="guW-Wa-HWb" firstAttribute="trailing" secondItem="TR9-oe-3vo" secondAttribute="trailingMargin" id="4Vb-vl-eFB"/>
+                    <constraint firstItem="kwi-7P-J9B" firstAttribute="top" secondItem="TR9-oe-3vo" secondAttribute="topMargin" constant="26" id="P1d-T6-NbN"/>
+                    <constraint firstItem="eRi-QV-Dxv" firstAttribute="top" secondItem="TR9-oe-3vo" secondAttribute="topMargin" constant="29" id="ZSp-ZE-NIg"/>
+                    <constraint firstItem="kwi-7P-J9B" firstAttribute="centerY" secondItem="eRi-QV-Dxv" secondAttribute="centerY" id="abA-rg-yeB"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="eRi-QV-Dxv" secondAttribute="bottom" constant="-5.5" id="g9r-Lm-sut"/>
+                    <constraint firstItem="kwi-7P-J9B" firstAttribute="leading" secondItem="eRi-QV-Dxv" secondAttribute="trailing" constant="33" id="pfs-Yj-DsJ"/>
+                    <constraint firstItem="kwi-7P-J9B" firstAttribute="centerX" secondItem="TR9-oe-3vo" secondAttribute="centerX" id="slU-Qe-mZS"/>
+                    <constraint firstItem="guW-Wa-HWb" firstAttribute="leading" secondItem="kwi-7P-J9B" secondAttribute="trailing" constant="43" id="wFx-fa-tGj"/>
+                    <constraint firstItem="eRi-QV-Dxv" firstAttribute="leading" secondItem="TR9-oe-3vo" secondAttribute="leadingMargin" constant="11" id="zaC-ge-Vor"/>
                 </constraints>
             </tableViewCellContentView>
             <color key="backgroundColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-            <point key="canvasLocation" x="-67" y="62.5"/>
+            <point key="canvasLocation" x="-67" y="57"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="120" id="YYe-Gz-39n">
             <rect key="frame" x="0.0" y="0.0" width="320" height="120"/>
@@ -153,28 +154,16 @@
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Condition" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5rO-a4-iFN">
                         <rect key="frame" x="108" y="20" width="104" height="31"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="31" id="4eh-sR-CEm"/>
-                            <constraint firstAttribute="width" constant="104" id="lKe-8Z-WIC"/>
+                            <constraint firstAttribute="width" constant="104" id="QYb-gB-mIx"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
                         <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="86v-Yb-IBl">
-                        <rect key="frame" x="31" y="61" width="90" height="33"/>
-                        <constraints>
-                            <constraint firstAttribute="width" secondItem="86v-Yb-IBl" secondAttribute="height" multiplier="30:11" id="lUv-S1-zAn"/>
-                        </constraints>
-                        <state key="normal" image="newgrey.png"/>
-                        <state key="selected" image="neworange.png"/>
-                        <connections>
-                            <action selector="newPressed:" destination="-1" eventType="touchUpInside" id="mYz-qw-XZ5"/>
-                        </connections>
-                    </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Ncy-DF-NM5">
-                        <rect key="frame" x="199" y="61" width="90" height="33"/>
+                        <rect key="frame" x="115" y="61" width="90" height="33"/>
                         <constraints>
-                            <constraint firstAttribute="width" secondItem="Ncy-DF-NM5" secondAttribute="height" multiplier="30:11" id="ahY-L6-swT"/>
+                            <constraint firstAttribute="width" secondItem="Ncy-DF-NM5" secondAttribute="height" multiplier="30:11" id="CYU-WZ-l4d"/>
                         </constraints>
                         <state key="normal" image="usedgrey.png"/>
                         <state key="selected" image="usedorange.png"/>
@@ -182,14 +171,39 @@
                             <action selector="usedPressed:" destination="-1" eventType="touchUpInside" id="fUP-VH-QpM"/>
                         </connections>
                     </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gEW-lm-Cp5">
+                        <rect key="frame" x="222" y="61" width="90" height="33"/>
+                        <constraints>
+                            <constraint firstAttribute="width" secondItem="gEW-lm-Cp5" secondAttribute="height" multiplier="30:11" id="ZGU-q0-D5K"/>
+                        </constraints>
+                        <state key="normal" image="anygrey.png"/>
+                        <state key="selected" image="anyorange.png"/>
+                        <connections>
+                            <action selector="anyPressed:" destination="-1" eventType="touchUpInside" id="mFF-KU-uF4"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="86v-Yb-IBl">
+                        <rect key="frame" x="8" y="61" width="90" height="33"/>
+                        <constraints>
+                            <constraint firstAttribute="width" secondItem="86v-Yb-IBl" secondAttribute="height" multiplier="30:11" id="2VJ-D6-wZG"/>
+                        </constraints>
+                        <state key="normal" image="newgrey.png"/>
+                        <state key="selected" image="neworange.png"/>
+                        <connections>
+                            <action selector="newPressed:" destination="-1" eventType="touchUpInside" id="mYz-qw-XZ5"/>
+                        </connections>
+                    </button>
                 </subviews>
                 <constraints>
-                    <constraint firstAttribute="trailingMargin" secondItem="Ncy-DF-NM5" secondAttribute="trailing" constant="23" id="6M8-ty-bnG"/>
-                    <constraint firstItem="Ncy-DF-NM5" firstAttribute="top" secondItem="86v-Yb-IBl" secondAttribute="top" id="IjD-ix-I4Q"/>
-                    <constraint firstItem="86v-Yb-IBl" firstAttribute="leading" secondItem="MmQ-CM-yoB" secondAttribute="leadingMargin" constant="23" id="SGq-LB-RUe"/>
-                    <constraint firstItem="5rO-a4-iFN" firstAttribute="top" secondItem="MmQ-CM-yoB" secondAttribute="topMargin" constant="12" id="V1h-I1-JZA"/>
-                    <constraint firstItem="5rO-a4-iFN" firstAttribute="centerX" secondItem="MmQ-CM-yoB" secondAttribute="centerX" id="eE1-42-JBB"/>
-                    <constraint firstItem="86v-Yb-IBl" firstAttribute="top" secondItem="5rO-a4-iFN" secondAttribute="bottom" constant="10" id="my5-PO-OKK"/>
+                    <constraint firstItem="Ncy-DF-NM5" firstAttribute="top" secondItem="86v-Yb-IBl" secondAttribute="top" id="82U-7g-FZn"/>
+                    <constraint firstItem="gEW-lm-Cp5" firstAttribute="trailing" secondItem="MmQ-CM-yoB" secondAttribute="trailingMargin" id="A4i-a6-nEX"/>
+                    <constraint firstItem="86v-Yb-IBl" firstAttribute="top" secondItem="MmQ-CM-yoB" secondAttribute="topMargin" constant="53" id="Wl5-TN-WHL"/>
+                    <constraint firstItem="5rO-a4-iFN" firstAttribute="top" secondItem="MmQ-CM-yoB" secondAttribute="topMargin" constant="12" id="WxG-SE-MrY"/>
+                    <constraint firstItem="Ncy-DF-NM5" firstAttribute="top" secondItem="gEW-lm-Cp5" secondAttribute="top" id="n66-zx-bLv"/>
+                    <constraint firstItem="86v-Yb-IBl" firstAttribute="leading" secondItem="MmQ-CM-yoB" secondAttribute="leadingMargin" id="tgG-sv-6zJ"/>
+                    <constraint firstItem="Ncy-DF-NM5" firstAttribute="centerX" secondItem="5rO-a4-iFN" secondAttribute="centerX" id="uBJ-Th-6JX"/>
+                    <constraint firstItem="5rO-a4-iFN" firstAttribute="centerX" secondItem="MmQ-CM-yoB" secondAttribute="centerX" id="vcg-9c-qKB"/>
+                    <constraint firstItem="Ncy-DF-NM5" firstAttribute="top" secondItem="5rO-a4-iFN" secondAttribute="bottom" constant="10" id="yVV-Q3-rsJ"/>
                 </constraints>
             </tableViewCellContentView>
             <color key="backgroundColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -199,7 +213,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="120"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="hZa-Zs-XNS" id="GDg-bb-hk6">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="120"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="119.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Category" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Nx6-Tr-q3x">
@@ -249,7 +263,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="182"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Tyx-NG-nBY" id="B73-8H-jGd">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="182"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="181.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="UK Size" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Wm8-IG-EgI">
@@ -308,7 +322,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="100"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="9JT-Jg-S3f" id="LRo-xQ-hJR">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="100"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="99.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="OB9-GK-tFP">
@@ -332,6 +346,8 @@
         </tableViewCell>
     </objects>
     <resources>
+        <image name="anygrey.png" width="90" height="33"/>
+        <image name="anyorange.png" width="90" height="33"/>
         <image name="applyB.png" width="204" height="45"/>
         <image name="clothinggrey.png" width="59" height="45"/>
         <image name="clothingorange.png" width="59" height="45"/>
