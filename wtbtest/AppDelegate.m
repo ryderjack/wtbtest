@@ -40,14 +40,17 @@
     self.testView = [[ViewController alloc] init];
     self.createView = [[CreateViewController alloc]init];
     self.exploreView = [[ExploreVC alloc]init];
+    self.profileView = [[ProfileController alloc]init];
         
     [self.window setBackgroundColor:[UIColor whiteColor]];
     
     NavigationController *navController = [[NavigationController alloc] initWithRootViewController:self.exploreView];
     NavigationController *navController1 = [[NavigationController alloc] initWithRootViewController:self.createView];
+    NavigationController *navController2 = [[NavigationController alloc] initWithRootViewController:self.profileView];
+    NavigationController *navController3 = [[NavigationController alloc] initWithRootViewController:self.welcomeView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController2,navController3, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
     [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0404511C1C8E1422001D5F3B /* OfferCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 0404511A1C8E1422001D5F3B /* OfferCell.m */; };
+		0404511D1C8E1422001D5F3B /* OfferCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0404511B1C8E1422001D5F3B /* OfferCell.xib */; };
 		0472B60C1C7CC78500529B2E /* WelcomeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0472B60A1C7CC78500529B2E /* WelcomeViewController.m */; };
 		0472B60D1C7CC78500529B2E /* WelcomeViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0472B60B1C7CC78500529B2E /* WelcomeViewController.xib */; };
 		0472B6241C7CCC9500529B2E /* NavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0472B6231C7CCC9500529B2E /* NavigationController.m */; };
@@ -282,6 +284,10 @@
 		04D9B9FF1C8CD0B7004AF0F2 /* anyorange.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9F91C8CD0B7004AF0F2 /* anyorange.png */; };
 		04D9BA001C8CD0B7004AF0F2 /* anygrey@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9FA1C8CD0B7004AF0F2 /* anygrey@2x.png */; };
 		04D9BA011C8CD0B7004AF0F2 /* anyorange@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9FB1C8CD0B7004AF0F2 /* anyorange@3x.png */; };
+		04D9BA061C8DEA9D004AF0F2 /* ProfileController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04D9BA041C8DEA9D004AF0F2 /* ProfileController.m */; };
+		04D9BA071C8DEA9D004AF0F2 /* ProfileController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04D9BA051C8DEA9D004AF0F2 /* ProfileController.xib */; };
+		04D9BA111C8DF6B6004AF0F2 /* OffersController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04D9BA0F1C8DF6B6004AF0F2 /* OffersController.m */; };
+		04D9BA121C8DF6B6004AF0F2 /* OffersController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04D9BA101C8DF6B6004AF0F2 /* OffersController.xib */; };
 		74B79C7A89FA97C17A39901B /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 327BDC9B7DD5E786D46C955D /* libPods.a */; };
 /* End PBXBuildFile section */
 
@@ -303,6 +309,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		040451191C8E1422001D5F3B /* OfferCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OfferCell.h; sourceTree = "<group>"; };
+		0404511A1C8E1422001D5F3B /* OfferCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OfferCell.m; sourceTree = "<group>"; };
+		0404511B1C8E1422001D5F3B /* OfferCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = OfferCell.xib; sourceTree = "<group>"; };
 		0472B6091C7CC78500529B2E /* WelcomeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WelcomeViewController.h; sourceTree = "<group>"; };
 		0472B60A1C7CC78500529B2E /* WelcomeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WelcomeViewController.m; sourceTree = "<group>"; };
 		0472B60B1C7CC78500529B2E /* WelcomeViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = WelcomeViewController.xib; sourceTree = "<group>"; };
@@ -605,6 +614,12 @@
 		04D9B9F91C8CD0B7004AF0F2 /* anyorange.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = anyorange.png; sourceTree = "<group>"; };
 		04D9B9FA1C8CD0B7004AF0F2 /* anygrey@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "anygrey@2x.png"; sourceTree = "<group>"; };
 		04D9B9FB1C8CD0B7004AF0F2 /* anyorange@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "anyorange@3x.png"; sourceTree = "<group>"; };
+		04D9BA031C8DEA9D004AF0F2 /* ProfileController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileController.h; sourceTree = "<group>"; };
+		04D9BA041C8DEA9D004AF0F2 /* ProfileController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileController.m; sourceTree = "<group>"; };
+		04D9BA051C8DEA9D004AF0F2 /* ProfileController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ProfileController.xib; sourceTree = "<group>"; };
+		04D9BA0E1C8DF6B6004AF0F2 /* OffersController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OffersController.h; sourceTree = "<group>"; };
+		04D9BA0F1C8DF6B6004AF0F2 /* OffersController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OffersController.m; sourceTree = "<group>"; };
+		04D9BA101C8DF6B6004AF0F2 /* OffersController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = OffersController.xib; sourceTree = "<group>"; };
 		2A1CA57F790FE4384B22E1A7 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		327BDC9B7DD5E786D46C955D /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DBFE0CA73A57E5A95AFAD6A /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
@@ -940,15 +955,14 @@
 			children = (
 				049EF42A1C776E49000A599F /* AppDelegate.h */,
 				049EF42B1C776E49000A599F /* AppDelegate.m */,
-				04D9B9BC1C8AFEB4004AF0F2 /* MakeOfferViewController.h */,
-				04D9B9BD1C8AFEB4004AF0F2 /* MakeOfferViewController.m */,
-				04D9B9BE1C8AFEB4004AF0F2 /* MakeOfferViewController.xib */,
+				04D9BA021C8DB417004AF0F2 /* MakeOffer */,
 				0472B6251C7CCC9F00529B2E /* Navbar */,
 				04C0814C1C85EE4200B8682C /* Camera */,
 				049EF42D1C776E49000A599F /* ViewController.h */,
 				049EF42E1C776E49000A599F /* ViewController.m */,
 				04D9B98C1C89CF66004AF0F2 /* Listing */,
 				04C081631C86292C00B8682C /* Explore Tab */,
+				04D9BA081C8DEDC0004AF0F2 /* Profile Tab */,
 				04D9B9F51C8CCFB8004AF0F2 /* Filter */,
 				04C080491C847C5400B8682C /* Create listing */,
 				0475A6F01C7F00FB0049AD61 /* Intro */,
@@ -1057,6 +1071,40 @@
 				04C081541C85F1A600B8682C /* FilterVC.xib */,
 			);
 			name = Filter;
+			sourceTree = "<group>";
+		};
+		04D9BA021C8DB417004AF0F2 /* MakeOffer */ = {
+			isa = PBXGroup;
+			children = (
+				04D9B9BC1C8AFEB4004AF0F2 /* MakeOfferViewController.h */,
+				04D9B9BD1C8AFEB4004AF0F2 /* MakeOfferViewController.m */,
+				04D9B9BE1C8AFEB4004AF0F2 /* MakeOfferViewController.xib */,
+			);
+			name = MakeOffer;
+			sourceTree = "<group>";
+		};
+		04D9BA081C8DEDC0004AF0F2 /* Profile Tab */ = {
+			isa = PBXGroup;
+			children = (
+				04D9BA131C8DF6FE004AF0F2 /* Offers */,
+				04D9BA031C8DEA9D004AF0F2 /* ProfileController.h */,
+				04D9BA041C8DEA9D004AF0F2 /* ProfileController.m */,
+				04D9BA051C8DEA9D004AF0F2 /* ProfileController.xib */,
+			);
+			name = "Profile Tab";
+			sourceTree = "<group>";
+		};
+		04D9BA131C8DF6FE004AF0F2 /* Offers */ = {
+			isa = PBXGroup;
+			children = (
+				040451191C8E1422001D5F3B /* OfferCell.h */,
+				0404511A1C8E1422001D5F3B /* OfferCell.m */,
+				0404511B1C8E1422001D5F3B /* OfferCell.xib */,
+				04D9BA0E1C8DF6B6004AF0F2 /* OffersController.h */,
+				04D9BA0F1C8DF6B6004AF0F2 /* OffersController.m */,
+				04D9BA101C8DF6B6004AF0F2 /* OffersController.xib */,
+			);
+			name = Offers;
 			sourceTree = "<group>";
 		};
 		CC565124AB6D3044040DAB32 /* Pods */ = {
@@ -1193,6 +1241,7 @@
 				04D9B9DE1C8B82A9004AF0F2 /* sendOffer@3x.png in Resources */,
 				0475A7141C804B080049AD61 /* deleteIcon@3x.png in Resources */,
 				04D9B9BB1C8A0D9B004AF0F2 /* exploreTabIcon@2x.png in Resources */,
+				04D9BA121C8DF6B6004AF0F2 /* OffersController.xib in Resources */,
 				0472B63D1C7CD6ED00529B2E /* fblogin@2x.png in Resources */,
 				0475A77F1C821D5E0049AD61 /* share@3x.png in Resources */,
 				0472B6511C7DB21600529B2E /* chooseLibButton@2x.png in Resources */,
@@ -1286,6 +1335,7 @@
 				04C081441C85EA9C00B8682C /* confirmButton.png in Resources */,
 				0475A6CF1C7E48BD0049AD61 /* pic1.png in Resources */,
 				04A91D901C87583200035F55 /* lowtohighorange@3x.png in Resources */,
+				04D9BA071C8DEA9D004AF0F2 /* ProfileController.xib in Resources */,
 				04C080451C8469DE00B8682C /* tag.png in Resources */,
 				04C080341C8469DE00B8682C /* filter@2x.png in Resources */,
 				04A91DA11C87591C00035F55 /* usedgrey.png in Resources */,
@@ -1429,6 +1479,7 @@
 				0475A6DC1C7E4BEC0049AD61 /* pic2@2x.png in Resources */,
 				0475A77C1C821D5E0049AD61 /* editListing@2x.png in Resources */,
 				049EF45B1C776E58000A599F /* Podfile in Resources */,
+				0404511D1C8E1422001D5F3B /* OfferCell.xib in Resources */,
 				04A91D941C87583200035F55 /* lowtohighorange.png in Resources */,
 				0472B6431C7CD85200529B2E /* RegisterViewController.xib in Resources */,
 				0475A77D1C821D5E0049AD61 /* editListing.png in Resources */,
@@ -1506,6 +1557,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0404511C1C8E1422001D5F3B /* OfferCell.m in Sources */,
+				04D9BA111C8DF6B6004AF0F2 /* OffersController.m in Sources */,
 				049EF42F1C776E49000A599F /* ViewController.m in Sources */,
 				0472B60C1C7CC78500529B2E /* WelcomeViewController.m in Sources */,
 				04D9B9581C88E60E004AF0F2 /* ListingController.m in Sources */,
@@ -1513,6 +1566,7 @@
 				04C081551C85F1A600B8682C /* FilterVC.m in Sources */,
 				04C081321C85C62700B8682C /* ConfirmController.m in Sources */,
 				04D9B9901C89F99F004AF0F2 /* ExplainViewController.m in Sources */,
+				04D9BA061C8DEA9D004AF0F2 /* ProfileController.m in Sources */,
 				0475A6CB1C7E3FCF0049AD61 /* ContainerViewController.m in Sources */,
 				0475A7481C8058D10049AD61 /* SelectViewController.m in Sources */,
 				04C080571C847E3800B8682C /* ExploreCell.m in Sources */,

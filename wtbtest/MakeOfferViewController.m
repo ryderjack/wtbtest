@@ -39,6 +39,8 @@
     self.buyerName.adjustsFontSizeToFitWidth = YES;
     self.buyerName.minimumScaleFactor=0.5;
     
+    [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    
     self.itemTitle.text = [self.listingObject objectForKey:@"title"];
     
     //button setup
@@ -311,7 +313,6 @@
 - (IBAction)firstCamPressed:(id)sender {
     if (self.firstCam.enabled == YES) {
         self.camButtonTapped = 1;
-        self.photostotal ++;
         [self alertSheet];
     }
 }
@@ -319,7 +320,6 @@
     if (self.secondCam.enabled == YES) {
         //show action sheet for either picker, library or web (eventually)
         self.camButtonTapped = 2;
-        self.photostotal ++;
         [self alertSheet];
     }
 }
@@ -327,7 +327,6 @@
     if (self.thirdCam.enabled == YES) {
         //show action sheet for either picker, library or web (eventually)
         self.camButtonTapped = 3;
-        self.photostotal ++;
         [self alertSheet];
     }
 }
@@ -335,8 +334,6 @@
     if (self.fourthCam.enabled == YES) {
         //show action sheet for either picker, library or web (eventually)
         self.camButtonTapped = 4;
-        self.photostotal ++;
-        NSLog(@"photos total %d", self.photostotal);
         [self alertSheet];
     }
 }
@@ -480,6 +477,7 @@
         [self.fourthDelete setHidden:NO];
         [self.fourthCam setEnabled:NO];
     }
+    self.photostotal ++;
 }
 
 - (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)item withitem:(NSString *)item2

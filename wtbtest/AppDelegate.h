@@ -11,7 +11,7 @@
 #import "ViewController.h"
 #import "CreateViewController.h"
 #import "ExploreVC.h"
-
+#import "ProfileController.h"
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate, UITabBarControllerDelegate>
 
@@ -21,6 +21,7 @@
 @property (strong, nonatomic) ViewController *testView;
 @property (strong, nonatomic) CreateViewController *createView;
 @property (strong, nonatomic) ExploreVC *exploreView;
+@property (strong, nonatomic) ProfileController *profileView;
 
 @end
 

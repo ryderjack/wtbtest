@@ -31,6 +31,8 @@
     self.emailField.delegate = self;
     self.usernameField.delegate = self;
     
+    [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    
     UITapGestureRecognizer* tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(removeKeyboard)];
     tapGesture.numberOfTapsRequired = 1;
     [self.tableView addGestureRecognizer:tapGesture];

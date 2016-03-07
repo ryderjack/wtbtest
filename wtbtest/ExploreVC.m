@@ -47,7 +47,7 @@
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.delegate = self;
     self.collectionView.alwaysBounceVertical = YES;
-    self.collectionView.backgroundColor = [UIColor colorWithRed:0.957 green:0.957 blue:0.957 alpha:1];
+    self.collectionView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     
     self.results = [[NSMutableArray alloc]init];
     
@@ -118,7 +118,6 @@
     }else{
         cell.sizeLabel.text = [NSString stringWithFormat:@"UK %@", [listing objectForKey:@"size"]];
     }
-    
     
     PFGeoPoint *location = [listing objectForKey:@"geopoint"];
     if (self.currentLocation && location) {

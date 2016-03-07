@@ -54,10 +54,12 @@
     self.infoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.payCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
+    [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
     self.warningLabel.text = @"";
     self.status = @"";
     self.lastId = @"";
+    self.genderSize = @"";
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -280,6 +282,15 @@
     header.textLabel.font = [UIFont fontWithName:@"AvenirNext-Regular" size:12];
     CGRect headerFrame = header.frame;
     header.textLabel.frame = headerFrame;
+    header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+}
+
+- (UIView *) tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
+{
+    UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
+    
+    [footerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    return footerView;
 }
 
 - (NSString*) tableView:(UITableView *) tableView titleForHeaderInSection:(NSInteger)section
@@ -562,10 +573,12 @@
         [self.listing setObject:self.chooseCondition.text forKey:@"condition"];
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
         [self.listing setObject:self.chooseSize.text forKey:@"size"];
-        if (self.genderSize) {
+        NSLog(@"gender size %@", self.genderSize);
+        if (![self.genderSize isEqualToString:@""]) {
             [self.listing setObject:self.genderSize forKey:@"sizegender"];
         }
         [self.listing setObject:self.chooseLocation.text forKey:@"location"];
+        NSLog(@"geo %@", self.geopoint);
         [self.listing setObject:self.geopoint forKey:@"geopoint"];
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
         [self.listing setObject:willingToPay forKey:@"price"];
@@ -574,6 +587,7 @@
         if (self.photostotal == 1) {
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
+            NSLog(@"image1 %@", imageFile1);
             [self.listing setObject:imageFile1 forKey:@"image1"];
         }
         else if (self.photostotal == 2){
@@ -589,46 +603,39 @@
             NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
             [self.listing setObject:imageFile1 forKey:@"image1"];
-            NSLog(@"file 1 %@", imageFile1);
             
             NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
             PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
             [self.listing setObject:imageFile2 forKey:@"image2"];
-            NSLog(@"file 2 %@", imageFile2);
             
             NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
             PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
             [self.listing setObject:imageFile3 forKey:@"image3"];
-            NSLog(@"file 3 %@", imageFile3);
         }
         else if (self.photostotal == 4){
             NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
             [self.listing setObject:imageFile1 forKey:@"image1"];
-            NSLog(@"file 1 %@", imageFile1);
             
             NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
             PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
             [self.listing setObject:imageFile2 forKey:@"image2"];
-            NSLog(@"file 2 %@", imageFile2);
             
             NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
             PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
             [self.listing setObject:imageFile3 forKey:@"image3"];
-            NSLog(@"file 3 %@", imageFile3);
             
             NSData* data4 = UIImageJPEGRepresentation(self.fourthImageView.image, 0.7f);
             PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
             [self.listing setObject:imageFile4 forKey:@"image4"];
-            NSLog(@"file 4 %@", imageFile4);
         }
-        
         if ([self.extraField.text isEqualToString:@"eg. Must come with original box"]) {
             //don't save its placeholder
         }
         else{
             [self.listing setObject:extraInfo forKey:@"extra"];
         }
+        NSLog(@"listing %@", self.listing);
         
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
@@ -636,6 +643,7 @@
                 ListingCompleteView *vc = [[ListingCompleteView alloc]init];
                 vc.delegate = self;
                 vc.lastObjectId = self.listing.objectId;
+                [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
                 [self.navigationController pushViewController:vc animated:YES];
             }
             else{
