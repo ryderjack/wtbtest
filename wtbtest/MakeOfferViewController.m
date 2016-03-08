@@ -67,36 +67,134 @@
     self.priceField.delegate = self;
     self.extraFiel.delegate = self;
     self.deliveryField.delegate = self;
-    
-    //buyer info
-    PFUser *buyer = [self.listingObject objectForKey:@"postUser"];
-    
+   
     [self setImageBorder];
     
-    [buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            self.buyerUser = buyer;
-            PFFile *pic = [buyer objectForKey:@"picture"];
-            [self.profileView setFile:pic];
-            [self.profileView loadInBackground];
-            self.buyerName.text = buyer.username;
+    //set up VC depending on whether its showing an offer to be reviewed or whether its to make an offer
+    
+    if (self.offerMode == YES) {
+        self.sellingLabel.text = @"They're selling:";
+        self.aboutUserLabel.text = @"About the seller";
+        
+        self.explainLabel.text = @"Are these photos tagged? Report a problem here";
+        
+        PFUser *seller = [self.listingObject objectForKey:@"sellerUser"];
+        [seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                PFFile *pic = [seller objectForKey:@"picture"];
+                [self.profileView setFile:pic];
+                [self.profileView loadInBackground];
+                self.buyerName.text = seller.username;
+            }
+            else{
+                NSLog(@"error %@", error);
+            }
+        }];
+        
+        if ([self.listingObject objectForKey:@"image1"]) {
+            [self.firstImageView setFile:[self.listingObject objectForKey:@"image1"]];
+            [self.firstImageView loadInBackground];
         }
         else{
-            NSLog(@"error %@", error);
+            [self.firstImageView setHidden:YES];
         }
-    }];
-    
-    //hightlight part of label
-    NSMutableAttributedString *string = [[NSMutableAttributedString alloc] initWithString:self.tagExplain.text];
-    NSRange selectedRange = NSMakeRange(82, 4); // 4 characters, starting at index 22
-    
-    [string beginEditing];
-    [string addAttribute:NSForegroundColorAttributeName
-                   value:[UIColor colorWithRed:0.29 green:0.565 blue:0.886 alpha:1]
-                   range:selectedRange];
-    
-    [string endEditing];
-    [self.tagExplain setAttributedText:string];
+        
+        if ([self.listingObject objectForKey:@"image2"]) {
+            [self.secondImageView setFile:[self.listingObject objectForKey:@"image2"]];
+            [self.secondImageView loadInBackground];
+        }
+        else{
+            [self.secondImageView setHidden:YES];
+        }
+        
+        if ([self.listingObject objectForKey:@"image3"]) {
+            [self.thirdImageView setFile:[self.listingObject objectForKey:@"image3"]];
+            [self.thirdImageView loadInBackground];
+        }
+        else{
+            [self.thirdImageView setHidden:YES];
+        }
+        
+        if ([self.listingObject objectForKey:@"image4"]) {
+            [self.fourthImageView setFile:[self.listingObject objectForKey:@"image4"]];
+            [self.fourthImageView loadInBackground];
+        }
+        else{
+            [self.fourthImageView setHidden:YES];
+        }
+        
+        //disable choose cells for selection
+        self.conditionCell.selectionStyle = UITableViewCellSelectionStyleNone;
+        self.categoryCell.selectionStyle = UITableViewCellSelectionStyleNone;
+        self.sizeCell.selectionStyle = UITableViewCellSelectionStyleNone;
+        self.locationCell.selectionStyle = UITableViewCellSelectionStyleNone;
+        self.methodCell.selectionStyle = UITableViewCellSelectionStyleNone;
+        
+        self.conditionCell.accessoryType = UITableViewCellAccessoryNone;
+        self.categoryCell.accessoryType = UITableViewCellAccessoryNone;
+        self.sizeCell.accessoryType = UITableViewCellAccessoryNone;
+        self.locationCell.accessoryType = UITableViewCellAccessoryNone;
+        self.methodCell.accessoryType = UITableViewCellAccessoryNone;
+        
+        //disable text fields
+        self.priceField.enabled = NO;
+        self.deliveryField.enabled = NO;
+        [self.extraFiel setEditable:NO];
+        
+        //setup offer to review info
+        [self.priceField setText:[NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"salePrice"]]];
+        self.chooseCondition.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"condition"]];
+        self.chooseCategory.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"category"]];
+        if ([self.chooseCategory.text isEqualToString:@"Clothing"]) {
+            self.chooseSize.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"size"]];
+        }
+        else{
+            self.chooseSize.text = [NSString stringWithFormat:@"%@ UK, %@",[self.listingObject objectForKey:@"sizeGender"] ,[self.listingObject objectForKey:@"size"]];
+        }
+        
+        self.chooseLocation.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"itemLocation"]];
+        self.chooseDelivery.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"deliveryMethod"]];
+        [self.deliveryField setText:[NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"deliveryCost"]]];
+        self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"totalCost"]];
+        if ([self.listingObject objectForKey:@"extra"]) {
+            [self.extraFiel setText:[NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"extra"]]];
+        }
+        else{
+            [self.extraFiel setText:@""];
+        }
+    }
+    else{
+        //normal make an offer mode
+        
+        self.sellingLabel.text = @"You're selling:";
+        
+        self.aboutUserLabel.text = @"About the buyer";
+        PFUser *buyer = [self.listingObject objectForKey:@"postUser"];
+        [buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                self.buyerUser = buyer;
+                PFFile *pic = [buyer objectForKey:@"picture"];
+                [self.profileView setFile:pic];
+                [self.profileView loadInBackground];
+                self.buyerName.text = buyer.username;
+            }
+            else{
+                NSLog(@"error %@", error);
+            }
+        }];
+        
+        //hightlight part of label
+        NSMutableAttributedString *string = [[NSMutableAttributedString alloc] initWithString:self.tagExplain.text];
+        NSRange selectedRange = NSMakeRange(82, 4); // 4 characters, starting at index 22
+        
+        [string beginEditing];
+        [string addAttribute:NSForegroundColorAttributeName
+                       value:[UIColor colorWithRed:0.29 green:0.565 blue:0.886 alpha:1]
+                       range:selectedRange];
+        
+        [string endEditing];
+        [self.tagExplain setAttributedText:string];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -204,7 +302,12 @@
     }
     else if (indexPath.section == 6){
         if (indexPath.row == 0) {
-            return self.buttonCell;
+            if (self.offerMode == YES) {
+                return self.reviewButtonsCell;
+            }
+            else{
+               return self.buttonCell;
+            }
         }
     }
     return nil;
@@ -261,7 +364,12 @@
     }
     else if (indexPath.section == 6){
         if (indexPath.row == 0) {
-            return 164;
+            if (self.offerMode == YES) {
+                return 181;
+            }
+            else{
+                return 164;
+            }
         }
     }
     return 100;
@@ -282,6 +390,22 @@
         return 0.0;
     }
     return 32.0f;
+}
+
+- (UIView *) tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
+    
+    [headerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    return headerView;
+}
+
+- (UIView *) tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
+{
+    UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
+    
+    [footerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    return footerView;
 }
 
 -(void)alertSheet{
@@ -680,6 +804,7 @@
         [offerObject setObject:self.geopoint forKey:@"geopoint"];
         [offerObject setObject:self.chooseDelivery.text forKey:@"deliveryMethod"];
         [offerObject setObject:saleprice forKey:@"salePrice"];
+        [offerObject setObject:@"open" forKey:@"status"];
         [offerObject setObject:deliverycost forKey:@"deliveryCost"];
         [offerObject setObject:deliverycost forKey:@"totalCost"];
         [offerObject setObject:self.buyerUser forKey:@"buyerUser"];
@@ -752,5 +877,13 @@
     ExplainViewController *vc = [[ExplainViewController alloc]init];
     vc.setting = @"tagged";
     [self presentViewController:vc animated:YES completion:nil];
+}
+- (IBAction)acceptPressed:(id)sender {
+    //proceed to payment then create an order
+}
+- (IBAction)declinePressed:(id)sender {
+    //update the offer status to declined
+    [self.listingObject setObject:@"declined" forKey:@"status"];
+    [self.listingObject saveInBackground];
 }
 @end

@@ -11,6 +11,9 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="MakeOfferViewController">
             <connections>
+                <outlet property="aboutUserLabel" destination="ouT-0c-Pyd" id="TUk-Gn-osy"/>
+                <outlet property="acceptOfferButton" destination="CIn-4V-xHv" id="mjy-lv-BzW"/>
+                <outlet property="askSellerButton" destination="L6F-PR-JHa" id="1UG-ld-Xys"/>
                 <outlet property="buttonCell" destination="NjE-cg-zEO" id="fhs-LM-Rbn"/>
                 <outlet property="buyerCell" destination="pwH-aZ-Tdm" id="EKw-OQ-LM0"/>
                 <outlet property="buyerName" destination="aRn-Cc-gw8" id="bV6-Uo-2fL"/>
@@ -21,9 +24,9 @@
                 <outlet property="chooseLocation" destination="o0R-Xa-96F" id="SXQ-9v-tg1"/>
                 <outlet property="chooseSize" destination="nav-dI-4cI" id="35u-kR-ZdC"/>
                 <outlet property="conditionCell" destination="hF0-tu-0dP" id="KSg-f2-5Q1"/>
+                <outlet property="declineOfferButton" destination="TR4-wu-prE" id="tmQ-oF-epZ"/>
                 <outlet property="deliveryCostCell" destination="oEl-lj-6Db" id="XY1-IV-ubf"/>
                 <outlet property="deliveryField" destination="fn4-3m-zEQ" id="Jax-O9-RdP"/>
-                <outlet property="explainLabel" destination="NLn-Qo-Cly" id="veH-es-gX1"/>
                 <outlet property="extraCell" destination="abY-gD-Rb0" id="gXf-Ye-ZLw"/>
                 <outlet property="extraFiel" destination="MLG-fO-yJz" id="s5A-Bm-Hjw"/>
                 <outlet property="firstCam" destination="7Vu-mZ-fVT" id="KaO-Sr-GJY"/>
@@ -38,10 +41,12 @@
                 <outlet property="picCell" destination="Q4B-z2-O7d" id="sio-mp-e0U"/>
                 <outlet property="priceField" destination="Alm-Fr-6Pt" id="ueo-qw-gsH"/>
                 <outlet property="profileView" destination="tPc-vC-rcE" id="2W8-jW-HVO"/>
+                <outlet property="reviewButtonsCell" destination="wtB-kz-HWg" id="eGS-rv-YwQ"/>
                 <outlet property="saleCell" destination="LFh-aG-gxm" id="J4n-9g-xIT"/>
                 <outlet property="secondCam" destination="2dK-dH-7bj" id="cS7-6F-biD"/>
                 <outlet property="secondDelete" destination="qhe-fA-q1w" id="AxN-oi-g5t"/>
                 <outlet property="secondImageView" destination="0o5-Od-rnO" id="M5r-3d-gyF"/>
+                <outlet property="sellingLabel" destination="AVo-JS-beu" id="2mV-MY-Vpc"/>
                 <outlet property="sizeCell" destination="79G-wk-r0x" id="DwX-uA-rQb"/>
                 <outlet property="starView" destination="O4V-lz-a47" id="Irl-mF-io0"/>
                 <outlet property="tagExplain" destination="NLn-Qo-Cly" id="GkR-BK-Ebp"/>
@@ -105,7 +110,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="130"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="pwH-aZ-Tdm" id="NLt-7X-fHa">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="130"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="129.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="About the buyer" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ouT-0c-Pyd">
@@ -174,7 +179,7 @@
                         </variation>
                     </view>
                 </subviews>
-                <color key="backgroundColor" red="0.96862745100000003" green="0.96862745100000003" blue="0.96862745100000003" alpha="1" colorSpace="calibratedRGB"/>
+                <color key="backgroundColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
                 <constraints>
                     <constraint firstItem="q4k-if-tjo" firstAttribute="centerX" secondItem="NLt-7X-fHa" secondAttribute="centerX" id="0UK-1P-jZt"/>
                     <constraint firstItem="ouT-0c-Pyd" firstAttribute="leading" secondItem="NLt-7X-fHa" secondAttribute="leadingMargin" constant="6" id="DEL-i1-H9C"/>
@@ -194,7 +199,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="188.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="SCg-1W-QrI">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="SCg-1W-QrI" customClass="PFImageView">
                         <rect key="frame" x="10" y="16" width="72" height="72"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="72" id="FDE-4K-reM"/>
@@ -213,7 +218,7 @@
                             <action selector="firstCamPressed:" destination="-1" eventType="touchUpInside" id="doZ-fT-QDp"/>
                         </connections>
                     </button>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="0o5-Od-rnO">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="0o5-Od-rnO" customClass="PFImageView">
                         <rect key="frame" x="86" y="16" width="72" height="72"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="72" id="Lii-xM-5Bz"/>
@@ -232,7 +237,7 @@
                             <action selector="secondCamPressed:" destination="-1" eventType="touchUpInside" id="GRs-P3-Cfb"/>
                         </connections>
                     </button>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="rUz-PF-IGr">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="rUz-PF-IGr" customClass="PFImageView">
                         <rect key="frame" x="162" y="16" width="72" height="72"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="72" id="FKj-vg-VeS"/>
@@ -261,7 +266,7 @@
                             <action selector="thirdDeletePressed:" destination="-1" eventType="touchUpInside" id="VZ5-Q6-MTw"/>
                         </connections>
                     </button>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="VlW-QU-l56">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="VlW-QU-l56" customClass="PFImageView">
                         <rect key="frame" x="238" y="16" width="72" height="72"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="72" id="9EN-MK-ziY"/>
@@ -838,12 +843,61 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="86" y="630"/>
         </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="181" id="wtB-kz-HWg">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="181"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="wtB-kz-HWg" id="kQr-eC-jn6">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="181"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="CIn-4V-xHv">
+                        <rect key="frame" x="54" y="9" width="212" height="40"/>
+                        <constraints>
+                            <constraint firstAttribute="width" secondItem="CIn-4V-xHv" secondAttribute="height" multiplier="53:10" id="iQL-Tx-fyg"/>
+                        </constraints>
+                        <state key="normal" image="acceptBuyButton.png"/>
+                        <connections>
+                            <action selector="acceptPressed:" destination="-1" eventType="touchUpInside" id="yQL-Vl-0gY"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="L6F-PR-JHa">
+                        <rect key="frame" x="54" y="131" width="212" height="40"/>
+                        <constraints>
+                            <constraint firstAttribute="width" secondItem="L6F-PR-JHa" secondAttribute="height" multiplier="53:10" id="Aiv-3k-sui"/>
+                        </constraints>
+                        <state key="normal" image="askSellerButton.png"/>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TR4-wu-prE">
+                        <rect key="frame" x="54" y="70" width="212" height="40"/>
+                        <constraints>
+                            <constraint firstAttribute="width" secondItem="TR4-wu-prE" secondAttribute="height" multiplier="53:10" id="l9l-PP-xeB"/>
+                        </constraints>
+                        <state key="normal" image="declineButton.png"/>
+                        <connections>
+                            <action selector="declinePressed:" destination="-1" eventType="touchUpInside" id="759-fq-nBo"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="TR4-wu-prE" firstAttribute="top" secondItem="CIn-4V-xHv" secondAttribute="bottom" constant="21" id="6ui-SG-h9Z"/>
+                    <constraint firstItem="L6F-PR-JHa" firstAttribute="centerX" secondItem="kQr-eC-jn6" secondAttribute="centerX" id="BuX-Mh-deo"/>
+                    <constraint firstItem="CIn-4V-xHv" firstAttribute="leading" secondItem="TR4-wu-prE" secondAttribute="leading" id="Nff-Kn-4SV"/>
+                    <constraint firstItem="L6F-PR-JHa" firstAttribute="top" secondItem="TR4-wu-prE" secondAttribute="bottom" constant="21" id="gc2-D8-bKp"/>
+                    <constraint firstItem="TR4-wu-prE" firstAttribute="centerY" secondItem="kQr-eC-jn6" secondAttribute="centerY" id="lHo-Th-OgN"/>
+                    <constraint firstItem="L6F-PR-JHa" firstAttribute="leading" secondItem="TR4-wu-prE" secondAttribute="leading" id="owJ-BE-tQ9"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="88" y="1614"/>
+        </tableViewCell>
     </objects>
     <resources>
         <image name="4star.png" width="128" height="26"/>
+        <image name="acceptBuyButton.png" width="212" height="40"/>
         <image name="askQ.png" width="245" height="46"/>
+        <image name="askSellerButton.png" width="212" height="40"/>
         <image name="box.png" width="17" height="17"/>
         <image name="cartIcon.png" width="17" height="17"/>
+        <image name="declineButton.png" width="212" height="40"/>
         <image name="deleteIcon.png" width="20" height="20"/>
         <image name="dots.png" width="17" height="6"/>
         <image name="expand.png" width="17" height="17"/>

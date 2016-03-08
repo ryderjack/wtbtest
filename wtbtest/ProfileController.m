@@ -63,6 +63,9 @@
     if (indexPath.section == 0) {
         if (indexPath.row == 0) {
             //received pressed
+            OffersController *vc = [[OffersController alloc]init];
+            vc.sentOffers = NO;
+            [self.navigationController pushViewController:vc animated:YES];
         }
         else if (indexPath.row == 1){
             //sent pressed

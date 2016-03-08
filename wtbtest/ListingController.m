@@ -60,6 +60,7 @@
     self.titleLabel.adjustsFontSizeToFitWidth = YES;
     self.titleLabel.minimumScaleFactor=0.5;
     
+    ///////////////////////////////////////////////////////////////////////////does this work? surely would just goto first -if- always
     if ([self.listingObject objectForKey:@"image2"]) {
         [self.picIndicator setNumberOfPages:2];
         self.numberOfPics = 2;
@@ -476,6 +477,7 @@
 - (IBAction)sellthisPressed:(id)sender {
     MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
     vc.listingObject = self.listingObject;
+    vc.offerMode = NO;
     [self.navigationController pushViewController:vc animated:YES];
 }
 @end

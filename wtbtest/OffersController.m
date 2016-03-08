@@ -7,6 +7,7 @@
 //
 
 #import "OffersController.h"
+#import "MakeOfferViewController.h"
 
 @interface OffersController ()
 
@@ -33,16 +34,16 @@
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"Cell"];
     
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
-    [flowLayout setItemSize:CGSizeMake(320, 72)]; //iPhone 6 specific
+    [flowLayout setItemSize:CGSizeMake(self.collectionView.frame.size.width-20, 72)]; //iPhone 6 specific
     //    [flowLayout setItemSize:CGSizeMake((self.collectionView.frame.size.width/2)-40, 300)]; //good for iPhone 5
     [flowLayout setMinimumInteritemSpacing:0.0];
-    [flowLayout setMinimumLineSpacing:1.0];
+    [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.delegate = self;
     self.collectionView.dataSource = self;
     self.collectionView.alwaysBounceVertical = YES;
-    self.collectionView.backgroundColor = [UIColor redColor];
+    self.collectionView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     
     self.results = [[NSMutableArray alloc]init];
 }
@@ -60,30 +61,21 @@
     cell.backgroundColor = [UIColor whiteColor];
     
     PFObject *offerObject = [self.results objectAtIndex:indexPath.row];
-    NSLog(@"offer object %@", offerObject);
+    cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"totalCost"]];
+
     PFObject *listing = [offerObject objectForKey:@"wtbListing"];
-    [listing fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            cell.itemTitle.text = [listing objectForKey:@"title"];
-            [cell.imageView setFile:[listing objectForKey:@"image1"]];
-            [cell.imageView loadInBackground];
-        }
-        else{
-            NSLog(@"error %@", error);
-        }
-    }];
-    PFUser *buyer = [offerObject objectForKey:@"buyerUser"];
-    [buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            cell.buyerName.text = [NSString stringWithFormat:@"%@", buyer.username];
-        }
-        else{
-            NSLog(@"error %@", error);
-        }
-    }];
+    cell.itemTitle.text = [listing objectForKey:@"title"];
+    [cell.imageView setFile:[offerObject objectForKey:@"image1"]];
+    [cell.imageView loadInBackground];
     
-    cell.priceLabel.text = [offerObject objectForKey:@"totalCost"];
-    
+    if (self.sentOffers == YES) {
+        PFUser *buyer = [offerObject objectForKey:@"buyerUser"];
+        cell.buyerName.text = [NSString stringWithFormat:@"Buyer: %@", buyer.username];
+    }
+    else{
+        PFUser *seller = [offerObject objectForKey:@"sellerUser"];
+        cell.buyerName.text = [NSString stringWithFormat:@"Seller: %@", seller.username];
+    }
     
     return cell;
 }
@@ -104,19 +96,37 @@
 
 -(void)offerQuery{
     PFQuery *query = [PFQuery queryWithClassName:@"offers"];
-    [query whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-    [query includeKey:@"buyerUser"];
+    
+    if (self.sentOffers == YES) {
+        [query whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+        [query includeKey:@"buyerUser"];
+    }
+    else{
+        [query whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+        [query includeKey:@"sellerUser"];
+    }
     [query includeKey:@"wtbListing"];
     [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            NSLog(@"results %@", objects);
+            [self.results removeAllObjects];
             [self.results addObjectsFromArray:objects];
-            NSLog(@"resultsarray %@", self.results);
             [self.collectionView reloadData];
         }
         else{
             NSLog(@"error %@", error);
         }
     }];
+}
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    if (self.sentOffers == YES) {
+
+    }
+    else{
+        PFObject *selectedOffer = [self.results objectAtIndex:indexPath.item];
+        MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
+        vc.offerMode = YES;
+        vc.listingObject = selectedOffer;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
 }
 @end

@@ -29,9 +29,11 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *extraCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *buttonCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *categoryCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *reviewButtonsCell;
 
 //titleCell
 @property (weak, nonatomic) IBOutlet UILabel *itemTitle;
+@property (weak, nonatomic) IBOutlet UILabel *sellingLabel;
 
 //buyerCell
 @property (weak, nonatomic) IBOutlet UILabel *buyerName;
@@ -65,10 +67,10 @@
 
 @property (strong, nonatomic) PFGeoPoint *geopoint;
 
-@property (weak, nonatomic) IBOutlet UIImageView *firstImageView;
-@property (weak, nonatomic) IBOutlet UIImageView *secondImageView;
-@property (weak, nonatomic) IBOutlet UIImageView *thirdImageView;
-@property (weak, nonatomic) IBOutlet UIImageView *fourthImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *firstImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *secondImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *thirdImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *fourthImageView;
 
 //mainCells
 @property (weak, nonatomic) IBOutlet UITextField *priceField;
@@ -90,5 +92,13 @@
 @property (nonatomic, strong) NSString *genderSize;
 @property (weak, nonatomic) IBOutlet UILabel *totalsumLabel;
 @property (weak, nonatomic) IBOutlet UILabel *tagExplain;
+
+@property (weak, nonatomic) IBOutlet UILabel *aboutUserLabel;
+@property (nonatomic) BOOL offerMode;
+
+//review buttons cell
+@property (weak, nonatomic) IBOutlet UIButton *acceptOfferButton;
+@property (weak, nonatomic) IBOutlet UIButton *declineOfferButton;
+@property (weak, nonatomic) IBOutlet UIButton *askSellerButton;
 
 @end
