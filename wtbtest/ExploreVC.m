@@ -39,8 +39,22 @@
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"Cell"];
     
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
-    [flowLayout setItemSize:CGSizeMake(175, 300)]; //iPhone 6 specific
-//    [flowLayout setItemSize:CGSizeMake((self.collectionView.frame.size.width/2)-40, 300)]; //good for iPhone 5
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [flowLayout setItemSize:CGSizeMake((self.collectionView.frame.size.width/2)-40, 300)];
+    }
+    else if([ [ UIScreen mainScreen ] bounds ].size.height == 736){
+        //iphone 6 plus
+        [flowLayout setItemSize:CGSizeMake((self.collectionView.frame.size.width/2), 300)];
+    }
+    else if([ [ UIScreen mainScreen ] bounds ].size.height == 480){
+        //iphone 4
+        [flowLayout setItemSize:CGSizeMake((self.collectionView.frame.size.width/2)-40, 300)];
+    }
+    else{
+        [flowLayout setItemSize:CGSizeMake(175, 300)]; //iPhone 6 specific
+    }
     [flowLayout setMinimumInteritemSpacing:0];
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
@@ -105,10 +119,10 @@
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
-    if (![PFUser currentUser]) {
-        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
-        [self presentViewController:vc animated:YES completion:nil];
-    }
+//    if (![PFUser currentUser]) {
+//        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+//        [self presentViewController:vc animated:YES completion:nil];
+//    }
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{

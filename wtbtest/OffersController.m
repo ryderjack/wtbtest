@@ -41,8 +41,24 @@
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"Cell"];
     
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
-    [flowLayout setItemSize:CGSizeMake(self.collectionView.frame.size.width-20, 72)]; //iPhone 6 specific
-    //    [flowLayout setItemSize:CGSizeMake((self.collectionView.frame.size.width/2)-40, 300)]; //good for iPhone 5
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iPhone5
+        [flowLayout setItemSize:CGSizeMake(self.collectionView.frame.size.width-40, 72)];
+    }
+    else if([ [ UIScreen mainScreen ] bounds ].size.height == 736){
+        //iPhone 6 plus
+        [flowLayout setItemSize:CGSizeMake(self.collectionView.frame.size.width-20, 72)];
+    }
+    else if([ [ UIScreen mainScreen ] bounds ].size.height == 480){
+        //iPhone 4
+        [flowLayout setItemSize:CGSizeMake(self.collectionView.frame.size.width-40, 72)];
+    }
+    else{
+        //iPhone 6
+        [flowLayout setItemSize:CGSizeMake(self.collectionView.frame.size.width-20, 72)];
+    }
+    
     [flowLayout setMinimumInteritemSpacing:0.0];
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
