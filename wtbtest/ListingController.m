@@ -142,6 +142,20 @@
             [self.buyerImgView loadInBackground];
             self.buyernameLabel.text = self.buyer.username;
             
+            NSString *purchased = [self.buyer objectForKey:@"purchased"];
+            NSString *sold = [self.buyer objectForKey:@"sold"];
+            
+            if (!purchased) {
+                purchased = @"0";
+            }
+            if (!sold) {
+                sold = @"0";
+            }
+            
+            self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %@\nSold: %@", purchased, sold];
+            
+            //set star image depending on feedback
+            
             if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
                 [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
             }

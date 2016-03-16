@@ -228,7 +228,10 @@
         }
     }
     else if ([self.mode isEqualToString:@"purchased"]){
-    
+        //goto order summary
+    }
+    else if ([self.mode isEqualToString:@"purchased"]){
+        
     }
 }
 @end

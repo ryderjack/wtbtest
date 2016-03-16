@@ -247,6 +247,7 @@
                         self.user[PF_USER_FULLNAME] = self.nameField.text;
                         self.user[PF_USER_EMAIL] = self.emailField.text;
                         self.user[PF_USER_USERNAME] = self.usernameField.text;
+                
                         
                         //also need to save image
                         
