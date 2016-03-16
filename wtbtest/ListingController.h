@@ -61,5 +61,7 @@
 @property (nonatomic) int numberOfPics;
 @property (nonatomic) BOOL extraCellNeeded;
 
+@property (nonatomic, strong) PFUser *buyer;
+
 
 @end

@@ -9,6 +9,7 @@
 #import "MakeOfferViewController.h"
 #import <TWPhotoPickerController.h>
 #import "ExplainViewController.h"
+#import "CheckoutController.h"
 
 @interface MakeOfferViewController ()
 
@@ -19,7 +20,6 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"Make an offer";
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
@@ -32,9 +32,9 @@
     self.buyerCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.totalCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.saleCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.reviewButtonsCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
-    self.itemTitle.adjustsFontSizeToFitWidth = YES;
-    self.itemTitle.minimumScaleFactor=0.5;
+    
     
     self.buyerName.adjustsFontSizeToFitWidth = YES;
     self.buyerName.minimumScaleFactor=0.5;
@@ -72,11 +72,25 @@
     
     //set up VC depending on whether its showing an offer to be reviewed or whether its to make an offer
     
-    if (self.offerMode == YES) {
+    if (self.reviewMode == YES) {
+        
+        [self.itemTitle setEnabled:NO];
+        self.navigationItem.title = @"Review offer";
         self.sellingLabel.text = @"They're selling:";
         self.aboutUserLabel.text = @"About the seller";
         
-        self.explainLabel.text = @"Are these photos tagged? Report a problem here";
+        self.tagExplain.text = @"Are these photos tagged?\nReport a problem here";
+        
+        NSMutableAttributedString *string = [[NSMutableAttributedString alloc] initWithString:self.tagExplain.text];
+        NSRange selectedRange = NSMakeRange(42, 4); // 4 characters, starting at index 22
+        
+        [string beginEditing];
+        [string addAttribute:NSForegroundColorAttributeName
+                       value:[UIColor colorWithRed:0.29 green:0.565 blue:0.886 alpha:1]
+                       range:selectedRange];
+        
+        [string endEditing];
+        [self.tagExplain setAttributedText:string];
         
         PFUser *seller = [self.listingObject objectForKey:@"sellerUser"];
         [seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -165,9 +179,11 @@
     }
     else{
         //normal make an offer mode
+        UIBarButtonItem *backButton = [[UIBarButtonItem alloc] initWithTitle:@"< Back" style:UIBarButtonItemStylePlain target:self action:@selector(popdecide)];
+        self.navigationItem.leftBarButtonItem = backButton;
         
+        self.navigationItem.title = @"Make an offer";
         self.sellingLabel.text = @"You're selling:";
-        
         self.aboutUserLabel.text = @"About the buyer";
         PFUser *buyer = [self.listingObject objectForKey:@"postUser"];
         [buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -302,7 +318,7 @@
     }
     else if (indexPath.section == 6){
         if (indexPath.row == 0) {
-            if (self.offerMode == YES) {
+            if (self.reviewMode == YES) {
                 return self.reviewButtonsCell;
             }
             else{
@@ -364,7 +380,7 @@
     }
     else if (indexPath.section == 6){
         if (indexPath.row == 0) {
-            if (self.offerMode == YES) {
+            if (self.reviewMode == YES) {
                 return 181;
             }
             else{
@@ -626,63 +642,66 @@
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     
+    if (self.reviewMode == NO) {
+    
     if (indexPath.section ==3){
-        if(indexPath.row == 1){
-            SelectViewController *vc = [[SelectViewController alloc]init];
-            vc.delegate = self;
-            vc.setting = @"condition";
-            self.selection = @"condition";
-            vc.offer = YES;
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-        else if(indexPath.row == 2){
-            SelectViewController *vc = [[SelectViewController alloc]init];
-            vc.delegate = self;
-            vc.setting = @"category";
-            self.selection = @"category";
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-        else if(indexPath.row == 3){
-            if ([self.chooseCategory.text isEqualToString:@"Choose"]) {
-                //prompt to choose category first
-                [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
+            if(indexPath.row == 1){
+                SelectViewController *vc = [[SelectViewController alloc]init];
+                vc.delegate = self;
+                vc.setting = @"condition";
+                self.selection = @"condition";
+                vc.offer = YES;
+                [self.navigationController pushViewController:vc animated:YES];
             }
-            else{
-                if ([self.chooseCategory.text isEqualToString:@"Footwear"]) {
-                    SelectViewController *vc = [[SelectViewController alloc]init];
-                    vc.delegate = self;
-                    vc.setting = @"sizefoot";
-                    vc.offer = YES;
-                    self.selection = @"size";
-                    [self.navigationController pushViewController:vc animated:YES];
+            else if(indexPath.row == 2){
+                SelectViewController *vc = [[SelectViewController alloc]init];
+                vc.delegate = self;
+                vc.setting = @"category";
+                self.selection = @"category";
+                [self.navigationController pushViewController:vc animated:YES];
+            }
+            else if(indexPath.row == 3){
+                if ([self.chooseCategory.text isEqualToString:@"Choose"]) {
+                    //prompt to choose category first
+                    [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
                 }
                 else{
-                    SelectViewController *vc = [[SelectViewController alloc]init];
-                    vc.delegate = self;
-                    vc.setting = @"sizeclothing";
-                    vc.offer = YES;
-                    self.selection = @"size";
-                    [self.navigationController pushViewController:vc animated:YES];
+                    if ([self.chooseCategory.text isEqualToString:@"Footwear"]) {
+                        SelectViewController *vc = [[SelectViewController alloc]init];
+                        vc.delegate = self;
+                        vc.setting = @"sizefoot";
+                        vc.offer = YES;
+                        self.selection = @"size";
+                        [self.navigationController pushViewController:vc animated:YES];
+                    }
+                    else{
+                        SelectViewController *vc = [[SelectViewController alloc]init];
+                        vc.delegate = self;
+                        vc.setting = @"sizeclothing";
+                        vc.offer = YES;
+                        self.selection = @"size";
+                        [self.navigationController pushViewController:vc animated:YES];
+                    }
                 }
             }
+            else if(indexPath.row == 4){
+                LocationView *vc = [[LocationView alloc]init];
+                vc.delegate = self;
+                self.selection = @"location";
+                [self.navigationController pushViewController:vc animated:YES];
+            }
+            else if(indexPath.row == 5){
+                SelectViewController *vc = [[SelectViewController alloc]init];
+                vc.delegate = self;
+                vc.setting = @"delivery";
+                vc.offer = YES;
+                self.selection = @"delivery";
+                [self.navigationController pushViewController:vc animated:YES];
+            }
         }
-        else if(indexPath.row == 4){
-            LocationView *vc = [[LocationView alloc]init];
-            vc.delegate = self;
-            self.selection = @"location";
-            [self.navigationController pushViewController:vc animated:YES];
+        else {
+            [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
         }
-        else if(indexPath.row == 5){
-            SelectViewController *vc = [[SelectViewController alloc]init];
-            vc.delegate = self;
-            vc.setting = @"delivery";
-            vc.offer = YES;
-            self.selection = @"delivery";
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-    }
-    else {
-        [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     }
 }
 
@@ -703,36 +722,46 @@
     }
 }
 -(void)textFieldDidEndEditing:(UITextField *)textField{
-    if (textField == self.priceField || textField == self.deliveryField) {
-        
-        if ([self.priceField.text isEqualToString:@""] || [self.deliveryField.text isEqualToString:@""] || [self.deliveryField.text isEqualToString:@"£"] || [self.priceField.text isEqualToString:@"£"]) {
-            
-            NSString *prefixToRemove = @"£";
-            
-            if ([textField.text hasPrefix:prefixToRemove]){
-                NSString *stringToEnter = [textField.text substringFromIndex:[prefixToRemove length]];
-                self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", stringToEnter];
-            }
-            else{
-                self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", textField.text];
-            }
-        }
-        else{
-            NSString *prefixToRemove = @"£";
-            NSString *price = [[NSString alloc]init];
-            NSString *delivery = [[NSString alloc]init];
-            
-            if ([self.priceField.text hasPrefix:prefixToRemove]){
-                price = [self.priceField.text substringFromIndex:[prefixToRemove length]];
-            }
-            if ([self.deliveryField.text hasPrefix:prefixToRemove]){
-                delivery = [self.deliveryField.text substringFromIndex:[prefixToRemove length]];
-            }
-            int priceInt = [price intValue];
-            int deliveryInt = [delivery intValue];
-            int total = (priceInt + deliveryInt);
-            self.totalsumLabel.text = [NSString stringWithFormat:@"£%d", total];
-        }
+    
+    NSString *prefixToRemove = @"£";
+    NSString *price = [[NSString alloc]init];
+    NSString *delivery = [[NSString alloc]init];
+    
+    if ([self.priceField.text hasPrefix:prefixToRemove]){
+        price = [self.priceField.text substringFromIndex:[prefixToRemove length]];
+    }
+    else{
+        price = self.priceField.text;
+    }
+    
+    if ([self.deliveryField.text hasPrefix:prefixToRemove]){
+        delivery = [self.deliveryField.text substringFromIndex:[prefixToRemove length]];
+    }
+    else{
+        delivery = self.deliveryField.text;
+    }
+    
+    if ([price isEqualToString:@""] && [delivery isEqualToString:@""]) {
+        NSLog(@"first");
+        self.totalsumLabel.text = @"";
+    }
+    else if (![price isEqualToString:@""] && [delivery isEqualToString:@""]) {
+        NSLog(@"second");
+        self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", price];
+    }
+    else if ([price isEqualToString:@""] && ![delivery isEqualToString:@""]) {
+        NSLog(@"third");
+        self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", delivery];
+    }
+    else{
+        NSLog(@"four");
+        //add together, we've got 2 numbers
+        int priceInt = [price intValue];
+        int deliveryInt = [delivery intValue];
+        NSLog(@"delivery int %d", deliveryInt);
+        int total = (priceInt + deliveryInt);
+        NSLog(@"total int %d", total);
+        self.totalsumLabel.text = [NSString stringWithFormat:@"£%d", total];
     }
 }
 -(void)textViewDidBeginEditing:(UITextView *)textView{
@@ -751,6 +780,7 @@
     [self.priceField resignFirstResponder];
     [self.extraFiel resignFirstResponder];
     [self.deliveryField resignFirstResponder];
+    [self.itemTitle resignFirstResponder];
 }
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
@@ -780,7 +810,7 @@
 - (IBAction)sendOfferPressed:(id)sender {
     [self removeKeyboard];
     
-    if ([self.chooseCategory.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || [self.priceField.text isEqualToString:@""] || [self.deliveryField.text isEqualToString:@""] || self.photostotal == 0) {
+    if ([self.chooseCategory.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || self.photostotal == 0 || [self.priceField.text isEqualToString:@"£"] || [self.priceField.text isEqualToString:@""] || [self.priceField.text isEqualToString:@"£"]) {
         self.warningLabel.text = @"Fill out all the above fields";
     }
     else{
@@ -790,10 +820,16 @@
         NSString *deliverycost = [[self.deliveryField.text componentsSeparatedByCharactersInSet:
                                    [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
                                   componentsJoinedByString:@""];
+        NSString *totalcost = [[self.totalsumLabel.text componentsSeparatedByCharactersInSet:
+                                   [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
+                                  componentsJoinedByString:@""];
         NSString *extraInfo = [self.extraFiel.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         
         PFObject *offerObject =[PFObject objectWithClassName:@"offers"];
+        
         [offerObject setObject:self.listingObject forKey:@"wtbListing"];
+        [offerObject setObject:self.itemTitle.text forKey:@"title"];
+        
         [offerObject setObject:self.chooseCondition.text forKey:@"condition"];
         [offerObject setObject:self.chooseCategory.text forKey:@"category"];
         [offerObject setObject:self.chooseSize.text forKey:@"size"];
@@ -806,7 +842,7 @@
         [offerObject setObject:saleprice forKey:@"salePrice"];
         [offerObject setObject:@"open" forKey:@"status"];
         [offerObject setObject:deliverycost forKey:@"deliveryCost"];
-        [offerObject setObject:deliverycost forKey:@"totalCost"];
+        [offerObject setObject:totalcost forKey:@"totalCost"];
         [offerObject setObject:self.buyerUser forKey:@"buyerUser"];
         [offerObject setObject:[PFUser currentUser] forKey:@"sellerUser"];
         
@@ -880,10 +916,28 @@
 }
 - (IBAction)acceptPressed:(id)sender {
     //proceed to payment then create an order
+    CheckoutController *vc = [[CheckoutController alloc]init];
+    vc.confirmedOfferObject = self.listingObject;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 - (IBAction)declinePressed:(id)sender {
     //update the offer status to declined
     [self.listingObject setObject:@"declined" forKey:@"status"];
     [self.listingObject saveInBackground];
+    [self.navigationController popViewControllerAnimated:YES];
 }
+-(void)popdecide{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Sure?" message:@"Are you sure you want to cancel your offer?" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        
+    }]];
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self.navigationController popViewControllerAnimated:YES];
+    }]];
+    
+    [self presentViewController:alertView animated:YES completion:nil];
+    
+}
+
 @end

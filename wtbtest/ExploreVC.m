@@ -10,7 +10,7 @@
 #import "ExploreCell.h"
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "ExplainViewController.h"
-
+#import "WelcomeViewController.h"
 
 @interface ExploreVC ()
 
@@ -104,6 +104,11 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    
+    if (![PFUser currentUser]) {
+        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+        [self presentViewController:vc animated:YES completion:nil];
+    }
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{

@@ -25,9 +25,12 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *cellButtonTwo;
 @property (strong, nonatomic) IBOutlet UITableViewCell *cellButtonThree;
 @property (strong, nonatomic) IBOutlet UITableViewCell *cellButtonFour;
+@property (strong, nonatomic) IBOutlet UITableViewCell *orderCell;
+@property (weak, nonatomic) IBOutlet UILabel *mainText;
 
+@property (nonatomic) BOOL orderMode;
 @property (nonatomic, strong) NSString *lastObjectId;
 
-
+@property (strong, nonatomic) NSString *orderTitle;
 
 @end

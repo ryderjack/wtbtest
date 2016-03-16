@@ -63,6 +63,10 @@
     tabBarItem2.image = [UIImage imageNamed:@"createIcon"];
     tabBarItem2.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
+    UITabBarItem *tabBarItem3 = [self.tabBarController.tabBar.items objectAtIndex:2];
+    tabBarItem3.image = [UIImage imageNamed:@"profileIcon"];
+    tabBarItem3.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
+    
     [self.tabBarController setDelegate:self];
     
     self.window.rootViewController = self.tabBarController;

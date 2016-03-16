@@ -14,6 +14,8 @@
                 <outlet property="cellButtonThree" destination="IRK-fQ-Btb" id="Zbi-Lr-tBq"/>
                 <outlet property="cellButtonTwo" destination="dUB-rA-6fm" id="MKI-CE-bcX"/>
                 <outlet property="mainCell" destination="lXn-R0-0Jq" id="C7Q-Ux-upb"/>
+                <outlet property="mainText" destination="0av-wW-qQs" id="Zpb-Qp-znH"/>
+                <outlet property="orderCell" destination="DHh-cR-UTD" id="5sr-de-UG2"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -67,7 +69,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="51"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="yL0-av-7dX" id="FLW-w2-bye">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="51"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="50.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TqI-68-WV7">
@@ -117,7 +119,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="51"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="IRK-fQ-Btb" id="hlu-xh-H2d">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="51"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="50.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Nbk-DX-OFY">
@@ -163,12 +165,38 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="107" y="768.5"/>
         </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="51" id="DHh-cR-UTD">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="51"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="DHh-cR-UTD" id="Zvf-FT-JuT">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="50.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6MW-tA-QFD">
+                        <rect key="frame" x="54" y="6" width="212" height="40"/>
+                        <constraints>
+                            <constraint firstAttribute="width" secondItem="6MW-tA-QFD" secondAttribute="height" multiplier="53:10" id="GlY-ED-Iug"/>
+                        </constraints>
+                        <state key="normal" image="orderdetails.png"/>
+                        <connections>
+                            <action selector="editListingPressed:" destination="-1" eventType="touchUpInside" id="U1I-V0-NOO"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="6MW-tA-QFD" firstAttribute="centerX" secondItem="Zvf-FT-JuT" secondAttribute="centerX" id="Vvx-VF-1qq"/>
+                    <constraint firstItem="6MW-tA-QFD" firstAttribute="centerY" secondItem="Zvf-FT-JuT" secondAttribute="centerY" id="ca8-Qv-MOz"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="107" y="879.5"/>
+        </tableViewCell>
     </objects>
     <resources>
         <image name="create another.png" width="212" height="40"/>
         <image name="done.png" width="704" height="678"/>
         <image name="editListing.png" width="212" height="40"/>
         <image name="fb share.png" width="212" height="40"/>
+        <image name="orderdetails.png" width="212" height="40"/>
         <image name="share.png" width="212" height="40"/>
     </resources>
 </document>

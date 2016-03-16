@@ -13,5 +13,7 @@
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *receivedOffers;
 @property (strong, nonatomic) IBOutlet UITableViewCell *sentOffers;
+@property (strong, nonatomic) IBOutlet UITableViewCell *purchasedItems;
+@property (strong, nonatomic) IBOutlet UITableViewCell *soldItems;
 
 @end

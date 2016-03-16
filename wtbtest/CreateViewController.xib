@@ -32,6 +32,7 @@
                 <outlet property="payCell" destination="0tK-ZK-53b" id="UzP-pE-WX4"/>
                 <outlet property="payField" destination="NSX-Y1-BtO" id="VTg-H2-Hdv"/>
                 <outlet property="picCell" destination="wJ0-qI-1BN" id="3Qk-Jh-u5K"/>
+                <outlet property="saveButton" destination="5g5-Kd-yzb" id="CRf-C1-K9B"/>
                 <outlet property="secondCam" destination="vMK-A2-WC0" id="dw7-5s-OHJ"/>
                 <outlet property="secondDelete" destination="5Xx-oh-9Rl" id="df9-ZT-py2"/>
                 <outlet property="secondImageView" destination="H1T-gQ-Z7K" id="dxC-DF-mPA"/>
@@ -97,7 +98,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="104.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="6e9-1o-jiV">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="6e9-1o-jiV" customClass="PFImageView">
                         <rect key="frame" x="10" y="16" width="72" height="72"/>
                         <constraints>
                             <constraint firstAttribute="width" secondItem="6e9-1o-jiV" secondAttribute="height" multiplier="1:1" id="E0F-Yq-y9z"/>
@@ -116,7 +117,7 @@
                             <action selector="firstCamPressed:" destination="-1" eventType="touchUpInside" id="WOc-YP-G2B"/>
                         </connections>
                     </button>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="H1T-gQ-Z7K">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="H1T-gQ-Z7K" customClass="PFImageView">
                         <rect key="frame" x="86" y="16" width="72" height="72"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="72" id="BL8-nS-tva"/>
@@ -135,7 +136,7 @@
                             <action selector="secondCamPressed:" destination="-1" eventType="touchUpInside" id="MQQ-J5-kRo"/>
                         </connections>
                     </button>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="lTs-Qy-sCy">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="lTs-Qy-sCy" customClass="PFImageView">
                         <rect key="frame" x="162" y="16" width="72" height="72"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="72" id="DPW-69-OJh"/>
@@ -164,7 +165,7 @@
                             <action selector="thirdDeletePressed:" destination="-1" eventType="touchUpInside" id="7qp-85-7cu"/>
                         </connections>
                     </button>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="jOd-da-zxo">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="jOd-da-zxo" customClass="PFImageView">
                         <rect key="frame" x="238" y="16" width="72" height="72"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="72" id="NCT-hY-42t"/>

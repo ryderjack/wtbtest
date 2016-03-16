@@ -32,7 +32,7 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 1;
+    return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -47,6 +47,14 @@
         }
         else if (indexPath.row == 1) {
             return self.sentOffers;
+        }
+    }
+    else if (indexPath.section == 1){
+        if (indexPath.row == 0) {
+            return self.purchasedItems;
+        }
+        else if (indexPath.row == 1) {
+            return self.soldItems;
         }
     }
     return nil;
@@ -64,13 +72,27 @@
         if (indexPath.row == 0) {
             //received pressed
             OffersController *vc = [[OffersController alloc]init];
-            vc.sentOffers = NO;
+            vc.mode = @"received";
             [self.navigationController pushViewController:vc animated:YES];
         }
         else if (indexPath.row == 1){
             //sent pressed
             OffersController *vc = [[OffersController alloc]init];
-            vc.sentOffers = YES;
+            vc.mode = @"sent";
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+    }
+    else if (indexPath.section == 1){
+        if (indexPath.row == 0) {
+            //received pressed
+            OffersController *vc = [[OffersController alloc]init];
+            vc.mode = @"purchased";
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else if (indexPath.row == 1){
+            //sent pressed
+            OffersController *vc = [[OffersController alloc]init];
+            vc.mode = @"sold";
             [self.navigationController pushViewController:vc animated:YES];
         }
     }

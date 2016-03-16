@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9530"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <objects>
@@ -15,29 +16,30 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="72"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="item title" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VWE-0Y-jMB">
-                        <rect key="frame" x="84" y="11" width="184" height="29"/>
+                        <rect key="frame" x="84" y="11" width="228" height="29"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="buyer name" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Qn2-Vh-pqq">
                         <rect key="frame" x="83" y="35" width="184" height="26"/>
-                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
+                        <fontDescription key="fontDescription" name="AvenirNext-UltraLight" family="Avenir Next" pointSize="17"/>
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="FsE-zQ-sRu" customClass="PFImageView">
                         <rect key="frame" x="18" y="11" width="50" height="50"/>
                         <constraints>
+                            <constraint firstAttribute="width" secondItem="FsE-zQ-sRu" secondAttribute="height" multiplier="1:1" id="KnN-vO-jRY"/>
                             <constraint firstAttribute="width" constant="50" id="rXw-5B-8ou"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="£100" textAlignment="right" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ctr-Ud-vYb">
-                        <rect key="frame" x="217" y="23" width="95" height="26"/>
+                        <rect key="frame" x="228" y="38" width="84" height="26"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="95" id="ACN-3H-6Mq"/>
+                            <constraint firstAttribute="width" constant="84" id="ACN-3H-6Mq"/>
                         </constraints>
-                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="20"/>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
                         <color key="textColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
@@ -45,12 +47,12 @@
                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
             </view>
             <constraints>
-                <constraint firstAttribute="trailing" secondItem="VWE-0Y-jMB" secondAttribute="trailing" constant="52" id="5M2-E9-Ery"/>
+                <constraint firstAttribute="trailing" secondItem="VWE-0Y-jMB" secondAttribute="trailing" constant="8" id="5M2-E9-Ery"/>
                 <constraint firstItem="Ctr-Ud-vYb" firstAttribute="trailing" secondItem="gTV-IL-0wX" secondAttribute="trailingMargin" id="FgV-hr-sfp"/>
-                <constraint firstItem="FsE-zQ-sRu" firstAttribute="centerY" secondItem="Ctr-Ud-vYb" secondAttribute="centerY" id="HVp-LV-Ufn"/>
-                <constraint firstItem="Ctr-Ud-vYb" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" id="Lei-m5-N2y"/>
+                <constraint firstItem="FsE-zQ-sRu" firstAttribute="centerY" secondItem="Ctr-Ud-vYb" secondAttribute="centerY" constant="-15" id="HVp-LV-Ufn"/>
+                <constraint firstItem="Ctr-Ud-vYb" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" constant="15" id="Lei-m5-N2y"/>
                 <constraint firstAttribute="bottom" secondItem="VWE-0Y-jMB" secondAttribute="bottom" constant="32" id="MmS-3x-vnf"/>
-                <constraint firstItem="Ctr-Ud-vYb" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="23" id="P7t-4T-9gU"/>
+                <constraint firstItem="Ctr-Ud-vYb" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="38" id="P7t-4T-9gU"/>
                 <constraint firstItem="FsE-zQ-sRu" firstAttribute="bottom" secondItem="Qn2-Vh-pqq" secondAttribute="bottom" id="Rd7-hO-94D"/>
                 <constraint firstItem="FsE-zQ-sRu" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="18" id="WWA-sv-rNm"/>
                 <constraint firstItem="FsE-zQ-sRu" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="11" id="j1h-wz-XFd"/>

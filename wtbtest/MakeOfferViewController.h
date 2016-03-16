@@ -13,7 +13,7 @@
 #import "SelectViewController.h"
 #import "LocationView.h"
 
-@interface MakeOfferViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate>
+@interface MakeOfferViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationBarDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
@@ -32,7 +32,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *reviewButtonsCell;
 
 //titleCell
-@property (weak, nonatomic) IBOutlet UILabel *itemTitle;
+@property (weak, nonatomic) IBOutlet UITextField *itemTitle;
 @property (weak, nonatomic) IBOutlet UILabel *sellingLabel;
 
 //buyerCell
@@ -40,9 +40,6 @@
 @property (weak, nonatomic) IBOutlet PFImageView *profileView;
 @property (weak, nonatomic) IBOutlet UIImageView *starView;
 @property (nonatomic, strong) PFUser *buyerUser;
-
-//picCell
-@property (weak, nonatomic) IBOutlet UILabel *explainLabel;
 
 //camera buttons
 @property (weak, nonatomic) IBOutlet UIButton *firstCam;
@@ -94,7 +91,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *tagExplain;
 
 @property (weak, nonatomic) IBOutlet UILabel *aboutUserLabel;
-@property (nonatomic) BOOL offerMode;
+@property (nonatomic) BOOL reviewMode;
 
 //review buttons cell
 @property (weak, nonatomic) IBOutlet UIButton *acceptOfferButton;

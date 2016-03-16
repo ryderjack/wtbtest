@@ -57,9 +57,11 @@
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
     self.warningLabel.text = @"";
-    self.status = @"";
-    self.lastId = @"";
     self.genderSize = @"";
+    
+    if (self.editFromListing == YES) {
+        [self listingSetup];
+    }
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -72,7 +74,6 @@
     if ([self.status isEqualToString:@"new"]) {
         [self resetForm];
     }
-    
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -248,10 +249,12 @@
             }
         }
         else if(indexPath.row == 3){
-            LocationView *vc = [[LocationView alloc]init];
-            vc.delegate = self;
-            self.selection = @"location";
-            [self.navigationController pushViewController:vc animated:YES];
+            if (self.editFromListing != YES) {
+                LocationView *vc = [[LocationView alloc]init];
+                vc.delegate = self;
+                self.selection = @"location";
+                [self.navigationController pushViewController:vc animated:YES];
+            }
         }
         else if(indexPath.row == 4){
             SelectViewController *vc = [[SelectViewController alloc]init];
@@ -554,11 +557,13 @@
         NSString *extraInfo = [self.extraField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         
         if ([self.status isEqualToString:@"edit"]) {
+            NSLog(@"should be querying the object here");
             PFQuery *query = [PFQuery queryWithClassName:@"wantobuys"];
             [query whereKey:@"objectId" equalTo:self.lastId];
             [query getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
                     self.listing = object;
+                    NSLog(@"self.listing id %@", self.listing.objectId);
                 }
                 else{
                     NSLog(@"error %@", error);
@@ -566,6 +571,7 @@
             }];
         }
         else{
+            NSLog(@"creating new object here self status %@", self.status);
             self.listing =[PFObject objectWithClassName:@"wantobuys"];
         }
         
@@ -577,9 +583,13 @@
         if (![self.genderSize isEqualToString:@""]) {
             [self.listing setObject:self.genderSize forKey:@"sizegender"];
         }
-        [self.listing setObject:self.chooseLocation.text forKey:@"location"];
-        NSLog(@"geo %@", self.geopoint);
-        [self.listing setObject:self.geopoint forKey:@"geopoint"];
+        
+        if (self.editFromListing != YES) {
+            //don't update location on listing if just editing
+            [self.listing setObject:self.chooseLocation.text forKey:@"location"];
+            [self.listing setObject:self.geopoint forKey:@"geopoint"];
+        }
+        
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
         [self.listing setObject:willingToPay forKey:@"price"];
         [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
@@ -589,6 +599,12 @@
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
             NSLog(@"image1 %@", imageFile1);
             [self.listing setObject:imageFile1 forKey:@"image1"];
+            
+            if (self.editFromListing == YES) {
+                [self.listing removeObjectForKey:@"image2"];
+                [self.listing removeObjectForKey:@"image3"];
+                [self.listing removeObjectForKey:@"image4"];
+            }
         }
         else if (self.photostotal == 2){
             NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
@@ -598,6 +614,11 @@
             NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
             PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
             [self.listing setObject:imageFile2 forKey:@"image2"];
+            
+            if (self.editFromListing == YES) {
+                [self.listing removeObjectForKey:@"image3"];
+                [self.listing removeObjectForKey:@"image4"];
+            }
         }
         else if (self.photostotal == 3){
             NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
@@ -611,6 +632,10 @@
             NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
             PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
             [self.listing setObject:imageFile3 forKey:@"image3"];
+            
+            if (self.editFromListing == YES) {
+                [self.listing removeObjectForKey:@"image4"];
+            }
         }
         else if (self.photostotal == 4){
             NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
@@ -643,6 +668,7 @@
                 ListingCompleteView *vc = [[ListingCompleteView alloc]init];
                 vc.delegate = self;
                 vc.lastObjectId = self.listing.objectId;
+                vc.orderMode = NO;
                 [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
                 [self.navigationController pushViewController:vc animated:YES];
             }
@@ -736,4 +762,80 @@
     }
     self.photostotal ++;
 }
+
+-(void)listingSetup{
+    self.navigationItem.title = @"Edit listing";
+    
+    [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
+    
+    self.titleField.text = [self.listing objectForKey:@"title"];
+    self.payField.text = [NSString stringWithFormat:@"£%@",[self.listing objectForKey:@"price"]];
+    self.chooseCondition.text = [self.listing objectForKey:@"condition"];
+    
+    //location is not updatable when editing listing
+    self.chooseLocation.text = [self.listing objectForKey:@"location"];
+    self.locCell.accessoryType = UITableViewCellAccessoryNone;
+    self.locCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    self.chooseDelivery.text = [self.listing objectForKey:@"delivery"];
+    self.chooseCategroy.text = [self.listing objectForKey:@"category"];
+    
+    //if gendersize required (if category is footwear) set variable
+    self.genderSize = [self.listing objectForKey:@"sizegender"];
+    
+    self.chooseSize.text = [self.listing objectForKey:@"size"];
+    
+    if ([self.listing objectForKey:@"extra"]) {
+        self.extraField.text = [self.listing objectForKey:@"extra"];
+    }
+    
+    if ([self.listing objectForKey:@"image1"]) {
+        [self.firstImageView setFile:[self.listing objectForKey:@"image1"]];
+        [self.firstImageView loadInBackground];
+        
+        [self.firstDelete setHidden:NO];
+        [self.secondCam setEnabled:YES];
+        [self.firstCam setEnabled:NO];
+        
+        [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
+        [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        self.photostotal = 1;
+    }
+    
+    if ([self.listing objectForKey:@"image2"]) {
+        [self.secondImageView setFile:[self.listing objectForKey:@"image2"]];
+        [self.secondImageView loadInBackground];
+        
+        [self.secondDelete setHidden:NO];
+        [self.thirdCam setEnabled:YES];
+        [self.secondCam setEnabled:NO];
+        
+        [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
+        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        self.photostotal = 2;
+    }
+    
+    if ([self.listing objectForKey:@"image3"]) {
+        [self.thirdImageView setFile:[self.listing objectForKey:@"image3"]];
+        [self.thirdImageView loadInBackground];
+        
+        [self.thirdDelete setHidden:NO];
+        [self.fourthCam setEnabled:YES];
+        [self.thirdCam setEnabled:NO];
+        
+        [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
+        self.photostotal = 3;
+    }
+    
+    if ([self.listing objectForKey:@"image4"]) {
+        [self.fourthImageView setFile:[self.listing objectForKey:@"image4"]];
+        [self.fourthImageView loadInBackground];
+        
+        [self.fourthDelete setHidden:NO];
+        [self.fourthCam setEnabled:NO];
+        self.photostotal = 4;
+    }
+}
+
 @end

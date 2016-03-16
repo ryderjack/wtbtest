@@ -11,6 +11,7 @@
 #import "LocationView.h"
 #import "ListingCompleteView.h"
 #import <Parse/Parse.h>
+#import <ParseUI/ParseUI.h>
 #import "CameraController.h"
 
 @interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate>
@@ -58,12 +59,12 @@
 @property (nonatomic, strong) UIImage *secondImage;
 @property (nonatomic, strong) UIImage *thirdImage;
 @property (nonatomic, strong) UIImage *fourthImage;
-@property (weak, nonatomic) IBOutlet UIImageView *firstImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *firstImageView;
 @property (nonatomic) int camButtonTapped;
 @property (nonatomic) int photostotal;
-@property (weak, nonatomic) IBOutlet UIImageView *secondImageView;
-@property (weak, nonatomic) IBOutlet UIImageView *thirdImageView;
-@property (weak, nonatomic) IBOutlet UIImageView *fourthImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *secondImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *thirdImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *fourthImageView;
 
 @property (nonatomic, strong) NSString *selection;
 @property (weak, nonatomic) IBOutlet UILabel *warningLabel;
@@ -73,5 +74,7 @@
 @property (nonatomic, strong) PFObject *listing;
 
 @property (nonatomic, strong) NSString *genderSize;
+@property (nonatomic) BOOL editFromListing;
+@property (weak, nonatomic) IBOutlet UIButton *saveButton;
 
 @end

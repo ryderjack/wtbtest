@@ -22,6 +22,14 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
+    self.mainText.adjustsFontSizeToFitWidth = YES;
+    self.mainText.minimumScaleFactor=0.5;
+    
+    if (self.orderMode == YES) {
+        self.mainText.text = [NSString stringWithFormat:@"Purchase completed! You've just purchased %@!",self.orderTitle];
+        UIBarButtonItem *backButton = [[UIBarButtonItem alloc] initWithTitle:@"< Back" style:UIBarButtonItemStylePlain target:self action:@selector(resetNavStack)];
+        self.navigationItem.leftBarButtonItem = backButton;
+    }
     
     self.navigationItem.hidesBackButton = YES;
     self.mainCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -42,7 +50,12 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 5;
+    if (self.orderMode == YES) {
+        return 4;
+    }
+    else{
+        return 5;
+    }
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -53,13 +66,27 @@
             return self.cellButtonOne;
         }
         else if(indexPath.row == 2){
-            return self.cellButtonTwo;
+            if (self.orderMode == YES) {
+                return self.cellButtonThree;
+            }
+            else{
+                return self.cellButtonTwo;
+            }
         }
         else if(indexPath.row == 3){
-            return self.cellButtonThree;
+            if (self.orderMode == YES) {
+                return self.orderCell;
+            }
+            else{
+                return self.cellButtonThree;
+            }
         }
         else if(indexPath.row == 4){
-            return self.cellButtonFour;
+            if (self.orderMode == YES) {
+            }
+            else{
+                return self.cellButtonFour;
+            }
         }
 
     return nil;
@@ -95,14 +122,21 @@
 - (IBAction)shareToGroupPresse:(id)sender {
 }
 - (IBAction)createAnotherPressed:(id)sender {
-    [self.delegate listingEdit:self didFinishEnteringItem:@"new"];
-    [self.navigationController popViewControllerAnimated:YES];
+    if (self.orderMode == YES) {
+        self.tabBarController.selectedIndex = 1;
+    }
+    else{
+        [self.delegate listingEdit:self didFinishEnteringItem:@"new"];
+        [self.navigationController popViewControllerAnimated:YES];
+    }
 }
 - (IBAction)editListingPressed:(id)sender {
     [self.delegate lastId:self didFinishEnteringItem:self.lastObjectId];
     [self.delegate listingEdit:self didFinishEnteringItem:@"edit"];
     [self.navigationController popViewControllerAnimated:YES];
 }
-
+-(void)resetNavStack{
+    [self.navigationController popToRootViewControllerAnimated:YES];
+}
 
 @end

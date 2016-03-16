@@ -13,7 +13,7 @@
 
 @interface OffersController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
 
-@property (nonatomic) BOOL sentOffers;
+@property (nonatomic) NSString *mode;
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
 
