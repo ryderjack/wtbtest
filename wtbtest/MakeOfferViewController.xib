@@ -24,6 +24,7 @@
                 <outlet property="chooseLocation" destination="o0R-Xa-96F" id="SXQ-9v-tg1"/>
                 <outlet property="chooseSize" destination="nav-dI-4cI" id="35u-kR-ZdC"/>
                 <outlet property="conditionCell" destination="hF0-tu-0dP" id="KSg-f2-5Q1"/>
+                <outlet property="dealsLabel" destination="JOJ-4L-0c3" id="3Oc-8I-JrN"/>
                 <outlet property="declineOfferButton" destination="TR4-wu-prE" id="tmQ-oF-epZ"/>
                 <outlet property="deliveryCostCell" destination="oEl-lj-6Db" id="XY1-IV-ubf"/>
                 <outlet property="deliveryField" destination="fn4-3m-zEQ" id="Jax-O9-RdP"/>
@@ -75,7 +76,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="90"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="lFP-1G-8mw" id="fVg-h6-jpZ">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="90"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="89.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You're selling:" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="AVo-JS-beu">
@@ -111,7 +112,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="130"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="pwH-aZ-Tdm" id="NLt-7X-fHa">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="129.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="130"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="About the buyer" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ouT-0c-Pyd">
@@ -163,14 +164,14 @@
                             <constraint firstItem="JOJ-4L-0c3" firstAttribute="top" secondItem="aRn-Cc-gw8" secondAttribute="bottom" id="8n0-Vs-nNe"/>
                             <constraint firstItem="tPc-vC-rcE" firstAttribute="top" secondItem="aRn-Cc-gw8" secondAttribute="top" id="Fyv-RO-ecu"/>
                             <constraint firstAttribute="bottom" secondItem="JOJ-4L-0c3" secondAttribute="bottom" id="GWt-m9-qOr"/>
-                            <constraint firstItem="O4V-lz-a47" firstAttribute="centerY" secondItem="tPc-vC-rcE" secondAttribute="centerY" id="YXw-Pv-Qf7"/>
                             <constraint firstItem="O4V-lz-a47" firstAttribute="trailing" secondItem="q4k-if-tjo" secondAttribute="trailingMargin" id="a60-bB-PaE"/>
                             <constraint firstItem="tPc-vC-rcE" firstAttribute="leading" secondItem="q4k-if-tjo" secondAttribute="leadingMargin" id="g7y-a8-2bV"/>
-                            <constraint firstItem="O4V-lz-a47" firstAttribute="leading" secondItem="JOJ-4L-0c3" secondAttribute="trailing" constant="8" symbolic="YES" id="gdg-5y-H2Z"/>
+                            <constraint firstItem="O4V-lz-a47" firstAttribute="centerY" secondItem="q4k-if-tjo" secondAttribute="centerY" id="hpA-Yx-MVh"/>
                             <constraint firstItem="aRn-Cc-gw8" firstAttribute="leading" secondItem="tPc-vC-rcE" secondAttribute="trailing" constant="11" id="jF3-ds-vJf"/>
+                            <constraint firstItem="O4V-lz-a47" firstAttribute="leading" secondItem="JOJ-4L-0c3" secondAttribute="trailing" constant="8" symbolic="YES" id="nb7-5e-Qht"/>
+                            <constraint firstItem="O4V-lz-a47" firstAttribute="centerY" secondItem="tPc-vC-rcE" secondAttribute="centerY" id="vGN-Dc-wuz"/>
                             <constraint firstItem="O4V-lz-a47" firstAttribute="trailing" secondItem="q4k-if-tjo" secondAttribute="trailingMargin" id="xQ3-AK-9zn"/>
                             <constraint firstItem="JOJ-4L-0c3" firstAttribute="leading" secondItem="tPc-vC-rcE" secondAttribute="trailing" constant="8" symbolic="YES" id="xzh-zV-kf1"/>
-                            <constraint firstItem="O4V-lz-a47" firstAttribute="centerY" secondItem="q4k-if-tjo" secondAttribute="centerY" id="zmK-dF-coI"/>
                         </constraints>
                         <variation key="default">
                             <mask key="constraints">

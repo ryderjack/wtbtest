@@ -23,6 +23,10 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
+    UIBarButtonItem *resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Clear" style:UIBarButtonItemStylePlain target:self action:@selector(resetForm)];
+    
+    self.navigationItem.rightBarButtonItem = resetButton;
+    
     //hide first table view header
     self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
         
@@ -693,6 +697,7 @@
     self.payField.text = @"";
     self.titleField.text = @"";
     self.extraField.text = @"eg. Must come with original box";
+    self.warningLabel.text = @"";
     
     self.firstImageView.contentMode = UIViewContentModeScaleAspectFit;
     [self.firstImageView setImage:[UIImage imageNamed:@"addImage"]];

@@ -216,13 +216,13 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="126"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="TMl-hw-atg" id="oJv-hM-e8p">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="126"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="125.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="checkIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="IfH-sr-kjw">
                         <rect key="frame" x="18" y="14" width="15" height="13"/>
                     </imageView>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="£10" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hRd-MC-QZg">
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="£10.00" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hRd-MC-QZg">
                         <rect key="frame" x="215" y="11" width="97" height="24"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="97" id="uPt-2E-1Y6"/>

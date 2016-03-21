@@ -10,6 +10,7 @@
             <connections>
                 <outlet property="collectionView" destination="bab-Yf-eve" id="bNL-xA-4M6"/>
                 <outlet property="filterButton" destination="Nla-Xy-e7q" id="8FJ-c7-iYZ"/>
+                <outlet property="noresultsLabel" destination="gQD-c5-Rae" id="gsy-u2-nil"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -34,22 +35,34 @@
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Nla-Xy-e7q">
                     <rect key="frame" x="157" y="577" width="60" height="60"/>
                     <constraints>
-                        <constraint firstAttribute="width" secondItem="Nla-Xy-e7q" secondAttribute="height" multiplier="1:1" id="aU3-7i-jIS"/>
+                        <constraint firstAttribute="width" secondItem="Nla-Xy-e7q" secondAttribute="height" multiplier="1:1" id="7sp-jh-abU"/>
                     </constraints>
                     <state key="normal" image="filterButton.png"/>
                     <connections>
                         <action selector="filterPressed:" destination="-1" eventType="touchUpInside" id="4Yy-74-lGL"/>
                     </connections>
                 </button>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text=":( no results" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gQD-c5-Rae">
+                    <rect key="frame" x="135" y="299" width="105" height="70"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="70" id="amH-Z9-UZk"/>
+                        <constraint firstAttribute="width" constant="105" id="xgn-0n-nDV"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
+                    <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
             </subviews>
             <color key="backgroundColor" red="0.96470588235294119" green="0.96862745098039216" blue="0.9882352941176471" alpha="1" colorSpace="calibratedRGB"/>
             <constraints>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="a35-iJ-y5m"/>
-                <constraint firstAttribute="bottom" secondItem="Nla-Xy-e7q" secondAttribute="bottom" constant="30" id="do1-Vy-8ap"/>
-                <constraint firstAttribute="trailing" secondItem="bab-Yf-eve" secondAttribute="trailing" id="fvi-tY-B8k"/>
-                <constraint firstAttribute="bottom" secondItem="bab-Yf-eve" secondAttribute="bottom" id="glm-sS-sfE"/>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="sGA-tk-M8P"/>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="centerX" secondItem="Nla-Xy-e7q" secondAttribute="centerX" id="zIO-FQ-FSk"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="centerX" secondItem="Nla-Xy-e7q" secondAttribute="centerX" id="2Za-IU-FKH"/>
+                <constraint firstAttribute="bottom" secondItem="bab-Yf-eve" secondAttribute="bottom" id="2bo-ya-r3X"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="F0e-zJ-5ZE"/>
+                <constraint firstItem="gQD-c5-Rae" firstAttribute="centerX" secondItem="Nla-Xy-e7q" secondAttribute="centerX" id="IRL-2X-7Cj"/>
+                <constraint firstItem="gQD-c5-Rae" firstAttribute="centerY" secondItem="bab-Yf-eve" secondAttribute="centerY" id="hfW-au-Oxz"/>
+                <constraint firstAttribute="trailing" secondItem="bab-Yf-eve" secondAttribute="trailing" id="j1f-sG-koe"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="mUl-YC-3Cw"/>
+                <constraint firstAttribute="bottom" secondItem="Nla-Xy-e7q" secondAttribute="bottom" constant="30" id="zeG-cE-FaR"/>
             </constraints>
             <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
             <point key="canvasLocation" x="498.5" y="355.5"/>

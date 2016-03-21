@@ -346,6 +346,38 @@
             selectionString = self.eleventhLabel.text;
         }
     }
+    else if (indexPath.row ==11){
+        if ([self.setting isEqualToString:@"sizefoot"]) {
+            selectionString = self.tenthLabel.text;
+        }
+        else{
+            selectionString = self.eleventhLabel.text;
+        }
+    }
+    else if (indexPath.row ==12){
+        if ([self.setting isEqualToString:@"sizefoot"]) {
+            selectionString = self.eleventhLabel.text;
+        }
+        else{
+            selectionString = self.twelveLabel.text;
+        }
+    }
+    else if (indexPath.row ==13){
+        if ([self.setting isEqualToString:@"sizefoot"]) {
+            selectionString = self.twelveLabel.text;
+        }
+        else{
+            selectionString = self.thirteenLabel.text;
+        }
+    }
+    else if (indexPath.row ==14){
+        if ([self.setting isEqualToString:@"sizefoot"]) {
+            selectionString = self.thirteenLabel.text;
+        }
+        else{
+            selectionString = self.fourteenthLabel.text;
+        }
+    }
     //if not nothing (coz of selection cell in sizes) proceed..
     NSLog(@"selected %@", selectionString);
     

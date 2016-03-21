@@ -8,6 +8,7 @@
 
 #import "OffersController.h"
 #import "MakeOfferViewController.h"
+#import "OrderSummaryController.h"
 
 @interface OffersController ()
 
@@ -66,7 +67,6 @@
     self.collectionView.delegate = self;
     self.collectionView.dataSource = self;
     self.collectionView.alwaysBounceVertical = YES;
-    self.collectionView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     
     self.results = [[NSMutableArray alloc]init];
 }
@@ -117,11 +117,11 @@
     }
     else if ([self.mode isEqualToString:@"purchased"]){
         //display total price including fees that buyer pays
-        cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"total"]];
+        cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"buyerTotal"]];
     }
     else if ([self.mode isEqualToString:@"sold"]){
         //display just sale price that they'll receieve
-        cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"salePrice"]];
+        cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"sellerTotal"]];
     }
     
     if ([self.mode isEqualToString:@"sent"] || [self.mode isEqualToString:@"received"]) {
@@ -209,14 +209,15 @@
                 NSLog(@"error %@", error);
             }
         }];
-        
     }
 }
+
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    PFObject *selectedOffer = [self.results objectAtIndex:indexPath.item];
+    
     if ([self.mode isEqualToString:@"sent"]) {
     }
     else if ([self.mode isEqualToString:@"received"]){
-        PFObject *selectedOffer = [self.results objectAtIndex:indexPath.item];
         if ([[selectedOffer objectForKey:@"status"]isEqualToString:@"purchased"]) {
             //show order summary
         }
@@ -229,9 +230,17 @@
     }
     else if ([self.mode isEqualToString:@"purchased"]){
         //goto order summary
+        OrderSummaryController *vc = [[OrderSummaryController alloc]init];
+        vc.purchased = YES;
+        vc.orderObject = selectedOffer;
+        [self.navigationController pushViewController:vc animated:YES];
     }
-    else if ([self.mode isEqualToString:@"purchased"]){
-        
+    else if ([self.mode isEqualToString:@"sold"]){
+        //goto order summary
+        OrderSummaryController *vc = [[OrderSummaryController alloc]init];
+        vc.purchased = NO;
+        vc.orderObject = selectedOffer;
+        [self.navigationController pushViewController:vc animated:YES];
     }
 }
 @end

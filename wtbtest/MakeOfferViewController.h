@@ -40,6 +40,7 @@
 @property (weak, nonatomic) IBOutlet PFImageView *profileView;
 @property (weak, nonatomic) IBOutlet UIImageView *starView;
 @property (nonatomic, strong) PFUser *buyerUser;
+@property (weak, nonatomic) IBOutlet UILabel *dealsLabel;
 
 //camera buttons
 @property (weak, nonatomic) IBOutlet UIButton *firstCam;

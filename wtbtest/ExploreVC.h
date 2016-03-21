@@ -16,6 +16,7 @@
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
+@property (weak, nonatomic) IBOutlet UILabel *noresultsLabel;
 
 //location
 @property (nonatomic, strong) CLLocationManager *locationManager;

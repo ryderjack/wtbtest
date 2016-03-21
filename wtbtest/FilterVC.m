@@ -227,6 +227,8 @@
         [self.filtersArray addObject:@"new"];
         [self.usedButton setSelected:NO];
         [self.filtersArray removeObject:@"used"];
+        [self.anyButton setSelected:NO];
+        [self.filtersArray removeObject:@"any"];
     }
 }
 - (IBAction)usedPressed:(id)sender {
@@ -239,11 +241,13 @@
         [self.filtersArray addObject:@"used"];
         [self.newconditionButton setSelected:NO];
         [self.filtersArray removeObject:@"new"];
+        [self.anyButton setSelected:NO];
+        [self.filtersArray removeObject:@"any"];
     }
 }
 - (IBAction)anyPressed:(id)sender {
     if(self.anyButton.selected == YES){
-        [self.usedButton setSelected:NO];
+        [self.anyButton setSelected:NO];
         [self.filtersArray removeObject:@"any"];
     }
     else{

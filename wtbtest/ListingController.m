@@ -61,12 +61,13 @@
     self.titleLabel.adjustsFontSizeToFitWidth = YES;
     self.titleLabel.minimumScaleFactor=0.5;
     
-    ///////////////////////////////////////////////////////////////////////////does this work? surely would just goto first -if- always
-    if ([self.listingObject objectForKey:@"image2"]) {
-        [self.picIndicator setNumberOfPages:2];
-        self.numberOfPics = 2;
+    if ([self.listingObject objectForKey:@"image4"]){
+        [self.picIndicator setNumberOfPages:4];
+        self.numberOfPics = 4;
         self.firstImage = [self.listingObject objectForKey:@"image1"];
         self.secondImage = [self.listingObject objectForKey:@"image2"];
+        self.thirdImage = [self.listingObject objectForKey:@"image3"];
+        self.fourthImage = [self.listingObject objectForKey:@"image4"];
     }
     else if ([self.listingObject objectForKey:@"image3"]){
         [self.picIndicator setNumberOfPages:3];
@@ -75,13 +76,12 @@
         self.secondImage = [self.listingObject objectForKey:@"image2"];
         self.thirdImage = [self.listingObject objectForKey:@"image3"];
     }
-    else if ([self.listingObject objectForKey:@"image4"]){
-        [self.picIndicator setNumberOfPages:4];
-        self.numberOfPics = 4;
+    
+    else if ([self.listingObject objectForKey:@"image2"]) {
+        [self.picIndicator setNumberOfPages:2];
+        self.numberOfPics = 2;
         self.firstImage = [self.listingObject objectForKey:@"image1"];
         self.secondImage = [self.listingObject objectForKey:@"image2"];
-        self.thirdImage = [self.listingObject objectForKey:@"image3"];
-        self.fourthImage = [self.listingObject objectForKey:@"image4"];
     }
     else{
         [self.picIndicator setHidden:YES];
@@ -498,19 +498,19 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 - (IBAction)sellthisPressed:(id)sender {
-    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        CreateViewController *vc = [[CreateViewController alloc]init];
-        vc.status = @"edit";
-        vc.lastId = self.listingObject.objectId;
-        vc.editFromListing = YES;
-        vc.listing = self.listingObject;
-        [self.navigationController pushViewController:vc animated:YES];
-    }
-    else{
+//    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+//        CreateViewController *vc = [[CreateViewController alloc]init];
+//        vc.status = @"edit";
+//        vc.lastId = self.listingObject.objectId;
+//        vc.editFromListing = YES;
+//        vc.listing = self.listingObject;
+//        [self.navigationController pushViewController:vc animated:YES];
+//    }
+//    else{
         MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
         vc.listingObject = self.listingObject;
         vc.reviewMode = NO;
         [self.navigationController pushViewController:vc animated:YES];
-    }
+//    }
 }
 @end

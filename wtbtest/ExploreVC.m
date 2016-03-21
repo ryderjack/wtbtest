@@ -22,6 +22,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self.noresultsLabel setHidden:YES];
     
     self.navigationItem.title = @"Explore";
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
@@ -192,6 +193,12 @@
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
+            if (count == 0) {
+                [self.noresultsLabel setHidden:NO];
+            }
+            else{
+                [self.noresultsLabel setHidden:YES];
+            }
             self.lastInfinSkipped = count;
             [self.results removeAllObjects];
             [self.results addObjectsFromArray:objects];
@@ -398,6 +405,9 @@
             [self.infiniteQuery whereKey:@"size" equalTo:@"OS"];
         }
     }
+    else{
+        [self.infiniteQuery orderByDescending:@"createdAt"];
+    }
 }
 -(void)setupPullQuery{
     if (self.filtersArray.count > 0) {
@@ -495,6 +505,9 @@
         else if ([self.filtersArray containsObject:@"OS"]){
             [self.pullQuery whereKey:@"size" equalTo:@"OS"];
         }
+    }
+    else{
+        [self.pullQuery orderByDescending:@"createdAt"];
     }
 }
 

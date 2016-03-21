@@ -34,10 +34,11 @@
     self.saleCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.reviewButtonsCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
-    
-    
     self.buyerName.adjustsFontSizeToFitWidth = YES;
     self.buyerName.minimumScaleFactor=0.5;
+    
+    self.dealsLabel.adjustsFontSizeToFitWidth = YES;
+    self.dealsLabel.minimumScaleFactor=0.5;
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -93,12 +94,23 @@
         [self.tagExplain setAttributedText:string];
         
         PFUser *seller = [self.listingObject objectForKey:@"sellerUser"];
-        [seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        
+        [seller fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
-                PFFile *pic = [seller objectForKey:@"picture"];
-                [self.profileView setFile:pic];
-                [self.profileView loadInBackground];
                 self.buyerName.text = seller.username;
+                [self.profileView setFile:[seller objectForKey:@"picture"]];
+                [self.profileView loadInBackground];
+                
+                NSString *purchased = [seller objectForKey:@"purchased"];
+                NSString *sold = [seller objectForKey:@"sold"];
+                
+                if (!purchased) {
+                    purchased = @"0";
+                }
+                if (!sold) {
+                    sold = @"0";
+                }
+                self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %@\nSold: %@", purchased, sold];
             }
             else{
                 NSLog(@"error %@", error);
@@ -186,13 +198,22 @@
         self.sellingLabel.text = @"You're selling:";
         self.aboutUserLabel.text = @"About the buyer";
         PFUser *buyer = [self.listingObject objectForKey:@"postUser"];
-        [buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        [buyer fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
-                self.buyerUser = buyer;
-                PFFile *pic = [buyer objectForKey:@"picture"];
-                [self.profileView setFile:pic];
-                [self.profileView loadInBackground];
                 self.buyerName.text = buyer.username;
+                [self.profileView setFile:[buyer objectForKey:@"picture"]];
+                [self.profileView loadInBackground];
+                
+                NSString *purchased = [buyer objectForKey:@"purchased"];
+                NSString *sold = [buyer objectForKey:@"sold"];
+                
+                if (!purchased) {
+                    purchased = @"0";
+                }
+                if (!sold) {
+                    sold = @"0";
+                }
+                self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %@\nSold: %@", purchased, sold];
             }
             else{
                 NSLog(@"error %@", error);
@@ -742,26 +763,21 @@
     }
     
     if ([price isEqualToString:@""] && [delivery isEqualToString:@""]) {
-        NSLog(@"first");
         self.totalsumLabel.text = @"";
     }
     else if (![price isEqualToString:@""] && [delivery isEqualToString:@""]) {
-        NSLog(@"second");
         self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", price];
     }
     else if ([price isEqualToString:@""] && ![delivery isEqualToString:@""]) {
-        NSLog(@"third");
         self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", delivery];
     }
     else{
-        NSLog(@"four");
         //add together, we've got 2 numbers
-        int priceInt = [price intValue];
-        int deliveryInt = [delivery intValue];
-        NSLog(@"delivery int %d", deliveryInt);
-        int total = (priceInt + deliveryInt);
-        NSLog(@"total int %d", total);
-        self.totalsumLabel.text = [NSString stringWithFormat:@"£%d", total];
+        double priceInt = [price doubleValue];
+        double deliveryInt = [delivery doubleValue];
+        double total = (priceInt + deliveryInt);
+        NSLog(@"total double %f", total);
+        self.totalsumLabel.text = [NSString stringWithFormat:@"£%.2f", total];
     }
 }
 -(void)textViewDidBeginEditing:(UITextView *)textView{
@@ -783,20 +799,20 @@
     [self.itemTitle resignFirstResponder];
 }
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-    
-    if (textField == self.priceField || textField == self.deliveryField) {
-        // Prevent crashing undo bug – see note below.
-        if(range.length + range.location > textField.text.length)
-        {
-            return NO;
-        }
-        
-        NSUInteger newLength = [textField.text length] + [string length] - range.length;
-        return newLength <= 4;
-    }
-    return string;
-}
+//- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+//    
+//    if (textField == self.priceField || textField == self.deliveryField) {
+//        // Prevent crashing undo bug – see note below.
+//        if(range.length + range.location > textField.text.length)
+//        {
+//            return NO;
+//        }
+//        
+//        NSUInteger newLength = [textField.text length] + [string length] - range.length;
+//        return newLength <= 4;
+//    }
+//    return string;
+//}
 -(void)setImageBorder{
     self.profileView.layer.cornerRadius = self.profileView.frame.size.width / 2;
     self.profileView.layer.masksToBounds = YES;
@@ -814,15 +830,17 @@
         self.warningLabel.text = @"Fill out all the above fields";
     }
     else{
-        NSString *saleprice = [[self.priceField.text componentsSeparatedByCharactersInSet:
-                                   [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
-                                  componentsJoinedByString:@""];
-        NSString *deliverycost = [[self.deliveryField.text componentsSeparatedByCharactersInSet:
-                                   [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
-                                  componentsJoinedByString:@""];
-        NSString *totalcost = [[self.totalsumLabel.text componentsSeparatedByCharactersInSet:
-                                   [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
-                                  componentsJoinedByString:@""];
+        
+        NSString *prefixToRemove = @"£";
+        NSString *salePrice = [[NSString alloc]init];
+        salePrice = [self.priceField.text substringFromIndex:[prefixToRemove length]];
+        
+        NSString *deliveryCost = [[NSString alloc]init];
+        deliveryCost = [self.deliveryField.text substringFromIndex:[prefixToRemove length]];
+        
+        NSString *totalCost = [[NSString alloc]init];
+        totalCost = [self.totalsumLabel.text substringFromIndex:[prefixToRemove length]];
+        
         NSString *extraInfo = [self.extraFiel.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         
         PFObject *offerObject =[PFObject objectWithClassName:@"offers"];
@@ -839,10 +857,10 @@
         [offerObject setObject:self.chooseLocation.text forKey:@"itemLocation"];
         [offerObject setObject:self.geopoint forKey:@"geopoint"];
         [offerObject setObject:self.chooseDelivery.text forKey:@"deliveryMethod"];
-        [offerObject setObject:saleprice forKey:@"salePrice"];
+        [offerObject setObject:salePrice forKey:@"salePrice"];
         [offerObject setObject:@"open" forKey:@"status"];
-        [offerObject setObject:deliverycost forKey:@"deliveryCost"];
-        [offerObject setObject:totalcost forKey:@"totalCost"];
+        [offerObject setObject:deliveryCost forKey:@"deliveryCost"];
+        [offerObject setObject:totalCost forKey:@"totalCost"];
         [offerObject setObject:self.buyerUser forKey:@"buyerUser"];
         [offerObject setObject:[PFUser currentUser] forKey:@"sellerUser"];
         

@@ -105,14 +105,24 @@
     [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
     [orderObject setObject:[self.confirmedOfferObject objectForKey:@"sellerUser"] forKey:@"sellerUser"];
     [orderObject setObject:@"paid" forKey:@"status"];
-    [orderObject setObject:self.transactionfeeLabel.text forKey:@"fee"];
+    [orderObject setObject:@"YES" forKey:@"check"];
     
     NSString *prefixToRemove = @"£";
-    NSString *price = [[NSString alloc]init];
-    price = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
-
-    [orderObject setObject:price forKey:@"total"];
-    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCost"] forKey:@"salePrice"];
+    NSString *fee = [[NSString alloc]init];
+    fee = [self.transactionfeeLabel.text substringFromIndex:[prefixToRemove length]];
+    
+    [orderObject setObject:fee forKey:@"fee"];
+    
+    NSString *buyerTotal = [[NSString alloc]init];
+    buyerTotal = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
+    [orderObject setObject:buyerTotal forKey:@"buyerTotal"];
+    
+    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCost"] forKey:@"sellerTotal"];
+    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
+    NSString *delivery = [[NSString alloc]init];
+    delivery = [self.deliverypriceLabel.text substringFromIndex:[prefixToRemove length]];
+    
+    [orderObject setObject:delivery forKey:@"delivery"];
     
     [orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
