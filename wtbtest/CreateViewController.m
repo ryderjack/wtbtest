@@ -530,6 +530,7 @@
     }
     else if ([self.selection isEqualToString:@"category"]){
         self.chooseCategroy.text = item;
+        self.chooseSize.text = @"Choose";
     }
     else if ([self.selection isEqualToString:@"size"]){
         self.chooseSize.text = item;
@@ -545,6 +546,20 @@
 -(void)addLocation:(LocationView *)controller didFinishEnteringItem:(NSString *)item longi:(CLLocationDegrees)item1 lati:(CLLocationDegrees)item2{
     self.chooseLocation.text = item;
     self.geopoint = [PFGeoPoint geoPointWithLatitude:item2 longitude:item1];
+}
+
+-(void)addCurrentLocation:(LocationView *)controller didPress:(BOOL)decision{
+    
+    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
+        if (geoPoint) {
+            self.geopoint = geoPoint;
+            self.chooseLocation.text = @"Current location";
+        }
+        else{
+            NSLog(@"error %@", error);
+            self.chooseLocation.text = @"Choose";
+        }
+    }];
 }
 - (IBAction)wantobuyPressed:(id)sender {
     

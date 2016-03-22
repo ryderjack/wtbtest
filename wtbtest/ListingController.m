@@ -156,12 +156,12 @@
             
             //set star image depending on feedback
             
-            if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-                [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
-            }
-            else{
-                NSLog(@"not the same buyer");
-            }
+//            if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+//                [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
+//            }
+//            else{
+//                NSLog(@"not the same buyer");
+//            }
         }
         else{
             NSLog(@"error %@", error);
@@ -415,6 +415,7 @@
     [self presentViewController:activityController animated:YES completion:nil];
 }
 - (IBAction)wantobuytooPressed:(id)sender {
+    self.tabBarController.selectedIndex = 1;
 }
 
 -(void)setImageBorder{

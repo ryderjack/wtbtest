@@ -19,6 +19,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    [self.noResultsLabel setHidden:YES];
+    
     if ([self.mode isEqualToString:@"sent"]) {
         self.navigationItem.title = @"Sent offers";
     }
@@ -176,6 +178,14 @@
         [query orderByDescending:@"createdAt"];
         [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
             if (objects) {
+                
+                if (objects.count == 0) {
+                    [self.noResultsLabel setHidden:NO];
+                }
+                else{
+                    [self.noResultsLabel setHidden:YES];
+                }
+                
                 [self.results removeAllObjects];
                 [self.results addObjectsFromArray:objects];
                 [self.collectionView reloadData];
@@ -201,6 +211,12 @@
         [query orderByDescending:@"createdAt"];
         [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
             if (objects) {
+                if (objects.count == 0) {
+                    [self.noResultsLabel setHidden:NO];
+                }
+                else{
+                    [self.noResultsLabel setHidden:YES];
+                }
                 [self.results removeAllObjects];
                 [self.results addObjectsFromArray:objects];
                 [self.collectionView reloadData];

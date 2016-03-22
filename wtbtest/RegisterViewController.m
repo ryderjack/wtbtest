@@ -163,7 +163,7 @@
         }
     }
     else if (indexPath.section ==1){
-        return 155;
+        return 140;
     }
     return 44;
 }

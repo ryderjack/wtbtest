@@ -112,7 +112,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="130"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="pwH-aZ-Tdm" id="NLt-7X-fHa">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="130"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="129.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="About the buyer" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ouT-0c-Pyd">
@@ -164,6 +164,7 @@
                             <constraint firstItem="JOJ-4L-0c3" firstAttribute="top" secondItem="aRn-Cc-gw8" secondAttribute="bottom" id="8n0-Vs-nNe"/>
                             <constraint firstItem="tPc-vC-rcE" firstAttribute="top" secondItem="aRn-Cc-gw8" secondAttribute="top" id="Fyv-RO-ecu"/>
                             <constraint firstAttribute="bottom" secondItem="JOJ-4L-0c3" secondAttribute="bottom" id="GWt-m9-qOr"/>
+                            <constraint firstAttribute="trailing" secondItem="O4V-lz-a47" secondAttribute="trailing" constant="8" id="O60-Jc-Qxo"/>
                             <constraint firstItem="O4V-lz-a47" firstAttribute="trailing" secondItem="q4k-if-tjo" secondAttribute="trailingMargin" id="a60-bB-PaE"/>
                             <constraint firstItem="tPc-vC-rcE" firstAttribute="leading" secondItem="q4k-if-tjo" secondAttribute="leadingMargin" id="g7y-a8-2bV"/>
                             <constraint firstItem="O4V-lz-a47" firstAttribute="centerY" secondItem="q4k-if-tjo" secondAttribute="centerY" id="hpA-Yx-MVh"/>
@@ -176,6 +177,7 @@
                         <variation key="default">
                             <mask key="constraints">
                                 <exclude reference="a60-bB-PaE"/>
+                                <exclude reference="nb7-5e-Qht"/>
                                 <exclude reference="xQ3-AK-9zn"/>
                             </mask>
                         </variation>

@@ -331,52 +331,22 @@
         }
     }
     else if (indexPath.row ==9){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.ninthLabel.text;
-        }
-        else{
-            selectionString = self.tenthLabel.text;
-        }
+        selectionString = self.ninthLabel.text;
     }
     else if (indexPath.row ==10){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.tenthLabel.text;
-        }
-        else{
-            selectionString = self.eleventhLabel.text;
-        }
+        selectionString = self.tenthLabel.text;
     }
     else if (indexPath.row ==11){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.tenthLabel.text;
-        }
-        else{
-            selectionString = self.eleventhLabel.text;
-        }
+        selectionString = self.eleventhLabel.text;
     }
     else if (indexPath.row ==12){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.eleventhLabel.text;
-        }
-        else{
-            selectionString = self.twelveLabel.text;
-        }
+        selectionString = self.twelveLabel.text;
     }
     else if (indexPath.row ==13){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.twelveLabel.text;
-        }
-        else{
-            selectionString = self.thirteenLabel.text;
-        }
+        selectionString = self.thirteenLabel.text;
     }
     else if (indexPath.row ==14){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.thirteenLabel.text;
-        }
-        else{
-            selectionString = self.fourteenthLabel.text;
-        }
+        selectionString = self.fourteenthLabel.text;
     }
     //if not nothing (coz of selection cell in sizes) proceed..
     NSLog(@"selected %@", selectionString);

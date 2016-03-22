@@ -16,5 +16,6 @@
 @property (nonatomic) NSString *mode;
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
+@property (weak, nonatomic) IBOutlet UILabel *noResultsLabel;
 
 @end

@@ -27,14 +27,26 @@
     self.definesPresentationContext = YES;
 
     self.searchResults = [[NSMutableArray alloc] init];
+    
+    self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-102, (self.view.frame.size.height/2)+(self.view.frame.size.height/4), 204, 50)];
+    [self.button setImage:[UIImage imageNamed:@"currentButton"] forState:UIControlStateNormal];
+    [self.button addTarget:self action:@selector(useCurrentLoc) forControlEvents:UIControlEventTouchUpInside];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.button];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
 }
 
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [self.button removeFromSuperview];
+}
+
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    
     [self.searchController setActive:YES];
     [self.searchController.searchBar becomeFirstResponder];
 }
@@ -110,5 +122,8 @@
     
 }
 
-
+-(void)useCurrentLoc{
+    [self.delegate addCurrentLocation:self didPress:YES];
+    [self.navigationController popViewControllerAnimated:YES];
+}
 @end

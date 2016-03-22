@@ -191,6 +191,8 @@
     }
     else{
         //normal make an offer mode
+        [self.itemTitle becomeFirstResponder];
+        
         UIBarButtonItem *backButton = [[UIBarButtonItem alloc] initWithTitle:@"< Back" style:UIBarButtonItemStylePlain target:self action:@selector(popdecide)];
         self.navigationItem.leftBarButtonItem = backButton;
         
@@ -647,6 +649,7 @@
         self.chooseCondition.text = item;
     }
     else if ([self.selection isEqualToString:@"category"]){
+        self.chooseSize.text = @"Choose";
         self.chooseCategory.text = item;
     }
     else if ([self.selection isEqualToString:@"size"]){
@@ -658,6 +661,15 @@
     }
     else if ([self.selection isEqualToString:@"delivery"]){
         self.chooseDelivery.text = item;
+        if ([item isEqualToString:@"Meetup"]) {
+            self.deliveryField.text = @"£0.00";
+            self.deliveryField.textColor = [UIColor lightGrayColor];
+            [self.deliveryField setEnabled:NO];
+        }
+        else{
+            [self.deliveryField setEnabled:YES];
+            self.deliveryField.textColor = [UIColor colorWithRed:74/255.0f green:74/255.0f blue:74/255.0f alpha:1.0f];
+        }
     }
 }
 
@@ -729,6 +741,19 @@
 -(void)addLocation:(LocationView *)controller didFinishEnteringItem:(NSString *)item longi:(CLLocationDegrees)item1 lati:(CLLocationDegrees)item2{
     self.chooseLocation.text = item;
     self.geopoint = [PFGeoPoint geoPointWithLatitude:item2 longitude:item1];
+}
+
+-(void)addCurrentLocation:(LocationView *)controller didPress:(BOOL)decision{
+    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
+        if (geoPoint) {
+            self.geopoint = geoPoint;
+            self.chooseLocation.text = @"Current location";
+        }
+        else{
+            NSLog(@"error %@", error);
+            self.chooseLocation.text = @"Choose";
+        }
+    }];
 }
 
 #pragma mark - Text field/view delegate methods

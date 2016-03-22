@@ -23,6 +23,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self.noresultsLabel setHidden:YES];
+    [self.noResultsImageView setHidden:YES];
     
     self.navigationItem.title = @"Explore";
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
@@ -195,9 +196,11 @@
             int count = (int)[objects count];
             if (count == 0) {
                 [self.noresultsLabel setHidden:NO];
+                [self.noResultsImageView setHidden:NO];
             }
             else{
                 [self.noresultsLabel setHidden:YES];
+                [self.noResultsImageView setHidden:YES];
             }
             self.lastInfinSkipped = count;
             [self.results removeAllObjects];
