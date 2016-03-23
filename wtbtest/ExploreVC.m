@@ -121,10 +121,10 @@
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
-//    if (![PFUser currentUser]) {
-//        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
-//        [self presentViewController:vc animated:YES completion:nil];
-//    }
+    if (![PFUser currentUser]) {
+        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+        [self presentViewController:vc animated:YES completion:nil];
+    }
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -142,10 +142,12 @@
     
     PFGeoPoint *location = [listing objectForKey:@"geopoint"];
     if (self.currentLocation && location) {
+        NSLog(@"here");
         int distance = [location distanceInKilometersTo:self.currentLocation];
         cell.distanceLabel.text = [NSString stringWithFormat:@"%dkm", distance];
     }
     else{
+        NSLog(@"nothing! %@ %@", self.currentLocation, location);
         cell.distanceLabel.text = @"";
     }
     
@@ -226,6 +228,7 @@
             [self.locationManager requestWhenInUseAuthorization];
         }
         [_locationManager startUpdatingLocation];
+        [self parseLocation];
     }
 }
 
@@ -252,6 +255,7 @@
             CLLocation *currentLocation = _locationManager.location;
             if (currentLocation) {
                 //got location
+                [self parseLocation];
             }
         }
             break;
@@ -264,6 +268,7 @@
             CLLocation *currentLocation = _locationManager.location;
             if (currentLocation) {
                 //got location
+                [self parseLocation];
             }
         }
             break;

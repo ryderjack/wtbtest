@@ -8,12 +8,14 @@
 
 #import <UIKit/UIKit.h>
 #import <MapKit/MapKit.h>
+#import <Parse/Parse.h>
+#import <ParseUI/ParseUI.h>
 
 @class LocationView;
 
 @protocol LocationViewControllerDelegate <NSObject>
 - (void)addLocation:(LocationView *)controller didFinishEnteringItem:(NSString *)item longi:(CLLocationDegrees )item1 lati:(CLLocationDegrees )item2;
-- (void)addCurrentLocation:(LocationView *)controller didPress:(BOOL)decision;
+- (void)addCurrentLocation:(LocationView *)controller didPress:(PFGeoPoint *)geoPoint title: (NSString *)placemark;
 @end
 
 @interface LocationView : UITableViewController <UISearchControllerDelegate, UISearchResultsUpdating, UISearchBarDelegate>

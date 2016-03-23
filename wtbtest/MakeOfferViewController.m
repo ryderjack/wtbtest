@@ -743,17 +743,16 @@
     self.geopoint = [PFGeoPoint geoPointWithLatitude:item2 longitude:item1];
 }
 
--(void)addCurrentLocation:(LocationView *)controller didPress:(BOOL)decision{
-    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
-        if (geoPoint) {
-            self.geopoint = geoPoint;
-            self.chooseLocation.text = @"Current location";
-        }
-        else{
-            NSLog(@"error %@", error);
-            self.chooseLocation.text = @"Choose";
-        }
-    }];
+-(void)addCurrentLocation:(LocationView *)controller didPress:(PFGeoPoint *)geoPoint title:(NSString *)placemark{
+    
+    if (geoPoint) {
+        self.geopoint = geoPoint;
+        self.chooseLocation.text = [NSString stringWithFormat:@"%@",placemark];
+    }
+    else{
+        NSLog(@"error with location");
+        self.chooseLocation.text = @"Choose";
+    }
 }
 
 #pragma mark - Text field/view delegate methods
@@ -849,10 +848,12 @@
     self.profileView.contentMode = UIViewContentModeScaleAspectFill;
 }
 - (IBAction)sendOfferPressed:(id)sender {
+    [self.sendOfferButton setEnabled:NO];
     [self removeKeyboard];
     
     if ([self.chooseCategory.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || self.photostotal == 0 || [self.priceField.text isEqualToString:@"£"] || [self.priceField.text isEqualToString:@""] || [self.priceField.text isEqualToString:@"£"]) {
         self.warningLabel.text = @"Fill out all the above fields";
+        [self.sendOfferButton setEnabled:YES];
     }
     else{
         
@@ -933,20 +934,20 @@
             PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
             [offerObject setObject:imageFile4 forKey:@"image4"];
         }
-        
         if ([self.extraFiel.text isEqualToString:@"eg. Includes original box"]) {
             //don't save its placeholder
         }
         else{
             [offerObject setObject:extraInfo forKey:@"extraInfo"];
         }
-        
         [offerObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
+                [self.sendOfferButton setEnabled:YES];
                 NSLog(@"offer saved! %@", offerObject.objectId);
                 [self.navigationController popViewControllerAnimated:YES];
             }
             else{
+                [self.sendOfferButton setEnabled:YES];
                 NSLog(@"error saving %@", error);
             }
         }];

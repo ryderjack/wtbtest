@@ -25,9 +25,11 @@
     self.tableView.tableHeaderView = self.searchController.searchBar;
     [self.searchController.searchBar sizeToFit];
     self.definesPresentationContext = YES;
-
+    self.searchController.searchBar.tintColor = [UIColor colorWithRed:0.525 green:0.745 blue:1 alpha:1];
+    
     self.searchResults = [[NSMutableArray alloc] init];
     
+    // current location button
     self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-102, (self.view.frame.size.height/2)+(self.view.frame.size.height/4), 204, 50)];
     [self.button setImage:[UIImage imageNamed:@"currentButton"] forState:UIControlStateNormal];
     [self.button addTarget:self action:@selector(useCurrentLoc) forControlEvents:UIControlEventTouchUpInside];
@@ -46,9 +48,9 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    
     [self.searchController setActive:YES];
-    [self.searchController.searchBar becomeFirstResponder];
+    //showing keyboard hides current location button, could have tool bar button but does it look as good?
+//    [self performSelector:@selector(showKeyboard) withObject:nil afterDelay:0.1];
 }
 
 #pragma mark - Table view data source
@@ -111,11 +113,15 @@
 -(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
     [self updateSearchResultsForSearchController:self.searchController];
 }
+
+- (void)showKeyboard
+{
+    [self.searchController.searchBar becomeFirstResponder];
+}
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     NSString *selectionString = [self.tableView cellForRowAtIndexPath:indexPath].textLabel.text;
-    NSLog(@"selection string location %@", selectionString);
     CLLocationCoordinate2D selectedItem = [[[[self.searchResults objectAtIndex:indexPath.row] placemark]location]coordinate];
     [self.delegate addLocation:self didFinishEnteringItem:selectionString longi:selectedItem.longitude lati:selectedItem.longitude];
     [self.navigationController popViewControllerAnimated:YES];
@@ -123,7 +129,29 @@
 }
 
 -(void)useCurrentLoc{
-    [self.delegate addCurrentLocation:self didPress:YES];
-    [self.navigationController popViewControllerAnimated:YES];
+    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
+        if (!error) {
+            double latitude = geoPoint.latitude;
+            double longitude = geoPoint.longitude;
+            
+            CLLocation *loc = [[CLLocation alloc]initWithLatitude:latitude longitude:longitude];
+            CLGeocoder *geocoder = [[CLGeocoder alloc]init];
+            [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
+                if (placemarks) {
+                    CLPlacemark *placemark = [placemarks lastObject];
+                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.administrativeArea];
+                    [self.delegate addCurrentLocation:self didPress:geoPoint title:titleString];
+                    [self.navigationController popViewControllerAnimated:YES];
+                }
+                else{
+                    NSLog(@"error %@", error);
+                }
+            }];
+        }
+        else{
+            NSLog(@"error %@", error);
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    }];
 }
 @end

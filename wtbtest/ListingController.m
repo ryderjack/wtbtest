@@ -132,6 +132,12 @@
     //buyer info
     self.buyer = [self.listingObject objectForKey:@"postUser"];
     
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
+    }
+    else{
+        //not the same buyer
+    }
     
     [self setImageBorder];
     
@@ -155,19 +161,11 @@
             self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %@\nSold: %@", purchased, sold];
             
             //set star image depending on feedback
-            
-//            if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-//                [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
-//            }
-//            else{
-//                NSLog(@"not the same buyer");
-//            }
         }
         else{
             NSLog(@"error %@", error);
         }
     }];
-    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -361,7 +359,6 @@
         }
     }
     return 44;
-
 }
 
 -(void) calcPostedDate{
@@ -499,19 +496,19 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 - (IBAction)sellthisPressed:(id)sender {
-//    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-//        CreateViewController *vc = [[CreateViewController alloc]init];
-//        vc.status = @"edit";
-//        vc.lastId = self.listingObject.objectId;
-//        vc.editFromListing = YES;
-//        vc.listing = self.listingObject;
-//        [self.navigationController pushViewController:vc animated:YES];
-//    }
-//    else{
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        CreateViewController *vc = [[CreateViewController alloc]init];
+        vc.status = @"edit";
+        vc.lastId = self.listingObject.objectId;
+        vc.editFromListing = YES;
+        vc.listing = self.listingObject;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else{
         MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
         vc.listingObject = self.listingObject;
         vc.reviewMode = NO;
         [self.navigationController pushViewController:vc animated:YES];
-//    }
+    }
 }
 @end

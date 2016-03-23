@@ -10,7 +10,6 @@
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CameraController">
             <connections>
                 <outlet property="camView" destination="R2B-xG-3vZ" id="8yO-mc-V1Z"/>
-                <outlet property="flashButton" destination="x0J-KN-XUF" id="UPI-My-HPn"/>
                 <outlet property="switchButton" destination="x0J-KN-XUF" id="qzY-00-N8h"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>

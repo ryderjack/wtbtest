@@ -48,6 +48,7 @@
                 <outlet property="secondDelete" destination="qhe-fA-q1w" id="AxN-oi-g5t"/>
                 <outlet property="secondImageView" destination="0o5-Od-rnO" id="M5r-3d-gyF"/>
                 <outlet property="sellingLabel" destination="AVo-JS-beu" id="2mV-MY-Vpc"/>
+                <outlet property="sendOfferButton" destination="R7E-5K-khw" id="M9p-Sm-RtF"/>
                 <outlet property="sizeCell" destination="79G-wk-r0x" id="DwX-uA-rQb"/>
                 <outlet property="starView" destination="O4V-lz-a47" id="Irl-mF-io0"/>
                 <outlet property="tagExplain" destination="NLn-Qo-Cly" id="GkR-BK-Ebp"/>

@@ -102,10 +102,10 @@
     
     if (indexPath.section == 0){
         if (indexPath.row == 0) {
-            return 70;
+            return 59;
         }
         else if (indexPath.row == 1 || indexPath.row == 2 || indexPath.row == 3){
-            return 120;
+            return 101;
         }
         else if (indexPath.row == 4){
             return 182;

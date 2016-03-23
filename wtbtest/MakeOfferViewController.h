@@ -98,5 +98,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *acceptOfferButton;
 @property (weak, nonatomic) IBOutlet UIButton *declineOfferButton;
 @property (weak, nonatomic) IBOutlet UIButton *askSellerButton;
+@property (weak, nonatomic) IBOutlet UIButton *sendOfferButton;
 
 @end

@@ -66,6 +66,9 @@
     if (self.editFromListing == YES) {
         [self listingSetup];
     }
+    
+    //add done button to number pad keyboard on pay field
+    [self addDoneButton];
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -332,6 +335,7 @@
     [textField resignFirstResponder];
     return YES;
 }
+
 -(void)textFieldDidBeginEditing:(UITextField *)textField{
     if (textField == self.payField) {
         self.payField.text = @"£";
@@ -348,6 +352,15 @@
         textView.text = @"eg. Must come with original box";
         textView.textColor = [UIColor lightGrayColor];
     }
+}
+//return key removes keyboard in text view
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+    if([text isEqualToString:@"\n"]) {
+        [textView resignFirstResponder];
+        return NO;
+    }
+    
+    return YES;
 }
 -(void)removeKeyboard{
     [self.titleField resignFirstResponder];
@@ -548,25 +561,24 @@
     self.geopoint = [PFGeoPoint geoPointWithLatitude:item2 longitude:item1];
 }
 
--(void)addCurrentLocation:(LocationView *)controller didPress:(BOOL)decision{
+-(void)addCurrentLocation:(LocationView *)controller didPress:(PFGeoPoint *)geoPoint title:(NSString *)placemark{
     
-    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
         if (geoPoint) {
             self.geopoint = geoPoint;
-            self.chooseLocation.text = @"Current location";
+            self.chooseLocation.text = [NSString stringWithFormat:@"%@",placemark];
         }
         else{
-            NSLog(@"error %@", error);
+            NSLog(@"error with location");
             self.chooseLocation.text = @"Choose";
         }
-    }];
 }
 - (IBAction)wantobuyPressed:(id)sender {
-    
+    [self.saveButton setEnabled:NO];
     [self removeKeyboard];
     
     if ([self.chooseCategroy.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0) {
         self.warningLabel.text = @"Fill out all the above fields";
+        [self.saveButton setEnabled:YES];
     }
     else{
         NSString *willingToPay = [[self.payField.text componentsSeparatedByCharactersInSet:
@@ -683,6 +695,7 @@
         
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
+                [self.saveButton setEnabled:YES];
                 NSLog(@"listing saved! %@", self.listing.objectId);
                 ListingCompleteView *vc = [[ListingCompleteView alloc]init];
                 vc.delegate = self;
@@ -692,6 +705,7 @@
                 [self.navigationController pushViewController:vc animated:YES];
             }
             else{
+                [self.saveButton setEnabled:YES];
                 NSLog(@"error saving %@", error);
             }
         }];
@@ -856,6 +870,19 @@
         [self.fourthCam setEnabled:NO];
         self.photostotal = 4;
     }
+}
+
+- (void)addDoneButton {
+    UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
+    [keyboardToolbar sizeToFit];
+    UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                      target:nil action:nil];
+    UIBarButtonItem *doneBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                      target:self.view action:@selector(endEditing:)];
+    keyboardToolbar.items = @[flexBarButton, doneBarButton];
+    self.payField.inputAccessoryView = keyboardToolbar;
 }
 
 @end
