@@ -49,6 +49,7 @@
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     [self.searchController setActive:YES];
+    
     //showing keyboard hides current location button, could have tool bar button but does it look as good?
 //    [self performSelector:@selector(showKeyboard) withObject:nil afterDelay:0.1];
 }

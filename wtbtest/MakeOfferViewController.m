@@ -199,15 +199,15 @@
         self.navigationItem.title = @"Make an offer";
         self.sellingLabel.text = @"You're selling:";
         self.aboutUserLabel.text = @"About the buyer";
-        PFUser *buyer = [self.listingObject objectForKey:@"postUser"];
-        [buyer fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        self.buyerUser = [self.listingObject objectForKey:@"postUser"];
+        [self.buyerUser fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
-                self.buyerName.text = buyer.username;
-                [self.profileView setFile:[buyer objectForKey:@"picture"]];
+                self.buyerName.text = self.buyerUser.username;
+                [self.profileView setFile:[self.buyerUser objectForKey:@"picture"]];
                 [self.profileView loadInBackground];
                 
-                NSString *purchased = [buyer objectForKey:@"purchased"];
-                NSString *sold = [buyer objectForKey:@"sold"];
+                NSString *purchased = [self.buyerUser objectForKey:@"purchased"];
+                NSString *sold = [self.buyerUser objectForKey:@"sold"];
                 
                 if (!purchased) {
                     purchased = @"0";
@@ -746,7 +746,9 @@
 -(void)addCurrentLocation:(LocationView *)controller didPress:(PFGeoPoint *)geoPoint title:(NSString *)placemark{
     
     if (geoPoint) {
+        NSLog(@"geopoint %@", geoPoint);
         self.geopoint = geoPoint;
+        NSLog(@"geopoint %@", self.geopoint);
         self.chooseLocation.text = [NSString stringWithFormat:@"%@",placemark];
     }
     else{
@@ -870,25 +872,65 @@
         NSString *extraInfo = [self.extraFiel.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         
         PFObject *offerObject =[PFObject objectWithClassName:@"offers"];
-        
+       
         [offerObject setObject:self.listingObject forKey:@"wtbListing"];
+         NSLog(@"%@", self.listingObject);
+        
         [offerObject setObject:self.itemTitle.text forKey:@"title"];
+         NSLog(@"%@", self.itemTitle.text);
         
         [offerObject setObject:self.chooseCondition.text forKey:@"condition"];
+         NSLog(@"%@", self.chooseCondition.text);
+        
         [offerObject setObject:self.chooseCategory.text forKey:@"category"];
+         NSLog(@"%@", self.chooseCategory.text);
+        
         [offerObject setObject:self.chooseSize.text forKey:@"size"];
+         NSLog(@"%@", self.chooseSize.text);
+        
         if (self.genderSize) {
+            
             [offerObject setObject:self.genderSize forKey:@"sizeGender"];
+             NSLog(@"%@", self.genderSize);
         }
+        
         [offerObject setObject:self.chooseLocation.text forKey:@"itemLocation"];
-        [offerObject setObject:self.geopoint forKey:@"geopoint"];
+         NSLog(@"%@", self.chooseLocation.text);
+        
+        if (self.geopoint) {
+            [offerObject setObject:self.geopoint forKey:@"geopoint"];
+             NSLog(@"%@", self.geopoint);
+        }
+        else{
+            NSLog(@"return");
+            self.warningLabel.text = @"Try your location again!";
+            self.chooseLocation.text = @"Choose";
+            [self.sendOfferButton setEnabled:YES];
+            return;
+        }
+        
         [offerObject setObject:self.chooseDelivery.text forKey:@"deliveryMethod"];
+        
         [offerObject setObject:salePrice forKey:@"salePrice"];
+         NSLog(@"%@", salePrice);
+        
         [offerObject setObject:@"open" forKey:@"status"];
+        
         [offerObject setObject:deliveryCost forKey:@"deliveryCost"];
+         NSLog(@"%@", deliveryCost);
+        
         [offerObject setObject:totalCost forKey:@"totalCost"];
+         NSLog(@"%@", totalCost);
+        
         [offerObject setObject:self.buyerUser forKey:@"buyerUser"];
+        
+        NSLog(@"buyer %@", self.buyerUser);
+        
         [offerObject setObject:[PFUser currentUser] forKey:@"sellerUser"];
+       
+        NSLog(@"current %@", [PFUser currentUser]);
+        NSLog(@"hello!!!!");
+        
         
         if (self.photostotal == 1) {
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
@@ -934,12 +976,15 @@
             PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
             [offerObject setObject:imageFile4 forKey:@"image4"];
         }
+        
+        NSLog(@"after images");
         if ([self.extraFiel.text isEqualToString:@"eg. Includes original box"]) {
             //don't save its placeholder
         }
         else{
             [offerObject setObject:extraInfo forKey:@"extraInfo"];
         }
+        NSLog(@"about to save");
         [offerObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
                 [self.sendOfferButton setEnabled:YES];

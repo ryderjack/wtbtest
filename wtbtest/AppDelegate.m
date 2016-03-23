@@ -25,12 +25,11 @@
     //initial Parse & Fb set up
     
     [Parse initializeWithConfiguration:[ParseClientConfiguration configurationWithBlock:^(id<ParseMutableClientConfiguration> configuration) {
-        
+
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
-//        configuration.server = @"http://localhost:1337/parse";
-        
-        configuration.server = @"http://wantobuy.azurewebsites.net/parse";
+        configuration.server = @"http://localhost:1337/parse";
+//        configuration.server = @"http://wantobuy.azurewebsites.net/parse";
         
     }]];
     
