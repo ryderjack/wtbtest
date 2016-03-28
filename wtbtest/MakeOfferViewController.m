@@ -924,13 +924,7 @@
         
         [offerObject setObject:self.buyerUser forKey:@"buyerUser"];
         
-        NSLog(@"buyer %@", self.buyerUser);
-        
         [offerObject setObject:[PFUser currentUser] forKey:@"sellerUser"];
-       
-        NSLog(@"current %@", [PFUser currentUser]);
-        NSLog(@"hello!!!!");
-        
         
         if (self.photostotal == 1) {
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
@@ -1026,7 +1020,6 @@
     }]];
     
     [self presentViewController:alertView animated:YES completion:nil];
-    
 }
 
 @end

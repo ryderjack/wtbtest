@@ -20,6 +20,9 @@
 		0404512F1C8ED32B001D5F3B /* acceptBuyButton@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0404512E1C8ED32B001D5F3B /* acceptBuyButton@1x.png */; };
 		040451331C8ED5FF001D5F3B /* CheckoutController.m in Sources */ = {isa = PBXBuildFile; fileRef = 040451311C8ED5FF001D5F3B /* CheckoutController.m */; };
 		040451341C8ED5FF001D5F3B /* CheckoutController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 040451321C8ED5FF001D5F3B /* CheckoutController.xib */; };
+		040D59301CA8453C0091E6F1 /* sellthisButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 040D592D1CA8453C0091E6F1 /* sellthisButton.png */; };
+		040D59311CA8453C0091E6F1 /* sellthisButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 040D592E1CA8453C0091E6F1 /* sellthisButton@2x.png */; };
+		040D59321CA8453C0091E6F1 /* sellthisButton@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 040D592F1CA8453C0091E6F1 /* sellthisButton@3x.png */; };
 		0431C6BA1C9C530C0025AF67 /* OrderSummaryController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0431C6B81C9C530C0025AF67 /* OrderSummaryController.m */; };
 		0431C6BB1C9C530C0025AF67 /* OrderSummaryController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0431C6B91C9C530C0025AF67 /* OrderSummaryController.xib */; };
 		0447CFF81CA02B5500BE5638 /* markShipped@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0447CFF51CA02B5500BE5638 /* markShipped@1x.png */; };
@@ -216,6 +219,27 @@
 		04A91DE61C87946400035F55 /* womenorange@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04A91DD71C87946400035F55 /* womenorange@2x.png */; };
 		04A91DE71C87946400035F55 /* menorange@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04A91DD81C87946400035F55 /* menorange@3x.png */; };
 		04A91DE81C87946400035F55 /* womenorange@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04A91DD91C87946400035F55 /* womenorange@3x.png */; };
+		04B0F85A1CA413E500C247F1 /* FeedbackController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04B0F8581CA413E500C247F1 /* FeedbackController.m */; };
+		04B0F85B1CA413E500C247F1 /* FeedbackController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8591CA413E500C247F1 /* FeedbackController.xib */; };
+		04B0F8601CA414F200C247F1 /* starIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F85C1CA414F200C247F1 /* starIcon@3x.png */; };
+		04B0F8611CA414F200C247F1 /* starBlkIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F85D1CA414F200C247F1 /* starBlkIcon.png */; };
+		04B0F8621CA414F200C247F1 /* starBlkIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F85E1CA414F200C247F1 /* starBlkIcon@2x.png */; };
+		04B0F8631CA414F200C247F1 /* starBlkIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F85F1CA414F200C247F1 /* starBlkIcon@3x.png */; };
+		04B0F8661CA414F700C247F1 /* starIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8641CA414F700C247F1 /* starIcon.png */; };
+		04B0F8671CA414F700C247F1 /* starIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8651CA414F700C247F1 /* starIcon@2x.png */; };
+		04B0F86D1CA5459D00C247F1 /* FBGroupShareViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04B0F86B1CA5459D00C247F1 /* FBGroupShareViewController.m */; };
+		04B0F86E1CA5459D00C247F1 /* FBGroupShareViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F86C1CA5459D00C247F1 /* FBGroupShareViewController.xib */; };
+		04B0F8761CA547A600C247F1 /* group3@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8701CA547A600C247F1 /* group3@3x.png */; };
+		04B0F8771CA547A600C247F1 /* group2.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8711CA547A600C247F1 /* group2.png */; };
+		04B0F8781CA547A600C247F1 /* group2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8721CA547A600C247F1 /* group2@2x.png */; };
+		04B0F8791CA547A600C247F1 /* group2@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8731CA547A600C247F1 /* group2@3x.png */; };
+		04B0F87A1CA547A600C247F1 /* group1.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8741CA547A600C247F1 /* group1.png */; };
+		04B0F87B1CA547A600C247F1 /* group1@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8751CA547A600C247F1 /* group1@2x.png */; };
+		04B0F87E1CA547AB00C247F1 /* group3.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F87C1CA547AB00C247F1 /* group3.png */; };
+		04B0F87F1CA547AB00C247F1 /* group3@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F87D1CA547AB00C247F1 /* group3@2x.png */; };
+		04B0F8811CA547B200C247F1 /* group1@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8801CA547B200C247F1 /* group1@3x.png */; };
+		04B0F8881CA58E0A00C247F1 /* groupWVController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04B0F8861CA58E0A00C247F1 /* groupWVController.m */; };
+		04B0F8891CA58E0A00C247F1 /* groupWVController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8871CA58E0A00C247F1 /* groupWVController.xib */; };
 		04C080331C8469DE00B8682C /* dots.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C0801F1C8469DE00B8682C /* dots.png */; };
 		04C080341C8469DE00B8682C /* filter@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C080201C8469DE00B8682C /* filter@2x.png */; };
 		04C080351C8469DE00B8682C /* dots@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C080211C8469DE00B8682C /* dots@2x.png */; };
@@ -273,9 +297,6 @@
 		04D9B9631C88FBB1004AF0F2 /* clock@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9601C88FBB1004AF0F2 /* clock@2x.png */; };
 		04D9B9641C88FBB1004AF0F2 /* clock@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9611C88FBB1004AF0F2 /* clock@3x.png */; };
 		04D9B9651C88FBB1004AF0F2 /* clock.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9621C88FBB1004AF0F2 /* clock.png */; };
-		04D9B9691C899189004AF0F2 /* sellthisButton@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9661C899189004AF0F2 /* sellthisButton@3x.png */; };
-		04D9B96A1C899189004AF0F2 /* sellthisButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9671C899189004AF0F2 /* sellthisButton.png */; };
-		04D9B96B1C899189004AF0F2 /* sellthisButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9681C899189004AF0F2 /* sellthisButton@2x.png */; };
 		04D9B9751C899CF1004AF0F2 /* shareListing@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B96C1C899CF1004AF0F2 /* shareListing@2x.png */; };
 		04D9B9761C899CF1004AF0F2 /* savelater@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B96D1C899CF1004AF0F2 /* savelater@2x.png */; };
 		04D9B9771C899CF1004AF0F2 /* savelater@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B96E1C899CF1004AF0F2 /* savelater@3x.png */; };
@@ -404,6 +425,9 @@
 		040451301C8ED5FF001D5F3B /* CheckoutController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CheckoutController.h; sourceTree = "<group>"; };
 		040451311C8ED5FF001D5F3B /* CheckoutController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CheckoutController.m; sourceTree = "<group>"; };
 		040451321C8ED5FF001D5F3B /* CheckoutController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CheckoutController.xib; sourceTree = "<group>"; };
+		040D592D1CA8453C0091E6F1 /* sellthisButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sellthisButton.png; sourceTree = "<group>"; };
+		040D592E1CA8453C0091E6F1 /* sellthisButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sellthisButton@2x.png"; sourceTree = "<group>"; };
+		040D592F1CA8453C0091E6F1 /* sellthisButton@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sellthisButton@3x.png"; sourceTree = "<group>"; };
 		0431C6B71C9C530C0025AF67 /* OrderSummaryController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OrderSummaryController.h; sourceTree = "<group>"; };
 		0431C6B81C9C530C0025AF67 /* OrderSummaryController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OrderSummaryController.m; sourceTree = "<group>"; };
 		0431C6B91C9C530C0025AF67 /* OrderSummaryController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = OrderSummaryController.xib; sourceTree = "<group>"; };
@@ -620,6 +644,30 @@
 		04A91DD71C87946400035F55 /* womenorange@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "womenorange@2x.png"; sourceTree = "<group>"; };
 		04A91DD81C87946400035F55 /* menorange@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menorange@3x.png"; sourceTree = "<group>"; };
 		04A91DD91C87946400035F55 /* womenorange@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "womenorange@3x.png"; sourceTree = "<group>"; };
+		04B0F8571CA413E500C247F1 /* FeedbackController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FeedbackController.h; sourceTree = "<group>"; };
+		04B0F8581CA413E500C247F1 /* FeedbackController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FeedbackController.m; sourceTree = "<group>"; };
+		04B0F8591CA413E500C247F1 /* FeedbackController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FeedbackController.xib; sourceTree = "<group>"; };
+		04B0F85C1CA414F200C247F1 /* starIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "starIcon@3x.png"; sourceTree = "<group>"; };
+		04B0F85D1CA414F200C247F1 /* starBlkIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = starBlkIcon.png; sourceTree = "<group>"; };
+		04B0F85E1CA414F200C247F1 /* starBlkIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "starBlkIcon@2x.png"; sourceTree = "<group>"; };
+		04B0F85F1CA414F200C247F1 /* starBlkIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "starBlkIcon@3x.png"; sourceTree = "<group>"; };
+		04B0F8641CA414F700C247F1 /* starIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = starIcon.png; sourceTree = "<group>"; };
+		04B0F8651CA414F700C247F1 /* starIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "starIcon@2x.png"; sourceTree = "<group>"; };
+		04B0F86A1CA5459D00C247F1 /* FBGroupShareViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FBGroupShareViewController.h; sourceTree = "<group>"; };
+		04B0F86B1CA5459D00C247F1 /* FBGroupShareViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FBGroupShareViewController.m; sourceTree = "<group>"; };
+		04B0F86C1CA5459D00C247F1 /* FBGroupShareViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FBGroupShareViewController.xib; sourceTree = "<group>"; };
+		04B0F8701CA547A600C247F1 /* group3@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "group3@3x.png"; sourceTree = "<group>"; };
+		04B0F8711CA547A600C247F1 /* group2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = group2.png; sourceTree = "<group>"; };
+		04B0F8721CA547A600C247F1 /* group2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "group2@2x.png"; sourceTree = "<group>"; };
+		04B0F8731CA547A600C247F1 /* group2@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "group2@3x.png"; sourceTree = "<group>"; };
+		04B0F8741CA547A600C247F1 /* group1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = group1.png; sourceTree = "<group>"; };
+		04B0F8751CA547A600C247F1 /* group1@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "group1@2x.png"; sourceTree = "<group>"; };
+		04B0F87C1CA547AB00C247F1 /* group3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = group3.png; sourceTree = "<group>"; };
+		04B0F87D1CA547AB00C247F1 /* group3@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "group3@2x.png"; sourceTree = "<group>"; };
+		04B0F8801CA547B200C247F1 /* group1@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "group1@3x.png"; sourceTree = "<group>"; };
+		04B0F8851CA58E0900C247F1 /* groupWVController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = groupWVController.h; sourceTree = "<group>"; };
+		04B0F8861CA58E0A00C247F1 /* groupWVController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = groupWVController.m; sourceTree = "<group>"; };
+		04B0F8871CA58E0A00C247F1 /* groupWVController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = groupWVController.xib; sourceTree = "<group>"; };
 		04C0801F1C8469DE00B8682C /* dots.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dots.png; sourceTree = "<group>"; };
 		04C080201C8469DE00B8682C /* filter@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "filter@2x.png"; sourceTree = "<group>"; };
 		04C080211C8469DE00B8682C /* dots@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "dots@2x.png"; sourceTree = "<group>"; };
@@ -683,9 +731,6 @@
 		04D9B9601C88FBB1004AF0F2 /* clock@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "clock@2x.png"; sourceTree = "<group>"; };
 		04D9B9611C88FBB1004AF0F2 /* clock@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "clock@3x.png"; sourceTree = "<group>"; };
 		04D9B9621C88FBB1004AF0F2 /* clock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = clock.png; sourceTree = "<group>"; };
-		04D9B9661C899189004AF0F2 /* sellthisButton@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sellthisButton@3x.png"; sourceTree = "<group>"; };
-		04D9B9671C899189004AF0F2 /* sellthisButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sellthisButton.png; sourceTree = "<group>"; };
-		04D9B9681C899189004AF0F2 /* sellthisButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sellthisButton@2x.png"; sourceTree = "<group>"; };
 		04D9B96C1C899CF1004AF0F2 /* shareListing@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "shareListing@2x.png"; sourceTree = "<group>"; };
 		04D9B96D1C899CF1004AF0F2 /* savelater@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "savelater@2x.png"; sourceTree = "<group>"; };
 		04D9B96E1C899CF1004AF0F2 /* savelater@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "savelater@3x.png"; sourceTree = "<group>"; };
@@ -831,6 +876,21 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				04B0F8801CA547B200C247F1 /* group1@3x.png */,
+				04B0F87C1CA547AB00C247F1 /* group3.png */,
+				04B0F87D1CA547AB00C247F1 /* group3@2x.png */,
+				04B0F8701CA547A600C247F1 /* group3@3x.png */,
+				04B0F8711CA547A600C247F1 /* group2.png */,
+				04B0F8721CA547A600C247F1 /* group2@2x.png */,
+				04B0F8731CA547A600C247F1 /* group2@3x.png */,
+				04B0F8741CA547A600C247F1 /* group1.png */,
+				04B0F8751CA547A600C247F1 /* group1@2x.png */,
+				04B0F8641CA414F700C247F1 /* starIcon.png */,
+				04B0F8651CA414F700C247F1 /* starIcon@2x.png */,
+				04B0F85C1CA414F200C247F1 /* starIcon@3x.png */,
+				04B0F85D1CA414F200C247F1 /* starBlkIcon.png */,
+				04B0F85E1CA414F200C247F1 /* starBlkIcon@2x.png */,
+				04B0F85F1CA414F200C247F1 /* starBlkIcon@3x.png */,
 				046A35C11CA2AA6D0066FF5B /* wtbicon29@2x.png */,
 				046A35C21CA2AA6D0066FF5B /* wtbicon40@2x.png */,
 				046A35C31CA2AA6D0066FF5B /* wtbicon29@1x.png */,
@@ -961,14 +1021,14 @@
 				04D9B96D1C899CF1004AF0F2 /* savelater@2x.png */,
 				04D9B96E1C899CF1004AF0F2 /* savelater@3x.png */,
 				04D9B96F1C899CF1004AF0F2 /* shareListing@3x.png */,
+				040D592D1CA8453C0091E6F1 /* sellthisButton.png */,
+				040D592E1CA8453C0091E6F1 /* sellthisButton@2x.png */,
+				040D592F1CA8453C0091E6F1 /* sellthisButton@3x.png */,
 				04D9B9701C899CF1004AF0F2 /* savelater@1x.png */,
 				04D9B9711C899CF1004AF0F2 /* wtbtoo@1x.png */,
 				04D9B9721C899CF1004AF0F2 /* shareListing@1x.png */,
 				04D9B9731C899CF1004AF0F2 /* wtbtoo@2x.png */,
 				04D9B9741C899CF1004AF0F2 /* wtbtoo@3x.png */,
-				04D9B9661C899189004AF0F2 /* sellthisButton@3x.png */,
-				04D9B9671C899189004AF0F2 /* sellthisButton.png */,
-				04D9B9681C899189004AF0F2 /* sellthisButton@2x.png */,
 				04D9B9601C88FBB1004AF0F2 /* clock@2x.png */,
 				04D9B9611C88FBB1004AF0F2 /* clock@3x.png */,
 				04D9B9621C88FBB1004AF0F2 /* clock.png */,
@@ -1205,6 +1265,7 @@
 			children = (
 				049EF42A1C776E49000A599F /* AppDelegate.h */,
 				049EF42B1C776E49000A599F /* AppDelegate.m */,
+				04B0F8681CA5445B00C247F1 /* Feedback */,
 				04D9BA021C8DB417004AF0F2 /* MakeOffer */,
 				0472B6251C7CCC9F00529B2E /* Navbar */,
 				04C0814C1C85EE4200B8682C /* Camera */,
@@ -1252,9 +1313,43 @@
 			path = wtbtestUITests;
 			sourceTree = "<group>";
 		};
+		04B0F8681CA5445B00C247F1 /* Feedback */ = {
+			isa = PBXGroup;
+			children = (
+				04B0F8571CA413E500C247F1 /* FeedbackController.h */,
+				04B0F8581CA413E500C247F1 /* FeedbackController.m */,
+				04B0F8591CA413E500C247F1 /* FeedbackController.xib */,
+			);
+			name = Feedback;
+			sourceTree = "<group>";
+		};
+		04B0F8691CA5447200C247F1 /* Profile controller */ = {
+			isa = PBXGroup;
+			children = (
+				04D9BA031C8DEA9D004AF0F2 /* ProfileController.h */,
+				04D9BA041C8DEA9D004AF0F2 /* ProfileController.m */,
+				04D9BA051C8DEA9D004AF0F2 /* ProfileController.xib */,
+			);
+			name = "Profile controller";
+			sourceTree = "<group>";
+		};
+		04B0F86F1CA545AC00C247F1 /* Group Share */ = {
+			isa = PBXGroup;
+			children = (
+				04B0F8851CA58E0900C247F1 /* groupWVController.h */,
+				04B0F8861CA58E0A00C247F1 /* groupWVController.m */,
+				04B0F8871CA58E0A00C247F1 /* groupWVController.xib */,
+				04B0F86A1CA5459D00C247F1 /* FBGroupShareViewController.h */,
+				04B0F86B1CA5459D00C247F1 /* FBGroupShareViewController.m */,
+				04B0F86C1CA5459D00C247F1 /* FBGroupShareViewController.xib */,
+			);
+			name = "Group Share";
+			sourceTree = "<group>";
+		};
 		04C080491C847C5400B8682C /* Create listing */ = {
 			isa = PBXGroup;
 			children = (
+				04B0F86F1CA545AC00C247F1 /* Group Share */,
 				0475A6EB1C7F00EE0049AD61 /* CreateViewController.h */,
 				0475A6EC1C7F00EE0049AD61 /* CreateViewController.m */,
 				0475A6ED1C7F00EE0049AD61 /* CreateViewController.xib */,
@@ -1339,11 +1434,9 @@
 				0431C6B71C9C530C0025AF67 /* OrderSummaryController.h */,
 				0431C6B81C9C530C0025AF67 /* OrderSummaryController.m */,
 				0431C6B91C9C530C0025AF67 /* OrderSummaryController.xib */,
-				040451351C8ED60F001D5F3B /* Checkout */,
 				04D9BA131C8DF6FE004AF0F2 /* Offers */,
-				04D9BA031C8DEA9D004AF0F2 /* ProfileController.h */,
-				04D9BA041C8DEA9D004AF0F2 /* ProfileController.m */,
-				04D9BA051C8DEA9D004AF0F2 /* ProfileController.xib */,
+				040451351C8ED60F001D5F3B /* Checkout */,
+				04B0F8691CA5447200C247F1 /* Profile controller */,
 			);
 			name = "Profile Tab";
 			sourceTree = "<group>";
@@ -1491,6 +1584,7 @@
 				0475A77E1C821D5E0049AD61 /* editListing@3x.png in Resources */,
 				04A91DDC1C87946400035F55 /* applyB@2x.png in Resources */,
 				04F82CAB1C9D8A7F00C4E250 /* problembutton@1x.png in Resources */,
+				04B0F86E1CA5459D00C247F1 /* FBGroupShareViewController.xib in Resources */,
 				04A91DE01C87946400035F55 /* womengrey@3x.png in Resources */,
 				04A91DE41C87946400035F55 /* womenorange.png in Resources */,
 				04D9B9DE1C8B82A9004AF0F2 /* sendOffer@3x.png in Resources */,
@@ -1519,6 +1613,7 @@
 				048B6F621C90887400F0894A /* checkIcon.png in Resources */,
 				0475A6D01C7E48BD0049AD61 /* pic1@2x.png in Resources */,
 				040451281C8ED324001D5F3B /* declineButton@3x.png in Resources */,
+				04B0F8781CA547A600C247F1 /* group2@2x.png in Resources */,
 				04C080351C8469DE00B8682C /* dots@2x.png in Resources */,
 				0447D0001CA02CB600BE5638 /* unmarkShipped@3x.png in Resources */,
 				048B6F6E1C99749A00F0894A /* updateButton@2x.png in Resources */,
@@ -1533,6 +1628,7 @@
 				04D9B9B51C8A0228004AF0F2 /* rows.png in Resources */,
 				04D9B9A01C89FCA2004AF0F2 /* chat.png in Resources */,
 				048B6F6D1C99749A00F0894A /* updateButton@1x.png in Resources */,
+				04B0F8791CA547A600C247F1 /* group2@3x.png in Resources */,
 				04A91DA41C87591C00035F55 /* usedorange@2x.png in Resources */,
 				04C081601C860B1400B8682C /* flashOn.png in Resources */,
 				0447D0041CA02EBB00BE5638 /* feedbacknotshipped@2x.png in Resources */,
@@ -1548,15 +1644,19 @@
 				04A91D8B1C87583200035F55 /* lowtohighgrey.png in Resources */,
 				04C0803E1C8469DE00B8682C /* settings@2x.png in Resources */,
 				04A91DA91C87591C00035F55 /* usedgrey@3x.png in Resources */,
+				040D59311CA8453C0091E6F1 /* sellthisButton@2x.png in Resources */,
 				0475A7131C804B080049AD61 /* deleteIcon@2x.png in Resources */,
+				04B0F87E1CA547AB00C247F1 /* group3.png in Resources */,
 				0475A6E11C7E4C680049AD61 /* paypal@2x.png in Resources */,
 				0475A7491C8058D10049AD61 /* SelectViewController.xib in Resources */,
 				04D9B9BA1C8A0D9B004AF0F2 /* exploreTabIcon@3x.png in Resources */,
 				04A91DB91C875ABF00035F55 /* clothinggrey.png in Resources */,
+				04B0F8601CA414F200C247F1 /* starIcon@3x.png in Resources */,
 				040451291C8ED324001D5F3B /* acceptBuyButton@3x.png in Resources */,
 				0475A7811C821D5E0049AD61 /* fb share@2x.png in Resources */,
 				04F82CC11C9EAA9400C4E250 /* trackingshipped@2x.png in Resources */,
 				04D9B9D81C8B8219004AF0F2 /* askQ@1x.png in Resources */,
+				04B0F8891CA58E0A00C247F1 /* groupWVController.xib in Resources */,
 				04C080481C846B2C00B8682C /* expand.png in Resources */,
 				0475A6D11C7E48BD0049AD61 /* pic1@3x.png in Resources */,
 				04C081331C85C62700B8682C /* ConfirmController.xib in Resources */,
@@ -1590,6 +1690,7 @@
 				04C0803D1C8469DE00B8682C /* plane@2x.png in Resources */,
 				0447D0061CA02EBB00BE5638 /* feedbacknotshipped@3x.png in Resources */,
 				04C0815F1C860B1400B8682C /* FlashOff@3x.png in Resources */,
+				04B0F8761CA547A600C247F1 /* group3@3x.png in Resources */,
 				046A35BA1CA186460066FF5B /* arrowDown@3x.png in Resources */,
 				04C080601C8497AC00B8682C /* ExploreVC.xib in Resources */,
 				0472B6891C7DC41200529B2E /* exit@1x.png in Resources */,
@@ -1600,6 +1701,7 @@
 				04A91DDA1C87946400035F55 /* applyB.png in Resources */,
 				04C080661C84BDDF00B8682C /* filterButton@3x.png in Resources */,
 				0404512B1C8ED324001D5F3B /* askSellerButton@2x.png in Resources */,
+				04B0F87F1CA547AB00C247F1 /* group3@2x.png in Resources */,
 				0475A77A1C821D5E0049AD61 /* share@2x.png in Resources */,
 				0475A6E31C7E4C680049AD61 /* paypal.png in Resources */,
 				04A91DAB1C87591C00035F55 /* neworange.png in Resources */,
@@ -1608,7 +1710,6 @@
 				04C081681C86389700B8682C /* filterOn@2x.png in Resources */,
 				04A91DE71C87946400035F55 /* menorange@3x.png in Resources */,
 				0404512D1C8ED324001D5F3B /* declineButton@1x.png in Resources */,
-				04D9B96A1C899189004AF0F2 /* sellthisButton.png in Resources */,
 				048B6F681C947B2400F0894A /* orderdetails.png in Resources */,
 				04D9B9FD1C8CD0B7004AF0F2 /* anyorange@2x.png in Resources */,
 				04C080581C847E3800B8682C /* ExploreCell.xib in Resources */,
@@ -1619,6 +1720,7 @@
 				0475A6D81C7E4BEC0049AD61 /* pic3@3x.png in Resources */,
 				04C081441C85EA9C00B8682C /* confirmButton.png in Resources */,
 				0475A6CF1C7E48BD0049AD61 /* pic1.png in Resources */,
+				040D59301CA8453C0091E6F1 /* sellthisButton.png in Resources */,
 				04A91D901C87583200035F55 /* lowtohighorange@3x.png in Resources */,
 				04F82CBF1C9EAA9400C4E250 /* trackingshipped@3x.png in Resources */,
 				04D9BA071C8DEA9D004AF0F2 /* ProfileController.xib in Resources */,
@@ -1638,6 +1740,7 @@
 				04C0813D1C85EA9C00B8682C /* cameraIcon.png in Resources */,
 				04D9B9AE1C8A0014004AF0F2 /* question.png in Resources */,
 				0475A6EF1C7F00EE0049AD61 /* CreateViewController.xib in Resources */,
+				04B0F87B1CA547A600C247F1 /* group1@2x.png in Resources */,
 				048B6F611C90887400F0894A /* checkIcon@2x.png in Resources */,
 				04C080411C8469DE00B8682C /* location.png in Resources */,
 				04A91DA51C87591C00035F55 /* newgrey@2x.png in Resources */,
@@ -1652,11 +1755,14 @@
 				0472B68B1C7DC41200529B2E /* exit@3x.png in Resources */,
 				04D9B9DC1C8B82A8004AF0F2 /* sendOffer@1x.png in Resources */,
 				04A91DDE1C87946400035F55 /* applyB@3x.png in Resources */,
+				04B0F8771CA547A600C247F1 /* group2.png in Resources */,
 				046A35D41CA2AA6D0066FF5B /* wtbicon76@2x.png in Resources */,
 				0472B60D1C7CC78500529B2E /* WelcomeViewController.xib in Resources */,
 				048B6F551C90718F00F0894A /* paypalicons@3x.png in Resources */,
 				0472B6531C7DB21600529B2E /* regButton@3x.png in Resources */,
+				040D59321CA8453C0091E6F1 /* sellthisButton@3x.png in Resources */,
 				04C0815E1C860B1400B8682C /* FlashOff@2x.png in Resources */,
+				04B0F8671CA414F700C247F1 /* starIcon@2x.png in Resources */,
 				04F82CA51C9D8A7F00C4E250 /* feedbackbutton@3x.png in Resources */,
 				04D9B9EE1C8CC712004AF0F2 /* taggedPic.png in Resources */,
 				04D9B9E51C8CC4BF004AF0F2 /* send@2x.png in Resources */,
@@ -1668,7 +1774,6 @@
 				04C081401C85EA9C00B8682C /* cameraIcon@2x.png in Resources */,
 				0472B6791C7DB46800529B2E /* globeIcon@2x.png in Resources */,
 				04D9B9CF1C8B8219004AF0F2 /* box.png in Resources */,
-				04D9B96B1C899189004AF0F2 /* sellthisButton@2x.png in Resources */,
 				04A91DA31C87591C00035F55 /* neworange@2x.png in Resources */,
 				040451271C8ED324001D5F3B /* acceptBuyButton@2x.png in Resources */,
 				0472B67E1C7DB46800529B2E /* emailIcon.png in Resources */,
@@ -1685,6 +1790,7 @@
 				04D9B9F41C8CC7EC004AF0F2 /* createIcon.png in Resources */,
 				04A91D8C1C87583200035F55 /* lowtohighorange@2x.png in Resources */,
 				0447CFF81CA02B5500BE5638 /* markShipped@1x.png in Resources */,
+				04B0F85B1CA413E500C247F1 /* FeedbackController.xib in Resources */,
 				0475A7821C821D5E0049AD61 /* create another.png in Resources */,
 				04D9B99A1C89FCA2004AF0F2 /* cart@2x.png in Resources */,
 				04D9B9F21C8CC7EC004AF0F2 /* createIcon@3x.png in Resources */,
@@ -1743,6 +1849,8 @@
 				048B6F741C99766C00F0894A /* profileIcon.png in Resources */,
 				04F82CC51C9EAB4B00C4E250 /* trackingfeedback.png in Resources */,
 				04C080641C84BDDF00B8682C /* filterButton@2x.png in Resources */,
+				04B0F8811CA547B200C247F1 /* group1@3x.png in Resources */,
+				04B0F8621CA414F200C247F1 /* starBlkIcon@2x.png in Resources */,
 				0475A6E21C7E4C680049AD61 /* paypal@3x.png in Resources */,
 				04C081671C86389700B8682C /* filterOn.png in Resources */,
 				04D9BA011C8CD0B7004AF0F2 /* anyorange@3x.png in Resources */,
@@ -1790,6 +1898,8 @@
 				0472B68A1C7DC41200529B2E /* exit@2x.png in Resources */,
 				0472B6361C7CD35D00529B2E /* page1.png in Resources */,
 				0475A6C81C7E32D10049AD61 /* Tut1ViewController.xib in Resources */,
+				04B0F8661CA414F700C247F1 /* starIcon.png in Resources */,
+				04B0F87A1CA547A600C247F1 /* group1.png in Resources */,
 				04D9B9A71C89FEE3004AF0F2 /* compose.png in Resources */,
 				0475A7121C804B080049AD61 /* deleteIcon.png in Resources */,
 				04C080421C8469DE00B8682C /* plane@3x.png in Resources */,
@@ -1798,6 +1908,7 @@
 				04D9B9791C899CF1004AF0F2 /* savelater@1x.png in Resources */,
 				040451341C8ED5FF001D5F3B /* CheckoutController.xib in Resources */,
 				046A35CC1CA2AA6D0066FF5B /* wtbicon29@2x.png in Resources */,
+				04B0F8631CA414F200C247F1 /* starBlkIcon@3x.png in Resources */,
 				0447D0051CA02EBB00BE5638 /* feedbacknotshipped.png in Resources */,
 				04A91DA81C87591C00035F55 /* neworange@3x.png in Resources */,
 				04D9B9FF1C8CD0B7004AF0F2 /* anyorange.png in Resources */,
@@ -1809,12 +1920,12 @@
 				049EF45B1C776E58000A599F /* Podfile in Resources */,
 				0447CFFA1CA02B5500BE5638 /* markShipped@2x.png in Resources */,
 				04F82CAE1C9D8A7F00C4E250 /* feedbackbutton@2x.png in Resources */,
+				04B0F8611CA414F200C247F1 /* starBlkIcon.png in Resources */,
 				0404511D1C8E1422001D5F3B /* OfferCell.xib in Resources */,
 				04A91D941C87583200035F55 /* lowtohighorange.png in Resources */,
 				048B6F561C90718F00F0894A /* paypalicons@2x.png in Resources */,
 				0472B6431C7CD85200529B2E /* RegisterViewController.xib in Resources */,
 				0475A77D1C821D5E0049AD61 /* editListing.png in Resources */,
-				04D9B9691C899189004AF0F2 /* sellthisButton@3x.png in Resources */,
 				0475A6FA1C7F67400049AD61 /* addImage.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1888,6 +1999,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				04B0F8881CA58E0A00C247F1 /* groupWVController.m in Sources */,
 				0404511C1C8E1422001D5F3B /* OfferCell.m in Sources */,
 				04D9BA111C8DF6B6004AF0F2 /* OffersController.m in Sources */,
 				049EF42F1C776E49000A599F /* ViewController.m in Sources */,
@@ -1896,11 +2008,13 @@
 				0475A6EE1C7F00EE0049AD61 /* CreateViewController.m in Sources */,
 				04C081551C85F1A600B8682C /* FilterVC.m in Sources */,
 				04C081321C85C62700B8682C /* ConfirmController.m in Sources */,
+				04B0F85A1CA413E500C247F1 /* FeedbackController.m in Sources */,
 				04D9B9901C89F99F004AF0F2 /* ExplainViewController.m in Sources */,
 				04D9BA061C8DEA9D004AF0F2 /* ProfileController.m in Sources */,
 				0475A6CB1C7E3FCF0049AD61 /* ContainerViewController.m in Sources */,
 				0475A7481C8058D10049AD61 /* SelectViewController.m in Sources */,
 				040451331C8ED5FF001D5F3B /* CheckoutController.m in Sources */,
+				04B0F86D1CA5459D00C247F1 /* FBGroupShareViewController.m in Sources */,
 				04C080571C847E3800B8682C /* ExploreCell.m in Sources */,
 				049EF42C1C776E49000A599F /* AppDelegate.m in Sources */,
 				04D9B9871C89CD32004AF0F2 /* DetailImageController.m in Sources */,

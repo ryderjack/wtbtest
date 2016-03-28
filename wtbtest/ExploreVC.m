@@ -77,6 +77,8 @@
     self.lastInfinSkipped = 0;
     
     self.filtersArray = [NSMutableArray array];
+    
+
 }
 
 - (void)didReceiveMemoryWarning {
@@ -170,6 +172,7 @@
 -(void)queryParseInfinite{
     self.infinFinished = NO;
     self.infiniteQuery.limit = 4;
+    [self.infiniteQuery whereKey:@"status" notEqualTo:@"purchased"];
     [self setupInfinQuery];
     
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -192,7 +195,7 @@
     self.pullFinished = NO;
     self.pullQuery.limit = 4;
     [self setupPullQuery];
-    
+    [self.pullQuery whereKey:@"status" notEqualTo:@"purchased"];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];

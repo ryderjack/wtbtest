@@ -31,7 +31,7 @@
 
 - (IBAction)facebookTapped:(id)sender {
     
-    [PFFacebookUtils logInInBackgroundWithReadPermissions:@[@"public_profile", @"email"] block:^(PFUser *user, NSError *error) {
+    [PFFacebookUtils logInInBackgroundWithReadPermissions:@[@"public_profile", @"email", @"user_managed_groups"] block:^(PFUser *user, NSError *error) {
         if (!user) {
             NSLog(@"Uh oh. The user cancelled the Facebook login.");
         } else if (user.isNew) {
@@ -46,11 +46,14 @@
             NSLog(@"User logged in through Facebook!");
             //check if completed reg/tutorial via NSUserDefaults
             
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg1"] == YES) {//////////////////update before release (remove the 1)
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg"] == YES) {//////////////////update before release (remove the 1)
                 //take to app
+                NSLog(@"dismiss popup");
+                [self dismissViewControllerAnimated:YES completion:nil];
             }
             else{
                 //haven't completed it take them there
+                NSLog(@"to reg screen");
                 RegisterViewController *vc = [[RegisterViewController alloc]init];
                 vc.user = user;
                 [self.navigationController pushViewController:vc animated:YES];

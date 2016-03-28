@@ -106,4 +106,10 @@
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
 
+//prevent user going back on create VC by tapping tab bar
+- (BOOL)tabBarController:(UITabBarController *)theTabBarController shouldSelectViewController:(UIViewController *)viewController
+{
+    return (theTabBarController.selectedViewController != viewController);
+}
+
 @end

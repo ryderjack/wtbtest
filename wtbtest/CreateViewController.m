@@ -23,10 +23,6 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    UIBarButtonItem *resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Clear" style:UIBarButtonItemStylePlain target:self action:@selector(resetForm)];
-    
-    self.navigationItem.rightBarButtonItem = resetButton;
-    
     //hide first table view header
     self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
         
@@ -63,9 +59,15 @@
     self.warningLabel.text = @"";
     self.genderSize = @"";
     
+    UIBarButtonItem *resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Clear" style:UIBarButtonItemStylePlain target:self action:@selector(resetForm)];
+    
     if (self.editFromListing == YES) {
         [self listingSetup];
+        resetButton.title = @"Delete";
+        resetButton.action = @selector(deleteListing);
     }
+    
+    self.navigationItem.rightBarButtonItem = resetButton;
     
     //add done button to number pad keyboard on pay field
     [self addDoneButton];
@@ -213,6 +215,7 @@
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     
     if (indexPath.section ==2){
         if(indexPath.row == 0){
@@ -222,6 +225,7 @@
             vc.offer = NO;
             self.selection = @"condition";
             [self.navigationController pushViewController:vc animated:YES];
+
         }
         else if(indexPath.row == 1){
             SelectViewController *vc = [[SelectViewController alloc]init];
@@ -588,7 +592,6 @@
         NSString *extraInfo = [self.extraField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         
         if ([self.status isEqualToString:@"edit"]) {
-            NSLog(@"should be querying the object here");
             PFQuery *query = [PFQuery queryWithClassName:@"wantobuys"];
             [query whereKey:@"objectId" equalTo:self.lastId];
             [query getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -602,7 +605,6 @@
             }];
         }
         else{
-            NSLog(@"creating new object here self status %@", self.status);
             self.listing =[PFObject objectWithClassName:@"wantobuys"];
         }
         
@@ -884,5 +886,18 @@
     keyboardToolbar.items = @[flexBarButton, doneBarButton];
     self.payField.inputAccessoryView = keyboardToolbar;
 }
-
+-(void)deleteListing{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your wantobuy?" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        
+    }]];
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self.listing deleteInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            [self.navigationController popToRootViewControllerAnimated:YES];
+        }];
+    }]];
+    
+    [self presentViewController:alertView animated:YES completion:nil];
+}
 @end

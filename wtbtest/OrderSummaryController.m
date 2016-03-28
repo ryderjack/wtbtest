@@ -7,6 +7,7 @@
 //
 
 #import "OrderSummaryController.h"
+#import "FeedbackController.h"
 
 @interface OrderSummaryController ()
 
@@ -96,28 +97,28 @@
     
     [self setImageBorder];
     
-    PFUser *otherUser = [[PFUser alloc]init];
+    self.otherUser = [[PFUser alloc]init];
     
     if (self.purchased == YES) {
         self.actionLabel.text = @"You purchased:";
-        otherUser = [self.orderObject objectForKey:@"sellerUser"];
+        self.otherUser = [self.orderObject objectForKey:@"sellerUser"];
         self.aboutLabel.text = @"About the seller";
     }
     else{
         self.actionLabel.text = @"You sold:";
-        otherUser = [self.orderObject objectForKey:@"buyerUser"];
+        self.otherUser = [self.orderObject objectForKey:@"buyerUser"];
         self.aboutLabel.text = @"About the buyer";
         self.totalCostLabel.text = @"Amount received";
     }
     
-    [otherUser fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+    [self.otherUser fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
-            self.userName.text = otherUser.username;
-            [self.userImageView setFile:[otherUser objectForKey:@"picture"]];
+            self.userName.text = self.otherUser.username;
+            [self.userImageView setFile:[self.otherUser objectForKey:@"picture"]];
             [self.userImageView loadInBackground];
             
-            NSString *purchased = [otherUser objectForKey:@"purchased"];
-            NSString *sold = [otherUser objectForKey:@"sold"];
+            NSString *purchased = [self.otherUser objectForKey:@"purchased"];
+            NSString *sold = [self.otherUser objectForKey:@"sold"];
             
             if (!purchased) {
                 purchased = @"0";
@@ -178,11 +179,11 @@
         self.totalLabel.text = [NSString stringWithFormat: @"£%@",[self.orderObject objectForKey:@"buyerTotal"]];
     }
     else{
-        shippingUser = otherUser;
+        shippingUser = self.otherUser;
         self.totalLabel.text = [NSString stringWithFormat: @"£%@",[self.orderObject objectForKey:@"sellerTotal"]];
     }
     
-    self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[otherUser objectForKey:@"fullname"], [otherUser objectForKey:@"building"], [otherUser objectForKey:@"street"], [otherUser objectForKey:@"city"], [otherUser objectForKey:@"postcode"], [otherUser objectForKey:@"phonenumber"]];
+    self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[shippingUser objectForKey:@"fullname"], [shippingUser objectForKey:@"building"], [shippingUser objectForKey:@"street"], [shippingUser objectForKey:@"city"], [shippingUser objectForKey:@"postcode"], [shippingUser objectForKey:@"phonenumber"]];
     
     //main cells
     
@@ -282,7 +283,6 @@
         }
     }
     return 1;
-
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -381,6 +381,10 @@
     self.userImageView.contentMode = UIViewContentModeScaleAspectFill;
 }
 - (IBAction)feedbackPressed:(id)sender {
+    FeedbackController *vc = [[FeedbackController alloc]init];
+    vc.user = self.otherUser;
+    vc.purchased = self.purchased;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 - (IBAction)reportPressed:(id)sender {
 }

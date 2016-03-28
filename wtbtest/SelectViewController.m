@@ -359,6 +359,7 @@
             [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withitem:nil];
         }
     }
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 -(void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath

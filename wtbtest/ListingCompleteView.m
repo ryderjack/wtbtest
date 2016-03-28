@@ -7,6 +7,7 @@
 //
 
 #import "ListingCompleteView.h"
+#import "FBGroupShareViewController.h"
 
 @interface ListingCompleteView ()
 
@@ -120,6 +121,9 @@
     [self presentViewController:activityController animated:YES completion:nil];
 }
 - (IBAction)shareToGroupPresse:(id)sender {
+    FBGroupShareViewController *vc = [[FBGroupShareViewController alloc]init];
+    vc.objectId = self.lastObjectId;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 - (IBAction)createAnotherPressed:(id)sender {
     if (self.orderMode == YES) {

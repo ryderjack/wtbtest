@@ -121,7 +121,7 @@
         [self.currentUser setObject:self.postcodeField.text forKey:@"postcode"];
         [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
-                NSString *addressString = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.buildingField.text, self.streetField.text, self.cityField.text, self.phoneNumCell.textLabel.text, self.postcodeField.text];
+                NSString *addressString = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.buildingField.text, self.streetField.text, self.cityField.text, self.numberField.text, self.postcodeField.text];
                 [self.delegate addItemViewController:self didFinishEnteringAddress:addressString];
                 [self.navigationController popViewControllerAnimated:YES];
             }

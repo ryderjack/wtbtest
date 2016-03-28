@@ -9,6 +9,7 @@
 #import "ProfileController.h"
 #import <Parse/Parse.h>
 #import "OffersController.h"
+#import "FBGroupShareViewController.h"
 
 @interface ProfileController ()
 

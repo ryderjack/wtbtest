@@ -100,6 +100,10 @@
     [self.confirmedOfferObject setObject:@"purchased" forKey:@"status"];
     [self.confirmedOfferObject saveInBackground];
     
+    PFObject *ogListing = [self.confirmedOfferObject objectForKey:@"wtbListing"];
+    [ogListing setObject:@"purchased" forKey:@"status"];
+    [ogListing saveInBackground];
+    
     PFObject *orderObject =[PFObject objectWithClassName:@"orders"];
     [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
     [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];

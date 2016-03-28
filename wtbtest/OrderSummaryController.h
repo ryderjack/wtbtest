@@ -60,6 +60,7 @@
 
 @property (nonatomic, strong) PFObject *orderObject;
 @property (nonatomic, strong) PFObject *confirmedOffer;
+@property (nonatomic, strong) PFUser *otherUser;
 @property (weak, nonatomic) IBOutlet UIButton *shippedButton;
 @property (nonatomic) BOOL purchased;
 @property (nonatomic, strong) NSString *statusString;
