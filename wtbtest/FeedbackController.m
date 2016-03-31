@@ -42,6 +42,8 @@
         self.aboutLabel.text = @"About the buyer";
     }
     
+    self.user = [[PFUser alloc]init];
+    self.user.objectId = self.IDUser;
     [self.user fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             self.userNameLabel.text = self.user.username;

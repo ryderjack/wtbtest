@@ -51,10 +51,10 @@
     }
     else if (self.index == 3){
         self.mainTitle.text = @"Buying";
-        self.mainLabel.text = @"We offer authenticity checks for any item bought for a small fee. You can decide right before you pay. All Payments are made securely using PayPal";
+//        self.mainLabel.text = @"We offer authenticity checks for any item bought for a small fee. You can decide right before you pay. All Payments are made securely using PayPal";
+        self.mainLabel.text = @"All Payments are made securely using PayPal";
         self.imageView.image = [UIImage imageNamed:@"paypal"];
         [self.startButton setHidden:NO];
-        
     }
 }
 - (IBAction)startPressed:(id)sender {

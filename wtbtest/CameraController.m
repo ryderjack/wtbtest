@@ -22,7 +22,7 @@
     
     [self fastttAddChildViewController:self.fastCamera];
     self.fastCamera.view.frame = self.camView.frame;
-    
+    self.fastCamera.cameraFlashMode = FastttCameraFlashModeOn;
 }
 
 - (void)didReceiveMemoryWarning {

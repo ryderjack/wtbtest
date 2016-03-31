@@ -13,6 +13,7 @@
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import <FBSDKLoginKit/FBSDKLoginKit.h>
 #import "ContainerViewController.h"
+#import "NavigationController.h"
 
 @interface WelcomeViewController ()
 
@@ -23,6 +24,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.navigationController.navigationBarHidden = YES;
+    [self.tutorialTestButton setHidden:YES];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -31,7 +33,7 @@
 
 - (IBAction)facebookTapped:(id)sender {
     
-    [PFFacebookUtils logInInBackgroundWithReadPermissions:@[@"public_profile", @"email", @"user_managed_groups"] block:^(PFUser *user, NSError *error) {
+    [PFFacebookUtils logInInBackgroundWithReadPermissions:@[@"public_profile", @"email"] block:^(PFUser *user, NSError *error) {
         if (!user) {
             NSLog(@"Uh oh. The user cancelled the Facebook login.");
         } else if (user.isNew) {
@@ -39,8 +41,7 @@
             //take to reg VC & save data
             RegisterViewController *vc = [[RegisterViewController alloc]init];
             vc.user = user;
-            [self presentViewController:vc animated:YES
-                             completion:nil];
+            [self.navigationController pushViewController:vc animated:YES];
             
         } else {
             NSLog(@"User logged in through Facebook!");
@@ -62,6 +63,7 @@
     }];
 }
 - (IBAction)tutorialPressed:(id)sender {
+    
     ContainerViewController *vc = [[ContainerViewController alloc]init];
     [self presentViewController:vc animated:YES
                      completion:nil];

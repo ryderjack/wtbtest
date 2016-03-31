@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="9532" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10116" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9530"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
@@ -10,6 +10,7 @@
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CameraController">
             <connections>
                 <outlet property="camView" destination="R2B-xG-3vZ" id="8yO-mc-V1Z"/>
+                <outlet property="flashButton" destination="eOf-7j-TyT" id="AVu-7d-NqZ"/>
                 <outlet property="switchButton" destination="x0J-KN-XUF" id="qzY-00-N8h"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
@@ -64,6 +65,7 @@
                         <constraint firstAttribute="width" secondItem="eOf-7j-TyT" secondAttribute="height" multiplier="1:1" id="2vf-qB-1nf"/>
                     </constraints>
                     <state key="normal" image="flashOn.png"/>
+                    <state key="selected" image="FlashOff.png"/>
                     <connections>
                         <action selector="flashPressed:" destination="-1" eventType="touchUpInside" id="X1a-9A-yYs"/>
                     </connections>
@@ -103,10 +105,11 @@
                 <constraint firstItem="x0J-KN-XUF" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="29" id="ySB-o1-Rvn"/>
             </constraints>
             <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
-            <point key="canvasLocation" x="352.5" y="355.5"/>
+            <point key="canvasLocation" x="362.5" y="341.5"/>
         </view>
     </objects>
     <resources>
+        <image name="FlashOff.png" width="17" height="20"/>
         <image name="cameraIcon.png" width="98" height="98"/>
         <image name="flashOn.png" width="14" height="20"/>
         <image name="switchIcon.png" width="20" height="20"/>

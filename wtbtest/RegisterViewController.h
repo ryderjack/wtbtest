@@ -27,13 +27,16 @@
 @property (weak, nonatomic) IBOutlet UITextField *emailField;
 @property (weak, nonatomic) IBOutlet UITextField *usernameField;
 
+@property (weak, nonatomic) IBOutlet UIButton *chooseFromLib;
 
 //picture cell
 @property (weak, nonatomic) IBOutlet UIImageView *profileImageView;
+@property (weak, nonatomic) IBOutlet UIButton *takePic;
 
 //user
 @property (strong, nonatomic) PFUser *user;
 
+@property (weak, nonatomic) IBOutlet UIButton *regButton;
 //warning
 @property (weak, nonatomic) IBOutlet UILabel *warningLabel;
 

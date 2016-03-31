@@ -51,7 +51,8 @@
     if ([self.currentUser objectForKey:@"phonenumber"]) {
         self.numberField.text = [self.currentUser objectForKey:@"phonenumber"];
     }
-    
+ 
+    [self addDoneButton];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -132,5 +133,18 @@
         }];
         
     }
+}
+
+- (void)addDoneButton {
+    UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
+    [keyboardToolbar sizeToFit];
+    UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                      target:nil action:nil];
+    UIBarButtonItem *doneBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                      target:self.view action:@selector(endEditing:)];
+    keyboardToolbar.items = @[flexBarButton, doneBarButton];
+    self.numberField.inputAccessoryView = keyboardToolbar;
 }
 @end

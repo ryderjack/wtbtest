@@ -71,6 +71,9 @@
    
     [self setImageBorder];
     
+    //add done button to number pad keyboard
+    [self addDoneButton];
+    
     //set up VC depending on whether its showing an offer to be reviewed or whether its to make an offer
     
     if (self.reviewMode == YES) {
@@ -1021,5 +1024,17 @@
     
     [self presentViewController:alertView animated:YES completion:nil];
 }
-
+- (void)addDoneButton {
+    UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
+    [keyboardToolbar sizeToFit];
+    UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                      target:nil action:nil];
+    UIBarButtonItem *doneBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                      target:self.view action:@selector(endEditing:)];
+    keyboardToolbar.items = @[flexBarButton, doneBarButton];
+    self.priceField.inputAccessoryView = keyboardToolbar;
+    self.deliveryField.inputAccessoryView = keyboardToolbar;
+}
 @end

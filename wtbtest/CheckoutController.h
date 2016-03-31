@@ -38,6 +38,7 @@
 @property (nonatomic) float fee;
 
 @property (nonatomic, strong) PFObject *confirmedOfferObject;
+@property (weak, nonatomic) IBOutlet UIButton *payButton;
 
 
 @end

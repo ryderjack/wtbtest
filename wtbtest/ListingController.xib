@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="9532" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10116" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9530"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
@@ -74,13 +74,6 @@
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="vV7-bV-E6t">
-                        <rect key="frame" x="38" y="245" width="245" height="46"/>
-                        <state key="normal" title=" " image="sellthisButton.png"/>
-                        <connections>
-                            <action selector="sellthisPressed:" destination="-1" eventType="touchUpInside" id="1B8-CH-AlN"/>
-                        </connections>
-                    </button>
                     <pageControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" numberOfPages="3" translatesAutoresizingMaskIntoConstraints="NO" id="q6d-Yh-gwu">
                         <rect key="frame" x="141" y="215" width="39" height="37"/>
                         <constraints>
@@ -95,15 +88,24 @@
                             </mask>
                         </variation>
                     </pageControl>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="vV7-bV-E6t">
+                        <rect key="frame" x="54" y="246" width="212" height="40"/>
+                        <constraints>
+                            <constraint firstAttribute="width" secondItem="vV7-bV-E6t" secondAttribute="height" multiplier="53:10" id="mFO-4c-0d6"/>
+                        </constraints>
+                        <state key="normal" title=" " image="sellthisButton.png"/>
+                        <connections>
+                            <action selector="sellthisPressed:" destination="-1" eventType="touchUpInside" id="1B8-CH-AlN"/>
+                        </connections>
+                    </button>
                 </subviews>
                 <constraints>
-                    <constraint firstAttribute="bottomMargin" secondItem="vV7-bV-E6t" secondAttribute="bottom" constant="14.5" id="6QU-ss-Rdg"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="vV7-bV-E6t" secondAttribute="bottom" constant="19.5" id="6QU-ss-Rdg"/>
                     <constraint firstItem="ftd-WT-Z4U" firstAttribute="centerX" secondItem="dx5-PB-QpB" secondAttribute="centerX" id="7y7-vm-rn7"/>
                     <constraint firstItem="dx5-PB-QpB" firstAttribute="centerX" secondItem="vV7-bV-E6t" secondAttribute="centerX" id="Bex-BJ-aBp"/>
                     <constraint firstItem="ftd-WT-Z4U" firstAttribute="leading" secondItem="5Tf-ze-Vs9" secondAttribute="leadingMargin" id="Pll-eD-b2C"/>
                     <constraint firstItem="dx5-PB-QpB" firstAttribute="top" secondItem="ftd-WT-Z4U" secondAttribute="bottom" constant="8" symbolic="YES" id="QvH-HE-9mr"/>
-                    <constraint firstItem="vV7-bV-E6t" firstAttribute="top" secondItem="dx5-PB-QpB" secondAttribute="bottom" constant="27" id="X0Y-SN-fgL"/>
-                    <constraint firstItem="vV7-bV-E6t" firstAttribute="leading" secondItem="5Tf-ze-Vs9" secondAttribute="leadingMargin" constant="30" id="f03-89-W6U"/>
+                    <constraint firstItem="vV7-bV-E6t" firstAttribute="top" secondItem="dx5-PB-QpB" secondAttribute="bottom" constant="28" id="X0Y-SN-fgL"/>
                     <constraint firstItem="dx5-PB-QpB" firstAttribute="leading" secondItem="5Tf-ze-Vs9" secondAttribute="leadingMargin" constant="72" id="oTc-Wd-mYq"/>
                     <constraint firstItem="ftd-WT-Z4U" firstAttribute="trailing" secondItem="5Tf-ze-Vs9" secondAttribute="trailingMargin" id="p5X-NW-Mty"/>
                     <constraint firstAttribute="bottomMargin" secondItem="q6d-Yh-gwu" secondAttribute="bottom" constant="53.5" id="qyD-bb-47f"/>

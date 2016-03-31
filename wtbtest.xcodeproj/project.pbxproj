@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		040333201CAAD59600C59385 /* SummaryCollectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0403331E1CAAD59600C59385 /* SummaryCollectionView.m */; };
+		040333211CAAD59600C59385 /* SummaryCollectionView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0403331F1CAAD59600C59385 /* SummaryCollectionView.xib */; };
+		040333251CAADB4A00C59385 /* SummaryCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 040333231CAADB4A00C59385 /* SummaryCell.m */; };
+		040333261CAADB4A00C59385 /* SummaryCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 040333241CAADB4A00C59385 /* SummaryCell.xib */; };
+		0403332A1CAADDFC00C59385 /* alertIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 040333271CAADDFC00C59385 /* alertIcon.png */; };
+		0403332B1CAADDFC00C59385 /* alertIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 040333281CAADDFC00C59385 /* alertIcon@2x.png */; };
+		0403332C1CAADDFC00C59385 /* alertIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 040333291CAADDFC00C59385 /* alertIcon@3x.png */; };
 		0404511C1C8E1422001D5F3B /* OfferCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 0404511A1C8E1422001D5F3B /* OfferCell.m */; };
 		0404511D1C8E1422001D5F3B /* OfferCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0404511B1C8E1422001D5F3B /* OfferCell.xib */; };
 		040451261C8ED324001D5F3B /* declineButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0404511E1C8ED324001D5F3B /* declineButton@2x.png */; };
@@ -162,7 +169,6 @@
 		048B6F741C99766C00F0894A /* profileIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 048B6F711C99766C00F0894A /* profileIcon.png */; };
 		049EF4291C776E49000A599F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 049EF4281C776E49000A599F /* main.m */; };
 		049EF42C1C776E49000A599F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 049EF42B1C776E49000A599F /* AppDelegate.m */; };
-		049EF42F1C776E49000A599F /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 049EF42E1C776E49000A599F /* ViewController.m */; };
 		049EF4341C776E49000A599F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 049EF4331C776E49000A599F /* Assets.xcassets */; };
 		049EF4371C776E49000A599F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 049EF4351C776E49000A599F /* LaunchScreen.storyboard */; };
 		049EF4421C776E49000A599F /* wtbtestTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 049EF4411C776E49000A599F /* wtbtestTests.m */; };
@@ -368,6 +374,8 @@
 		04D9BA071C8DEA9D004AF0F2 /* ProfileController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04D9BA051C8DEA9D004AF0F2 /* ProfileController.xib */; };
 		04D9BA111C8DF6B6004AF0F2 /* OffersController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04D9BA0F1C8DF6B6004AF0F2 /* OffersController.m */; };
 		04D9BA121C8DF6B6004AF0F2 /* OffersController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04D9BA101C8DF6B6004AF0F2 /* OffersController.xib */; };
+		04F72E411CA9C18C0096E02B /* productCrawlerView.m in Sources */ = {isa = PBXBuildFile; fileRef = 04F72E3F1CA9C18C0096E02B /* productCrawlerView.m */; };
+		04F72E421CA9C18C0096E02B /* productCrawlerView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04F72E401CA9C18C0096E02B /* productCrawlerView.xib */; };
 		04F82CA41C9D8A7F00C4E250 /* problembutton@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04F82C981C9D8A7F00C4E250 /* problembutton@3x.png */; };
 		04F82CA51C9D8A7F00C4E250 /* feedbackbutton@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04F82C991C9D8A7F00C4E250 /* feedbackbutton@3x.png */; };
 		04F82CA61C9D8A7F00C4E250 /* cancelbutton@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04F82C9A1C9D8A7F00C4E250 /* cancelbutton@3x.png */; };
@@ -410,6 +418,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0403331D1CAAD59600C59385 /* SummaryCollectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SummaryCollectionView.h; sourceTree = "<group>"; };
+		0403331E1CAAD59600C59385 /* SummaryCollectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SummaryCollectionView.m; sourceTree = "<group>"; };
+		0403331F1CAAD59600C59385 /* SummaryCollectionView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SummaryCollectionView.xib; sourceTree = "<group>"; };
+		040333221CAADB4A00C59385 /* SummaryCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SummaryCell.h; sourceTree = "<group>"; };
+		040333231CAADB4A00C59385 /* SummaryCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SummaryCell.m; sourceTree = "<group>"; };
+		040333241CAADB4A00C59385 /* SummaryCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SummaryCell.xib; sourceTree = "<group>"; };
+		040333271CAADDFC00C59385 /* alertIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = alertIcon.png; sourceTree = "<group>"; };
+		040333281CAADDFC00C59385 /* alertIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alertIcon@2x.png"; sourceTree = "<group>"; };
+		040333291CAADDFC00C59385 /* alertIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alertIcon@3x.png"; sourceTree = "<group>"; };
 		040451191C8E1422001D5F3B /* OfferCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OfferCell.h; sourceTree = "<group>"; };
 		0404511A1C8E1422001D5F3B /* OfferCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OfferCell.m; sourceTree = "<group>"; };
 		0404511B1C8E1422001D5F3B /* OfferCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = OfferCell.xib; sourceTree = "<group>"; };
@@ -581,8 +598,6 @@
 		049EF4281C776E49000A599F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		049EF42A1C776E49000A599F /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		049EF42B1C776E49000A599F /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		049EF42D1C776E49000A599F /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		049EF42E1C776E49000A599F /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		049EF4331C776E49000A599F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		049EF4361C776E49000A599F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		049EF4381C776E49000A599F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -807,6 +822,9 @@
 		04D9BA0E1C8DF6B6004AF0F2 /* OffersController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OffersController.h; sourceTree = "<group>"; };
 		04D9BA0F1C8DF6B6004AF0F2 /* OffersController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OffersController.m; sourceTree = "<group>"; };
 		04D9BA101C8DF6B6004AF0F2 /* OffersController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = OffersController.xib; sourceTree = "<group>"; };
+		04F72E3E1CA9C18C0096E02B /* productCrawlerView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = productCrawlerView.h; sourceTree = "<group>"; };
+		04F72E3F1CA9C18C0096E02B /* productCrawlerView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = productCrawlerView.m; sourceTree = "<group>"; };
+		04F72E401CA9C18C0096E02B /* productCrawlerView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = productCrawlerView.xib; sourceTree = "<group>"; };
 		04F82C981C9D8A7F00C4E250 /* problembutton@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "problembutton@3x.png"; sourceTree = "<group>"; };
 		04F82C991C9D8A7F00C4E250 /* feedbackbutton@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "feedbackbutton@3x.png"; sourceTree = "<group>"; };
 		04F82C9A1C9D8A7F00C4E250 /* cancelbutton@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cancelbutton@3x.png"; sourceTree = "<group>"; };
@@ -876,6 +894,9 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				040333271CAADDFC00C59385 /* alertIcon.png */,
+				040333281CAADDFC00C59385 /* alertIcon@2x.png */,
+				040333291CAADDFC00C59385 /* alertIcon@3x.png */,
 				04B0F8801CA547B200C247F1 /* group1@3x.png */,
 				04B0F87C1CA547AB00C247F1 /* group3.png */,
 				04B0F87D1CA547AB00C247F1 /* group3@2x.png */,
@@ -1265,12 +1286,11 @@
 			children = (
 				049EF42A1C776E49000A599F /* AppDelegate.h */,
 				049EF42B1C776E49000A599F /* AppDelegate.m */,
+				04F72E431CA9C1940096E02B /* CrawlerTab */,
 				04B0F8681CA5445B00C247F1 /* Feedback */,
 				04D9BA021C8DB417004AF0F2 /* MakeOffer */,
 				0472B6251C7CCC9F00529B2E /* Navbar */,
 				04C0814C1C85EE4200B8682C /* Camera */,
-				049EF42D1C776E49000A599F /* ViewController.h */,
-				049EF42E1C776E49000A599F /* ViewController.m */,
 				04D9B98C1C89CF66004AF0F2 /* Listing */,
 				04C081631C86292C00B8682C /* Explore Tab */,
 				04D9BA081C8DEDC0004AF0F2 /* Profile Tab */,
@@ -1326,6 +1346,12 @@
 		04B0F8691CA5447200C247F1 /* Profile controller */ = {
 			isa = PBXGroup;
 			children = (
+				0403331D1CAAD59600C59385 /* SummaryCollectionView.h */,
+				0403331E1CAAD59600C59385 /* SummaryCollectionView.m */,
+				0403331F1CAAD59600C59385 /* SummaryCollectionView.xib */,
+				040333221CAADB4A00C59385 /* SummaryCell.h */,
+				040333231CAADB4A00C59385 /* SummaryCell.m */,
+				040333241CAADB4A00C59385 /* SummaryCell.xib */,
 				04D9BA031C8DEA9D004AF0F2 /* ProfileController.h */,
 				04D9BA041C8DEA9D004AF0F2 /* ProfileController.m */,
 				04D9BA051C8DEA9D004AF0F2 /* ProfileController.xib */,
@@ -1431,9 +1457,7 @@
 		04D9BA081C8DEDC0004AF0F2 /* Profile Tab */ = {
 			isa = PBXGroup;
 			children = (
-				0431C6B71C9C530C0025AF67 /* OrderSummaryController.h */,
-				0431C6B81C9C530C0025AF67 /* OrderSummaryController.m */,
-				0431C6B91C9C530C0025AF67 /* OrderSummaryController.xib */,
+				04F72E441CA9C23D0096E02B /* Order Summary */,
 				04D9BA131C8DF6FE004AF0F2 /* Offers */,
 				040451351C8ED60F001D5F3B /* Checkout */,
 				04B0F8691CA5447200C247F1 /* Profile controller */,
@@ -1452,6 +1476,26 @@
 				04D9BA101C8DF6B6004AF0F2 /* OffersController.xib */,
 			);
 			name = Offers;
+			sourceTree = "<group>";
+		};
+		04F72E431CA9C1940096E02B /* CrawlerTab */ = {
+			isa = PBXGroup;
+			children = (
+				04F72E3E1CA9C18C0096E02B /* productCrawlerView.h */,
+				04F72E3F1CA9C18C0096E02B /* productCrawlerView.m */,
+				04F72E401CA9C18C0096E02B /* productCrawlerView.xib */,
+			);
+			name = CrawlerTab;
+			sourceTree = "<group>";
+		};
+		04F72E441CA9C23D0096E02B /* Order Summary */ = {
+			isa = PBXGroup;
+			children = (
+				0431C6B71C9C530C0025AF67 /* OrderSummaryController.h */,
+				0431C6B81C9C530C0025AF67 /* OrderSummaryController.m */,
+				0431C6B91C9C530C0025AF67 /* OrderSummaryController.xib */,
+			);
+			name = "Order Summary";
 			sourceTree = "<group>";
 		};
 		CC565124AB6D3044040DAB32 /* Pods */ = {
@@ -1688,12 +1732,14 @@
 				0475A7561C8119290049AD61 /* LocationView.xib in Resources */,
 				04A91DE61C87946400035F55 /* womenorange@2x.png in Resources */,
 				04C0803D1C8469DE00B8682C /* plane@2x.png in Resources */,
+				040333261CAADB4A00C59385 /* SummaryCell.xib in Resources */,
 				0447D0061CA02EBB00BE5638 /* feedbacknotshipped@3x.png in Resources */,
 				04C0815F1C860B1400B8682C /* FlashOff@3x.png in Resources */,
 				04B0F8761CA547A600C247F1 /* group3@3x.png in Resources */,
 				046A35BA1CA186460066FF5B /* arrowDown@3x.png in Resources */,
 				04C080601C8497AC00B8682C /* ExploreVC.xib in Resources */,
 				0472B6891C7DC41200529B2E /* exit@1x.png in Resources */,
+				0403332C1CAADDFC00C59385 /* alertIcon@3x.png in Resources */,
 				04A91D8F1C87583200035F55 /* lowtohighgrey@2x.png in Resources */,
 				04C080371C8469DE00B8682C /* filter@3x.png in Resources */,
 				048B6F571C90718F00F0894A /* paypalicons.png in Resources */,
@@ -1716,6 +1762,7 @@
 				0475A6FC1C7F67400049AD61 /* addImage@3x.png in Resources */,
 				04A91D891C87583200035F55 /* hightolowgrey.png in Resources */,
 				0472B6551C7DB21600529B2E /* takepicButton.png in Resources */,
+				0403332A1CAADDFC00C59385 /* alertIcon.png in Resources */,
 				0472B67C1C7DB46800529B2E /* userIcon.png in Resources */,
 				0475A6D81C7E4BEC0049AD61 /* pic3@3x.png in Resources */,
 				04C081441C85EA9C00B8682C /* confirmButton.png in Resources */,
@@ -1875,6 +1922,7 @@
 				04C080461C8469DE00B8682C /* tag@3x.png in Resources */,
 				048B6F4F1C90680200F0894A /* home@3x.png in Resources */,
 				04C080431C8469DE00B8682C /* settings@3x.png in Resources */,
+				04F72E421CA9C18C0096E02B /* productCrawlerView.xib in Resources */,
 				04F82CA71C9D8A7F00C4E250 /* ogofferButton@3x.png in Resources */,
 				0475A7831C821D5E0049AD61 /* create another@2x.png in Resources */,
 				04D9B9EA1C8CC4BF004AF0F2 /* bigTag@2x.png in Resources */,
@@ -1888,6 +1936,8 @@
 				0475A6FE1C7F67400049AD61 /* camHolder@2x.png in Resources */,
 				04C0812E1C85BFD600B8682C /* CameraController.xib in Resources */,
 				04D9B9FE1C8CD0B7004AF0F2 /* anygrey.png in Resources */,
+				040333211CAAD59600C59385 /* SummaryCollectionView.xib in Resources */,
+				0403332B1CAADDFC00C59385 /* alertIcon@2x.png in Resources */,
 				04A91DAA1C87591C00035F55 /* usedorange@3x.png in Resources */,
 				04D9B9FC1C8CD0B7004AF0F2 /* anygrey@3x.png in Resources */,
 				046A35CD1CA2AA6D0066FF5B /* wtbicon40@2x.png in Resources */,
@@ -2002,7 +2052,6 @@
 				04B0F8881CA58E0A00C247F1 /* groupWVController.m in Sources */,
 				0404511C1C8E1422001D5F3B /* OfferCell.m in Sources */,
 				04D9BA111C8DF6B6004AF0F2 /* OffersController.m in Sources */,
-				049EF42F1C776E49000A599F /* ViewController.m in Sources */,
 				0472B60C1C7CC78500529B2E /* WelcomeViewController.m in Sources */,
 				04D9B9581C88E60E004AF0F2 /* ListingController.m in Sources */,
 				0475A6EE1C7F00EE0049AD61 /* CreateViewController.m in Sources */,
@@ -2013,6 +2062,7 @@
 				04D9BA061C8DEA9D004AF0F2 /* ProfileController.m in Sources */,
 				0475A6CB1C7E3FCF0049AD61 /* ContainerViewController.m in Sources */,
 				0475A7481C8058D10049AD61 /* SelectViewController.m in Sources */,
+				04F72E411CA9C18C0096E02B /* productCrawlerView.m in Sources */,
 				040451331C8ED5FF001D5F3B /* CheckoutController.m in Sources */,
 				04B0F86D1CA5459D00C247F1 /* FBGroupShareViewController.m in Sources */,
 				04C080571C847E3800B8682C /* ExploreCell.m in Sources */,
@@ -2021,6 +2071,7 @@
 				0475A7641C81F6880049AD61 /* ListingCompleteView.m in Sources */,
 				04C0812D1C85BFD600B8682C /* CameraController.m in Sources */,
 				0475A6C71C7E32D10049AD61 /* Tut1ViewController.m in Sources */,
+				040333251CAADB4A00C59385 /* SummaryCell.m in Sources */,
 				04C0805F1C8497AC00B8682C /* ExploreVC.m in Sources */,
 				0472B6421C7CD85200529B2E /* RegisterViewController.m in Sources */,
 				0431C6BA1C9C530C0025AF67 /* OrderSummaryController.m in Sources */,
@@ -2028,6 +2079,7 @@
 				0475A7551C8119290049AD61 /* LocationView.m in Sources */,
 				049EF4291C776E49000A599F /* main.m in Sources */,
 				04D9B9BF1C8AFEB4004AF0F2 /* MakeOfferViewController.m in Sources */,
+				040333201CAAD59600C59385 /* SummaryCollectionView.m in Sources */,
 				0472B6241C7CCC9500529B2E /* NavigationController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

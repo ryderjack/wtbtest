@@ -23,6 +23,8 @@
     [super viewDidLoad];
     
     self.navigationController.navigationBarHidden = YES;
+    [self.takePic setHidden:YES];
+    [self.chooseFromLib setHidden:YES];
     
     //hide first table view header
     self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
@@ -219,6 +221,8 @@
 
 - (IBAction)regPressed:(id)sender {
     
+    [self.regButton setEnabled:NO];
+    
     //check values entered
     
     NSString *name = [self.nameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -228,11 +232,13 @@
     if ([name length] == 0 || [email length] == 0 || [username length] == 0)  {
         
         self.warningLabel.text = @"Enter your name, email and a username";
+        [self.regButton setEnabled:YES];
     }
     else{
         if ([self NSStringIsValidEmail:self.emailField.text] == NO) {
             self.warningLabel.text = @"Enter a valid email";
             self.emailField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
+            [self.regButton setEnabled:YES];
         }
         else{
             
@@ -264,12 +270,21 @@
                              }
                              else
                              {
+                                 [self.regButton setEnabled:YES];
                                  NSLog(@"error %@", error);
+                                 UIAlertController * alert=   [UIAlertController
+                                                               alertControllerWithTitle:@"Error"
+                                                               message:@"Make sure you're connected to the internet!"
+                                                               preferredStyle:UIAlertControllerStyleAlert];
+                                 UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+                                 [alert addAction:ok];
+                                 [self presentViewController:alert animated:YES completion:nil];
                              }
                          }];
                     }
                     else{
                         NSLog(@"username taken");
+                        [self.regButton setEnabled:YES];
                         self.warningLabel.text = @"Username taken";
                         self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
                     }

@@ -23,6 +23,7 @@
     self.searchController.dimsBackgroundDuringPresentation = NO;
     self.searchController.searchBar.delegate = self;
     self.tableView.tableHeaderView = self.searchController.searchBar;
+    self.searchController.searchBar.searchBarStyle = UISearchBarStyleMinimal;
     [self.searchController.searchBar sizeToFit];
     self.definesPresentationContext = YES;
     self.searchController.searchBar.tintColor = [UIColor colorWithRed:0.525 green:0.745 blue:1 alpha:1];

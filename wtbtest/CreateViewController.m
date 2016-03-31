@@ -698,13 +698,19 @@
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
                 [self.saveButton setEnabled:YES];
-                NSLog(@"listing saved! %@", self.listing.objectId);
-                ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-                vc.delegate = self;
-                vc.lastObjectId = self.listing.objectId;
-                vc.orderMode = NO;
-                [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
-                [self.navigationController pushViewController:vc animated:YES];
+                if (self.editFromListing == YES) {
+                    [self.navigationController popToRootViewControllerAnimated:YES];
+                }
+                else{
+                    NSLog(@"listing saved! %@", self.listing.objectId);
+                    ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+                    vc.delegate = self;
+                    vc.lastObjectId = self.listing.objectId;
+                    vc.orderMode = NO;
+                    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
+                
             }
             else{
                 [self.saveButton setEnabled:YES];
@@ -817,7 +823,12 @@
     self.chooseCategroy.text = [self.listing objectForKey:@"category"];
     
     //if gendersize required (if category is footwear) set variable
-    self.genderSize = [self.listing objectForKey:@"sizegender"];
+    if ([self.listing objectForKey:@"sizegender"]) {
+       self.genderSize = [self.listing objectForKey:@"sizegender"];
+    }
+    else{
+        
+    }
     
     self.chooseSize.text = [self.listing objectForKey:@"size"];
     

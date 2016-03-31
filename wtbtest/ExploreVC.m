@@ -11,6 +11,7 @@
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "ExplainViewController.h"
 #import "WelcomeViewController.h"
+#import "NavigationController.h"
 
 @interface ExploreVC ()
 
@@ -77,8 +78,6 @@
     self.lastInfinSkipped = 0;
     
     self.filtersArray = [NSMutableArray array];
-    
-
 }
 
 - (void)didReceiveMemoryWarning {
@@ -125,7 +124,8 @@
     
     if (![PFUser currentUser]) {
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
-        [self presentViewController:vc animated:YES completion:nil];
+        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+        [self presentViewController:navController animated:YES completion:nil];
     }
 }
 
@@ -144,7 +144,6 @@
     
     PFGeoPoint *location = [listing objectForKey:@"geopoint"];
     if (self.currentLocation && location) {
-        NSLog(@"here");
         int distance = [location distanceInKilometersTo:self.currentLocation];
         cell.distanceLabel.text = [NSString stringWithFormat:@"%dkm", distance];
     }
@@ -344,10 +343,10 @@
         }
         
         if ([self.filtersArray containsObject:@"male"]){
-            [self.infiniteQuery whereKey:@"sizegender" equalTo:@"male"];
+            [self.infiniteQuery whereKey:@"sizegender" equalTo:@"Mens"];
         }
         else if ([self.filtersArray containsObject:@"female"]){
-            [self.infiniteQuery whereKey:@"sizegender" equalTo:@"female"];
+            [self.infiniteQuery whereKey:@"sizegender" equalTo:@"Womens"];
         }
         
         //footwear sizes
@@ -444,10 +443,10 @@
         }
         
         if ([self.filtersArray containsObject:@"male"]){
-            [self.pullQuery whereKey:@"sizegender" equalTo:@"male"];
+            [self.pullQuery whereKey:@"sizegender" equalTo:@"Mens"];
         }
         else if ([self.filtersArray containsObject:@"female"]){
-            [self.pullQuery whereKey:@"sizegender" equalTo:@"female"];
+            [self.pullQuery whereKey:@"sizegender" equalTo:@"Womens"];
         }
         
         //footwear sizes

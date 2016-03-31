@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "WelcomeViewController.h"
-#import "ViewController.h"
 #import "CreateViewController.h"
 #import "ExploreVC.h"
 #import "ProfileController.h"
@@ -18,7 +17,6 @@
 @property (strong, nonatomic) UIWindow *window;
 @property (strong, nonatomic) UITabBarController *tabBarController;
 @property (strong, nonatomic) WelcomeViewController *welcomeView;
-@property (strong, nonatomic) ViewController *testView;
 @property (strong, nonatomic) CreateViewController *createView;
 @property (strong, nonatomic) ExploreVC *exploreView;
 @property (strong, nonatomic) ProfileController *profileView;

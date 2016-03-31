@@ -240,7 +240,7 @@
     }
     else if (section ==3){
         if (self.purchased == YES) {
-            return 4;
+            return 3; //add another for fee
         }
         else{
             return 2;
@@ -313,11 +313,11 @@
             return self.deliveryCell;
         }
         else if (indexPath.row == 2){
-            return self.feeCell;
-        }
-        else if (indexPath.row == 3){
             return self.checkCell;
         }
+//        else if (indexPath.row == 3){    swap with cell above
+//            return self.feeCell;
+//        }
     }
     else if (indexPath.section == 4){
         if (indexPath.row == 0) {
@@ -382,7 +382,7 @@
 }
 - (IBAction)feedbackPressed:(id)sender {
     FeedbackController *vc = [[FeedbackController alloc]init];
-    vc.user = self.otherUser;
+    vc.IDUser = self.otherUser.objectId;
     vc.purchased = self.purchased;
     [self.navigationController pushViewController:vc animated:YES];
 }

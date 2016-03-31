@@ -35,6 +35,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *problemButton;
 
 @property (nonatomic, strong) PFUser *user;
+@property (nonnull, strong) NSString *IDUser;
 @property (nonatomic) BOOL purchased;
 @property (nonatomic) int starNumber;
 @property (weak, nonatomic) IBOutlet UILabel *warningLabel;

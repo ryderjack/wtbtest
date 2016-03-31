@@ -28,8 +28,8 @@
 
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
-        configuration.server = @"http://localhost:1337/parse";
-//        configuration.server = @"http://wantobuy.azurewebsites.net/parse";
+//        configuration.server = @"http://localhost:1337/parse";
+        configuration.server = @"http://wantobuy.azurewebsites.net/parse";
         
     }]];
     
@@ -38,7 +38,6 @@
     //set up tab bar
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.welcomeView = [[WelcomeViewController alloc] init];
-    self.testView = [[ViewController alloc] init];
     self.createView = [[CreateViewController alloc]init];
     self.exploreView = [[ExploreVC alloc]init];
     self.profileView = [[ProfileController alloc]init];

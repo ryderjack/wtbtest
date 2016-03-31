@@ -35,8 +35,9 @@
     //setup values
     self.price = [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue];
     self.delivery = [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue];
-    self.fee = (self.price + self.delivery)*0.05;
-    float total = (self.price + self.delivery + self.fee);
+//    self.fee = (self.price + self.delivery)*0.05;
+    self.fee = 0;
+    float total = (self.price + self.delivery ); //+ self.fee
     self.transactionfeeLabel.text = [NSString stringWithFormat:@"£%.2f", self.fee];
     self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",(total + 15)];
     
@@ -51,7 +52,7 @@
         self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@\n%@\n%@\n%@",[currentUser objectForKey:@"fullname"], [currentUser objectForKey:@"building"], [currentUser objectForKey:@"street"], [currentUser objectForKey:@"city"], [currentUser objectForKey:@"postcode"], [currentUser objectForKey:@"phonenumber"]];
     }
     else{
-        self.addressLabel.text = [NSString stringWithFormat:@"%@",[currentUser objectForKey:@"fullname"]];
+        self.addressLabel.text = @"Add address";
     }
 
     
@@ -81,7 +82,7 @@
         return 1;
     }
     else if (section == 1){
-        return 4;
+        return 3; //should be 4 with fee cell
     }
     else if (section == 2){
         return 1;
@@ -95,51 +96,68 @@
     return 1;
 }
 - (IBAction)payPressed:(id)sender {
+    [self.payButton setEnabled:NO];
     //show paypal then create an order object
     
-    [self.confirmedOfferObject setObject:@"purchased" forKey:@"status"];
-    [self.confirmedOfferObject saveInBackground];
-    
-    PFObject *ogListing = [self.confirmedOfferObject objectForKey:@"wtbListing"];
-    [ogListing setObject:@"purchased" forKey:@"status"];
-    [ogListing saveInBackground];
-    
-    PFObject *orderObject =[PFObject objectWithClassName:@"orders"];
-    [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
-    [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
-    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"sellerUser"] forKey:@"sellerUser"];
-    [orderObject setObject:@"paid" forKey:@"status"];
-    [orderObject setObject:@"YES" forKey:@"check"];
-    
-    NSString *prefixToRemove = @"£";
-    NSString *fee = [[NSString alloc]init];
-    fee = [self.transactionfeeLabel.text substringFromIndex:[prefixToRemove length]];
-    
-    [orderObject setObject:fee forKey:@"fee"];
-    
-    NSString *buyerTotal = [[NSString alloc]init];
-    buyerTotal = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
-    [orderObject setObject:buyerTotal forKey:@"buyerTotal"];
-    
-    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCost"] forKey:@"sellerTotal"];
-    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
-    NSString *delivery = [[NSString alloc]init];
-    delivery = [self.deliverypriceLabel.text substringFromIndex:[prefixToRemove length]];
-    
-    [orderObject setObject:delivery forKey:@"delivery"];
-    
-    [orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-        if (succeeded) {
-            NSLog(@"order placed! %@", orderObject.objectId);
-            ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-            vc.orderMode = YES;
-            vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-        else{
-            NSLog(@"error saving %@", error);
-        }
-    }];
+    if ([self.addressLabel.text isEqualToString:@"Add address"]) {
+        // havent entered address
+        UIAlertController * alert=   [UIAlertController
+                                      alertControllerWithTitle:@"Shipping address"
+                                      message:@"Add a valid shipping address!"
+                                      preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+        [alert addAction:ok];
+        [self presentViewController:alert animated:YES completion:nil];
+        [self.payButton setEnabled:YES];
+        return;
+    }
+    else{
+        [self.confirmedOfferObject setObject:@"purchased" forKey:@"status"];
+        [self.confirmedOfferObject saveInBackground];
+        
+        PFObject *ogListing = [self.confirmedOfferObject objectForKey:@"wtbListing"];
+        [ogListing setObject:@"purchased" forKey:@"status"];
+        [ogListing saveInBackground];
+        
+        PFObject *orderObject =[PFObject objectWithClassName:@"orders"];
+        [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
+        [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
+        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"sellerUser"] forKey:@"sellerUser"];
+        [orderObject setObject:@"paid" forKey:@"status"];
+        [orderObject setObject:@"YES" forKey:@"check"];
+        
+        NSString *prefixToRemove = @"£";
+        NSString *fee = [[NSString alloc]init];
+        fee = [self.transactionfeeLabel.text substringFromIndex:[prefixToRemove length]];
+        
+        [orderObject setObject:fee forKey:@"fee"];
+        
+        NSString *buyerTotal = [[NSString alloc]init];
+        buyerTotal = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
+        [orderObject setObject:buyerTotal forKey:@"buyerTotal"];
+        
+        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCost"] forKey:@"sellerTotal"];
+        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
+        NSString *delivery = [[NSString alloc]init];
+        delivery = [self.deliverypriceLabel.text substringFromIndex:[prefixToRemove length]];
+        
+        [orderObject setObject:delivery forKey:@"delivery"];
+        
+        [orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            if (succeeded) {
+                NSLog(@"order placed! %@", orderObject.objectId);
+                [self.payButton setEnabled:YES];
+                ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+                vc.orderMode = YES;
+                vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
+                [self.navigationController pushViewController:vc animated:YES];
+            }
+            else{
+                [self.payButton setEnabled:YES];
+                NSLog(@"error saving %@", error);
+            }
+        }];
+    }
 }
 
 - (UIView *) tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
@@ -165,11 +183,11 @@
             return self.deliveryCell;
         }
         else if (indexPath.row == 2){
-            return self.feeCell;
-        }
-        else if (indexPath.row == 3){
             return self.authenticityCell;
         }
+//        else if (indexPath.row == 3){ should be above authenticity
+//            return self.feeCell;
+//        }
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
@@ -203,11 +221,11 @@
             return 44;
         }
         else if (indexPath.row == 2){
-            return 44;
-        }
-        else if (indexPath.row == 3){
             return 126;
         }
+//        else if (indexPath.row == 3){ swap with one above!
+//            return 44;
+//        }
     }
     else if (indexPath.section == 2 || indexPath.section == 3 || indexPath.section == 4){
         return 44;
@@ -217,13 +235,13 @@
 - (IBAction)switchChanged:(id)sender {
     if (self.authenticitySwitch.isSelected == YES) {
         [self.authenticitySwitch setSelected:NO];
-        float total = (self.price + self.delivery + self.fee);
+        float total = (self.price + self.delivery ); //+ self.fee
         self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",(total + 15)];
     }
     else{
         [self.authenticitySwitch setSelected:YES];
         NSLog(self.authenticitySwitch.isSelected ? @"Yes" : @"No");
-        float total = (self.price + self.delivery + self.fee);
+        float total = (self.price + self.delivery); //+ self.fee
         self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",(total)];
     }
 }

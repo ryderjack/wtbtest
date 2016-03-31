@@ -10,6 +10,7 @@
 #import <Parse/Parse.h>
 #import "OffersController.h"
 #import "FBGroupShareViewController.h"
+#import "SummaryCollectionView.h"
 
 @interface ProfileController ()
 
@@ -88,13 +89,13 @@
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
-            //received pressed
+            //purchase pressed
             OffersController *vc = [[OffersController alloc]init];
             vc.mode = @"purchased";
             [self.navigationController pushViewController:vc animated:YES];
         }
         else if (indexPath.row == 1){
-            //sent pressed
+            //sold pressed
             OffersController *vc = [[OffersController alloc]init];
             vc.mode = @"sold";
             [self.navigationController pushViewController:vc animated:YES];

@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 
 @interface WelcomeViewController : UIViewController
+@property (weak, nonatomic) IBOutlet UIButton *tutorialTestButton;
 
 
 @end
