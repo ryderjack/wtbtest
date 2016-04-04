@@ -680,64 +680,66 @@
     
     if (self.reviewMode == NO) {
     
-    if (indexPath.section ==3){
-            if(indexPath.row == 1){
-                SelectViewController *vc = [[SelectViewController alloc]init];
-                vc.delegate = self;
-                vc.setting = @"condition";
-                self.selection = @"condition";
-                vc.offer = YES;
-                [self.navigationController pushViewController:vc animated:YES];
-            }
-            else if(indexPath.row == 2){
-                SelectViewController *vc = [[SelectViewController alloc]init];
-                vc.delegate = self;
-                vc.setting = @"category";
-                self.selection = @"category";
-                [self.navigationController pushViewController:vc animated:YES];
-            }
-            else if(indexPath.row == 3){
-                if ([self.chooseCategory.text isEqualToString:@"Choose"]) {
-                    //prompt to choose category first
-                    [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
+        [self removeKeyboard];
+        
+        if (indexPath.section ==3){
+                if(indexPath.row == 1){
+                    SelectViewController *vc = [[SelectViewController alloc]init];
+                    vc.delegate = self;
+                    vc.setting = @"condition";
+                    self.selection = @"condition";
+                    vc.offer = YES;
+                    [self.navigationController pushViewController:vc animated:YES];
                 }
-                else{
-                    if ([self.chooseCategory.text isEqualToString:@"Footwear"]) {
-                        SelectViewController *vc = [[SelectViewController alloc]init];
-                        vc.delegate = self;
-                        vc.setting = @"sizefoot";
-                        vc.offer = YES;
-                        self.selection = @"size";
-                        [self.navigationController pushViewController:vc animated:YES];
+                else if(indexPath.row == 2){
+                    SelectViewController *vc = [[SelectViewController alloc]init];
+                    vc.delegate = self;
+                    vc.setting = @"category";
+                    self.selection = @"category";
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
+                else if(indexPath.row == 3){
+                    if ([self.chooseCategory.text isEqualToString:@"Choose"]) {
+                        //prompt to choose category first
+                        [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
                     }
                     else{
-                        SelectViewController *vc = [[SelectViewController alloc]init];
-                        vc.delegate = self;
-                        vc.setting = @"sizeclothing";
-                        vc.offer = YES;
-                        self.selection = @"size";
-                        [self.navigationController pushViewController:vc animated:YES];
+                        if ([self.chooseCategory.text isEqualToString:@"Footwear"]) {
+                            SelectViewController *vc = [[SelectViewController alloc]init];
+                            vc.delegate = self;
+                            vc.setting = @"sizefoot";
+                            vc.offer = YES;
+                            self.selection = @"size";
+                            [self.navigationController pushViewController:vc animated:YES];
+                        }
+                        else{
+                            SelectViewController *vc = [[SelectViewController alloc]init];
+                            vc.delegate = self;
+                            vc.setting = @"sizeclothing";
+                            vc.offer = YES;
+                            self.selection = @"size";
+                            [self.navigationController pushViewController:vc animated:YES];
+                        }
                     }
                 }
+                else if(indexPath.row == 4){
+                    LocationView *vc = [[LocationView alloc]init];
+                    vc.delegate = self;
+                    self.selection = @"location";
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
+                else if(indexPath.row == 5){
+                    SelectViewController *vc = [[SelectViewController alloc]init];
+                    vc.delegate = self;
+                    vc.setting = @"delivery";
+                    vc.offer = YES;
+                    self.selection = @"delivery";
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
             }
-            else if(indexPath.row == 4){
-                LocationView *vc = [[LocationView alloc]init];
-                vc.delegate = self;
-                self.selection = @"location";
-                [self.navigationController pushViewController:vc animated:YES];
+            else {
+                [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
             }
-            else if(indexPath.row == 5){
-                SelectViewController *vc = [[SelectViewController alloc]init];
-                vc.delegate = self;
-                vc.setting = @"delivery";
-                vc.offer = YES;
-                self.selection = @"delivery";
-                [self.navigationController pushViewController:vc animated:YES];
-            }
-        }
-        else {
-            [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
-        }
     }
 }
 

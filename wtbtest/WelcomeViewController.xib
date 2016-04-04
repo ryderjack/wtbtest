@@ -3,12 +3,11 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
-        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="WelcomeViewController">
             <connections>
-                <outlet property="tutorialTestButton" destination="4cP-pX-Quw" id="xUU-wr-BjZ"/>
+                <outlet property="descriptionLabel" destination="BnC-1B-y19" id="u01-8R-IdO"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -17,65 +16,47 @@
             <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="page1.png" translatesAutoresizingMaskIntoConstraints="NO" id="Iur-vO-F7d">
-                    <rect key="frame" x="87" y="256" width="200" height="168"/>
-                    <constraints>
-                        <constraint firstAttribute="width" secondItem="Iur-vO-F7d" secondAttribute="height" multiplier="25:21" id="l23-y3-Y7s"/>
-                    </constraints>
-                </imageView>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="wantobuy" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="iEU-WM-76G">
                     <rect key="frame" x="63" y="42" width="248" height="52"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="52" id="MC2-KU-tbG"/>
+                        <constraint firstAttribute="height" constant="52" id="vPq-gB-Hnm"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="AvenirNext-UltraLight" family="Avenir Next" pointSize="42"/>
                     <color key="textColor" red="0.96078431372549022" green="0.65098039215686276" blue="0.13725490196078433" alpha="1" colorSpace="calibratedRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="page1.png" translatesAutoresizingMaskIntoConstraints="NO" id="Iur-vO-F7d">
+                    <rect key="frame" x="87" y="250" width="200" height="168"/>
+                </imageView>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Y4l-da-WYp">
-                    <rect key="frame" x="81" y="497" width="212" height="40"/>
-                    <constraints>
-                        <constraint firstAttribute="width" secondItem="Y4l-da-WYp" secondAttribute="height" multiplier="53:10" id="bxd-cO-jaQ"/>
-                    </constraints>
+                    <rect key="frame" x="81" y="522" width="212" height="40"/>
                     <state key="normal" image="fblogin.png"/>
                     <connections>
                         <action selector="facebookTapped:" destination="-1" eventType="touchUpInside" id="FF8-y9-TAX"/>
                     </connections>
                 </button>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Post items you wantobuy so sellers can sell them to you saving time &amp; effort" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BnC-1B-y19">
-                    <rect key="frame" x="78" y="134" width="218" height="104"/>
+                    <rect key="frame" x="78" y="138" width="218" height="104"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="104" id="U9L-Qm-z8u"/>
+                        <constraint firstAttribute="height" constant="104" id="0dM-MY-fYW"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="18"/>
                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4cP-pX-Quw">
-                    <rect key="frame" x="138" y="594" width="98" height="30"/>
-                    <constraints>
-                        <constraint firstAttribute="width" constant="98" id="I8q-9v-khV"/>
-                    </constraints>
-                    <state key="normal" title="Tutorial test"/>
-                    <connections>
-                        <action selector="tutorialPressed:" destination="-1" eventType="touchUpInside" id="TrX-tH-Yp3"/>
-                    </connections>
-                </button>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
             <constraints>
-                <constraint firstItem="4cP-pX-Quw" firstAttribute="top" secondItem="Y4l-da-WYp" secondAttribute="bottom" constant="57" id="4Wq-nH-jGj"/>
-                <constraint firstItem="4cP-pX-Quw" firstAttribute="centerX" secondItem="Y4l-da-WYp" secondAttribute="centerX" id="BLR-lF-ppI"/>
-                <constraint firstItem="Y4l-da-WYp" firstAttribute="top" secondItem="Iur-vO-F7d" secondAttribute="bottom" constant="73" id="BmT-3X-rPM"/>
-                <constraint firstItem="BnC-1B-y19" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="Djy-Ib-o2k"/>
-                <constraint firstItem="BnC-1B-y19" firstAttribute="centerX" secondItem="Iur-vO-F7d" secondAttribute="centerX" id="R1l-Pk-PXh"/>
-                <constraint firstItem="iEU-WM-76G" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="63" id="Tqm-OA-OUx"/>
-                <constraint firstItem="Iur-vO-F7d" firstAttribute="top" secondItem="BnC-1B-y19" secondAttribute="bottom" constant="18" id="e3D-H1-xCH"/>
-                <constraint firstItem="BnC-1B-y19" firstAttribute="centerX" secondItem="iEU-WM-76G" secondAttribute="centerX" id="r6A-2J-AG6"/>
-                <constraint firstItem="Y4l-da-WYp" firstAttribute="centerX" secondItem="Iur-vO-F7d" secondAttribute="centerX" id="ruH-Hi-WAy"/>
-                <constraint firstItem="BnC-1B-y19" firstAttribute="top" secondItem="iEU-WM-76G" secondAttribute="bottom" constant="40" id="ufA-BY-eyZ"/>
-                <constraint firstItem="iEU-WM-76G" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="42" id="unQ-D1-1AF"/>
-                <constraint firstItem="BnC-1B-y19" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="78" id="wDw-TT-gJF"/>
+                <constraint firstItem="BnC-1B-y19" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="78" id="C28-ID-Uyl"/>
+                <constraint firstItem="Iur-vO-F7d" firstAttribute="centerY" secondItem="i5M-Pr-FkT" secondAttribute="centerY" id="IBW-bD-X80"/>
+                <constraint firstItem="BnC-1B-y19" firstAttribute="centerX" secondItem="iEU-WM-76G" secondAttribute="centerX" id="MjJ-oU-Hy9"/>
+                <constraint firstItem="Y4l-da-WYp" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="T7j-4d-NUw"/>
+                <constraint firstItem="iEU-WM-76G" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="63" id="a2Z-At-mai"/>
+                <constraint firstItem="Iur-vO-F7d" firstAttribute="centerX" secondItem="iEU-WM-76G" secondAttribute="centerX" id="hay-or-Oc0"/>
+                <constraint firstAttribute="bottom" secondItem="Y4l-da-WYp" secondAttribute="bottom" constant="105" id="l20-mH-u3G"/>
+                <constraint firstItem="iEU-WM-76G" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="mbC-xh-yZ2"/>
+                <constraint firstItem="iEU-WM-76G" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="42" id="rCg-rB-035"/>
+                <constraint firstItem="Iur-vO-F7d" firstAttribute="top" secondItem="BnC-1B-y19" secondAttribute="bottom" constant="8" id="zEq-iG-xYN"/>
             </constraints>
             <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
         </view>

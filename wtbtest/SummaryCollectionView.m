@@ -8,6 +8,7 @@
 
 #import "SummaryCollectionView.h"
 #import "OrderSummaryController.h"
+#import "SummaryCell.h"
 
 @interface SummaryCollectionView ()
 
@@ -31,7 +32,7 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-//    [self.collectionView registerClass:[OfferCell class] forCellWithReuseIdentifier:@"Cell"];
+    [self.collectionView registerClass:[SummaryCell class] forCellWithReuseIdentifier:@"Cell"];
     
     UINib *cellNib = [UINib nibWithNibName:@"OfferCell" bundle:nil];
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"Cell"];
@@ -80,7 +81,25 @@
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
-    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
+    SummaryCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
+    
+    PFObject *order = [self.results objectAtIndex:indexPath.row];
+    
+    if ([[order objectForKey:@"status"] isEqualToString:@"paid"]) {
+        cell.shipImageView.image = [UIImage imageNamed:@"planeOff"];
+        cell.fbImageView.image = [UIImage imageNamed:@"starOff"];
+    }
+    else if ([[order objectForKey:@"status"] isEqualToString:@"paid"]) {
+        cell.shipImageView.image = [UIImage imageNamed:@"planeOn"];
+        cell.fbImageView.image = [UIImage imageNamed:@"starOff"];
+    }
+    else if ([[order objectForKey:@"status"] isEqualToString:@"paid"]) {
+        cell.shipImageView.image = [UIImage imageNamed:@"planeOn"];
+        cell.fbImageView.image = [UIImage imageNamed:@"starOn"];
+    }
+    
+    
+    
     return cell;
 }
 

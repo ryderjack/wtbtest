@@ -11,6 +11,7 @@
 #import <ParseUI/ParseUI.h>
 
 @interface FeedbackController : UITableViewController <UITextFieldDelegate>
+
 @property (strong, nonatomic) IBOutlet UITableViewCell *userCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *starCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *buttonCell;

@@ -4,6 +4,7 @@
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <objects>
@@ -33,25 +34,28 @@
                         <color key="textColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="sm7-Ov-poo">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="cost.png" translatesAutoresizingMaskIntoConstraints="NO" id="sm7-Ov-poo">
                         <rect key="frame" x="73" y="70" width="20" height="20"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="20" id="wTy-er-Fi2"/>
                             <constraint firstAttribute="height" constant="20" id="xkz-0g-Dkp"/>
+                            <constraint firstAttribute="width" secondItem="sm7-Ov-poo" secondAttribute="height" multiplier="1:1" id="yAq-cp-X98"/>
                         </constraints>
                     </imageView>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="alertIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="z5i-dv-0d2">
                         <rect key="frame" x="73" y="112" width="20" height="20"/>
                     </imageView>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="DrO-Y4-cb4">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="planeOff.png" translatesAutoresizingMaskIntoConstraints="NO" id="DrO-Y4-cb4">
                         <rect key="frame" x="121" y="70" width="20" height="20"/>
                         <constraints>
+                            <constraint firstAttribute="width" secondItem="DrO-Y4-cb4" secondAttribute="height" multiplier="1:1" id="kaD-cn-t8F"/>
                             <constraint firstAttribute="width" constant="20" id="sfI-td-MCh"/>
                         </constraints>
                     </imageView>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="6d6-V1-e3z">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="starOff.png" translatesAutoresizingMaskIntoConstraints="NO" id="6d6-V1-e3z">
                         <rect key="frame" x="169" y="70" width="20" height="20"/>
                         <constraints>
+                            <constraint firstAttribute="width" secondItem="6d6-V1-e3z" secondAttribute="height" multiplier="1:1" id="GUF-kc-GV8"/>
                             <constraint firstAttribute="width" constant="20" id="bDF-EN-j5U"/>
                         </constraints>
                     </imageView>
@@ -109,5 +113,8 @@
     </objects>
     <resources>
         <image name="alertIcon.png" width="22" height="22"/>
+        <image name="cost.png" width="20" height="20"/>
+        <image name="planeOff.png" width="22" height="22"/>
+        <image name="starOff.png" width="22" height="22"/>
     </resources>
 </document>

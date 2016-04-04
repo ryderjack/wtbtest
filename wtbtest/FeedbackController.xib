@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="9532" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10116" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9530"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
@@ -44,7 +44,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="130"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="YKo-Ha-STC" id="f7e-dM-jK8">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="129.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="130"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="About the buyer" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="zmu-88-loO">
@@ -93,15 +93,15 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="plm-r5-nD8" firstAttribute="leading" secondItem="b9S-dX-Lf8" secondAttribute="trailing" constant="11" id="1ld-AT-6mi"/>
-                            <constraint firstAttribute="trailing" secondItem="Crf-qQ-t3q" secondAttribute="trailing" constant="8" id="98l-Fz-XL2"/>
                             <constraint firstItem="Crf-qQ-t3q" firstAttribute="trailing" secondItem="Irf-sm-6kw" secondAttribute="trailingMargin" id="FBm-zK-1qB"/>
                             <constraint firstItem="8jq-lo-Yld" firstAttribute="leading" secondItem="b9S-dX-Lf8" secondAttribute="trailing" constant="8" symbolic="YES" id="O4y-z0-pwt"/>
+                            <constraint firstItem="Crf-qQ-t3q" firstAttribute="leading" secondItem="8jq-lo-Yld" secondAttribute="trailing" constant="8" symbolic="YES" id="OoK-Os-tBB"/>
                             <constraint firstItem="b9S-dX-Lf8" firstAttribute="top" secondItem="Irf-sm-6kw" secondAttribute="top" constant="20" id="RYg-cR-2cI"/>
-                            <constraint firstItem="Crf-qQ-t3q" firstAttribute="centerY" secondItem="b9S-dX-Lf8" secondAttribute="centerY" id="V9v-wE-5Tm"/>
                             <constraint firstAttribute="bottom" secondItem="8jq-lo-Yld" secondAttribute="bottom" id="YPV-nX-PZu"/>
-                            <constraint firstItem="Crf-qQ-t3q" firstAttribute="centerY" secondItem="Irf-sm-6kw" secondAttribute="centerY" id="a90-5e-TlV"/>
                             <constraint firstItem="Crf-qQ-t3q" firstAttribute="leading" secondItem="8jq-lo-Yld" secondAttribute="trailing" constant="8" symbolic="YES" id="hk1-aW-fbg"/>
+                            <constraint firstItem="Crf-qQ-t3q" firstAttribute="centerY" secondItem="b9S-dX-Lf8" secondAttribute="centerY" id="iKV-oJ-F4Q"/>
                             <constraint firstItem="Crf-qQ-t3q" firstAttribute="trailing" secondItem="Irf-sm-6kw" secondAttribute="trailingMargin" id="jG0-pU-NVA"/>
+                            <constraint firstItem="Crf-qQ-t3q" firstAttribute="centerY" secondItem="Irf-sm-6kw" secondAttribute="centerY" id="oev-oi-zTI"/>
                             <constraint firstItem="b9S-dX-Lf8" firstAttribute="leading" secondItem="Irf-sm-6kw" secondAttribute="leadingMargin" id="rGK-4Q-rUz"/>
                             <constraint firstItem="8jq-lo-Yld" firstAttribute="top" secondItem="plm-r5-nD8" secondAttribute="bottom" id="vGL-On-Rps"/>
                             <constraint firstItem="b9S-dX-Lf8" firstAttribute="top" secondItem="plm-r5-nD8" secondAttribute="top" id="wa7-m0-fuU"/>

@@ -9,6 +9,7 @@
 #import "CreateViewController.h"
 #import <TWPhotoPickerController.h>
 
+
 @interface CreateViewController ()
 
 @end
@@ -217,6 +218,8 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     
+    [self removeKeyboard];
+    
     if (indexPath.section ==2){
         if(indexPath.row == 0){
             SelectViewController *vc = [[SelectViewController alloc]init];
@@ -387,7 +390,6 @@
     return string;
 }
 
-
 -(void)alertSheet{
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
@@ -411,8 +413,59 @@
         [self presentViewController:photoPicker animated:YES completion:nil];
     }]];
     
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Search Instagram" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        
+        // search insta
+        DZNPhotoPickerController *picker = [DZNPhotoPickerController new];
+        picker.supportedServices =  DZNPhotoPickerControllerServiceInstagram;
+        picker.allowsEditing = NO;
+        picker.cropMode = DZNPhotoEditorViewControllerCropModeSquare;
+        picker.initialSearchTerm = self.titleField.text;
+        picker.enablePhotoDownload = YES;
+        picker.allowAutoCompletedSearch = YES;
+        picker.infiniteScrollingEnabled = YES;
+        picker.title = @"Search Instagram";
+        
+        picker.cancellationBlock = ^(DZNPhotoPickerController *picker) {
+            [self dismissViewControllerAnimated:YES completion:nil];
+        };
+        
+        picker.finalizationBlock = ^(DZNPhotoPickerController *picker, NSDictionary *info) {
+            [self handleImagePicker:picker withMediaInfo:info];
+            [self dismissViewControllerAnimated:YES completion:nil];
+        };
+        
+        [self presentViewController:picker animated:YES completion:nil];
+    }]];
+    
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
+
+#pragma web picker delegates
+
+-(void)photoPickerControllerDidCancel:(DZNPhotoPickerController *)picker{
+}
+
+-(void)photoPickerController:(DZNPhotoPickerController *)picker didFinishPickingPhotoWithInfo:(NSDictionary *)userInfo{
+}
+
+- (void)handleImagePicker:(DZNPhotoPickerController *)picker withMediaInfo:(NSDictionary *)info
+{
+    [self updateImageWithPayload:info];
+}
+
+- (void)updateImageWithPayload:(NSDictionary *)payload
+{
+    UIImage *image = payload[UIImagePickerControllerEditedImage];
+    if (!image) image = payload[UIImagePickerControllerOriginalImage];
+    
+    [self finalImage:image];
+}
+
+-(void)photoPickerController:(DZNPhotoPickerController *)picker didFailedPickingPhotoWithError:(NSError *)error{
+}
+
+#pragma camera buttons
 
 - (IBAction)firstCamPressed:(id)sender {
     if (self.firstCam.enabled == YES) {
@@ -539,6 +592,8 @@
     [self.fourthCam setEnabled:YES];
     [self.fourthDelete setHidden:YES];
 }
+
+#pragma delegate callbacks
 
 - (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)item withitem:(NSString *)item2
 {
@@ -710,7 +765,6 @@
                     [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
                     [self.navigationController pushViewController:vc animated:YES];
                 }
-                
             }
             else{
                 [self.saveButton setEnabled:YES];
@@ -910,5 +964,13 @@
     }]];
     
     [self presentViewController:alertView animated:YES completion:nil];
+}
+
++ (void)initialize
+{
+    
+    [DZNPhotoPickerController registerFreeService:DZNPhotoPickerControllerServiceInstagram consumerKey:@"16759bba4b7e4831b80bf3412e7dcb16" consumerSecret:@"701c5a99144a401c8285b0c9df999509"];
+
+    
 }
 @end

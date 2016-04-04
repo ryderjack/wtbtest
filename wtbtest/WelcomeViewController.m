@@ -25,6 +25,12 @@
     [super viewDidLoad];
     self.navigationController.navigationBarHidden = YES;
     [self.tutorialTestButton setHidden:YES];
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone &&
+        [[[UIDevice currentDevice] model] hasPrefix:@"iPad"]) {
+        // This app is an iPhone app running on an iPad
+        [self.descriptionLabel setHidden:YES];
+    }
 }
 
 - (void)didReceiveMemoryWarning {

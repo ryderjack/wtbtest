@@ -10,6 +10,7 @@
 
 @interface WelcomeViewController : UIViewController
 @property (weak, nonatomic) IBOutlet UIButton *tutorialTestButton;
+@property (weak, nonatomic) IBOutlet UILabel *descriptionLabel;
 
 
 @end

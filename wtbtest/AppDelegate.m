@@ -28,10 +28,11 @@
 
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
-//        configuration.server = @"http://localhost:1337/parse";
-        configuration.server = @"http://wantobuy.azurewebsites.net/parse";
+        configuration.server = @"http://localhost:1337/parse";
+//        configuration.server = @"http://wantobuy.azurewebsites.net/parse";
         
     }]];
+    //AIzaSyDsC4bjzCATLTYR5vN-f-huCclUGuN4z_g google api key
     
     [PFFacebookUtils initializeFacebookWithApplicationLaunchOptions:launchOptions];
     
