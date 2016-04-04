@@ -236,6 +236,35 @@
         
         [string endEditing];
         [self.tagExplain setAttributedText:string];
+        
+        //setup placeholders to be what the wtb user wants
+        
+        self.chooseCategory.text = [self.listingObject objectForKey:@"category"];
+        
+        self.priceField.text = [NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"price"]];
+       
+        if ([[self.listingObject objectForKey:@"condition"] isEqualToString:@"Any"]) {
+            
+        }
+        else{
+           self.chooseCondition.text = [self.listingObject objectForKey:@"condition"];
+        }
+        
+        if ([[self.listingObject objectForKey:@"size"] isEqualToString:@"Any"]) {
+            
+        }
+        else{
+            self.chooseSize.text = [self.listingObject objectForKey:@"size"];
+        }
+        
+        if ([[self.listingObject objectForKey:@"delivery"] isEqualToString:@"Any"]) {
+            
+        }
+        else{
+            self.chooseDelivery.text = [self.listingObject objectForKey:@"delivery"];
+        }
+        
+        
     }
 }
 
@@ -879,35 +908,22 @@
         PFObject *offerObject =[PFObject objectWithClassName:@"offers"];
        
         [offerObject setObject:self.listingObject forKey:@"wtbListing"];
-         NSLog(@"%@", self.listingObject);
-        
         [offerObject setObject:self.itemTitle.text forKey:@"title"];
-         NSLog(@"%@", self.itemTitle.text);
-        
         [offerObject setObject:self.chooseCondition.text forKey:@"condition"];
-         NSLog(@"%@", self.chooseCondition.text);
-        
         [offerObject setObject:self.chooseCategory.text forKey:@"category"];
-         NSLog(@"%@", self.chooseCategory.text);
-        
         [offerObject setObject:self.chooseSize.text forKey:@"size"];
-         NSLog(@"%@", self.chooseSize.text);
         
         if (self.genderSize) {
             
             [offerObject setObject:self.genderSize forKey:@"sizeGender"];
-             NSLog(@"%@", self.genderSize);
         }
         
         [offerObject setObject:self.chooseLocation.text forKey:@"itemLocation"];
-         NSLog(@"%@", self.chooseLocation.text);
         
         if (self.geopoint) {
             [offerObject setObject:self.geopoint forKey:@"geopoint"];
-             NSLog(@"%@", self.geopoint);
         }
         else{
-            NSLog(@"return");
             self.warningLabel.text = @"Try your location again!";
             self.chooseLocation.text = @"Choose";
             [self.sendOfferButton setEnabled:YES];
@@ -917,15 +933,12 @@
         [offerObject setObject:self.chooseDelivery.text forKey:@"deliveryMethod"];
         
         [offerObject setObject:salePrice forKey:@"salePrice"];
-         NSLog(@"%@", salePrice);
         
         [offerObject setObject:@"open" forKey:@"status"];
         
         [offerObject setObject:deliveryCost forKey:@"deliveryCost"];
-         NSLog(@"%@", deliveryCost);
         
         [offerObject setObject:totalCost forKey:@"totalCost"];
-         NSLog(@"%@", totalCost);
         
         [offerObject setObject:self.buyerUser forKey:@"buyerUser"];
         
@@ -976,7 +989,6 @@
             [offerObject setObject:imageFile4 forKey:@"image4"];
         }
         
-        NSLog(@"after images");
         if ([self.extraFiel.text isEqualToString:@"eg. Includes original box"]) {
             //don't save its placeholder
         }

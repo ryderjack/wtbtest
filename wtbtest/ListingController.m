@@ -178,7 +178,7 @@
 {
     if (section == 0)
         return 1.0f;
-    else if(section == 2){
+    else if(section == 2 || section == 3){
         return 32.0f;
     }
     return 0.0f;
@@ -190,7 +190,7 @@
 }
 -(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
    
-    if (section == 1 || section == 3)
+    if (section == 1 || section == 3 || section == 2)
         return 0.0f;
     
     return 32.0f;
@@ -497,20 +497,20 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 - (IBAction)sellthisPressed:(id)sender {
-//    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-//        CreateViewController *vc = [[CreateViewController alloc]init];
-//        vc.status = @"edit";
-//        vc.lastId = self.listingObject.objectId;
-//        vc.editFromListing = YES;
-//        vc.listing = self.listingObject;
-//        [self.navigationController pushViewController:vc animated:YES];
-//    }
-//    else{
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        CreateViewController *vc = [[CreateViewController alloc]init];
+        vc.status = @"edit";
+        vc.lastId = self.listingObject.objectId;
+        vc.editFromListing = YES;
+        vc.listing = self.listingObject;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else{
         MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
         vc.listingObject = self.listingObject;
         vc.reviewMode = NO;
         [self.navigationController pushViewController:vc animated:YES];
-//    }
+    }
 
 }
 @end

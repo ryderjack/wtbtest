@@ -34,6 +34,10 @@
     self.commentField.delegate= self;
     
     self.user = [[PFUser alloc]init];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
     
     if (self.purchased == YES) {
         self.aboutLabel.text = @"About the seller";
@@ -65,6 +69,7 @@
             NSLog(@"error %@", error);
         }
     }];
+    
 }
 
 - (void)didReceiveMemoryWarning {

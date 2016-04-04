@@ -416,29 +416,42 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Search Instagram" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         
         // search insta
-        DZNPhotoPickerController *picker = [DZNPhotoPickerController new];
-        picker.supportedServices =  DZNPhotoPickerControllerServiceInstagram;
-        picker.allowsEditing = NO;
-        picker.cropMode = DZNPhotoEditorViewControllerCropModeSquare;
-        picker.initialSearchTerm = self.titleField.text;
-        picker.enablePhotoDownload = YES;
-        picker.allowAutoCompletedSearch = YES;
-        picker.infiniteScrollingEnabled = YES;
-        picker.title = @"Search Instagram";
         
-        picker.cancellationBlock = ^(DZNPhotoPickerController *picker) {
-            [self dismissViewControllerAnimated:YES completion:nil];
-        };
-        
-        picker.finalizationBlock = ^(DZNPhotoPickerController *picker, NSDictionary *info) {
-            [self handleImagePicker:picker withMediaInfo:info];
-            [self dismissViewControllerAnimated:YES completion:nil];
-        };
-        
-        [self presentViewController:picker animated:YES completion:nil];
+        if ([self.titleField.text isEqualToString:@""]) {
+            [self popUpAlert];
+        }
+        else{
+            DZNPhotoPickerController *picker = [DZNPhotoPickerController new];
+            picker.supportedServices =  DZNPhotoPickerControllerServiceInstagram;
+            picker.allowsEditing = NO;
+            picker.cropMode = DZNPhotoEditorViewControllerCropModeSquare;
+            picker.initialSearchTerm = self.titleField.text;
+            picker.enablePhotoDownload = YES;
+            picker.allowAutoCompletedSearch = YES;
+            picker.infiniteScrollingEnabled = YES;
+            picker.title = @"Search Instagram";
+            
+            picker.cancellationBlock = ^(DZNPhotoPickerController *picker) {
+                [self dismissViewControllerAnimated:YES completion:nil];
+            };
+            
+            picker.finalizationBlock = ^(DZNPhotoPickerController *picker, NSDictionary *info) {
+                [self handleImagePicker:picker withMediaInfo:info];
+                [self dismissViewControllerAnimated:YES completion:nil];
+            };
+            [self presentViewController:picker animated:YES completion:nil];
+        }
     }]];
     
     [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+-(void)popUpAlert{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Enter a title" message:@"Make sure you've entered a title for the item you wantobuy!" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 
 #pragma web picker delegates
@@ -968,9 +981,6 @@
 
 + (void)initialize
 {
-    
     [DZNPhotoPickerController registerFreeService:DZNPhotoPickerControllerServiceInstagram consumerKey:@"16759bba4b7e4831b80bf3412e7dcb16" consumerSecret:@"701c5a99144a401c8285b0c9df999509"];
-
-    
 }
 @end

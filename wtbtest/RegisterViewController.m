@@ -219,6 +219,19 @@
     self.profileImageView.contentMode = UIViewContentModeScaleAspectFill;
 }
 
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+
+    if (textField == self.usernameField) {
+        if(range.length + range.location > textField.text.length)
+        {
+            return NO;
+        }
+        NSUInteger newLength = [textField.text length] + [string length] - range.length;
+        return newLength <= 10;
+    }
+    return string;
+}
+
 - (IBAction)regPressed:(id)sender {
     
     [self.regButton setEnabled:NO];
