@@ -19,6 +19,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    self.textView.text = @"";
+    
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     
@@ -51,6 +53,7 @@
     self.searchController.searchBar.tintColor = [UIColor colorWithRed:0.525 green:0.745 blue:1 alpha:1];
     
     PFQuery *groupsQuery = [PFQuery queryWithClassName:@"groups"];
+    [groupsQuery orderByDescending:@"groupName"];
     [groupsQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             [self.arrayOfGroups addObjectsFromArray:objects];

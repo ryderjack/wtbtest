@@ -77,5 +77,6 @@
 @property (nonatomic, strong) NSString *genderSize;
 @property (nonatomic) BOOL editFromListing;
 @property (weak, nonatomic) IBOutlet UIButton *saveButton;
+@property (nonatomic, strong) UIBarButtonItem *resetButton;
 
 @end

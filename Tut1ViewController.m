@@ -45,13 +45,12 @@
     }
     else if (self.index == 2){
         self.mainTitle.text = @"Buying";
-        self.mainLabel.text = @"Create listings for items you wantobuy. By telling sellers what you want, you can sit back & wait for them to send you offers to purchase their items";
+        self.mainLabel.text = @"Tell sellers exactly what you wantobuy";
         self.imageView.image = [UIImage imageNamed:@"pic3"];
         
     }
     else if (self.index == 3){
         self.mainTitle.text = @"Buying";
-//        self.mainLabel.text = @"We offer authenticity checks for any item bought for a small fee. You can decide right before you pay. All Payments are made securely using PayPal";
         self.mainLabel.text = @"All Payments are made securely using PayPal";
         self.imageView.image = [UIImage imageNamed:@"paypal"];
         [self.startButton setHidden:NO];

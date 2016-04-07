@@ -29,12 +29,12 @@
     self.authenticityCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.voucherCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
-    self.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
-    self.deliverypriceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue]];
+    self.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"salePriceFloat"] floatValue]];
+    self.deliverypriceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"deliveryCostFloat"] floatValue]];
     
     //setup values
-    self.price = [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue];
-    self.delivery = [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue];
+    self.price = [[self.confirmedOfferObject objectForKey:@"salePriceFloat"] floatValue];
+    self.delivery = [[self.confirmedOfferObject objectForKey:@"deliveryCostFloat"] floatValue];
 //    self.fee = (self.price + self.delivery)*0.05;
     self.fee = 0;
     float total = (self.price + self.delivery ); //+ self.fee
@@ -112,13 +112,6 @@
         return;
     }
     else{
-        [self.confirmedOfferObject setObject:@"purchased" forKey:@"status"];
-        [self.confirmedOfferObject saveInBackground];
-        
-        PFObject *ogListing = [self.confirmedOfferObject objectForKey:@"wtbListing"];
-        [ogListing setObject:@"purchased" forKey:@"status"];
-        [ogListing saveInBackground];
-        
         PFObject *orderObject =[PFObject objectWithClassName:@"orders"];
         [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
         [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
@@ -129,23 +122,35 @@
         NSString *prefixToRemove = @"£";
         NSString *fee = [[NSString alloc]init];
         fee = [self.transactionfeeLabel.text substringFromIndex:[prefixToRemove length]];
-        
-        [orderObject setObject:fee forKey:@"fee"];
+        float feeFloat = [fee floatValue];
+        orderObject[@"fee"] = @(feeFloat);
         
         NSString *buyerTotal = [[NSString alloc]init];
         buyerTotal = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
-        [orderObject setObject:buyerTotal forKey:@"buyerTotal"];
+        float buyerTotalFloat = [buyerTotal floatValue];
+        orderObject[@"buyerTotal"] = @(buyerTotalFloat);
         
-        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCost"] forKey:@"sellerTotal"];
-        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
+        
+        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCostFloat"] forKey:@"sellerTotal"];
+        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePriceFloat"] forKey:@"salePrice"];
         NSString *delivery = [[NSString alloc]init];
         delivery = [self.deliverypriceLabel.text substringFromIndex:[prefixToRemove length]];
-        
-        [orderObject setObject:delivery forKey:@"delivery"];
+        float deliveryFloat = [delivery floatValue];
+        orderObject[@"delivery"] = @(deliveryFloat);
         
         [orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
                 NSLog(@"order placed! %@", orderObject.objectId);
+                
+                //update other objects
+                
+                [self.confirmedOfferObject setObject:@"purchased" forKey:@"status"];
+                [self.confirmedOfferObject saveInBackground];
+                
+                PFObject *ogListing = [self.confirmedOfferObject objectForKey:@"wtbListing"];
+                [ogListing setObject:@"purchased" forKey:@"status"];
+                [ogListing saveInBackground];
+                
                 [self.payButton setEnabled:YES];
                 ListingCompleteView *vc = [[ListingCompleteView alloc]init];
                 vc.orderMode = YES;

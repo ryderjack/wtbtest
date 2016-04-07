@@ -12,6 +12,7 @@
 #import "ExplainViewController.h"
 #import "WelcomeViewController.h"
 #import "NavigationController.h"
+#import "searchResultsController.h"
 
 @interface ExploreVC ()
 
@@ -26,14 +27,20 @@
     [self.noresultsLabel setHidden:YES];
     [self.noResultsImageView setHidden:YES];
     
-    self.navigationItem.title = @"Explore";
+    self.searchString = @"";
+    self.searchEnabled = NO;
+    
+    self.navigationItem.title = @"wantobuy";
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"question"] style:UIBarButtonItemStylePlain target:self action:@selector(showExtraInfo)];
     
+    UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"searchBarIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(searchPressed)];
+    
     self.navigationItem.rightBarButtonItem = infoButton;
+    self.navigationItem.leftBarButtonItem = searchButton;
     
     //collection view/cell setup
     [self.collectionView registerClass:[ExploreCell class] forCellWithReuseIdentifier:@"Cell"];
@@ -61,12 +68,14 @@
     [flowLayout setMinimumInteritemSpacing:0];
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
+    
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.delegate = self;
     self.collectionView.alwaysBounceVertical = YES;
     self.collectionView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     
     self.results = [[NSMutableArray alloc]init];
+    self.searchResults = [[NSMutableArray alloc]init];
     
     //location stuff
     [self startLocationManager];
@@ -78,6 +87,11 @@
     self.lastInfinSkipped = 0;
     
     self.filtersArray = [NSMutableArray array];
+    
+    // set searchbar font
+    NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:13],
+                                      NSFontAttributeName, nil];
+    [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:searchAttributes];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -117,6 +131,10 @@
     if (self.pullFinished == YES) {
         [self queryParsePull];
     }
+    
+    if (self.searchEnabled == YES) {
+        [self.searchController.searchBar setHidden:NO];
+    }
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -132,9 +150,20 @@
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     ExploreCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     
-    PFObject *listing = [self.results objectAtIndex:indexPath.row];
+    PFObject *listing;
+    
+    if (self.searchEnabled == YES) {
+        listing = [self.searchResults objectAtIndex:indexPath.row];
+    }
+    else{
+        listing = [self.results objectAtIndex:indexPath.row];
+    }
+    
     cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
-    cell.priceLabel.text = [NSString stringWithFormat:@"%@ £%@", [listing objectForKey:@"condition"],[listing objectForKey:@"price"]];
+    
+    NSString *condition = [listing objectForKey:@"condition"];
+    int price = [[listing objectForKey:@"listingPrice"] intValue];
+    cell.priceLabel.text = [NSString stringWithFormat:@"%@ £%d", condition,price];
     
     if ([[listing objectForKey:@"size"] isEqualToString:@"One size"]) {
         cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"size"]];
@@ -161,7 +190,14 @@
 }
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
-    return self.results.count;
+    if (self.searchEnabled == YES) {
+        NSLog(@"search number");
+       return self.searchResults.count;
+    }
+    else{
+        NSLog(@"results number");
+       return self.results.count;
+    }
 }
 
 -(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
@@ -170,15 +206,28 @@
 
 -(void)queryParseInfinite{
     self.infinFinished = NO;
-    self.infiniteQuery.limit = 4;
+    self.infiniteQuery.limit = 8;
     [self.infiniteQuery whereKey:@"status" notEqualTo:@"purchased"];
     [self setupInfinQuery];
+    
+    if (self.searchEnabled == YES) {
+        [self.infiniteQuery whereKey:@"title" matchesRegex:self.searchString];
+    }
     
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
             self.lastInfinSkipped = self.lastInfinSkipped + count;
-            [self.results addObjectsFromArray:objects];
+            
+            if (self.searchEnabled == YES) {
+                //save in searchResults array
+                [self.searchResults addObjectsFromArray:objects];
+            }
+            else{
+                //save in normal results array
+                [self.results addObjectsFromArray:objects];
+            }
+            
             [self.collectionView reloadData];
             
             [self.collectionView.infiniteScrollingView stopAnimating];
@@ -192,8 +241,14 @@
 }
 -(void)queryParsePull{
     self.pullFinished = NO;
-    self.pullQuery.limit = 4;
+    self.pullQuery.limit = 8;
     [self setupPullQuery];
+    
+    if (self.searchEnabled == YES) {
+        NSLog(@"search enabled == YES!");
+        [self.pullQuery whereKey:@"title" matchesRegex:self.searchString];
+    }
+    
     [self.pullQuery whereKey:@"status" notEqualTo:@"purchased"];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
@@ -207,8 +262,25 @@
                 [self.noResultsImageView setHidden:YES];
             }
             self.lastInfinSkipped = count;
-            [self.results removeAllObjects];
-            [self.results addObjectsFromArray:objects];
+            
+            if (self.searchEnabled == YES) {
+                //save in searchResults array
+                [self.searchResults removeAllObjects];
+                [self.searchResults addObjectsFromArray:objects];
+            }
+            else{
+                //save in normal results array
+                [self.results removeAllObjects];
+                
+//                NSSortDescriptor *sortDescriptor;
+//                sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"listingPrice"
+//                                                             ascending:NO];
+//                NSArray *sortDescriptors = [NSArray arrayWithObject:sortDescriptor];
+//                NSArray *sortedArray = [objects sortedArrayUsingDescriptors:sortDescriptors];
+                
+                [self.results addObjectsFromArray:objects];
+            }
+            
             [self.collectionView reloadData];
             [self.collectionView.pullToRefreshView stopAnimating];
             self.pullFinished = YES;
@@ -322,10 +394,10 @@
 -(void)setupInfinQuery{
     if (self.filtersArray.count > 0) {
         if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.infiniteQuery orderByDescending:@"price"];
+            [self.infiniteQuery orderByDescending:@"listingPrice"];
         }
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.infiniteQuery orderByAscending:@"price"];
+            [self.infiniteQuery orderByAscending:@"listingPrice"];
         }
         
         if ([self.filtersArray containsObject:@"new"]){
@@ -340,13 +412,13 @@
         }
         else if ([self.filtersArray containsObject:@"footwear"]){
             [self.infiniteQuery whereKey:@"category" equalTo:@"Footwear"];
-        }
-        
-        if ([self.filtersArray containsObject:@"male"]){
-            [self.infiniteQuery whereKey:@"sizegender" equalTo:@"Mens"];
-        }
-        else if ([self.filtersArray containsObject:@"female"]){
-            [self.infiniteQuery whereKey:@"sizegender" equalTo:@"Womens"];
+            
+            if ([self.filtersArray containsObject:@"male"]){
+                [self.infiniteQuery whereKey:@"sizegender" equalTo:@"Mens"];
+            }
+            else if ([self.filtersArray containsObject:@"female"]){
+                [self.infiniteQuery whereKey:@"sizegender" equalTo:@"Womens"];
+            }
         }
         
         //footwear sizes
@@ -422,10 +494,10 @@
 -(void)setupPullQuery{
     if (self.filtersArray.count > 0) {
         if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.pullQuery orderByDescending:@"price"];
+            [self.pullQuery orderByDescending:@"listingPrice"];
         }
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.pullQuery orderByAscending:@"price"];
+            [self.pullQuery orderByAscending:@"listingPrice"];
         }
         
         if ([self.filtersArray containsObject:@"new"]){
@@ -440,13 +512,13 @@
         }
         else if ([self.filtersArray containsObject:@"footwear"]){
             [self.pullQuery whereKey:@"category" equalTo:@"Footwear"];
-        }
-        
-        if ([self.filtersArray containsObject:@"male"]){
-            [self.pullQuery whereKey:@"sizegender" equalTo:@"Mens"];
-        }
-        else if ([self.filtersArray containsObject:@"female"]){
-            [self.pullQuery whereKey:@"sizegender" equalTo:@"Womens"];
+            
+            if ([self.filtersArray containsObject:@"male"]){
+                [self.pullQuery whereKey:@"sizegender" equalTo:@"Mens"];
+            }
+            else if ([self.filtersArray containsObject:@"female"]){
+                [self.pullQuery whereKey:@"sizegender" equalTo:@"Womens"];
+            }
         }
         
         //footwear sizes
@@ -525,6 +597,9 @@
     PFObject *selected = [self.results objectAtIndex:indexPath.item];
     ListingController *vc = [[ListingController alloc]init];
     vc.listingObject = selected;
+    if (self.searchEnabled == YES) {
+        [self.searchController.searchBar setHidden:YES];
+    }
     [self.navigationController pushViewController:vc animated:YES];
 }
 
@@ -532,5 +607,80 @@
     ExplainViewController *vc = [[ExplainViewController alloc]init];
     vc.setting = @"process";
     [self presentViewController:vc animated:YES completion:nil];
+}
+
+-(void)searchPressed{
+    // Create the search results view controller and use it for the UISearchController.
+//    searchResultsController *resultsController = [[searchResultsController alloc]init];
+    
+    // Create the search controller and make it perform the results updating.
+    self.searchController = [[UISearchController alloc] initWithSearchResultsController:nil];
+    self.searchController.searchResultsUpdater = self;
+    self.searchController.hidesNavigationBarDuringPresentation = NO;
+    self.searchController.dimsBackgroundDuringPresentation = NO;
+    self.searchController.searchBar.searchBarStyle = UISearchBarStyleDefault;
+    self.searchController.searchBar.delegate = self;
+    self.searchController.searchBar.placeholder = @"Search for stuff you're selling";
+
+    self.searchController.searchBar.barTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+    self.searchController.searchBar.tintColor = [UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1];
+    
+    [self.searchController.searchBar setTranslucent:YES];
+    self.searchEnabled = YES;
+    
+    // reset filters
+    [self.filtersArray removeAllObjects];
+    [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
+        
+    // Present the view controller.
+    [self presentViewController:self.searchController animated:YES completion:nil];
+}
+
+-(void)updateSearchResultsForSearchController:(UISearchController *)searchController
+{
+}
+
+-(BOOL)searchBarShouldBeginEditing:(UISearchBar *)searchBar{
+    [self.collectionView reloadData];
+    
+    return YES;
+}
+
+-(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
+    if (self.searchEnabled == YES) {
+        self.searchString = searchBar.text;
+        [self queryParsePull];
+    }
+}
+
+-(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
+    NSLog(@"cancel pressed");
+    self.searchEnabled = NO;
+    
+    if (self.results.count == 0) {
+        [self.noresultsLabel setHidden:NO];
+        [self.noResultsImageView setHidden:NO];
+    }
+    else{
+        [self.noresultsLabel setHidden:YES];
+        [self.noResultsImageView setHidden:YES];
+    }
+    
+    // cancel existing search queries
+    [self.pullQuery cancel];
+    [self.infiniteQuery cancel];
+    
+    // reset filters
+    [self.filtersArray removeAllObjects];
+    [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
+    
+    // reset the skip count and the pull query
+    int count = (int)[self.results count];
+    self.lastInfinSkipped = count;
+    
+    self.pullQuery = nil;
+    self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
+    
+    [self.collectionView reloadData];
 }
 @end

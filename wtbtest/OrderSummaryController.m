@@ -176,11 +176,11 @@
     
     if (self.purchased == YES) {
         shippingUser = [PFUser currentUser];
-        self.totalLabel.text = [NSString stringWithFormat: @"£%@",[self.orderObject objectForKey:@"buyerTotal"]];
+        self.totalLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"buyerTotal"]floatValue]];
     }
     else{
         shippingUser = self.otherUser;
-        self.totalLabel.text = [NSString stringWithFormat: @"£%@",[self.orderObject objectForKey:@"sellerTotal"]];
+        self.totalLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"sellerTotal"]floatValue]];
     }
     
     self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[shippingUser objectForKey:@"fullname"], [shippingUser objectForKey:@"building"], [shippingUser objectForKey:@"street"], [shippingUser objectForKey:@"city"], [shippingUser objectForKey:@"postcode"], [shippingUser objectForKey:@"phonenumber"]];
@@ -194,9 +194,9 @@
         self.checkLabel.text = @"-";
     }
     
-    self.itemPrice.text = [NSString stringWithFormat: @"£%@",[self.orderObject objectForKey:@"salePrice"]];
-    self.deliveryLabel.text = [NSString stringWithFormat: @"£%@",[self.orderObject objectForKey:@"delivery"]];
-    self.feeLabel.text = [NSString stringWithFormat: @"£%@",[self.orderObject objectForKey:@"fee"]];
+    self.itemPrice.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"salePrice"]floatValue]];
+    self.deliveryLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"delivery"]floatValue]];
+    self.feeLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"fee"]floatValue]];
     
 }
 

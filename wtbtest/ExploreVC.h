@@ -12,7 +12,7 @@
 #import "FilterVC.h"
 #import "ListingController.h"
 
-@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate>
+@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, UISearchControllerDelegate, UISearchResultsUpdating, UISearchBarDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
@@ -32,4 +32,10 @@
 @property (weak, nonatomic) IBOutlet UIButton *filterButton;
 
 @property (nonatomic, strong) NSMutableArray *filtersArray;
+
+//search
+@property (strong, nonatomic) UISearchController *searchController;
+@property (nonatomic, strong) NSString *searchString;
+@property (nonatomic, strong) NSMutableArray *searchResults;
+@property (nonatomic) BOOL searchEnabled;
 @end

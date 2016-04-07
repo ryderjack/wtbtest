@@ -205,7 +205,7 @@
     }
 }
 - (IBAction)dismissPressed:(id)sender {
-    [self dismissViewControllerAnimated:YES completion:nil];
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 -(void)setImageBorder{

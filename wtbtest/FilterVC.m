@@ -270,9 +270,7 @@
         [self.footButton setSelected:NO];
         [self.filtersArray removeObject:@"footwear"];
         
-        //set up horizontal scroll view for clothing
         [self setupclothingsizes];
-        //if filter array contains shoe sizes, remove these
     }
 }
 - (IBAction)footwearPressed:(id)sender {

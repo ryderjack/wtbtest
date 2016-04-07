@@ -60,15 +60,15 @@
     self.warningLabel.text = @"";
     self.genderSize = @"";
     
-    UIBarButtonItem *resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Clear" style:UIBarButtonItemStylePlain target:self action:@selector(resetForm)];
+    self.resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Clear" style:UIBarButtonItemStylePlain target:self action:@selector(resetForm)];
     
     if (self.editFromListing == YES) {
         [self listingSetup];
-        resetButton.title = @"Delete";
-        resetButton.action = @selector(deleteListing);
+        self.resetButton.title = @"Delete";
+        self.resetButton.action = @selector(deleteListing);
     }
     
-    self.navigationItem.rightBarButtonItem = resetButton;
+    self.navigationItem.rightBarButtonItem = self.resetButton;
     
     //add done button to number pad keyboard on pay field
     [self addDoneButton];
@@ -76,6 +76,7 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    [self.titleField becomeFirstResponder];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -83,6 +84,13 @@
     
     if ([self.status isEqualToString:@"new"]) {
         [self resetForm];
+    }
+    if ([self.status isEqualToString:@"edit"] && [self.resetButton.title isEqualToString:@"Clear"]) {
+        [self.navigationItem setRightBarButtonItems:nil animated:YES];
+        [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
+    }
+    else{
+        self.navigationItem.rightBarButtonItem = self.resetButton;
     }
 }
 - (void)didReceiveMemoryWarning {
@@ -348,6 +356,7 @@
         self.payField.text = @"£";
     }
 }
+
 -(void)textViewDidBeginEditing:(UITextView *)textView{
     if ([textView.text isEqualToString:@"eg. Must come with original box"]) {
         textView.text = @"";
@@ -360,6 +369,7 @@
         textView.textColor = [UIColor lightGrayColor];
     }
 }
+
 //return key removes keyboard in text view
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
     if([text isEqualToString:@"\n"]) {
@@ -375,21 +385,41 @@
     [self.payField resignFirstResponder];
 }
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-    
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
     if (textField == self.payField) {
-        // Prevent crashing undo bug – see note below.
-        if(range.length + range.location > textField.text.length)
-        {
+        // Check for deletion of the $ sign
+        if (range.location == 0 && [textField.text hasPrefix:@"£"])
             return NO;
+        
+        NSString *updatedText = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        NSArray *stringsArray = [updatedText componentsSeparatedByString:@"."];
+        
+        // Check for an absurdly large amount
+        if (stringsArray.count > 0)
+        {
+            NSString *dollarAmount = stringsArray[0];
+            if (dollarAmount.length > 6)
+                return NO;
         }
         
-        NSUInteger newLength = [textField.text length] + [string length] - range.length;
-        return newLength <= 4;
+        // Check for more than 2 chars after the decimal point
+        if (stringsArray.count > 1)
+        {
+            NSString *centAmount = stringsArray[1];
+            if (centAmount.length > 2)
+                return NO;
+        }
+        
+        // Check for a second decimal point
+        if (stringsArray.count > 2)
+            return NO;
+        
+        return YES;
     }
-    return string;
+    
+    return YES;
 }
-
 -(void)alertSheet{
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
@@ -430,6 +460,7 @@
             picker.allowAutoCompletedSearch = YES;
             picker.infiniteScrollingEnabled = YES;
             picker.title = @"Search Instagram";
+        
             
             picker.cancellationBlock = ^(DZNPhotoPickerController *picker) {
                 [self dismissViewControllerAnimated:YES completion:nil];
@@ -653,11 +684,15 @@
         [self.saveButton setEnabled:YES];
     }
     else{
-        NSString *willingToPay = [[self.payField.text componentsSeparatedByCharactersInSet:
-                                [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
-                               componentsJoinedByString:@""];
-        NSString *itemTitle = [self.titleField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        NSString *extraInfo = [self.extraField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+
+        NSString *prefixToRemove = @"£";
+        NSString *priceString = [[NSString alloc]init];
+        priceString = [self.payField.text substringFromIndex:[prefixToRemove length]];
+        
+        int price = [priceString intValue];
+        
+        NSString *itemTitle = self.titleField.text;
+        NSString *extraInfo = self.extraField.text;
         
         if ([self.status isEqualToString:@"edit"]) {
             PFQuery *query = [PFQuery queryWithClassName:@"wantobuys"];
@@ -692,7 +727,7 @@
         }
         
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
-        [self.listing setObject:willingToPay forKey:@"price"];
+        self.listing[@"listingPrice"] = @(price);
         [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
         
         if (self.photostotal == 1) {
@@ -792,6 +827,7 @@
 }
 
 -(void)resetForm{
+    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
     self.status = @"";
     self.chooseCategroy.text = @"Choose";
     self.chooseCondition.text = @"Choose";
@@ -878,7 +914,7 @@
     [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     
     self.titleField.text = [self.listing objectForKey:@"title"];
-    self.payField.text = [NSString stringWithFormat:@"£%@",[self.listing objectForKey:@"price"]];
+    self.payField.text = [NSString stringWithFormat:@"£%@",[self.listing objectForKey:@"listingPrice"]];
     self.chooseCondition.text = [self.listing objectForKey:@"condition"];
     
     //location is not updatable when editing listing

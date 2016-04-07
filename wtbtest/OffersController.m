@@ -98,7 +98,7 @@
             cell.priceLabel.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
         }
         else{
-            cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"totalCost"]];
+            cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"totalCostFloat"]];
             cell.priceLabel.textColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
         }
     }
@@ -113,17 +113,17 @@
             cell.priceLabel.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
         }
         else{
-            cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"totalCost"]];
+            cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"totalCostFloat"] floatValue]];
             cell.priceLabel.textColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
         }
     }
     else if ([self.mode isEqualToString:@"purchased"]){
         //display total price including fees that buyer pays
-        cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"buyerTotal"]];
+        cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"buyerTotal"] floatValue]];
     }
     else if ([self.mode isEqualToString:@"sold"]){
         //display just sale price that they'll receieve
-        cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"sellerTotal"]];
+        cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"sellerTotal"] floatValue]];
     }
     
     if ([self.mode isEqualToString:@"sent"] || [self.mode isEqualToString:@"received"]) {

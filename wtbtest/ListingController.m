@@ -105,7 +105,7 @@
     self.conditionCell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     self.titleLabel.text = [self.listingObject objectForKey:@"title"];
-    self.priceLabel.text = [NSString stringWithFormat:@"£%@",[self.listingObject objectForKey:@"price"]];
+    self.priceLabel.text = [NSString stringWithFormat:@"£%@",[self.listingObject objectForKey:@"listingPrice"]];
     self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
     self.locationLabel.text = [self.listingObject objectForKey:@"location"];
     self.deliveryLabel.text = [self.listingObject objectForKey:@"delivery"];
@@ -408,7 +408,7 @@
 }
 - (IBAction)sharePressed:(id)sender {
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:[NSString stringWithFormat:@"Check out this WTB: %@ for %@", [self.listingObject objectForKey:@"title"], [self.listingObject objectForKey:@"price"]]];
+    [items addObject:[NSString stringWithFormat:@"Check out this WTB: %@ for %@", [self.listingObject objectForKey:@"title"], [self.listingObject objectForKey:@"listingPrice"]]];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
 }
@@ -511,6 +511,5 @@
         vc.reviewMode = NO;
         [self.navigationController pushViewController:vc animated:YES];
     }
-
 }
 @end

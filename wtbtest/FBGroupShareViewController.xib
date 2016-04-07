@@ -3,7 +3,6 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="FBGroupShareViewController">
@@ -43,7 +42,7 @@
             </connections>
         </searchDisplayController>
         <view contentMode="scaleToFill" id="5gd-Ih-rIr">
-            <rect key="frame" x="0.0" y="0.0" width="375" height="198"/>
+            <rect key="frame" x="0.0" y="0.0" width="375" height="215"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <subviews>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MCa-rj-6dU">
@@ -55,17 +54,17 @@ You can then paste the text there!</string>
                     <nil key="highlightedColor"/>
                 </label>
                 <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" text="WTB: CONDITION TITLE in a SIZE. More details on wantobuy" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="5cz-ae-ffG">
-                    <rect key="frame" x="67" y="104" width="240" height="57"/>
+                    <rect key="frame" x="37" y="87" width="300" height="78"/>
                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <fontDescription key="fontDescription" name="AvenirNext-MediumItalic" family="Avenir Next" pointSize="14"/>
                     <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                 </textView>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Y6d-B6-NTa">
-                    <rect key="frame" x="145" y="160" width="85" height="30"/>
+                    <rect key="frame" x="145" y="173" width="85" height="30"/>
                     <constraints>
-                        <constraint firstAttribute="width" constant="85" id="X5K-Dc-coX"/>
-                        <constraint firstAttribute="height" constant="30" id="oqp-tW-CPf"/>
+                        <constraint firstAttribute="height" constant="30" id="VnZ-xS-MRg"/>
+                        <constraint firstAttribute="width" constant="85" id="kcg-W5-vlU"/>
                     </constraints>
                     <state key="normal" title="Copy">
                         <color key="titleColor" red="0.96078431369999995" green="0.65098039220000004" blue="0.13725490200000001" alpha="1" colorSpace="calibratedRGB"/>
@@ -77,19 +76,19 @@ You can then paste the text there!</string>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
             <constraints>
-                <constraint firstItem="MCa-rj-6dU" firstAttribute="leading" secondItem="5gd-Ih-rIr" secondAttribute="leading" constant="42" id="77e-10-a6w"/>
-                <constraint firstItem="5cz-ae-ffG" firstAttribute="leading" secondItem="5gd-Ih-rIr" secondAttribute="leading" constant="67" id="D0k-4A-vrf"/>
-                <constraint firstItem="Y6d-B6-NTa" firstAttribute="top" secondItem="MCa-rj-6dU" secondAttribute="bottom" constant="69" id="FUY-mq-loK"/>
-                <constraint firstItem="Y6d-B6-NTa" firstAttribute="bottom" secondItem="5gd-Ih-rIr" secondAttribute="bottomMargin" id="NnC-9x-gv3"/>
-                <constraint firstItem="MCa-rj-6dU" firstAttribute="top" secondItem="5gd-Ih-rIr" secondAttribute="top" constant="14" id="aMv-Vj-Q2j"/>
-                <constraint firstItem="5cz-ae-ffG" firstAttribute="top" secondItem="MCa-rj-6dU" secondAttribute="bottom" constant="13" id="d4Q-tC-SIu"/>
-                <constraint firstItem="5cz-ae-ffG" firstAttribute="centerX" secondItem="Y6d-B6-NTa" secondAttribute="centerX" id="fre-lp-wbc"/>
-                <constraint firstItem="5cz-ae-ffG" firstAttribute="centerX" secondItem="5gd-Ih-rIr" secondAttribute="centerX" id="trx-wt-3LW"/>
-                <constraint firstItem="MCa-rj-6dU" firstAttribute="centerX" secondItem="5cz-ae-ffG" secondAttribute="centerX" id="u5f-O3-IJE"/>
-                <constraint firstAttribute="bottom" secondItem="5cz-ae-ffG" secondAttribute="bottom" constant="37" id="yQ2-K7-uD8"/>
+                <constraint firstItem="Y6d-B6-NTa" firstAttribute="top" secondItem="5cz-ae-ffG" secondAttribute="bottom" constant="8" symbolic="YES" id="4AT-yq-qE4"/>
+                <constraint firstItem="5cz-ae-ffG" firstAttribute="centerX" secondItem="Y6d-B6-NTa" secondAttribute="centerX" id="Akv-fz-tmU"/>
+                <constraint firstItem="Y6d-B6-NTa" firstAttribute="top" secondItem="MCa-rj-6dU" secondAttribute="bottom" constant="82" id="DCR-Xg-1TP"/>
+                <constraint firstItem="5cz-ae-ffG" firstAttribute="top" secondItem="5gd-Ih-rIr" secondAttribute="top" constant="87" id="JyA-bW-gtv"/>
+                <constraint firstItem="5cz-ae-ffG" firstAttribute="leading" secondItem="5gd-Ih-rIr" secondAttribute="leading" constant="37" id="MA3-hK-7IM"/>
+                <constraint firstItem="MCa-rj-6dU" firstAttribute="centerX" secondItem="5cz-ae-ffG" secondAttribute="centerX" id="gIM-G2-QZU"/>
+                <constraint firstAttribute="bottom" secondItem="Y6d-B6-NTa" secondAttribute="bottom" constant="12" id="glJ-U7-dHu"/>
+                <constraint firstItem="5cz-ae-ffG" firstAttribute="centerX" secondItem="5gd-Ih-rIr" secondAttribute="centerX" id="mdH-Xi-Tsd"/>
+                <constraint firstItem="MCa-rj-6dU" firstAttribute="top" secondItem="5gd-Ih-rIr" secondAttribute="top" constant="14" id="pVD-aT-33v"/>
+                <constraint firstItem="MCa-rj-6dU" firstAttribute="leading" secondItem="5gd-Ih-rIr" secondAttribute="leading" constant="42" id="xl0-s5-0GJ"/>
             </constraints>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
-            <point key="canvasLocation" x="408.5" y="-477"/>
+            <point key="canvasLocation" x="408.5" y="-468.5"/>
         </view>
     </objects>
 </document>

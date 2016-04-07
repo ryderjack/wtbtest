@@ -30,8 +30,16 @@
     
     self.searchResults = [[NSMutableArray alloc] init];
     
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, (self.view.frame.size.height/2)+(self.view.frame.size.height/6), 204, 50)];
+    }
+    else{
+        //everything else
+        self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-102, (self.view.frame.size.height/2)+(self.view.frame.size.height/4), 204, 50)];
+    }
+    
     // current location button
-    self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-102, (self.view.frame.size.height/2)+(self.view.frame.size.height/4), 204, 50)];
     [self.button setImage:[UIImage imageNamed:@"currentButton"] forState:UIControlStateNormal];
     [self.button addTarget:self action:@selector(useCurrentLoc) forControlEvents:UIControlEventTouchUpInside];
     [[UIApplication sharedApplication].keyWindow addSubview:self.button];
@@ -43,7 +51,6 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
-    
     [self.button removeFromSuperview];
 }
 
@@ -156,4 +163,5 @@
         }
     }];
 }
+
 @end

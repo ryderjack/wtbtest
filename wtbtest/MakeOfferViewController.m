@@ -68,6 +68,10 @@
     self.priceField.delegate = self;
     self.extraFiel.delegate = self;
     self.deliveryField.delegate = self;
+    self.itemTitle.delegate = self;
+    
+    self.priceField.keyboardType = UIKeyboardTypeDecimalPad;
+    self.deliveryField.keyboardType = UIKeyboardTypeDecimalPad;
    
     [self setImageBorder];
     
@@ -171,7 +175,10 @@
         [self.extraFiel setEditable:NO];
         
         //setup offer to review info
-        [self.priceField setText:[NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"salePrice"]]];
+        
+        float price = [[self.listingObject objectForKey:@"salePriceFloat"]floatValue];
+        [self.priceField setText:[NSString stringWithFormat:@"£%.2f",price]];
+        
         self.chooseCondition.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"condition"]];
         self.chooseCategory.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"category"]];
         if ([self.chooseCategory.text isEqualToString:@"Clothing"]) {
@@ -183,8 +190,13 @@
         
         self.chooseLocation.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"itemLocation"]];
         self.chooseDelivery.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"deliveryMethod"]];
-        [self.deliveryField setText:[NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"deliveryCost"]]];
-        self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"totalCost"]];
+        
+        float delivery = [[self.listingObject objectForKey:@"deliveryCostFloat"] floatValue];
+        [self.deliveryField setText:[NSString stringWithFormat:@"£%.2f", delivery]];
+        
+        float total = [[self.listingObject objectForKey:@"totalCostFloat"] floatValue];
+        self.totalsumLabel.text = [NSString stringWithFormat:@"£%.2f",total];
+        
         if ([self.listingObject objectForKey:@"extra"]) {
             [self.extraFiel setText:[NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"extra"]]];
         }
@@ -238,33 +250,7 @@
         [self.tagExplain setAttributedText:string];
         
         //setup placeholders to be what the wtb user wants
-        
-        self.chooseCategory.text = [self.listingObject objectForKey:@"category"];
-        
-        self.priceField.text = [NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"price"]];
-       
-        if ([[self.listingObject objectForKey:@"condition"] isEqualToString:@"Any"]) {
-            
-        }
-        else{
-           self.chooseCondition.text = [self.listingObject objectForKey:@"condition"];
-        }
-        
-        if ([[self.listingObject objectForKey:@"size"] isEqualToString:@"Any"]) {
-            
-        }
-        else{
-            self.chooseSize.text = [self.listingObject objectForKey:@"size"];
-        }
-        
-        if ([[self.listingObject objectForKey:@"delivery"] isEqualToString:@"Any"]) {
-            
-        }
-        else{
-            self.chooseDelivery.text = [self.listingObject objectForKey:@"delivery"];
-        }
-        
-        
+        [self setPlaceholderValues];
     }
 }
 
@@ -706,6 +692,7 @@
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     
     if (self.reviewMode == NO) {
     
@@ -778,11 +765,8 @@
 }
 
 -(void)addCurrentLocation:(LocationView *)controller didPress:(PFGeoPoint *)geoPoint title:(NSString *)placemark{
-    
     if (geoPoint) {
-        NSLog(@"geopoint %@", geoPoint);
         self.geopoint = geoPoint;
-        NSLog(@"geopoint %@", self.geopoint);
         self.chooseLocation.text = [NSString stringWithFormat:@"%@",placemark];
     }
     else{
@@ -794,6 +778,7 @@
 #pragma mark - Text field/view delegate methods
 
 -(BOOL)textFieldShouldReturn:(UITextField *)textField{
+    NSLog(@"should return");
     [textField resignFirstResponder];
     return YES;
 }
@@ -802,44 +787,64 @@
         textField.text = @"£";
     }
 }
--(void)textFieldDidEndEditing:(UITextField *)textField{
-    
-    NSString *prefixToRemove = @"£";
-    NSString *price = [[NSString alloc]init];
-    NSString *delivery = [[NSString alloc]init];
-    
-    if ([self.priceField.text hasPrefix:prefixToRemove]){
-        price = [self.priceField.text substringFromIndex:[prefixToRemove length]];
+
+//return key removes keyboard in text view
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+    if([text isEqualToString:@"\n"]) {
+        [textView resignFirstResponder];
+        return NO;
     }
-    else{
-        price = self.priceField.text;
-    }
-    
-    if ([self.deliveryField.text hasPrefix:prefixToRemove]){
-        delivery = [self.deliveryField.text substringFromIndex:[prefixToRemove length]];
-    }
-    else{
-        delivery = self.deliveryField.text;
-    }
-    
-    if ([price isEqualToString:@""] && [delivery isEqualToString:@""]) {
-        self.totalsumLabel.text = @"";
-    }
-    else if (![price isEqualToString:@""] && [delivery isEqualToString:@""]) {
-        self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", price];
-    }
-    else if ([price isEqualToString:@""] && ![delivery isEqualToString:@""]) {
-        self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", delivery];
-    }
-    else{
-        //add together, we've got 2 numbers
-        double priceInt = [price doubleValue];
-        double deliveryInt = [delivery doubleValue];
-        double total = (priceInt + deliveryInt);
-        NSLog(@"total double %f", total);
-        self.totalsumLabel.text = [NSString stringWithFormat:@"£%.2f", total];
-    }
+    return YES;
 }
+
+-(void)textFieldDidEndEditing:(UITextField *)textField{
+    if (textField == self.priceField || textField == self.deliveryField) {
+        
+        NSArray *stringsArray = [textField.text componentsSeparatedByString:@"."];
+        NSLog(@"strings array %@", stringsArray);
+        
+        if ([stringsArray[0] isEqualToString:@"£"]) {
+            textField.text = @"£0.00";
+        }
+        else if (stringsArray.count > 1){
+            //got an x and y
+            
+            NSString *intAmount = stringsArray[0];
+            
+            if (intAmount.length == 1){
+                NSLog(@"just the £ then a decimal point");
+                intAmount = @"£00";
+            }
+            else{
+                NSLog(@"got a number + the £");
+            }
+            
+            NSMutableString *centAmount = stringsArray[1];
+            if (centAmount.length == 2){
+                NSLog(@"all good");
+            }
+            else if (centAmount.length == 1){
+                NSLog(@"got 1 decimal place");
+                centAmount = [NSMutableString stringWithFormat:@"%@0", centAmount];
+                
+            }
+            else{
+                NSLog(@"point but no numbers after it");
+                centAmount = [NSMutableString stringWithFormat:@"%@00", centAmount];
+            }
+            
+            textField.text = [NSString stringWithFormat:@"%@.%@", intAmount, centAmount];
+        }
+        else{
+            NSLog(@"no decimal point");
+            textField.text = [NSString stringWithFormat:@"%@.00", textField.text];
+        }
+    }
+    
+    [self calculateTotal];
+    
+}
+
 -(void)textViewDidBeginEditing:(UITextView *)textView{
     if ([textView.text isEqualToString:@"eg. Includes original box"]) {
         textView.text = @"";
@@ -859,20 +864,38 @@
     [self.itemTitle resignFirstResponder];
 }
 
-//- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-//    
-//    if (textField == self.priceField || textField == self.deliveryField) {
-//        // Prevent crashing undo bug – see note below.
-//        if(range.length + range.location > textField.text.length)
-//        {
-//            return NO;
-//        }
-//        
-//        NSUInteger newLength = [textField.text length] + [string length] - range.length;
-//        return newLength <= 4;
-//    }
-//    return string;
-//}
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    // Check for deletion of the $ sign
+    if (range.location == 0 && [textField.text hasPrefix:@"£"])
+        return NO;
+    
+    NSString *updatedText = [textField.text stringByReplacingCharactersInRange:range withString:string];
+    NSArray *stringsArray = [updatedText componentsSeparatedByString:@"."];
+    
+    // Check for an absurdly large amount
+    if (stringsArray.count > 0)
+    {
+        NSString *dollarAmount = stringsArray[0];
+        if (dollarAmount.length > 6)
+            return NO;
+    }
+    
+    // Check for more than 2 chars after the decimal point
+    if (stringsArray.count > 1)
+    {
+        NSString *centAmount = stringsArray[1];
+        if (centAmount.length > 2)
+            return NO;
+    }
+    
+    // Check for a second decimal point
+    if (stringsArray.count > 2)
+        return NO;
+    
+    return YES;
+}
+
 -(void)setImageBorder{
     self.profileView.layer.cornerRadius = self.profileView.frame.size.width / 2;
     self.profileView.layer.masksToBounds = YES;
@@ -896,12 +919,15 @@
         NSString *prefixToRemove = @"£";
         NSString *salePrice = [[NSString alloc]init];
         salePrice = [self.priceField.text substringFromIndex:[prefixToRemove length]];
+        float salePriceFloat = [salePrice intValue];
         
         NSString *deliveryCost = [[NSString alloc]init];
         deliveryCost = [self.deliveryField.text substringFromIndex:[prefixToRemove length]];
+        float deliveryFloat = [deliveryCost intValue];
         
         NSString *totalCost = [[NSString alloc]init];
         totalCost = [self.totalsumLabel.text substringFromIndex:[prefixToRemove length]];
+        float totalFloat = [totalCost intValue];
         
         NSString *extraInfo = [self.extraFiel.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         
@@ -932,13 +958,13 @@
         
         [offerObject setObject:self.chooseDelivery.text forKey:@"deliveryMethod"];
         
-        [offerObject setObject:salePrice forKey:@"salePrice"];
+        offerObject[@"salePriceFloat"] = @(salePriceFloat);
         
         [offerObject setObject:@"open" forKey:@"status"];
         
-        [offerObject setObject:deliveryCost forKey:@"deliveryCost"];
+        offerObject[@"deliveryCostFloat"] = @(deliveryFloat);
         
-        [offerObject setObject:totalCost forKey:@"totalCost"];
+        offerObject[@"totalCostFloat"] = @(totalFloat);
         
         [offerObject setObject:self.buyerUser forKey:@"buyerUser"];
         
@@ -1050,5 +1076,76 @@
     keyboardToolbar.items = @[flexBarButton, doneBarButton];
     self.priceField.inputAccessoryView = keyboardToolbar;
     self.deliveryField.inputAccessoryView = keyboardToolbar;
+}
+
+-(void)setPlaceholderValues{
+    self.chooseCategory.text = [self.listingObject objectForKey:@"category"];
+    
+    self.priceField.text = [NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"listingPrice"]];
+    
+    if ([[self.listingObject objectForKey:@"condition"] isEqualToString:@"Any"]) {
+        
+    }
+    else{
+        self.chooseCondition.text = [self.listingObject objectForKey:@"condition"];
+    }
+    
+    if ([[self.listingObject objectForKey:@"size"] isEqualToString:@"Any"]) {
+        
+    }
+    else{
+        self.chooseSize.text = [self.listingObject objectForKey:@"size"];
+    }
+    
+    if ([[self.listingObject objectForKey:@"delivery"] isEqualToString:@"Any"]) {
+        
+    }
+    else if ([[self.listingObject objectForKey:@"delivery"] isEqualToString:@"Meetup"]){
+        self.chooseDelivery.text = [self.listingObject objectForKey:@"delivery"];
+        self.chooseDelivery.text = [self.listingObject objectForKey:@"delivery"];
+        self.deliveryField.text = @"£0.00";
+        self.deliveryField.textColor = [UIColor lightGrayColor];
+        [self.deliveryField setEnabled:NO];
+    }
+    else{
+        self.chooseDelivery.text = [self.listingObject objectForKey:@"delivery"];
+    }
+}
+
+-(void)calculateTotal{
+    NSString *prefixToRemove = @"£";
+    NSString *price = [[NSString alloc]init];
+    NSString *delivery = [[NSString alloc]init];
+    
+    if ([self.priceField.text hasPrefix:prefixToRemove]){
+        price = [self.priceField.text substringFromIndex:[prefixToRemove length]];
+    }
+    else{
+        price = self.priceField.text;
+    }
+    
+    if ([self.deliveryField.text hasPrefix:prefixToRemove]){
+        delivery = [self.deliveryField.text substringFromIndex:[prefixToRemove length]];
+    }
+    else{
+        delivery = self.deliveryField.text;
+    }
+    
+    if ([price isEqualToString:@""] && [delivery isEqualToString:@""]) {
+        self.totalsumLabel.text = @"";
+    }
+    else if (![price isEqualToString:@""] && [delivery isEqualToString:@""]) {
+        self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", price];
+    }
+    else if ([price isEqualToString:@""] && ![delivery isEqualToString:@""]) {
+        self.totalsumLabel.text = [NSString stringWithFormat:@"£%@", delivery];
+    }
+    else{
+        //add together, we've got 2 numbers
+        double priceInt = [price doubleValue];
+        double deliveryInt = [delivery doubleValue];
+        double total = (priceInt + deliveryInt);
+        self.totalsumLabel.text = [NSString stringWithFormat:@"£%.2f", total];
+    }
 }
 @end
