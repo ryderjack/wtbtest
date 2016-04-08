@@ -17,4 +17,7 @@
 @interface searchResultsController : UITableViewController <UISearchResultsUpdating>
 
 @property (nonatomic, weak) id <searchResultsDelegate> delegate;
+@property (nonatomic, strong) NSArray *allResults;
+@property (nonatomic, strong) NSMutableArray *visibleResults;
+@property (nonatomic) BOOL filterEnabled;
 @end

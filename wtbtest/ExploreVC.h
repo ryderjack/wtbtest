@@ -39,4 +39,5 @@
 @property (nonatomic, strong) NSString *searchString;
 @property (nonatomic, strong) NSMutableArray *searchResults;
 @property (nonatomic) BOOL searchEnabled;
+@property (nonatomic, strong) searchResultsController *resultsController;
 @end

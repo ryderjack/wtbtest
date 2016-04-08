@@ -11,9 +11,6 @@
 #import <Parse/Parse.h>
 
 @interface searchResultsController ()
-
-@property (nonatomic, strong) NSArray *allResults;
-
 @end
 
 @implementation searchResultsController
@@ -22,40 +19,61 @@
     [super viewDidLoad];
     
     [self.tableView registerNib:[UINib nibWithNibName:@"resultCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
-    
-    self.allResults = [[[[PFUser currentUser]objectForKey:@"searches"] reverseObjectEnumerator] allObjects];
-    
-    [self.tableView reloadData];
+    self.visibleResults = [[NSMutableArray alloc]init];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    self.allResults = [[[[PFUser currentUser]objectForKey:@"searches"] reverseObjectEnumerator] allObjects];
+    [self.tableView reloadData];
+}
+
 #pragma mark - Property Overrides
 
 - (void)setFilterString:(NSString *)filterString {
-//    _filterString = filterString;
-//    
-//    if (!filterString || filterString.length <= 0) {
-//        self.visibleResults = self.allResults;
-//    }
-//    else {
-//        NSPredicate *filterPredicate = [NSPredicate predicateWithFormat:@"self contains[c] %@", filterString];
-//        self.visibleResults = [self.allResults filteredArrayUsingPredicate:filterPredicate];
-//    }
     
-//    [self.tableView reloadData];
+    if (!filterString || filterString.length <= 0) {
+        self.visibleResults = [NSMutableArray arrayWithArray:self.allResults];
+    }
+    else {
+        NSPredicate *filterPredicate = [NSPredicate predicateWithFormat:@"self contains[c] %@", filterString];
+        self.visibleResults = [NSMutableArray arrayWithArray:[self.allResults filteredArrayUsingPredicate:filterPredicate]];
+    }
+    
+    [self.tableView reloadData];
 }
 
 -(void)updateSearchResultsForSearchController:(UISearchController *)searchController{
     //implement filtering here of search terms?
+    
+    if ([searchController.searchBar.text isEqualToString:@""]) {
+        self.filterEnabled = NO;
+        [self.tableView reloadData];
+    }
+    else{
+        self.filterEnabled = YES;
+        [self setFilterString:searchController.searchBar.text];
+    }
+    
+    // unhide table view when edits search text in searchController
+    
+    [self.view setHidden:NO];
 }
 
 #pragma mark - UITableViewDataSource
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return self.allResults.count;
+    if (self.filterEnabled == YES) {
+        return self.visibleResults.count;
+    }
+    else{
+       return self.allResults.count;
+    }
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -64,14 +82,27 @@
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    cell.textLabel.text = self.allResults[indexPath.row];
+    
+    if (self.filterEnabled == YES) {
+        cell.textLabel.text = self.visibleResults[indexPath.row];
+    }
+    else{
+        cell.textLabel.text = self.allResults[indexPath.row];
+    }
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
-    NSString *selected =[self.allResults objectAtIndex:indexPath.row];
-    [self.delegate favouriteTapped:selected];
     
+    NSString *selected = [[NSString alloc]init];
+    
+    if (self.filterEnabled == YES) {
+        selected = [self.visibleResults objectAtIndex:indexPath.row];
+    }
+    else{
+        selected = [self.allResults objectAtIndex:indexPath.row];
+    }
+    [self.delegate favouriteTapped:selected];
     [self.tableView setHidden:YES];
 }
 

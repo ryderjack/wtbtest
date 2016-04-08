@@ -50,7 +50,7 @@
     NavigationController *navController3 = [[NavigationController alloc] initWithRootViewController:self.welcomeView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController2, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController2, navController3, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
     [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];

@@ -191,11 +191,9 @@
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
     if (self.searchEnabled == YES) {
-        NSLog(@"search number");
        return self.searchResults.count;
     }
     else{
-        NSLog(@"results number");
        return self.results.count;
     }
 }
@@ -245,7 +243,6 @@
     [self setupPullQuery];
     
     if (self.searchEnabled == YES) {
-        NSLog(@"search enabled == YES!");
         [self.pullQuery whereKey:@"title" matchesRegex:self.searchString];
     }
     
@@ -611,14 +608,14 @@
 
 -(void)searchPressed{
     // Create the search results view controller and use it for the UISearchController.
-    searchResultsController *resultsController = [[searchResultsController alloc]init];
-    resultsController.delegate = self;
+    self.resultsController = [[searchResultsController alloc]init];
+    self.resultsController.delegate = self;
     
     // Create the search controller and make it perform the results updating.
-    self.searchController = [[UISearchController alloc] initWithSearchResultsController:resultsController];
+    self.searchController = [[UISearchController alloc] initWithSearchResultsController:self.resultsController];
     self.searchController.delegate = self;
     
-    self.searchController.searchResultsUpdater = self;
+    self.searchController.searchResultsUpdater = self.resultsController;
     self.searchController.hidesNavigationBarDuringPresentation = NO;
     self.searchController.dimsBackgroundDuringPresentation = NO;
     self.searchController.searchBar.searchBarStyle = UISearchBarStyleDefault;
@@ -641,12 +638,12 @@
 
 -(void)updateSearchResultsForSearchController:(UISearchController *)searchController
 {
+    //update list
     [self.searchController.searchResultsController.view setHidden:NO];
 }
 
 -(BOOL)searchBarShouldBeginEditing:(UISearchBar *)searchBar{
     [self.collectionView reloadData];
-    
     return YES;
 }
 
@@ -655,6 +652,9 @@
         self.searchString = searchBar.text;
         
         //clear search array
+        [self.searchResults removeAllObjects];
+        [self.noresultsLabel setHidden:YES];
+        [self.noResultsImageView setHidden:YES];
         
         //save the search term
         if (![self.searchString isEqualToString:@""]) {
@@ -662,15 +662,20 @@
             [[PFUser currentUser] saveEventually];
         }
         
+        //update results controller UI since only updated via query every tie search button pressed
+        
+        NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.resultsController.allResults];
+        [searchesList insertObject:self.searchString atIndex:0];
+        self.resultsController.allResults = searchesList;
+        [self.resultsController.tableView reloadData];
+        
         //query
         [self.searchController.searchResultsController.view setHidden:YES];
         [self queryParsePull];
-        
     }
 }
 
 -(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
-    NSLog(@"cancel pressed");
     self.searchEnabled = NO;
     
     if (self.results.count == 0) {
