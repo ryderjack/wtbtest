@@ -8,10 +8,13 @@
 
 #import <UIKit/UIKit.h>
 
+@class searchResultsController;
+
+@protocol searchResultsDelegate <NSObject>
+- (void)favouriteTapped:(NSString *)favourite;
+@end
+
 @interface searchResultsController : UITableViewController <UISearchResultsUpdating>
 
-@property (nonatomic, copy) NSString *filterString;
-
-@property (readonly, copy) NSArray *visibleResults;
-
+@property (nonatomic, weak) id <searchResultsDelegate> delegate;
 @end

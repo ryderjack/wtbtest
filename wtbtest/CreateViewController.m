@@ -72,11 +72,13 @@
     
     //add done button to number pad keyboard on pay field
     [self addDoneButton];
+    
+    [self.titleField becomeFirstResponder];
 }
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    [self.titleField becomeFirstResponder];
+    
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -717,7 +719,7 @@
         [self.listing setObject:self.chooseSize.text forKey:@"size"];
         NSLog(@"gender size %@", self.genderSize);
         if (![self.genderSize isEqualToString:@""]) {
-            [self.listing setObject:self.genderSize forKey:@"sizegender"];
+            [self.listing setObject:self.genderSize forKey:@"sizeGender"];
         }
         
         if (self.editFromListing != YES) {
@@ -926,8 +928,8 @@
     self.chooseCategroy.text = [self.listing objectForKey:@"category"];
     
     //if gendersize required (if category is footwear) set variable
-    if ([self.listing objectForKey:@"sizegender"]) {
-       self.genderSize = [self.listing objectForKey:@"sizegender"];
+    if ([self.listing objectForKey:@"sizeGender"]) {
+       self.genderSize = [self.listing objectForKey:@"sizeGender"];
     }
     else{
         

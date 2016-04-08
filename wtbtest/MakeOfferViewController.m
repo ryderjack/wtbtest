@@ -176,7 +176,7 @@
         
         //setup offer to review info
         
-        float price = [[self.listingObject objectForKey:@"salePriceFloat"]floatValue];
+        float price = [[self.listingObject objectForKey:@"salePrice"]floatValue];
         [self.priceField setText:[NSString stringWithFormat:@"£%.2f",price]];
         
         self.chooseCondition.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"condition"]];
@@ -191,10 +191,10 @@
         self.chooseLocation.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"itemLocation"]];
         self.chooseDelivery.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"deliveryMethod"]];
         
-        float delivery = [[self.listingObject objectForKey:@"deliveryCostFloat"] floatValue];
+        float delivery = [[self.listingObject objectForKey:@"deliveryCost"] floatValue];
         [self.deliveryField setText:[NSString stringWithFormat:@"£%.2f", delivery]];
         
-        float total = [[self.listingObject objectForKey:@"totalCostFloat"] floatValue];
+        float total = [[self.listingObject objectForKey:@"totalCost"] floatValue];
         self.totalsumLabel.text = [NSString stringWithFormat:@"£%.2f",total];
         
         if ([self.listingObject objectForKey:@"extra"]) {
@@ -958,13 +958,13 @@
         
         [offerObject setObject:self.chooseDelivery.text forKey:@"deliveryMethod"];
         
-        offerObject[@"salePriceFloat"] = @(salePriceFloat);
+        offerObject[@"salePrice"] = @(salePriceFloat);
         
         [offerObject setObject:@"open" forKey:@"status"];
         
-        offerObject[@"deliveryCostFloat"] = @(deliveryFloat);
+        offerObject[@"deliveryCost"] = @(deliveryFloat);
         
-        offerObject[@"totalCostFloat"] = @(totalFloat);
+        offerObject[@"totalCost"] = @(totalFloat);
         
         [offerObject setObject:self.buyerUser forKey:@"buyerUser"];
         
@@ -1094,6 +1094,7 @@
         
     }
     else{
+        self.genderSize = [self.listingObject objectForKey:@"sizeGender"];
         self.chooseSize.text = [self.listingObject objectForKey:@"size"];
     }
     

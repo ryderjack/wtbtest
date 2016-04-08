@@ -11,8 +11,9 @@
 #import <CoreLocation/CoreLocation.h>
 #import "FilterVC.h"
 #import "ListingController.h"
+#import "searchResultsController.h"
 
-@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, UISearchControllerDelegate, UISearchResultsUpdating, UISearchBarDelegate>
+@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, UISearchControllerDelegate, UISearchResultsUpdating, UISearchBarDelegate, searchResultsDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;

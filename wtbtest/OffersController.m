@@ -98,7 +98,7 @@
             cell.priceLabel.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
         }
         else{
-            cell.priceLabel.text = [NSString stringWithFormat:@"£%@",[offerObject objectForKey:@"totalCostFloat"]];
+            cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"totalCost"] floatValue]];
             cell.priceLabel.textColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
         }
     }
@@ -113,7 +113,7 @@
             cell.priceLabel.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
         }
         else{
-            cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"totalCostFloat"] floatValue]];
+            cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"totalCost"] floatValue]];
             cell.priceLabel.textColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
         }
     }

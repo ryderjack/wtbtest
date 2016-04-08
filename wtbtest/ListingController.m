@@ -110,11 +110,11 @@
     self.locationLabel.text = [self.listingObject objectForKey:@"location"];
     self.deliveryLabel.text = [self.listingObject objectForKey:@"delivery"];
     
-    if (![self.listingObject objectForKey:@"sizegender"]) {
+    if (![self.listingObject objectForKey:@"sizeGender"]) {
         self.sizeLabel.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"size"]];
     }
     else{
-        self.sizeLabel.text = [NSString stringWithFormat:@"%@, UK %@",[self.listingObject objectForKey:@"sizegender"], [self.listingObject objectForKey:@"size"]];
+        self.sizeLabel.text = [NSString stringWithFormat:@"%@, UK %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"size"]];
     }
     
     if (![self.listingObject objectForKey:@"extra"]) {

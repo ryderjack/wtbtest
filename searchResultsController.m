@@ -8,11 +8,11 @@
 
 #import "searchResultsController.h"
 #import "resultCell.h"
+#import <Parse/Parse.h>
 
 @interface searchResultsController ()
 
-@property (copy) NSArray *allResults;
-@property (readwrite, copy) NSArray *visibleResults;
+@property (nonatomic, strong) NSArray *allResults;
 
 @end
 
@@ -23,45 +23,39 @@
     
     [self.tableView registerNib:[UINib nibWithNibName:@"resultCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
     
-    self.allResults = @[@"Here's", @"to", @"the", @"crazy", @"ones.", @"The", @"misfits.", @"The", @"rebels.", @"The", @"troublemakers.", @"The", @"round", @"pegs", @"in", @"the", @"square", @"holes.", @"The", @"ones", @"who", @"see", @"things", @"differently.", @"They're", @"not", @"fond", @"of", @"rules.", @"And", @"they", @"have", @"no", @"respect", @"for", @"the", @"status", @"quo.", @"You", @"can", @"quote", @"them,", @"disagree", @"with", @"them,", @"glorify", @"or", @"vilify", @"them.", @"About", @"the", @"only", @"thing", @"you", @"can't", @"do", @"is", @"ignore", @"them.", @"Because", @"they", @"change", @"things.", @"They", @"push", @"the", @"human", @"race", @"forward.", @"And", @"while", @"some", @"may", @"see", @"them", @"as", @"the", @"crazy", @"ones,", @"we", @"see", @"genius.", @"Because", @"the", @"people", @"who", @"are", @"crazy", @"enough", @"to", @"think", @"they", @"can", @"change", @"the", @"world,", @"are", @"the", @"ones", @"who", @"do."];
+    self.allResults = [[[[PFUser currentUser]objectForKey:@"searches"] reverseObjectEnumerator] allObjects];
     
-    self.visibleResults = self.allResults;
+    [self.tableView reloadData];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 #pragma mark - Property Overrides
 
 - (void)setFilterString:(NSString *)filterString {
-    _filterString = filterString;
+//    _filterString = filterString;
+//    
+//    if (!filterString || filterString.length <= 0) {
+//        self.visibleResults = self.allResults;
+//    }
+//    else {
+//        NSPredicate *filterPredicate = [NSPredicate predicateWithFormat:@"self contains[c] %@", filterString];
+//        self.visibleResults = [self.allResults filteredArrayUsingPredicate:filterPredicate];
+//    }
     
-    if (!filterString || filterString.length <= 0) {
-        self.visibleResults = self.allResults;
-    }
-    else {
-        NSPredicate *filterPredicate = [NSPredicate predicateWithFormat:@"self contains[c] %@", filterString];
-        self.visibleResults = [self.allResults filteredArrayUsingPredicate:filterPredicate];
-    }
-    
-    [self.tableView reloadData];
+//    [self.tableView reloadData];
 }
 
-- (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
-
-    if (!searchController.active) {
-        return;
-    }
-    
-    self.filterString = searchController.searchBar.text;
+-(void)updateSearchResultsForSearchController:(UISearchController *)searchController{
+    //implement filtering here of search terms?
 }
 
 #pragma mark - UITableViewDataSource
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return self.visibleResults.count;
+    return self.allResults.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -70,7 +64,16 @@
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    cell.textLabel.text = self.visibleResults[indexPath.row];
+    cell.textLabel.text = self.allResults[indexPath.row];
 }
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
+    NSString *selected =[self.allResults objectAtIndex:indexPath.row];
+    [self.delegate favouriteTapped:selected];
+    
+    [self.tableView setHidden:YES];
+}
+
 
 @end

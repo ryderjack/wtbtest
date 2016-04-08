@@ -29,12 +29,12 @@
     self.authenticityCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.voucherCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
-    self.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"salePriceFloat"] floatValue]];
-    self.deliverypriceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"deliveryCostFloat"] floatValue]];
+    self.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
+    self.deliverypriceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue]];
     
     //setup values
-    self.price = [[self.confirmedOfferObject objectForKey:@"salePriceFloat"] floatValue];
-    self.delivery = [[self.confirmedOfferObject objectForKey:@"deliveryCostFloat"] floatValue];
+    self.price = [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue];
+    self.delivery = [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue];
 //    self.fee = (self.price + self.delivery)*0.05;
     self.fee = 0;
     float total = (self.price + self.delivery ); //+ self.fee
@@ -131,8 +131,8 @@
         orderObject[@"buyerTotal"] = @(buyerTotalFloat);
         
         
-        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCostFloat"] forKey:@"sellerTotal"];
-        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePriceFloat"] forKey:@"salePrice"];
+        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCost"] forKey:@"sellerTotal"];
+        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
         NSString *delivery = [[NSString alloc]init];
         delivery = [self.deliverypriceLabel.text substringFromIndex:[prefixToRemove length]];
         float deliveryFloat = [delivery floatValue];

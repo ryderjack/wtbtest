@@ -12,7 +12,6 @@
 #import "ExplainViewController.h"
 #import "WelcomeViewController.h"
 #import "NavigationController.h"
-#import "searchResultsController.h"
 
 @interface ExploreVC ()
 
@@ -92,6 +91,7 @@
     NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:13],
                                       NSFontAttributeName, nil];
     [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:searchAttributes];
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -414,10 +414,10 @@
             [self.infiniteQuery whereKey:@"category" equalTo:@"Footwear"];
             
             if ([self.filtersArray containsObject:@"male"]){
-                [self.infiniteQuery whereKey:@"sizegender" equalTo:@"Mens"];
+                [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Mens"];
             }
             else if ([self.filtersArray containsObject:@"female"]){
-                [self.infiniteQuery whereKey:@"sizegender" equalTo:@"Womens"];
+                [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Womens"];
             }
         }
         
@@ -514,10 +514,10 @@
             [self.pullQuery whereKey:@"category" equalTo:@"Footwear"];
             
             if ([self.filtersArray containsObject:@"male"]){
-                [self.pullQuery whereKey:@"sizegender" equalTo:@"Mens"];
+                [self.pullQuery whereKey:@"sizeGender" equalTo:@"Mens"];
             }
             else if ([self.filtersArray containsObject:@"female"]){
-                [self.pullQuery whereKey:@"sizegender" equalTo:@"Womens"];
+                [self.pullQuery whereKey:@"sizeGender" equalTo:@"Womens"];
             }
         }
         
@@ -611,10 +611,13 @@
 
 -(void)searchPressed{
     // Create the search results view controller and use it for the UISearchController.
-//    searchResultsController *resultsController = [[searchResultsController alloc]init];
+    searchResultsController *resultsController = [[searchResultsController alloc]init];
+    resultsController.delegate = self;
     
     // Create the search controller and make it perform the results updating.
-    self.searchController = [[UISearchController alloc] initWithSearchResultsController:nil];
+    self.searchController = [[UISearchController alloc] initWithSearchResultsController:resultsController];
+    self.searchController.delegate = self;
+    
     self.searchController.searchResultsUpdater = self;
     self.searchController.hidesNavigationBarDuringPresentation = NO;
     self.searchController.dimsBackgroundDuringPresentation = NO;
@@ -638,6 +641,7 @@
 
 -(void)updateSearchResultsForSearchController:(UISearchController *)searchController
 {
+    [self.searchController.searchResultsController.view setHidden:NO];
 }
 
 -(BOOL)searchBarShouldBeginEditing:(UISearchBar *)searchBar{
@@ -649,7 +653,19 @@
 -(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
     if (self.searchEnabled == YES) {
         self.searchString = searchBar.text;
+        
+        //clear search array
+        
+        //save the search term
+        if (![self.searchString isEqualToString:@""]) {
+            [[PFUser currentUser] addObject:self.searchString forKey:@"searches"];
+            [[PFUser currentUser] saveEventually];
+        }
+        
+        //query
+        [self.searchController.searchResultsController.view setHidden:YES];
         [self queryParsePull];
+        
     }
 }
 
@@ -682,5 +698,13 @@
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     
     [self.collectionView reloadData];
+}
+
+-(void)favouriteTapped:(NSString *)favourite{
+    if (self.searchEnabled == YES) {
+        self.searchController.searchBar.text = favourite;
+        self.searchString = favourite;
+        [self queryParsePull];
+    }
 }
 @end
