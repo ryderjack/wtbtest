@@ -14,6 +14,7 @@
 
 @protocol CameraControllerDelegate <NSObject>
 - (void)finalImage:(UIImage *)image;
+-(void)tagString:(NSString *)tag;
 @end
 
 @interface CameraController : UIViewController <FastttCameraDelegate, ConfirmControllerDelegate>
@@ -25,5 +26,7 @@
 @property (nonatomic, strong) ConfirmController *confirmController;
 @property (nonatomic, strong) UIImage *finishedImage;
 @property (nonatomic, weak) id <CameraControllerDelegate> delegate;
+@property (weak, nonatomic) IBOutlet UILabel *tageLabel;
+@property (nonatomic) BOOL offerMode;
 
 @end

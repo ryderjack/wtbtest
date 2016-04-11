@@ -434,6 +434,7 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         CameraController *vc = [[CameraController alloc]init];
         vc.delegate = self;
+        vc.offerMode = NO;
         [self presentViewController:vc animated:YES completion:nil];
     }]];
     
@@ -1020,5 +1021,8 @@
 + (void)initialize
 {
     [DZNPhotoPickerController registerFreeService:DZNPhotoPickerControllerServiceInstagram consumerKey:@"16759bba4b7e4831b80bf3412e7dcb16" consumerSecret:@"701c5a99144a401c8285b0c9df999509"];
+}
+-(void)tagString:(NSString *)tag{
+    //do nothing only for images shown in offer mode
 }
 @end

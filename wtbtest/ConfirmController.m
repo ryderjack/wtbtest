@@ -7,6 +7,8 @@
 //
 
 #import "ConfirmController.h"
+#import <Parse/Parse.h>
+
 @import AssetsLibrary;
 
 @interface ConfirmController ()
@@ -24,13 +26,20 @@
     if (!self.capturedImage.isNormalized) {
         self.confirmButton.enabled = NO;
     }
+    
+    if (self.offerMode == YES) {
+        // add tag label as camera overlay
+        [self.previewImage addSubview:self.tageLabel];
+        self.tageLabel.text = self.tagText;
+    }
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
 }
 - (IBAction)confirmButtonPressed:(id)sender {
-    //send image to create vc
+    //send image to create / offer vc
+
     [self.delegate imageConfirmed:self.capturedImage.fullImage];
     [self dismissViewControllerAnimated:YES completion:nil];
 }

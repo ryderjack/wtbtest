@@ -7,6 +7,7 @@
 //
 
 #import "CameraController.h"
+#import <Parse/Parse.h>
 
 @interface CameraController ()
 
@@ -23,6 +24,20 @@
     [self fastttAddChildViewController:self.fastCamera];
     self.fastCamera.view.frame = self.camView.frame;
     self.fastCamera.cameraFlashMode = FastttCameraFlashModeOn;
+    
+    if (self.offerMode == YES) {
+        // add tag label as camera overlay
+        [self.fastCamera.view addSubview:self.tageLabel];
+        
+        // set date
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setLocale:[NSLocale currentLocale]];
+        [dateFormatter setDateFormat:@"MMM YY"];
+        
+        NSDate *formattedDate = [NSDate date];
+        self.tageLabel.text = [NSString stringWithFormat:@"%@\n%@", [PFUser currentUser].username, [dateFormatter stringFromDate:formattedDate]];
+        dateFormatter = nil;
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -81,6 +96,12 @@
     self.confirmController = [[ConfirmController alloc]init];
     self.confirmController.capturedImage = capturedImage;
     self.confirmController.delegate = self;
+    
+    if (self.offerMode == YES) {
+        self.confirmController.offerMode = YES;
+        self.confirmController.tagText = self.tageLabel.text;
+    }
+    
     [self fastttAddChildViewController:self.confirmController];
 }
 
@@ -99,6 +120,10 @@
 -(void)imageConfirmed:(UIImage *)image{
     self.finishedImage = image;
     [self.delegate finalImage:image];
+    
+    if (self.offerMode == YES) {
+        [self.delegate tagString:self.tageLabel.text];
+    }
 }
 
 

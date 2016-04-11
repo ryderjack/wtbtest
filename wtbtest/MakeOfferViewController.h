@@ -12,6 +12,7 @@
 #import "CameraController.h"
 #import "SelectViewController.h"
 #import "LocationView.h"
+#import "DetailImageController.h"
 
 @interface MakeOfferViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationBarDelegate>
 
@@ -55,10 +56,10 @@
 @property (weak, nonatomic) IBOutlet UIButton *fourthDelete;
 
 //images & image views
-@property (nonatomic, strong) UIImage *firstImage;
-@property (nonatomic, strong) UIImage *secondImage;
-@property (nonatomic, strong) UIImage *thirdImage;
-@property (nonatomic, strong) UIImage *fourthImage;
+@property (nonatomic, strong) PFFile *firstImage;
+@property (nonatomic, strong) PFFile *secondImage;
+@property (nonatomic, strong) PFFile *thirdImage;
+@property (nonatomic, strong) PFFile *fourthImage;
 
 @property (nonatomic) int camButtonTapped;
 @property (nonatomic) int photostotal;
@@ -94,10 +95,17 @@
 @property (weak, nonatomic) IBOutlet UILabel *aboutUserLabel;
 @property (nonatomic) BOOL reviewMode;
 
+@property (nonatomic, strong) NSString *tagString;
+
 //review buttons cell
 @property (weak, nonatomic) IBOutlet UIButton *acceptOfferButton;
 @property (weak, nonatomic) IBOutlet UIButton *declineOfferButton;
 @property (weak, nonatomic) IBOutlet UIButton *askSellerButton;
 @property (weak, nonatomic) IBOutlet UIButton *sendOfferButton;
+
+//detail image vc
+@property (nonatomic, strong) DetailImageController *detailController;
+@property (nonatomic) int numberOfPics;
+
 
 @end

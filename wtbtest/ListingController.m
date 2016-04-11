@@ -471,6 +471,8 @@
 
 -(void)presentDetailImage{
     DetailImageController *vc = [[DetailImageController alloc]init];
+    vc.listingPic = YES;
+    
     if (self.numberOfPics == 1) {
         vc.numberOfPics = 1;
         vc.listing = self.listingObject;
@@ -497,19 +499,19 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 - (IBAction)sellthisPressed:(id)sender {
-    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        CreateViewController *vc = [[CreateViewController alloc]init];
-        vc.status = @"edit";
-        vc.lastId = self.listingObject.objectId;
-        vc.editFromListing = YES;
-        vc.listing = self.listingObject;
-        [self.navigationController pushViewController:vc animated:YES];
-    }
-    else{
+//    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+//        CreateViewController *vc = [[CreateViewController alloc]init];
+//        vc.status = @"edit";
+//        vc.lastId = self.listingObject.objectId;
+//        vc.editFromListing = YES;
+//        vc.listing = self.listingObject;
+//        [self.navigationController pushViewController:vc animated:YES];
+//    }
+//    else{
         MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
         vc.listingObject = self.listingObject;
         vc.reviewMode = NO;
         [self.navigationController pushViewController:vc animated:YES];
-    }
+//    }
 }
 @end

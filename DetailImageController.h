@@ -23,5 +23,11 @@
 @property (nonatomic, strong) PFFile *fourthImage;
 @property (nonatomic, strong) PFObject *listing;
 @property (nonatomic) int numberOfPics;
+@property (weak, nonatomic) IBOutlet UILabel *tagLabel;
+
+// if its a listing pic then we dont show the tag label ^
+@property (nonatomic) BOOL listingPic;
+@property (nonatomic, strong) NSString *tagText;
+
 
 @end

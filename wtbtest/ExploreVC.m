@@ -591,7 +591,16 @@
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
-    PFObject *selected = [self.results objectAtIndex:indexPath.item];
+    
+    PFObject *selected;
+    
+    if (self.searchEnabled == YES) {
+        selected = [self.searchResults objectAtIndex:indexPath.item];
+    }
+    else{
+        selected = [self.results objectAtIndex:indexPath.item];
+    }
+    
     ListingController *vc = [[ListingController alloc]init];
     vc.listingObject = selected;
     if (self.searchEnabled == YES) {
@@ -649,6 +658,7 @@
 
 -(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
     if (self.searchEnabled == YES) {
+        
         self.searchString = searchBar.text;
         
         //clear search array
@@ -656,13 +666,31 @@
         [self.noresultsLabel setHidden:YES];
         [self.noResultsImageView setHidden:YES];
         
-        //save the search term
+        NSMutableArray *history = [[NSMutableArray alloc]init];
+        
+        //save the search term and if there's 10 or more items in the search array delete the oldest and add the latest term
         if (![self.searchString isEqualToString:@""]) {
-            [[PFUser currentUser] addObject:self.searchString forKey:@"searches"];
+            
+            // if haven't searched before create empty array to avoid crashing
+            
+            if ([[PFUser currentUser] objectForKey:@"searches"]) {
+                history = [[PFUser currentUser] objectForKey:@"searches"];
+            }
+            else{
+                history = [NSMutableArray arrayWithArray:@[]];
+            }
+            
+            if (history.count >= 15) {
+                [history removeObjectAtIndex:0];
+            }
+            
+            [history addObject:self.searchString];
+            
+            [[PFUser currentUser] setObject:history forKey:@"searches"];
             [[PFUser currentUser] saveEventually];
         }
         
-        //update results controller UI since only updated via query every tie search button pressed
+        //update results controller UI since only updated via query every time search button pressed
         
         NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.resultsController.allResults];
         [searchesList insertObject:self.searchString atIndex:0];

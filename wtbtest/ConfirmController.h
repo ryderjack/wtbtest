@@ -23,6 +23,8 @@
 @property (nonatomic, assign) BOOL imagesReady;
 @property (weak, nonatomic) IBOutlet UIButton *confirmButton;
 @property (nonatomic, weak) id <ConfirmControllerDelegate> delegate;
-
+@property (weak, nonatomic) IBOutlet UILabel *tageLabel;
+@property (nonatomic, strong) NSString *tagText;
+@property (nonatomic) BOOL offerMode;
 
 @end

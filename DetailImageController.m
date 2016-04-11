@@ -31,6 +31,16 @@
     // Adding the swipe gesture on image view
     [self.view addGestureRecognizer:swipeLeft];
     [self.view addGestureRecognizer:swipeRight];
+    
+    if (self.listingPic == YES) {
+        // don't show tagged label
+        [self.tagLabel setHidden:YES];
+    }
+    else{
+        // show it oh show it!
+        [self.tagLabel setHidden:NO];
+        self.tagLabel.text = self.tagText;
+    }
 }
 
 - (void)didReceiveMemoryWarning {

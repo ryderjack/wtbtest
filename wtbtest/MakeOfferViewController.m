@@ -44,12 +44,6 @@
     
     self.itemTitle.text = [self.listingObject objectForKey:@"title"];
     
-    //button setup
-    [self.firstCam setEnabled:YES];
-    [self.secondCam setEnabled:NO];
-    [self.thirdCam setEnabled:NO];
-    [self.fourthCam setEnabled:NO];
-    
     [self.firstDelete setHidden:YES];
     [self.secondDelete setHidden:YES];
     [self.thirdDelete setHidden:YES];
@@ -89,16 +83,20 @@
         
         self.tagExplain.text = @"Are these photos tagged?\nReport a problem here";
         
-        NSMutableAttributedString *string = [[NSMutableAttributedString alloc] initWithString:self.tagExplain.text];
-        NSRange selectedRange = NSMakeRange(42, 4); // 4 characters, starting at index 22
+        // create detail vc for use with camera buttons
+        self.detailController = [[DetailImageController alloc]init];
+        self.detailController.listingPic = NO;
         
-        [string beginEditing];
-        [string addAttribute:NSForegroundColorAttributeName
-                       value:[UIColor colorWithRed:0.29 green:0.565 blue:0.886 alpha:1]
-                       range:selectedRange];
-        
-        [string endEditing];
-        [self.tagExplain setAttributedText:string];
+//        NSMutableAttributedString *string = [[NSMutableAttributedString alloc] initWithString:self.tagExplain.text];
+//        NSRange selectedRange = NSMakeRange(42, 4); // 4 characters, starting at index 22
+//        
+//        [string beginEditing];
+//        [string addAttribute:NSForegroundColorAttributeName
+//                       value:[UIColor colorWithRed:0.29 green:0.565 blue:0.886 alpha:1]
+//                       range:selectedRange];
+//        
+//        [string endEditing];
+//        [self.tagExplain setAttributedText:string];
         
         PFUser *seller = [self.listingObject objectForKey:@"sellerUser"];
         
@@ -124,36 +122,56 @@
             }
         }];
         
+        // setup image views
         if ([self.listingObject objectForKey:@"image1"]) {
+            self.numberOfPics = 1;
+            self.firstImage = [self.listingObject objectForKey:@"image1"];
             [self.firstImageView setFile:[self.listingObject objectForKey:@"image1"]];
             [self.firstImageView loadInBackground];
+            
+            [self.firstCam setEnabled:YES];
         }
         else{
             [self.firstImageView setHidden:YES];
         }
         
         if ([self.listingObject objectForKey:@"image2"]) {
+            self.numberOfPics = 2;
+            self.secondImage = [self.listingObject objectForKey:@"image2"];
             [self.secondImageView setFile:[self.listingObject objectForKey:@"image2"]];
             [self.secondImageView loadInBackground];
+            
+            [self.secondCam setEnabled:YES];
         }
         else{
             [self.secondImageView setHidden:YES];
+            [self.secondCam setEnabled:NO];
         }
         
         if ([self.listingObject objectForKey:@"image3"]) {
+            self.numberOfPics = 3;
+            self.thirdImage = [self.listingObject objectForKey:@"image3"];
             [self.thirdImageView setFile:[self.listingObject objectForKey:@"image3"]];
             [self.thirdImageView loadInBackground];
+            
+            [self.thirdCam setEnabled:YES];
         }
         else{
             [self.thirdImageView setHidden:YES];
+            [self.thirdCam setEnabled:NO];
         }
         
         if ([self.listingObject objectForKey:@"image4"]) {
+            self.numberOfPics = 4;
+            self.fourthImage = [self.listingObject objectForKey:@"image4"];
             [self.fourthImageView setFile:[self.listingObject objectForKey:@"image4"]];
             [self.fourthImageView loadInBackground];
+            
+            [self.fourthCam setEnabled:YES];
         }
         else{
             [self.fourthImageView setHidden:YES];
+            [self.fourthCam setEnabled:NO];
         }
         
         //disable choose cells for selection
@@ -203,6 +221,10 @@
         else{
             [self.extraFiel setText:@""];
         }
+        
+        // format location label
+        self.chooseLocation.adjustsFontSizeToFitWidth = YES;
+        self.chooseLocation.minimumScaleFactor=0.5;
     }
     else{
         //normal make an offer mode
@@ -237,20 +259,14 @@
             }
         }];
         
-        //hightlight part of label
-        NSMutableAttributedString *string = [[NSMutableAttributedString alloc] initWithString:self.tagExplain.text];
-        NSRange selectedRange = NSMakeRange(82, 4); // 4 characters, starting at index 22
-        
-        [string beginEditing];
-        [string addAttribute:NSForegroundColorAttributeName
-                       value:[UIColor colorWithRed:0.29 green:0.565 blue:0.886 alpha:1]
-                       range:selectedRange];
-        
-        [string endEditing];
-        [self.tagExplain setAttributedText:string];
-        
         //setup placeholders to be what the wtb user wants
         [self setPlaceholderValues];
+        
+        //setup cam buttons
+        [self.firstCam setEnabled:YES];
+        [self.secondCam setEnabled:NO];
+        [self.thirdCam setEnabled:NO];
+        [self.fourthCam setEnabled:NO];
     }
 }
 
@@ -383,7 +399,7 @@
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
-            return 190;
+            return 105;
         }
     }
     else if (indexPath.section ==3){
@@ -446,13 +462,15 @@
     if (section ==3 || section == 4 || section == 5 || section == 6 || section == 0) {
         return 0.0;
     }
+    else if (section == 2){
+        return 40.0f;
+    }
     return 32.0f;
 }
 
 - (UIView *) tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-    
     [headerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     return headerView;
 }
@@ -460,6 +478,22 @@
 - (UIView *) tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
 {
     UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
+    
+    if (section == 2) {
+        UILabel *footer = [[UILabel alloc]initWithFrame:CGRectMake(12, 0, tableView.bounds.size.width, 30)];
+        [footer setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:12]];
+        [footer setTextColor:[UIColor grayColor]];
+        
+        if (self.reviewMode == YES) {
+            footer.text = @"Report a problem here";
+            
+            // add button to goto report screen
+        }
+        else{
+            footer.text = @"Don't worry about tagging your photos, it's done for you!";
+        }
+        [footerView addSubview:footer];
+    }
     
     [footerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     return footerView;
@@ -477,45 +511,74 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         CameraController *vc = [[CameraController alloc]init];
         vc.delegate = self;
+        vc.offerMode = YES;
         [self presentViewController:vc animated:YES completion:nil];
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        TWPhotoPickerController *photoPicker = [[TWPhotoPickerController alloc] init];
-        photoPicker.cropBlock = ^(UIImage *image) {
-            [self finalImage:image];
-        };
-        [self presentViewController:photoPicker animated:YES completion:nil];
-    }]];
+//    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//        TWPhotoPickerController *photoPicker = [[TWPhotoPickerController alloc] init];
+//        photoPicker.cropBlock = ^(UIImage *image) {
+//            [self finalImage:image];
+//        };
+//        [self presentViewController:photoPicker animated:YES completion:nil];
+//    }]];
     
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
 - (IBAction)firstCamPressed:(id)sender {
-    if (self.firstCam.enabled == YES) {
-        self.camButtonTapped = 1;
-        [self alertSheet];
+    if (self.reviewMode == YES) {
+        //reviewing so just view photo when pressed
+        [self presentDetailImage];
     }
+    else{
+        //normal make an offer so take a photo when pressed
+        if (self.firstCam.enabled == YES) {
+            self.camButtonTapped = 1;
+            [self alertSheet];
+        }
+    }
+    
 }
 - (IBAction)secondCamPressed:(id)sender {
-    if (self.secondCam.enabled == YES) {
-        //show action sheet for either picker, library or web (eventually)
-        self.camButtonTapped = 2;
-        [self alertSheet];
+    
+    if (self.reviewMode == YES) {
+        //reviewing so just view photo when pressed
+        [self presentDetailImage];
+    }
+    else{
+        if (self.secondCam.enabled == YES) {
+            //show action sheet for either picker, library or insta
+            self.camButtonTapped = 2;
+            [self alertSheet];
+        }
     }
 }
 - (IBAction)thirdPressed:(id)sender {
-    if (self.thirdCam.enabled == YES) {
-        //show action sheet for either picker, library or web (eventually)
-        self.camButtonTapped = 3;
-        [self alertSheet];
+    
+    if (self.reviewMode == YES) {
+        //reviewing so just view photo when pressed
+        [self presentDetailImage];
+    }
+    else{
+        if (self.thirdCam.enabled == YES) {
+            //show action sheet for either picker, library or insta
+            self.camButtonTapped = 3;
+            [self alertSheet];
+        }
     }
 }
 - (IBAction)fourthCamPressed:(id)sender {
-    if (self.fourthCam.enabled == YES) {
-        //show action sheet for either picker, library or web (eventually)
-        self.camButtonTapped = 4;
-        [self alertSheet];
+    if (self.reviewMode == YES) {
+        //reviewing so just view photo when pressed
+        [self presentDetailImage];
+    }
+    else{
+        if (self.fourthCam.enabled == YES) {
+            //show action sheet for either picker, library or insta
+            self.camButtonTapped = 4;
+            [self alertSheet];
+        }
     }
 }
 
@@ -866,6 +929,10 @@
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
+    if (textField == self.itemTitle) {
+        return YES;
+    }
+    
     // Check for deletion of the $ sign
     if (range.location == 0 && [textField.text hasPrefix:@"£"])
         return NO;
@@ -956,6 +1023,9 @@
             return;
         }
         
+        //username/date stamp
+        [offerObject setObject:self.tagString forKey:@"tagString"];
+        
         [offerObject setObject:self.chooseDelivery.text forKey:@"deliveryMethod"];
         
         offerObject[@"salePrice"] = @(salePriceFloat);
@@ -1035,11 +1105,7 @@
         }];
     }
 }
-- (IBAction)taggedExlpainTapped:(id)sender {
-    ExplainViewController *vc = [[ExplainViewController alloc]init];
-    vc.setting = @"tagged";
-    [self presentViewController:vc animated:YES completion:nil];
-}
+
 - (IBAction)acceptPressed:(id)sender {
     //proceed to payment then create an order
     CheckoutController *vc = [[CheckoutController alloc]init];
@@ -1148,5 +1214,32 @@
         double total = (priceInt + deliveryInt);
         self.totalsumLabel.text = [NSString stringWithFormat:@"£%.2f", total];
     }
+}
+
+-(void)presentDetailImage{
+    if (self.numberOfPics == 1) {
+        self.detailController.numberOfPics = 1;
+        self.detailController.listing = self.listingObject;
+    }
+    else if (self.numberOfPics == 2){
+        self.detailController.numberOfPics = 2;
+        self.detailController.firstImage = self.firstImage;
+        self.detailController.listing = self.listingObject;
+    }
+    else if (self.numberOfPics == 3){
+        self.detailController.numberOfPics = 3;
+        self.detailController.listing = self.listingObject;
+    }
+    else if (self.numberOfPics == 4){
+        self.detailController.numberOfPics = 4;
+        self.detailController.listing = self.listingObject;
+    }
+    self.detailController.tagText = [self.listingObject objectForKey:@"tagString"];
+    
+    [self presentViewController:self.detailController animated:YES completion:nil];
+}
+
+-(void)tagString:(NSString *)tag{
+    self.tagString = tag;
 }
 @end
