@@ -481,7 +481,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="158"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="vll-s6-WMk" id="0Ic-Fz-yjL">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="157.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="158"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="About the buyer" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="F8I-Py-L1I">
@@ -504,10 +504,10 @@
                                 </constraints>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="buyer name" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c20-QR-DwN">
-                                <rect key="frame" x="66" y="14" width="187" height="21"/>
+                                <rect key="frame" x="66" y="14" width="136" height="21"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="21" id="485-iM-Zao"/>
-                                    <constraint firstAttribute="width" constant="187" id="sKx-Ur-G9Q"/>
+                                    <constraint firstAttribute="width" constant="136" id="sKx-Ur-G9Q"/>
                                 </constraints>
                                 <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="16"/>
                                 <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -519,34 +519,25 @@
                                 <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="4star.png" translatesAutoresizingMaskIntoConstraints="NO" id="nDm-QT-8vg">
-                                <rect key="frame" x="162" y="44" width="128" height="26"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="128" id="We2-f2-Q6P"/>
-                                </constraints>
-                            </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="c20-QR-DwN" firstAttribute="top" secondItem="wfg-yD-IRF" secondAttribute="top" constant="-6" id="4Yz-DD-a8y"/>
                             <constraint firstItem="wfg-yD-IRF" firstAttribute="top" secondItem="lCL-d1-y7M" secondAttribute="top" constant="20" id="8Kj-jZ-m9x"/>
                             <constraint firstItem="x8B-MK-Pxw" firstAttribute="top" secondItem="c20-QR-DwN" secondAttribute="bottom" id="NKF-fF-kUO"/>
-                            <constraint firstItem="nDm-QT-8vg" firstAttribute="trailing" secondItem="lCL-d1-y7M" secondAttribute="trailingMargin" id="XoE-3O-cXW"/>
                             <constraint firstItem="x8B-MK-Pxw" firstAttribute="leading" secondItem="c20-QR-DwN" secondAttribute="leading" id="aKE-b7-DtJ"/>
                             <constraint firstItem="c20-QR-DwN" firstAttribute="leading" secondItem="wfg-yD-IRF" secondAttribute="trailing" constant="8" id="eBE-S4-Az4"/>
-                            <constraint firstItem="nDm-QT-8vg" firstAttribute="trailing" secondItem="lCL-d1-y7M" secondAttribute="trailingMargin" id="ecq-Yq-utU"/>
-                            <constraint firstItem="nDm-QT-8vg" firstAttribute="centerY" secondItem="wfg-yD-IRF" secondAttribute="centerY" constant="12" id="kjj-MV-gQu"/>
                             <constraint firstItem="wfg-yD-IRF" firstAttribute="leading" secondItem="lCL-d1-y7M" secondAttribute="leadingMargin" id="nY9-w7-EZy"/>
-                            <constraint firstItem="x8B-MK-Pxw" firstAttribute="trailing" secondItem="c20-QR-DwN" secondAttribute="trailing" constant="-79" id="qML-TL-txR"/>
-                            <constraint firstItem="nDm-QT-8vg" firstAttribute="top" secondItem="lCL-d1-y7M" secondAttribute="top" constant="44" id="s8S-tF-h8A"/>
+                            <constraint firstItem="x8B-MK-Pxw" firstAttribute="trailing" secondItem="c20-QR-DwN" secondAttribute="trailing" constant="-28" id="qML-TL-txR"/>
                             <constraint firstItem="x8B-MK-Pxw" firstAttribute="bottom" secondItem="lCL-d1-y7M" secondAttribute="bottomMargin" constant="-6" id="yOp-vC-ZgR"/>
                         </constraints>
-                        <variation key="default">
-                            <mask key="constraints">
-                                <exclude reference="XoE-3O-cXW"/>
-                            </mask>
-                        </variation>
                     </view>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="4star.png" translatesAutoresizingMaskIntoConstraints="NO" id="nDm-QT-8vg">
+                        <rect key="frame" x="173" y="66" width="128" height="26"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="128" id="We2-f2-Q6P"/>
+                        </constraints>
+                    </imageView>
                 </subviews>
                 <color key="backgroundColor" red="0.96470588235294119" green="0.96862745098039216" blue="0.9882352941176471" alpha="1" colorSpace="calibratedRGB"/>
                 <constraints>
@@ -554,6 +545,8 @@
                     <constraint firstItem="lCL-d1-y7M" firstAttribute="centerY" secondItem="0Ic-Fz-yjL" secondAttribute="centerY" id="8Xi-Y5-tVY"/>
                     <constraint firstAttribute="bottomMargin" secondItem="lCL-d1-y7M" secondAttribute="bottom" constant="25.5" id="Bdk-km-e0f"/>
                     <constraint firstItem="F8I-Py-L1I" firstAttribute="top" secondItem="0Ic-Fz-yjL" secondAttribute="topMargin" id="Dom-aX-l4l"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="nDm-QT-8vg" secondAttribute="trailing" constant="11" id="PaV-by-gPQ"/>
+                    <constraint firstItem="nDm-QT-8vg" firstAttribute="centerY" secondItem="lCL-d1-y7M" secondAttribute="centerY" id="RiA-El-7wm"/>
                     <constraint firstItem="lCL-d1-y7M" firstAttribute="centerX" secondItem="0Ic-Fz-yjL" secondAttribute="centerX" id="fw1-Ui-bHQ"/>
                     <constraint firstItem="F8I-Py-L1I" firstAttribute="leading" secondItem="0Ic-Fz-yjL" secondAttribute="leadingMargin" constant="6" id="mPW-Lu-hDx"/>
                     <constraint firstItem="lCL-d1-y7M" firstAttribute="top" secondItem="F8I-Py-L1I" secondAttribute="bottom" constant="5" id="wjF-67-kRb"/>

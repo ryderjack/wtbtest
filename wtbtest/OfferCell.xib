@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+        <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
@@ -16,7 +17,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="72"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="item title" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VWE-0Y-jMB">
-                        <rect key="frame" x="84" y="11" width="228" height="29"/>
+                        <rect key="frame" x="84" y="11" width="167" height="29"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
@@ -43,28 +44,41 @@
                         <color key="textColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="16-April" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JFe-sN-DEa">
+                        <rect key="frame" x="238" y="13" width="74" height="24"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="74" id="JJ7-rC-cgS"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
                 </subviews>
                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
             </view>
             <constraints>
-                <constraint firstAttribute="trailing" secondItem="VWE-0Y-jMB" secondAttribute="trailing" constant="8" id="5M2-E9-Ery"/>
+                <constraint firstAttribute="bottom" secondItem="VWE-0Y-jMB" secondAttribute="bottom" constant="32" id="A2J-vB-tpa"/>
+                <constraint firstAttribute="trailing" secondItem="VWE-0Y-jMB" secondAttribute="trailing" constant="69" id="DMs-SL-Z2H"/>
                 <constraint firstItem="Ctr-Ud-vYb" firstAttribute="trailing" secondItem="gTV-IL-0wX" secondAttribute="trailingMargin" id="FgV-hr-sfp"/>
+                <constraint firstItem="VWE-0Y-jMB" firstAttribute="centerY" secondItem="JFe-sN-DEa" secondAttribute="centerY" id="G3Z-gE-tZ5"/>
                 <constraint firstItem="FsE-zQ-sRu" firstAttribute="centerY" secondItem="Ctr-Ud-vYb" secondAttribute="centerY" constant="-15" id="HVp-LV-Ufn"/>
+                <constraint firstItem="VWE-0Y-jMB" firstAttribute="top" secondItem="FsE-zQ-sRu" secondAttribute="top" id="LQ3-0i-XXu"/>
                 <constraint firstItem="Ctr-Ud-vYb" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" constant="15" id="Lei-m5-N2y"/>
-                <constraint firstAttribute="bottom" secondItem="VWE-0Y-jMB" secondAttribute="bottom" constant="32" id="MmS-3x-vnf"/>
                 <constraint firstItem="Ctr-Ud-vYb" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="38" id="P7t-4T-9gU"/>
                 <constraint firstItem="FsE-zQ-sRu" firstAttribute="bottom" secondItem="Qn2-Vh-pqq" secondAttribute="bottom" id="Rd7-hO-94D"/>
                 <constraint firstItem="FsE-zQ-sRu" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="18" id="WWA-sv-rNm"/>
+                <constraint firstItem="VWE-0Y-jMB" firstAttribute="firstBaseline" secondItem="JFe-sN-DEa" secondAttribute="firstBaseline" id="aIa-st-4Ce"/>
                 <constraint firstItem="FsE-zQ-sRu" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="11" id="j1h-wz-XFd"/>
                 <constraint firstItem="Qn2-Vh-pqq" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="35" id="kP1-2W-e72"/>
-                <constraint firstItem="VWE-0Y-jMB" firstAttribute="leading" secondItem="FsE-zQ-sRu" secondAttribute="trailing" constant="16" id="uUY-4y-kw2"/>
-                <constraint firstItem="VWE-0Y-jMB" firstAttribute="top" secondItem="FsE-zQ-sRu" secondAttribute="top" id="wSo-Em-O8j"/>
+                <constraint firstItem="JFe-sN-DEa" firstAttribute="trailing" secondItem="Ctr-Ud-vYb" secondAttribute="trailing" id="neK-kA-3Vc"/>
+                <constraint firstItem="VWE-0Y-jMB" firstAttribute="leading" secondItem="FsE-zQ-sRu" secondAttribute="trailing" constant="16" id="q0I-Op-P2S"/>
                 <constraint firstAttribute="trailing" secondItem="Qn2-Vh-pqq" secondAttribute="trailing" constant="53" id="wXF-IU-NDD"/>
                 <constraint firstItem="Qn2-Vh-pqq" firstAttribute="leading" secondItem="FsE-zQ-sRu" secondAttribute="trailing" constant="15" id="zzo-cE-3BX"/>
             </constraints>
             <size key="customSize" width="288" height="72"/>
             <connections>
                 <outlet property="buyerName" destination="Qn2-Vh-pqq" id="wlw-IA-jqv"/>
+                <outlet property="dateLabel" destination="JFe-sN-DEa" id="mqH-WN-nHY"/>
                 <outlet property="imageView" destination="FsE-zQ-sRu" id="exp-uv-Ok4"/>
                 <outlet property="itemTitle" destination="VWE-0Y-jMB" id="9V4-6o-VqR"/>
                 <outlet property="priceLabel" destination="Ctr-Ud-vYb" id="aH4-Ao-hrx"/>

@@ -91,7 +91,6 @@
     NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:13],
                                       NSFontAttributeName, nil];
     [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:searchAttributes];
-    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -144,6 +143,22 @@
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
         NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
         [self presentViewController:navController animated:YES completion:nil];
+    }
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasFBUpdate"])
+    {
+        // Has feedback update
+    }
+    else
+    {
+        [PFUser logOut];
+        
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasFBUpdate"];
+        
+        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+        [self presentViewController:navController animated:YES completion:nil];
+        
     }
 }
 
@@ -736,7 +751,9 @@
 -(void)favouriteTapped:(NSString *)favourite{
     if (self.searchEnabled == YES) {
         self.searchController.searchBar.text = favourite;
+        [self.searchController.searchBar resignFirstResponder];
         self.searchString = favourite;
+        [self.pullQuery cancel];
         [self queryParsePull];
     }
 }

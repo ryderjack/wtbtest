@@ -16,6 +16,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    //reset user cell
+    self.userNameLabel.text = @"";
+    self.dealsLabel.text = @"";
+    
     self.starNumber = 0;
     self.warningLabel.text = @"";
     
@@ -54,22 +59,36 @@
             [self.pictureView setFile:[self.user objectForKey:@"picture"]];
             [self.pictureView loadInBackground];
             
-            NSString *purchased = [self.user objectForKey:@"purchased"];
-            NSString *sold = [self.user objectForKey:@"sold"];
+            int starNumber = [[self.user objectForKey:@"currentRating"] intValue];
             
-            if (!purchased) {
-                purchased = @"0";
+            if (starNumber == 0) {
+                [self.starView setImage:[UIImage imageNamed:@"0star"]];
             }
-            if (!sold) {
-                sold = @"0";
+            else if (starNumber == 1){
+                [self.starView setImage:[UIImage imageNamed:@"1star"]];
             }
-            self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %@\nSold: %@", purchased, sold];
+            else if (starNumber == 2){
+                [self.starView setImage:[UIImage imageNamed:@"2star"]];
+            }
+            else if (starNumber == 3){
+                [self.starView setImage:[UIImage imageNamed:@"3star"]];
+            }
+            else if (starNumber == 4){
+                [self.starView setImage:[UIImage imageNamed:@"4star"]];
+            }
+            else if (starNumber == 5){
+                [self.starView setImage:[UIImage imageNamed:@"5star"]];
+            }
+            
+            int purchased = [[self.user objectForKey:@"purchased"]intValue];
+            int sold = [[self.user objectForKey:@"sold"] intValue];
+            
+            self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
         }
         else{
             NSLog(@"error %@", error);
         }
     }];
-    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -131,15 +150,95 @@
             return 157;
         }
     }
-    
     return 100;
 }
 - (IBAction)leaveFeedbackPressed:(id)sender {
+    
+    [self.feedbackButton setEnabled:NO];
+    
     if (self.starNumber == 0 || [self.commentField.text isEqualToString:@""]) {
         self.warningLabel.text = @"Include a rating and a comment";
+        [self.feedbackButton setEnabled:YES];
     }
     else{
-        //save
+        PFObject *feedbackObject = [PFObject objectWithClassName:@"feedback"];
+        
+        [feedbackObject setObject:[NSNumber numberWithInt:self.starNumber] forKey:@"rating"];
+        
+        if (self.purchased == YES) {
+            [feedbackObject setObject:self.user forKey:@"sellerUser"];
+            [feedbackObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
+        }
+        else{
+            [feedbackObject setObject:self.user forKey:@"buyerUser"];
+            [feedbackObject setObject:[PFUser currentUser] forKey:@"sellerUser"];
+        }
+        
+        [feedbackObject setObject:self.commentField.text forKey:@"comment"];
+        [feedbackObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            if (!error) {
+                
+                //update order status
+
+                if (self.purchased == YES) {
+                    [self.orderObject setObject:[NSNumber numberWithBool:YES] forKey:@"buyerFeedback"];
+                }
+                else{
+                    [self.orderObject setObject:[NSNumber numberWithBool:YES] forKey:@"sellerFeedback"];
+                }
+                [self.orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (!error) {
+                        if (self.starNumber == 1) {
+                            [self.user incrementKey:@"star1"];
+                        }
+                        else if (self.starNumber == 2){
+                            [self.user incrementKey:@"star2"];
+                        }
+                        else if (self.starNumber == 3){
+                            [self.user incrementKey:@"star3"];
+                        }
+                        else if (self.starNumber == 4){
+                            [self.user incrementKey:@"star4"];
+                        }
+                        else if (self.starNumber == 5){
+                            [self.user incrementKey:@"star5"];
+                        }
+                        
+                        [self.user incrementKey:@"dealsTotal"];
+                        
+                        if (self.purchased == YES) {
+                            [self.user incrementKey:@"sold"];
+                        }
+                        else{
+                            [self.user incrementKey:@"purchased"];
+                        }
+                        
+                        // weight the different stars
+                        int star1 = [[self.user objectForKey:@"star1"]intValue]*5;
+                        int star2 = [[self.user objectForKey:@"star2"]intValue]*4;
+                        int star3 = [[self.user objectForKey:@"star3"]intValue]*3;
+                        int star4 = [[self.user objectForKey:@"star4"]intValue]*2;
+                        int star5 = [[self.user objectForKey:@"star5"]intValue]*1;
+                        
+                        NSArray *ratings = [NSArray arrayWithObjects:@(star1), @(star2), @(star3), @(star4), @(star5), nil];
+                        int max = [[ratings valueForKeyPath:@"@max.intValue"] intValue];
+                        int star = (int) [ratings indexOfObject:@(max)]+1;
+                        [self.user setObject:[NSNumber numberWithInt:star] forKey:@"currentRating"];
+                        [self.user saveInBackground];
+                        
+                        [self.navigationController popViewControllerAnimated:YES];
+                    }
+                    else{
+                        NSLog(@"error %@", error);
+                        [self.feedbackButton setEnabled:YES];
+                    }
+                }];
+            }
+            else{
+                NSLog(@"error %@", error);
+                [self.feedbackButton setEnabled:YES];
+            }
+        }];
     }
 }
 - (IBAction)reportPressed:(id)sender {

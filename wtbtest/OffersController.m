@@ -97,6 +97,10 @@
             cell.priceLabel.text = @"Declined";
             cell.priceLabel.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
         }
+        else if ([[offerObject objectForKey:@"status"]isEqualToString:@"expired"]) {
+            cell.priceLabel.text = @"Expired";
+            cell.priceLabel.textColor = [UIColor lightGrayColor];
+        }
         else{
             cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"totalCost"] floatValue]];
             cell.priceLabel.textColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
@@ -111,6 +115,10 @@
         else if ([[offerObject objectForKey:@"status"]isEqualToString:@"declined"]) {
             cell.priceLabel.text = @"Declined";
             cell.priceLabel.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
+        }
+        else if ([[offerObject objectForKey:@"status"]isEqualToString:@"expired"]) {
+            cell.priceLabel.text = @"Expired";
+            cell.priceLabel.textColor = [UIColor lightGrayColor];
         }
         else{
             cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"totalCost"] floatValue]];
@@ -145,6 +153,16 @@
         PFUser *seller = [offerObject objectForKey:@"sellerUser"];
         cell.buyerName.text = [NSString stringWithFormat:@"Seller: %@", seller.username];
     }
+    
+    // set date
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setLocale:[NSLocale currentLocale]];
+    [dateFormatter setDateFormat:@"dd MMM"];
+    
+    NSDate *formattedDate = offerObject.createdAt;
+    cell.dateLabel.text = [NSString stringWithFormat:@"%@",[dateFormatter stringFromDate:formattedDate]];
+    dateFormatter = nil;
+    
     return cell;
 }
 
@@ -248,6 +266,7 @@
         //goto order summary
         OrderSummaryController *vc = [[OrderSummaryController alloc]init];
         vc.purchased = YES;
+        vc.orderDate = selectedOffer.createdAt;
         vc.orderObject = selectedOffer;
         [self.navigationController pushViewController:vc animated:YES];
     }
@@ -255,6 +274,7 @@
         //goto order summary
         OrderSummaryController *vc = [[OrderSummaryController alloc]init];
         vc.purchased = NO;
+        vc.orderDate = selectedOffer.createdAt;
         vc.orderObject = selectedOffer;
         [self.navigationController pushViewController:vc animated:YES];
     }

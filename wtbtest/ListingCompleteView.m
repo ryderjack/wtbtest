@@ -142,5 +142,8 @@
 -(void)resetNavStack{
     [self.navigationController popToRootViewControllerAnimated:YES];
 }
+- (IBAction)viewOrderPressed:(id)sender {
+    // goto order summary
+}
 
 @end

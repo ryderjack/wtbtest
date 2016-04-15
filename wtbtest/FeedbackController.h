@@ -41,4 +41,7 @@
 @property (nonatomic) int starNumber;
 @property (weak, nonatomic) IBOutlet UILabel *warningLabel;
 
+@property (nonatomic, strong) PFObject *orderObject;
+@property (nonatomic, strong) NSString *statusString;
+
 @end

@@ -250,7 +250,7 @@
         }
         else if(indexPath.row == 2){
             if ([self.chooseCategroy.text isEqualToString:@"Choose"]) {
-                //prompt to choose category first
+                [self sizePopUp];
                 [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
             }
             else{
@@ -378,7 +378,6 @@
         [textView resignFirstResponder];
         return NO;
     }
-    
     return YES;
 }
 -(void)removeKeyboard{
@@ -482,6 +481,14 @@
 
 -(void)popUpAlert{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Enter a title" message:@"Make sure you've entered a title for the item you wantobuy!" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)sizePopUp{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Choose a category first!" message:@"Make sure you've entered a category for the item you wantobuy!" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -809,6 +816,21 @@
                 }
                 else{
                     NSLog(@"listing saved! %@", self.listing.objectId);
+                    
+                    NSDictionary *params = @{@"itemTitle": itemTitle, @"price": [NSNumber numberWithInt:price], @"condition": self.chooseCondition.text};
+                    
+                    [PFCloud callFunctionInBackground:@"eBayLookup" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                        if (!error) {
+                            NSLog(@"response %@", response);
+                            
+                            NSLog(@"item title: %@, item price: £%@, item URL: %@, pic URL: %@", [response objectForKey:@"title"], [[[response objectForKey:@"sellingStatus"]objectForKey:@"currentPrice"]objectForKey:@"amount"], [response objectForKey:@"viewItemURL"], [response objectForKey:@"galleryURL"]);
+                        }
+                        else{
+                            NSLog(@"error %@", error);
+                        }
+                    }];
+                    
+                    
                     ListingCompleteView *vc = [[ListingCompleteView alloc]init];
                     vc.delegate = self;
                     vc.lastObjectId = self.listing.objectId;

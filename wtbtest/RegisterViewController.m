@@ -93,6 +93,18 @@
         [self.profileImageView setImage:[UIImage imageWithData:pic]];
         [self setImageBorder];
         
+        // setup feedback
+        [self.user setObject:@0 forKey:@"star1"];
+        [self.user setObject:@0 forKey:@"star2"];
+        [self.user setObject:@0 forKey:@"star3"];
+        [self.user setObject:@0 forKey:@"star4"];
+        [self.user setObject:@0 forKey:@"star5"];
+        
+        [self.user setObject:@0 forKey:@"dealsTotal"];
+        [self.user setObject:@0 forKey:@"sold"];
+        [self.user setObject:@0 forKey:@"purchased"];
+        [self.user setObject:@0 forKey:@"currentRating"];
+        
         //save image
         PFFile *picFile = [PFFile fileWithData:pic];
         self.user[PF_USER_PICTURE] = picFile;

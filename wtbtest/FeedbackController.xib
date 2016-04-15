@@ -44,7 +44,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="130"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="YKo-Ha-STC" id="f7e-dM-jK8">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="130"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="129.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="About the buyer" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="zmu-88-loO">
@@ -95,9 +95,9 @@
                             <constraint firstItem="plm-r5-nD8" firstAttribute="leading" secondItem="b9S-dX-Lf8" secondAttribute="trailing" constant="11" id="1ld-AT-6mi"/>
                             <constraint firstItem="Crf-qQ-t3q" firstAttribute="trailing" secondItem="Irf-sm-6kw" secondAttribute="trailingMargin" id="FBm-zK-1qB"/>
                             <constraint firstItem="8jq-lo-Yld" firstAttribute="leading" secondItem="b9S-dX-Lf8" secondAttribute="trailing" constant="8" symbolic="YES" id="O4y-z0-pwt"/>
-                            <constraint firstItem="Crf-qQ-t3q" firstAttribute="leading" secondItem="8jq-lo-Yld" secondAttribute="trailing" constant="8" symbolic="YES" id="OoK-Os-tBB"/>
                             <constraint firstItem="b9S-dX-Lf8" firstAttribute="top" secondItem="Irf-sm-6kw" secondAttribute="top" constant="20" id="RYg-cR-2cI"/>
                             <constraint firstAttribute="bottom" secondItem="8jq-lo-Yld" secondAttribute="bottom" id="YPV-nX-PZu"/>
+                            <constraint firstAttribute="trailing" secondItem="Crf-qQ-t3q" secondAttribute="trailing" constant="8" id="gSW-QC-Kzj"/>
                             <constraint firstItem="Crf-qQ-t3q" firstAttribute="leading" secondItem="8jq-lo-Yld" secondAttribute="trailing" constant="8" symbolic="YES" id="hk1-aW-fbg"/>
                             <constraint firstItem="Crf-qQ-t3q" firstAttribute="centerY" secondItem="b9S-dX-Lf8" secondAttribute="centerY" id="iKV-oJ-F4Q"/>
                             <constraint firstItem="Crf-qQ-t3q" firstAttribute="trailing" secondItem="Irf-sm-6kw" secondAttribute="trailingMargin" id="jG0-pU-NVA"/>
@@ -205,7 +205,7 @@
                         </constraints>
                         <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="14"/>
-                        <textInputTraits key="textInputTraits"/>
+                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                     </textField>
                 </subviews>
                 <constraints>

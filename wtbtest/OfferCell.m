@@ -19,6 +19,9 @@
     
     self.priceLabel.adjustsFontSizeToFitWidth = YES;
     self.priceLabel.minimumScaleFactor=0.5;
+    
+    self.dateLabel.adjustsFontSizeToFitWidth = YES;
+    self.dateLabel.minimumScaleFactor=0.5;
 }
 
 @end

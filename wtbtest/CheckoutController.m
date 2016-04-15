@@ -55,7 +55,6 @@
         self.addressLabel.text = @"Add address";
     }
 
-    
     //paypal icons in footer
     UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 60)];
     [footerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
@@ -69,6 +68,10 @@
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+-(void)viewDidAppear:(BOOL)animated{
+    
 }
 
 #pragma mark - Table view data source
@@ -116,7 +119,12 @@
         [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
         [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
         [orderObject setObject:[self.confirmedOfferObject objectForKey:@"sellerUser"] forKey:@"sellerUser"];
-        [orderObject setObject:@"paid" forKey:@"status"];
+        
+        [orderObject setObject:[NSNumber numberWithBool:YES] forKey:@"paid"];
+        [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"shipped"];
+        [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"sellerFeedback"];
+        [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"buyerFeedback"];
+        
         [orderObject setObject:@"YES" forKey:@"check"];
         
         NSString *prefixToRemove = @"£";
@@ -129,7 +137,6 @@
         buyerTotal = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
         float buyerTotalFloat = [buyerTotal floatValue];
         orderObject[@"buyerTotal"] = @(buyerTotalFloat);
-        
         
         [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCost"] forKey:@"sellerTotal"];
         [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
@@ -150,6 +157,22 @@
                 PFObject *ogListing = [self.confirmedOfferObject objectForKey:@"wtbListing"];
                 [ogListing setObject:@"purchased" forKey:@"status"];
                 [ogListing saveInBackground];
+                
+                PFQuery *findOtherOffers =[PFQuery queryWithClassName:@"offers"];
+                [findOtherOffers whereKey:@"wtbListing" equalTo:[self.confirmedOfferObject objectForKey:@"wtbListing"]];
+                [findOtherOffers findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                    if (objects) {
+                        for (PFObject *offer in objects){
+                            NSLog(@"this offer is being set to expired because the item has already been purchased! %@", offer);
+                            
+                            [offer setObject:@"expired" forKey:@"status"];
+                            [offer saveInBackground];
+                        }
+                    }
+                    else{
+                        NSLog(@"no objects or error %@", error);
+                    }
+                }];
                 
                 [self.payButton setEnabled:YES];
                 ListingCompleteView *vc = [[ListingCompleteView alloc]init];

@@ -25,6 +25,15 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    
+    //paypal icons in footer
+    UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 60)];
+    [footerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    
+//    UILabel *versionLabel = [[UILabel alloc]initWithFrame:CGRectMake(12, 0, 30, 30)];
+    
+    //insert version when have current installation data via push
+    self.tableView.tableFooterView = footerView;
 }
 
 - (void)didReceiveMemoryWarning {

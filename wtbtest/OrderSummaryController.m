@@ -23,7 +23,7 @@
     self.navigationItem.title = @"Order details";
     
     self.titleCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.imageCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.simpleImagesCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.shippingCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.feeCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.checkCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -50,6 +50,9 @@
     self.totalCostLabel.adjustsFontSizeToFitWidth = YES;
     self.totalCostLabel.minimumScaleFactor=0.5;
     
+    self.dateLabel.adjustsFontSizeToFitWidth = YES;
+    self.dateLabel.minimumScaleFactor=0.5;
+    
     //setup title cell
     
     self.confirmedOffer = [self.orderObject objectForKey:@"offerObject"];
@@ -59,6 +62,13 @@
             self.itemTitleLabel.text = [self.confirmedOffer objectForKey:@"title"];
             self.conditionLabel.text = [NSString stringWithFormat:@"Condition: %@", [self.confirmedOffer objectForKey:@"condition"]];
             
+            // set date
+            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+            [dateFormatter setLocale:[NSLocale currentLocale]];
+            [dateFormatter setDateFormat:@"dd MMM YY"];
+            
+            self.dateLabel.text = [NSString stringWithFormat:@"%@",[dateFormatter stringFromDate:self.orderDate]];
+            dateFormatter = nil;
         }
         else{
             NSLog(@"error %@", error);
@@ -71,27 +81,35 @@
     // paidshippedfb = paid, shipped and feedback has been left
     // paidfb = paid, not marked as shipped but feedback has been left
     
-    if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paid"]) {
-        [self.titleImageView setImage:[UIImage imageNamed:@"trackingpaid"]];
-        [self.shippedButton setSelected:NO];
-        //use statusString as a local version of what the key value is to avoid multiple saves. The finally saved on willDisappear
-        self.statusString = @"paid";
-    }
-    else if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paidshipped"]) {
-        [self.titleImageView setImage:[UIImage imageNamed:@"trackingshipped"]];
-        [self.shippedButton setSelected:YES];
-        self.statusString = @"paidshipped";
-    }
-    else if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paidshippedfb"]) {
-        [self.titleImageView setImage:[UIImage imageNamed:@"trackingfeedback"]];
-        [self.shippedButton setSelected:YES];
-        self.statusString = @"paidshippedfb";
-    }
-    else if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paidfb"]) {
-        [self.titleImageView setImage:[UIImage imageNamed:@"feedbacknotshipped"]];
-        [self.shippedButton setSelected:NO];
-        self.statusString = @"paidfb";
-    }
+    //moved the below to view will appear
+    
+//    if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paid"]) {
+//        [self.titleImageView setImage:[UIImage imageNamed:@"trackingpaid"]];
+//        [self.shippedButton setSelected:NO];
+//        //use statusString as a local version of what the key value is to avoid multiple saves. The finally saved on willDisappear
+//        self.statusString = @"paid";
+//    }
+//    else if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paidshipped"]) {
+//        [self.titleImageView setImage:[UIImage imageNamed:@"trackingshipped"]];
+//        [self.shippedButton setSelected:YES];
+//        self.statusString = @"paidshipped";
+//    }
+//    else if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paidshippedfb"]) {
+//        [self.titleImageView setImage:[UIImage imageNamed:@"trackingfeedback"]];
+//        [self.shippedButton setSelected:YES];
+//        self.statusString = @"paidshippedfb";
+//        
+//        [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
+//        [self.feedbackButton setEnabled:NO];
+//    }
+//    else if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paidfb"]) {
+//        [self.titleImageView setImage:[UIImage imageNamed:@"feedbacknotshipped"]];
+//        [self.shippedButton setSelected:NO];
+//        self.statusString = @"paidfb";
+//        
+//        [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
+//        [self.feedbackButton setEnabled:NO];
+//    }
     
     //setup user cell
     
@@ -117,16 +135,31 @@
             [self.userImageView setFile:[self.otherUser objectForKey:@"picture"]];
             [self.userImageView loadInBackground];
             
-            NSString *purchased = [self.otherUser objectForKey:@"purchased"];
-            NSString *sold = [self.otherUser objectForKey:@"sold"];
+            int starNumber = [[self.otherUser objectForKey:@"currentRating"] intValue];
             
-            if (!purchased) {
-                purchased = @"0";
+            if (starNumber == 0) {
+                [self.starsImgView setImage:[UIImage imageNamed:@"0star"]];
             }
-            if (!sold) {
-                sold = @"0";
+            else if (starNumber == 1){
+                [self.starsImgView setImage:[UIImage imageNamed:@"1star"]];
             }
-            self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %@\nSold: %@", purchased, sold];
+            else if (starNumber == 2){
+                [self.starsImgView setImage:[UIImage imageNamed:@"2star"]];
+            }
+            else if (starNumber == 3){
+                [self.starsImgView setImage:[UIImage imageNamed:@"3star"]];
+            }
+            else if (starNumber == 4){
+                [self.starsImgView setImage:[UIImage imageNamed:@"4star"]];
+            }
+            else if (starNumber == 5){
+                [self.starsImgView setImage:[UIImage imageNamed:@"5star"]];
+            }
+            
+            int purchased = [[self.otherUser objectForKey:@"purchased"]intValue];
+            int sold = [[self.otherUser objectForKey:@"sold"] intValue];
+            
+            self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
         }
         else{
             NSLog(@"error %@", error);
@@ -147,24 +180,42 @@
     [self.explainLabel setAttributedText:string];
     
     if ([self.confirmedOffer objectForKey:@"image4"]){
+        self.numberOfPics = 4;
         [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
         [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
         [self.thirdImageView setFile:[self.confirmedOffer objectForKey:@"image3"]];
         [self.fourthImageView setFile:[self.confirmedOffer objectForKey:@"image4"]];
     }
     else if ([self.confirmedOffer objectForKey:@"image3"]){
+        self.numberOfPics = 3;
+        [self.fourthCam setEnabled:NO];
+        
         [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
         [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
         [self.thirdImageView setFile:[self.confirmedOffer objectForKey:@"image3"]];
     }
     
     else if ([self.confirmedOffer objectForKey:@"image2"]) {
+        self.numberOfPics = 2;
+        [self.thirdCam setEnabled:NO];
+        [self.fourthCam setEnabled:NO];
+        
         [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
         [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
     }
     else{
+        self.numberOfPics = 1;
+        [self.secondCam setEnabled:NO];
+        [self.thirdCam setEnabled:NO];
+        [self.fourthCam setEnabled:NO];
+        
         [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
     }
+    
+    // create detail vc for use with camera buttons
+    self.detailController = [[DetailImageController alloc]init];
+    self.detailController.listingPic = NO;
+    
     [self.firstImageView loadInBackground];
     [self.secondImageView loadInBackground];
     [self.thirdImageView loadInBackground];
@@ -266,7 +317,7 @@
         }
     }
     else if (indexPath.section ==1){
-        return 147;
+        return 104;
     }
     else if (indexPath.section ==2){
         return 124;
@@ -297,7 +348,7 @@
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
-            return self.imageCell;
+            return self.simpleImagesCell;
         }
     }
     else if (indexPath.section == 2){
@@ -384,6 +435,7 @@
     FeedbackController *vc = [[FeedbackController alloc]init];
     vc.IDUser = self.otherUser.objectId;
     vc.purchased = self.purchased;
+    vc.orderObject = self.orderObject;
     [self.navigationController pushViewController:vc animated:YES];
 }
 - (IBAction)reportPressed:(id)sender {
@@ -396,29 +448,150 @@
 }
 - (IBAction)markAsShipped:(id)sender {
     if (self.shippedButton.selected == YES) {
+       
         [self.shippedButton setSelected:NO];
-        
-        if ([self.statusString isEqualToString:@"paidshipped"]) {
-            [self.orderObject setObject:@"paid" forKey:@"status"];
-            [self.titleImageView setImage:[UIImage imageNamed:@"trackingpaid"]];
-            self.statusString = @"paid";
-        }
-        else if ([self.statusString isEqualToString:@"paidshippedfb"]) {
-            [self.orderObject setObject:@"paidfb" forKey:@"status"];
-            [self.titleImageView setImage:[UIImage imageNamed:@"feedbacknotshipped"]];
-            self.statusString = @"paidfb";
-        }
+        [self.orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"shipped"];
+        [self setUpTitle];
     }
     else{
         [self.shippedButton setSelected:YES];
-        [self.titleImageView setImage:[UIImage imageNamed:@"trackingshipped"]];
-        [self.orderObject setObject:@"paidshipped" forKey:@"status"];
-        self.statusString = @"paidshipped";
+        [self.orderObject setObject:[NSNumber numberWithBool:YES] forKey:@"shipped"];
+        [self setUpTitle];
     }
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     [self.orderObject saveInBackground];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [self setUpTitle];
+}
+- (IBAction)firstCamPressed:(id)sender {
+    [self presentDetailImage];
+}
+- (IBAction)secondCamPressed:(id)sender {
+    [self presentDetailImage];
+}
+- (IBAction)thirdCamPressed:(id)sender {
+    [self presentDetailImage];
+}
+- (IBAction)fourthCamPressed:(id)sender {
+    [self presentDetailImage];
+}
+
+-(void)presentDetailImage{
+    if (self.numberOfPics == 1) {
+        self.detailController.numberOfPics = 1;
+        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
+    }
+    else if (self.numberOfPics == 2){
+        self.detailController.numberOfPics = 2;
+        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
+    }
+    else if (self.numberOfPics == 3){
+        self.detailController.numberOfPics = 3;
+        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
+    }
+    else if (self.numberOfPics == 4){
+        self.detailController.numberOfPics = 4;
+        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
+    }
+    self.detailController.tagText = [self.orderObject objectForKey:@"tagString"];
+    
+    [self presentViewController:self.detailController animated:YES completion:nil];
+}
+
+-(void)setUpTitle{
+    if (self.purchased == YES) {
+        //user is the buyer
+        
+        if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == YES && [[self.orderObject objectForKey:@"buyerFeedback"]boolValue] == YES) {
+            
+            // all status points done!
+            
+            [self.titleImageView setImage:[UIImage imageNamed:@"trackingfeedback"]];
+            [self.shippedButton setSelected:YES];
+            
+            [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
+            [self.feedbackButton setEnabled:NO];
+        }
+        else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == YES && [[self.orderObject objectForKey:@"buyerFeedback"]boolValue] == NO){
+            
+            // only feedback left
+            
+            NSLog(@"need to leave feedback");
+            
+            [self.titleImageView setImage:[UIImage imageNamed:@"trackingshipped"]];
+            [self.shippedButton setSelected:YES];
+        }
+        else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == NO && [[self.orderObject objectForKey:@"buyerFeedback"]boolValue] == YES){
+            
+            // still needs to be shipped
+            
+            [self.titleImageView setImage:[UIImage imageNamed:@"feedbacknotshipped"]];
+            [self.shippedButton setSelected:NO];
+            self.statusString = @"paidfb";
+            
+            [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
+            [self.feedbackButton setEnabled:NO];
+            
+        }
+        else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == NO && [[self.orderObject objectForKey:@"buyerFeedback"]boolValue] == NO){
+            
+            // only paid
+            
+            NSLog(@"need to leave feedback and needs to be shipped");
+            
+            [self.titleImageView setImage:[UIImage imageNamed:@"trackingpaid"]];
+            [self.shippedButton setSelected:NO];
+        }
+    }
+    else{
+        //user is the seller
+        
+        if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == YES && [[self.orderObject objectForKey:@"sellerFeedback"]boolValue] == YES) {
+            
+            // all status points done!
+            
+            NSLog(@"done! for seller");
+
+            [self.titleImageView setImage:[UIImage imageNamed:@"trackingfeedback"]];
+            [self.shippedButton setSelected:YES];
+            
+            [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
+            [self.feedbackButton setEnabled:NO];
+        }
+        else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == YES && [[self.orderObject objectForKey:@"sellerFeedback"]boolValue] == NO){
+            
+            // only feedback left
+            
+            NSLog(@"need to leave feedback");
+            
+            [self.titleImageView setImage:[UIImage imageNamed:@"trackingshipped"]];
+            [self.shippedButton setSelected:YES];
+        }
+        else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == NO && [[self.orderObject objectForKey:@"sellerFeedback"]boolValue] == YES){
+            
+            // still needs to be shipped
+            
+            [self.titleImageView setImage:[UIImage imageNamed:@"feedbacknotshipped"]];
+            [self.shippedButton setSelected:NO];
+            
+            [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
+            [self.feedbackButton setEnabled:NO];
+            
+        }
+        else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == NO && [[self.orderObject objectForKey:@"sellerFeedback"]boolValue] == NO){
+            
+            // only paid
+            
+            NSLog(@"need to leave feedback and needs to be shipped");
+            
+            [self.titleImageView setImage:[UIImage imageNamed:@"trackingpaid"]];
+            [self.shippedButton setSelected:NO];
+        }
+    }
 }
 @end

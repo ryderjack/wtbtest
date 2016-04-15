@@ -66,6 +66,10 @@
     
     self.priceField.keyboardType = UIKeyboardTypeDecimalPad;
     self.deliveryField.keyboardType = UIKeyboardTypeDecimalPad;
+    
+    //reset user cell
+    self.buyerName.text = @"";
+    self.dealsLabel.text = @"";
    
     [self setImageBorder];
     
@@ -243,16 +247,10 @@
                 [self.profileView setFile:[self.buyerUser objectForKey:@"picture"]];
                 [self.profileView loadInBackground];
                 
-                NSString *purchased = [self.buyerUser objectForKey:@"purchased"];
-                NSString *sold = [self.buyerUser objectForKey:@"sold"];
+                int purchased = [[self.buyerUser objectForKey:@"purchased"]intValue];
+                int sold = [[self.buyerUser objectForKey:@"sold"] intValue];
                 
-                if (!purchased) {
-                    purchased = @"0";
-                }
-                if (!sold) {
-                    sold = @"0";
-                }
-                self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %@\nSold: %@", purchased, sold];
+                self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
             }
             else{
                 NSLog(@"error %@", error);
@@ -889,7 +887,6 @@
             else if (centAmount.length == 1){
                 NSLog(@"got 1 decimal place");
                 centAmount = [NSMutableString stringWithFormat:@"%@0", centAmount];
-                
             }
             else{
                 NSLog(@"point but no numbers after it");
@@ -1147,7 +1144,7 @@
 -(void)setPlaceholderValues{
     self.chooseCategory.text = [self.listingObject objectForKey:@"category"];
     
-    self.priceField.text = [NSString stringWithFormat:@"£%@", [self.listingObject objectForKey:@"listingPrice"]];
+    self.priceField.text = [NSString stringWithFormat:@"£%.2f", [[self.listingObject objectForKey:@"listingPrice"] floatValue]];
     
     if ([[self.listingObject objectForKey:@"condition"] isEqualToString:@"Any"]) {
         
@@ -1177,6 +1174,8 @@
     else{
         self.chooseDelivery.text = [self.listingObject objectForKey:@"delivery"];
     }
+    
+    [self calculateTotal];
 }
 
 -(void)calculateTotal{
@@ -1210,6 +1209,8 @@
     else{
         //add together, we've got 2 numbers
         double priceInt = [price doubleValue];
+        NSLog(@"price %f", priceInt);
+        
         double deliveryInt = [delivery doubleValue];
         double total = (priceInt + deliveryInt);
         self.totalsumLabel.text = [NSString stringWithFormat:@"£%.2f", total];
@@ -1223,7 +1224,6 @@
     }
     else if (self.numberOfPics == 2){
         self.detailController.numberOfPics = 2;
-        self.detailController.firstImage = self.firstImage;
         self.detailController.listing = self.listingObject;
     }
     else if (self.numberOfPics == 3){

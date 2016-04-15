@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
+#import "DetailImageController.h"
+
 
 @interface OrderSummaryController : UITableViewController
 
@@ -24,12 +26,15 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *totalCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *buttonCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *sellerButtons;
+@property (strong, nonatomic) IBOutlet UITableViewCell *simpleImagesCell;
 
 //title cell
 @property (weak, nonatomic) IBOutlet UILabel *itemTitleLabel;
 @property (weak, nonatomic) IBOutlet UILabel *conditionLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *titleImageView;
 @property (weak, nonatomic) IBOutlet UILabel *actionLabel;
+@property (weak, nonatomic) IBOutlet UILabel *dateLabel;
+@property (nonatomic, strong) NSDate *orderDate;
 
 //user cell
 @property (weak, nonatomic) IBOutlet UILabel *aboutLabel;
@@ -45,6 +50,13 @@
 @property (weak, nonatomic) IBOutlet PFImageView *fourthImageView;
 @property (weak, nonatomic) IBOutlet UILabel *explainLabel;
 
+//image buttons
+@property (weak, nonatomic) IBOutlet UIButton *firstCam;
+@property (weak, nonatomic) IBOutlet UIButton *secondCam;
+@property (weak, nonatomic) IBOutlet UIButton *thirdCam;
+@property (weak, nonatomic) IBOutlet UIButton *fourthCam;
+
+
 //shipping cell
 @property (weak, nonatomic) IBOutlet UILabel *addressLabel;
 
@@ -57,11 +69,15 @@
 @property (weak, nonatomic) IBOutlet UILabel *totalCostLabel;
 
 //button cell
-
 @property (nonatomic, strong) PFObject *orderObject;
 @property (nonatomic, strong) PFObject *confirmedOffer;
 @property (nonatomic, strong) PFUser *otherUser;
 @property (weak, nonatomic) IBOutlet UIButton *shippedButton;
 @property (nonatomic) BOOL purchased;
 @property (nonatomic, strong) NSString *statusString;
+@property (weak, nonatomic) IBOutlet UIButton *feedbackButton;
+
+//detail image vc
+@property (nonatomic, strong) DetailImageController *detailController;
+@property (nonatomic) int numberOfPics;
 @end

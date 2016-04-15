@@ -133,12 +133,12 @@
     //buyer info
     self.buyer = [self.listingObject objectForKey:@"postUser"];
     
-    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
-    }
-    else{
-        //not the same buyer
-    }
+//    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+//        [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
+//    }
+//    else{
+//        //not the same buyer
+//    }
     
     [self setImageBorder];
     
@@ -149,17 +149,31 @@
             [self.buyerImgView loadInBackground];
             self.buyernameLabel.text = self.buyer.username;
             
-            NSString *purchased = [self.buyer objectForKey:@"purchased"];
-            NSString *sold = [self.buyer objectForKey:@"sold"];
+            int starNumber = [[self.buyer objectForKey:@"currentRating"] intValue];
             
-            if (!purchased) {
-                purchased = @"0";
+            if (starNumber == 0) {
+                [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
             }
-            if (!sold) {
-                sold = @"0";
+            else if (starNumber == 1){
+                [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
+            }
+            else if (starNumber == 2){
+                [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
+            }
+            else if (starNumber == 3){
+                [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
+            }
+            else if (starNumber == 4){
+                [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
+            }
+            else if (starNumber == 5){
+                [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
             }
             
-            self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %@\nSold: %@", purchased, sold];
+            int purchased = [[self.buyer objectForKey:@"purchased"]intValue];
+            int sold = [[self.buyer objectForKey:@"sold"] intValue];
+            
+            self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
             
             //set star image depending on feedback
         }
@@ -499,19 +513,19 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 - (IBAction)sellthisPressed:(id)sender {
-//    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-//        CreateViewController *vc = [[CreateViewController alloc]init];
-//        vc.status = @"edit";
-//        vc.lastId = self.listingObject.objectId;
-//        vc.editFromListing = YES;
-//        vc.listing = self.listingObject;
-//        [self.navigationController pushViewController:vc animated:YES];
-//    }
-//    else{
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        CreateViewController *vc = [[CreateViewController alloc]init];
+        vc.status = @"edit";
+        vc.lastId = self.listingObject.objectId;
+        vc.editFromListing = YES;
+        vc.listing = self.listingObject;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else{
         MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
         vc.listingObject = self.listingObject;
         vc.reviewMode = NO;
         [self.navigationController pushViewController:vc animated:YES];
-//    }
+    }
 }
 @end
