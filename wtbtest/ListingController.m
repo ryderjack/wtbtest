@@ -77,7 +77,6 @@
         self.secondImage = [self.listingObject objectForKey:@"image2"];
         self.thirdImage = [self.listingObject objectForKey:@"image3"];
     }
-    
     else if ([self.listingObject objectForKey:@"image2"]) {
         [self.picIndicator setNumberOfPages:2];
         self.numberOfPics = 2;
@@ -133,12 +132,12 @@
     //buyer info
     self.buyer = [self.listingObject objectForKey:@"postUser"];
     
-//    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-//        [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
-//    }
-//    else{
-//        //not the same buyer
-//    }
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
+    }
+    else{
+        //not the same buyer
+    }
     
     [self setImageBorder];
     
@@ -513,6 +512,9 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 - (IBAction)sellthisPressed:(id)sender {
+    
+    // check if have any outstanding offers - if so the latest offer deletes previous offers !!!!!!!!!
+    
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         CreateViewController *vc = [[CreateViewController alloc]init];
         vc.status = @"edit";

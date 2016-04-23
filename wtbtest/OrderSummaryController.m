@@ -514,8 +514,8 @@
             [self.titleImageView setImage:[UIImage imageNamed:@"trackingfeedback"]];
             [self.shippedButton setSelected:YES];
             
-            [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
-            [self.feedbackButton setEnabled:NO];
+            [self.otherFeedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
+            [self.otherFeedbackButton setEnabled:NO];
         }
         else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == YES && [[self.orderObject objectForKey:@"buyerFeedback"]boolValue] == NO){
             
@@ -534,8 +534,8 @@
             [self.shippedButton setSelected:NO];
             self.statusString = @"paidfb";
             
-            [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
-            [self.feedbackButton setEnabled:NO];
+            [self.otherFeedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
+            [self.otherFeedbackButton setEnabled:NO];
             
         }
         else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == NO && [[self.orderObject objectForKey:@"buyerFeedback"]boolValue] == NO){

@@ -23,6 +23,8 @@
     self.sizeScrollButton.backgroundColor = [UIColor clearColor];
     self.sizeLabels = [NSArray arrayWithObjects:@"XXS", @"XS", @"S", @"M", @"L", @"XL", @"XXL", @"OS", nil];
     
+    self.shoesArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", nil];
+    
     self.titleCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.priceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.conditionCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -298,7 +300,6 @@
     {
         UIButton *btn = (UIButton *)sender;
         if(btn.tag == 0){
-            NSLog(@"2 pressed");
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
@@ -306,7 +307,7 @@
                     [self.filtersArray removeObject:@"XXS"];
                 }
                 else{
-                    [self.filtersArray removeObject:@"2"];
+                    [self.filtersArray removeObject:@"3"];
                 }
             }
             else{
@@ -317,7 +318,7 @@
                     [self.filtersArray removeObject:[NSString stringWithFormat:@"%@", self.lasttapped.titleLabel.text]];
                 }
                 else{
-                    [self.filtersArray addObject:@"2"];
+                    [self.filtersArray addObject:@"3"];
                     [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
                 }
                 [btn setSelected:YES];
@@ -327,7 +328,6 @@
             }
         }
         else if(btn.tag == 1){
-            NSLog(@"3 pressed");
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
@@ -335,7 +335,7 @@
                     [self.filtersArray removeObject:@"XS"];
                 }
                 else{
-                    [self.filtersArray removeObject:@"3"];
+                    [self.filtersArray removeObject:@"3.5"];
                 }
             }
             else{
@@ -346,7 +346,7 @@
                     [self.filtersArray removeObject:[NSString stringWithFormat:@"%@", self.lasttapped.titleLabel.text]];
                 }
                 else{
-                    [self.filtersArray addObject:@"3"];
+                    [self.filtersArray addObject:@"3.5"];
                     [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
                 }
                 [btn setSelected:YES];
@@ -355,7 +355,6 @@
             }
         }
         else if(btn.tag == 2){
-            NSLog(@"4 pressed");
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
@@ -383,7 +382,6 @@
             }
         }
         else if(btn.tag == 3){
-            NSLog(@"5 pressed");
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
@@ -391,7 +389,7 @@
                     [self.filtersArray removeObject:@"M"];
                 }
                 else{
-                    [self.filtersArray removeObject:@"5"];
+                    [self.filtersArray removeObject:@"4.5"];
                 }
             }
             else{
@@ -402,7 +400,7 @@
                     [self.filtersArray removeObject:[NSString stringWithFormat:@"%@", self.lasttapped.titleLabel.text]];
                 }
                 else{
-                    [self.filtersArray addObject:@"5"];
+                    [self.filtersArray addObject:@"4.5"];
                     [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
                 }
                 [btn setSelected:YES];
@@ -412,12 +410,65 @@
             }
         }
         else if(btn.tag == 4){
-            NSLog(@"6 pressed");
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
                 if (self.clothingEnabled == YES) {
                     [self.filtersArray removeObject:@"L"];
+                }
+                else{
+                    [self.filtersArray removeObject:@"5"];
+                }
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                if (self.clothingEnabled == YES) {
+                    [self.filtersArray addObject:@"L"];
+                    [self.filtersArray removeObject:[NSString stringWithFormat:@"%@", self.lasttapped.titleLabel.text]];
+                }
+                else{
+                    [self.filtersArray addObject:@"5"];
+                    [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                }
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+            }
+        }
+        else if(btn.tag == 5){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                if (self.clothingEnabled == YES) {
+                    [self.filtersArray removeObject:@"XL"];
+                }
+                else{
+                    [self.filtersArray removeObject:@"5.5"];
+                }
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                if (self.clothingEnabled == YES) {
+                    [self.filtersArray addObject:@"XL"];
+                    [self.filtersArray removeObject:[NSString stringWithFormat:@"%@", self.lasttapped.titleLabel.text]];
+                }
+                else{
+                    [self.filtersArray addObject:@"5.5"];
+                    [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                }
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+            }
+        }
+        else if(btn.tag == 6){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                if (self.clothingEnabled == YES) {
+                    [self.filtersArray removeObject:@"XXL"];
                 }
                 else{
                     [self.filtersArray removeObject:@"6"];
@@ -427,7 +478,7 @@
                 [self.lasttapped setSelected:NO];
                 [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
                 if (self.clothingEnabled == YES) {
-                    [self.filtersArray addObject:@"L"];
+                    [self.filtersArray addObject:@"XXL"];
                     [self.filtersArray removeObject:[NSString stringWithFormat:@"%@", self.lasttapped.titleLabel.text]];
                 }
                 else{
@@ -439,64 +490,7 @@
                 self.lasttapped = btn;
             }
         }
-        else if(btn.tag == 5){
-            NSLog(@"7 pressed");
-            if (btn.selected == YES) {
-                [btn setSelected:NO];
-                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
-                if (self.clothingEnabled == YES) {
-                    [self.filtersArray removeObject:@"XL"];
-                }
-                else{
-                    [self.filtersArray removeObject:@"7"];
-                }
-            }
-            else{
-                [self.lasttapped setSelected:NO];
-                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
-                if (self.clothingEnabled == YES) {
-                    [self.filtersArray addObject:@"XL"];
-                    [self.filtersArray removeObject:[NSString stringWithFormat:@"%@", self.lasttapped.titleLabel.text]];
-                }
-                else{
-                    [self.filtersArray addObject:@"7"];
-                    [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
-                }
-                [btn setSelected:YES];
-                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
-                self.lasttapped = btn;
-            }
-        }
-        else if(btn.tag == 6){
-            NSLog(@"8 pressed");
-            if (btn.selected == YES) {
-                [btn setSelected:NO];
-                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
-                if (self.clothingEnabled == YES) {
-                    [self.filtersArray removeObject:@"XXL"];
-                }
-                else{
-                    [self.filtersArray removeObject:@"8"];
-                }
-            }
-            else{
-                [self.lasttapped setSelected:NO];
-                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
-                if (self.clothingEnabled == YES) {
-                    [self.filtersArray addObject:@"XXL"];
-                    [self.filtersArray removeObject:[NSString stringWithFormat:@"%@", self.lasttapped.titleLabel.text]];
-                }
-                else{
-                    [self.filtersArray addObject:@"8"];
-                    [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
-                }
-                [btn setSelected:YES];
-                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
-                self.lasttapped = btn;
-            }
-        }
         else if(btn.tag == 7){
-            NSLog(@"9 pressed");
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
@@ -504,7 +498,7 @@
                     [self.filtersArray removeObject:@"OS"];
                 }
                 else{
-                    [self.filtersArray removeObject:@"9"];
+                    [self.filtersArray removeObject:@"6.5"];
                 }
             }
             else{
@@ -515,7 +509,7 @@
                     [self.filtersArray removeObject:[NSString stringWithFormat:@"%@", self.lasttapped.titleLabel.text]];
                 }
                 else{
-                    [self.filtersArray addObject:@"9"];
+                    [self.filtersArray addObject:@"6.5"];
                     [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
                 }
                 [btn setSelected:YES];
@@ -524,7 +518,102 @@
             }
         }
         else if(btn.tag == 8){
-            NSLog(@"10 pressed");
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:@"7"];
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+                [self.filtersArray addObject:@"7"];
+            }
+        }
+        else if(btn.tag == 9){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:@"7.5"];
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+                [self.filtersArray addObject:@"7.5"];
+            }
+        }
+        else if(btn.tag == 10){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:@"8"];
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+                [self.filtersArray addObject:@"8"];
+            }
+        }
+        else if(btn.tag == 11){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:@"8.5"];
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+                [self.filtersArray addObject:@"8.5"];
+            }
+        }
+        else if(btn.tag == 12){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:@"9"];
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+                [self.filtersArray addObject:@"9"];
+            }
+        }
+        else if(btn.tag == 13){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:@"9.5"];
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+                [self.filtersArray addObject:@"9.5"];
+            }
+        }
+        else if(btn.tag == 14){
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
@@ -540,8 +629,23 @@
                 [self.filtersArray addObject:@"10"];
             }
         }
-        else if(btn.tag == 9){
-            NSLog(@"11 pressed");
+        else if(btn.tag == 15){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:@"10.5"];
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+                [self.filtersArray addObject:@"10.5"];
+            }
+        }
+        else if(btn.tag == 16){
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
@@ -557,8 +661,23 @@
                 [self.filtersArray addObject:@"11"];
             }
         }
-        else if(btn.tag == 10){
-            NSLog(@"12 pressed");
+        else if(btn.tag == 17){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:@"11.5"];
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+                [self.filtersArray addObject:@"11.5"];
+            }
+        }
+        else if(btn.tag == 18){
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
@@ -574,8 +693,23 @@
                 [self.filtersArray addObject:@"12"];
             }
         }
-        else if(btn.tag == 11){
-            NSLog(@"13 pressed");
+        else if(btn.tag == 19){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:@"12.5"];
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+                [self.filtersArray addObject:@"12.5"];
+            }
+        }
+        else if(btn.tag == 20){
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
@@ -591,8 +725,23 @@
                 [self.filtersArray addObject:@"13"];
             }
         }
-        else if(btn.tag == 12){
-            NSLog(@"14 pressed");
+        else if(btn.tag == 21){
+            if (btn.selected == YES) {
+                [btn setSelected:NO];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:@"13.5"];
+            }
+            else{
+                [self.lasttapped setSelected:NO];
+                [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
+                [self.filtersArray removeObject:[NSString stringWithFormat:@"%ld",(long)self.lasttapped.tag+2]];
+                [btn setSelected:YES];
+                [btn setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+                self.lasttapped = btn;
+                [self.filtersArray addObject:@"13.5"];
+            }
+        }
+        else if(btn.tag == 22){
             if (btn.selected == YES) {
                 [btn setSelected:NO];
                 [btn setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
@@ -678,7 +827,7 @@
     }
     self.sizeScrollButton.contentSize = CGSizeMake(x, self.sizeScrollButton.frame.size.height);
     
-    for (int k = 2; k<15; k++) {
+    for (int k = 2; k<23; k++) {
         if ([self.filtersArray containsObject:[NSString stringWithFormat:@"%d", k]]) {
             [self.filtersArray removeObject:[NSString stringWithFormat:@"%d", k]];
         }
@@ -692,7 +841,7 @@
     
     int x = 0;
     CGRect frame;
-    for (int i = 0; i < 13; i++) {
+    for (int i = 0; i < 23; i++) {
         
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
         
@@ -703,19 +852,19 @@
         }
         
         button.frame = frame;
-        [button setTitle:[NSString stringWithFormat:@"%d", i+2] forState:UIControlStateNormal];
+        [button setTitle:[NSString stringWithFormat:@"%@", self.shoesArray[i]] forState:UIControlStateNormal];
         [button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [button setTag:i];
         [button setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
         button.layer.borderWidth = 0.0;
         button.clipsToBounds = YES;
         
-        //half of the width
+        //half of the width to get circles
         button.layer.cornerRadius = 50/2.0f;
         [button addTarget:self action:@selector(sizeButtonClicked:) forControlEvents:UIControlEventTouchUpInside];
         [self.sizeScrollButton addSubview:button];
         
-        if (i == 12) {
+        if (i == 22) {
             x = CGRectGetMaxX(button.frame);
         }
         
@@ -724,7 +873,6 @@
             [button setBackgroundColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
             self.lasttapped = button;
         }
-        
     }
     self.sizeScrollButton.contentSize = CGSizeMake(x, self.sizeScrollButton.frame.size.height);
     

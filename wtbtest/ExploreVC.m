@@ -145,21 +145,21 @@
         [self presentViewController:navController animated:YES completion:nil];
     }
     
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasFBUpdate"])
-    {
-        // Has feedback update
-    }
-    else
-    {
-        [PFUser logOut];
-        
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasFBUpdate"];
-        
-        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
-        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
-        [self presentViewController:navController animated:YES completion:nil];
-        
-    }
+//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasFBUpdate111"])
+//    {
+//        // Has feedback update
+//    }
+//    else
+//    {
+//        [PFUser logOut];
+//        
+//        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasFBUpdate"];
+//        
+//        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+//        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+//        [self presentViewController:navController animated:YES completion:nil];
+//        
+//    }
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -173,6 +173,9 @@
     else{
         listing = [self.results objectAtIndex:indexPath.row];
     }
+    
+    [cell.imageView setFile:[listing objectForKey:@"image1"]];
+    [cell.imageView loadInBackground];
     
     cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
     
@@ -195,10 +198,7 @@
         NSLog(@"nothing! %@ %@", self.currentLocation, location);
         cell.distanceLabel.text = @"";
     }
-    
-    [cell.imageView setFile:[listing objectForKey:@"image1"]];
-    [cell.imageView loadInBackground];
-    
+
     cell.backgroundColor = [UIColor whiteColor];
     
     return cell;
@@ -413,7 +413,7 @@
         }
         
         if ([self.filtersArray containsObject:@"new"]){
-            [self.infiniteQuery whereKey:@"condition" equalTo:@"New"];
+            [self.infiniteQuery whereKey:@"condition" containsString:@"New"];
         }
         else if ([self.filtersArray containsObject:@"used"]){
             [self.infiniteQuery whereKey:@"condition" equalTo:@"Used"];
@@ -434,41 +434,71 @@
         }
         
         //footwear sizes
-        if ([self.filtersArray containsObject:@"2"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"2"];
-        }
-        else if ([self.filtersArray containsObject:@"3"]){
+        if ([self.filtersArray containsObject:@"3"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"3"];
+        }
+        else if ([self.filtersArray containsObject:@"3.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"3.5"];
         }
         else if ([self.filtersArray containsObject:@"4"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"4"];
         }
+        else if ([self.filtersArray containsObject:@"4.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"4.5"];
+        }
         else if ([self.filtersArray containsObject:@"5"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"5"];
+        }
+        else if ([self.filtersArray containsObject:@"5.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"5.5"];
         }
         else if ([self.filtersArray containsObject:@"6"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"6"];
         }
+        else if ([self.filtersArray containsObject:@"6.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"6.5"];
+        }
         else if ([self.filtersArray containsObject:@"7"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"7"];
+        }
+        else if ([self.filtersArray containsObject:@"7.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"7.5"];
         }
         else if ([self.filtersArray containsObject:@"8"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"8"];
         }
+        else if ([self.filtersArray containsObject:@"8.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"8.5"];
+        }
         else if ([self.filtersArray containsObject:@"9"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"9"];
+        }
+        else if ([self.filtersArray containsObject:@"9.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"9.5"];
         }
         else if ([self.filtersArray containsObject:@"10"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"10"];
         }
+        else if ([self.filtersArray containsObject:@"10.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"10.5"];
+        }
         else if ([self.filtersArray containsObject:@"11"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"11"];
+        }
+        else if ([self.filtersArray containsObject:@"11.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"11.5"];
         }
         else if ([self.filtersArray containsObject:@"12"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"12"];
         }
+        else if ([self.filtersArray containsObject:@"12.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"12.5"];
+        }
         else if ([self.filtersArray containsObject:@"13"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"13"];
+        }
+        else if ([self.filtersArray containsObject:@"13.5"]){
+            [self.infiniteQuery whereKey:@"size" equalTo:@"13.5"];
         }
         else if ([self.filtersArray containsObject:@"14"]){
             [self.infiniteQuery whereKey:@"size" equalTo:@"14"];
@@ -513,7 +543,7 @@
         }
         
         if ([self.filtersArray containsObject:@"new"]){
-            [self.pullQuery whereKey:@"condition" equalTo:@"New"];
+            [self.pullQuery whereKey:@"condition" containsString:@"New"];
         }
         else if ([self.filtersArray containsObject:@"used"]){
             [self.pullQuery whereKey:@"condition" equalTo:@"Used"];
@@ -534,41 +564,71 @@
         }
         
         //footwear sizes
-        if ([self.filtersArray containsObject:@"2"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"2"];
-        }
-        else if ([self.filtersArray containsObject:@"3"]){
+        if ([self.filtersArray containsObject:@"3"]){
             [self.pullQuery whereKey:@"size" equalTo:@"3"];
+        }
+        else if ([self.filtersArray containsObject:@"3.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"3.5"];
         }
         else if ([self.filtersArray containsObject:@"4"]){
             [self.pullQuery whereKey:@"size" equalTo:@"4"];
         }
+        else if ([self.filtersArray containsObject:@"4.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"4.5"];
+        }
         else if ([self.filtersArray containsObject:@"5"]){
             [self.pullQuery whereKey:@"size" equalTo:@"5"];
+        }
+        else if ([self.filtersArray containsObject:@"5.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"5.5"];
         }
         else if ([self.filtersArray containsObject:@"6"]){
             [self.pullQuery whereKey:@"size" equalTo:@"6"];
         }
+        else if ([self.filtersArray containsObject:@"6.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"6.5"];
+        }
         else if ([self.filtersArray containsObject:@"7"]){
             [self.pullQuery whereKey:@"size" equalTo:@"7"];
+        }
+        else if ([self.filtersArray containsObject:@"7.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"7.5"];
         }
         else if ([self.filtersArray containsObject:@"8"]){
             [self.pullQuery whereKey:@"size" equalTo:@"8"];
         }
+        else if ([self.filtersArray containsObject:@"8.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"8.5"];
+        }
         else if ([self.filtersArray containsObject:@"9"]){
             [self.pullQuery whereKey:@"size" equalTo:@"9"];
+        }
+        else if ([self.filtersArray containsObject:@"9.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"9.5"];
         }
         else if ([self.filtersArray containsObject:@"10"]){
             [self.pullQuery whereKey:@"size" equalTo:@"10"];
         }
+        else if ([self.filtersArray containsObject:@"10.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"10.5"];
+        }
         else if ([self.filtersArray containsObject:@"11"]){
             [self.pullQuery whereKey:@"size" equalTo:@"11"];
+        }
+        else if ([self.filtersArray containsObject:@"11.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"11.5"];
         }
         else if ([self.filtersArray containsObject:@"12"]){
             [self.pullQuery whereKey:@"size" equalTo:@"12"];
         }
+        else if ([self.filtersArray containsObject:@"12.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"12.5"];
+        }
         else if ([self.filtersArray containsObject:@"13"]){
             [self.pullQuery whereKey:@"size" equalTo:@"13"];
+        }
+        else if ([self.filtersArray containsObject:@"13.5"]){
+            [self.pullQuery whereKey:@"size" equalTo:@"13.5"];
         }
         else if ([self.filtersArray containsObject:@"14"]){
             [self.pullQuery whereKey:@"size" equalTo:@"14"];

@@ -25,7 +25,7 @@
                 <outlet property="explainLabel" destination="aLb-QK-xjb" id="kPI-rW-ZQ6"/>
                 <outlet property="feeCell" destination="q11-hN-DFb" id="7kF-fh-4yG"/>
                 <outlet property="feeLabel" destination="EX2-59-8hX" id="WNf-vb-M9I"/>
-                <outlet property="feedbackButton" destination="KeE-B7-YpU" id="mc7-dE-fHx"/>
+                <outlet property="feedbackButton" destination="KeE-B7-YpU" id="9Sf-kO-jHJ"/>
                 <outlet property="firstCam" destination="e4r-iJ-Rno" id="BOJ-Rr-yLX"/>
                 <outlet property="firstImageView" destination="GZ7-G8-rTS" id="m86-fg-OpX"/>
                 <outlet property="fourthCam" destination="Mem-9h-ctT" id="M6q-bs-08x"/>
@@ -34,6 +34,7 @@
                 <outlet property="itemPrice" destination="dGo-0K-umL" id="8hF-VU-pzY"/>
                 <outlet property="itemTitleLabel" destination="XLH-Sw-iNb" id="8oh-x1-NIc"/>
                 <outlet property="itempriceCell" destination="Z7m-yQ-2fU" id="NuP-hS-0uP"/>
+                <outlet property="otherFeedbackButton" destination="rHx-oB-KL2" id="j0n-p6-tN7"/>
                 <outlet property="secondCam" destination="Xrx-ys-jfr" id="3sx-N7-PHP"/>
                 <outlet property="secondImageView" destination="gJg-aD-TcW" id="5ra-Bi-DkJ"/>
                 <outlet property="sellerButtons" destination="SAN-K4-zD0" id="Pmg-Ev-wCF"/>

@@ -331,6 +331,8 @@
 		04C081671C86389700B8682C /* filterOn.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081641C86389700B8682C /* filterOn.png */; };
 		04C081681C86389700B8682C /* filterOn@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081651C86389700B8682C /* filterOn@2x.png */; };
 		04C081691C86389700B8682C /* filterOn@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04C081661C86389700B8682C /* filterOn@3x.png */; };
+		04CF28B21CCBC36700BFE066 /* selectCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04CF28B01CCBC36700BFE066 /* selectCell.m */; };
+		04CF28B31CCBC36700BFE066 /* selectCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04CF28B11CCBC36700BFE066 /* selectCell.xib */; };
 		04D9B9581C88E60E004AF0F2 /* ListingController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04D9B9561C88E60E004AF0F2 /* ListingController.m */; };
 		04D9B9591C88E60E004AF0F2 /* ListingController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9571C88E60E004AF0F2 /* ListingController.xib */; };
 		04D9B9631C88FBB1004AF0F2 /* clock@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04D9B9601C88FBB1004AF0F2 /* clock@2x.png */; };
@@ -812,6 +814,9 @@
 		04C081641C86389700B8682C /* filterOn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filterOn.png; sourceTree = "<group>"; };
 		04C081651C86389700B8682C /* filterOn@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "filterOn@2x.png"; sourceTree = "<group>"; };
 		04C081661C86389700B8682C /* filterOn@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "filterOn@3x.png"; sourceTree = "<group>"; };
+		04CF28AF1CCBC36700BFE066 /* selectCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = selectCell.h; sourceTree = "<group>"; };
+		04CF28B01CCBC36700BFE066 /* selectCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = selectCell.m; sourceTree = "<group>"; };
+		04CF28B11CCBC36700BFE066 /* selectCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = selectCell.xib; sourceTree = "<group>"; };
 		04D9B9551C88E60E004AF0F2 /* ListingController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ListingController.h; sourceTree = "<group>"; };
 		04D9B9561C88E60E004AF0F2 /* ListingController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ListingController.m; sourceTree = "<group>"; };
 		04D9B9571C88E60E004AF0F2 /* ListingController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ListingController.xib; sourceTree = "<group>"; };
@@ -1498,6 +1503,9 @@
 				0475A7451C8058D10049AD61 /* SelectViewController.h */,
 				0475A7461C8058D10049AD61 /* SelectViewController.m */,
 				0475A7471C8058D10049AD61 /* SelectViewController.xib */,
+				04CF28AF1CCBC36700BFE066 /* selectCell.h */,
+				04CF28B01CCBC36700BFE066 /* selectCell.m */,
+				04CF28B11CCBC36700BFE066 /* selectCell.xib */,
 				0475A7521C8119290049AD61 /* LocationView.h */,
 				0475A7531C8119290049AD61 /* LocationView.m */,
 				0475A7541C8119290049AD61 /* LocationView.xib */,
@@ -2091,6 +2099,7 @@
 				04B462551CB02C4F003755B2 /* planeOn@3x.png in Resources */,
 				04C0812E1C85BFD600B8682C /* CameraController.xib in Resources */,
 				04D9B9FE1C8CD0B7004AF0F2 /* anygrey.png in Resources */,
+				04CF28B31CCBC36700BFE066 /* selectCell.xib in Resources */,
 				040333211CAAD59600C59385 /* SummaryCollectionView.xib in Resources */,
 				0403332B1CAADDFC00C59385 /* alertIcon@2x.png in Resources */,
 				042A38391CBE86CA009D5155 /* 3star@2x.png in Resources */,
@@ -2236,6 +2245,7 @@
 				0431C6BA1C9C530C0025AF67 /* OrderSummaryController.m in Sources */,
 				04F09AEE1CB5663C00686D3B /* searchResultsController.m in Sources */,
 				048B6F5B1C9075B200F0894A /* ShippingController.m in Sources */,
+				04CF28B21CCBC36700BFE066 /* selectCell.m in Sources */,
 				0475A7551C8119290049AD61 /* LocationView.m in Sources */,
 				049EF4291C776E49000A599F /* main.m in Sources */,
 				04D9B9BF1C8AFEB4004AF0F2 /* MakeOfferViewController.m in Sources */,

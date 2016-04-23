@@ -31,6 +31,15 @@
     else{
         self.title = @"Select";
     }
+    
+    self.conditionArray = [NSArray arrayWithObjects:@"New w/ tags",@"New no tags", @"Used", @"Any",nil];
+    self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear", nil];
+    self.sizeArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", @"Any", nil];
+    self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"OS", @"Any", nil];
+    self.deliveryArray = [NSArray arrayWithObjects:@"Meetup",@"Courier", @"Any", nil];
+    
+    
+    [self.tableView registerNib:[UINib nibWithNibName:@"selectCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -50,9 +59,9 @@
     //if self.offer == yes then user is making an offer. Encourage specificity so remove 'Any' options
     if ([self.setting isEqualToString:@"condition"]) {
         if (self.offer == YES) {
-            return 2;
+            return 3;
         }
-        return 3;
+        return 4;
     }
     else if ([self.setting isEqualToString:@"category"]){
         return 2;
@@ -66,9 +75,9 @@
     else if ([self.setting isEqualToString:@"sizefoot"]){
         self.genderSelected = @"Mens";
         if (self.offer == YES) {
-            return 14;
+            return 23;
         }
-        return 15;
+        return 24;
     }
     else if ([self.setting isEqualToString:@"delivery"]){
         if (self.offer == YES) {
@@ -82,153 +91,39 @@
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    self.cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
+    [self.cell.segmentControl setHidden:YES];
+    
     if ([self.setting isEqualToString:@"condition"]) {
-        if (indexPath.row == 0){
-            self.firstLabel.text = @"New";
-            return self.oneCell;
-        }
-        else if (indexPath.row ==1){
-            self.secondLabel.text = @"Used";
-            return self.twoCell;
-        }
-        else if (indexPath.row ==2){
-            self.thirdLabel.text = @"Any";
-            return self.threeCell;
-        }
+        self.cell.textLabel.text = [self.conditionArray objectAtIndex:indexPath.row];
     }
     else if ([self.setting isEqualToString:@"category"]){
-        if (indexPath.row == 0){
-            self.firstLabel.text = @"Clothing";
-            return self.oneCell;
-        }
-        else if (indexPath.row ==1){
-            self.secondLabel.text = @"Footwear";
-            return self.twoCell;
-        }
+        self.cell.textLabel.text = [self.categoryArray objectAtIndex:indexPath.row];
     }
     else if ([self.setting isEqualToString:@"sizeclothing"]){
-        if (indexPath.row == 0){
-            self.firstLabel.text = @"XXS";
-            return self.oneCell;
-        }
-        else if (indexPath.row ==1){
-            self.secondLabel.text = @"XS";
-            return self.twoCell;
-        }
-        else if (indexPath.row ==2){
-            self.thirdLabel.text = @"S";
-            return self.threeCell;
-        }
-        else if (indexPath.row ==3){
-            self.fourthLabel.text = @"M";
-            return self.fourCell;
-        }
-        else if (indexPath.row ==4){
-            self.fifthLabel.text = @"L";
-            return self.fiveCell;
-        }
-        else if (indexPath.row ==5){
-            self.sixthLabel.text = @"XL";
-            return self.sixCell;
-        }
-        else if (indexPath.row ==6){
-            self.seventhLabel.text = @"XXL";
-            return self.sevenCell;
-        }
-        else if (indexPath.row ==7){
-            self.eigthLabel.text = @"One size";
-            return self.eightCell;
-        }
-        else if (indexPath.row ==8){
-            self.ninthLabel.text = @"Any";
-            return self.nineCell;
-        }
+        self.cell.textLabel.text = [self.clothingyArray objectAtIndex:indexPath.row];
     }
     else if ([self.setting isEqualToString:@"sizefoot"]){
-        
-            if (indexPath.row == 0){
-                return self.selectCell;
-            }
-            else if (indexPath.row ==1){
-                self.firstLabel.text = @"2";
-                return self.oneCell;
-            }
-            else if (indexPath.row ==2){
-                self.secondLabel.text = @"3";
-                return self.twoCell;
-            }
-            else if (indexPath.row ==3){
-                self.thirdLabel.text = @"4";
-                return self.threeCell;
-            }
-            else if (indexPath.row ==4){
-                self.fourthLabel.text = @"5";
-                return self.fourCell;
-            }
-            else if (indexPath.row ==5){
-                self.fifthLabel.text = @"6";
-                return self.fiveCell;
-            }
-            else if (indexPath.row ==6){
-                self.sixthLabel.text = @"7";
-                return self.sixCell;
-            }
-            else if (indexPath.row ==7){
-                self.seventhLabel.text = @"8";
-                return self.sevenCell;
-            }
-            else if (indexPath.row ==8){
-                self.eigthLabel.text = @"9";
-                return self.eightCell;
-            }
-            else if (indexPath.row ==9){
-                self.ninthLabel.text = @"10";
-                return self.nineCell;
-            }
-            else if (indexPath.row ==10){
-                self.tenthLabel.text = @"11";
-                return self.tenCell;
-            }
-            else if (indexPath.row ==11){
-                self.eleventhLabel.text = @"12";
-                return self.elevenCell;
-            }
-            else if (indexPath.row ==12){
-                self.twelveLabel.text = @"13";
-                return self.twelveCell;
-            }
-            else if (indexPath.row ==13){
-                self.thirteenLabel.text = @"14";
-                return self.thirteenCell;
-            }
-            else if (indexPath.row ==14){
-                self.fourteenthLabel.text = @"Any";
-                return self.fourteenCell;
-            }
+        if (indexPath.row == 0) {
+            [self.cell.segmentControl setHidden:NO];
+        }
+        else{
+            self.cell.textLabel.text = [self.sizeArray objectAtIndex:indexPath.row-1];
+            
+        }
     }
     else if ([self.setting isEqualToString:@"delivery"]){
-        if (indexPath.row == 0){
-            self.firstLabel.text = @"Meetup";
-            return self.oneCell;
-        }
-        else if (indexPath.row ==1){
-            self.secondLabel.text = @"Courier";
-            return self.twoCell;
-        }
-        else if (indexPath.row ==2){
-            self.thirdLabel.text = @"Any";
-            return self.threeCell;
-        }
+        self.cell.textLabel.text = [self.deliveryArray objectAtIndex:indexPath.row];
     }
+    return self.cell;
     
-    return nil;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     return 44;
 }
 - (IBAction)genderSwitchChanged:(id)sender {
-    if (self.segmentContro.selectedSegmentIndex == 0) {
+    if (self.cell.segmentControl.selectedSegmentIndex == 0) {
         //male
         self.genderSelected = @"Mens";
     }
@@ -237,12 +132,12 @@
     }
 }
 
-
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
+    selectCell *selected = [tableView cellForRowAtIndexPath:indexPath];
     
-    if ([self.tableView cellForRowAtIndexPath:indexPath] == self.selectCell) {
+    if (selected.segmentControl.isHidden == NO) {
     }
     else{
         if(self.lastSelectedPath) {
@@ -259,97 +154,30 @@
     
     NSString *selectionString = [[NSString alloc]init];
     
-    if (indexPath.row == 0) {
-        if ([self.tableView cellForRowAtIndexPath:indexPath] == self.selectCell) {
+    if ([self.setting isEqualToString:@"sizefoot"]) {
+        if (indexPath.row == 0) {
+            //segment control
+            selectionString = @"";
         }
         else{
-            selectionString = self.firstLabel.text;
+            selectionString = [self.sizeArray objectAtIndex:indexPath.row-1];
         }
     }
-    else if (indexPath.row ==1){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.firstLabel.text;
-        }
-        else{
-            selectionString = self.secondLabel.text;
-        }
+    else if ([self.setting isEqualToString:@"sizeclothing"]) {
+        selectionString = [self.clothingyArray objectAtIndex:indexPath.row];
     }
-    else if (indexPath.row ==2){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.secondLabel.text;
-        }
-        else{
-            selectionString = self.thirdLabel.text;
-        }
+    else if ([self.setting isEqualToString:@"category"]) {
+        selectionString = [self.categoryArray objectAtIndex:indexPath.row];
     }
-    else if (indexPath.row ==3){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.thirdLabel.text;
-        }
-        else{
-            selectionString = self.fourthLabel.text;
-        }
+    else if ([self.setting isEqualToString:@"condition"]) {
+        selectionString = [self.conditionArray objectAtIndex:indexPath.row];
     }
-    else if (indexPath.row ==4){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.fourthLabel.text;
-        }
-        else{
-            selectionString = self.fifthLabel.text;
-        }
+    else if ([self.setting isEqualToString:@"delivery"]) {
+        selectionString = [self.deliveryArray objectAtIndex:indexPath.row];
     }
-    else if (indexPath.row ==5){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.fifthLabel.text;
-        }
-        else{
-            selectionString = self.sixthLabel.text;
-        }
-    }
-    else if (indexPath.row ==6){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.sixthLabel.text;
-        }
-        else{
-            selectionString = self.seventhLabel.text;
-        }
-    }
-    else if (indexPath.row ==7){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.seventhLabel.text;
-        }
-        else{
-            selectionString = self.eigthLabel.text;
-        }
-    }
-    else if (indexPath.row ==8){
-        if ([self.setting isEqualToString:@"sizefoot"]) {
-            selectionString = self.eigthLabel.text;
-        }
-        else{
-            selectionString = self.ninthLabel.text;
-        }
-    }
-    else if (indexPath.row ==9){
-        selectionString = self.ninthLabel.text;
-    }
-    else if (indexPath.row ==10){
-        selectionString = self.tenthLabel.text;
-    }
-    else if (indexPath.row ==11){
-        selectionString = self.eleventhLabel.text;
-    }
-    else if (indexPath.row ==12){
-        selectionString = self.twelveLabel.text;
-    }
-    else if (indexPath.row ==13){
-        selectionString = self.thirteenLabel.text;
-    }
-    else if (indexPath.row ==14){
-        selectionString = self.fourteenthLabel.text;
-    }
+    
     //if not nothing (coz of selection cell in sizes) proceed..
-    NSLog(@"selected %@", selectionString);
+    NSLog(@"selected: %@", selectionString);
     
     if (![selectionString isEqualToString:@""]) {
         if ([self.setting isEqualToString:@"sizefoot"]) {
@@ -358,8 +186,8 @@
         else{
             [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withitem:nil];
         }
+        [self.navigationController popViewControllerAnimated:YES];
     }
-    [self.navigationController popViewControllerAnimated:YES];
 }
 
 -(void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath

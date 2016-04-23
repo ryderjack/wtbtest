@@ -104,6 +104,7 @@
     
     if ([self.addressLabel.text isEqualToString:@"Add address"]) {
         // havent entered address
+        [self.payButton setEnabled:YES];
         UIAlertController * alert=   [UIAlertController
                                       alertControllerWithTitle:@"Shipping address"
                                       message:@"Add a valid shipping address!"
@@ -111,7 +112,7 @@
         UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
         [alert addAction:ok];
         [self presentViewController:alert animated:YES completion:nil];
-        [self.payButton setEnabled:YES];
+        
         return;
     }
     else{
@@ -160,25 +161,36 @@
                 
                 PFQuery *findOtherOffers =[PFQuery queryWithClassName:@"offers"];
                 [findOtherOffers whereKey:@"wtbListing" equalTo:[self.confirmedOfferObject objectForKey:@"wtbListing"]];
-                [findOtherOffers findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                    if (objects) {
-                        for (PFObject *offer in objects){
-                            NSLog(@"this offer is being set to expired because the item has already been purchased! %@", offer);
-                            
-                            [offer setObject:@"expired" forKey:@"status"];
-                            [offer saveInBackground];
-                        }
-                    }
-                    else{
-                        NSLog(@"no objects or error %@", error);
-                    }
-                }];
+                [findOtherOffers whereKey:@"objectId" notEqualTo:self.confirmedOfferObject.objectId];
                 
-                [self.payButton setEnabled:YES];
                 ListingCompleteView *vc = [[ListingCompleteView alloc]init];
                 vc.orderMode = YES;
                 vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
                 [self.navigationController pushViewController:vc animated:YES];
+                
+//                [findOtherOffers findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//                    if (objects) {
+//                        for (PFObject *offer in objects){
+//                            NSLog(@"this offer is being set to expired because the item has already been purchased! %@", offer);
+//                            
+//                            [offer setObject:@"expired" forKey:@"status"];
+//                            [offer saveInBackground];
+//                            
+//                            [self.payButton setEnabled:YES];
+//                            ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+//                            vc.orderMode = YES;
+//                            vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
+//                            [self.navigationController pushViewController:vc animated:YES];
+//                        }
+//                    }
+//                    else{
+//                        NSLog(@"no objects or error %@", error);
+//                        ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+//                        vc.orderMode = YES;
+//                        vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
+//                        [self.navigationController pushViewController:vc animated:YES];
+//                    }
+//                }];
             }
             else{
                 [self.payButton setEnabled:YES];

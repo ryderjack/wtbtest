@@ -254,6 +254,10 @@
     else if ([self.mode isEqualToString:@"received"]){
         if ([[selectedOffer objectForKey:@"status"]isEqualToString:@"purchased"]) {
             //show order summary
+            
+        }
+        else if ([[selectedOffer objectForKey:@"status"]isEqualToString:@"expired"]){
+            //do nothing
         }
         else{
             MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];

@@ -380,6 +380,8 @@
     }
     return YES;
 }
+
+
 -(void)removeKeyboard{
     [self.titleField resignFirstResponder];
     [self.extraField resignFirstResponder];
@@ -389,7 +391,7 @@
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
     if (textField == self.payField) {
-        // Check for deletion of the $ sign
+        // Check for deletion of the £ sign
         if (range.location == 0 && [textField.text hasPrefix:@"£"])
             return NO;
         
@@ -402,19 +404,12 @@
             NSString *dollarAmount = stringsArray[0];
             if (dollarAmount.length > 6)
                 return NO;
-        }
-        
-        // Check for more than 2 chars after the decimal point
-        if (stringsArray.count > 1)
-        {
-            NSString *centAmount = stringsArray[1];
-            if (centAmount.length > 2)
+            
+            // not allowed to enter all 9s
+            if ([dollarAmount isEqualToString:@"£99999"]) {
                 return NO;
+            }
         }
-        
-        // Check for a second decimal point
-        if (stringsArray.count > 2)
-            return NO;
         
         return YES;
     }
@@ -489,6 +484,14 @@
 
 -(void)sizePopUp{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Choose a category first!" message:@"Make sure you've entered a category for the item you wantobuy!" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)locationPopUp{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Location error" message:@"Please choose a different location!" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -670,8 +673,18 @@
     }
 }
 -(void)addLocation:(LocationView *)controller didFinishEnteringItem:(NSString *)item longi:(CLLocationDegrees)item1 lati:(CLLocationDegrees)item2{
-    self.chooseLocation.text = item;
-    self.geopoint = [PFGeoPoint geoPointWithLatitude:item2 longitude:item1];
+    
+    // do a check to prevent crashes
+    
+    if (item1 > 90 || item1 < -90 || item2 > 90 || item2 < -90) {
+        //values outside range of PFGeoPoint - range is -90->+90 for some reason. Sort this PLZ!
+        [self locationPopUp];
+    }
+    else{
+        self.chooseLocation.text = item;
+        self.geopoint = [PFGeoPoint geoPointWithLatitude:item2 longitude:item1];
+    }
+    
 }
 
 -(void)addCurrentLocation:(LocationView *)controller didPress:(PFGeoPoint *)geoPoint title:(NSString *)placemark{
@@ -689,7 +702,7 @@
     [self.saveButton setEnabled:NO];
     [self removeKeyboard];
     
-    if ([self.chooseCategroy.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0) {
+    if ([self.chooseCategroy.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:@"£"]) {
         self.warningLabel.text = @"Fill out all the above fields";
         [self.saveButton setEnabled:YES];
     }
@@ -830,7 +843,6 @@
                         }
                     }];
                     
-                    
                     ListingCompleteView *vc = [[ListingCompleteView alloc]init];
                     vc.delegate = self;
                     vc.lastObjectId = self.listing.objectId;
@@ -953,9 +965,6 @@
     //if gendersize required (if category is footwear) set variable
     if ([self.listing objectForKey:@"sizeGender"]) {
        self.genderSize = [self.listing objectForKey:@"sizeGender"];
-    }
-    else{
-        
     }
     
     self.chooseSize.text = [self.listing objectForKey:@"size"];

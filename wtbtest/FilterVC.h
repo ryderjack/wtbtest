@@ -48,7 +48,9 @@
 @property (weak, nonatomic) IBOutlet UIButton *womenButton;
 @property (strong, nonatomic) IBOutlet UIButton *lasttapped;
 @property (nonatomic) BOOL clothingEnabled;
+
 @property (nonatomic, strong) NSArray *sizeLabels;
+@property (nonatomic, strong) NSArray *shoesArray;
 
 //apply
 @property (weak, nonatomic) IBOutlet UIButton *applyButton;

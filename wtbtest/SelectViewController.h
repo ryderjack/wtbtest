@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "selectCell.h"
 
 @class SelectViewController;
 
@@ -21,42 +22,13 @@
 @property (nonatomic) BOOL offer;
 @property (nonatomic, strong) NSIndexPath *lastSelectedPath;
 
-//cells
-@property (strong, nonatomic) IBOutlet UITableViewCell *oneCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *twoCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *threeCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *fourCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *fiveCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *sixCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *sevenCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *eightCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *nineCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *tenCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *elevenCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *selectCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *twelveCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *thirteenCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *fourteenCell;
-
-//labels
-@property (weak, nonatomic) IBOutlet UILabel *firstLabel;
-@property (weak, nonatomic) IBOutlet UILabel *secondLabel;
-@property (weak, nonatomic) IBOutlet UILabel *thirdLabel;
-@property (weak, nonatomic) IBOutlet UILabel *fourthLabel;
-@property (weak, nonatomic) IBOutlet UILabel *fifthLabel;
-@property (weak, nonatomic) IBOutlet UILabel *sixthLabel;
-@property (weak, nonatomic) IBOutlet UILabel *seventhLabel;
-@property (weak, nonatomic) IBOutlet UILabel *eigthLabel;
-@property (weak, nonatomic) IBOutlet UILabel *ninthLabel;
-@property (weak, nonatomic) IBOutlet UILabel *tenthLabel;
-@property (weak, nonatomic) IBOutlet UILabel *eleventhLabel;
-@property (weak, nonatomic) IBOutlet UILabel *twelveLabel;
-@property (weak, nonatomic) IBOutlet UILabel *thirteenLabel;
-@property (weak, nonatomic) IBOutlet UILabel *fourteenthLabel;
-
-@property (weak, nonatomic) IBOutlet UISegmentedControl *segmentContro;
 @property (strong, nonatomic) NSString *genderSelected;
 
+@property (nonatomic, strong) NSArray *sizeArray;
+@property (nonatomic, strong) NSArray *conditionArray;
+@property (nonatomic, strong) NSArray *deliveryArray;
+@property (nonatomic, strong) NSArray *categoryArray;
+@property (nonatomic, strong) NSArray *clothingyArray;
 
-
+@property (nonatomic, strong) selectCell *cell;
 @end
