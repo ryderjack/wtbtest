@@ -79,4 +79,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *saveButton;
 @property (nonatomic, strong) UIBarButtonItem *resetButton;
 
+@property (nonatomic, strong) NSArray *sizesArray;
+
 @end

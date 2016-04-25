@@ -259,6 +259,18 @@
                     vc.delegate = self;
                     vc.setting = @"sizefoot";
                     vc.offer = NO;
+                    
+                    // setup previously selected
+                    if (![self.chooseSize.text isEqualToString:@"Choose"]) {
+                        NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+                        NSLog(@"selected already %@", selectedArray);
+                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+                        vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+                    }
+                    else{
+                        vc.holdingGender = @"";
+                    }
+                    
                     self.selection = @"size";
                     [self.navigationController pushViewController:vc animated:YES];
                 }
@@ -267,6 +279,14 @@
                     vc.delegate = self;
                     vc.setting = @"sizeclothing";
                     vc.offer = NO;
+                    
+                    // setup previously selected
+                    if (![self.chooseSize.text isEqualToString:@"Choose"]) {
+                        NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+                        NSLog(@"selected already %@", selectedArray);
+                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+                    }
+                    
                     self.selection = @"size";
                     [self.navigationController pushViewController:vc animated:YES];
                 }
@@ -652,26 +672,46 @@
 
 #pragma delegate callbacks
 
-- (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)item withitem:(NSString *)item2
-{
+-(void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)selectionString withgender:(NSString *)genderString andsizes:(NSArray *)array{
     if ([self.selection isEqualToString:@"condition"]) {
-        self.chooseCondition.text = item;
+        self.chooseCondition.text = selectionString;
     }
     else if ([self.selection isEqualToString:@"category"]){
-        self.chooseCategroy.text = item;
+        self.chooseCategroy.text = selectionString;
         self.chooseSize.text = @"Choose";
     }
     else if ([self.selection isEqualToString:@"size"]){
-        self.chooseSize.text = item;
-        if (item2) {
-            NSLog(@"gendersize being set %@", item2);
-            self.genderSize = item2;
+//        self.chooseSize.text = selectionString;
+        
+        if (genderString) {
+            self.genderSize = genderString;
         }
+        
+        if (array) {
+            self.sizesArray = [NSArray arrayWithArray:array];
+            
+            NSLog(@"sizes array from select VC %@, count %lu", self.sizesArray, (unsigned long)array.count);
+            
+            if (self.sizesArray.count == 1) {
+                self.chooseSize.text = [NSString stringWithFormat:@"%@",self.sizesArray[0]];
+            }
+            else if (self.sizesArray.count == 2){
+                self.chooseSize.text = [NSString stringWithFormat:@"%@/%@",self.sizesArray[0],self.sizesArray[1]];
+            }
+            else if (self.sizesArray.count == 3){
+                self.chooseSize.text = [NSString stringWithFormat:@"%@/%@/%@",self.sizesArray[0],self.sizesArray[1],self.sizesArray[2]];
+            }
+        }
+        else{
+            NSLog(@"no array, been an error");
+        }
+        
     }
     else if ([self.selection isEqualToString:@"delivery"]){
-        self.chooseDelivery.text = item;
+        self.chooseDelivery.text = selectionString;
     }
 }
+
 -(void)addLocation:(LocationView *)controller didFinishEnteringItem:(NSString *)item longi:(CLLocationDegrees)item1 lati:(CLLocationDegrees)item2{
     
     // do a check to prevent crashes

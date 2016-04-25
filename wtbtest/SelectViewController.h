@@ -12,10 +12,10 @@
 @class SelectViewController;
 
 @protocol SelectViewControllerDelegate <NSObject>
-- (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)item withitem:(NSString *)item2;
+- (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)selectionString withgender:(NSString *)genderString andsizes:(NSArray *)array;
 @end
 
-@interface SelectViewController : UITableViewController
+@interface SelectViewController : UITableViewController <selectCellDelegate>
 
 @property (nonatomic, weak) id <SelectViewControllerDelegate> delegate;
 @property (nonatomic, strong) NSString *setting;
@@ -30,5 +30,10 @@
 @property (nonatomic, strong) NSArray *categoryArray;
 @property (nonatomic, strong) NSArray *clothingyArray;
 
+@property (nonatomic, strong) NSMutableArray *selectedSizes;
+@property (nonatomic, strong) NSArray *holdingArray;
+@property (nonatomic, strong) NSString *holdingGender;
+
 @property (nonatomic, strong) selectCell *cell;
+@property (nonatomic) BOOL menSelected;
 @end

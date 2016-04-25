@@ -167,6 +167,8 @@
     
     PFObject *listing;
     
+    //add in if (!cell)????
+    
     if (self.searchEnabled == YES) {
         listing = [self.searchResults objectAtIndex:indexPath.row];
     }

@@ -20,5 +20,15 @@
 
     // Configure the view for the selected state
 }
+- (IBAction)segmentChanged:(id)sender {
+    if (self.segmentControl.selectedSegmentIndex == 0) {
+        self.firstSelected = YES;
+        [self.delegate genderSelected:@"Male"];
+    }
+    else{
+        self.firstSelected = NO;
+        [self.delegate genderSelected:@"Womens"];
+    }
+}
 
 @end
