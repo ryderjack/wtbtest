@@ -20,6 +20,7 @@
 @property (nonatomic, weak) id <SelectViewControllerDelegate> delegate;
 @property (nonatomic, strong) NSString *setting;
 @property (nonatomic) BOOL offer;
+
 @property (nonatomic, strong) NSIndexPath *lastSelectedPath;
 
 @property (strong, nonatomic) NSString *genderSelected;

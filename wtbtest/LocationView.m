@@ -132,7 +132,7 @@
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     NSString *selectionString = [self.tableView cellForRowAtIndexPath:indexPath].textLabel.text;
     CLLocationCoordinate2D selectedItem = [[[[self.searchResults objectAtIndex:indexPath.row] placemark]location]coordinate];
-    [self.delegate addLocation:self didFinishEnteringItem:selectionString longi:selectedItem.longitude lati:selectedItem.longitude];
+    [self.delegate addLocation:self didFinishEnteringItem:selectionString longi:selectedItem.longitude lati:selectedItem.latitude];
     [self.navigationController popViewControllerAnimated:YES];
     
 }

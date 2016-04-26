@@ -107,5 +107,5 @@
 @property (nonatomic, strong) DetailImageController *detailController;
 @property (nonatomic) int numberOfPics;
 
-
+@property (nonatomic, strong) NSArray *sizesArray;
 @end

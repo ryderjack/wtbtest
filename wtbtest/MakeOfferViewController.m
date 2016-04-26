@@ -722,25 +722,24 @@
     self.photostotal ++;
 }
 
-- (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)item withitem:(NSString *)item2
+- (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)selectionString withgender:(NSString *)genderString andsizes:(NSArray *)array
 {
     if ([self.selection isEqualToString:@"condition"]) {
-        self.chooseCondition.text = item;
+        self.chooseCondition.text = selectionString;
     }
     else if ([self.selection isEqualToString:@"category"]){
+        self.chooseCategory.text = selectionString;
         self.chooseSize.text = @"Choose";
-        self.chooseCategory.text = item;
     }
     else if ([self.selection isEqualToString:@"size"]){
-        self.chooseSize.text = item;
-        if (item2) {
-            NSLog(@"gendersize being set %@", item2);
-            self.genderSize = item2;
+        self.chooseSize.text = selectionString;
+        if (genderString) {
+            self.genderSize = genderString;
         }
     }
     else if ([self.selection isEqualToString:@"delivery"]){
-        self.chooseDelivery.text = item;
-        if ([item isEqualToString:@"Meetup"]) {
+        self.chooseDelivery.text = selectionString;
+        if ([selectionString isEqualToString:@"Meetup"]) {
             self.deliveryField.text = @"£0.00";
             self.deliveryField.textColor = [UIColor lightGrayColor];
             [self.deliveryField setEnabled:NO];
@@ -766,6 +765,12 @@
                     vc.setting = @"condition";
                     self.selection = @"condition";
                     vc.offer = YES;
+                    
+                    if (![self.chooseCondition.text isEqualToString:@"Choose"]) {
+                        NSArray *selectedArray = [self.chooseCondition.text componentsSeparatedByString:@"."];
+                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+                    }
+                    
                     [self.navigationController pushViewController:vc animated:YES];
                 }
                 else if(indexPath.row == 2){
@@ -773,6 +778,12 @@
                     vc.delegate = self;
                     vc.setting = @"category";
                     self.selection = @"category";
+                    
+                    if (![self.chooseCategory.text isEqualToString:@"Choose"]) {
+                        NSArray *selectedArray = [self.chooseCategory.text componentsSeparatedByString:@"."];
+                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+                    }
+                    
                     [self.navigationController pushViewController:vc animated:YES];
                 }
                 else if(indexPath.row == 3){
@@ -787,6 +798,18 @@
                             vc.setting = @"sizefoot";
                             vc.offer = YES;
                             self.selection = @"size";
+                            
+                            // setup previously selected
+                            if (![self.chooseSize.text isEqualToString:@"Choose"]) {
+                                NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+                                NSLog(@"selected already %@", selectedArray);
+                                vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+                                vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+                            }
+                            else{
+                                vc.holdingGender = @"";
+                            }
+                            
                             [self.navigationController pushViewController:vc animated:YES];
                         }
                         else{
@@ -795,6 +818,13 @@
                             vc.setting = @"sizeclothing";
                             vc.offer = YES;
                             self.selection = @"size";
+                            
+                            // setup previously selected
+                            if (![self.chooseSize.text isEqualToString:@"Choose"]) {
+                                NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+                                vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+                            }
+                            
                             [self.navigationController pushViewController:vc animated:YES];
                         }
                     }
@@ -811,6 +841,11 @@
                     vc.setting = @"delivery";
                     vc.offer = YES;
                     self.selection = @"delivery";
+                    
+                    if (![self.chooseDelivery.text isEqualToString:@"Choose"]) {
+                        NSArray *selectedArray = [self.chooseDelivery.text componentsSeparatedByString:@"."];
+                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+                    }
                     [self.navigationController pushViewController:vc animated:YES];
                 }
             }

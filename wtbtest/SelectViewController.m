@@ -24,15 +24,6 @@
     }
     else if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]){
         self.title = @"Size UK";
-        
-        self.selectedSizes = [NSMutableArray array];
-        
-        if (self.holdingArray.count >0) {
-            [self.selectedSizes addObjectsFromArray:self.holdingArray];
-            NSLog(@"added objects");
-        }
-        
-        NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
     }
     else if ([self.setting isEqualToString:@"delivery"]){
         self.title = @"Delivery";
@@ -40,6 +31,14 @@
     else{
         self.title = @"Select";
     }
+    
+    self.selectedSizes = [NSMutableArray array];
+    
+    if (self.holdingArray.count >0) {
+        [self.selectedSizes addObjectsFromArray:self.holdingArray];
+    }
+    
+    NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
     
     self.conditionArray = [NSArray arrayWithObjects:@"New w/ tags",@"New no tags", @"Used", @"Any",nil];
     self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear", nil];
@@ -94,7 +93,7 @@
         }
         
         if (self.offer == YES) {
-            return 23;
+            return 24;
         }
         return 25;
     }
@@ -121,11 +120,28 @@
         self.cell.textLabel.text = [self.conditionArray objectAtIndex:indexPath.row];
         [self.cell.segmentControl setHidden:YES];
         
+        if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
+            //already been selected, show checkmark
+            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+        }
+        else{
+            //hasnt already been selected
+            self.cell.accessoryType = UITableViewCellAccessoryNone;
+        }
         
     }
     else if ([self.setting isEqualToString:@"category"]){
         self.cell.textLabel.text = [self.categoryArray objectAtIndex:indexPath.row];
         [self.cell.segmentControl setHidden:YES];
+        
+        if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
+            //already been selected, show checkmark
+            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+        }
+        else{
+            //hasnt already been selected
+            self.cell.accessoryType = UITableViewCellAccessoryNone;
+        }
     }
     else if ([self.setting isEqualToString:@"sizeclothing"]){
         self.cell.textLabel.text = [self.clothingyArray objectAtIndex:indexPath.row];
@@ -173,6 +189,15 @@
     else if ([self.setting isEqualToString:@"delivery"]){
         self.cell.textLabel.text = [self.deliveryArray objectAtIndex:indexPath.row];
         [self.cell.segmentControl setHidden:YES];
+        
+        if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
+            //already been selected, show checkmark
+            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+        }
+        else{
+            //hasnt already been selected
+            self.cell.accessoryType = UITableViewCellAccessoryNone;
+        }
     }
     
     return self.cell;
@@ -186,6 +211,15 @@
     
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     selectCell *selected = [tableView cellForRowAtIndexPath:indexPath];
+    
+    // First figure out how many sections there are
+    NSInteger lastSectionIndex = [tableView numberOfSections] - 1;
+    
+    // Then grab the number of rows in the last section
+    NSInteger lastRowIndex = [tableView numberOfRowsInSection:lastSectionIndex] - 1;
+    
+    // Now just construct the index path
+    NSIndexPath *pathToLastRow = [NSIndexPath indexPathForRow:lastRowIndex inSection:lastSectionIndex];
     
     //check if cell previously been selected
     if (selected.accessoryType == UITableViewCellAccessoryCheckmark) {
@@ -219,16 +253,7 @@
         }
         
         //if setting is size add a checkmark if array is < 3
-        if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"] ) {
-            
-            // First figure out how many sections there are
-            NSInteger lastSectionIndex = [tableView numberOfSections] - 1;
-            
-            // Then grab the number of rows in the last section
-            NSInteger lastRowIndex = [tableView numberOfRowsInSection:lastSectionIndex] - 1;
-            
-            // Now just construct the index path
-            NSIndexPath *pathToLastRow = [NSIndexPath indexPathForRow:lastRowIndex inSection:lastSectionIndex];
+        if (([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"])&& self.offer == NO) {
             
             // if selected index is last (='Any') then clear the array and removes all checkmarks
             if (indexPath == pathToLastRow) {
@@ -298,6 +323,10 @@
     
     NSString *selectionString = [[NSString alloc]init];
     
+    //first index path
+    
+    NSIndexPath *firstPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    
     if ([self.setting isEqualToString:@"category"]) {
         selectionString = [self.categoryArray objectAtIndex:indexPath.row];
     }
@@ -307,28 +336,47 @@
     else if ([self.setting isEqualToString:@"delivery"]) {
         selectionString = [self.deliveryArray objectAtIndex:indexPath.row];
     }
+    else if ([self.setting isEqualToString:@"sizefoot"] && self.offer == YES && indexPath != firstPath) {
+        selectionString = [self.sizeArray objectAtIndex:indexPath.row-1];
+    }
+    else if ([self.setting isEqualToString:@"sizeclothing"] && self.offer == YES && indexPath != firstPath) {
+        selectionString = [self.clothingyArray objectAtIndex:indexPath.row];
+    }
     
     //if not nothing (coz of selection cell in sizes) proceed..
     NSLog(@"selected: %@", selectionString);
     
     if (![selectionString isEqualToString:@""]) {
-        if (![self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]) {
-            [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withgender:nil andsizes:nil];
+
+            [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withgender:self.genderSelected andsizes:nil];
             
             [self.navigationController popViewControllerAnimated:YES];
-        }
     }
 }
-
-//-(void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath
-//{
-//    [tableView cellForRowAtIndexPath:indexPath].accessoryType = UITableViewCellAccessoryNone;
-//}
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     
-    if ([self.setting isEqualToString:@"sizeclothing"]){
+     if ([self.setting isEqualToString:@"sizefoot"] && self.offer == NO && self.selectedSizes.count > 0 && ![self.selectedSizes containsObject:@"Any"]){
+        
+         //convert array strings into numbers to sort into ascending order
+         NSArray *strings = [NSArray arrayWithArray:self.selectedSizes];
+         [self.selectedSizes removeAllObjects];
+         
+         for (int i = 0; i<strings.count; i++) {
+             double number = [[strings objectAtIndex:i]doubleValue];
+             [self.selectedSizes addObject:@(number)];
+         }
+         
+         // sort clothing sizes array in order of string length for appearance
+         NSSortDescriptor *sortDescriptor;
+         sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"floatValue"
+                                                      ascending:YES];
+         NSArray *sortDescriptors = [NSArray arrayWithObject:sortDescriptor];
+         [self.selectedSizes sortUsingDescriptors:sortDescriptors];
+    }
+    
+    else if ([self.setting isEqualToString:@"sizeclothing"] && self.offer == NO){
         
         // sort clothing sizes array in order of string length for appearance
         NSSortDescriptor *sortDescriptor;
@@ -338,7 +386,7 @@
         [self.selectedSizes sortUsingDescriptors:sortDescriptors];
     }
     
-    if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]) {
+    if (([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]) && self.offer == NO) {
         NSArray *finalSelection = [NSArray arrayWithArray:self.selectedSizes];
         NSLog(@"final selection is %@", finalSelection);
         [self.delegate addItemViewController:self didFinishEnteringItem:nil withgender:self.genderSelected andsizes:finalSelection];

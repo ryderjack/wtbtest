@@ -237,6 +237,12 @@
             vc.setting = @"condition";
             vc.offer = NO;
             self.selection = @"condition";
+            
+            if (![self.chooseCondition.text isEqualToString:@"Choose"]) {
+                NSArray *selectedArray = [self.chooseCondition.text componentsSeparatedByString:@"."];
+                vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+            }
+            
             [self.navigationController pushViewController:vc animated:YES];
 
         }
@@ -246,12 +252,19 @@
             vc.setting = @"category";
             vc.offer = NO;
             self.selection = @"category";
+            
+            if (![self.chooseCategroy.text isEqualToString:@"Choose"]) {
+                NSArray *selectedArray = [self.chooseCategroy.text componentsSeparatedByString:@"."];
+                vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+            }
+            
             [self.navigationController pushViewController:vc animated:YES];
         }
         else if(indexPath.row == 2){
             if ([self.chooseCategroy.text isEqualToString:@"Choose"]) {
                 [self sizePopUp];
                 [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
+                
             }
             else{
                 if ([self.chooseCategroy.text isEqualToString:@"Footwear"]) {
@@ -283,7 +296,6 @@
                     // setup previously selected
                     if (![self.chooseSize.text isEqualToString:@"Choose"]) {
                         NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
-                        NSLog(@"selected already %@", selectedArray);
                         vc.holdingArray = [NSArray arrayWithArray:selectedArray];
                     }
                     
@@ -306,6 +318,12 @@
             vc.setting = @"delivery";
             vc.offer = NO;
             self.selection = @"delivery";
+            
+            if (![self.chooseDelivery.text isEqualToString:@"Choose"]) {
+                NSArray *selectedArray = [self.chooseDelivery.text componentsSeparatedByString:@"."];
+                vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+            }
+            
             [self.navigationController pushViewController:vc animated:YES];
         }
     }
@@ -681,8 +699,6 @@
         self.chooseSize.text = @"Choose";
     }
     else if ([self.selection isEqualToString:@"size"]){
-//        self.chooseSize.text = selectionString;
-        
         if (genderString) {
             self.genderSize = genderString;
         }
@@ -713,18 +729,8 @@
 }
 
 -(void)addLocation:(LocationView *)controller didFinishEnteringItem:(NSString *)item longi:(CLLocationDegrees)item1 lati:(CLLocationDegrees)item2{
-    
-    // do a check to prevent crashes
-    
-    if (item1 > 90 || item1 < -90 || item2 > 90 || item2 < -90) {
-        //values outside range of PFGeoPoint - range is -90->+90 for some reason. Sort this PLZ!
-        [self locationPopUp];
-    }
-    else{
-        self.chooseLocation.text = item;
-        self.geopoint = [PFGeoPoint geoPointWithLatitude:item2 longitude:item1];
-    }
-    
+    self.chooseLocation.text = item;
+    self.geopoint = [PFGeoPoint geoPointWithLatitude:item2 longitude:item1];
 }
 
 -(void)addCurrentLocation:(LocationView *)controller didPress:(PFGeoPoint *)geoPoint title:(NSString *)placemark{
