@@ -73,12 +73,7 @@
     //add done button to number pad keyboard on pay field
     [self addDoneButton];
     
-    [self.titleField becomeFirstResponder];
-}
-
--(void)viewDidAppear:(BOOL)animated{
-    [super viewDidAppear:animated];
-    
+//    [self.titleField becomeFirstResponder];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -367,7 +362,7 @@
         return @"Add photos of the item you’d like to buy";
     }
     else if (section ==2){
-        return @"Tell sellers exactly what you wantobuy";
+        return @"Tell sellers exactly what you're looking for";
     }
     else {
         return @"";
@@ -471,11 +466,18 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        TWPhotoPickerController *photoPicker = [[TWPhotoPickerController alloc] init];
-        photoPicker.cropBlock = ^(UIImage *image) {
-            [self finalImage:image];
-        };
-        [self presentViewController:photoPicker animated:YES completion:nil];
+//        TWPhotoPickerController *photoPicker = [[TWPhotoPickerController alloc] init];
+//        photoPicker.cropBlock = ^(UIImage *image) {
+//            [self finalImage:image];
+//        };
+//        [self presentViewController:photoPicker animated:YES completion:nil];
+        
+        UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+        picker.delegate = self;
+        picker.allowsEditing = YES;
+        picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+        
+        [self presentViewController:picker animated:YES completion:nil];
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Search Instagram" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -512,8 +514,20 @@
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+    UIImage *chosenImage = info[UIImagePickerControllerEditedImage];
+    [self finalImage:chosenImage];
+    [picker dismissViewControllerAnimated:YES completion:NULL];
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    
+    [picker dismissViewControllerAnimated:YES completion:NULL];
+    
+}
+
 -(void)popUpAlert{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Enter a title" message:@"Make sure you've entered a title for the item you wantobuy!" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Enter a title" message:@"Make sure you've entered a title for your WTB!" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -521,7 +535,7 @@
 }
 
 -(void)sizePopUp{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Choose a category first!" message:@"Make sure you've entered a category for the item you wantobuy!" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Choose a category first!" message:@"Make sure you've entered a category for your WTB!" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -876,18 +890,20 @@
                 else{
                     NSLog(@"listing saved! %@", self.listing.objectId);
                     
-                    NSDictionary *params = @{@"itemTitle": itemTitle, @"price": [NSNumber numberWithInt:price], @"condition": self.chooseCondition.text};
+                    // call bg function
                     
-                    [PFCloud callFunctionInBackground:@"eBayLookup" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                        if (!error) {
-                            NSLog(@"response %@", response);
-                            
-                            NSLog(@"item title: %@, item price: £%@, item URL: %@, pic URL: %@", [response objectForKey:@"title"], [[[response objectForKey:@"sellingStatus"]objectForKey:@"currentPrice"]objectForKey:@"amount"], [response objectForKey:@"viewItemURL"], [response objectForKey:@"galleryURL"]);
-                        }
-                        else{
-                            NSLog(@"error %@", error);
-                        }
-                    }];
+//                    NSDictionary *params = @{@"itemTitle": itemTitle, @"price": [NSNumber numberWithInt:price], @"condition": self.chooseCondition.text};
+                    
+//                    [PFCloud callFunctionInBackground:@"eBayLookup" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//                        if (!error) {
+//                            NSLog(@"response %@", response);
+//                            
+//                            NSLog(@"item title: %@, item price: £%@, item URL: %@, pic URL: %@", [response objectForKey:@"title"], [[[response objectForKey:@"sellingStatus"]objectForKey:@"currentPrice"]objectForKey:@"amount"], [response objectForKey:@"viewItemURL"], [response objectForKey:@"galleryURL"]);
+//                        }
+//                        else{
+//                            NSLog(@"error %@", error);
+//                        }
+//                    }];
                     
                     ListingCompleteView *vc = [[ListingCompleteView alloc]init];
                     vc.delegate = self;
@@ -937,6 +953,8 @@
     [self.secondDelete setHidden:YES];
     [self.thirdDelete setHidden:YES];
     [self.fourthDelete setHidden:YES];
+    
+    [self.saveButton setImage:[UIImage imageNamed:@"buyButton"] forState:UIControlStateNormal];
     
     self.photostotal = 0;
     self.camButtonTapped = 0;
@@ -1081,7 +1099,7 @@
     self.payField.inputAccessoryView = keyboardToolbar;
 }
 -(void)deleteListing{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your wantobuy?" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your WTB?" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         
@@ -1097,7 +1115,7 @@
 
 + (void)initialize
 {
-    [DZNPhotoPickerController registerFreeService:DZNPhotoPickerControllerServiceInstagram consumerKey:@"16759bba4b7e4831b80bf3412e7dcb16" consumerSecret:@"701c5a99144a401c8285b0c9df999509"];
+    [DZNPhotoPickerController registerFreeService:DZNPhotoPickerControllerServiceInstagram consumerKey:@"c25462a25bea4d61ac285d30ab5bd802" consumerSecret:@"13236e6d23644697ac9b81945c90dd1a"];
 }
 -(void)tagString:(NSString *)tag{
     //do nothing only for images shown in offer mode

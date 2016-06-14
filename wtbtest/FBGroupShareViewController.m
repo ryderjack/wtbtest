@@ -80,7 +80,7 @@
             NSString *condition = [object objectForKey:@"condition"];
             NSString *size = [object objectForKey:@"size"];
             
-            self.textView.text = [NSString stringWithFormat:@"WTB: %@ %@ in a %@. More details on wantobuy", condition, title, size];
+            self.textView.text = [NSString stringWithFormat:@"WTB: %@ %@ in a %@. More details on bump", condition, title, size];
         }
         else{
             NSLog(@"error %@", error);

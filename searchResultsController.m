@@ -106,5 +106,9 @@
     [self.tableView setHidden:YES];
 }
 
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    [self.delegate willdiss:YES];
+}
 
 @end

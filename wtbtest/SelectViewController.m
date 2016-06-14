@@ -40,12 +40,11 @@
     
     NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
     
-    self.conditionArray = [NSArray arrayWithObjects:@"New w/ tags",@"New no tags", @"Used", @"Any",nil];
+    self.conditionArray = [NSArray arrayWithObjects:@"BNWT",@"BNWOT", @"Used", @"Any",nil];
     self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear", nil];
     self.sizeArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", @"Any", nil];
     self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"OS", @"Any", nil];
     self.deliveryArray = [NSArray arrayWithObjects:@"Meetup",@"Courier", @"Any", nil];
-    
     
     [self.tableView registerNib:[UINib nibWithNibName:@"selectCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
     

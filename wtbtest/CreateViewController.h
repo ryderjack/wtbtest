@@ -15,7 +15,7 @@
 #import "CameraController.h"
 #import <DZNPhotoPickerController/DZNPhotoPickerController.h>
 
-@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, DZNPhotoPickerControllerDelegate, UINavigationControllerDelegate>
+@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, DZNPhotoPickerControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;

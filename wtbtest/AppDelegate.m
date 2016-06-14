@@ -28,9 +28,9 @@
 
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
-//        configuration.server = @"http://localhost:1337/parse";
+        configuration.server = @"http://localhost:1337/parse";
 //        configuration.server = @"http://wantobuy.azurewebsites.net/parse";
-        configuration.server = @"http://wantobuy.herokuapp.com/parse";
+//        configuration.server = @"http://wantobuy.herokuapp.com/parse";
         
         
     }]];
@@ -52,7 +52,7 @@
     NavigationController *navController3 = [[NavigationController alloc] initWithRootViewController:self.welcomeView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController2, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController2, navController3, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
     [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];

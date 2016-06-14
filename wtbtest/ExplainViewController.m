@@ -31,13 +31,13 @@
     self.labelThree.minimumScaleFactor=0.5;
     
     if ([self.setting isEqualToString:@"process"]) {
-        self.titleLabel.text = @"How does wantobuy work?";
+        self.titleLabel.text = @"How does bump work?";
         [self.segmentControl setHidden:NO];
         [self.firstImageView setImage:[UIImage imageNamed:@"compose"]];
         [self.secondImageView setImage:[UIImage imageNamed:@"chat"]];
         [self.thirdImageView setImage:[UIImage imageNamed:@"cart"]];
         
-        self.labelOne.text = @"Create a listing for an item you wantobuy";
+        self.labelOne.text = @"Create a listing for an item you want";
         self.labelTwo.text = @"Sellers see your listing and send you offers to buy their item ";
         self.labelThree.text = @"Choose to accept/reject offers until you reach a deal, pay and its shipped!";
     }
@@ -48,7 +48,7 @@
         [self.secondImageView setImage:[UIImage imageNamed:@"bigTag"]];
         [self.thirdImageView setImage:[UIImage imageNamed:@"send"]];
         
-        self.labelOne.text = @"To prove that you own the item you’re selling, wantobuy requires tagged photos";
+        self.labelOne.text = @"To prove that you own the item you’re selling, bump requires tagged photos";
         self.labelTwo.text = @"Simply write your username and the date on a piece of paper and place this next to your item when taking photos";
         self.labelThree.text = @"Failure to do so could result in a selling ban, so get tagging!";
     }
@@ -126,14 +126,14 @@
         if (self.segmentControl.selectedSegmentIndex == 1) {
             //sellers selected
             [self.firstImageView setImage:[UIImage imageNamed:@"grid"]];
-            self.labelOne.text = @"Browse through items people wantobuy";
+            self.labelOne.text = @"Browse through items people are looking to purchase";
             self.labelTwo.text = @"Spot an item you’re selling? Send the buyer an offer to sell";
             self.labelThree.text = @"Choose to accept/reject offers until you reach a deal, receive payment and then ship!";
         }
         else{
             //buyers selected
             [self.firstImageView setImage:[UIImage imageNamed:@"compose"]];
-            self.labelOne.text = @"Create a listing for an item you wantobuy";
+            self.labelOne.text = @"Create a listing for an item you want";
             self.labelTwo.text = @"Sellers see your listing and send you offers to buy their item ";
             self.labelThree.text = @"Choose to accept/reject offers until you reach a deal, pay and its shipped!";
         }

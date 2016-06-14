@@ -29,7 +29,7 @@
     self.searchString = @"";
     self.searchEnabled = NO;
     
-    self.navigationItem.title = @"wantobuy";
+    self.navigationItem.title = @"bump";
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
@@ -91,6 +91,10 @@
     NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:13],
                                       NSFontAttributeName, nil];
     [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:searchAttributes];
+    
+//    self.definesPresentationContext = YES;
+
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -139,6 +143,12 @@
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
+    NSLog(self.searchEnabled ? @"Yes":@"No");
+    
+    if (self.searchEnabled == YES) {
+        [self searchPressed];
+    }
+    
     if (![PFUser currentUser]) {
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
         NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
@@ -152,7 +162,7 @@
 //    else
 //    {
 //        [PFUser logOut];
-//        
+//
 //        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasFBUpdate"];
 //        
 //        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
@@ -162,12 +172,23 @@
 //    }
 }
 
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    NSLog(self.searchEnabled ? @"Yes" : @"No");
+    
+}
+
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     ExploreCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     
     PFObject *listing;
     
     //add in if (!cell)????
+    
+    if (cell == nil) {
+        
+    }
     
     if (self.searchEnabled == YES) {
         listing = [self.searchResults objectAtIndex:indexPath.row];
@@ -183,7 +204,20 @@
     
     NSString *condition = [listing objectForKey:@"condition"];
     int price = [[listing objectForKey:@"listingPrice"] intValue];
-    cell.priceLabel.text = [NSString stringWithFormat:@"%@ £%d", condition,price];
+    cell.priceLabel.text = [NSString stringWithFormat:@"£%d", price];
+    
+    if ([condition isEqualToString:@"BNWT"]) {
+        [cell.conditionView setImage:[UIImage imageNamed:@"BNWTImg"]];
+    }
+    else if([condition isEqualToString:@"BNWOT"]){
+        [cell.conditionView setImage:[UIImage imageNamed:@"BNWOTImg"]];
+    }
+    else if([condition isEqualToString:@"Any"]){
+        [cell.conditionView setImage:[UIImage imageNamed:@"AnyImg"]];
+    }
+    else if([condition isEqualToString:@"Used"]){
+        [cell.conditionView setImage:[UIImage imageNamed:@"UsedImg"]];
+    }
     
     if ([[listing objectForKey:@"size"] isEqualToString:@"One size"]) {
         cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"size"]];
@@ -261,6 +295,7 @@
     
     if (self.searchEnabled == YES) {
         [self.pullQuery whereKey:@"title" matchesRegex:self.searchString];
+        
     }
     
     [self.pullQuery whereKey:@"status" notEqualTo:@"purchased"];
@@ -327,7 +362,7 @@
         {
             UIAlertController * alert=   [UIAlertController
                                           alertControllerWithTitle:@"Location services disabled"
-                                          message:@"Enable location services in settings to view wantobuy listings nearby!"
+                                          message:@"Enable location services in settings to view WTBs nearby!"
                                           preferredStyle:UIAlertControllerStyleAlert];
             UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
             [alert addAction:ok];
@@ -707,11 +742,11 @@
     self.searchController.searchBar.searchBarStyle = UISearchBarStyleDefault;
     self.searchController.searchBar.delegate = self;
     self.searchController.searchBar.placeholder = @"Search for stuff you're selling";
-
     self.searchController.searchBar.barTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
     self.searchController.searchBar.tintColor = [UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1];
     
     [self.searchController.searchBar setTranslucent:YES];
+    
     self.searchEnabled = YES;
     
     // reset filters
@@ -732,7 +767,13 @@
     [self.collectionView reloadData];
     return YES;
 }
-
+-(void)willdiss:(BOOL)response{
+    NSLog(@"here1");
+    if (response == YES) {
+        NSLog(@"here");
+        [self.searchController dismissViewControllerAnimated:NO completion:nil];
+    }
+}
 -(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
     if (self.searchEnabled == YES) {
         

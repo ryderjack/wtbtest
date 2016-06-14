@@ -22,7 +22,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"Listing";
+    self.navigationItem.title = @"WTB";
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
@@ -172,9 +172,7 @@
             int purchased = [[self.buyer objectForKey:@"purchased"]intValue];
             int sold = [[self.buyer objectForKey:@"sold"] intValue];
             
-            self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
-            
-            //set star image depending on feedback
+            self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];            
         }
         else{
             NSLog(@"error %@", error);

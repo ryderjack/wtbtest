@@ -40,6 +40,13 @@
     self.cellButtonFour.selectionStyle = UITableViewCellSelectionStyleNone;
 }
 
+-(void)viewDidDisappear:(BOOL)animated{
+    if (self.orderMode == NO) {
+        [self.delegate listingEdit:self didFinishEnteringItem:@"new"];
+        [self.navigationController popViewControllerAnimated:NO];
+    }
+}
+
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
 }
@@ -116,7 +123,7 @@
 
 - (IBAction)sharePressed:(id)sender {
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"I just listed an item on wantobuy! Can you sell it to me??"];
+    [items addObject:@"I just listed a WTB on bump! Know anyone that can sell it to me?"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
 }

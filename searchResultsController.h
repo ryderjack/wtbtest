@@ -12,6 +12,7 @@
 
 @protocol searchResultsDelegate <NSObject>
 - (void)favouriteTapped:(NSString *)favourite;
+- (void)willdiss:(BOOL)response;
 @end
 
 @interface searchResultsController : UITableViewController <UISearchResultsUpdating>

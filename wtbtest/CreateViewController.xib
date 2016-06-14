@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10116" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
@@ -65,8 +65,8 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="80.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="What do you wantobuy?" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c6V-YO-8Om">
-                        <rect key="frame" x="16" y="8" width="197" height="21"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="What do you want to buy?" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c6V-YO-8Om">
+                        <rect key="frame" x="16" y="8" width="232" height="21"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
                         <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
@@ -79,7 +79,7 @@
                     </textField>
                 </subviews>
                 <constraints>
-                    <constraint firstAttribute="trailingMargin" secondItem="c6V-YO-8Om" secondAttribute="trailing" constant="99" id="9z7-iQ-kmL"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="c6V-YO-8Om" secondAttribute="trailing" constant="64" id="9z7-iQ-kmL"/>
                     <constraint firstItem="OXz-je-UgW" firstAttribute="top" secondItem="gFf-J1-eeC" secondAttribute="topMargin" constant="20" id="KhX-KY-7dl"/>
                     <constraint firstAttribute="bottomMargin" secondItem="c6V-YO-8Om" secondAttribute="bottom" constant="43.5" id="M0S-tf-rjP"/>
                     <constraint firstAttribute="bottomMargin" secondItem="OXz-je-UgW" secondAttribute="bottom" constant="-6.5" id="SHo-W3-KsB"/>

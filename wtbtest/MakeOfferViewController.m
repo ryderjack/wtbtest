@@ -91,17 +91,6 @@
         self.detailController = [[DetailImageController alloc]init];
         self.detailController.listingPic = NO;
         
-//        NSMutableAttributedString *string = [[NSMutableAttributedString alloc] initWithString:self.tagExplain.text];
-//        NSRange selectedRange = NSMakeRange(42, 4); // 4 characters, starting at index 22
-//        
-//        [string beginEditing];
-//        [string addAttribute:NSForegroundColorAttributeName
-//                       value:[UIColor colorWithRed:0.29 green:0.565 blue:0.886 alpha:1]
-//                       range:selectedRange];
-//        
-//        [string endEditing];
-//        [self.tagExplain setAttributedText:string];
-        
         PFUser *seller = [self.listingObject objectForKey:@"sellerUser"];
         
         [seller fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -110,16 +99,31 @@
                 [self.profileView setFile:[seller objectForKey:@"picture"]];
                 [self.profileView loadInBackground];
                 
-                NSString *purchased = [seller objectForKey:@"purchased"];
-                NSString *sold = [seller objectForKey:@"sold"];
+                int starNumber = [[seller objectForKey:@"currentRating"] intValue];
                 
-                if (!purchased) {
-                    purchased = @"0";
+                if (starNumber == 0) {
+                    [self.starView setImage:[UIImage imageNamed:@"0star"]];
                 }
-                if (!sold) {
-                    sold = @"0";
+                else if (starNumber == 1){
+                    [self.starView setImage:[UIImage imageNamed:@"1star"]];
                 }
-                self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %@\nSold: %@", purchased, sold];
+                else if (starNumber == 2){
+                    [self.starView setImage:[UIImage imageNamed:@"2star"]];
+                }
+                else if (starNumber == 3){
+                    [self.starView setImage:[UIImage imageNamed:@"3star"]];
+                }
+                else if (starNumber == 4){
+                    [self.starView setImage:[UIImage imageNamed:@"4star"]];
+                }
+                else if (starNumber == 5){
+                    [self.starView setImage:[UIImage imageNamed:@"5star"]];
+                }
+                
+                int purchased = [[seller objectForKey:@"purchased"]intValue];
+                int sold = [[seller objectForKey:@"sold"] intValue];
+                
+                self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
             }
             else{
                 NSLog(@"error %@", error);

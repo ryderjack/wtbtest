@@ -39,13 +39,13 @@
     }
     else if (self.index == 1){
         self.mainTitle.text = @"Selling";
-        self.mainLabel.text = @"Hit the filter button to refine your search results when looking for items people wantobuy";
+        self.mainLabel.text = @"Hit the filter button to refine your search results when looking for items people want";
         self.imageView.image = [UIImage imageNamed:@"pic2"];
         
     }
     else if (self.index == 2){
         self.mainTitle.text = @"Buying";
-        self.mainLabel.text = @"Tell sellers exactly what you wantobuy";
+        self.mainLabel.text = @"Tell sellers exactly what you want";
         self.imageView.image = [UIImage imageNamed:@"pic3"];
         
     }

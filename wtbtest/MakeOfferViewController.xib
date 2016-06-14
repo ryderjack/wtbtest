@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10116" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
@@ -145,7 +145,7 @@
                                     <constraint firstAttribute="width" secondItem="tPc-vC-rcE" secondAttribute="height" multiplier="1:1" id="uGj-I3-n0b"/>
                                 </constraints>
                             </imageView>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="4star.png" translatesAutoresizingMaskIntoConstraints="NO" id="O4V-lz-a47">
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="4star.png" translatesAutoresizingMaskIntoConstraints="NO" id="O4V-lz-a47">
                                 <rect key="frame" x="162" y="32" width="128" height="26"/>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="14 sales       3 purchases" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JOJ-4L-0c3">
@@ -756,11 +756,11 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="86" y="1085"/>
         </tableViewCell>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="164" id="NjE-cg-zEO">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="164"/>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="192" id="NjE-cg-zEO">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="192"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="NjE-cg-zEO" id="jbU-zE-ei7">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="163.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="191.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="R7E-5K-khw">
@@ -794,7 +794,7 @@
                     <constraint firstItem="R7E-5K-khw" firstAttribute="top" secondItem="Jil-kG-I7I" secondAttribute="bottom" constant="13" id="vVU-Jm-j3V"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="86" y="1386"/>
+            <point key="canvasLocation" x="86" y="1400"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" id="w7s-b4-lWo">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
