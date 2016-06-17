@@ -15,7 +15,7 @@
 #import "CameraController.h"
 #import <DZNPhotoPickerController/DZNPhotoPickerController.h>
 
-@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, DZNPhotoPickerControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate>
+@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, DZNPhotoPickerControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
@@ -80,5 +80,6 @@
 @property (nonatomic, strong) UIBarButtonItem *resetButton;
 
 @property (nonatomic, strong) NSArray *sizesArray;
+@property (nonatomic, strong) UIWebView *webView;
 
 @end

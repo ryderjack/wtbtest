@@ -21,8 +21,11 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.sobump.jack</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>bump</string>
 				<string>fb955972104485652</string>
 			</array>
 		</dict>
@@ -68,5 +71,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>InstagramAppClientId</key>
+	<string>c25462a25bea4d61ac285d30ab5bd802</string>
+	<key>InstagramAppRedirectURL</key>
+	<string>bump://</string>
 </dict>
 </plist>

@@ -73,15 +73,14 @@
     switch (self.fastCamera.cameraDevice) {
         case FastttCameraDeviceFront:
             cameraDevice = FastttCameraDeviceRear;
+            [self.flashButton setEnabled:YES];
             break;
         case FastttCameraDeviceRear:
         default:
             cameraDevice = FastttCameraDeviceFront;
-            
-            // work??
-            
             self.fastCamera.cameraFlashMode = FastttCameraFlashModeOff;
             [self.flashButton setImage:[UIImage imageNamed:@"FlashOff"] forState:UIControlStateNormal];
+            [self.flashButton setEnabled:NO];
             break;
     }
     if ([FastttCamera isCameraDeviceAvailable:cameraDevice]) {

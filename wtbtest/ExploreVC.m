@@ -143,8 +143,6 @@
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
-    NSLog(self.searchEnabled ? @"Yes":@"No");
-    
     if (self.searchEnabled == YES) {
         [self searchPressed];
     }
@@ -170,13 +168,6 @@
 //        [self presentViewController:navController animated:YES completion:nil];
 //        
 //    }
-}
-
--(void)viewWillDisappear:(BOOL)animated{
-    [super viewWillDisappear:animated];
-    
-    NSLog(self.searchEnabled ? @"Yes" : @"No");
-    
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -449,11 +440,14 @@
             [self.infiniteQuery orderByAscending:@"listingPrice"];
         }
         
-        if ([self.filtersArray containsObject:@"new"]){
-            [self.infiniteQuery whereKey:@"condition" containsString:@"New"];
+        if ([self.filtersArray containsObject:@"BNWT"]){
+            [self.infiniteQuery whereKey:@"condition" containsString:@"BNWT"];
         }
         else if ([self.filtersArray containsObject:@"used"]){
             [self.infiniteQuery whereKey:@"condition" equalTo:@"Used"];
+        }
+        else if ([self.filtersArray containsObject:@"BNWOT"]){
+            [self.infiniteQuery whereKey:@"condition" equalTo:@"BNWOT"];
         }
         
         if ([self.filtersArray containsObject:@"clothing"]){
@@ -579,11 +573,14 @@
             [self.pullQuery orderByAscending:@"listingPrice"];
         }
         
-        if ([self.filtersArray containsObject:@"new"]){
-            [self.pullQuery whereKey:@"condition" containsString:@"New"];
+        if ([self.filtersArray containsObject:@"BNWT"]){
+            [self.pullQuery whereKey:@"condition" containsString:@"BNWT"];
         }
         else if ([self.filtersArray containsObject:@"used"]){
             [self.pullQuery whereKey:@"condition" equalTo:@"Used"];
+        }
+        else if ([self.filtersArray containsObject:@"BNWOT"]){
+            [self.pullQuery whereKey:@"condition" equalTo:@"BNWOT"];
         }
         
         if ([self.filtersArray containsObject:@"clothing"]){
@@ -768,9 +765,7 @@
     return YES;
 }
 -(void)willdiss:(BOOL)response{
-    NSLog(@"here1");
     if (response == YES) {
-        NSLog(@"here");
         [self.searchController dismissViewControllerAnimated:NO completion:nil];
     }
 }

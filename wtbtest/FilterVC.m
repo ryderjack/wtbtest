@@ -46,14 +46,14 @@
             if ([self.filtersArray containsObject:@"lowtohigh"]){
                 [self.lowtoHighButton setSelected:YES];
             }
-            if ([self.filtersArray containsObject:@"new"]){
-                [self.newconditionButton setSelected:YES];
+            if ([self.filtersArray containsObject:@"BNWT"]){
+                [self.BNWTconditionButton setSelected:YES];
             }
             if ([self.filtersArray containsObject:@"used"]){
                 [self.usedButton setSelected:YES];
             }
-            if ([self.filtersArray containsObject:@"any"]){
-                [self.anyButton setSelected:YES];
+            if ([self.filtersArray containsObject:@"BNWOT"]){
+                [self.BNWOTButton setSelected:YES];
             }
             
             if ([self.filtersArray containsObject:@"clothing"]){
@@ -87,7 +87,7 @@
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+    // Dispose of BNWOT resources that can be recreated.
 }
 
 #pragma mark - Table view data source
@@ -183,7 +183,7 @@
 - (IBAction)clearPressed:(id)sender {
     [self.hightolowButton setSelected:NO];
     [self.lowtoHighButton setSelected:NO];
-    [self.newconditionButton setSelected:NO];
+    [self.BNWTconditionButton setSelected:NO];
     [self.usedButton setSelected:NO];
     [self.clothingButton setSelected:NO];
     [self.footButton setSelected:NO];
@@ -191,7 +191,7 @@
     [self.womenButton setSelected:NO];
     [self.lasttapped setSelected:NO];
     [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1]];
-    [self.anyButton setSelected:NO];
+    [self.BNWOTButton setSelected:NO];
     
     [self.filtersArray removeAllObjects];
 }
@@ -219,18 +219,18 @@
         [self.filtersArray removeObject:@"hightolow"];
     }
 }
-- (IBAction)newPressed:(id)sender {
-    if(self.newconditionButton.selected == YES){
-        [self.newconditionButton setSelected:NO];
-        [self.filtersArray removeObject:@"new"];
+- (IBAction)BNWTPressed:(id)sender {
+    if(self.BNWTconditionButton.selected == YES){
+        [self.BNWTconditionButton setSelected:NO];
+        [self.filtersArray removeObject:@"BNWT"];
     }
     else{
-        [self.newconditionButton setSelected:YES];
-        [self.filtersArray addObject:@"new"];
+        [self.BNWTconditionButton setSelected:YES];
+        [self.filtersArray addObject:@"BNWT"];
         [self.usedButton setSelected:NO];
         [self.filtersArray removeObject:@"used"];
-        [self.anyButton setSelected:NO];
-        [self.filtersArray removeObject:@"any"];
+        [self.BNWOTButton setSelected:NO];
+        [self.filtersArray removeObject:@"BNWOT"];
     }
 }
 - (IBAction)usedPressed:(id)sender {
@@ -241,22 +241,22 @@
     else{
         [self.usedButton setSelected:YES];
         [self.filtersArray addObject:@"used"];
-        [self.newconditionButton setSelected:NO];
-        [self.filtersArray removeObject:@"new"];
-        [self.anyButton setSelected:NO];
-        [self.filtersArray removeObject:@"any"];
+        [self.BNWTconditionButton setSelected:NO];
+        [self.filtersArray removeObject:@"BNWT"];
+        [self.BNWOTButton setSelected:NO];
+        [self.filtersArray removeObject:@"BNWOT"];
     }
 }
-- (IBAction)anyPressed:(id)sender {
-    if(self.anyButton.selected == YES){
-        [self.anyButton setSelected:NO];
-        [self.filtersArray removeObject:@"any"];
+- (IBAction)BNWOTPressed:(id)sender {
+    if(self.BNWOTButton.selected == YES){
+        [self.BNWOTButton setSelected:NO];
+        [self.filtersArray removeObject:@"BNWOT"];
     }
     else{
-        [self.anyButton setSelected:YES];
-        [self.filtersArray addObject:@"any"];
-        [self.newconditionButton setSelected:NO];
-        [self.filtersArray removeObject:@"new"];
+        [self.BNWOTButton setSelected:YES];
+        [self.filtersArray addObject:@"BNWOT"];
+        [self.BNWTconditionButton setSelected:NO];
+        [self.filtersArray removeObject:@"BNWT"];
         [self.usedButton setSelected:NO];
         [self.filtersArray removeObject:@"used"];
     }

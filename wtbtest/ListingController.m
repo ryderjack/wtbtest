@@ -423,8 +423,11 @@
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
 }
-- (IBAction)wantobuytooPressed:(id)sender {
-    self.tabBarController.selectedIndex = 1;
+- (IBAction)messageBuyerPressed:(id)sender {
+
+
+
+
 }
 
 -(void)setImageBorder{

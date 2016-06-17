@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="9532" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9530"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="FilterVC">
             <connections>
-                <outlet property="anyButton" destination="gEW-lm-Cp5" id="SCy-e1-9OQ"/>
+                <outlet property="BNWOTButton" destination="Ncy-DF-NM5" id="zlo-gN-akX"/>
+                <outlet property="BNWTconditionButton" destination="86v-Yb-IBl" id="QuH-8b-b1r"/>
                 <outlet property="applyButton" destination="OB9-GK-tFP" id="cfT-yl-Kbh"/>
                 <outlet property="applyCell" destination="9JT-Jg-S3f" id="Bvm-uN-bt2"/>
                 <outlet property="categoryCell" destination="hZa-Zs-XNS" id="yJI-O0-j3T"/>
@@ -19,12 +20,11 @@
                 <outlet property="hightolowButton" destination="NZO-dd-lyQ" id="IBh-h4-H33"/>
                 <outlet property="lowtoHighButton" destination="62M-td-5wI" id="sMf-fE-QQG"/>
                 <outlet property="menButton" destination="bJz-lD-qjE" id="FeX-8b-yio"/>
-                <outlet property="newconditionButton" destination="86v-Yb-IBl" id="l2q-f2-SGV"/>
                 <outlet property="priceCell" destination="YYe-Gz-39n" id="N8I-c9-F4J"/>
                 <outlet property="sizeCell" destination="Tyx-NG-nBY" id="IZh-OX-vr2"/>
                 <outlet property="sizeScrollButton" destination="TAt-vO-hyD" id="LSH-hJ-D8K"/>
                 <outlet property="titleCell" destination="2Qb-lu-ryI" id="XFo-St-PNQ"/>
-                <outlet property="usedButton" destination="Ncy-DF-NM5" id="L6E-FV-wpF"/>
+                <outlet property="usedButton" destination="gEW-lm-Cp5" id="xxF-7x-5IK"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
                 <outlet property="womenButton" destination="RFp-4I-Xbf" id="vKW-kV-5ja"/>
             </connections>
@@ -44,7 +44,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="59"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2Qb-lu-ryI" id="TR9-oe-3vo">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="59"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="58.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Filters" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="kwi-7P-J9B">
@@ -165,10 +165,10 @@
                         <constraints>
                             <constraint firstAttribute="width" secondItem="Ncy-DF-NM5" secondAttribute="height" multiplier="30:11" id="CYU-WZ-l4d"/>
                         </constraints>
-                        <state key="normal" image="usedgrey.png"/>
-                        <state key="selected" image="usedorange.png"/>
+                        <state key="normal" image="BNWOTgrey.png"/>
+                        <state key="selected" image="BNWOTorange.png"/>
                         <connections>
-                            <action selector="usedPressed:" destination="-1" eventType="touchUpInside" id="fUP-VH-QpM"/>
+                            <action selector="BNWOTPressed:" destination="-1" eventType="touchUpInside" id="8gi-b0-XrK"/>
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gEW-lm-Cp5">
@@ -176,10 +176,10 @@
                         <constraints>
                             <constraint firstAttribute="width" secondItem="gEW-lm-Cp5" secondAttribute="height" multiplier="30:11" id="ZGU-q0-D5K"/>
                         </constraints>
-                        <state key="normal" image="anygrey.png"/>
-                        <state key="selected" image="anyorange.png"/>
+                        <state key="normal" image="usedgrey.png"/>
+                        <state key="selected" image="usedorange.png"/>
                         <connections>
-                            <action selector="anyPressed:" destination="-1" eventType="touchUpInside" id="mFF-KU-uF4"/>
+                            <action selector="usedPressed:" destination="-1" eventType="touchUpInside" id="zKF-Ep-xj8"/>
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="86v-Yb-IBl">
@@ -187,10 +187,10 @@
                         <constraints>
                             <constraint firstAttribute="width" secondItem="86v-Yb-IBl" secondAttribute="height" multiplier="30:11" id="2VJ-D6-wZG"/>
                         </constraints>
-                        <state key="normal" image="newgrey.png"/>
-                        <state key="selected" image="neworange.png"/>
+                        <state key="normal" image="BNWTgrey.png"/>
+                        <state key="selected" image="BNWTorange.png"/>
                         <connections>
-                            <action selector="newPressed:" destination="-1" eventType="touchUpInside" id="mYz-qw-XZ5"/>
+                            <action selector="BNWTPressed:" destination="-1" eventType="touchUpInside" id="YHN-ki-LKX"/>
                         </connections>
                     </button>
                 </subviews>
@@ -346,8 +346,10 @@
         </tableViewCell>
     </objects>
     <resources>
-        <image name="anygrey.png" width="90" height="33"/>
-        <image name="anyorange.png" width="90" height="33"/>
+        <image name="BNWOTgrey.png" width="90" height="32"/>
+        <image name="BNWOTorange.png" width="90" height="32"/>
+        <image name="BNWTgrey.png" width="90" height="32"/>
+        <image name="BNWTorange.png" width="90" height="32"/>
         <image name="applyB.png" width="204" height="45"/>
         <image name="clothinggrey.png" width="59" height="45"/>
         <image name="clothingorange.png" width="59" height="45"/>
@@ -357,8 +359,6 @@
         <image name="lowtohighorange.png" width="90" height="33"/>
         <image name="mengrey.png" width="90" height="33"/>
         <image name="menorange.png" width="90" height="33"/>
-        <image name="newgrey.png" width="90" height="33"/>
-        <image name="neworange.png" width="90" height="33"/>
         <image name="shoesgrey.png" width="42" height="45"/>
         <image name="shoesorange.png" width="42" height="45"/>
         <image name="usedgrey.png" width="90" height="33"/>

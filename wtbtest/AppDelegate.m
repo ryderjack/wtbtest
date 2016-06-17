@@ -43,6 +43,7 @@
     self.createView = [[CreateViewController alloc]init];
     self.exploreView = [[ExploreVC alloc]init];
     self.profileView = [[ProfileController alloc]init];
+    self.inboxView = [[InboxViewController alloc]init];
         
     [self.window setBackgroundColor:[UIColor whiteColor]];
     
@@ -50,9 +51,10 @@
     NavigationController *navController1 = [[NavigationController alloc] initWithRootViewController:self.createView];
     NavigationController *navController2 = [[NavigationController alloc] initWithRootViewController:self.profileView];
     NavigationController *navController3 = [[NavigationController alloc] initWithRootViewController:self.welcomeView];
+    NavigationController *navController4 = [[NavigationController alloc] initWithRootViewController:self.inboxView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController2, navController3, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController2, navController4, navController3, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
     [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
@@ -68,6 +70,10 @@
     UITabBarItem *tabBarItem3 = [self.tabBarController.tabBar.items objectAtIndex:2];
     tabBarItem3.image = [UIImage imageNamed:@"profileIcon"];
     tabBarItem3.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
+    
+    UITabBarItem *tabBarItem4 = [self.tabBarController.tabBar.items objectAtIndex:3];
+    tabBarItem4.image = [UIImage imageNamed:@"messagesIcon"];
+    tabBarItem4.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     [self.tabBarController setDelegate:self];
     
@@ -111,6 +117,14 @@
 - (BOOL)tabBarController:(UITabBarController *)theTabBarController shouldSelectViewController:(UIViewController *)viewController
 {
     return (theTabBarController.selectedViewController != viewController);
+}
+
+- (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
+    // handler code here
+    
+    NSLog(@"url recieved: %@", url);
+    
+    return YES;
 }
 
 @end

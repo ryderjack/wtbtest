@@ -35,8 +35,8 @@
 
 //condition buttons
 @property (weak, nonatomic) IBOutlet UIButton *usedButton;
-@property (weak, nonatomic) IBOutlet UIButton *newconditionButton;
-@property (weak, nonatomic) IBOutlet UIButton *anyButton;
+@property (weak, nonatomic) IBOutlet UIButton *BNWTconditionButton;
+@property (weak, nonatomic) IBOutlet UIButton *BNWOTButton;
 
 //category buttons
 @property (weak, nonatomic) IBOutlet UIButton *clothingButton;

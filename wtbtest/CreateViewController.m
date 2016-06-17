@@ -8,7 +8,7 @@
 
 #import "CreateViewController.h"
 #import <TWPhotoPickerController.h>
-
+#import <InstagramKit.h>
 
 @interface CreateViewController ()
 
@@ -74,6 +74,7 @@
     [self addDoneButton];
     
 //    [self.titleField becomeFirstResponder];
+    
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -487,32 +488,69 @@
         if ([self.titleField.text isEqualToString:@""]) {
             [self popUpAlert];
         }
-        else{
-            DZNPhotoPickerController *picker = [DZNPhotoPickerController new];
-            picker.supportedServices =  DZNPhotoPickerControllerServiceInstagram;
-            picker.allowsEditing = NO;
-            picker.cropMode = DZNPhotoEditorViewControllerCropModeSquare;
-            picker.initialSearchTerm = self.titleField.text;
-            picker.enablePhotoDownload = YES;
-            picker.allowAutoCompletedSearch = YES;
-            picker.infiniteScrollingEnabled = YES;
-            picker.title = @"Search Instagram";
         
-            
-            picker.cancellationBlock = ^(DZNPhotoPickerController *picker) {
-                [self dismissViewControllerAnimated:YES completion:nil];
-            };
-            
-            picker.finalizationBlock = ^(DZNPhotoPickerController *picker, NSDictionary *info) {
-                [self handleImagePicker:picker withMediaInfo:info];
-                [self dismissViewControllerAnimated:YES completion:nil];
-            };
-            [self presentViewController:picker animated:YES completion:nil];
-        }
+        
+//        NSURL *authURL = [[InstagramEngine sharedEngine] authorizationURL];
+//        
+//        self.webView = [[UIWebView alloc]initWithFrame:self.view.frame];
+//        self.webView.delegate = self;
+//        [self.view addSubview:self.webView];
+//        
+//        UIViewController *vc = [[UIViewController alloc]init];
+//        [vc.view addSubview:self.webView];
+//        [self.webView loadRequest:[NSURLRequest requestWithURL:authURL]];
+//        
+//        [self presentViewController:vc animated:YES completion:^{
+//            NSLog(@"shown modal VC");
+//        }];
+        
+        
+//        else if (NOT AUTHENTICATED){
+//            
+//        }
+//        else{
+        
+//        }
     }]];
     
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
+
+//- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+//{
+//    NSLog(@"thinking!");
+//    
+//    NSError *error;
+//    if ([[InstagramEngine sharedEngine] receivedValidAccessTokenFromURL:request.URL error:&error]) {
+//        // success!
+//        NSLog(@"success, %@", request);
+//        
+//        [self.webView removeFromSuperview];
+//        
+//        DZNPhotoPickerController *picker = [DZNPhotoPickerController new];
+//        picker.supportedServices =  DZNPhotoPickerControllerServiceInstagram;
+//        picker.allowsEditing = NO;
+//        picker.cropMode = DZNPhotoEditorViewControllerCropModeSquare;
+//        picker.initialSearchTerm = self.titleField.text;
+//        picker.enablePhotoDownload = YES;
+//        picker.allowAutoCompletedSearch = YES;
+//        picker.infiniteScrollingEnabled = YES;
+//        picker.title = @"Search Instagram";
+//        
+//        
+//        picker.cancellationBlock = ^(DZNPhotoPickerController *picker) {
+//            [self dismissViewControllerAnimated:YES completion:nil];
+//        };
+//        
+//        picker.finalizationBlock = ^(DZNPhotoPickerController *picker, NSDictionary *info) {
+//            [self handleImagePicker:picker withMediaInfo:info];
+//            [self dismissViewControllerAnimated:YES completion:nil];
+//        };
+//        [self presentViewController:picker animated:YES completion:nil];
+//        
+//    }
+//    return YES;
+//}
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     UIImage *chosenImage = info[UIImagePickerControllerEditedImage];
