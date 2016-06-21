@@ -7,7 +7,28 @@
 //
 
 #import <JSQMessagesViewController/JSQMessagesViewController.h>
+#import "JSQMessages.h"
+#import <Parse/Parse.h>
+#import "CameraController.h"
 
-@interface MessageViewController : JSQMessagesViewController
+@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate>
+
+@property (nonatomic, strong) NSString *convoId;
+@property (nonatomic, strong) NSString *otherUser;
+@property (nonatomic, strong) PFObject *convoObject;
+@property (nonatomic, strong) NSMutableArray *messages;
+@property (nonatomic, strong) JSQMessagesBubbleImage *outgoingBubbleImageData;
+@property (nonatomic, strong) JSQMessagesBubbleImage *incomingBubbleImageData;
+@property (nonatomic, strong) JSQMessagesBubbleImage *offerBubbleImageData;
+@property (nonatomic, strong) JSQMessagesBubbleImageFactory *bubbleFactory;
+@property (nonatomic, strong) JSQMessagesMediaViewBubbleImageMasker *masker;
+
+@property (nonatomic) int skipped;
+@property (nonatomic) BOOL earlierPressed;
+
+@property (nonatomic, strong) NSMutableArray *messagesParseArray;
+@property (nonatomic, strong) NSMutableArray *sentMessagesParseArray;
+
+@property (nonatomic) BOOL offerMode;
 
 @end

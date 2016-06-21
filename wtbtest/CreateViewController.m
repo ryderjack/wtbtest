@@ -603,6 +603,8 @@
 
 - (void)updateImageWithPayload:(NSDictionary *)payload
 {
+    NSLog(@"here!");
+    
     UIImage *image = payload[UIImagePickerControllerEditedImage];
     if (!image) image = payload[UIImagePickerControllerOriginalImage];
     
