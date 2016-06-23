@@ -14,8 +14,12 @@
 @interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
-@property (nonatomic, strong) NSString *otherUser;
+@property (nonatomic, strong) NSString *otherUserName;
+@property (nonatomic, strong) NSString *tagString;
+
 @property (nonatomic, strong) PFObject *convoObject;
+@property (nonatomic, strong) PFUser *buyerUser;
+
 @property (nonatomic, strong) NSMutableArray *messages;
 @property (nonatomic, strong) JSQMessagesBubbleImage *outgoingBubbleImageData;
 @property (nonatomic, strong) JSQMessagesBubbleImage *incomingBubbleImageData;
@@ -30,5 +34,10 @@
 @property (nonatomic, strong) NSMutableArray *sentMessagesParseArray;
 
 @property (nonatomic) BOOL offerMode;
+
+@property (nonatomic, strong) PFObject *listing;
+@property (nonatomic, strong) PFObject *offerObject;
+
+@property (nonatomic) BOOL sellThisPressed;
 
 @end

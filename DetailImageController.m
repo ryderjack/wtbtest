@@ -50,7 +50,12 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
-    [self.imageView setFile:[self.listing objectForKey:@"image1"]];
+    if (self.messagesPicMode == YES) {
+        [self.imageView setImage:self.messagePicture];
+    }
+    else{
+        [self.imageView setFile:[self.listing objectForKey:@"image1"]];
+    }
     
     [self.pageControl setCurrentPage:self.index];
     [self.imageView loadInBackground];

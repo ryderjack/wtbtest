@@ -48,7 +48,9 @@
     [self.fastCamera takePicture];
 }
 - (IBAction)dismissPressed:(id)sender {
-    [self dismissViewControllerAnimated:YES completion:nil];
+    [self dismissViewControllerAnimated:YES completion:^{
+        [self.delegate dismissPressed:YES];
+    }];
 }
 - (IBAction)flashPressed:(id)sender {
     FastttCameraFlashMode flashMode;

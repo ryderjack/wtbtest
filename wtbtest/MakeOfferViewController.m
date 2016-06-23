@@ -1281,4 +1281,7 @@
 -(void)tagString:(NSString *)tag{
     self.tagString = tag;
 }
+-(void)dismissPressed:(BOOL)yesorno{
+    
+}
 @end

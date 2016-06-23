@@ -425,8 +425,11 @@
     [self presentViewController:activityController animated:YES completion:nil];
 }
 - (IBAction)messageBuyerPressed:(id)sender {
-    
-    
+    self.sellThisPressed = NO;
+    [self setupMessages];
+}
+
+-(void)setupMessages{
     PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     
     NSString *possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"postUser"]objectId], self.listingObject.objectId];
@@ -438,43 +441,51 @@
     [convoQuery whereKey:@"convoId" containedIn:idArray];
     
     [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                //convo exists, goto that one
-                NSLog(@"convoExists");
-                
-                MessageViewController *vc = [[MessageViewController alloc]init];
-                vc.convoId = [object objectForKey:@"convoId"];
-                vc.convoObject = object;
-                vc.otherUser = [[self.listingObject objectForKey:@"postUser"]username];
-                [self.navigationController pushViewController:vc animated:YES];
+        if (object) {
+            //convo exists, goto that one
+            
+            MessageViewController *vc = [[MessageViewController alloc]init];
+            vc.convoId = [object objectForKey:@"convoId"];
+            vc.convoObject = object;
+            vc.listing = self.listingObject;
+            if (self.sellThisPressed == YES) {
+                vc.sellThisPressed = YES;
             }
-            else{
-                //create a new convo and goto it
-                NSLog(@"Must create a convo!");
-                
-                PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
-                convoObject[@"user1"] = [PFUser currentUser];
-                convoObject[@"user2"] = [self.listingObject objectForKey:@"postUser"];
-                convoObject[@"itemId"] = self.listingObject.objectId;
-                convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"postUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
-                
-                [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-                        //saved
-                        NSLog(@"SAVED %@", convoObject);
-                        
-                        MessageViewController *vc = [[MessageViewController alloc]init];
-                        vc.convoId = [convoObject objectForKey:@"convoId"];
-                        vc.convoObject = convoObject;
-                        vc.otherUser = [[self.listingObject objectForKey:@"postUser"]username];
-                        [self.navigationController pushViewController:vc animated:YES];
+            vc.buyerUser = [self.listingObject objectForKey:@"postUser"];
+            vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else{
+            //create a new convo and goto it
+            
+            PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
+            convoObject[@"user1"] = [PFUser currentUser];
+            convoObject[@"user2"] = [self.listingObject objectForKey:@"postUser"];
+            convoObject[@"itemId"] = self.listingObject.objectId;
+            convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"postUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
+            
+            [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    //saved
+                    
+                    MessageViewController *vc = [[MessageViewController alloc]init];
+                    vc.convoId = [convoObject objectForKey:@"convoId"];
+                    vc.convoObject = convoObject;
+                    vc.listing = self.listingObject;
+                    if (self.sellThisPressed == YES) {
+                        vc.sellThisPressed = YES;
                     }
-                    else{
-                        NSLog(@"error");
-                    }
-                }];
-            }
+                    vc.buyerUser = [self.listingObject objectForKey:@"postUser"];
+                    vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
+                else{
+                    NSLog(@"error");
+                }
+            }];
+        }
     }];
+
 }
 
 -(void)setImageBorder{
@@ -561,7 +572,7 @@
 }
 - (IBAction)sellthisPressed:(id)sender {
     
-    // check if have any outstanding offers - if so the latest offer deletes previous offers !!!!!!!!!
+    //check status of item?
     
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         CreateViewController *vc = [[CreateViewController alloc]init];
@@ -572,10 +583,13 @@
         [self.navigationController pushViewController:vc animated:YES];
     }
     else{
-        MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
-        vc.listingObject = self.listingObject;
-        vc.reviewMode = NO;
-        [self.navigationController pushViewController:vc animated:YES];
+        self.sellThisPressed = YES;
+        [self setupMessages];
+        
+//        MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
+//        vc.listingObject = self.listingObject;
+//        vc.reviewMode = NO;
+//        [self.navigationController pushViewController:vc animated:YES];
     }
 }
 @end

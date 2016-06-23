@@ -7,6 +7,8 @@
 //
 
 #import "MessageViewController.h"
+#import "CheckoutController.h"
+#import "DetailImageController.h"
 
 @interface MessageViewController ()
 
@@ -29,7 +31,7 @@
 {
     [super viewDidLoad];
     
-    self.title = self.otherUser;
+    self.title = self.otherUserName;
     
     self.inputToolbar.contentView.textView.pasteDelegate = self;
     self.inputToolbar.contentView.textView.placeHolder = @"Tap the tag icon to send an offer";
@@ -60,6 +62,7 @@
      */
     
     self.senderId = [PFUser currentUser].objectId;
+    
     self.messages = [[NSMutableArray alloc]init];
     self.messagesParseArray = [[NSMutableArray alloc]init];
     self.sentMessagesParseArray = [[NSMutableArray alloc]init];
@@ -171,10 +174,17 @@
                 }
                 else{
                     
-                    message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:[messageOb objectForKey:@"message"]];
+                    NSString *messageText = [messageOb objectForKey:@"message"];
+                    
+                    if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId]) {
+                        messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"Tap to buy now" withString:@""];
+                    }
+                    
+                    message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
                     
                     if ([[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
                         message.isOfferMessage = YES;
+                        message.offerObject = [messageOb objectForKey:@"offerObject"];
                     }
                     
                     [self.messages insertObject:message atIndex:0];
@@ -207,9 +217,13 @@
      *  You must set this from `viewDidAppear:`
      *  Note: this feature is mostly stable, but still experimental
      */
-    self.collectionView.collectionViewLayout.springinessEnabled = NO;    
+    self.collectionView.collectionViewLayout.springinessEnabled = NO;
+    
+    if (self.sellThisPressed == YES) {
+        self.offerMode = YES;
+        self.inputToolbar.contentView.textView.text = @"Selling:\nCondition:\nPrice:£\nMeetup?:";
+    }
 }
-
 
 #pragma mark - Custom menu actions for cells
 
@@ -245,19 +259,102 @@
     if (self.offerMode == YES) {
         
         // offer message
+        messageString = [NSString stringWithFormat:@"%@\nTap to buy now", text];
         
-        if ([self.senderId isEqualToString:[PFUser currentUser].objectId]) {
-            messageString = [NSString stringWithFormat:@"%@\nTap to buy now", text];
+//        //create offer object in bg
+        NSArray *strings = [text componentsSeparatedByString:@"\n"];
+        
+        NSString *itemTitle = @"";
+        NSString *condition = @"";
+        NSString *meetup = @"";
+        NSString *priceString = @"";
+        
+        for (NSString *substring in strings) {
+            NSArray *detailStrings = [substring componentsSeparatedByString:@":"];
+            
+            if ([detailStrings[0] containsString:@"Selling"]) {
+                NSLog(@"item title: %@", detailStrings[1]);
+                itemTitle = detailStrings[1];
+            }
+            else if ([detailStrings[0] containsString:@"Condition"]){
+                NSLog(@"condition: %@", detailStrings[1]);
+                condition = detailStrings[1];
+            }
+            else if ([detailStrings[0] containsString:@"Price"]){
+                NSLog(@"price: %@", detailStrings[1]);
+                
+                NSArray *priceArray = [detailStrings[1] componentsSeparatedByString:@"."];
+                NSLog(@"price array %@", priceArray);
+                
+                if ([priceArray[0] isEqualToString:@"£"]) {
+                    priceString = @"£0.00";
+                }
+                else if (priceArray.count > 1){
+                    NSString *intAmount = priceArray[0];
+                    
+                    if (intAmount.length == 1){
+                        NSLog(@"just the £ then a decimal point");
+                        intAmount = @"£00";
+                    }
+                    else{
+                        NSLog(@"got a number + the £");
+                    }
+                    
+                    NSMutableString *centAmount = priceArray[1];
+                    if (centAmount.length == 2){
+                        NSLog(@"all good");
+                    }
+                    else if (centAmount.length == 1){
+                        NSLog(@"got 1 decimal place");
+                        centAmount = [NSMutableString stringWithFormat:@"%@0", centAmount];
+                    }
+                    else{
+                        NSLog(@"point but no numbers after it");
+                        centAmount = [NSMutableString stringWithFormat:@"%@00", centAmount];
+                    }
+                    
+                    priceString = [NSString stringWithFormat:@"%@.%@", intAmount, centAmount];
+                }
+                else{
+                    NSLog(@"no decimal point");
+                    priceString = [NSString stringWithFormat:@"%@.00", detailStrings[1]];
+                }
+                
+                NSLog(@"formatted price string %@", priceString);
+            }
+            else if ([detailStrings[0] containsString:@"Meetup"]){
+                NSLog(@"meetup: %@", detailStrings[1]);
+                meetup = detailStrings[1];
+            }
         }
-        else{
-            messageString = text;
-        }
+        
+        NSString *prefixToRemove = @"£";
+        NSString *salePrice = [[NSString alloc]init];
+        salePrice = [priceString substringFromIndex:[prefixToRemove length]];
+        float salePriceFloat = [salePrice intValue];
+        
+        self.offerObject = nil;
+        self.offerObject = [PFObject objectWithClassName:@"offers"];
+        
+        [self.offerObject setObject:self.listing forKey:@"wtbListing"];
+        [self.offerObject setObject:itemTitle forKey:@"title"];
+        [self.offerObject setObject:condition forKey:@"condition"];
+        self.offerObject[@"salePrice"] = @(salePriceFloat);
+        [self.offerObject setObject:self.buyerUser forKey:@"buyerUser"];
+        [self.offerObject setObject:[PFUser currentUser] forKey:@"sellerUser"];
+        
     }
     
     JSQMessage *message = [[JSQMessage alloc] initWithSenderId:senderId
                                              senderDisplayName:senderDisplayName
                                                           date:date
                                                           text:messageString];
+    if (self.offerMode == YES) {
+        NSLog(@"self.offerobj %@", self.offerObject);
+        message.offerObject = self.offerObject;
+        NSLog(@"offer prop %@", message.offerObject);
+    }
+    
     [self.messages addObject:message];
     
     PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
@@ -269,6 +366,7 @@
     messageObject[@"status"] = @"sent";
     if (self.offerMode == YES) {
         messageObject[@"offer"] = @"YES";
+        messageObject[@"offerObject"] = self.offerObject;
         message.isOfferMessage = YES;
     }
     else{
@@ -294,17 +392,37 @@
     [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
     
     if (self.offerMode == YES) {
-        CameraController *vc = [[CameraController alloc]init];
-        vc.delegate = self;
-        vc.offerMode = YES;
-        [self presentViewController:vc animated:YES completion:nil];
+        if ([self.convoObject objectForKey:@"convoImages"] == 0) {
+            //images have been previously sent in the chat so don't need to send anymore
+            CameraController *vc = [[CameraController alloc]init];
+            vc.delegate = self;
+            vc.offerMode = YES;
+            [self presentViewController:vc animated:YES completion:nil];
+        }
+        else{
+            PFQuery *convoImagesQuery = [PFQuery queryWithClassName:@"messageImages"];
+            [convoImagesQuery whereKey:@"convo" equalTo:self.convoObject];
+            [convoImagesQuery orderByDescending:@"createdAt"];
+            [convoImagesQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    NSLog(@"got the last image object from the convo %@", object);
+                    
+                    [self.offerObject setObject:[object objectForKey:@"Image"] forKey:@"image"];
+                }
+                else{
+                    NSLog(@"error %@", error);
+                }
+                [self.offerObject saveInBackground];
+            }];
+        }
     }
 }
 
 -(void)textViewDidChange:(UITextView *)textView{
     if (textView == self.inputToolbar.contentView.textView) {
-        if (![textView.text containsString:@"Selling:"] && ![textView.text containsString:@"Condition:"] && ![textView.text containsString:@"Price:"]) {
+        if (![textView.text containsString:@"\nSelling:"] && ![textView.text containsString:@"\nCondition:"] && ![textView.text containsString:@"\nPrice:"] && ![textView.text containsString:@"\nMeetup"]) {
             self.offerMode = NO;
+            NSLog(@"offer mode is now off");
         }
         [self.inputToolbar toggleSendButtonEnabled];
     }
@@ -313,9 +431,6 @@
 - (void)didPressAccessoryButton:(UIButton *)sender
 {
     [self.inputToolbar.contentView.textView resignFirstResponder];
-    
-    //display action sheet with options
-    
     [self alertSheet];
     
 }
@@ -331,7 +446,7 @@
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         self.offerMode = YES;
-        self.inputToolbar.contentView.textView.text = @"Selling:\nCondition:\nPrice:";
+        self.inputToolbar.contentView.textView.text = @"Selling:\nCondition:\nPrice:£\nMeetup?:";
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -361,9 +476,13 @@
                                                    displayName:self.senderDisplayName
                                                          media:photoItem];
     
+    NSLog(@"here1");
+    
     [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
     [self.messages addObject:photoMessage];
     [self finishSendingMessageAnimated:YES];
+    
+     NSLog(@"here2");
     
     PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(image, 0.6)];
     [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
@@ -371,40 +490,92 @@
          if (error) {
              NSLog(@"error %@", error);
          }
+         else{
+             NSLog(@"saved image");
+         }
      }];
+    
+     NSLog(@"here3");
     
     PFObject *picObject = [PFObject objectWithClassName:@"messageImages"];
     [picObject setObject:filePicture forKey:@"Image"];
+    [picObject setObject:self.convoObject forKey:@"convo"];
+    
+    NSLog(@"here4");
+    
     [picObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
         if (succeeded) {
             PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
+            
             messageObject[@"message"] = picObject.objectId;
+            NSLog(@"here5");
             messageObject[@"sender"] = [PFUser currentUser];
+            NSLog(@"here6");
             messageObject[@"senderId"] = [PFUser currentUser].objectId;
+            NSLog(@"here7");
             messageObject[@"senderName"] = [PFUser currentUser].username;
+            NSLog(@"here8");
             messageObject[@"convoId"] = self.convoId;
+            NSLog(@"here9");
             messageObject[@"status"] = @"sent";
+            NSLog(@"here10");
             messageObject[@"mediaMessage"] = @"YES";
+            NSLog(@"here11");
             [messageObject saveInBackground];
+            
+            NSLog(@"here5");
+            
+            if (![self.senderId isEqualToString:self.buyerUser.objectId]) {
+                [self.convoObject incrementKey:@"convoImages"];
+                [self.convoObject saveInBackground];
+            }
+            
+            NSLog(@"here6");
             
             // add new message object to relevant arrays
             [self.sentMessagesParseArray insertObject:picObject atIndex:0];
             [self.messagesParseArray insertObject:picObject atIndex:0];
             
+            NSLog(@"sent array %@ and overall array %@", self.sentMessagesParseArray, self.messagesParseArray);
+            
             //call attributedString method to update labels
             NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
             NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
+            
+            // is crash caused by empty messages?
+            
+            NSLog(@"lastItemIndex %ld", (long)lastItemIndex);
+            
             NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
             
             [self collectionView:self.collectionView attributedTextForCellBottomLabelAtIndexPath:pathToLastItem];
             [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
             [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
+            
+            if (self.offerMode == YES) {
+                [self.offerObject setObject:picObject forKey:@"image"];
+                [self.offerObject saveInBackground];
+            }
+        }
+        else{
+            NSLog(@"error saving %@", error);
         }
     }];
 }
 
+-(void)dismissPressed:(BOOL)yesorno{
+    if (yesorno == YES && self.offerMode == YES) {
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Take a picture of the item you're selling" message:@"Take a picture now of the item you're selling. Tap the tag icon then 'Take a picture'" preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            
+        }]];
+        [self presentViewController:alertView animated:YES completion:nil];
+    }
+}
+
 -(void)tagString:(NSString *)tag{
-    
+    self.tagString = tag;
 }
 
 #pragma mark - JSQMessages CollectionView DataSource
@@ -507,25 +678,27 @@
 
 - (NSAttributedString *)collectionView:(JSQMessagesCollectionView *)collectionView attributedTextForCellBottomLabelAtIndexPath:(NSIndexPath *)indexPath
 {
-    if ([self.messagesParseArray containsObject:self.sentMessagesParseArray[0]]) {
-        
-        //user has sent a message
-        
-        NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
-        NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
-        NSInteger itemIndex = [self.messagesParseArray indexOfObject:self.sentMessagesParseArray[0]];
-        NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:(lastItemIndex -itemIndex)inSection:lastSectionIndex];
-        
-        if (indexPath == pathToLastItem) {
-            NSAttributedString *string = [[NSAttributedString alloc]initWithString:[[self.sentMessagesParseArray objectAtIndex:0]objectForKey:@"status"]];
-            return string;
+    if (self.sentMessagesParseArray.count > 0 && self.messagesParseArray.count > 0) {
+        if ([self.messagesParseArray containsObject:self.sentMessagesParseArray[0]]) {
+            
+            //user has sent a message
+            
+            NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
+            NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
+            NSInteger itemIndex = [self.messagesParseArray indexOfObject:self.sentMessagesParseArray[0]];
+            NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:(lastItemIndex -itemIndex)inSection:lastSectionIndex];
+            
+            if (indexPath == pathToLastItem) {
+                NSAttributedString *string = [[NSAttributedString alloc]initWithString:[[self.sentMessagesParseArray objectAtIndex:0]objectForKey:@"status"]];
+                return string;
+            }
+            else{
+                //index path is not last
+            }
         }
         else{
-            //index path is not last
+            //user hasn't send a message
         }
-    }
-    else{
-        //user hasn't send a message
     }
     
     return nil;
@@ -573,15 +746,6 @@
     
     if (msg.isOfferMessage) {
         cell.textView.textColor = [UIColor whiteColor];
-        
-        if ([msg.senderId isEqualToString:[PFUser currentUser].objectId]) {
-            cell.textView.text = [[msg text]stringByReplacingOccurrencesOfString:@"Tap to buy now" withString:@""];
-            
-            JSQMessagesCollectionViewFlowLayoutInvalidationContext *context = [JSQMessagesCollectionViewFlowLayoutInvalidationContext context];
-            context.invalidateFlowLayoutMessagesCache = YES;
-            [self.collectionView.collectionViewLayout invalidateLayoutWithContext:context];
-            
-        }
     }
     
     return cell;
@@ -664,18 +828,26 @@
 - (CGFloat)collectionView:(JSQMessagesCollectionView *)collectionView
                    layout:(JSQMessagesCollectionViewFlowLayout *)collectionViewLayout heightForCellBottomLabelAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (self.sentMessagesParseArray.count > 0) {
-        if ([self.messagesParseArray containsObject:self.sentMessagesParseArray[0]]) {
-            NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
-            
-            NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
-            NSInteger itemIndex = [self.messagesParseArray indexOfObject:self.sentMessagesParseArray[0]];
-            
-            NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:(lastItemIndex -itemIndex)inSection:lastSectionIndex];
-            
-            
-            if (indexPath == pathToLastItem) {
-                return kJSQMessagesCollectionViewCellLabelHeightDefault;
+        if (self.sentMessagesParseArray.count > 0 && self.messagesParseArray.count > 0) {
+            NSLog(@"in here now1!");
+            if ([self.messagesParseArray containsObject:self.sentMessagesParseArray[0]]) {
+                NSLog(@"in here now!2");
+                NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
+                
+                NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
+                NSInteger itemIndex = [self.messagesParseArray indexOfObject:self.sentMessagesParseArray[0]];
+                NSLog(@"in here now!3");
+                
+                NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:(lastItemIndex -itemIndex)inSection:lastSectionIndex];
+                
+                NSLog(@"in here now!4");
+                
+                if (indexPath == pathToLastItem) {
+                    return kJSQMessagesCollectionViewCellLabelHeightDefault;
+                }
+                else{
+                    return 0.0f;
+                }
             }
             else{
                 return 0.0f;
@@ -683,11 +855,7 @@
         }
         else{
             return 0.0f;
-        }
-    }
-    else{
-        return 0.0f;
-    }
+        } 
 }
 
 #pragma mark - Responding to collection view tap events
@@ -695,7 +863,6 @@
 - (void)collectionView:(JSQMessagesCollectionView *)collectionView
                 header:(JSQMessagesLoadEarlierHeaderView *)headerView didTapLoadEarlierMessagesButton:(UIButton *)sender
 {
-    NSLog(@"Load earlier messages!");
     self.earlierPressed = YES;
     [self loadMessages];
 }
@@ -707,7 +874,27 @@
 
 - (void)collectionView:(JSQMessagesCollectionView *)collectionView didTapMessageBubbleAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSLog(@"Tapped message bubble! %@", [self.messages objectAtIndex:indexPath.item]);
+    
+    JSQMessage *tappedMessage = [self.messages objectAtIndex:indexPath.item];
+    
+    if (tappedMessage.isOfferMessage == YES) {
+        CheckoutController *vc = [[CheckoutController alloc]init];
+        vc.confirmedOfferObject = tappedMessage.offerObject;
+        NSLog(@"tapped offer %@", tappedMessage.offerObject);
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else if ([[self.messages objectAtIndex:indexPath.item] isMediaMessage] == YES){
+        DetailImageController *vc = [[DetailImageController alloc]init];
+        vc.listingPic = NO;
+        vc.numberOfPics = 1;
+        vc.messagesPicMode = YES;
+        
+        id<JSQMessageMediaData> mediaItem = tappedMessage.media;
+        JSQPhotoMediaItem *photoItem = (JSQPhotoMediaItem *)mediaItem;
+        vc.messagePicture = photoItem.image;
+        
+        [self presentViewController:vc animated:YES completion:nil];
+    }
 }
 
 - (void)collectionView:(JSQMessagesCollectionView *)collectionView didTapCellAtIndexPath:(NSIndexPath *)indexPath touchLocation:(CGPoint)touchLocation
@@ -717,23 +904,23 @@
 
 #pragma mark - JSQMessagesComposerTextViewPasteDelegate methods
 
-
 - (BOOL)composerTextView:(JSQMessagesComposerTextView *)textView shouldPasteWithSender:(id)sender
 {
-    if ([UIPasteboard generalPasteboard].image) {
-        // If there's an image in the pasteboard, construct a media item with that image and `send` it.
-        JSQPhotoMediaItem *item = [[JSQPhotoMediaItem alloc] initWithImage:[UIPasteboard generalPasteboard].image];
-        JSQMessage *message = [[JSQMessage alloc] initWithSenderId:self.senderId
-                                                 senderDisplayName:self.senderDisplayName
-                                                              date:[NSDate date]
-                                                             media:item];
-        [self.messages addObject:message];
-        [self finishSendingMessage];
-        
-        
-        return NO;
-    }
-    return YES;
+//    if ([UIPasteboard generalPasteboard].image) {
+//        // If there's an image in the pasteboard, construct a media item with that image and `send` it.
+//        JSQPhotoMediaItem *item = [[JSQPhotoMediaItem alloc] initWithImage:[UIPasteboard generalPasteboard].image];
+//        JSQMessage *message = [[JSQMessage alloc] initWithSenderId:self.senderId
+//                                                 senderDisplayName:self.senderDisplayName
+//                                                              date:[NSDate date]
+//                                                             media:item];
+//        [self.messages addObject:message];
+//        [self finishSendingMessage];
+//        
+//        
+//        return NO;
+//    }
+//    return YES;
+    return NO;
 }
 
 @end

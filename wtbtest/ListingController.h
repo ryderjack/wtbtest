@@ -63,5 +63,7 @@
 
 @property (nonatomic, strong) PFUser *buyer;
 
+@property (nonatomic) BOOL sellThisPressed;
+
 
 @end

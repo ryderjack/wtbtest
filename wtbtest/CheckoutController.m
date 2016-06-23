@@ -29,17 +29,24 @@
     self.authenticityCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.voucherCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
-    self.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
-    self.deliverypriceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue]];
+    [self.confirmedOfferObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (!error) {
+            self.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
+            self.price = [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue];
+            self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",self.price];
+        }
+    }];
+    
+//    self.deliverypriceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue]];
     
     //setup values
-    self.price = [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue];
-    self.delivery = [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue];
+    
+//    self.delivery = [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue];
 //    self.fee = (self.price + self.delivery)*0.05;
-    self.fee = 0;
-    float total = (self.price + self.delivery ); //+ self.fee
-    self.transactionfeeLabel.text = [NSString stringWithFormat:@"£%.2f", self.fee];
-    self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",(total + 15)];
+//    self.fee = 0;
+//    float total = (self.price + self.delivery ); //+ self.fee
+//    self.transactionfeeLabel.text = [NSString stringWithFormat:@"£%.2f", self.fee];
+//    self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",(total + 15)];
     
     self.addressLabel.adjustsFontSizeToFitWidth = YES;
     self.addressLabel.minimumScaleFactor=0.5;
@@ -54,6 +61,8 @@
     else{
         self.addressLabel.text = @"Add address";
     }
+    
+    [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
 
     //paypal icons in footer
     UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 60)];
@@ -85,7 +94,7 @@
         return 1;
     }
     else if (section == 1){
-        return 3; //should be 4 with fee cell
+        return 1; //should be 4 with fee cell & delivery cell & authenticity
     }
     else if (section == 2){
         return 1;
@@ -118,8 +127,12 @@
     else{
         PFObject *orderObject =[PFObject objectWithClassName:@"orders"];
         [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
+        NSLog(@"offer object %@", self.confirmedOfferObject);
+        
         [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
+        
         [orderObject setObject:[self.confirmedOfferObject objectForKey:@"sellerUser"] forKey:@"sellerUser"];
+        NSLog(@"sellerUser %@", [self.confirmedOfferObject objectForKey:@"sellerUser"]);
         
         [orderObject setObject:[NSNumber numberWithBool:YES] forKey:@"paid"];
         [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"shipped"];
@@ -129,22 +142,24 @@
         [orderObject setObject:@"YES" forKey:@"check"];
         
         NSString *prefixToRemove = @"£";
-        NSString *fee = [[NSString alloc]init];
-        fee = [self.transactionfeeLabel.text substringFromIndex:[prefixToRemove length]];
-        float feeFloat = [fee floatValue];
-        orderObject[@"fee"] = @(feeFloat);
+        
+//        NSString *fee = [[NSString alloc]init];
+//        fee = [self.transactionfeeLabel.text substringFromIndex:[prefixToRemove length]];
+//        float feeFloat = [fee floatValue];
+//        orderObject[@"fee"] = @(feeFloat);
         
         NSString *buyerTotal = [[NSString alloc]init];
         buyerTotal = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
         float buyerTotalFloat = [buyerTotal floatValue];
         orderObject[@"buyerTotal"] = @(buyerTotalFloat);
         
-        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCost"] forKey:@"sellerTotal"];
+//        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCost"] forKey:@"sellerTotal"];
         [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
-        NSString *delivery = [[NSString alloc]init];
-        delivery = [self.deliverypriceLabel.text substringFromIndex:[prefixToRemove length]];
-        float deliveryFloat = [delivery floatValue];
-        orderObject[@"delivery"] = @(deliveryFloat);
+        
+//        NSString *delivery = [[NSString alloc]init];
+//        delivery = [self.deliverypriceLabel.text substringFromIndex:[prefixToRemove length]];
+//        float deliveryFloat = [delivery floatValue];
+//        orderObject[@"delivery"] = @(deliveryFloat);
         
         [orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
@@ -219,12 +234,12 @@
         if (indexPath.row == 0) {
             return self.itemPriceCell;
         }
-        else if (indexPath.row == 1){
-            return self.deliveryCell;
-        }
-        else if (indexPath.row == 2){
-            return self.authenticityCell;
-        }
+//        else if (indexPath.row == 1){
+//            return self.deliveryCell;
+//        }
+//        else if (indexPath.row == 1){
+//            return self.authenticityCell;
+//        }
 //        else if (indexPath.row == 3){ should be above authenticity
 //            return self.feeCell;
 //        }
@@ -257,12 +272,12 @@
         if (indexPath.row == 0) {
             return 44;
         }
-        else if (indexPath.row == 1){
-            return 44;
-        }
-        else if (indexPath.row == 2){
-            return 126;
-        }
+//        else if (indexPath.row == 1){
+//            return 126;
+//        }
+//        else if (indexPath.row == 2){
+//            return 44;
+//        }
 //        else if (indexPath.row == 3){ swap with one above!
 //            return 44;
 //        }

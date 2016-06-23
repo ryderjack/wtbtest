@@ -27,6 +27,9 @@
 
 // if its a listing pic then we dont show the tag label ^
 @property (nonatomic) BOOL listingPic;
+@property (nonatomic) BOOL messagesPicMode;
+@property (nonatomic, strong) UIImage *messagePicture;
+
 @property (nonatomic, strong) NSString *tagText;
 
 

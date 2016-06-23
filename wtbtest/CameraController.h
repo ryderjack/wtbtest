@@ -15,6 +15,7 @@
 @protocol CameraControllerDelegate <NSObject>
 - (void)finalImage:(UIImage *)image;
 -(void)tagString:(NSString *)tag;
+-(void)dismissPressed:(BOOL)yesorno;
 @end
 
 @interface CameraController : UIViewController <FastttCameraDelegate, ConfirmControllerDelegate>
