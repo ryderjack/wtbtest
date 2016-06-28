@@ -1160,4 +1160,7 @@
 -(void)tagString:(NSString *)tag{
     //do nothing only for images shown in offer mode
 }
+-(void)dismissPressed:(BOOL)yesorno{
+    //do nothing in create VC
+}
 @end

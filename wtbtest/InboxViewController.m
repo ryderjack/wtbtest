@@ -7,6 +7,8 @@
 //
 
 #import "InboxViewController.h"
+#import "MessageViewController.h"
+#import <SVPullToRefresh/SVPullToRefresh.h>
 
 @interface InboxViewController ()
 
@@ -17,11 +19,76 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
+    self.navigationItem.title = @"Messages";
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    [self.tableView registerNib:[UINib nibWithNibName:@"InboxCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
+    self.convoObjects = [[NSArray alloc]init];
+    self.unseenMessages = [[NSMutableArray alloc]init];
+    
+    [self loadMessages];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [self loadMessages];
+}
+
+-(void)loadMessages{
+    PFQuery *convosQuery = [PFQuery queryWithClassName:@"convos"];
+    [convosQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
+    [convosQuery whereKey:@"totalMessages" notEqualTo:@0];
+    [convosQuery includeKey:@"user1"];
+    [convosQuery includeKey:@"user2"];
+    [convosQuery includeKey:@"wtbListing"];
+    [convosQuery includeKey:@"lastSent"];
+    [convosQuery orderByDescending:@"createdAt"];
+    [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (!error) {
+            if (objects) {
+                self.convoObjects = objects;
+                [self.tableView reloadData];
+                [self.tableView.pullToRefreshView stopAnimating];
+                
+                [self.unseenMessages removeAllObjects];
+                
+                for (PFObject *convo in objects) {
+                    PFObject *msgObject = [convo objectForKey:@"lastSent"];
+                    if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                        [self.unseenMessages addObject:msgObject];
+                    }
+                }
+                // careful! as only showing unseen messages that have been loaded
+                if (self.unseenMessages.count > 0) {
+                    [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%ld", self.unseenMessages.count];
+                    self.navigationItem.title = [NSString stringWithFormat:@"Messages(%ld)", self.unseenMessages.count];
+                }
+                else{
+                    self.navigationItem.title = @"Messages";
+                }
+            }
+            else{
+                NSLog(@"no convos");
+                //update table view
+            }
+        }
+        else{
+            NSLog(@"error %@", error);
+        }
+    }];
+}
+
+-(void)didMoveToParentViewController:(UIViewController *)parent {
+    [super didMoveToParentViewController:parent];
+    
+    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
+    __weak typeof(self) weakSelf = self;
+    [self.tableView addPullToRefreshWithActionHandler:^{
+        [weakSelf loadMessages];
+    }];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -32,65 +99,128 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 0;
+    return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 0;
+    return self.convoObjects.count;
 }
 
-/*
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:<#@"reuseIdentifier"#> forIndexPath:indexPath];
+    self.cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
+    if (!self.cell) {
+        self.cell = [[InboxCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
+    }
+    PFObject *convoObject = [self.convoObjects objectAtIndex:indexPath.row];
     
-    // Configure the cell...
+    PFUser *user1 = [convoObject objectForKey:@"user1"];
+    PFUser *user2 = [convoObject objectForKey:@"user2"];
     
-    return cell;
+    if (user1 == [PFUser currentUser]) {
+        //current user is user 1
+        self.cell.usernameLabel.text = [NSString stringWithFormat:@"%@", user2.username];
+        [self.cell.userPicView setFile:[user2 objectForKey:@"picture"]];
+        [self.cell.userPicView loadInBackground];
+    }
+    else{
+        //current user is user 2
+        self.cell.usernameLabel.text = [NSString stringWithFormat:@"%@", user1.username];
+        [self.cell.userPicView setFile:[user1 objectForKey:@"picture"]];
+        [self.cell.userPicView loadInBackground];
+    }
+    
+    //set timestamp
+    NSDate *convoDate = convoObject.updatedAt;
+    NSCalendar* calendar = [NSCalendar currentCalendar];
+    BOOL updatedToday = [calendar isDateInToday:convoDate];
+    NSDateFormatter *dateFormat = [[NSDateFormatter alloc] init];
+    [dateFormat setLocale:[NSLocale currentLocale]];
+    
+    if (updatedToday == YES) {
+        //format into the time
+        [dateFormat setDateFormat:@"HH:mm"];
+    }
+    else{
+        //format into the day/month
+        [dateFormat setDateFormat:@"dd/MM"];
+    }
+    self.cell.timeLabel.text = [NSString stringWithFormat:@"%@", [dateFormat stringFromDate:convoDate]];
+    [self setImageBorder:self.cell.userPicView];
+    
+    PFObject *wtbListing = [convoObject objectForKey:@"wtbListing"];
+    [self.cell.wtbImageView setFile:[wtbListing objectForKey:@"image1"]];
+    [self.cell.wtbImageView loadInBackground];
+    self.cell.wtbTitleLabel.text = [NSString stringWithFormat:@"%@", [wtbListing objectForKey:@"title"]];
+    self.cell.wtbPriceLabel.text = [NSString stringWithFormat:@"£%@", [wtbListing objectForKey:@"listingPrice"]];
+    [self setImageBorder:self.cell.wtbImageView];
+    
+    PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
+    NSString *text = [msgObject objectForKey:@"message"];
+    
+    if ([[msgObject objectForKey:@"mediaMessage"]isEqualToString:@"YES"]) {
+        self.cell.messageLabel.text = [NSString stringWithFormat:@"%@ sent a photo", [msgObject objectForKey:@"senderName"]];
+    }
+    else if ([[msgObject objectForKey:@"offer"]isEqualToString:@"YES"]){
+        self.cell.messageLabel.text = [NSString stringWithFormat:@"%@ sent an offer", [msgObject objectForKey:@"senderName"]];
+    }
+    else{
+        self.cell.messageLabel.text = [NSString stringWithFormat:@"%@",text];
+    }
+    
+    if ([[msgObject objectForKey:@"status"] isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+        //message has not been seen
+        [self.cell.unreadIcon setHidden:NO];
+    }
+    else{
+        //message has been seen
+        [self.cell.unreadIcon setHidden:YES];
+    }
+    return self.cell;
 }
-*/
 
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    
+    [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    PFObject *convoObject = [self.convoObjects objectAtIndex:indexPath.row];
+    PFObject *listing = [convoObject objectForKey:@"wtbListing"];
+    
+    MessageViewController *vc = [[MessageViewController alloc]init];
+    vc.convoId = [convoObject objectForKey:@"convoId"];
+    vc.convoObject = convoObject;
+    vc.listing = listing;
+    vc.buyerUser = [listing objectForKey:@"postUser"];
+    vc.otherUserName = @"";
+    [self.navigationController pushViewController:vc animated:YES];
 }
-*/
 
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    } else if (editingStyle == UITableViewCellEditingStyleInsert) {
-        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
+-(void)setImageBorder:(UIImageView *)imageView{
+    imageView.layer.cornerRadius = imageView.frame.size.width / 2;
+    imageView.layer.masksToBounds = YES;
+    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    imageView.contentMode = UIViewContentModeScaleAspectFill;
 }
-*/
-
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
+                     
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return 119;
 }
-*/
 
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
+-(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    // Remove seperator inset
+    if ([cell respondsToSelector:@selector(setSeparatorInset:)]) {
+        [cell setSeparatorInset:UIEdgeInsetsZero];
+    }
+    
+    // Prevent the cell from inheriting the Table View's margin settings
+    if ([cell respondsToSelector:@selector(setPreservesSuperviewLayoutMargins:)]) {
+        [cell setPreservesSuperviewLayoutMargins:NO];
+    }
+    
+    // Explictly set your cell's layout margins
+    if ([cell respondsToSelector:@selector(setLayoutMargins:)]) {
+        [cell setLayoutMargins:UIEdgeInsetsZero];
+    }
 }
-*/
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
 
 @end

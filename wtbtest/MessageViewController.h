@@ -40,4 +40,6 @@
 
 @property (nonatomic) BOOL sellThisPressed;
 
+@property (nonatomic, strong) UIBarButtonItem *cancelButton;
+
 @end

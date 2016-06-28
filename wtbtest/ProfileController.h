@@ -7,13 +7,18 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <MessageUI/MessageUI.h>
 
-@interface ProfileController : UITableViewController
+@interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *receivedOffers;
 @property (strong, nonatomic) IBOutlet UITableViewCell *sentOffers;
 @property (strong, nonatomic) IBOutlet UITableViewCell *purchasedItems;
 @property (strong, nonatomic) IBOutlet UITableViewCell *soldItems;
+@property (strong, nonatomic) IBOutlet UITableViewCell *settingsCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *profileCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *howItWorks;
+@property (strong, nonatomic) IBOutlet UITableViewCell *feedbackCell;
 
 @end

@@ -7,7 +7,19 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "InboxCell.h"
+#import <Parse/Parse.h>
+#import <ParseUI/ParseUI.h>
 
 @interface InboxViewController : UITableViewController
+
+@property (nonatomic, strong) InboxCell *cell;
+@property (nonatomic, strong) NSArray *convoObjects;
+
+@property (nonatomic, strong) NSMutableArray *unseenMessages;
+
+//@property (nonatomic, strong) PFLiveQueryClient *client;
+//@property (nonatomic, strong) PFQuery *query;
+//@property (nonatomic, strong) PFLiveQuerySubscription *subscription;
 
 @end

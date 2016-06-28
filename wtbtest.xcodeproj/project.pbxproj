@@ -366,6 +366,18 @@
 		04CD30E11D159FE200E2850D /* tagIconG.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30DE1D159FE200E2850D /* tagIconG.png */; };
 		04CD30E21D159FE200E2850D /* tagIconG@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30DF1D159FE200E2850D /* tagIconG@2x.png */; };
 		04CD30E31D159FE200E2850D /* tagIconG@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30E01D159FE200E2850D /* tagIconG@3x.png */; };
+		04CD30E71D1C19B000E2850D /* InboxCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04CD30E51D1C19B000E2850D /* InboxCell.m */; };
+		04CD30E81D1C19B000E2850D /* InboxCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30E61D1C19B000E2850D /* InboxCell.xib */; };
+		04CD30EC1D1D329200E2850D /* unreadIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30E91D1D329200E2850D /* unreadIcon.png */; };
+		04CD30ED1D1D329200E2850D /* unreadIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30EA1D1D329200E2850D /* unreadIcon@2x.png */; };
+		04CD30EE1D1D329200E2850D /* unreadIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30EB1D1D329200E2850D /* unreadIcon@3x.png */; };
+		04CD30F91D1ED57F00E2850D /* chatButton@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30F61D1ED57F00E2850D /* chatButton@3x.png */; };
+		04CD30FA1D1ED57F00E2850D /* chatButton@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30F71D1ED57F00E2850D /* chatButton@1x.png */; };
+		04CD30FB1D1ED57F00E2850D /* chatButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30F81D1ED57F00E2850D /* chatButton@2x.png */; };
+		04CD31041D1FDEE000E2850D /* UserProfileController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04CD31021D1FDEE000E2850D /* UserProfileController.m */; };
+		04CD31051D1FDEE000E2850D /* UserProfileController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04CD31031D1FDEE000E2850D /* UserProfileController.xib */; };
+		04CD310E1D21723E00E2850D /* SettingsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04CD310C1D21723E00E2850D /* SettingsController.m */; };
+		04CD310F1D21723E00E2850D /* SettingsController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04CD310D1D21723E00E2850D /* SettingsController.xib */; };
 		04CF28B21CCBC36700BFE066 /* selectCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04CF28B01CCBC36700BFE066 /* selectCell.m */; };
 		04CF28B31CCBC36700BFE066 /* selectCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04CF28B11CCBC36700BFE066 /* selectCell.xib */; };
 		04D9B9581C88E60E004AF0F2 /* ListingController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04D9B9561C88E60E004AF0F2 /* ListingController.m */; };
@@ -883,6 +895,21 @@
 		04CD30DE1D159FE200E2850D /* tagIconG.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tagIconG.png; sourceTree = "<group>"; };
 		04CD30DF1D159FE200E2850D /* tagIconG@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tagIconG@2x.png"; sourceTree = "<group>"; };
 		04CD30E01D159FE200E2850D /* tagIconG@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tagIconG@3x.png"; sourceTree = "<group>"; };
+		04CD30E41D1C19B000E2850D /* InboxCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InboxCell.h; sourceTree = "<group>"; };
+		04CD30E51D1C19B000E2850D /* InboxCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InboxCell.m; sourceTree = "<group>"; };
+		04CD30E61D1C19B000E2850D /* InboxCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = InboxCell.xib; sourceTree = "<group>"; };
+		04CD30E91D1D329200E2850D /* unreadIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = unreadIcon.png; sourceTree = "<group>"; };
+		04CD30EA1D1D329200E2850D /* unreadIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "unreadIcon@2x.png"; sourceTree = "<group>"; };
+		04CD30EB1D1D329200E2850D /* unreadIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "unreadIcon@3x.png"; sourceTree = "<group>"; };
+		04CD30F61D1ED57F00E2850D /* chatButton@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "chatButton@3x.png"; sourceTree = "<group>"; };
+		04CD30F71D1ED57F00E2850D /* chatButton@1x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "chatButton@1x.png"; sourceTree = "<group>"; };
+		04CD30F81D1ED57F00E2850D /* chatButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "chatButton@2x.png"; sourceTree = "<group>"; };
+		04CD31011D1FDEE000E2850D /* UserProfileController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UserProfileController.h; sourceTree = "<group>"; };
+		04CD31021D1FDEE000E2850D /* UserProfileController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UserProfileController.m; sourceTree = "<group>"; };
+		04CD31031D1FDEE000E2850D /* UserProfileController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = UserProfileController.xib; sourceTree = "<group>"; };
+		04CD310B1D21723E00E2850D /* SettingsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingsController.h; sourceTree = "<group>"; };
+		04CD310C1D21723E00E2850D /* SettingsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SettingsController.m; sourceTree = "<group>"; };
+		04CD310D1D21723E00E2850D /* SettingsController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SettingsController.xib; sourceTree = "<group>"; };
 		04CF28AF1CCBC36700BFE066 /* selectCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = selectCell.h; sourceTree = "<group>"; };
 		04CF28B01CCBC36700BFE066 /* selectCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = selectCell.m; sourceTree = "<group>"; };
 		04CF28B11CCBC36700BFE066 /* selectCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = selectCell.xib; sourceTree = "<group>"; };
@@ -1045,6 +1072,12 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				04CD30F61D1ED57F00E2850D /* chatButton@3x.png */,
+				04CD30F71D1ED57F00E2850D /* chatButton@1x.png */,
+				04CD30F81D1ED57F00E2850D /* chatButton@2x.png */,
+				04CD30E91D1D329200E2850D /* unreadIcon.png */,
+				04CD30EA1D1D329200E2850D /* unreadIcon@2x.png */,
+				04CD30EB1D1D329200E2850D /* unreadIcon@3x.png */,
 				04CD30DE1D159FE200E2850D /* tagIconG.png */,
 				04CD30DF1D159FE200E2850D /* tagIconG@2x.png */,
 				04CD30E01D159FE200E2850D /* tagIconG@3x.png */,
@@ -1572,6 +1605,12 @@
 				040333241CAADB4A00C59385 /* SummaryCell.xib */,
 				04D9BA031C8DEA9D004AF0F2 /* ProfileController.h */,
 				04D9BA041C8DEA9D004AF0F2 /* ProfileController.m */,
+				04CD310B1D21723E00E2850D /* SettingsController.h */,
+				04CD310C1D21723E00E2850D /* SettingsController.m */,
+				04CD310D1D21723E00E2850D /* SettingsController.xib */,
+				04CD31011D1FDEE000E2850D /* UserProfileController.h */,
+				04CD31021D1FDEE000E2850D /* UserProfileController.m */,
+				04CD31031D1FDEE000E2850D /* UserProfileController.xib */,
 				04D9BA051C8DEA9D004AF0F2 /* ProfileController.xib */,
 			);
 			name = "Profile controller";
@@ -1647,6 +1686,9 @@
 		04CD30B01D1404EA00E2850D /* Messaging */ = {
 			isa = PBXGroup;
 			children = (
+				04CD30E41D1C19B000E2850D /* InboxCell.h */,
+				04CD30E51D1C19B000E2850D /* InboxCell.m */,
+				04CD30E61D1C19B000E2850D /* InboxCell.xib */,
 				04CD30CF1D14141900E2850D /* MessageViewController.h */,
 				04CD30D01D14141900E2850D /* MessageViewController.m */,
 				04CD30AD1D1404E400E2850D /* InboxViewController.h */,
@@ -1877,15 +1919,18 @@
 				0475A77F1C821D5E0049AD61 /* share@3x.png in Resources */,
 				04CD30CE1D140B9900E2850D /* messagesIcon@3x.png in Resources */,
 				04B462541CB02C4F003755B2 /* starOn@2x.png in Resources */,
+				04CD30EC1D1D329200E2850D /* unreadIcon.png in Resources */,
 				0472B6511C7DB21600529B2E /* chooseLibButton@2x.png in Resources */,
 				04B462531CB02C4F003755B2 /* planeOn@2x.png in Resources */,
 				0475A6DD1C7E4BEC0049AD61 /* pic2.png in Resources */,
 				04C080381C8469DE00B8682C /* location@2x.png in Resources */,
+				04CD30FA1D1ED57F00E2850D /* chatButton@1x.png in Resources */,
 				04C0803B1C8469DE00B8682C /* plane.png in Resources */,
 				04D9B9AF1C8A0014004AF0F2 /* question@2x.png in Resources */,
 				04CD30A91D13FDE000E2850D /* BNWTgrey.png in Resources */,
 				0475A6E71C7E4D910049AD61 /* startButton@3x.png in Resources */,
 				04A91DAC1C87591C00035F55 /* usedorange.png in Resources */,
+				04CD31051D1FDEE000E2850D /* UserProfileController.xib in Resources */,
 				04D9B9761C899CF1004AF0F2 /* savelater@2x.png in Resources */,
 				04C0814B1C85EB5200B8682C /* switchIcon@3x.png in Resources */,
 				04C0803F1C8469DE00B8682C /* expand@2x.png in Resources */,
@@ -1937,6 +1982,7 @@
 				04F82CBA1C9D8E4700C4E250 /* trackingpaid@3x.png in Resources */,
 				04A91DBC1C875ABF00035F55 /* clothinggrey@2x.png in Resources */,
 				04CD30891D10561300E2850D /* UsedImg@3x.png in Resources */,
+				04CD30EE1D1D329200E2850D /* unreadIcon@3x.png in Resources */,
 				04B462571CB02C4F003755B2 /* cost@3x.png in Resources */,
 				04A91D8B1C87583200035F55 /* lowtohighgrey.png in Resources */,
 				04C0803E1C8469DE00B8682C /* settings@2x.png in Resources */,
@@ -1979,6 +2025,7 @@
 				046A35D11CA2AA6D0066FF5B /* wtbicon60@3x.png in Resources */,
 				04D9B9771C899CF1004AF0F2 /* savelater@3x.png in Resources */,
 				04F82CAA1C9D8A7F00C4E250 /* feedbackbutton@1x.png in Resources */,
+				04CD310F1D21723E00E2850D /* SettingsController.xib in Resources */,
 				04C080401C8469DE00B8682C /* expand@3x.png in Resources */,
 				0475A6D91C7E4BEC0049AD61 /* pic3@2x.png in Resources */,
 				046A35D51CA2AA6D0066FF5B /* wtbicon40@1x.png in Resources */,
@@ -2057,6 +2104,7 @@
 				04D9B9AE1C8A0014004AF0F2 /* question.png in Resources */,
 				0475A6EF1C7F00EE0049AD61 /* CreateViewController.xib in Resources */,
 				04B0F87B1CA547A600C247F1 /* group1@2x.png in Resources */,
+				04CD30E81D1C19B000E2850D /* InboxCell.xib in Resources */,
 				048B6F611C90887400F0894A /* checkIcon@2x.png in Resources */,
 				04C080411C8469DE00B8682C /* location.png in Resources */,
 				042A38431CBE86CA009D5155 /* 3star.png in Resources */,
@@ -2159,6 +2207,7 @@
 				04D9B9D41C8B8219004AF0F2 /* cartIcon@3x.png in Resources */,
 				04A91D911C87583200035F55 /* hightolowgrey@3x.png in Resources */,
 				04CD30E31D159FE200E2850D /* tagIconG@3x.png in Resources */,
+				04CD30F91D1ED57F00E2850D /* chatButton@3x.png in Resources */,
 				048B6F601C90887400F0894A /* checkIcon@3x.png in Resources */,
 				0475A6FD1C7F67400049AD61 /* camHolder.png in Resources */,
 				04D9B9B31C8A0228004AF0F2 /* rows@2x.png in Resources */,
@@ -2182,6 +2231,7 @@
 				048B6F741C99766C00F0894A /* profileIcon.png in Resources */,
 				04CD308A1D10561300E2850D /* BNWTImg@2x.png in Resources */,
 				04F82CC51C9EAB4B00C4E250 /* trackingfeedback.png in Resources */,
+				04CD30FB1D1ED57F00E2850D /* chatButton@2x.png in Resources */,
 				04C080641C84BDDF00B8682C /* filterButton@2x.png in Resources */,
 				04B0F8811CA547B200C247F1 /* group1@3x.png in Resources */,
 				04B0F8621CA414F200C247F1 /* starBlkIcon@2x.png in Resources */,
@@ -2251,6 +2301,7 @@
 				0472B6361C7CD35D00529B2E /* page1.png in Resources */,
 				04CD30A11D13FDE000E2850D /* BNWOTgrey.png in Resources */,
 				0475A6C81C7E32D10049AD61 /* Tut1ViewController.xib in Resources */,
+				04CD30ED1D1D329200E2850D /* unreadIcon@2x.png in Resources */,
 				04B0F8661CA414F700C247F1 /* starIcon.png in Resources */,
 				04B0F87A1CA547A600C247F1 /* group1.png in Resources */,
 				04D9B9A71C89FEE3004AF0F2 /* compose.png in Resources */,
@@ -2360,10 +2411,13 @@
 				0472B60C1C7CC78500529B2E /* WelcomeViewController.m in Sources */,
 				04D9B9581C88E60E004AF0F2 /* ListingController.m in Sources */,
 				0475A6EE1C7F00EE0049AD61 /* CreateViewController.m in Sources */,
+				04CD31041D1FDEE000E2850D /* UserProfileController.m in Sources */,
 				04C081551C85F1A600B8682C /* FilterVC.m in Sources */,
 				04C081321C85C62700B8682C /* ConfirmController.m in Sources */,
+				04CD30E71D1C19B000E2850D /* InboxCell.m in Sources */,
 				04CD30D11D14141900E2850D /* MessageViewController.m in Sources */,
 				04B0F85A1CA413E500C247F1 /* FeedbackController.m in Sources */,
+				04CD310E1D21723E00E2850D /* SettingsController.m in Sources */,
 				04D9B9901C89F99F004AF0F2 /* ExplainViewController.m in Sources */,
 				04D9BA061C8DEA9D004AF0F2 /* ProfileController.m in Sources */,
 				0475A6CB1C7E3FCF0049AD61 /* ContainerViewController.m in Sources */,

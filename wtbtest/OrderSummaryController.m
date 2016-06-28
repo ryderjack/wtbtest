@@ -8,6 +8,7 @@
 
 #import "OrderSummaryController.h"
 #import "FeedbackController.h"
+#import "MessageViewController.h"
 
 @interface OrderSummaryController ()
 
@@ -74,42 +75,6 @@
             NSLog(@"error %@", error);
         }
     }];
-    
-    //Status key
-    // paid = paid
-    // paidshipped = paid for and been marked as shipped
-    // paidshippedfb = paid, shipped and feedback has been left
-    // paidfb = paid, not marked as shipped but feedback has been left
-    
-    //moved the below to view will appear
-    
-//    if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paid"]) {
-//        [self.titleImageView setImage:[UIImage imageNamed:@"trackingpaid"]];
-//        [self.shippedButton setSelected:NO];
-//        //use statusString as a local version of what the key value is to avoid multiple saves. The finally saved on willDisappear
-//        self.statusString = @"paid";
-//    }
-//    else if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paidshipped"]) {
-//        [self.titleImageView setImage:[UIImage imageNamed:@"trackingshipped"]];
-//        [self.shippedButton setSelected:YES];
-//        self.statusString = @"paidshipped";
-//    }
-//    else if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paidshippedfb"]) {
-//        [self.titleImageView setImage:[UIImage imageNamed:@"trackingfeedback"]];
-//        [self.shippedButton setSelected:YES];
-//        self.statusString = @"paidshippedfb";
-//        
-//        [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
-//        [self.feedbackButton setEnabled:NO];
-//    }
-//    else if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"paidfb"]) {
-//        [self.titleImageView setImage:[UIImage imageNamed:@"feedbacknotshipped"]];
-//        [self.shippedButton setSelected:NO];
-//        self.statusString = @"paidfb";
-//        
-//        [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
-//        [self.feedbackButton setEnabled:NO];
-//    }
     
     //setup user cell
     
@@ -290,12 +255,13 @@
         return 1;
     }
     else if (section ==3){
-        if (self.purchased == YES) {
-            return 3; //add another for fee
-        }
-        else{
-            return 2;
-        }
+        return 1;
+//        if (self.purchased == YES) {
+//            return 3; //add another for fee
+//        }
+//        else{
+//            return 2;
+//        }
     }
     else if (section ==4){
         return 1;
@@ -327,10 +293,10 @@
     }
     else if (indexPath.section ==5){
         if (self.purchased == YES) {
-            return 299;
+            return 179;
         }
         else{
-            return 359;
+            return 238;
         }
     }
     return 1;
@@ -360,12 +326,12 @@
         if (indexPath.row == 0){
             return self.itempriceCell;
         }
-        else if (indexPath.row == 1){
-            return self.deliveryCell;
-        }
-        else if (indexPath.row == 2){
-            return self.checkCell;
-        }
+//        else if (indexPath.row == 1){
+//            return self.deliveryCell;
+//        }
+//        else if (indexPath.row == 2){
+//            return self.checkCell;
+//        }
 //        else if (indexPath.row == 3){    swap with cell above
 //            return self.feeCell;
 //        }
@@ -440,12 +406,24 @@
 }
 - (IBAction)reportPressed:(id)sender {
 }
-- (IBAction)askPressed:(id)sender {
+- (IBAction)chatPressed:(id)sender {
+    MessageViewController *vc = [[MessageViewController alloc]init];
+    vc.convoId = [[self.confirmedOffer objectForKey:@"convo"]objectId];
+    vc.convoObject = [self.confirmedOffer objectForKey:@"convo"];
+    vc.listing = [self.confirmedOffer objectForKey:@"wtbListing"];
+    
+    if (self.purchased == YES) {
+        //other user is seller, current is buyer
+        vc.buyerUser = [PFUser currentUser];
+    }
+    else{
+        //other is buyer, current is seller
+        vc.buyerUser = self.otherUser;
+    }
+    vc.otherUserName = self.otherUser.username;
+    [self.navigationController pushViewController:vc animated:YES];
 }
-- (IBAction)cancelPressed:(id)sender {
-}
-- (IBAction)viewogpressed:(id)sender {
-}
+
 - (IBAction)markAsShipped:(id)sender {
     if (self.shippedButton.selected == YES) {
        

@@ -457,13 +457,14 @@
         }
         else{
             //create a new convo and goto it
-            
+            NSLog(@"create new convo");
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
             convoObject[@"user1"] = [PFUser currentUser];
             convoObject[@"user2"] = [self.listingObject objectForKey:@"postUser"];
             convoObject[@"itemId"] = self.listingObject.objectId;
+            convoObject[@"wtbListing"] = self.listingObject;
             convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"postUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
-            
+            convoObject[@"totalMessages"] = @0;
             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
                     //saved
@@ -491,10 +492,6 @@
 -(void)setImageBorder{
     self.buyerImgView.layer.cornerRadius = self.buyerImgView.frame.size.width / 2;
     self.buyerImgView.layer.masksToBounds = YES;
-    
-    self.buyerImgView.layer.borderWidth = 1.0f;
-    self.buyerImgView.layer.borderColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1].CGColor;
-    
     self.buyerImgView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     self.buyerImgView.contentMode = UIViewContentModeScaleAspectFill;
 }

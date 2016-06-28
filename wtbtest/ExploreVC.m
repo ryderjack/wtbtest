@@ -93,7 +93,6 @@
     [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:searchAttributes];
     
 //    self.definesPresentationContext = YES;
-
     
 }
 
@@ -796,7 +795,6 @@
             if (history.count >= 15) {
                 [history removeObjectAtIndex:0];
             }
-            
             [history addObject:self.searchString];
             
             [[PFUser currentUser] setObject:history forKey:@"searches"];

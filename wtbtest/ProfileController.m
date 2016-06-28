@@ -11,6 +11,9 @@
 #import "OffersController.h"
 #import "FBGroupShareViewController.h"
 #import "SummaryCollectionView.h"
+#import "UserProfileController.h"
+#import "SettingsController.h"
+#import "ExplainViewController.h"
 
 @interface ProfileController ()
 
@@ -48,21 +51,32 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 2;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 2;
+    if (section == 0) {
+        return 1;
+    }
+    else if (section == 1){
+        return 2;
+    }
+    else if (section == 2){
+        return 1;
+    }
+    else if (section == 3){
+        return 2;
+    }
+    else{
+        return 1;
+    }
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (indexPath.section == 0){
         if (indexPath.row == 0) {
-            return self.receivedOffers;
-        }
-        else if (indexPath.row == 1) {
-            return self.sentOffers;
+            return self.profileCell;
         }
     }
     else if (indexPath.section == 1){
@@ -71,6 +85,19 @@
         }
         else if (indexPath.row == 1) {
             return self.soldItems;
+        }
+    }
+    else if (indexPath.section == 2){
+        if (indexPath.row == 0) {
+            return self.settingsCell;
+        }
+    }
+    else if (indexPath.section == 3){
+        if (indexPath.row == 0) {
+            return self.howItWorks;
+        }
+        else if (indexPath.row == 1) {
+            return self.feedbackCell;
         }
     }
     return nil;
@@ -86,15 +113,9 @@
     
     if (indexPath.section == 0) {
         if (indexPath.row == 0) {
-            //received pressed
-            OffersController *vc = [[OffersController alloc]init];
-            vc.mode = @"received";
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-        else if (indexPath.row == 1){
-            //sent pressed
-            OffersController *vc = [[OffersController alloc]init];
-            vc.mode = @"sent";
+            //profile pressed
+            UserProfileController *vc = [[UserProfileController alloc]init];
+            vc.user = [PFUser currentUser];
             [self.navigationController pushViewController:vc animated:YES];
         }
     }
@@ -112,6 +133,55 @@
             [self.navigationController pushViewController:vc animated:YES];
         }
     }
-    
+    else if (indexPath.section == 2){
+        if (indexPath.row == 0) {
+            //settings pressed
+            SettingsController *vc = [[SettingsController alloc]init];
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+    }
+    else if (indexPath.section == 3){
+        if (indexPath.row == 0) {
+            //how it works pressed
+            ExplainViewController *vc = [[ExplainViewController alloc]init];
+            vc.setting = @"process";
+            [self presentViewController:vc animated:YES completion:nil];
+        }
+        else if (indexPath.row == 1) {
+            //send us feedback
+            [self showEmail];
+        }
+    }
 }
+
+- (void)showEmail{
+    NSString *emailTitle = @"Help us make bump better!";
+    NSString *messageBody = @"Yo\n\n Tell us how we can make bump even better or any problems you've faced! We promise to reply within an hour.";
+    NSArray *toRecipents = [NSArray arrayWithObject:@"ryder_jack@hotmail.co.uk"];
+    MFMailComposeViewController *mc = [[MFMailComposeViewController alloc] init];
+    mc.mailComposeDelegate = self;
+    [mc setSubject:emailTitle];
+    [mc setMessageBody:messageBody isHTML:NO];
+    [mc setToRecipients:toRecipents];
+    [self presentViewController:mc animated:YES completion:NULL];
+}
+
+- (void) mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
+{
+    switch (result)
+    {
+        case MFMailComposeResultCancelled:
+            break;
+        case MFMailComposeResultSaved:
+            break;
+        case MFMailComposeResultSent:
+            break;
+        case MFMailComposeResultFailed:
+            break;
+        default:
+            break;
+    }
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
 @end

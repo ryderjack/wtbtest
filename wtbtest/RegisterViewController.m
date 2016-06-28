@@ -87,7 +87,7 @@
         user[PF_USER_GENDER] = userData[@"gender"];
     }
     if ([userData objectForKey:@"picture"]) {
-        NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?height=80", userData[@"id"]];
+        NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=normal", userData[@"id"]];
         NSURL *picUrl = [NSURL URLWithString:userImageURL];
         NSData *pic = [NSData dataWithContentsOfURL:picUrl];
         [self.profileImageView setImage:[UIImage imageWithData:pic]];
@@ -224,8 +224,8 @@
     self.profileImageView.layer.cornerRadius = self.profileImageView.frame.size.width / 2;
     self.profileImageView.layer.masksToBounds = YES;
     
-    self.profileImageView.layer.borderWidth = 1.0f;
-    self.profileImageView.layer.borderColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1].CGColor;
+//    self.profileImageView.layer.borderWidth = 1.0f;
+//    self.profileImageView.layer.borderColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1].CGColor;
     
     self.profileImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     self.profileImageView.contentMode = UIViewContentModeScaleAspectFill;
