@@ -12,6 +12,7 @@
 #import "ExplainViewController.h"
 #import "WelcomeViewController.h"
 #import "NavigationController.h"
+#import "Flurry.h"
 
 @interface ExploreVC ()
 
@@ -34,11 +35,7 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"question"] style:UIBarButtonItemStylePlain target:self action:@selector(showExtraInfo)];
-    
     UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"searchBarIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(searchPressed)];
-    
-    self.navigationItem.rightBarButtonItem = infoButton;
     self.navigationItem.leftBarButtonItem = searchButton;
     
     //collection view/cell setup
@@ -151,6 +148,8 @@
         NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
         [self presentViewController:navController animated:YES completion:nil];
     }
+    
+    [Flurry logEvent:@"Explore_Tapped"];
     
 //    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasFBUpdate111"])
 //    {
@@ -715,12 +714,6 @@
         [self.searchController.searchBar setHidden:YES];
     }
     [self.navigationController pushViewController:vc animated:YES];
-}
-
--(void)showExtraInfo{
-    ExplainViewController *vc = [[ExplainViewController alloc]init];
-    vc.setting = @"process";
-    [self presentViewController:vc animated:YES completion:nil];
 }
 
 -(void)searchPressed{

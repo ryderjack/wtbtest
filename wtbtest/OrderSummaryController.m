@@ -405,6 +405,25 @@
     [self.navigationController pushViewController:vc animated:YES];
 }
 - (IBAction)reportPressed:(id)sender {
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"bump takes inappropriate behaviour very seriously.\nIf you feel although this transaction has violated our terms let us know so we can make your experience on bump as brilliant as possible. We'll be in touch within the hour to find out how we can help" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+        PFObject *reportObject = [PFObject objectWithClassName:@"Reported"];
+        reportObject[@"reportedUser"] = self.otherUser;
+        reportObject[@"reporter"] = [PFUser currentUser];
+        reportObject[@"order"] = self.orderObject;
+        reportObject[@"offer"] = self.confirmedOffer;
+        [reportObject saveInBackground];
+    }]];
+    
+    [self presentViewController:alertView animated:YES completion:nil];
+
+    
+    
 }
 - (IBAction)chatPressed:(id)sender {
     MessageViewController *vc = [[MessageViewController alloc]init];
@@ -414,11 +433,11 @@
     
     if (self.purchased == YES) {
         //other user is seller, current is buyer
-        vc.buyerUser = [PFUser currentUser];
+        vc.otherUser = [PFUser currentUser];
     }
     else{
         //other is buyer, current is seller
-        vc.buyerUser = self.otherUser;
+        vc.otherUser = self.otherUser;
     }
     vc.otherUserName = self.otherUser.username;
     [self.navigationController pushViewController:vc animated:YES];

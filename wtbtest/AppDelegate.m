@@ -11,7 +11,7 @@
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import "NavigationController.h"
 #import <ParseFacebookUtilsV4/PFFacebookUtils.h>
-
+#import "Flurry.h"
 
 @interface AppDelegate ()
 
@@ -30,9 +30,10 @@
         configuration.clientKey = @"jack1234";
         configuration.server = @"http://localhost:1337/parse";
 //        configuration.server = @"http://wantobuy.herokuapp.com/parse";
-        
-        
     }]];
+
+    [Flurry startSession:@"9Y63FGHCCGZQJDQTCTMP"];
+    [Flurry setDebugLogEnabled:YES];
     
     [PFFacebookUtils initializeFacebookWithApplicationLaunchOptions:launchOptions];
     
@@ -59,27 +60,95 @@
     [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
     
     UITabBarItem *tabBarItem1 = [self.tabBarController.tabBar.items objectAtIndex:0];
-    tabBarItem1.image = [UIImage imageNamed:@"exploreTabIcon"];
+    tabBarItem1.image = [UIImage imageNamed:@"homeIcon"];
     tabBarItem1.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     UITabBarItem *tabBarItem2 = [self.tabBarController.tabBar.items objectAtIndex:1];
-    tabBarItem2.image = [UIImage imageNamed:@"createIcon"];
+    tabBarItem2.image = [UIImage imageNamed:@"plusIcon"];
     tabBarItem2.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     UITabBarItem *tabBarItem3 = [self.tabBarController.tabBar.items objectAtIndex:2];
-    tabBarItem3.image = [UIImage imageNamed:@"profileIcon"];
+    tabBarItem3.image = [UIImage imageNamed:@"profileIcon2"];
     tabBarItem3.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     UITabBarItem *tabBarItem4 = [self.tabBarController.tabBar.items objectAtIndex:3];
-    tabBarItem4.image = [UIImage imageNamed:@"messagesIcon"];
+    tabBarItem4.image = [UIImage imageNamed:@"messagesIcon2"];
     tabBarItem4.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     [self.tabBarController setDelegate:self];
     
     self.window.rootViewController = self.tabBarController;
     [self.window makeKeyAndVisible];
+    
+    UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
+                                                    UIUserNotificationTypeBadge |
+                                                    UIUserNotificationTypeSound);
+    UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:userNotificationTypes
+                                                                             categories:nil];
+    [application registerUserNotificationSettings:settings];
+    [application registerForRemoteNotifications];
+    
+    self.installation = [PFInstallation currentInstallation];
+    if (self.installation.badge == 0) {
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+    }
+    else{
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%ld", (long)self.installation.badge]];
+    }
+    
+    self.unseenMessages = [[NSMutableArray alloc]init];
 
     return YES;
+}
+
+//call to check messages if installation badge value doesnt work for ppl who havent enabled push
+-(void)checkMesages{
+    PFQuery *convosQuery = [PFQuery queryWithClassName:@"convos"];
+    [convosQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
+    [convosQuery whereKey:@"totalMessages" notEqualTo:@0];
+    [convosQuery orderByDescending:@"createdAt"];
+    [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (!error) {
+            if (objects) {
+                
+                for (PFObject *convo in objects) {
+                    PFObject *msgObject = [convo objectForKey:@"lastSent"];
+                    if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                        [self.unseenMessages addObject:msgObject];
+                    }
+                }
+                if (self.unseenMessages.count > 0) {
+                    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%lu", (unsigned long)self.unseenMessages.count]];
+                }
+                else{
+                    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                }
+            }
+            else{
+                NSLog(@"no convos");
+            }
+        }
+        else{
+            NSLog(@"error %@", error);
+        }
+    }];
+}
+
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+    // Store the deviceToken in the current installation and save it to Parse.
+    [self.installation setDeviceTokenFromData:deviceToken];
+    if ([PFUser currentUser]) {
+        [self.installation setObject:[PFUser currentUser] forKey:@"user"];
+        [self.installation setObject:[PFUser currentUser].objectId forKey:@"userId"];
+    }
+    self.installation.channels = @[ @"global" ];
+    [self.installation saveInBackground];
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+    NSLog(@"DID RECEIVE A PUSH");
+    [PFPush handlePush:userInfo];
+    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
 }
 
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {

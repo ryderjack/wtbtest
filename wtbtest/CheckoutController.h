@@ -25,12 +25,12 @@
 //shipping cell
 @property (weak, nonatomic) IBOutlet UILabel *addressLabel;
 
-@property (weak, nonatomic) IBOutlet UILabel *priceLabel;
 @property (weak, nonatomic) IBOutlet UILabel *deliverypriceLabel;
 @property (weak, nonatomic) IBOutlet UILabel *transactionfeeLabel;
 @property (weak, nonatomic) IBOutlet UISwitch *authenticitySwitch;
 @property (weak, nonatomic) IBOutlet UILabel *totalLabel;
 @property (weak, nonatomic) IBOutlet UITextField *voucherField;
+@property (weak, nonatomic) IBOutlet UITextField *priceField;
 
 //costs
 @property (nonatomic) float price;

@@ -29,9 +29,11 @@
     self.authenticityCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.voucherCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
+    self.priceField.delegate = self;
+    
     [self.confirmedOfferObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
-            self.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
+            self.priceField.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
             self.price = [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue];
             self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",self.price];
         }
@@ -124,6 +126,19 @@
         
         return;
     }
+    else if ([self.priceField.text isEqualToString:@"£"]){
+        // havent entered valid price
+        [self.payButton setEnabled:YES];
+        UIAlertController * alert=   [UIAlertController
+                                      alertControllerWithTitle:@"Price"
+                                      message:@"Add a valid item price to pay"
+                                      preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+        [alert addAction:ok];
+        [self presentViewController:alert animated:YES completion:nil];
+        
+        return;
+    }
     else{
         PFObject *orderObject =[PFObject objectWithClassName:@"orders"];
         [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
@@ -182,30 +197,6 @@
                 vc.orderMode = YES;
                 vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
                 [self.navigationController pushViewController:vc animated:YES];
-                
-//                [findOtherOffers findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//                    if (objects) {
-//                        for (PFObject *offer in objects){
-//                            NSLog(@"this offer is being set to expired because the item has already been purchased! %@", offer);
-//                            
-//                            [offer setObject:@"expired" forKey:@"status"];
-//                            [offer saveInBackground];
-//                            
-//                            [self.payButton setEnabled:YES];
-//                            ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-//                            vc.orderMode = YES;
-//                            vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
-//                            [self.navigationController pushViewController:vc animated:YES];
-//                        }
-//                    }
-//                    else{
-//                        NSLog(@"no objects or error %@", error);
-//                        ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-//                        vc.orderMode = YES;
-//                        vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
-//                        [self.navigationController pushViewController:vc animated:YES];
-//                    }
-//                }];
             }
             else{
                 [self.payButton setEnabled:YES];
@@ -319,17 +310,8 @@
 - (UIView *) tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-    
     [headerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     return headerView;
-}
--(BOOL)textFieldShouldReturn:(UITextField *)textField{
-    [textField resignFirstResponder];
-    return YES;
-}
-
--(void)removeKeyboard{
-    [self.voucherField resignFirstResponder];
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
@@ -368,4 +350,50 @@
     self.addressLabel.text = address;
 }
 
+//text field delegates
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    if (textField == self.priceField) {
+        // Check for deletion of the £ sign
+        if (range.location == 0 && [textField.text hasPrefix:@"£"])
+            return NO;
+        
+        NSString *updatedText = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        NSArray *stringsArray = [updatedText componentsSeparatedByString:@"."];
+        
+        // Check for an absurdly large amount
+        if (stringsArray.count > 0)
+        {
+            NSString *dollarAmount = stringsArray[0];
+            if (dollarAmount.length > 6)
+                return NO;
+            
+            // not allowed to enter all 9s
+            if ([dollarAmount isEqualToString:@"£99999"]) {
+                return NO;
+            }
+        }
+        
+        return YES;
+    }
+    
+    return YES;
+}
+
+-(void)textFieldDidBeginEditing:(UITextField *)textField{
+    if (textField == self.priceField) {
+        self.priceField.text = @"£";
+    }
+}
+
+-(BOOL)textFieldShouldReturn:(UITextField *)textField{
+    [textField resignFirstResponder];
+    return YES;
+}
+
+-(void)removeKeyboard{
+    [self.voucherField resignFirstResponder];
+    [self.priceField resignFirstResponder];
+}
 @end

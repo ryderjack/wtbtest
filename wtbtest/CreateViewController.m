@@ -9,6 +9,9 @@
 #import "CreateViewController.h"
 #import <TWPhotoPickerController.h>
 #import <InstagramKit.h>
+#import "InstaWebController.h"
+#import "NavigationController.h"
+#import "Flurry.h"
 
 @interface CreateViewController ()
 
@@ -60,7 +63,7 @@
     self.warningLabel.text = @"";
     self.genderSize = @"";
     
-    self.resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Clear" style:UIBarButtonItemStylePlain target:self action:@selector(resetForm)];
+    self.resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain target:self action:@selector(resetForm)];
     
     if (self.editFromListing == YES) {
         [self listingSetup];
@@ -83,12 +86,14 @@
     if ([self.status isEqualToString:@"new"]) {
         [self resetForm];
     }
-    if ([self.status isEqualToString:@"edit"] && [self.resetButton.title isEqualToString:@"Clear"]) {
+    
+    if ([self.status isEqualToString:@"edit"] && [self.resetButton.title isEqualToString:@"Reset"]) {
         [self.navigationItem setRightBarButtonItems:nil animated:YES];
         [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     }
     else{
         self.navigationItem.rightBarButtonItem = self.resetButton;
+        [Flurry logEvent:@"Create_Tapped"];
     }
 }
 - (void)didReceiveMemoryWarning {
@@ -481,93 +486,120 @@
         [self presentViewController:picker animated:YES completion:nil];
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Search Instagram" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        
-        // search insta
-        
-        if ([self.titleField.text isEqualToString:@""]) {
-            [self popUpAlert];
-        }
-        
-        
+//    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Search Instagram" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//        
+//        // search insta
+//        
+//        if ([self.titleField.text isEqualToString:@""]) {
+//            [self popUpAlert];
+//        }
+//        
+//        
 //        NSURL *authURL = [[InstagramEngine sharedEngine] authorizationURL];
-//        
-//        self.webView = [[UIWebView alloc]initWithFrame:self.view.frame];
+//
+//        self.viewC = [[UIViewController alloc]init];
+//        self.webView = [[UIWebView alloc]initWithFrame:self.viewC.view.frame];
 //        self.webView.delegate = self;
-//        [self.view addSubview:self.webView];
+//        [self.viewC.view addSubview:self.webView];
 //        
-//        UIViewController *vc = [[UIViewController alloc]init];
-//        [vc.view addSubview:self.webView];
 //        [self.webView loadRequest:[NSURLRequest requestWithURL:authURL]];
 //        
-//        [self presentViewController:vc animated:YES completion:^{
+//        [self.navigationController presentViewController:self.viewC animated:YES completion:^{
 //            NSLog(@"shown modal VC");
 //        }];
-        
-        
-//        else if (NOT AUTHENTICATED){
-//            
-//        }
-//        else{
-        
-//        }
-    }]];
+//        
+//    }]];
     
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
-//- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
-//{
-//    NSLog(@"thinking!");
-//    
-//    NSError *error;
-//    if ([[InstagramEngine sharedEngine] receivedValidAccessTokenFromURL:request.URL error:&error]) {
-//        // success!
-//        NSLog(@"success, %@", request);
-//        
-//        [self.webView removeFromSuperview];
-//        
-//        DZNPhotoPickerController *picker = [DZNPhotoPickerController new];
-//        picker.supportedServices =  DZNPhotoPickerControllerServiceInstagram;
-//        picker.allowsEditing = NO;
-//        picker.cropMode = DZNPhotoEditorViewControllerCropModeSquare;
-//        picker.initialSearchTerm = self.titleField.text;
-//        picker.enablePhotoDownload = YES;
-//        picker.allowAutoCompletedSearch = YES;
-//        picker.infiniteScrollingEnabled = YES;
-//        picker.title = @"Search Instagram";
-//        
-//        
-//        picker.cancellationBlock = ^(DZNPhotoPickerController *picker) {
-//            [self dismissViewControllerAnimated:YES completion:nil];
-//        };
-//        
-//        picker.finalizationBlock = ^(DZNPhotoPickerController *picker, NSDictionary *info) {
-//            [self handleImagePicker:picker withMediaInfo:info];
-//            [self dismissViewControllerAnimated:YES completion:nil];
-//        };
-//        [self presentViewController:picker animated:YES completion:nil];
-//        
-//    }
-//    return YES;
-//}
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+{
+    NSLog(@"thinking!");
+    
+    NSError *error;
+    if ([[InstagramEngine sharedEngine] receivedValidAccessTokenFromURL:request.URL error:&error]) {
+        // success!
+        NSLog(@"success, %@", request);
+        
+        [self.viewC dismissViewControllerAnimated:YES completion:^{
+            
+            NSLog(@"dismissed webview VC");
+            
+            InstagramEngine *engine = [InstagramEngine sharedEngine];
+            [engine getMediaWithTagName:@"yeezy" count:5 maxId:nil withSuccess:^(NSArray<InstagramMedia *> * _Nonnull media, InstagramPaginationInfo * _Nonnull paginationInfo) {
+                
+                NSLog(@"array of insta media %@", media);
+                
+            } failure:^(NSError * _Nonnull error, NSInteger serverStatusCode) {
+                NSLog(@"insta media error %@", error);
+            }];
+            
+            //end points are fucked on the repo - they still haven't been fixed... GREAT
+            
+            
+//            DZNPhotoPickerController *picker = [DZNPhotoPickerController new];
+//            picker.supportedServices =  DZNPhotoPickerControllerServiceInstagram;
+//            picker.allowsEditing = NO;
+//            picker.cropMode = DZNPhotoEditorViewControllerCropModeSquare;
+//            picker.initialSearchTerm = self.titleField.text;
+//            picker.enablePhotoDownload = YES;
+//            picker.allowAutoCompletedSearch = YES;
+//            picker.infiniteScrollingEnabled = YES;
+//            picker.title = @"Search Instagram";
+//            
+//            picker.cancellationBlock = ^(DZNPhotoPickerController *picker) {
+//                [self dismissViewControllerAnimated:YES completion:nil];
+//            };
+//            
+//            picker.finalizationBlock = ^(DZNPhotoPickerController *picker, NSDictionary *info) {
+//                [self handleImagePicker:picker withMediaInfo:info];
+//                [self dismissViewControllerAnimated:YES completion:nil];
+//            };
+//            [self presentViewController:picker animated:YES completion:nil];
+        }];
+    }
+    else{
+        NSLog(@"insta error %@", error);
+    }
+    return YES;
+}
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     UIImage *chosenImage = info[UIImagePickerControllerEditedImage];
     [self finalImage:chosenImage];
-    [picker dismissViewControllerAnimated:YES completion:NULL];
+    [picker dismissViewControllerAnimated:YES completion:^{
+        
+//        DZNPhotoEditorViewController *editor = [[DZNPhotoEditorViewController alloc] initWithImage:chosenImage];
+//        editor.cropMode = DZNPhotoEditorViewControllerCropModeCustom;
+//        editor.cropSize = DZNPhotoEditorViewControllerCropModeCustom
+//        
+//        [editor setAcceptBlock:^(DZNPhotoEditorViewController *editor, NSDictionary *userInfo){
+//            
+//            //Your implementation here
+//            
+//        }];
+//        
+//        [editor setCancelBlock:^(DZNPhotoEditorViewController *editor){
+//            
+//            //Your implementation here
+//            NSLog(@"cancelled");
+//        }];
+//        
+//        
+//        // The view controller requieres to be nested in a navigation controller
+//        [self.navigationController presentViewController:editor animated:YES completion:nil];
+    }];
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
-    
     [picker dismissViewControllerAnimated:YES completion:NULL];
-    
 }
 
 -(void)popUpAlert{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Enter a title" message:@"Make sure you've entered a title for your WTB!" preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -575,7 +607,7 @@
 -(void)sizePopUp{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Choose a category first!" message:@"Make sure you've entered a category for your WTB!" preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -583,7 +615,7 @@
 -(void)locationPopUp{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Location error" message:@"Please choose a different location!" preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -603,8 +635,6 @@
 
 - (void)updateImageWithPayload:(NSDictionary *)payload
 {
-    NSLog(@"here!");
-    
     UIImage *image = payload[UIImagePickerControllerEditedImage];
     if (!image) image = payload[UIImagePickerControllerOriginalImage];
     
@@ -712,7 +742,6 @@
         [self.thirdImageView setImage:self.fourthImageView.image];
         [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
         [self.fourthDelete setHidden:YES];
-        
         [self.fourthCam setEnabled:YES];
     }
 }
@@ -775,7 +804,6 @@
         else{
             NSLog(@"no array, been an error");
         }
-        
     }
     else if ([self.selection isEqualToString:@"delivery"]){
         self.chooseDelivery.text = selectionString;
@@ -838,7 +866,8 @@
         [self.listing setObject:self.chooseCondition.text forKey:@"condition"];
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
         [self.listing setObject:self.chooseSize.text forKey:@"size"];
-        NSLog(@"gender size %@", self.genderSize);
+        [self.listing setObject:@"live" forKey:@"status"];
+
         if (![self.genderSize isEqualToString:@""]) {
             [self.listing setObject:self.genderSize forKey:@"sizeGender"];
         }
@@ -856,7 +885,6 @@
         if (self.photostotal == 1) {
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
-            NSLog(@"image1 %@", imageFile1);
             [self.listing setObject:imageFile1 forKey:@"image1"];
             
             if (self.editFromListing == YES) {
@@ -919,7 +947,6 @@
         else{
             [self.listing setObject:extraInfo forKey:@"extra"];
         }
-        NSLog(@"listing %@", self.listing);
         
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
@@ -929,22 +956,6 @@
                 }
                 else{
                     NSLog(@"listing saved! %@", self.listing.objectId);
-                    
-                    // call bg function
-                    
-//                    NSDictionary *params = @{@"itemTitle": itemTitle, @"price": [NSNumber numberWithInt:price], @"condition": self.chooseCondition.text};
-                    
-//                    [PFCloud callFunctionInBackground:@"eBayLookup" withParameters:params block:^(NSDictionary *response, NSError *error) {
-//                        if (!error) {
-//                            NSLog(@"response %@", response);
-//                            
-//                            NSLog(@"item title: %@, item price: £%@, item URL: %@, pic URL: %@", [response objectForKey:@"title"], [[[response objectForKey:@"sellingStatus"]objectForKey:@"currentPrice"]objectForKey:@"amount"], [response objectForKey:@"viewItemURL"], [response objectForKey:@"galleryURL"]);
-//                        }
-//                        else{
-//                            NSLog(@"error %@", error);
-//                        }
-//                    }];
-                    
                     ListingCompleteView *vc = [[ListingCompleteView alloc]init];
                     vc.delegate = self;
                     vc.lastObjectId = self.listing.objectId;
@@ -1141,10 +1152,10 @@
 -(void)deleteListing{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your WTB?" preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         
     }]];
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         [self.listing deleteInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             [self.navigationController popToRootViewControllerAnimated:YES];
         }];

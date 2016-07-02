@@ -20,4 +20,5 @@
 @property (weak, nonatomic) IBOutlet UISegmentedControl *segmentControl;
 @property (weak, nonatomic) IBOutlet UIImageView *starImgView;
 @property (nonatomic, strong) PFUser *user;
+@property (weak, nonatomic) IBOutlet UILabel *nothingLabel;
 @end

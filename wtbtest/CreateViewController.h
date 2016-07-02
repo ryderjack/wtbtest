@@ -81,5 +81,6 @@
 
 @property (nonatomic, strong) NSArray *sizesArray;
 @property (nonatomic, strong) UIWebView *webView;
+@property (nonatomic, strong) UIViewController *viewC;
 
 @end

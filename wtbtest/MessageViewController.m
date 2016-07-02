@@ -9,6 +9,7 @@
 #import "MessageViewController.h"
 #import "CheckoutController.h"
 #import "DetailImageController.h"
+#import "UserProfileController.h"
 
 @interface MessageViewController ()
 
@@ -32,9 +33,9 @@
     [super viewDidLoad];
     
     if ([self.otherUserName isEqualToString:@""]) {
-        [self.buyerUser fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        [self.otherUser fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
-                self.title = self.buyerUser.username;
+                self.title = self.otherUser.username;
             }
         }];
     }
@@ -43,6 +44,9 @@
     }
     
     self.cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(clearOffer)];
+    self.profileButton = [[UIBarButtonItem alloc] initWithTitle:@"Profile" style:UIBarButtonItemStylePlain target:self action:@selector(profileTapped)];
+    self.navigationItem.rightBarButtonItem = self.profileButton;
+    
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
     self.inputToolbar.contentView.textView.pasteDelegate = self;
     self.inputToolbar.contentView.textView.placeHolder = @"Tap the tag icon to send an offer";
@@ -104,6 +108,7 @@
     messageQuery.limit = 10;
     messageQuery.skip = self.skipped;
     [messageQuery orderByDescending :@"createdAt"];
+    [messageQuery includeKey:@"offerObject"];
     [messageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             
@@ -147,6 +152,7 @@
                     
                     message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
                     [self.messages insertObject:message atIndex:0];
+                    message.msgObject = messageOb;
 
                     PFQuery *imageQuery = [PFQuery queryWithClassName:@"messageImages"];
                     [imageQuery whereKey:@"objectId" equalTo:[messageOb objectForKey:@"message"]];
@@ -159,7 +165,7 @@
                                     
                                     UIImage *messageImage = [UIImage imageWithData:data];
                                     photoItem.image = messageImage;
-    
+                                    
                                     newMediaAttachmentCopy = [UIImage imageWithCGImage:photoItem.image.CGImage];
                                     newMediaData = photoItem;
                                     [message setValue:newMediaData forKey:@"media"];
@@ -188,14 +194,17 @@
                     NSString *messageText = [messageOb objectForKey:@"message"];
                     
                     if ([[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId]) {
-                        messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to buy now" withString:@""];
+                        messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to buy now" withString:@"\nTap to cancel offer"];
                     }
                     
                     message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
                     
                     if ([[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
-                        message.isOfferMessage = YES;
-                        message.offerObject = [messageOb objectForKey:@"offerObject"];
+                        PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
+                        if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
+                            message.isOfferMessage = YES;
+                            message.offerObject = offerOb;
+                        }
                     }
                     
                     [self.messages insertObject:message atIndex:0];
@@ -382,14 +391,14 @@
         [self.offerObject setObject:itemTitle forKey:@"title"];
         [self.offerObject setObject:condition forKey:@"condition"];
         self.offerObject[@"salePrice"] = @(salePriceFloat);
-        [self.offerObject setObject:self.buyerUser forKey:@"buyerUser"];
+        [self.offerObject setObject:self.otherUser forKey:@"buyerUser"];
         [self.offerObject setObject:[PFUser currentUser] forKey:@"sellerUser"];
         [self.offerObject setObject:self.convoObject forKey:@"convo"];
         [self.offerObject setObject:@"open" forKey:@"status"];
     }
     
     if (self.offerMode == YES) {
-        messageString = [messageString stringByReplacingOccurrencesOfString:@"\nTap to buy now" withString:@""];
+        messageString = [messageString stringByReplacingOccurrencesOfString:@"\nTap to buy now" withString:@"\nTap to cancel offer"];
     }
     
     JSQMessage *message = [[JSQMessage alloc] initWithSenderId:senderId
@@ -418,8 +427,26 @@
         messageObject[@"offer"] = @"NO";
         message.isOfferMessage = NO;
     }
+    
     messageObject[@"mediaMessage"] = @"NO";
-    [messageObject saveInBackground];
+    [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded == YES) {
+            NSString *pushText = messageString;
+            if (self.offerMode == YES) {
+                pushText = @"sent an offer 🔌";
+            }
+            //send push to other user
+            NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username};
+            [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                if (!error) {
+                    NSLog(@"response %@", response);
+                }
+                else{
+                    NSLog(@"push error %@", error);
+                }
+            }];
+        }
+    }];
     
     [self finishSendingMessageAnimated:YES];
     
@@ -513,9 +540,24 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report user" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-
+        
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report inappropriate behaviour" message:@"bump takes inappropriate behaviour very seriously.\nIf you feel like this user has behaved wrongly please let us know so we can make your experience on bump as brilliant as possible." preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            
+        }]];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+            PFObject *reportObject = [PFObject objectWithClassName:@"ReportedUsers"];
+            reportObject[@"reportedUser"] = self.otherUser;
+            reportObject[@"reporter"] = [PFUser currentUser];
+            reportObject[@"convo"] = self.convoObject;
+            [reportObject saveInBackground];
+        }]];
+        
+        [self presentViewController:alertView animated:YES completion:nil];
+        
     }]];
-    
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
@@ -546,20 +588,26 @@
     PFObject *picObject = [PFObject objectWithClassName:@"messageImages"];
     [picObject setObject:filePicture forKey:@"Image"];
     [picObject setObject:self.convoObject forKey:@"convo"];
-    
     [picObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
         if (succeeded) {
-            PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
-            messageObject[@"message"] = picObject.objectId;
-            messageObject[@"sender"] = [PFUser currentUser];
-            messageObject[@"senderId"] = [PFUser currentUser].objectId;
-            messageObject[@"senderName"] = [PFUser currentUser].username;
-            messageObject[@"convoId"] = self.convoId;
-            messageObject[@"status"] = @"sent";
-            messageObject[@"mediaMessage"] = @"YES";
-            [messageObject saveInBackground];
+            self.messageObject = [PFObject objectWithClassName:@"messages"];
+            self.messageObject[@"message"] = picObject.objectId;
+            self.messageObject[@"sender"] = [PFUser currentUser];
+            self.messageObject[@"senderId"] = [PFUser currentUser].objectId;
+            self.messageObject[@"senderName"] = [PFUser currentUser].username;
+            self.messageObject[@"convoId"] = self.convoId;
+            self.messageObject[@"status"] = @"sent";
+            self.messageObject[@"mediaMessage"] = @"YES";
+            if (self.tagString) {
+                NSLog(@"setting tag");
+                [self.messageObject setObject:self.tagString forKey:@"tagString"];
+            }
+            [self.messageObject saveInBackground];
             
-            if (![self.senderId isEqualToString:self.buyerUser.objectId]) {
+            //set msg object so photo is tagged
+            photoMessage.msgObject = self.messageObject;
+            
+            if (![self.senderId isEqualToString:self.otherUser.objectId]) {
                 [self.convoObject incrementKey:@"convoImages"];
             }
             
@@ -567,10 +615,22 @@
             
             if (self.offerMode == YES) {
                 [self.offerObject setObject:picObject forKey:@"image"];
-                [self.offerObject saveInBackground];
+                [self.offerObject saveEventually];
             }
             else{
-                [self.convoObject setObject:messageObject forKey:@"lastSent"];
+                [self.convoObject setObject:self.messageObject forKey:@"lastSent"];
+                
+                //send push to other user
+                NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": @"📸", @"sender": [PFUser currentUser].username};
+                [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                    if (!error) {
+                        NSLog(@"response %@", response);
+                        
+                    }
+                    else{
+                        NSLog(@"image push error %@", error);
+                    }
+                }];
             }
             
             self.offerMode = NO;
@@ -609,6 +669,7 @@
 
 -(void)tagString:(NSString *)tag{
     self.tagString = tag;
+    NSLog(@"tag %@", self.tagString);
 }
 
 #pragma mark - JSQMessages CollectionView DataSource
@@ -909,25 +970,49 @@
 
 - (void)collectionView:(JSQMessagesCollectionView *)collectionView didTapMessageBubbleAtIndexPath:(NSIndexPath *)indexPath
 {
+
     JSQMessage *tappedMessage = [self.messages objectAtIndex:indexPath.item];
-    if (tappedMessage.isOfferMessage == YES) { //doesnt work after offer with image just been sent but does that matter because seller shouldnt click thru to offer
-        if ([[tappedMessage.offerObject objectForKey:@"status"]isEqualToString:@"open"]) {
-            CheckoutController *vc = [[CheckoutController alloc]init];
-            vc.confirmedOfferObject = tappedMessage.offerObject;
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-    }
-    else if ([[self.messages objectAtIndex:indexPath.item] isMediaMessage] == YES){
+    
+    if ([[self.messages objectAtIndex:indexPath.item] isMediaMessage] == YES){
         DetailImageController *vc = [[DetailImageController alloc]init];
         vc.listingPic = NO;
         vc.numberOfPics = 1;
         vc.messagesPicMode = YES;
-        
+        vc.tagText = [tappedMessage.msgObject objectForKey:@"tagString"];
         id<JSQMessageMediaData> mediaItem = tappedMessage.media;
         JSQPhotoMediaItem *photoItem = (JSQPhotoMediaItem *)mediaItem;
         vc.messagePicture = photoItem.image;
         
         [self presentViewController:vc animated:YES completion:nil];
+    }
+    
+    else if ([tappedMessage.senderId isEqualToString:[PFUser currentUser].objectId]) {
+        if (tappedMessage.isOfferMessage == YES) {
+            
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Cancel offer" message:@"Are you sure you want to cancel your offer? If the buyer has already purchased the item then you must explain the situation asap" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                PFObject *offerObj = tappedMessage.offerObject;
+                [offerObj setObject:@"cancelled" forKey:@"status"];
+                [offerObj saveInBackground];
+                tappedMessage.isOfferMessage = NO;
+                [self.collectionView reloadData];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
+        }
+    }
+    else{
+        if (tappedMessage.isOfferMessage == YES) { //doesnt work after offer with image just been sent but does that matter because seller shouldnt click thru to offer
+            if ([[tappedMessage.offerObject objectForKey:@"status"]isEqualToString:@"open"]) {
+                CheckoutController *vc = [[CheckoutController alloc]init];
+                vc.confirmedOfferObject = tappedMessage.offerObject;
+                [self.navigationController pushViewController:vc animated:YES];
+            }
+        }
     }
 }
 
@@ -946,6 +1031,12 @@
 -(void)clearOffer{
     self.inputToolbar.contentView.textView.text = @"";
     self.offerMode = NO;
-    self.navigationItem.rightBarButtonItem = nil;
+    self.navigationItem.rightBarButtonItem = self.profileButton;
+}
+
+-(void)profileTapped{
+    UserProfileController *vc = [[UserProfileController alloc]init];
+    vc.user = self.otherUser;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 @end

@@ -14,6 +14,7 @@
 #import "UserProfileController.h"
 #import "SettingsController.h"
 #import "ExplainViewController.h"
+#import "Flurry.h"
 
 @interface ProfileController ()
 
@@ -46,6 +47,7 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     self.navigationItem.title = [NSString stringWithFormat:@"%@", [PFUser currentUser].username];
+    [Flurry logEvent:@"Profile_Tapped"];
 }
 
 #pragma mark - Table view data source

@@ -60,9 +60,12 @@
     self.lisitngsArray = [[NSArray alloc]init];
     self.feedbackArray = [[NSMutableArray alloc]init];
     
+    [self.nothingLabel setHidden:YES];
     [self loadListings];
-    
     [self setImageBorder:self.headerImgView];
+    
+    [self setAutomaticallyAdjustsScrollViewInsets:NO];
+
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -112,6 +115,7 @@
 }
 
 -(void)loadListings{
+    [self.nothingLabel setHidden:YES];
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [wtbQuery whereKey:@"postUser" equalTo:self.user];
     [wtbQuery orderByDescending:@"createdAt"];
@@ -123,6 +127,7 @@
             }
             else{
                 NSLog(@"no listings");
+                [self.nothingLabel setHidden:NO];
             }
         }
         else{
@@ -133,7 +138,7 @@
 
 -(void)loadFeedback{
     //first query for sales feedback
-    
+    [self.nothingLabel setHidden:YES];
     PFQuery *salesQuery = [PFQuery queryWithClassName:@"feedback"];
     [salesQuery whereKey:@"sellerUser" equalTo:self.user];
     [salesQuery includeKey:@"buyerUser"];
@@ -159,6 +164,11 @@
                     
                     [self.feedbackArray removeAllObjects];
                     [self.feedbackArray addObjectsFromArray:sortedArray];
+                   
+                    if (self.feedbackArray.count == 0) {
+                        [self.nothingLabel setHidden:NO];
+                    }
+
                     [self.collectionView reloadData];
                 }
                 else{
@@ -217,7 +227,12 @@
             cell.buyerName.text = [NSString stringWithFormat:@"%@", [listingObject objectForKey:@"condition"]];
         }
         
-        cell.priceLabel.text = [NSString stringWithFormat:@"£%@", [listingObject objectForKey:@"listingPrice"]];
+        if (![[listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
+            cell.priceLabel.text = [NSString stringWithFormat:@"%@", [listingObject objectForKey:@"status"]];
+        }
+        else{
+            cell.priceLabel.text = [NSString stringWithFormat:@"£%@", [listingObject objectForKey:@"listingPrice"]];
+        }
         
         // set date
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
@@ -250,8 +265,6 @@
         }
         
         cell.itemTitle.text = [NSString stringWithFormat:@"%@", [feedbackObject objectForKey:@"comment"]];
-
-        
         cell.priceLabel.text = [NSString stringWithFormat:@"%@ stars", [feedbackObject objectForKey:@"rating"]];
         
         // set date
@@ -267,11 +280,11 @@
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
-    PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
-    ListingController *vc = [[ListingController alloc]init];
-    vc.listingObject = selected;
-    [self.navigationController pushViewController:vc animated:YES];
+    if (self.segmentControl.selectedSegmentIndex == 0) {
+        [self showAlertViewWithPath:indexPath];
+    }
 }
+
 - (IBAction)segmentControlChanged:(id)sender {
     if (self.segmentControl.selectedSegmentIndex == 0) {
         [self loadListings];
@@ -279,6 +292,55 @@
     else{
         [self loadFeedback];
     }
+}
+
+-(void)showAlertViewWithPath:(NSIndexPath *)indexPath{
+    
+    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self dismissViewControllerAnimated:YES completion:^{
+        }];
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"View listing" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
+        ListingController *vc = [[ListingController alloc]init];
+        vc.listingObject = selected;
+        [self.navigationController pushViewController:vc animated:YES];
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as purchased" message:@"Are you sure you want to mark your WTB as purchased? Sellers will no longer be able to view your WTB and offer to sell you items" preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            
+        }]];
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
+            [selected setObject:@"purchased" forKey:@"status"];
+            [selected saveInBackground];
+            [self.collectionView reloadData];
+        }]];
+        [self presentViewController:alertView animated:YES completion:nil];
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your WTB?" preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            
+        }]];
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
+            [selected deleteInBackground];
+        }]];
+        
+        [self presentViewController:alertView animated:YES completion:nil];
+    }]];
+    
+    [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
 @end

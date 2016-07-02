@@ -28,7 +28,7 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"question"] style:UIBarButtonItemStylePlain target:self action:@selector(showExtraInfo)];
+    UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
     
     self.navigationItem.rightBarButtonItem = infoButton;
     
@@ -451,7 +451,7 @@
             if (self.sellThisPressed == YES) {
                 vc.sellThisPressed = YES;
             }
-            vc.buyerUser = [self.listingObject objectForKey:@"postUser"];
+            vc.otherUser = [self.listingObject objectForKey:@"postUser"];
             vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
             [self.navigationController pushViewController:vc animated:YES];
         }
@@ -476,7 +476,7 @@
                     if (self.sellThisPressed == YES) {
                         vc.sellThisPressed = YES;
                     }
-                    vc.buyerUser = [self.listingObject objectForKey:@"postUser"];
+                    vc.otherUser = [self.listingObject objectForKey:@"postUser"];
                     vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
                     [self.navigationController pushViewController:vc animated:YES];
                 }
@@ -588,5 +588,38 @@
 //        vc.reviewMode = NO;
 //        [self.navigationController pushViewController:vc animated:YES];
     }
+}
+
+-(void)showAlertView{
+
+    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        
+        [self dismissViewControllerAnimated:YES completion:^{
+        }];
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report listing" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"bump takes inappropriate behaviour very seriously.\nIf you feel although this post has violated our terms let us know so we can make your experience on bump as brilliant as possible." preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            
+        }]];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+            PFObject *reportObject = [PFObject objectWithClassName:@"Reported"];
+            reportObject[@"reportedUser"] = self.buyer;
+            reportObject[@"reporter"] = [PFUser currentUser];
+            reportObject[@"listing"] = self.listingObject;
+            [reportObject saveInBackground];
+        }]];
+        
+        [self presentViewController:alertView animated:YES completion:nil];
+        
+    }]];
+    
+    [self presentViewController:actionSheet animated:YES completion:nil];
 }
 @end

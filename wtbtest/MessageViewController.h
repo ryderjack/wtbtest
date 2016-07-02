@@ -18,7 +18,7 @@
 @property (nonatomic, strong) NSString *tagString;
 
 @property (nonatomic, strong) PFObject *convoObject;
-@property (nonatomic, strong) PFUser *buyerUser;
+@property (nonatomic, strong) PFUser *otherUser;
 
 @property (nonatomic, strong) NSMutableArray *messages;
 @property (nonatomic, strong) JSQMessagesBubbleImage *outgoingBubbleImageData;
@@ -41,5 +41,7 @@
 @property (nonatomic) BOOL sellThisPressed;
 
 @property (nonatomic, strong) UIBarButtonItem *cancelButton;
+@property (nonatomic, strong) UIBarButtonItem *profileButton;
+@property (nonatomic, strong) PFObject *messageObject;
 
 @end

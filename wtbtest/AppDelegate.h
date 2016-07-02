@@ -22,6 +22,8 @@
 @property (strong, nonatomic) ExploreVC *exploreView;
 @property (strong, nonatomic) ProfileController *profileView;
 @property (strong, nonatomic) InboxViewController *inboxView;
+@property (nonatomic, strong) PFInstallation *installation;
+@property (nonatomic, strong) NSMutableArray *unseenMessages;
 
 @end
 

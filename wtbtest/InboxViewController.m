@@ -9,6 +9,7 @@
 #import "InboxViewController.h"
 #import "MessageViewController.h"
 #import <SVPullToRefresh/SVPullToRefresh.h>
+#import "Flurry.h"
 
 @interface InboxViewController ()
 
@@ -33,6 +34,8 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    [Flurry logEvent:@"Inbox_Tapped"];
     
     [self loadMessages];
 }
@@ -68,6 +71,12 @@
                 }
                 else{
                     self.navigationItem.title = @"Messages";
+                    [self.navigationController tabBarItem].badgeValue = nil;
+                     PFInstallation *installation = [PFInstallation currentInstallation];
+                    if (installation.badge != 0) {
+                        installation.badge = 0;
+                    }
+                    [installation saveInBackground];
                 }
             }
             else{
@@ -158,10 +167,20 @@
     NSString *text = [msgObject objectForKey:@"message"];
     
     if ([[msgObject objectForKey:@"mediaMessage"]isEqualToString:@"YES"]) {
-        self.cell.messageLabel.text = [NSString stringWithFormat:@"%@ sent a photo", [msgObject objectForKey:@"senderName"]];
+        if ([[msgObject objectForKey:@"senderName"]isEqualToString:[PFUser currentUser].username]) {
+            self.cell.messageLabel.text = @"you sent a photo 📸";
+        }
+        else{
+            self.cell.messageLabel.text = [NSString stringWithFormat:@"%@ sent a photo 📸", [msgObject objectForKey:@"senderName"]];
+        }
     }
     else if ([[msgObject objectForKey:@"offer"]isEqualToString:@"YES"]){
-        self.cell.messageLabel.text = [NSString stringWithFormat:@"%@ sent an offer", [msgObject objectForKey:@"senderName"]];
+        if ([[msgObject objectForKey:@"senderName"]isEqualToString:[PFUser currentUser].username]) {
+            self.cell.messageLabel.text = @"you sent an offer 🔌";
+        }
+        else{
+            self.cell.messageLabel.text = [NSString stringWithFormat:@"%@ sent an offer 🔌", [msgObject objectForKey:@"senderName"]];
+        }
     }
     else{
         self.cell.messageLabel.text = [NSString stringWithFormat:@"%@",text];
@@ -189,7 +208,7 @@
     vc.convoId = [convoObject objectForKey:@"convoId"];
     vc.convoObject = convoObject;
     vc.listing = listing;
-    vc.buyerUser = [listing objectForKey:@"postUser"];
+    vc.otherUser = [listing objectForKey:@"postUser"];
     vc.otherUserName = @"";
     [self.navigationController pushViewController:vc animated:YES];
 }
