@@ -15,6 +15,7 @@
 #import "SettingsController.h"
 #import "ExplainViewController.h"
 #import "Flurry.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface ProfileController ()
 

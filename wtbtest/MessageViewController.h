@@ -44,4 +44,6 @@
 @property (nonatomic, strong) UIBarButtonItem *profileButton;
 @property (nonatomic, strong) PFObject *messageObject;
 
+@property (nonatomic) BOOL userIsBuyer;
+
 @end

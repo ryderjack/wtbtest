@@ -175,7 +175,6 @@
                     NSLog(@"error %@", error);
                 }
             }];
-            
         }
         else{
             NSLog(@"error %@", error);
@@ -185,7 +184,6 @@
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 #pragma mark <UICollectionViewDataSource>
@@ -296,6 +294,8 @@
 
 -(void)showAlertViewWithPath:(NSIndexPath *)indexPath{
     
+    PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
+    
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -304,27 +304,40 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"View listing" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
         ListingController *vc = [[ListingController alloc]init];
         vc.listingObject = selected;
         [self.navigationController pushViewController:vc animated:YES];
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        
-        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as purchased" message:@"Are you sure you want to mark your WTB as purchased? Sellers will no longer be able to view your WTB and offer to sell you items" preferredStyle:UIAlertControllerStyleAlert];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    if ([[selected objectForKey:@"status"] isEqualToString:@"purchased"]) {
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [selected setObject:@"live" forKey:@"status"];
+            [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    [self.collectionView reloadData];
+                }
+            }];
+        }]];
+    }
+    else{
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as purchased" message:@"Are you sure you want to mark your WTB as purchased? Sellers will no longer be able to view your WTB and offer to sell you items" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                
+            }]];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [selected setObject:@"purchased" forKey:@"status"];
+                [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        [self.collectionView reloadData];
+                    }
+                }];
+            }]];
+            [self presentViewController:alertView animated:YES completion:nil];
         }]];
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
-            [selected setObject:@"purchased" forKey:@"status"];
-            [selected saveInBackground];
-            [self.collectionView reloadData];
-        }]];
-        [self presentViewController:alertView animated:YES completion:nil];
-    }]];
+    }
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your WTB?" preferredStyle:UIAlertControllerStyleAlert];
@@ -334,7 +347,11 @@
         }]];
         [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
             PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
-            [selected deleteInBackground];
+            [selected deleteInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    [self.collectionView reloadData];
+                }
+            }];
         }]];
         
         [self presentViewController:alertView animated:YES completion:nil];

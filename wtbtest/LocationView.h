@@ -26,5 +26,7 @@
 @property (strong, nonatomic) NSMutableArray *searchResults;
 @property (nonatomic, strong) UIButton *button;
 
+@property (nonatomic) BOOL buttonShowing;
+
 
 @end

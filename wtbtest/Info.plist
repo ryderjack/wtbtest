@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDisplayName</key>
+	<string>bump</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
@@ -31,7 +33,12 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1.0.40</string>
+	<string>1.0.45</string>
+	<key>Fabric</key>
+	<dict>
+		<key>APIKey</key>
+		<string>5470e0b8fa3bea7e444a770b104d67f10d5283e2</string>
+	</dict>
 	<key>FacebookAppID</key>
 	<string>955972104485652</string>
 	<key>FacebookDisplayName</key>
@@ -71,9 +78,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>InstagramAppClientId</key>
-	<string>c25462a25bea4d61ac285d30ab5bd802</string>
-	<key>InstagramAppRedirectURL</key>
-	<string>bump://</string>
 </dict>
 </plist>

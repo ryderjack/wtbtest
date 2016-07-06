@@ -61,7 +61,7 @@
                     <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Nothing here!" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hdj-xj-wY2">
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Nothing here" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hdj-xj-wY2">
                     <rect key="frame" x="123" y="381" width="128" height="56"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="56" id="4Py-eq-o0t"/>
@@ -79,6 +79,9 @@
                 </label>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="4star.png" translatesAutoresizingMaskIntoConstraints="NO" id="TVo-mz-Z7Y">
                     <rect key="frame" x="250" y="118" width="117" height="23"/>
+                    <constraints>
+                        <constraint firstAttribute="width" secondItem="TVo-mz-Z7Y" secondAttribute="height" multiplier="117:23" id="e6b-gf-dJ2"/>
+                    </constraints>
                 </imageView>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>

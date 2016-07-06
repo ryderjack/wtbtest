@@ -8,10 +8,11 @@
 
 #import "CreateViewController.h"
 #import <TWPhotoPickerController.h>
-#import <InstagramKit.h>
 #import "InstaWebController.h"
 #import "NavigationController.h"
 #import "Flurry.h"
+#import "WelcomeViewController.h"
+
 
 @interface CreateViewController ()
 
@@ -76,12 +77,17 @@
     //add done button to number pad keyboard on pay field
     [self addDoneButton];
     
-//    [self.titleField becomeFirstResponder];
-    
+    self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    if (![PFUser currentUser]) {
+        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+        [self presentViewController:navController animated:YES completion:nil];
+    }
     
     if ([self.status isEqualToString:@"new"]) {
         [self resetForm];
@@ -94,6 +100,10 @@
     else{
         self.navigationItem.rightBarButtonItem = self.resetButton;
         [Flurry logEvent:@"Create_Tapped"];
+    }
+    
+    if (self.shouldShowHUD == YES) {
+        [self showHUD];
     }
 }
 - (void)didReceiveMemoryWarning {
@@ -480,120 +490,85 @@
         
         UIImagePickerController *picker = [[UIImagePickerController alloc] init];
         picker.delegate = self;
-        picker.allowsEditing = YES;
+        picker.allowsEditing = NO;
         picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
         
         [self presentViewController:picker animated:YES completion:nil];
     }]];
     
-//    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Search Instagram" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//        
-//        // search insta
-//        
-//        if ([self.titleField.text isEqualToString:@""]) {
-//            [self popUpAlert];
-//        }
-//        
-//        
-//        NSURL *authURL = [[InstagramEngine sharedEngine] authorizationURL];
-//
-//        self.viewC = [[UIViewController alloc]init];
-//        self.webView = [[UIWebView alloc]initWithFrame:self.viewC.view.frame];
-//        self.webView.delegate = self;
-//        [self.viewC.view addSubview:self.webView];
-//        
-//        [self.webView loadRequest:[NSURLRequest requestWithURL:authURL]];
-//        
-//        [self.navigationController presentViewController:self.viewC animated:YES completion:^{
-//            NSLog(@"shown modal VC");
-//        }];
-//        
-//    }]];
-    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Search Google" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        
+        // search insta
+        
+        if ([self.titleField.text isEqualToString:@""]) {
+            [self popUpAlert];
+        }
+        
+        // instructions on saving images from google
+        if (![[NSUserDefaults standardUserDefaults] boolForKey:@"seenGoogle"] == YES) {
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Search Google" message:@"Simply tap the image you'd like to use to get it fullscreen and when you're happy, hit Choose!" preferredStyle:UIAlertControllerStyleAlert];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [self showGoogle];
+            }]];
+            [self presentViewController:alertView animated:YES completion:nil];
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenGoogle"];
+        }
+        else{
+            [self showGoogle];
+        }
+    }]];
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
-{
-    NSLog(@"thinking!");
-    
-    NSError *error;
-    if ([[InstagramEngine sharedEngine] receivedValidAccessTokenFromURL:request.URL error:&error]) {
-        // success!
-        NSLog(@"success, %@", request);
-        
-        [self.viewC dismissViewControllerAnimated:YES completion:^{
-            
-            NSLog(@"dismissed webview VC");
-            
-            InstagramEngine *engine = [InstagramEngine sharedEngine];
-            [engine getMediaWithTagName:@"yeezy" count:5 maxId:nil withSuccess:^(NSArray<InstagramMedia *> * _Nonnull media, InstagramPaginationInfo * _Nonnull paginationInfo) {
-                
-                NSLog(@"array of insta media %@", media);
-                
-            } failure:^(NSError * _Nonnull error, NSInteger serverStatusCode) {
-                NSLog(@"insta media error %@", error);
-            }];
-            
-            //end points are fucked on the repo - they still haven't been fixed... GREAT
-            
-            
-//            DZNPhotoPickerController *picker = [DZNPhotoPickerController new];
-//            picker.supportedServices =  DZNPhotoPickerControllerServiceInstagram;
-//            picker.allowsEditing = NO;
-//            picker.cropMode = DZNPhotoEditorViewControllerCropModeSquare;
-//            picker.initialSearchTerm = self.titleField.text;
-//            picker.enablePhotoDownload = YES;
-//            picker.allowAutoCompletedSearch = YES;
-//            picker.infiniteScrollingEnabled = YES;
-//            picker.title = @"Search Instagram";
-//            
-//            picker.cancellationBlock = ^(DZNPhotoPickerController *picker) {
-//                [self dismissViewControllerAnimated:YES completion:nil];
-//            };
-//            
-//            picker.finalizationBlock = ^(DZNPhotoPickerController *picker, NSDictionary *info) {
-//                [self handleImagePicker:picker withMediaInfo:info];
-//                [self dismissViewControllerAnimated:YES completion:nil];
-//            };
-//            [self presentViewController:picker animated:YES completion:nil];
-        }];
-    }
-    else{
-        NSLog(@"insta error %@", error);
-    }
-    return YES;
+-(void)showGoogle{
+    NSString *searchString = [self.titleField.text stringByReplacingOccurrencesOfString:@" " withString:@"+"];
+    NSString *URLString = [NSString stringWithFormat:@"https://www.google.co.uk/search?tbm=isch&q=%@&tbs=iar:s#imgrc=_",searchString];
+    self.webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+    self.webViewController.title = [NSString stringWithFormat:@"%@", self.titleField.text];
+    self.webViewController.showUrlWhileLoading = NO;
+    self.webViewController.showPageTitles = NO;
+    self.webViewController.delegate = self;
+    self.webViewController.doneButtonTitle = @"Choose";
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
+    [self presentViewController:navigationController animated:YES completion:nil];
+}
+
+-(void)didPressDone:(UIImage *)screenshot{
+    [self.webViewController dismissViewControllerAnimated:YES completion:^{
+        [self displayCropperWithImage:screenshot];
+    }];
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
-    UIImage *chosenImage = info[UIImagePickerControllerEditedImage];
-    [self finalImage:chosenImage];
+    UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
+    //display crop picker
     [picker dismissViewControllerAnimated:YES completion:^{
-        
-//        DZNPhotoEditorViewController *editor = [[DZNPhotoEditorViewController alloc] initWithImage:chosenImage];
-//        editor.cropMode = DZNPhotoEditorViewControllerCropModeCustom;
-//        editor.cropSize = DZNPhotoEditorViewControllerCropModeCustom
-//        
-//        [editor setAcceptBlock:^(DZNPhotoEditorViewController *editor, NSDictionary *userInfo){
-//            
-//            //Your implementation here
-//            
-//        }];
-//        
-//        [editor setCancelBlock:^(DZNPhotoEditorViewController *editor){
-//            
-//            //Your implementation here
-//            NSLog(@"cancelled");
-//        }];
-//        
-//        
-//        // The view controller requieres to be nested in a navigation controller
-//        [self.navigationController presentViewController:editor animated:YES completion:nil];
+        [self displayCropperWithImage:chosenImage];
     }];
+}
+
+-(void)displayCropperWithImage:(UIImage *)image{
+    BASSquareCropperViewController *squareCropperViewController = [[BASSquareCropperViewController alloc] initWithImage:image minimumCroppedImageSideLength:375.0f];
+    squareCropperViewController.squareCropperDelegate = self;
+    squareCropperViewController.backgroundColor = [UIColor blackColor];
+    squareCropperViewController.borderColor = [UIColor whiteColor];
+    squareCropperViewController.doneFont = [UIFont fontWithName:@"AvenirNext-Regular" size:18.0f];
+    squareCropperViewController.cancelFont = [UIFont fontWithName:@"AvenirNext-Regular" size:16.0f];
+    squareCropperViewController.excludedBackgroundColor = [UIColor blackColor];
+    [self.navigationController presentViewController:squareCropperViewController animated:YES completion:nil];
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
     [picker dismissViewControllerAnimated:YES completion:NULL];
+}
+
+- (void)squareCropperDidCropImage:(UIImage *)croppedImage inCropper:(BASSquareCropperViewController *)cropper{
+    [cropper dismissViewControllerAnimated:YES completion:NULL];
+    [self finalImage:croppedImage];
+}
+
+- (void)squareCropperDidCancelCropInCropper:(BASSquareCropperViewController *)cropper{
+    [cropper dismissViewControllerAnimated:YES completion:NULL];
 }
 
 -(void)popUpAlert{
@@ -606,7 +581,6 @@
 
 -(void)sizePopUp{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Choose a category first!" message:@"Make sure you've entered a category for your WTB!" preferredStyle:UIAlertControllerStyleAlert];
-    
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
@@ -826,6 +800,7 @@
             self.chooseLocation.text = @"Choose";
         }
 }
+
 - (IBAction)wantobuyPressed:(id)sender {
     [self.saveButton setEnabled:NO];
     [self removeKeyboard];
@@ -835,7 +810,8 @@
         [self.saveButton setEnabled:YES];
     }
     else{
-
+        [self showHUD];
+        
         NSString *prefixToRemove = @"£";
         NSString *priceString = [[NSString alloc]init];
         priceString = [self.payField.text substringFromIndex:[prefixToRemove length]];
@@ -855,6 +831,8 @@
                 }
                 else{
                     NSLog(@"error %@", error);
+                    [self hidHUD];
+                    return;
                 }
             }];
         }
@@ -880,6 +858,9 @@
         
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
         self.listing[@"listingPrice"] = @(price);
+        
+        NSLog(@"SETTING USER ON WTB %@", [PFUser currentUser]);
+        
         [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
         
         if (self.photostotal == 1) {
@@ -950,6 +931,7 @@
         
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
+                [self hidHUD];
                 [self.saveButton setEnabled:YES];
                 if (self.editFromListing == YES) {
                     [self.navigationController popToRootViewControllerAnimated:YES];
@@ -965,6 +947,7 @@
                 }
             }
             else{
+//                [self hidHUD];
                 [self.saveButton setEnabled:YES];
                 NSLog(@"error saving %@", error);
             }
@@ -1174,4 +1157,29 @@
 -(void)dismissPressed:(BOOL)yesorno{
     //do nothing in create VC
 }
+
+-(void)hidHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
+        self.hudShowing = NO;
+        self.shouldShowHUD = NO;
+    });
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    if (self.hudShowing == YES) {
+        [self hidHUD];
+    }
+}
+
+-(void)showHUD{
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+    self.hudShowing = YES;
+    self.shouldShowHUD = YES;
+}
+
 @end

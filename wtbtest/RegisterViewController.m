@@ -10,7 +10,6 @@
 #import "WelcomeViewController.h"
 #import "ContainerViewController.h"
 #import "NavigationController.h"
-
 #import "AppConstant.h"
 
 @interface RegisterViewController ()
@@ -39,6 +38,8 @@
     tapGesture.numberOfTapsRequired = 1;
     [self.tableView addGestureRecognizer:tapGesture];
     self.warningLabel.text = @"";
+    
+    self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -87,7 +88,7 @@
         user[PF_USER_GENDER] = userData[@"gender"];
     }
     if ([userData objectForKey:@"picture"]) {
-        NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=normal", userData[@"id"]];
+        NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", userData[@"id"]];
         NSURL *picUrl = [NSURL URLWithString:userImageURL];
         NSData *pic = [NSData dataWithContentsOfURL:picUrl];
         [self.profileImageView setImage:[UIImage imageWithData:pic]];
@@ -266,6 +267,11 @@
             [self.regButton setEnabled:YES];
         }
         else{
+            self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+            self.hud.square = YES;
+            self.hud.mode = MBProgressHUDModeCustomView;
+            self.hud.customView = self.spinner;
+            [self.spinner startAnimating];
             
             //check username entered is unique
             PFQuery *usernameQuery = [PFQuery queryWithClassName:@"_User"];
@@ -274,14 +280,10 @@
                 if (!error) {
                     if (number == 0) {
                         NSLog(@"username is available!");
-                        
                         self.user[PF_USER_FULLNAME] = self.nameField.text;
                         self.user[PF_USER_EMAIL] = self.emailField.text;
                         self.user[PF_USER_USERNAME] = self.usernameField.text;
                 
-                        
-                        //also need to save image
-                        
                         [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
                          {
                              if (error == nil)
@@ -291,11 +293,13 @@
                                  
                                  //progress to tutorial
                                  ContainerViewController *vc = [[ContainerViewController alloc]init];
+                                 [self dismissHUD];
                                  [self.navigationController pushViewController:vc animated:YES];
                              }
                              else
                              {
                                  [self.regButton setEnabled:YES];
+                                 [self dismissHUD];
                                  NSLog(@"error %@", error);
                                  UIAlertController * alert=   [UIAlertController
                                                                alertControllerWithTitle:@"Error"
@@ -309,6 +313,7 @@
                     }
                     else{
                         NSLog(@"username taken");
+                        [self dismissHUD];
                         [self.regButton setEnabled:YES];
                         self.warningLabel.text = @"Username taken";
                         self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
@@ -337,6 +342,12 @@
     NSString *emailRegex = stricterFilter ? stricterFilterString : laxString;
     NSPredicate *emailTest = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", emailRegex];
     return [emailTest evaluateWithObject:checkString];
+}
+
+-(void)dismissHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:self.view animated:YES];
+    });
 }
 
 @end

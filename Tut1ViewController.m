@@ -33,25 +33,25 @@
     
     if (self.index == 0) {
         self.mainTitle.text = @"Selling";
-        self.mainLabel.text = @"Listings show how much the buyer is willing to pay and the condition of the item they wantobuy";
-        self.imageView.image = [UIImage imageNamed:@"pic1"];
+        self.mainLabel.text = @"Listings show how much buyers are willing to pay and the condition of the item wanted";
+        self.imageView.image = [UIImage imageNamed:@"SellingImg1"];
         
     }
     else if (self.index == 1){
         self.mainTitle.text = @"Selling";
-        self.mainLabel.text = @"Hit the filter button to refine your search results when looking for items people want";
-        self.imageView.image = [UIImage imageNamed:@"pic2"];
+        self.mainLabel.text = @"Hit the filter button to refine your search results when looking to sell your stuff";
+        self.imageView.image = [UIImage imageNamed:@"SellingImg2"];
         
     }
     else if (self.index == 2){
         self.mainTitle.text = @"Buying";
-        self.mainLabel.text = @"Tell sellers exactly what you want";
-        self.imageView.image = [UIImage imageNamed:@"pic3"];
+        self.mainLabel.text = @"WTB posts are standardised so they’re easier for sellers to find and search through";
+        self.imageView.image = [UIImage imageNamed:@"BuyingImg1"];
         
     }
     else if (self.index == 3){
         self.mainTitle.text = @"Buying";
-        self.mainLabel.text = @"All Payments are made securely using PayPal";
+        self.mainLabel.text = @"Sort your deal out quickly and we’ll take you to PayPal to complete the transaction";
         self.imageView.image = [UIImage imageNamed:@"paypal"];
         [self.startButton setHidden:NO];
     }

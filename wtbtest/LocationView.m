@@ -43,6 +43,7 @@
     [self.button setImage:[UIImage imageNamed:@"currentButton"] forState:UIControlStateNormal];
     [self.button addTarget:self action:@selector(useCurrentLoc) forControlEvents:UIControlEventTouchUpInside];
     [[UIApplication sharedApplication].keyWindow addSubview:self.button];
+    self.buttonShowing = YES;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -52,14 +53,16 @@
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     [self.button removeFromSuperview];
+    self.buttonShowing = NO;
 }
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     [self.searchController setActive:YES];
     
-    //showing keyboard hides current location button, could have tool bar button but does it look as good?
-//    [self performSelector:@selector(showKeyboard) withObject:nil afterDelay:0.1];
+    if (self.buttonShowing == NO) {
+        [[UIApplication sharedApplication].keyWindow addSubview:self.button];
+    }
 }
 
 #pragma mark - Table view data source

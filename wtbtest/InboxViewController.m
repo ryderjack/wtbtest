@@ -44,8 +44,8 @@
     PFQuery *convosQuery = [PFQuery queryWithClassName:@"convos"];
     [convosQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
     [convosQuery whereKey:@"totalMessages" notEqualTo:@0];
-    [convosQuery includeKey:@"user1"];
-    [convosQuery includeKey:@"user2"];
+    [convosQuery includeKey:@"buyerUser"];
+    [convosQuery includeKey:@"sellerUser"];
     [convosQuery includeKey:@"wtbListing"];
     [convosQuery includeKey:@"lastSent"];
     [convosQuery orderByDescending:@"createdAt"];
@@ -66,8 +66,8 @@
                 }
                 // careful! as only showing unseen messages that have been loaded
                 if (self.unseenMessages.count > 0) {
-                    [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%ld", self.unseenMessages.count];
-                    self.navigationItem.title = [NSString stringWithFormat:@"Messages(%ld)", self.unseenMessages.count];
+                    [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%ld", (unsigned long)self.unseenMessages.count];
+                    self.navigationItem.title = [NSString stringWithFormat:@"Messages(%ld)", (unsigned long)self.unseenMessages.count];
                 }
                 else{
                     self.navigationItem.title = @"Messages";
@@ -208,7 +208,19 @@
     vc.convoId = [convoObject objectForKey:@"convoId"];
     vc.convoObject = convoObject;
     vc.listing = listing;
-    vc.otherUser = [listing objectForKey:@"postUser"];
+    
+    PFUser *buyer = [convoObject objectForKey:@"buyerUser"];
+    
+    if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+        //current user is buyer so other user is seller
+        vc.otherUser = [listing objectForKey:@"sellerUser"];
+        vc.userIsBuyer = YES;
+    }
+    else{
+        //other user is buyer, current is seller
+        vc.otherUser = [listing objectForKey:@"buyerUser"];
+        vc.userIsBuyer = NO;
+    }
     vc.otherUserName = @"";
     [self.navigationController pushViewController:vc animated:YES];
 }

@@ -151,7 +151,7 @@
     
     [Flurry logEvent:@"Explore_Tapped"];
     
-//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasFBUpdate111"])
+//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasUpdate1.0.45"])
 //    {
 //        // Has feedback update
 //    }
@@ -159,7 +159,7 @@
 //    {
 //        [PFUser logOut];
 //
-//        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasFBUpdate"];
+//        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasUpdate1.0.45"];
 //        
 //        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
 //        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
@@ -243,6 +243,9 @@
 }
 
 -(void)queryParseInfinite{
+    if (self.pullFinished == NO) {
+        return;
+    }
     self.infinFinished = NO;
     self.infiniteQuery.limit = 8;
     [self.infiniteQuery whereKey:@"status" notEqualTo:@"purchased"];
@@ -293,7 +296,7 @@
             int count = (int)[objects count];
             if (count == 0) {
                 [self.noresultsLabel setHidden:NO];
-                [self.noResultsImageView setHidden:NO];
+                [self.noResultsImageView setHidden:YES];
             }
             else{
                 [self.noresultsLabel setHidden:YES];
@@ -731,8 +734,18 @@
     self.searchController.searchBar.searchBarStyle = UISearchBarStyleDefault;
     self.searchController.searchBar.delegate = self;
     self.searchController.searchBar.placeholder = @"Search for stuff you're selling";
-    self.searchController.searchBar.barTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
-    self.searchController.searchBar.tintColor = [UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1];
+    self.searchController.searchBar.barTintColor = [UIColor blackColor];
+    self.searchController.searchBar.tintColor = [UIColor whiteColor];
+    
+    //change cursor colour
+    for ( UIView *v in [self.searchController.searchBar.subviews.firstObject subviews] )
+    {
+        if ( YES == [v isKindOfClass:[UITextField class]] )
+        {
+            [((UITextField*)v) setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
+            break;
+        }
+    }
     
     [self.searchController.searchBar setTranslucent:YES];
     
@@ -812,7 +825,7 @@
     
     if (self.results.count == 0) {
         [self.noresultsLabel setHidden:NO];
-        [self.noResultsImageView setHidden:NO];
+        [self.noResultsImageView setHidden:YES];
     }
     else{
         [self.noresultsLabel setHidden:YES];

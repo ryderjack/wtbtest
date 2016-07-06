@@ -48,7 +48,7 @@
                     <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="pic1.png" translatesAutoresizingMaskIntoConstraints="NO" id="GIp-i0-qXp">
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="SellingImg1.png" translatesAutoresizingMaskIntoConstraints="NO" id="GIp-i0-qXp">
                     <rect key="frame" x="7" y="208" width="361" height="321"/>
                     <constraints>
                         <constraint firstAttribute="width" secondItem="GIp-i0-qXp" secondAttribute="height" multiplier="125:111" id="h2H-T7-sNa"/>
@@ -85,7 +85,7 @@
         </view>
     </objects>
     <resources>
-        <image name="pic1.png" width="250" height="223"/>
+        <image name="SellingImg1.png" width="250" height="210"/>
         <image name="startButton.png" width="212" height="40"/>
     </resources>
 </document>

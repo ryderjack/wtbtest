@@ -12,6 +12,8 @@
 #import "NavigationController.h"
 #import <ParseFacebookUtilsV4/PFFacebookUtils.h>
 #import "Flurry.h"
+#import <Fabric/Fabric.h>
+#import <Crashlytics/Crashlytics.h>
 
 @interface AppDelegate ()
 
@@ -26,6 +28,13 @@
     
     [Parse initializeWithConfiguration:[ParseClientConfiguration configurationWithBlock:^(id<ParseMutableClientConfiguration> configuration) {
 
+        
+        // checks before sending to test:
+            //1. server
+            //2. tab number
+            //3. messaging/offering items to yourself
+        
+        
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
         configuration.server = @"http://localhost:1337/parse";
@@ -33,7 +42,13 @@
     }]];
 
     [Flurry startSession:@"9Y63FGHCCGZQJDQTCTMP"];
-    [Flurry setDebugLogEnabled:YES];
+//    [Flurry setDebugLogEnabled:YES];
+    [Fabric with:@[[Crashlytics class]]];
+    
+    if ([PFUser currentUser]) {
+        [Flurry setUserID:[NSString stringWithFormat:@"%@", [PFUser currentUser].objectId]];
+        [self logUser];
+    }
     
     [PFFacebookUtils initializeFacebookWithApplicationLaunchOptions:launchOptions];
     
@@ -54,7 +69,7 @@
     NavigationController *navController4 = [[NavigationController alloc] initWithRootViewController:self.inboxView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController2, navController4, navController3, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController4, navController2, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
     [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
@@ -68,12 +83,12 @@
     tabBarItem2.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     UITabBarItem *tabBarItem3 = [self.tabBarController.tabBar.items objectAtIndex:2];
-    tabBarItem3.image = [UIImage imageNamed:@"profileIcon2"];
+    tabBarItem3.image = [UIImage imageNamed:@"messagesIcon2"];
     tabBarItem3.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     UITabBarItem *tabBarItem4 = [self.tabBarController.tabBar.items objectAtIndex:3];
-    tabBarItem4.image = [UIImage imageNamed:@"messagesIcon2"];
-    tabBarItem4.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
+    tabBarItem4.image = [UIImage imageNamed:@"profileIcon2"];
+    tabBarItem4.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);    
     
     [self.tabBarController setDelegate:self];
     
@@ -90,16 +105,22 @@
     
     self.installation = [PFInstallation currentInstallation];
     if (self.installation.badge == 0) {
-        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
     }
     else{
-        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%ld", (long)self.installation.badge]];
+        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%ld", (long)self.installation.badge]];
     }
     
     self.unseenMessages = [[NSMutableArray alloc]init];
 
     return YES;
 }
+
+- (void) logUser {
+    [CrashlyticsKit setUserIdentifier:[NSString stringWithFormat:@"%@", [PFUser currentUser].objectId]];
+    [CrashlyticsKit setUserName:[NSString stringWithFormat:@"%@", [PFUser currentUser].username]];
+}
+
 
 //call to check messages if installation badge value doesnt work for ppl who havent enabled push
 -(void)checkMesages{

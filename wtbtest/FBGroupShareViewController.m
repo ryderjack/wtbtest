@@ -33,27 +33,17 @@
     
     self.tableView.tableHeaderView = self.headerView;
     
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc]initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
+    
+    self.navigationItem.leftBarButtonItem = cancelButton;
+    
     //fb group stuff
     self.arrayOfGroups = [[NSMutableArray alloc]init];
     self.filteredGroups = [NSMutableArray array];
     
-    //set up search
-    self.searchController = [[UISearchController alloc] initWithSearchResultsController:nil];
-    self.searchController.searchResultsUpdater = self;
-    self.searchController.dimsBackgroundDuringPresentation = NO;
-    
-    self.navigationItem.titleView = self.searchController.searchBar;
-    self.searchController.searchBar.searchBarStyle = UISearchBarStyleMinimal;
-    self.searchController.searchBar.delegate = self;
-    [self.searchController.searchBar sizeToFit];
-    self.definesPresentationContext = NO;
-    self.searchController.hidesNavigationBarDuringPresentation = NO;
-    self.navigationController.extendedLayoutIncludesOpaqueBars = true;
-    self.searchController.searchBar.placeholder = @"Search groups";
-    self.searchController.searchBar.tintColor = [UIColor colorWithRed:0.525 green:0.745 blue:1 alpha:1];
     
     PFQuery *groupsQuery = [PFQuery queryWithClassName:@"groups"];
-    [groupsQuery orderByDescending:@"groupName"];
+    [groupsQuery orderByAscending:@"groupName"];
     [groupsQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             [self.arrayOfGroups addObjectsFromArray:objects];
@@ -71,7 +61,7 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    
+
     PFQuery *query = [PFQuery queryWithClassName:@"wantobuys"];
     [query whereKey:@"objectId" equalTo:self.objectId];
     [query getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -88,29 +78,6 @@
     }];
 }
 
--(void)updateSearchResultsForSearchController:(UISearchController *)searchController
-{
-    NSString *searchString = searchController.searchBar.text;
-    [self searchForText:searchString];
-}
-
-- (void)searchForText:(NSString*)searchText
-{
-    if ([searchText isEqualToString:@""]) {
-        self.filtered = NO;
-        [self.tableView reloadData];
-    }
-    else{
-        NSPredicate *resultPredicate = [NSPredicate predicateWithFormat:@"groupName contains[c] %@", searchText];
-        NSArray *array = [self.arrayOfGroups filteredArrayUsingPredicate:resultPredicate];
-        [self.filteredGroups removeAllObjects];
-        [self.filteredGroups addObjectsFromArray:array];
-        self.filtered = YES;
-        
-        //update table view
-        [self.tableView reloadData];
-    }
-}
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -129,16 +96,7 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     UITableViewCell *cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
-    
-    PFObject *group;
-    
-    if (self.filtered) {
-        group = [self.filteredGroups objectAtIndex:indexPath.row];
-    }
-    else{
-        group = [self.arrayOfGroups objectAtIndex:indexPath.row];
-    }
-    
+    PFObject *group = [self.arrayOfGroups objectAtIndex:indexPath.row];
     cell.textLabel.text = [group objectForKey:@"groupName"];
     
     return cell;
@@ -148,17 +106,15 @@
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     
     NSString *groupId = [[NSString alloc]init];
-    
-    if (self.filtered) {
-        groupId = [[self.filteredGroups objectAtIndex:indexPath.row] objectForKey:@"groupId"];
-    }
-    else{
+//    
+//    if (self.filtered) {
+//        groupId = [[self.filteredGroups objectAtIndex:indexPath.row] objectForKey:@"groupId"];
+//    }
+//    else{
         groupId = [[self.arrayOfGroups objectAtIndex:indexPath.row] objectForKey:@"groupId"];
-    }
+//    }
     
     NSString *url = [NSString stringWithFormat:@"https://www.facebook.com/groups/%@/", groupId];
-
-//    NSString *url = [NSString stringWithFormat:@"https://m.facebook.com/groups/%@?tsid=0.12355867517180741&source=typeahead&soft=composer", groupId];
     groupWVController *vc = [[groupWVController alloc]init];
     vc.groupURL = url;
     [self.navigationController pushViewController:vc animated:YES];
@@ -170,12 +126,13 @@
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
             self.textCopyButton.titleLabel.text = @"Copy";
-
     });
-    
-    
     UIPasteboard *pb = [UIPasteboard generalPasteboard];
     [pb setString:[self.textView text]];
+}
+
+-(void)dismissVC{
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
      
 @end

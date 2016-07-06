@@ -341,6 +341,7 @@
         if(indexPath.row == 0){
             ShippingController *vc = [[ShippingController alloc]init];
             vc.delegate = self;
+            vc.settingsMode = NO;
             [self.navigationController pushViewController:vc animated:YES];
         }
     }

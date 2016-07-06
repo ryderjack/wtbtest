@@ -18,7 +18,7 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="bump" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="iEU-WM-76G">
-                    <rect key="frame" x="63" y="28" width="193" height="52"/>
+                    <rect key="frame" x="64" y="64" width="193" height="52"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="52" id="DtI-ko-jL5"/>
                     </constraints>
@@ -26,7 +26,7 @@
                     <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="page1.png" translatesAutoresizingMaskIntoConstraints="NO" id="Iur-vO-F7d">
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="exploreImg.png" translatesAutoresizingMaskIntoConstraints="NO" id="Iur-vO-F7d">
                     <rect key="frame" x="60" y="200" width="200" height="168"/>
                 </imageView>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Y4l-da-WYp">
@@ -36,12 +36,6 @@
                         <action selector="facebookTapped:" destination="-1" eventType="touchUpInside" id="FF8-y9-TAX"/>
                     </connections>
                 </button>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="All WTBs are in one place making buying &amp; selling much easier." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BnC-1B-y19">
-                    <rect key="frame" x="51" y="88" width="217" height="104"/>
-                    <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="18"/>
-                    <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <nil key="highlightedColor"/>
-                </label>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Swm-HV-Onk">
                     <rect key="frame" x="135" y="394" width="49" height="30"/>
                     <state key="normal" title="tutorial"/>
@@ -49,20 +43,26 @@
                         <action selector="tutorialPressed:" destination="-1" eventType="touchUpInside" id="WBP-gn-vsH"/>
                     </connections>
                 </button>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="All WTBs standardized in one place." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BnC-1B-y19">
+                    <rect key="frame" x="51" y="97" width="217" height="104"/>
+                    <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="18"/>
+                    <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
             <constraints>
                 <constraint firstItem="Iur-vO-F7d" firstAttribute="centerY" secondItem="i5M-Pr-FkT" secondAttribute="centerY" id="6bQ-dQ-GeF"/>
                 <constraint firstItem="Iur-vO-F7d" firstAttribute="centerX" secondItem="Y4l-da-WYp" secondAttribute="centerX" id="Dxj-bu-fmP"/>
-                <constraint firstItem="iEU-WM-76G" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="28" id="H15-4O-N5A"/>
+                <constraint firstItem="iEU-WM-76G" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="64" id="H15-4O-N5A"/>
                 <constraint firstItem="BnC-1B-y19" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="51" id="KZI-5g-4gS"/>
                 <constraint firstItem="BnC-1B-y19" firstAttribute="centerX" secondItem="Iur-vO-F7d" secondAttribute="centerX" id="ME0-tw-Te1"/>
                 <constraint firstItem="Y4l-da-WYp" firstAttribute="top" secondItem="Iur-vO-F7d" secondAttribute="bottom" constant="74" id="QnX-EV-JQJ"/>
-                <constraint firstItem="iEU-WM-76G" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="63" id="S2N-8h-gzl"/>
+                <constraint firstItem="iEU-WM-76G" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="64" id="S2N-8h-gzl"/>
                 <constraint firstItem="Swm-HV-Onk" firstAttribute="centerX" secondItem="BnC-1B-y19" secondAttribute="centerX" id="S4v-Pv-Z6B"/>
-                <constraint firstItem="iEU-WM-76G" firstAttribute="centerX" secondItem="BnC-1B-y19" secondAttribute="centerX" id="W09-Zu-hVD"/>
-                <constraint firstItem="BnC-1B-y19" firstAttribute="top" secondItem="iEU-WM-76G" secondAttribute="bottom" constant="8" symbolic="YES" id="eLA-lS-VBC"/>
-                <constraint firstItem="Iur-vO-F7d" firstAttribute="top" secondItem="BnC-1B-y19" secondAttribute="bottom" constant="8" symbolic="YES" id="fGO-C7-nvj"/>
+                <constraint firstItem="iEU-WM-76G" firstAttribute="centerX" secondItem="BnC-1B-y19" secondAttribute="centerX" constant="1" id="W09-Zu-hVD"/>
+                <constraint firstItem="BnC-1B-y19" firstAttribute="top" secondItem="iEU-WM-76G" secondAttribute="bottom" constant="-19" id="eLA-lS-VBC"/>
+                <constraint firstItem="Iur-vO-F7d" firstAttribute="top" secondItem="BnC-1B-y19" secondAttribute="bottom" constant="-1" id="fGO-C7-nvj"/>
                 <constraint firstItem="iEU-WM-76G" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="tG6-0X-c93"/>
                 <constraint firstItem="Y4l-da-WYp" firstAttribute="top" secondItem="Swm-HV-Onk" secondAttribute="bottom" constant="18" id="wqs-h8-YVM"/>
             </constraints>
@@ -71,7 +71,7 @@
         </view>
     </objects>
     <resources>
+        <image name="exploreImg.png" width="200" height="168"/>
         <image name="fblogin.png" width="212" height="40"/>
-        <image name="page1.png" width="200" height="168"/>
     </resources>
 </document>

@@ -7,10 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <SpinKit/RTSpinKitView.h>
+#import <MBProgressHUD.h>
 
 @interface WelcomeViewController : UIViewController
 @property (weak, nonatomic) IBOutlet UIButton *tutorialTestButton;
 @property (weak, nonatomic) IBOutlet UILabel *descriptionLabel;
 
-
+@property (nonatomic, strong) RTSpinKitView *spinner;
+@property (nonatomic, strong) MBProgressHUD *hud;
 @end

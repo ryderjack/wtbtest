@@ -31,6 +31,8 @@
         // This app is an iPhone app running on an iPad
         [self.descriptionLabel setHidden:YES];
     }
+    
+    self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -39,19 +41,32 @@
 
 - (IBAction)facebookTapped:(id)sender {
     
+    self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+    
     [PFFacebookUtils logInInBackgroundWithReadPermissions:@[@"public_profile", @"email"] block:^(PFUser *user, NSError *error) {
         if (!user) {
             NSLog(@"Uh oh. The user cancelled the Facebook login.");
+            [self hidHUD];
+            
         } else if (user.isNew) {
             NSLog(@"New user signed up and logged in through Facebook!");
             //take to reg VC & save data
             RegisterViewController *vc = [[RegisterViewController alloc]init];
             vc.user = user;
+            
+            [self hidHUD];
+            
             [self.navigationController pushViewController:vc animated:YES];
             
         } else {
             NSLog(@"User logged in through Facebook!");
             //check if completed reg/tutorial via NSUserDefaults
+            
+            [self hidHUD];
             
             if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg"] == YES) {//////////////////update before release (remove the 1)
                 //take to app
@@ -69,11 +84,15 @@
     }];
 }
 - (IBAction)tutorialPressed:(id)sender {
-    
     ContainerViewController *vc = [[ContainerViewController alloc]init];
     [self presentViewController:vc animated:YES
                      completion:nil];
 }
 
+-(void)hidHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:self.view animated:YES];
+    });
+}
 
 @end

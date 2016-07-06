@@ -14,8 +14,12 @@
 #import <ParseUI/ParseUI.h>
 #import "CameraController.h"
 #import <DZNPhotoPickerController/DZNPhotoPickerController.h>
+#import <BASSquareCropperViewController.h>
+#import <TOWebViewController.h>
+#import <SpinKit/RTSpinKitView.h>
+#import <MBProgressHUD.h>
 
-@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, DZNPhotoPickerControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate>
+@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, DZNPhotoPickerControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate, TOWebDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
@@ -82,5 +86,14 @@
 @property (nonatomic, strong) NSArray *sizesArray;
 @property (nonatomic, strong) UIWebView *webView;
 @property (nonatomic, strong) UIViewController *viewC;
+
+@property (nonatomic, strong) TOWebViewController *webViewController;
+
+@property (nonatomic, strong) RTSpinKitView *spinner;
+@property (nonatomic, strong) MBProgressHUD *hud;
+
+@property (nonatomic) BOOL hudShowing;
+@property (nonatomic) BOOL shouldShowHUD;
+
 
 @end

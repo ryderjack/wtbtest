@@ -10,7 +10,7 @@
 #import <Parse/Parse.h>
 
 
-@interface FBGroupShareViewController : UITableViewController  <UISearchControllerDelegate, UISearchResultsUpdating, UISearchBarDelegate>
+@interface FBGroupShareViewController : UITableViewController
 
 //extras
 @property (weak, nonatomic) IBOutlet UITextView *textView;
@@ -24,6 +24,5 @@
 
 //search
 @property (nonatomic) BOOL filtered;
-@property (strong, nonatomic) UISearchController *searchController;
 @property (strong, nonatomic) NSMutableArray *filteredGroups;
 @end

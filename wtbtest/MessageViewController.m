@@ -19,15 +19,6 @@
 
 #pragma mark - View lifecycle
 
-/**
- *  Override point for customization.
- *
- *  Customize your view.
- *  Look at the properties on `JSQMessagesViewController` and `JSQMessagesCollectionView` to see what is possible.
- *
- *  Customize your layout.
- *  Look at the properties on `JSQMessagesCollectionViewFlowLayout` to see what is possible.
- */
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -193,8 +184,8 @@
                     
                     NSString *messageText = [messageOb objectForKey:@"message"];
                     
-                    if ([[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId]) {
-                        messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to buy now" withString:@"\nTap to cancel offer"];
+                    if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId]) {
+                        messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
                     }
                     
                     message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
@@ -219,13 +210,13 @@
         else{
             NSLog(@"no messages");
         }
+//        [NSTimer scheduledTimerWithTimeInterval:2.0 target:self selector:@selector(loadMessages) userInfo:nil repeats:NO];
     }];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -274,20 +265,12 @@
          senderDisplayName:(NSString *)senderDisplayName
                       date:(NSDate *)date
 {
-    /**
-     *  Sending a message. Your implementation of this method should do *at least* the following:
-     *
-     *  1. Play sound (optional)
-     *  2. Add new id<JSQMessageData> object to your data source
-     *  3. Call `finishSendingMessage`
-     */
-    
     NSString *messageString = text;
     
     if (self.offerMode == YES) {
         
         // offer message
-        messageString = [NSString stringWithFormat:@"%@\nTap to buy now", text];
+//        messageString = [NSString stringWithFormat:@"%@\nTap to buy now", text];
         
 //        //create offer object in bg
         NSArray *strings = [text componentsSeparatedByString:@"\n"];
@@ -398,7 +381,8 @@
     }
     
     if (self.offerMode == YES) {
-        messageString = [messageString stringByReplacingOccurrencesOfString:@"\nTap to buy now" withString:@"\nTap to cancel offer"];
+//        messageString = [messageString stringByReplacingOccurrencesOfString:@"\nTap to buy now" withString:@"\nTap to cancel offer"];
+        messageString = [NSString stringWithFormat:@"%@\nTap to cancel offer", text];
     }
     
     JSQMessage *message = [[JSQMessage alloc] initWithSenderId:senderId
@@ -522,18 +506,27 @@
         }];
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        self.offerMode = YES;
-        self.inputToolbar.contentView.textView.text = @"Selling: \nCondition: \nPrice: £\nMeetup: ";
-        self.navigationItem.rightBarButtonItem = self.cancelButton;
-    }]];
+    if (self.userIsBuyer == YES) {
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            self.offerMode = YES;
+            self.inputToolbar.contentView.textView.text = @"Selling: \nCondition: \nPrice: £\nMeetup: ";
+            self.navigationItem.rightBarButtonItem = self.cancelButton;
+        }]];
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            CameraController *vc = [[CameraController alloc]init];
+            vc.delegate = self;
+            vc.offerMode = YES;
+            [self presentViewController:vc animated:YES completion:nil];
+        }]];
+        
+    }
+    else{
+        //show different options
+    }
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        CameraController *vc = [[CameraController alloc]init];
-        vc.delegate = self;
-        vc.offerMode = YES;
-        [self presentViewController:vc animated:YES completion:nil];
-    }]];
+    
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Pay with PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 
@@ -554,9 +547,7 @@
             reportObject[@"convo"] = self.convoObject;
             [reportObject saveInBackground];
         }]];
-        
         [self presentViewController:alertView animated:YES completion:nil];
-        
     }]];
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
@@ -569,7 +560,6 @@
     JSQMessage *photoMessage = [JSQMessage messageWithSenderId:self.senderId
                                                    displayName:self.senderDisplayName
                                                          media:photoItem];
-    
     [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
     [self.messages addObject:photoMessage];
     [self finishSendingMessageAnimated:YES];

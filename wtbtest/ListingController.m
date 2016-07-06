@@ -133,6 +133,8 @@
     //buyer info
     self.buyer = [self.listingObject objectForKey:@"postUser"];
     
+    NSLog(@"FIRST SELF.BUYER %@", self.buyer);
+    
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
     }
@@ -144,6 +146,8 @@
     
     [self.buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
+            NSLog(@"FETCHED BUYER %@", self.buyer);
+            
             PFFile *pic = [self.buyer objectForKey:@"picture"];
             [self.buyerImgView setFile:pic];
             [self.buyerImgView loadInBackground];
@@ -176,7 +180,7 @@
             self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];            
         }
         else{
-            NSLog(@"error %@", error);
+            NSLog(@"buyer error %@", error);
         }
     }];
 }
@@ -204,7 +208,6 @@
    
     if (section == 1 || section == 3 || section == 2)
         return 0.0f;
-    
     return 32.0f;
 }
 
@@ -219,11 +222,9 @@
 - (UIView *) tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
 {
     UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-    
     [footerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     return footerView;
 }
-
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -425,8 +426,10 @@
     [self presentViewController:activityController animated:YES completion:nil];
 }
 - (IBAction)messageBuyerPressed:(id)sender {
-    self.sellThisPressed = NO;
-    [self setupMessages];
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {  ////////////////////////CHANGE
+        self.sellThisPressed = NO;
+        [self setupMessages];
+    }
 }
 
 -(void)setupMessages{
@@ -457,10 +460,12 @@
         }
         else{
             //create a new convo and goto it
-            NSLog(@"create new convo");
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
-            convoObject[@"user1"] = [PFUser currentUser];
-            convoObject[@"user2"] = [self.listingObject objectForKey:@"postUser"];
+            
+            // make it clear whos the buyer and whos the seller in the convo object
+            
+            convoObject[@"sellerUser"] = [PFUser currentUser];
+            convoObject[@"buyerUser"] = [self.listingObject objectForKey:@"postUser"];
             convoObject[@"itemId"] = self.listingObject.objectId;
             convoObject[@"wtbListing"] = self.listingObject;
             convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"postUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
@@ -568,8 +573,6 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 - (IBAction)sellthisPressed:(id)sender {
-    
-    //check status of item?
     
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         CreateViewController *vc = [[CreateViewController alloc]init];

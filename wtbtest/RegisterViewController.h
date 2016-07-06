@@ -11,6 +11,8 @@
 #import <Parse.h>
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import <FBSDKLoginKit/FBSDKLoginKit.h>
+#import <SpinKit/RTSpinKitView.h>
+#import <MBProgressHUD.h>
 
 @interface RegisterViewController : UITableViewController <UITextFieldDelegate>
 
@@ -39,5 +41,8 @@
 @property (weak, nonatomic) IBOutlet UIButton *regButton;
 //warning
 @property (weak, nonatomic) IBOutlet UILabel *warningLabel;
+
+@property (nonatomic, strong) RTSpinKitView *spinner;
+@property (nonatomic, strong) MBProgressHUD *hud;
 
 @end

@@ -37,6 +37,7 @@
 @property (weak, nonatomic) IBOutlet UITextField *numberField;
 
 @property (nonatomic) PFUser *currentUser;
+@property (nonatomic) BOOL settingsMode;
 
 
 

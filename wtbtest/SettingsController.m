@@ -87,6 +87,7 @@
             //goto shipping controller
             ShippingController *vc = [[ShippingController alloc]init];
             vc.delegate = self;
+            vc.settingsMode = YES;
             [self.navigationController pushViewController:vc animated:YES];
         }
     }

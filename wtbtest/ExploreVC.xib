@@ -43,14 +43,12 @@
                         <action selector="filterPressed:" destination="-1" eventType="touchUpInside" id="4Yy-74-lGL"/>
                     </connections>
                 </button>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gQD-c5-Rae">
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No results :(" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gQD-c5-Rae">
                     <rect key="frame" x="41" y="299" width="292" height="70"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="70" id="3IS-gC-D1u"/>
                         <constraint firstAttribute="height" constant="70" id="cD2-xB-eiz"/>
                     </constraints>
-                    <string key="text">No results
-You're a bit too picky.. try less filters!</string>
                     <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                     <nil key="highlightedColor"/>

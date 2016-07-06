@@ -38,10 +38,17 @@
     self.cellButtonTwo.selectionStyle = UITableViewCellSelectionStyleNone;
     self.cellButtonThree.selectionStyle = UITableViewCellSelectionStyleNone;
     self.cellButtonFour.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    self.shareMode = NO;
 }
 
 -(void)viewDidDisappear:(BOOL)animated{
-    if (self.orderMode == NO) {
+    
+    if (self.shareMode == YES) {
+        self.shareMode = NO;
+    }
+    
+    else if (self.orderMode == NO) {
         [self.delegate listingEdit:self didFinishEnteringItem:@"new"];
         [self.navigationController popViewControllerAnimated:NO];
     }
@@ -128,9 +135,11 @@
     [self presentViewController:activityController animated:YES completion:nil];
 }
 - (IBAction)shareToGroupPresse:(id)sender {
+    self.shareMode = YES;
     FBGroupShareViewController *vc = [[FBGroupShareViewController alloc]init];
     vc.objectId = self.lastObjectId;
-    [self.navigationController pushViewController:vc animated:YES];
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:vc];
+    [self presentViewController:navigationController animated:YES completion:nil];
 }
 - (IBAction)createAnotherPressed:(id)sender {
     if (self.orderMode == YES) {
