@@ -24,9 +24,12 @@
     [super viewDidLoad];
     
     if ([self.otherUserName isEqualToString:@""]) {
-        [self.otherUser fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        [self.otherUser fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
                 self.title = self.otherUser.username;
+            }
+            else{
+                NSLog(@"getting user error %@", error);
             }
         }];
     }
@@ -43,8 +46,6 @@
     self.inputToolbar.contentView.textView.placeHolder = @"Tap the tag icon to send an offer";
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagIcon"] forState:UIControlStateNormal];
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagIconG"] forState:UIControlStateHighlighted];
-    
-    self.showLoadEarlierMessagesHeader = YES;
     
     //no avatar images
     self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeZero;
@@ -72,6 +73,9 @@
     self.messages = [[NSMutableArray alloc]init];
     self.messagesParseArray = [[NSMutableArray alloc]init];
     self.sentMessagesParseArray = [[NSMutableArray alloc]init];
+    
+    //hide by default
+    self.showLoadEarlierMessagesHeader = NO;
     
     self.skipped = 0;
     
@@ -102,6 +106,10 @@
     [messageQuery includeKey:@"offerObject"];
     [messageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
+            
+            if (self.earlierPressed == NO) {
+                self.lastMessage = [objects objectAtIndex:0];
+            }
             
             if (objects.count < 10) {
                 self.showLoadEarlierMessagesHeader = NO;
@@ -143,6 +151,7 @@
                     
                     message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
                     [self.messages insertObject:message atIndex:0];
+                    
                     message.msgObject = messageOb;
 
                     PFQuery *imageQuery = [PFQuery queryWithClassName:@"messageImages"];
@@ -160,18 +169,20 @@
                                     newMediaAttachmentCopy = [UIImage imageWithCGImage:photoItem.image.CGImage];
                                     newMediaData = photoItem;
                                     [message setValue:newMediaData forKey:@"media"];
-                                    [self.collectionView reloadData];
+//                                    [self.collectionView reloadData];
 
                                     if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                                         [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
                                     }
                                     else{
-                                        [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView];
+                                        [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView]; //needs to change?
                                     }
                                     
-                                    if (self.earlierPressed == NO) {
-                                        [self scrollToBottomAnimated:NO];
-                                    }
+                                    [self.collectionView reloadData];
+                                    
+//                                    if (self.earlierPressed == NO) {
+//                                        [self scrollToBottomAnimated:NO];
+//                                    }
                                 }
                             }];
                         }
@@ -181,7 +192,6 @@
                     }];
                 }
                 else{
-                    
                     NSString *messageText = [messageOb objectForKey:@"message"];
                     
                     if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId]) {
@@ -199,26 +209,182 @@
                     }
                     
                     [self.messages insertObject:message atIndex:0];
-                    [self.collectionView reloadData];
-                    
-                    if (self.earlierPressed == NO) {
-                        [self scrollToBottomAnimated:NO];
-                    }
                 }
+            }
+            
+            [self.collectionView reloadData];
+            
+            if (self.earlierPressed == NO) {
+                [self scrollToBottomAnimated:NO];
             }
         }
         else{
             NSLog(@"no messages");
         }
-//        [NSTimer scheduledTimerWithTimeInterval:2.0 target:self selector:@selector(loadMessages) userInfo:nil repeats:NO];
+//        [NSTimer scheduledTimerWithTimeInterval:10.0 target:self selector:@selector(loadMessages) userInfo:nil repeats:NO];
     }];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    
+    //to prevent double tapping profile button
+    self.profileBTapped = NO;
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleNotification:) name:@"NewMessage" object:nil];
 }
 
+- (void)handleNotification:(NSNotification*)note {
+    NSLog(@"Got a new message: %@", note);
+    
+    NSMutableArray *unseenConvos = [note object];
+    NSLog(@"unseen convos from noti %@", unseenConvos);
+    
+    PFObject *currentConvo = self.convoObject;
+    
+    for (PFObject *convo in unseenConvos) {
+        NSLog(@"convo %@", convo);
+        NSLog(@"current convo %@", currentConvo);
+        
+        if ([convo.objectId isEqualToString:currentConvo.objectId]) {
+            NSLog(@"SAME CONVO UPDATED");
+            
+            //stop listening until new msgs loaded
+            [[NSNotificationCenter defaultCenter] removeObserver:self name:@"NewMessage" object:nil];
+            
+            [self loadNewMessages];
+        }
+    }
+    
+}
+
+-(void)loadNewMessages{
+    NSLog(@"LAST MESSAGE SENT %@", self.lastMessage);
+    
+    PFQuery *newMessageQuery = [PFQuery queryWithClassName:@"messages"];
+    [newMessageQuery whereKey:@"convoId" equalTo:self.convoId];
+    NSDate *lastDate = [self.lastMessage createdAt];
+    [newMessageQuery whereKey:@"createdAt" greaterThan:lastDate];
+    [newMessageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            NSLog(@"new objects %@", objects);
+            
+            //update skipped number
+            int count = (int)[objects count];
+            self.skipped = count + self.skipped;
+            
+            //add new message(s) to UI
+            
+            for (PFObject *messageOb in objects) {
+                
+                if (![self.messagesParseArray containsObject:messageOb]) {
+                    [self.messagesParseArray addObject:messageOb];
+                }
+                
+                __block JSQMessage *message = nil;
+                
+                if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                    [messageOb setObject:@"seen" forKey:@"status"];
+                    [messageOb saveInBackground];
+                }
+                else{
+                    // only add current user's messages to parse array so last one's status can be displayed
+                    if (![self.sentMessagesParseArray containsObject:messageOb]) {
+                        [self.sentMessagesParseArray addObject:messageOb];
+                    }
+                }
+                
+                if ([[messageOb objectForKey:@"mediaMessage"] isEqualToString:@"YES"]) {
+                    
+                    //media message
+                    
+                    __block id<JSQMessageMediaData> newMediaData = nil;
+                    __block id newMediaAttachmentCopy = nil;
+                    __block JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc]init];
+                    photoItem.image = nil;
+                    
+                    message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
+                    [self.messages addObject:message];
+                    message.msgObject = messageOb;
+                    
+                    PFQuery *imageQuery = [PFQuery queryWithClassName:@"messageImages"];
+                    [imageQuery whereKey:@"objectId" equalTo:[messageOb objectForKey:@"message"]];
+                    
+                    [imageQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                        if (!error) {
+                            PFFile *img = [object objectForKey:@"Image"];
+                            [img getDataInBackgroundWithBlock:^(NSData *data, NSError *error) {
+                                if (!error) {
+                                    
+                                    UIImage *messageImage = [UIImage imageWithData:data];
+                                    photoItem.image = messageImage;
+                                    
+                                    newMediaAttachmentCopy = [UIImage imageWithCGImage:photoItem.image.CGImage];
+                                    newMediaData = photoItem;
+                                    [message setValue:newMediaData forKey:@"media"];
+                                    [self.collectionView reloadData];
+                                    
+                                    if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                                        [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
+                                    }
+                                    else{
+                                        [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView]; //needs to change?
+                                    }
+                                }
+                            }];
+                        }
+                        else{
+                            NSLog(@"error with image query %@", error);
+                        }
+                    }];
+                }
+                else{
+                    NSString *messageText = [messageOb objectForKey:@"message"];
+                    
+                    if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId]) {
+                        messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
+                    }
+                    
+                    message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
+                    
+                    if ([[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
+                        PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
+                        if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
+                            message.isOfferMessage = YES;
+                            message.offerObject = offerOb;
+                        }
+                    }
+                    //was ere
+                    [self.messages addObject:message];
+                }
+                self.lastMessage = messageOb;
+            }
+            [self.collectionView reloadData];
+            
+            //scroll to bottom
+            [self scrollToBottomAnimated:YES];
+            
+            //minus number of new messages that have just been seen off tab bar badge
+            NSString *badgeString =[[self.tabBarController.tabBar.items objectAtIndex:2] badgeValue];
+            int badgeInt = [badgeString intValue];
+            int newCount = (int)[objects count];
+            int updatedBadge = badgeInt - newCount;
+            if (updatedBadge == 0) {
+                [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+            }
+            else{
+                [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", updatedBadge]];
+            }
+
+            //reregister for notifications again
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleNotification:) name:@"NewMessage" object:nil];
+        }
+        else{
+            NSLog(@"no new objects");
+        }
+    }];
+}
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
@@ -230,9 +396,11 @@
      */
     self.collectionView.collectionViewLayout.springinessEnabled = NO;
     
+    
     if (self.sellThisPressed == YES) {
+        self.sellThisPressed = NO;
         self.offerMode = YES;
-        self.inputToolbar.contentView.textView.text = @"Selling:\nCondition:\nPrice:£\nMeetup:";
+        self.inputToolbar.contentView.textView.text = @"Selling: \nCondition: \nPrice: £\nMeetup: ";
     }
 }
 
@@ -419,6 +587,9 @@
             if (self.offerMode == YES) {
                 pushText = @"sent an offer 🔌";
             }
+            else{
+                self.lastMessage = messageObject;
+            }
             //send push to other user
             NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username};
             [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
@@ -506,7 +677,7 @@
         }];
     }]];
     
-    if (self.userIsBuyer == YES) {
+    if (self.userIsBuyer == NO) {
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             self.offerMode = YES;
@@ -589,10 +760,12 @@
             self.messageObject[@"status"] = @"sent";
             self.messageObject[@"mediaMessage"] = @"YES";
             if (self.tagString) {
-                NSLog(@"setting tag");
                 [self.messageObject setObject:self.tagString forKey:@"tagString"];
             }
             [self.messageObject saveInBackground];
+            
+            //set as last message sent
+            self.lastMessage = self.messageObject;
             
             //set msg object so photo is tagged
             photoMessage.msgObject = self.messageObject;
@@ -601,7 +774,7 @@
                 [self.convoObject incrementKey:@"convoImages"];
             }
             
-            NSLog(self.offerMode ? @"YES":@"NO");
+//            NSLog(self.offerMode ? @"YES":@"NO");
             
             if (self.offerMode == YES) {
                 [self.offerObject setObject:picObject forKey:@"image"];
@@ -950,6 +1123,7 @@
                 header:(JSQMessagesLoadEarlierHeaderView *)headerView didTapLoadEarlierMessagesButton:(UIButton *)sender
 {
     self.earlierPressed = YES;
+    self.showLoadEarlierMessagesHeader = NO;
     [self loadMessages];
 }
 
@@ -991,7 +1165,6 @@
                 tappedMessage.isOfferMessage = NO;
                 [self.collectionView reloadData];
             }]];
-            
             [self presentViewController:alertView animated:YES completion:nil];
         }
     }
@@ -1025,8 +1198,37 @@
 }
 
 -(void)profileTapped{
-    UserProfileController *vc = [[UserProfileController alloc]init];
-    vc.user = self.otherUser;
-    [self.navigationController pushViewController:vc animated:YES];
+    if (self.otherUser && self.profileBTapped == NO) {
+        self.profileBTapped = YES;
+        UserProfileController *vc = [[UserProfileController alloc]init];
+        vc.user = self.otherUser;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+}
+
+-(void)markTapped{
+    NSLog(@"mark payment as received!");
+}
+
+-(void)showBanner{
+    if (self.payBannerShowing == YES) {
+        [self.paidView removeFromSuperview];
+    }
+    else{
+        if (!self.paidView) {
+            self.paidView = [[UIView alloc]initWithFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, self.navigationController.navigationBar.frame.size.width, 50)];
+            
+            UIButton *paidButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, self.paidView.frame.size.width, self.paidView.frame.size.height)];
+            [paidButton setTitle:@"Mark payment as received" forState:UIControlStateNormal];
+            [paidButton addTarget:self action:@selector(markTapped) forControlEvents:UIControlEventTouchUpInside];
+            
+            paidButton.backgroundColor = [UIColor greenColor];
+            [paidButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+            [self.paidView addSubview:paidButton];
+            [paidButton setCenter:CGPointMake(self.paidView.frame.size.width / 2, self.paidView.frame.size.height / 2)];
+        }
+        [self.view addSubview:self.paidView];
+    }
+    
 }
 @end

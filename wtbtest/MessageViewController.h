@@ -43,7 +43,11 @@
 @property (nonatomic, strong) UIBarButtonItem *cancelButton;
 @property (nonatomic, strong) UIBarButtonItem *profileButton;
 @property (nonatomic, strong) PFObject *messageObject;
+@property (nonatomic, strong) PFObject *lastMessage;
 
 @property (nonatomic) BOOL userIsBuyer;
+@property (nonatomic) BOOL profileBTapped;
 
+@property (nonatomic) BOOL payBannerShowing;
+@property (nonatomic, strong) UIView *paidView;
 @end

@@ -79,7 +79,7 @@
     int purchased = [[self.user objectForKey:@"purchased"]intValue];
     int sold = [[self.user objectForKey:@"sold"] intValue];
     
-    self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
+    self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d Sold: %d", purchased, sold];
     
     int starNumber = [[self.user objectForKey:@"currentRating"] intValue];
     

@@ -133,8 +133,6 @@
     //buyer info
     self.buyer = [self.listingObject objectForKey:@"postUser"];
     
-    NSLog(@"FIRST SELF.BUYER %@", self.buyer);
-    
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
     }
@@ -143,10 +141,8 @@
     }
     
     [self setImageBorder];
-    
     [self.buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
-            NSLog(@"FETCHED BUYER %@", self.buyer);
             
             PFFile *pic = [self.buyer objectForKey:@"picture"];
             [self.buyerImgView setFile:pic];
@@ -426,7 +422,7 @@
     [self presentViewController:activityController animated:YES completion:nil];
 }
 - (IBAction)messageBuyerPressed:(id)sender {
-    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {  ////////////////////////CHANGE
+    if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         self.sellThisPressed = NO;
         [self setupMessages];
     }
@@ -436,9 +432,7 @@
     PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     
     NSString *possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"postUser"]objectId], self.listingObject.objectId];
-    
     NSString *otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"postUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
-    
     NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
     
     [convoQuery whereKey:@"convoId" containedIn:idArray];
@@ -454,8 +448,8 @@
             if (self.sellThisPressed == YES) {
                 vc.sellThisPressed = YES;
             }
-            vc.otherUser = [self.listingObject objectForKey:@"postUser"];
-            vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
+            vc.otherUser = [object objectForKey:@"buyerUser"];
+            vc.otherUserName = [[object objectForKey:@"buyerUser"]username];
             [self.navigationController pushViewController:vc animated:YES];
         }
         else{
@@ -491,7 +485,6 @@
             }];
         }
     }];
-
 }
 
 -(void)setImageBorder{

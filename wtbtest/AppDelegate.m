@@ -33,12 +33,13 @@
             //1. server
             //2. tab number
             //3. messaging/offering items to yourself
+            //4. push check for non-simulator devices
         
         
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
-        configuration.server = @"http://localhost:1337/parse";
-//        configuration.server = @"http://wantobuy.herokuapp.com/parse";
+//        configuration.server = @"http://localhost:1337/parse";
+        configuration.server = @"http://wantobuy.herokuapp.com/parse";
     }]];
 
     [Flurry startSession:@"9Y63FGHCCGZQJDQTCTMP"];
@@ -69,10 +70,11 @@
     NavigationController *navController4 = [[NavigationController alloc] initWithRootViewController:self.inboxView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController4, navController2, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController4, navController2, navController3, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
-    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+//    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
+    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
     
     UITabBarItem *tabBarItem1 = [self.tabBarController.tabBar.items objectAtIndex:0];
     tabBarItem1.image = [UIImage imageNamed:@"homeIcon"];
@@ -112,6 +114,10 @@
     }
     
     self.unseenMessages = [[NSMutableArray alloc]init];
+    
+//    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {  commented out for simulator testing purposes
+        [self checkMesages];
+//    }
 
     return YES;
 }
@@ -121,36 +127,39 @@
     [CrashlyticsKit setUserName:[NSString stringWithFormat:@"%@", [PFUser currentUser].username]];
 }
 
-
 //call to check messages if installation badge value doesnt work for ppl who havent enabled push
 -(void)checkMesages{
     PFQuery *convosQuery = [PFQuery queryWithClassName:@"convos"];
     [convosQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
     [convosQuery whereKey:@"totalMessages" notEqualTo:@0];
     [convosQuery orderByDescending:@"createdAt"];
+    [convosQuery includeKey:@"lastSent"];
     [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects) {
-                
+                [self.unseenMessages removeAllObjects];
                 for (PFObject *convo in objects) {
                     PFObject *msgObject = [convo objectForKey:@"lastSent"];
                     if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                        [self.unseenMessages addObject:msgObject];
+                        [self.unseenMessages addObject:convo];
                     }
                 }
-                if (self.unseenMessages.count > 0) {
-                    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%lu", (unsigned long)self.unseenMessages.count]];
+                if (self.unseenMessages.count != 0) {
+                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%lu", (unsigned long)self.unseenMessages.count]];
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:self.unseenMessages];
                 }
                 else{
-                    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
                 }
+                
+                [NSTimer scheduledTimerWithTimeInterval:30.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:NO];
             }
             else{
-                NSLog(@"no convos");
+                //no convos
             }
         }
         else{
-            NSLog(@"error %@", error);
+            NSLog(@"error getting convos %@", error);
         }
     }];
 }
@@ -168,8 +177,16 @@
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     NSLog(@"DID RECEIVE A PUSH");
-    [PFPush handlePush:userInfo];
-    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
+//    [PFPush handlePush:userInfo]; NEEDED??
+    
+    NSString *badgeString =[[self.tabBarController.tabBar.items objectAtIndex:2] badgeValue];
+    int badgeInt = [badgeString intValue];
+    if (badgeInt == 0) {
+        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:@"1"];
+    }
+    else{
+        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", badgeInt+1]];
+    }
 }
 
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {

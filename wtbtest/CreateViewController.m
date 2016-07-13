@@ -8,7 +8,6 @@
 
 #import "CreateViewController.h"
 #import <TWPhotoPickerController.h>
-#import "InstaWebController.h"
 #import "NavigationController.h"
 #import "Flurry.h"
 #import "WelcomeViewController.h"
@@ -827,7 +826,6 @@
             [query getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
                     self.listing = object;
-                    NSLog(@"self.listing id %@", self.listing.objectId);
                 }
                 else{
                     NSLog(@"error %@", error);
@@ -841,6 +839,7 @@
         }
         
         [self.listing setObject:itemTitle forKey:@"title"];
+        [self.listing setObject:[itemTitle lowercaseString]forKey:@"titleLower"];
         [self.listing setObject:self.chooseCondition.text forKey:@"condition"];
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
         [self.listing setObject:self.chooseSize.text forKey:@"size"];
@@ -858,8 +857,6 @@
         
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
         self.listing[@"listingPrice"] = @(price);
-        
-        NSLog(@"SETTING USER ON WTB %@", [PFUser currentUser]);
         
         [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
         

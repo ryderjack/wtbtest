@@ -151,7 +151,7 @@
     
     [Flurry logEvent:@"Explore_Tapped"];
     
-//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasUpdate1.0.45"])
+//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasUpdate1.0.48"])
 //    {
 //        // Has feedback update
 //    }
@@ -252,7 +252,7 @@
     [self setupInfinQuery];
     
     if (self.searchEnabled == YES) {
-        [self.infiniteQuery whereKey:@"title" matchesRegex:self.searchString];
+        [self.infiniteQuery whereKey:@"titleLower" containsString:self.searchString];
     }
     
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -286,8 +286,7 @@
     [self setupPullQuery];
     
     if (self.searchEnabled == YES) {
-        [self.pullQuery whereKey:@"title" matchesRegex:self.searchString];
-        
+        [self.pullQuery whereKey:@"titleLower" containsString:self.searchString];
     }
     
     [self.pullQuery whereKey:@"status" notEqualTo:@"purchased"];
@@ -738,17 +737,14 @@
     self.searchController.searchBar.tintColor = [UIColor whiteColor];
     
     //change cursor colour
-    for ( UIView *v in [self.searchController.searchBar.subviews.firstObject subviews] )
-    {
-        if ( YES == [v isKindOfClass:[UITextField class]] )
-        {
+    for ( UIView *v in [self.searchController.searchBar.subviews.firstObject subviews] ){
+        if ( YES == [v isKindOfClass:[UITextField class]] ){
             [((UITextField*)v) setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
             break;
         }
     }
     
     [self.searchController.searchBar setTranslucent:YES];
-    
     self.searchEnabled = YES;
     
     // reset filters
@@ -778,7 +774,7 @@
     if (self.searchEnabled == YES) {
         
         self.searchString = searchBar.text;
-        
+
         //clear search array
         [self.searchResults removeAllObjects];
         [self.noresultsLabel setHidden:YES];
@@ -813,6 +809,8 @@
         [searchesList insertObject:self.searchString atIndex:0];
         self.resultsController.allResults = searchesList;
         [self.resultsController.tableView reloadData];
+        
+        self.searchString = [searchBar.text lowercaseString];
         
         //query
         [self.searchController.searchResultsController.view setHidden:YES];
