@@ -28,13 +28,11 @@
     
     [Parse initializeWithConfiguration:[ParseClientConfiguration configurationWithBlock:^(id<ParseMutableClientConfiguration> configuration) {
 
-        
         // checks before sending to test:
             //1. server
             //2. tab number
             //3. messaging/offering items to yourself
             //4. push check for non-simulator devices
-        
         
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
@@ -114,10 +112,14 @@
     }
     
     self.unseenMessages = [[NSMutableArray alloc]init];
-    
-//    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {  commented out for simulator testing purposes
+        
+    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {  //commented out for simulator testing purposes
+       NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:YES];
+        [timer fire];
+    }
+    else{
         [self checkMesages];
-//    }
+    }
 
     return YES;
 }
@@ -137,25 +139,50 @@
     [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects) {
+                //check if last msg sent is seen
+                //if no then retrieves the relevant unseen counter for the user
+                //uses that on the tab
+                
                 [self.unseenMessages removeAllObjects];
+                int totalUnseen = 0;
+                int unseen = 0;
+
                 for (PFObject *convo in objects) {
                     PFObject *msgObject = [convo objectForKey:@"lastSent"];
+                    
                     if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                        [self.unseenMessages addObject:convo];
+                        if (![self.inboxView.selectedConvo isEqualToString:convo.objectId]) {
+                            //don't add to tab bar for a selected convo since the added badge could be confusing
+                            [self.unseenMessages addObject:convo];
+                        }
+                        
+                        PFUser *buyer = [convo objectForKey:@"buyerUser"];
+                        if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+                            //current user is buyer so other user is seller
+                            unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                        }
+                        else{
+                            //other user is buyer, current is seller
+                            unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                        }
+                        
+                        totalUnseen = totalUnseen + unseen;
+                        
+                        NSLog(@"running total unseen: %d", totalUnseen);
                     }
                 }
+                
                 if (self.unseenMessages.count != 0) {
-                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%lu", (unsigned long)self.unseenMessages.count]];
+                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
                     [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:self.unseenMessages];
                 }
                 else{
                     [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
                 }
-                
-                [NSTimer scheduledTimerWithTimeInterval:30.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:NO];
             }
             else{
                 //no convos
+                NSLog(@"no convos");
             }
         }
         else{
@@ -176,17 +203,7 @@
 }
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
-    NSLog(@"DID RECEIVE A PUSH");
-//    [PFPush handlePush:userInfo]; NEEDED??
-    
-    NSString *badgeString =[[self.tabBarController.tabBar.items objectAtIndex:2] badgeValue];
-    int badgeInt = [badgeString intValue];
-    if (badgeInt == 0) {
-        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:@"1"];
-    }
-    else{
-        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", badgeInt+1]];
-    }
+    [self checkMesages];
 }
 
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {

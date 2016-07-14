@@ -23,7 +23,7 @@
             <subviews>
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="R2B-xG-3vZ">
                     <rect key="frame" x="0.0" y="66" width="375" height="375"/>
-                    <color key="backgroundColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                     <constraints>
                         <constraint firstAttribute="width" secondItem="R2B-xG-3vZ" secondAttribute="height" multiplier="1:1" id="D63-Id-KTe"/>
                     </constraints>
@@ -94,7 +94,7 @@
                     <nil key="highlightedColor"/>
                 </label>
             </subviews>
-            <color key="backgroundColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
             <constraints>
                 <constraint firstItem="R2B-xG-3vZ" firstAttribute="centerX" secondItem="oJO-pp-7GF" secondAttribute="centerX" id="AW0-GU-jCP"/>
                 <constraint firstItem="oJO-pp-7GF" firstAttribute="top" secondItem="R2B-xG-3vZ" secondAttribute="bottom" constant="68" id="GUZ-gQ-ZpG"/>

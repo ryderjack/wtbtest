@@ -422,21 +422,21 @@
     [self presentViewController:activityController animated:YES completion:nil];
 }
 - (IBAction)messageBuyerPressed:(id)sender {
-    if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+    if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) { //TESTING PURPOSES
         self.sellThisPressed = NO;
         [self setupMessages];
     }
 }
 
 -(void)setupMessages{
-    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     NSString *possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"postUser"]objectId], self.listingObject.objectId];
     NSString *otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"postUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
     NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
     
     [convoQuery whereKey:@"convoId" containedIn:idArray];
-    
+    [convoQuery includeKey:@"buyerUser"];
     [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //convo exists, goto that one

@@ -84,9 +84,6 @@
 @property (nonatomic, strong) UIBarButtonItem *resetButton;
 
 @property (nonatomic, strong) NSArray *sizesArray;
-@property (nonatomic, strong) UIWebView *webView;
-@property (nonatomic, strong) UIViewController *viewC;
-
 @property (nonatomic, strong) TOWebViewController *webViewController;
 
 @property (nonatomic, strong) RTSpinKitView *spinner;

@@ -9,8 +9,9 @@
 #import <UIKit/UIKit.h>
 #import <Parse/Parse.h>
 #import "ShippingController.h"
+#import <TOWebViewController.h>
 
-@interface CheckoutController : UITableViewController <UITextFieldDelegate, ShippingControllerDelegate>
+@interface CheckoutController : UITableViewController <UITextFieldDelegate, ShippingControllerDelegate, TOWebDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *shippingAddressCell;
@@ -39,6 +40,9 @@
 
 @property (nonatomic, strong) PFObject *confirmedOfferObject;
 @property (weak, nonatomic) IBOutlet UIButton *payButton;
+
+//web view
+@property (nonatomic, strong) TOWebViewController *webViewController;
 
 
 @end

@@ -35,8 +35,8 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
+    self.selectedConvo = @"";
     [Flurry logEvent:@"Inbox_Tapped"];
-    
     [self loadMessages];
 }
 
@@ -57,22 +57,44 @@
                 [self.tableView.pullToRefreshView stopAnimating];
                 
                 [self.unseenMessages removeAllObjects];
+                int totalUnseen = 0;
+                int unseen = 0;
                 
                 for (PFObject *convo in objects) {
                     PFObject *msgObject = [convo objectForKey:@"lastSent"];
                     if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                        [self.unseenMessages addObject:convo];
+                        
+                        if (![self.selectedConvo isEqualToString:convo.objectId]) {
+                            //don't add to tab bar for a selected convo since the added badge could be confusing
+                            [self.unseenMessages addObject:convo];
+                        }
+                        
+                        PFUser *buyer = [convo objectForKey:@"buyerUser"];
+                        
+                        if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+                            //current user is buyer so other user is seller
+                            unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                        }
+                        else{
+                            //other user is buyer, current is seller
+                            unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                        }
+                        
+                        totalUnseen = totalUnseen + unseen;
+                        
+                        NSLog(@"running total unseen: %d", totalUnseen);
                     }
                 }
                 // careful! as only showing unseen messages that have been loaded
                 if (self.unseenMessages.count > 0) {
-                    [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%ld", (unsigned long)self.unseenMessages.count];
-                    self.navigationItem.title = [NSString stringWithFormat:@"Messages (%ld)", (unsigned long)self.unseenMessages.count];
+                    [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", totalUnseen];
+                    self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", totalUnseen];
                 }
                 else{
                     self.navigationItem.title = @"Messages";
                     [self.navigationController tabBarItem].badgeValue = nil;
-                     PFInstallation *installation = [PFInstallation currentInstallation];
+                    
+                    PFInstallation *installation = [PFInstallation currentInstallation];
                     if (installation.badge != 0) {
                         installation.badge = 0;
                     }
@@ -195,7 +217,6 @@
     }
     else{
         //message has been seen
-//        [self.cell.unreadIcon setHidden:YES];
         [self unboldFontForLabel:self.cell.usernameLabel];
         [self unboldFontForLabel:self.cell.messageLabel];
         [self unboldFontForLabel:self.cell.timeLabel];
@@ -209,6 +230,8 @@
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     
     PFObject *convoObject = [self.convoObjects objectAtIndex:indexPath.row];
+    self.selectedConvo = convoObject.objectId;
+    
     PFObject *listing = [convoObject objectForKey:@"wtbListing"];
     
     if ([self.unseenMessages containsObject:convoObject]) {

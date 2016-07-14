@@ -29,7 +29,7 @@
     self.currentUser = [PFUser currentUser];
     
     self.nameLabel.text = [NSString stringWithFormat:@"Name: %@",[self.currentUser objectForKey:@"fullname"]];
-    self.emailFields.placeholder = [NSString stringWithFormat:@"Email: %@",[self.currentUser objectForKey:@"email"]];
+    self.emailFields.placeholder = [NSString stringWithFormat:@"Paypal email: %@",[self.currentUser objectForKey:@"email"]];
     
     if ([self.currentUser objectForKey:@"building"]) {
         //address been set before

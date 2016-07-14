@@ -10,6 +10,7 @@
 #import "CheckoutController.h"
 #import "DetailImageController.h"
 #import "UserProfileController.h"
+#import "SettingsController.h"
 
 @interface MessageViewController ()
 
@@ -132,6 +133,13 @@
                 if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                     [messageOb setObject:@"seen" forKey:@"status"];
                     [messageOb saveInBackground];
+                    
+                    if (self.userIsBuyer == YES) {
+                        [self.convoObject setObject:@0 forKey:@"buyerUnseen"];
+                    }
+                    else{
+                        [self.convoObject setObject:@0 forKey:@"sellerUnseen"];
+                    }
                 }
                 else{
                     // only add current user's messages to parse array so last one's status can be displayed
@@ -211,6 +219,7 @@
                     [self.messages insertObject:message atIndex:0];
                 }
             }
+            [self.convoObject saveInBackground];
             
             [self.collectionView reloadData];
             
@@ -221,7 +230,6 @@
         else{
             NSLog(@"no messages");
         }
-//        [NSTimer scheduledTimerWithTimeInterval:10.0 target:self selector:@selector(loadMessages) userInfo:nil repeats:NO];
     }];
 }
 
@@ -256,12 +264,9 @@
             [self loadNewMessages];
         }
     }
-    
 }
 
 -(void)loadNewMessages{
-    NSLog(@"LAST MESSAGE SENT %@", self.lastMessage);
-    
     PFQuery *newMessageQuery = [PFQuery queryWithClassName:@"messages"];
     [newMessageQuery whereKey:@"convoId" equalTo:self.convoId];
     NSDate *lastDate = [self.lastMessage createdAt];
@@ -279,7 +284,8 @@
             for (PFObject *messageOb in objects) {
                 
                 if (![self.messagesParseArray containsObject:messageOb]) {
-                    [self.messagesParseArray addObject:messageOb];
+                    // insets new messages at beginning of array (bottom of CV) so status labels are correct
+                    [self.messagesParseArray insertObject:messageOb atIndex:0];
                 }
                 
                 __block JSQMessage *message = nil;
@@ -287,6 +293,13 @@
                 if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                     [messageOb setObject:@"seen" forKey:@"status"];
                     [messageOb saveInBackground];
+                    
+                    if (self.userIsBuyer == YES) {
+                        [self.convoObject setObject:@0 forKey:@"buyerUnseen"];
+                    }
+                    else{
+                        [self.convoObject setObject:@0 forKey:@"sellerUnseen"];
+                    }
                 }
                 else{
                     // only add current user's messages to parse array so last one's status can be displayed
@@ -360,10 +373,26 @@
                 }
                 self.lastMessage = messageOb;
             }
-            [self.collectionView reloadData];
+            
+            //save new unseen counter number
+            [self.convoObject saveInBackground];
             
             //scroll to bottom
             [self scrollToBottomAnimated:YES];
+            
+            //call attributedString method to update labels
+            NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
+            
+            NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
+            NSLog(@"last item index %ld", (long)lastItemIndex);
+            
+            NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
+            NSLog(@"last path %@", pathToLastItem);
+            
+            [self collectionView:self.collectionView attributedTextForCellBottomLabelAtIndexPath:pathToLastItem];
+            [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
+//            [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
+            [self.collectionView reloadData];
             
             //minus number of new messages that have just been seen off tab bar badge
             NSString *badgeString =[[self.tabBarController.tabBar.items objectAtIndex:2] badgeValue];
@@ -389,13 +418,7 @@
 {
     [super viewDidAppear:animated];
     
-    /**
-     *  Enable/disable springy bubbles, default is NO.
-     *  You must set this from `viewDidAppear:`
-     *  Note: this feature is mostly stable, but still experimental
-     */
     self.collectionView.collectionViewLayout.springinessEnabled = NO;
-    
     
     if (self.sellThisPressed == YES) {
         self.sellThisPressed = NO;
@@ -425,6 +448,21 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
+-(void)showPayPalAlert{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"PayPal" message:[NSString stringWithFormat:@"Make sure your PayPal email address is correct to ensure seemless payment. Is it %@?", [PFUser currentUser].email] preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Change" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        SettingsController *vc = [[SettingsController alloc]init];
+        [self.navigationController pushViewController:vc animated:YES];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
 #pragma mark - JSQMessagesViewController method overrides
 
 - (void)didPressSendButton:(UIButton *)button
@@ -437,10 +475,10 @@
     
     if (self.offerMode == YES) {
         
-        // offer message
-//        messageString = [NSString stringWithFormat:@"%@\nTap to buy now", text];
+        //check if have paypal email before proceeding
+        [self showPayPalAlert];
         
-//        //create offer object in bg
+        //create offer object in bg
         NSArray *strings = [text componentsSeparatedByString:@"\n"];
         
         NSString *itemTitle = @"";
@@ -537,7 +575,6 @@
         
         self.offerObject = nil;
         self.offerObject = [PFObject objectWithClassName:@"offers"];
-        
         [self.offerObject setObject:self.listing forKey:@"wtbListing"];
         [self.offerObject setObject:itemTitle forKey:@"title"];
         [self.offerObject setObject:condition forKey:@"condition"];
@@ -549,7 +586,6 @@
     }
     
     if (self.offerMode == YES) {
-//        messageString = [messageString stringByReplacingOccurrencesOfString:@"\nTap to buy now" withString:@"\nTap to cancel offer"];
         messageString = [NSString stringWithFormat:@"%@\nTap to cancel offer", text];
     }
     
@@ -635,8 +671,6 @@
             [convoImagesQuery orderByDescending:@"createdAt"];
             [convoImagesQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
-                    NSLog(@"got the last image object from the convo %@", object);
-                    
                     [self.offerObject setObject:[object objectForKey:@"Image"] forKey:@"image"];
                 }
                 else{
@@ -650,6 +684,12 @@
     //update convo object after every message sent
     [self.convoObject incrementKey:@"totalMessages"];
     [self.convoObject setObject:messageObject forKey:@"lastSent"];
+    if (self.userIsBuyer == YES) {
+       [self.convoObject incrementKey:@"sellerUnseen"];
+    }
+    else{
+        [self.convoObject incrementKey:@"buyerUnseen"];
+    }
     [self.convoObject saveInBackground];
 }
 
@@ -696,9 +736,7 @@
     else{
         //show different options
     }
-    
-    
-    
+
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Pay with PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 
     }]];
@@ -798,6 +836,12 @@
             
             self.offerMode = NO;
             [self.convoObject incrementKey:@"totalMessages"];
+            if (self.userIsBuyer == YES) {
+                [self.convoObject incrementKey:@"sellerUnseen"];
+            }
+            else{
+                [self.convoObject incrementKey:@"buyerUnseen"];
+            }
             [self.convoObject saveInBackground];
             
             // add new message object to relevant arrays
@@ -939,12 +983,10 @@
         if ([self.messagesParseArray containsObject:self.sentMessagesParseArray[0]]) {
             
             //user has sent a message
-            
             NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
             NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
             NSInteger itemIndex = [self.messagesParseArray indexOfObject:self.sentMessagesParseArray[0]];
             NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:(lastItemIndex -itemIndex)inSection:lastSectionIndex];
-            
             if (indexPath == pathToLastItem) {
                 NSString *statusString = [[self.sentMessagesParseArray objectAtIndex:0]objectForKey:@"status"];
                 
@@ -1216,19 +1258,18 @@
     }
     else{
         if (!self.paidView) {
-            self.paidView = [[UIView alloc]initWithFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, self.navigationController.navigationBar.frame.size.width, 50)];
+            self.paidView = [[UIView alloc]initWithFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, self.navigationController.navigationBar.frame.size.width, 30)];
             
             UIButton *paidButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, self.paidView.frame.size.width, self.paidView.frame.size.height)];
-            [paidButton setTitle:@"Mark payment as received" forState:UIControlStateNormal];
+            [paidButton setTitle:@"Tap to confirm you've received payment" forState:UIControlStateNormal];
             [paidButton addTarget:self action:@selector(markTapped) forControlEvents:UIControlEventTouchUpInside];
-            
-            paidButton.backgroundColor = [UIColor greenColor];
+            paidButton.backgroundColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
             [paidButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+            paidButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
             [self.paidView addSubview:paidButton];
             [paidButton setCenter:CGPointMake(self.paidView.frame.size.width / 2, self.paidView.frame.size.height / 2)];
         }
         [self.view addSubview:self.paidView];
     }
-    
 }
 @end

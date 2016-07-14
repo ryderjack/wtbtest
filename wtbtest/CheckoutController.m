@@ -140,70 +140,72 @@
         return;
     }
     else{
-        PFObject *orderObject =[PFObject objectWithClassName:@"orders"];
-        [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
-        NSLog(@"offer object %@", self.confirmedOfferObject);
-        
-        [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
-        
-        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"sellerUser"] forKey:@"sellerUser"];
-        NSLog(@"sellerUser %@", [self.confirmedOfferObject objectForKey:@"sellerUser"]);
-        
-        [orderObject setObject:[NSNumber numberWithBool:YES] forKey:@"paid"];
-        [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"shipped"];
-        [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"sellerFeedback"];
-        [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"buyerFeedback"];
-        
-        [orderObject setObject:@"YES" forKey:@"check"];
-        
-        NSString *prefixToRemove = @"£";
-        
-//        NSString *fee = [[NSString alloc]init];
-//        fee = [self.transactionfeeLabel.text substringFromIndex:[prefixToRemove length]];
-//        float feeFloat = [fee floatValue];
-//        orderObject[@"fee"] = @(feeFloat);
-        
-        NSString *buyerTotal = [[NSString alloc]init];
-        buyerTotal = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
-        float buyerTotalFloat = [buyerTotal floatValue];
-        orderObject[@"buyerTotal"] = @(buyerTotalFloat);
-        
-//        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"totalCost"] forKey:@"sellerTotal"];
-        [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
-        
-//        NSString *delivery = [[NSString alloc]init];
-//        delivery = [self.deliverypriceLabel.text substringFromIndex:[prefixToRemove length]];
-//        float deliveryFloat = [delivery floatValue];
-//        orderObject[@"delivery"] = @(deliveryFloat);
-        
-        [orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            if (succeeded) {
-                NSLog(@"order placed! %@", orderObject.objectId);
-                
-                //update other objects
-                
-                [self.confirmedOfferObject setObject:@"purchased" forKey:@"status"];
-                [self.confirmedOfferObject saveInBackground];
-                
-                PFObject *ogListing = [self.confirmedOfferObject objectForKey:@"wtbListing"];
-                [ogListing setObject:@"purchased" forKey:@"status"];
-                [ogListing saveInBackground];
-                
-                PFQuery *findOtherOffers =[PFQuery queryWithClassName:@"offers"];
-                [findOtherOffers whereKey:@"wtbListing" equalTo:[self.confirmedOfferObject objectForKey:@"wtbListing"]];
-                [findOtherOffers whereKey:@"objectId" notEqualTo:self.confirmedOfferObject.objectId];
-                
-                ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-                vc.orderMode = YES;
-                vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
-                [self.navigationController pushViewController:vc animated:YES];
-            }
-            else{
-                [self.payButton setEnabled:YES];
-                NSLog(@"error saving %@", error);
-            }
-        }];
+        [self showPaypal];
     }
+}
+
+-(void)showPaypal{
+    NSString *URLString = @"https://www.paypal.com/myaccount/transfer/buy";
+    self.webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+    self.webViewController.title = @"PayPal";
+    self.webViewController.showUrlWhileLoading = YES;
+    self.webViewController.showPageTitles = NO;
+    self.webViewController.delegate = self;
+    self.webViewController.doneButtonTitle = @"Done";
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
+    [self presentViewController:navigationController animated:YES completion:nil];
+}
+
+-(void)finishOrder{
+    PFObject *orderObject =[PFObject objectWithClassName:@"orders"];
+    [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
+    NSLog(@"offer object %@", self.confirmedOfferObject);
+    
+    [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
+    
+    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"sellerUser"] forKey:@"sellerUser"];
+    NSLog(@"sellerUser %@", [self.confirmedOfferObject objectForKey:@"sellerUser"]);
+    
+    [orderObject setObject:[NSNumber numberWithBool:YES] forKey:@"paid"];
+    [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"shipped"];
+    [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"sellerFeedback"];
+    [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"buyerFeedback"];
+    
+    [orderObject setObject:@"YES" forKey:@"check"];
+    
+    NSString *prefixToRemove = @"£";
+    NSString *buyerTotal = [[NSString alloc]init];
+    buyerTotal = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
+    float buyerTotalFloat = [buyerTotal floatValue];
+    orderObject[@"buyerTotal"] = @(buyerTotalFloat);
+    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
+    [orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            NSLog(@"order placed! %@", orderObject.objectId);
+            
+            //update other objects
+            
+            [self.confirmedOfferObject setObject:@"purchased" forKey:@"status"];
+            [self.confirmedOfferObject saveInBackground];
+            
+            PFObject *ogListing = [self.confirmedOfferObject objectForKey:@"wtbListing"];
+            [ogListing setObject:@"purchased" forKey:@"status"];
+            [ogListing saveInBackground];
+            
+            PFQuery *findOtherOffers =[PFQuery queryWithClassName:@"offers"];
+            [findOtherOffers whereKey:@"wtbListing" equalTo:[self.confirmedOfferObject objectForKey:@"wtbListing"]];
+            [findOtherOffers whereKey:@"objectId" notEqualTo:self.confirmedOfferObject.objectId];
+            
+            ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+            vc.orderMode = YES;
+            vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else{
+            [self.payButton setEnabled:YES];
+            NSLog(@"error saving %@", error);
+        }
+    }];
 }
 
 - (UIView *) tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
@@ -396,5 +398,9 @@
 -(void)removeKeyboard{
     [self.voucherField resignFirstResponder];
     [self.priceField resignFirstResponder];
+}
+
+-(void)didPressDone:(UIImage *)screenshot{
+    //do nothing
 }
 @end

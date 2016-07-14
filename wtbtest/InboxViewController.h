@@ -18,6 +18,8 @@
 
 @property (nonatomic, strong) NSMutableArray *unseenMessages;
 
+@property (nonatomic, strong) NSString *selectedConvo;
+
 //@property (nonatomic, strong) PFLiveQueryClient *client;
 //@property (nonatomic, strong) PFQuery *query;
 //@property (nonatomic, strong) PFLiveQuerySubscription *subscription;
