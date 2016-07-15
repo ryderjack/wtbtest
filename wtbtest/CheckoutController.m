@@ -74,6 +74,8 @@
     [payp setFrame:CGRectMake((self.tableView.frame.size.width/2)-60, 20, 120, 18)];
     [footerView addSubview:payp];
     self.tableView.tableFooterView = footerView;
+    
+    self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -151,59 +153,73 @@
     self.webViewController.showUrlWhileLoading = YES;
     self.webViewController.showPageTitles = NO;
     self.webViewController.delegate = self;
-    self.webViewController.doneButtonTitle = @"Done";
+    self.webViewController.doneButtonTitle = @"Paid";
+    self.webViewController.paypalMode = YES;
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 
--(void)finishOrder{
+-(void)createOrder{
+    [self showHUD];
     PFObject *orderObject =[PFObject objectWithClassName:@"orders"];
     [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
-    NSLog(@"offer object %@", self.confirmedOfferObject);
-    
     [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
-    
     [orderObject setObject:[self.confirmedOfferObject objectForKey:@"sellerUser"] forKey:@"sellerUser"];
-    NSLog(@"sellerUser %@", [self.confirmedOfferObject objectForKey:@"sellerUser"]);
-    
-    [orderObject setObject:[NSNumber numberWithBool:YES] forKey:@"paid"];
+    [orderObject setObject:@"waiting" forKey:@"status"];
+    [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"paid"];
     [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"shipped"];
     [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"sellerFeedback"];
     [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"buyerFeedback"];
-    
-    [orderObject setObject:@"YES" forKey:@"check"];
     
     NSString *prefixToRemove = @"£";
     NSString *buyerTotal = [[NSString alloc]init];
     buyerTotal = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
     float buyerTotalFloat = [buyerTotal floatValue];
     orderObject[@"buyerTotal"] = @(buyerTotalFloat);
+    
     [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
+    
     [orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
-            NSLog(@"order placed! %@", orderObject.objectId);
+            NSLog(@"order placed! %@", orderObject);
             
-            //update other objects
+            [self.convo setObject:orderObject forKey:@"order"];
+            [self.convo setObject:self.confirmedOfferObject forKey:@"offer"];
+            [self.convo setObject:[self.confirmedOfferObject objectForKey:@"wtbListing"] forKey:@"listing"];
+            [self.convo saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    NSLog(@"success! saving convo");
+                    [self.confirmedOfferObject setObject:@"waiting" forKey:@"status"];
+                    [self.confirmedOfferObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            NSLog(@"success! saving offer");
+                            [self hideHUD];
+                            [self.navigationController popViewControllerAnimated:YES];
+                        }
+                        else{
+                            NSLog(@"error saving offer status %@", error);
+                            [self hideHUD];
+                            [self.navigationController popViewControllerAnimated:YES];
+                        }
+                    }];
+                }
+                else{
+                    NSLog(@"error saving convo obj %@", error);
+                    [self hideHUD];
+                    [self.navigationController popViewControllerAnimated:YES];
+                }
+            }];
             
-            [self.confirmedOfferObject setObject:@"purchased" forKey:@"status"];
-            [self.confirmedOfferObject saveInBackground];
-            
-            PFObject *ogListing = [self.confirmedOfferObject objectForKey:@"wtbListing"];
-            [ogListing setObject:@"purchased" forKey:@"status"];
-            [ogListing saveInBackground];
-            
-            PFQuery *findOtherOffers =[PFQuery queryWithClassName:@"offers"];
-            [findOtherOffers whereKey:@"wtbListing" equalTo:[self.confirmedOfferObject objectForKey:@"wtbListing"]];
-            [findOtherOffers whereKey:@"objectId" notEqualTo:self.confirmedOfferObject.objectId];
-            
-            ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-            vc.orderMode = YES;
-            vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
-            [self.navigationController pushViewController:vc animated:YES];
+//            ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+//            vc.orderMode = YES;
+//            vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
+//            [self.navigationController pushViewController:vc animated:YES];
         }
         else{
+            [self hideHUD];
             [self.payButton setEnabled:YES];
             NSLog(@"error saving %@", error);
+            [self.navigationController popViewControllerAnimated:YES];
         }
     }];
 }
@@ -401,6 +417,21 @@
 }
 
 -(void)didPressDone:(UIImage *)screenshot{
-    //do nothing
+    [self.webViewController dismissViewControllerAnimated:YES completion:nil];
+    [self createOrder];
+}
+
+-(void)showHUD{
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+}
+
+-(void)hideHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
+    });
 }
 @end

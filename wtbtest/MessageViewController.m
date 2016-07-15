@@ -11,6 +11,8 @@
 #import "DetailImageController.h"
 #import "UserProfileController.h"
 #import "SettingsController.h"
+#import <TOWebViewController.h>
+#import "FeedbackController.h"
 
 @interface MessageViewController ()
 
@@ -85,6 +87,8 @@
     
     [self loadMessages];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleNotification:) name:@"NewMessage" object:nil];
+    
     self.bubbleFactory = [[JSQMessagesBubbleImageFactory alloc] initWithBubbleImage:[UIImage jsq_bubbleRegularTaillessImage] capInsets:UIEdgeInsetsZero];
     
     JSQMessagesBubbleImageFactory *bubbleFactoryOutline = [[JSQMessagesBubbleImageFactory alloc] initWithBubbleImage:[UIImage jsq_bubbleRegularStrokedTaillessImage] capInsets:UIEdgeInsetsZero];
@@ -92,6 +96,8 @@
     self.outgoingBubbleImageData = [self.bubbleFactory outgoingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.957 green:0.957 blue:0.957 alpha:1]];
     
     self.incomingBubbleImageData = [bubbleFactoryOutline incomingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.957 green:0.957 blue:0.957 alpha:1]];
+    
+    self.waitingBubbleImageData = [bubbleFactoryOutline incomingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
     
     self.offerBubbleImageData = [self.bubbleFactory outgoingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
     
@@ -107,7 +113,6 @@
     [messageQuery includeKey:@"offerObject"];
     [messageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            
             if (self.earlierPressed == NO) {
                 self.lastMessage = [objects objectAtIndex:0];
             }
@@ -202,20 +207,33 @@
                 else{
                     NSString *messageText = [messageOb objectForKey:@"message"];
                     
-                    if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId]) {
-                        messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
+                    if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
+                        PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
+                        if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
+                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
+                        }
+                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
+                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nPurchased"];
+                        }
+                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
+                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for seller to confirm"];
+                        }
                     }
                     
                     message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
                     
                     if ([[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
+                        
                         PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
                         if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
                             message.isOfferMessage = YES;
                             message.offerObject = offerOb;
                         }
+                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
+                            message.isOfferMessage = NO;
+                            message.isWaiting = YES;
+                        }
                     }
-                    
                     [self.messages insertObject:message atIndex:0];
                 }
             }
@@ -240,27 +258,30 @@
     //to prevent double tapping profile button
     self.profileBTapped = NO;
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleNotification:) name:@"NewMessage" object:nil];
+    if (self.checkoutTapped == YES) {
+        //reset VC/load method
+        self.skipped = 0;
+        [self.messages removeAllObjects];
+        [self.collectionView reloadData];
+        [self loadMessages];
+    }
+    
+    [self.convoObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (!error) {
+            //get order status
+            [self refreshStatus];
+        }
+    }];
 }
 
 - (void)handleNotification:(NSNotification*)note {
-    NSLog(@"Got a new message: %@", note);
     
     NSMutableArray *unseenConvos = [note object];
-    NSLog(@"unseen convos from noti %@", unseenConvos);
-    
     PFObject *currentConvo = self.convoObject;
-    
     for (PFObject *convo in unseenConvos) {
-        NSLog(@"convo %@", convo);
-        NSLog(@"current convo %@", currentConvo);
-        
         if ([convo.objectId isEqualToString:currentConvo.objectId]) {
-            NSLog(@"SAME CONVO UPDATED");
-            
             //stop listening until new msgs loaded
             [[NSNotificationCenter defaultCenter] removeObserver:self name:@"NewMessage" object:nil];
-            
             [self loadNewMessages];
         }
     }
@@ -273,14 +294,11 @@
     [newMessageQuery whereKey:@"createdAt" greaterThan:lastDate];
     [newMessageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            NSLog(@"new objects %@", objects);
-            
             //update skipped number
             int count = (int)[objects count];
             self.skipped = count + self.skipped;
             
             //add new message(s) to UI
-            
             for (PFObject *messageOb in objects) {
                 
                 if (![self.messagesParseArray containsObject:messageOb]) {
@@ -355,17 +373,31 @@
                 else{
                     NSString *messageText = [messageOb objectForKey:@"message"];
                     
-                    if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId]) {
-                        messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
+                    if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
+                        PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
+                        if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
+                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
+                        }
+                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
+                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nPurchased"];
+                        }
+                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
+                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for seller to confirm"];
+                        }
                     }
                     
                     message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
                     
                     if ([[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
+                        
                         PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
                         if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
                             message.isOfferMessage = YES;
                             message.offerObject = offerOb;
+                        }
+                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
+                            message.isOfferMessage = NO;
+                            message.isWaiting = YES;
                         }
                     }
                     //was ere
@@ -388,7 +420,9 @@
             
             NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
             NSLog(@"last path %@", pathToLastItem);
-            
+
+            self.checkoutTapped = NO;
+
             [self collectionView:self.collectionView attributedTextForCellBottomLabelAtIndexPath:pathToLastItem];
             [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
 //            [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
@@ -475,8 +509,12 @@
     
     if (self.offerMode == YES) {
         
-        //check if have paypal email before proceeding
-        [self showPayPalAlert];
+        //check if paypal email has been checked before proceeding
+        if (![[[PFUser currentUser]objectForKey:@"paypalChecked"]isEqualToString:@"YES"]) {
+            [self showPayPalAlert];
+            [[PFUser currentUser] setObject:@"YES" forKey:@"paypalChecked"];
+            [[PFUser currentUser]saveInBackground];
+        }
         
         //create offer object in bg
         NSArray *strings = [text componentsSeparatedByString:@"\n"];
@@ -606,6 +644,7 @@
     messageObject[@"senderName"] = [PFUser currentUser].username;
     messageObject[@"convoId"] = self.convoId;
     messageObject[@"status"] = @"sent";
+    
     if (self.offerMode == YES) {
         messageObject[@"offer"] = @"YES";
         messageObject[@"offerObject"] = self.offerObject;
@@ -655,7 +694,7 @@
     [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
     
     if (self.offerMode == YES) {
-        self.navigationItem.rightBarButtonItem = nil;
+        self.navigationItem.rightBarButtonItem = self.profileButton;
         
         if ([self.convoObject objectForKey:@"convoImages"] == 0) {
             //images have been previously sent in the chat so don't need to send anymore
@@ -671,12 +710,21 @@
             [convoImagesQuery orderByDescending:@"createdAt"];
             [convoImagesQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
-                    [self.offerObject setObject:[object objectForKey:@"Image"] forKey:@"image"];
+                    PFFile *imgFile = [object objectForKey:@"Image"];
+                    [imgFile getDataInBackgroundWithBlock:^(NSData * _Nullable data, NSError * _Nullable error) {
+                        if (data) {
+                            UIImage *image = [UIImage imageWithData:data];
+                            [self.offerObject setObject:image forKey:@"image"];
+                            [self.offerObject saveInBackground];
+                        }
+                        else{
+                            NSLog(@"error getting img data %@", error);
+                        }
+                    }];
                 }
                 else{
                     NSLog(@"error %@", error);
                 }
-                [self.offerObject saveInBackground];
             }];
         }
     }
@@ -684,6 +732,7 @@
     //update convo object after every message sent
     [self.convoObject incrementKey:@"totalMessages"];
     [self.convoObject setObject:messageObject forKey:@"lastSent"];
+    
     if (self.userIsBuyer == YES) {
        [self.convoObject incrementKey:@"sellerUnseen"];
     }
@@ -719,11 +768,22 @@
     
     if (self.userIsBuyer == NO) {
         
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            self.offerMode = YES;
-            self.inputToolbar.contentView.textView.text = @"Selling: \nCondition: \nPrice: £\nMeetup: ";
-            self.navigationItem.rightBarButtonItem = self.cancelButton;
-        }]];
+        PFObject *order = [self.convoObject objectForKey:@"order"];
+        
+        if (order == nil) {
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                self.offerMode = YES;
+                self.inputToolbar.contentView.textView.text = @"Selling: \nCondition: \nPrice: £\nMeetup: ";
+                self.navigationItem.rightBarButtonItem = self.cancelButton;
+            }]];
+        }
+        else{
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Pay with PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                //used as a backup way to pay if user has clicked paid but didn't actually pay.
+                //order object already created so just need to an easy way to pay
+                [self payPaypal];
+            }]];
+        }
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             CameraController *vc = [[CameraController alloc]init];
@@ -732,33 +792,58 @@
             [self presentViewController:vc animated:YES completion:nil];
         }]];
         
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Goto my PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self showMyPaypal];
+        }]];
     }
     else{
-        //show different options
+        //pay with paypal at all times here? not just used as a backup when an order has been created?
     }
-
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Pay with PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-
-    }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report user" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-        
-        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report inappropriate behaviour" message:@"bump takes inappropriate behaviour very seriously.\nIf you feel like this user has behaved wrongly please let us know so we can make your experience on bump as brilliant as possible." preferredStyle:UIAlertControllerStyleAlert];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-            
-        }]];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-            PFObject *reportObject = [PFObject objectWithClassName:@"ReportedUsers"];
-            reportObject[@"reportedUser"] = self.otherUser;
-            reportObject[@"reporter"] = [PFUser currentUser];
-            reportObject[@"convo"] = self.convoObject;
-            [reportObject saveInBackground];
-        }]];
-        [self presentViewController:alertView animated:YES completion:nil];
+        [self reportUser];
     }]];
     [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+-(void)reportUser{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report inappropriate behaviour" message:@"bump takes inappropriate behaviour very seriously.\nIf you feel like this user has behaved wrongly please let us know so we can make your experience on bump as brilliant as possible." preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+        PFObject *reportObject = [PFObject objectWithClassName:@"ReportedUsers"];
+        reportObject[@"reportedUser"] = self.otherUser;
+        reportObject[@"reporter"] = [PFUser currentUser];
+        reportObject[@"convo"] = self.convoObject;
+        [reportObject saveInBackground];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)payPaypal{
+    NSString *URLString = @"https://www.paypal.com/myaccount/transfer/buy";
+    TOWebViewController *webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+    webViewController.title = @"PayPal";
+    webViewController.showUrlWhileLoading = YES;
+    webViewController.showPageTitles = NO;
+    webViewController.doneButtonTitle = @"Paid";
+    webViewController.paypalMode = YES;
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
+    [self presentViewController:navigationController animated:YES completion:nil];
+}
+
+-(void)showMyPaypal{
+    NSString *URLString = @"https://www.paypal.com/myaccount/";
+    TOWebViewController *webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+    webViewController.title = @"My PayPal";
+    webViewController.showUrlWhileLoading = YES;
+    webViewController.showPageTitles = NO;
+    webViewController.doneButtonTitle = @"";
+    webViewController.paypalMode = NO;
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
+    [self presentViewController:navigationController animated:YES completion:nil];
 }
 
 -(void)finalImage:(UIImage *)image{
@@ -826,7 +911,6 @@
                 [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                     if (!error) {
                         NSLog(@"response %@", response);
-                        
                     }
                     else{
                         NSLog(@"image push error %@", error);
@@ -909,6 +993,9 @@
     if (message.isOfferMessage == YES) {
         return self.offerBubbleImageData;
     }
+    else if (message.isWaiting == YES){
+        return self.waitingBubbleImageData;
+    }
     
     if ([message.senderId isEqualToString:self.senderId])
     {
@@ -979,6 +1066,7 @@
 
 - (NSAttributedString *)collectionView:(JSQMessagesCollectionView *)collectionView attributedTextForCellBottomLabelAtIndexPath:(NSIndexPath *)indexPath
 {
+
     if (self.sentMessagesParseArray.count > 0 && self.messagesParseArray.count > 0) {
         if ([self.messagesParseArray containsObject:self.sentMessagesParseArray[0]]) {
             
@@ -1009,7 +1097,6 @@
             //user hasn't send a message
         }
     }
-    
     return nil;
 }
 
@@ -1137,18 +1224,15 @@
 - (CGFloat)collectionView:(JSQMessagesCollectionView *)collectionView
                    layout:(JSQMessagesCollectionViewFlowLayout *)collectionViewLayout heightForCellBottomLabelAtIndexPath:(NSIndexPath *)indexPath
 {
-        if (self.sentMessagesParseArray.count > 0 && self.messagesParseArray.count > 0) {
-            if ([self.messagesParseArray containsObject:self.sentMessagesParseArray[0]]) {
-                NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
-                NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
-                NSInteger itemIndex = [self.messagesParseArray indexOfObject:self.sentMessagesParseArray[0]];
-                NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:(lastItemIndex -itemIndex)inSection:lastSectionIndex];
-                if (indexPath == pathToLastItem) {
-                    return kJSQMessagesCollectionViewCellLabelHeightDefault;
-                }
-                else{
-                    return 0.0f;
-                }
+
+    if (self.sentMessagesParseArray.count > 0 && self.messagesParseArray.count > 0) {
+        if ([self.messagesParseArray containsObject:self.sentMessagesParseArray[0]]) {
+            NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
+            NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
+            NSInteger itemIndex = [self.messagesParseArray indexOfObject:self.sentMessagesParseArray[0]];
+            NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:(lastItemIndex -itemIndex)inSection:lastSectionIndex];
+            if (indexPath == pathToLastItem) {
+                return kJSQMessagesCollectionViewCellLabelHeightDefault;
             }
             else{
                 return 0.0f;
@@ -1156,7 +1240,11 @@
         }
         else{
             return 0.0f;
-        } 
+        }
+    }
+    else{
+        return 0.0f;
+    }
 }
 
 #pragma mark - Responding to collection view tap events
@@ -1213,8 +1301,10 @@
     else{
         if (tappedMessage.isOfferMessage == YES) { //doesnt work after offer with image just been sent but does that matter because seller shouldnt click thru to offer
             if ([[tappedMessage.offerObject objectForKey:@"status"]isEqualToString:@"open"]) {
+                self.checkoutTapped = YES;
                 CheckoutController *vc = [[CheckoutController alloc]init];
                 vc.confirmedOfferObject = tappedMessage.offerObject;
+                vc.convo = self.convoObject;
                 [self.navigationController pushViewController:vc animated:YES];
             }
         }
@@ -1250,11 +1340,26 @@
 
 -(void)markTapped{
     NSLog(@"mark payment as received!");
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Payment Received" message:@"Tap 'Confirm' to tell us you have received the agreed amount into your PayPal account. Tap 'Check' to make sure." preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Confirm" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [self confirmOrder];
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Check" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [self showMyPaypal];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 
--(void)showBanner{
+-(void)showConfirmBanner{
     if (self.payBannerShowing == YES) {
         [self.paidView removeFromSuperview];
+        self.payBannerShowing = NO;
     }
     else{
         if (!self.paidView) {
@@ -1270,6 +1375,187 @@
             [paidButton setCenter:CGPointMake(self.paidView.frame.size.width / 2, self.paidView.frame.size.height / 2)];
         }
         [self.view addSubview:self.paidView];
+        self.payBannerShowing = YES;
+    }
+}
+
+-(void)showSuccessBannerWithText:(NSString *)text{
+    if (self.successBannerShowing == YES) {
+        [self.successView removeFromSuperview];
+        self.successBannerShowing = NO;
+    }
+    else{
+        if (!self.successView) {
+            self.successView = [[UIView alloc]initWithFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, self.navigationController.navigationBar.frame.size.width, 30)];
+            self.successButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, self.successView.frame.size.width, self.successView.frame.size.height)];
+            [self.successButton setTitle:text forState:UIControlStateNormal];
+            [self.successButton addTarget:self action:@selector(markTapped) forControlEvents:UIControlEventTouchUpInside];
+            self.successButton.backgroundColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
+            [self.successButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+            self.successButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
+            [self.successView addSubview:self.successButton];
+            [self.successButton setCenter:CGPointMake(self.successView.frame.size.width / 2, self.successView.frame.size.height / 2)];
+        }
+        [self.view addSubview:self.successView];
+        self.successBannerShowing = YES;
+    }
+}
+
+-(void)confirmOrder{
+    [self.paidButton setEnabled:NO];
+    
+    [self showConfirmBanner]; //hide
+    [self showSuccessBannerWithText:@"Payment received"]; // show
+    [self.successButton addTarget:self action:@selector(feedbackTapped) forControlEvents:UIControlEventTouchUpInside];
+    
+    PFObject *order = [self.convoObject objectForKey:@"order"];
+    [order setObject:@"paid" forKey:@"status"];
+    [order setObject:[NSNumber numberWithBool:YES] forKey:@"paid"];
+
+    [order saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            NSLog(@"order has been paid for!");
+            [self refreshStatus];
+            
+            PFObject *offer = [self.convoObject objectForKey:@"offer"];
+            [offer setObject:@"purchased" forKey:@"status"];
+            [offer saveInBackground];
+            
+            PFObject *listing = [self.convoObject objectForKey:@"listing"];
+            [listing setObject:@"purchased" forKey:@"status"];
+            [listing saveInBackground];
+        }
+        else{
+            NSLog(@"error saving order %@", error);
+            
+            //revert back to OG banners
+            [self showConfirmBanner];
+            [self refreshStatus];
+            
+            [self.paidButton setEnabled:YES];
+        }
+    }];
+}
+
+-(void)markAsShipped{
+    [self.successButton setEnabled:NO];
+    [self.successButton setTitle:@"Shipped!" forState:UIControlStateNormal];
+    PFObject *order = [self.convoObject objectForKey:@"order"];
+    [order setObject:[NSNumber numberWithBool:YES] forKey:@"shipped"];
+    [order saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            [self.successButton setEnabled:YES];
+        }
+        else{
+            NSLog(@"error updating order %@", error);
+            [self.successButton setEnabled:YES];
+        }
+        [self refreshStatus];
+    }];
+}
+
+-(void)feedbackTapped{
+    FeedbackController *vc = [[FeedbackController alloc]init];
+    vc.IDUser = self.otherUser.objectId;
+    BOOL purchased;
+    if (self.userIsBuyer == YES) {
+        purchased = YES;
+    }
+    else{
+        purchased = NO;
+    }
+    vc.purchased = purchased;
+    vc.orderObject = [self.convoObject objectForKey:@"order"];
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+-(void)refreshStatus{
+    PFObject *order = [self.convoObject objectForKey:@"order"];
+    if (order !=nil) {
+
+        [order fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                NSLog(@"got the order %@", order);
+                
+                BOOL paid = [[order objectForKey:@"paid"]boolValue];
+                BOOL shipped = [[order objectForKey:@"shipped"]boolValue];
+                BOOL feedback;
+                if (self.userIsBuyer == YES) {
+                    feedback = [[order objectForKey:@"buyerFeedback"]boolValue];
+                }
+                else{
+                    feedback = [[order objectForKey:@"sellerFeedback"]boolValue];
+                }
+                
+                if (paid == NO && shipped == NO && feedback == NO) {
+                    //next step is for payment to be confirmed
+                    if (self.userIsBuyer == YES) {
+                        [self showSuccessBannerWithText:@"Waiting for seller to confirm payment"];
+                    }
+                    else{
+                        [self showConfirmBanner];
+                    }
+                }
+                else if (paid == YES && shipped == NO && feedback == NO) {
+                    //next step is to leave feedback for buyer and for seller to mark as shipped
+                    if (self.userIsBuyer == YES) {
+                        [self showSuccessBannerWithText:@"Seller has confirmed payment - Tap to leave feedback"];
+                        [self.successButton addTarget:self action:@selector(feedbackTapped) forControlEvents:UIControlEventTouchUpInside];
+                    }
+                    else{
+                        [self showSuccessBannerWithText:@"Payment received - Tap to mark as shipped"];
+                        // mark as shipped
+                        [self markAsShipped];
+                    }
+                }
+                else if (paid == YES && shipped == YES && feedback == NO) {
+                    //next step is to leave feedback for seller once shipped or buyer to leave feedback
+                    if (self.userIsBuyer == YES) {
+                        [self showSuccessBannerWithText:@"Item shipped - Tap to leave feedback"];
+                    }
+                    else{
+                        [self showSuccessBannerWithText:@"Payment received - Tap to leave feedback"];
+                    }
+                    [self.successButton addTarget:self action:@selector(feedbackTapped) forControlEvents:UIControlEventTouchUpInside];
+                }
+                else if (paid == YES && shipped == YES && feedback == YES) {
+                    //next step is to leave feedback for seller once shipped or buyer to leave feedback
+                    if (self.userIsBuyer == YES) {
+                        [self showSuccessBannerWithText:@"Item shipped - Tap to report a problem"];
+                        [self reportUser];
+                    }
+                    else{
+                        [self showSuccessBannerWithText:@"Payment received & feedback left"];
+                    }
+                }
+            }
+            else{
+                NSLog(@"error getting order %@", error);
+            }
+        }];
+    }
+    else{
+        NSLog(@"no confirmed order yet!");
+    }
+}
+
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    float edge = scrollView.contentOffset.y + scrollView.frame.size.height;
+    if (edge <= (scrollView.contentSize.height-(scrollView.contentSize.height/2))){
+        if (self.successBannerShowing == YES) {
+            [self.successView setAlpha:0.0];
+        }
+        else if(self.payBannerShowing == YES){
+            [self.paidView setAlpha:0.0];
+        }
+    }
+    else{
+        if (self.successBannerShowing == YES) {
+            [self.successView setAlpha:1.0];
+        }
+        else if(self.payBannerShowing == YES){
+            [self.paidView setAlpha:1.0];
+        }
     }
 }
 @end

@@ -421,26 +421,37 @@
     }]];
     
     [self presentViewController:alertView animated:YES completion:nil];
-
-    
-    
 }
 - (IBAction)chatPressed:(id)sender {
-    MessageViewController *vc = [[MessageViewController alloc]init];
-    vc.convoId = [[self.confirmedOffer objectForKey:@"convo"]objectId];
-    vc.convoObject = [self.confirmedOffer objectForKey:@"convo"];
-    vc.listing = [self.confirmedOffer objectForKey:@"wtbListing"];
+    [self.chatButton setEnabled:NO];
+    [self.sellerChatButton setEnabled:NO];
     
-    if (self.purchased == YES) {
-        //other user is seller, current is buyer
-        vc.otherUser = [PFUser currentUser];
-    }
-    else{
-        //other is buyer, current is seller
-        vc.otherUser = self.otherUser;
-    }
-    vc.otherUserName = self.otherUser.username;
-    [self.navigationController pushViewController:vc animated:YES];
+    MessageViewController *vc = [[MessageViewController alloc]init];
+    PFObject *convoObject = [self.confirmedOffer objectForKey:@"convo"];
+    [convoObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (!error) {
+            vc.convoId = [convoObject objectForKey:@"convoId"];
+            vc.convoObject = convoObject;
+            vc.listing = [self.confirmedOffer objectForKey:@"wtbListing"];
+            if (self.purchased == YES) {
+                //other user is seller, current is buyer
+                vc.otherUser = [PFUser currentUser];
+            }
+            else{
+                //other is buyer, current is seller
+                vc.otherUser = self.otherUser;
+            }
+            vc.otherUserName = self.otherUser.username;
+            [self.chatButton setEnabled:YES];
+            [self.sellerChatButton setEnabled:YES];
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else{
+            NSLog(@"error fetching convo %@", error);
+            [self.chatButton setEnabled:YES];
+            [self.sellerChatButton setEnabled:YES];
+        }
+    }];
 }
 
 - (IBAction)markAsShipped:(id)sender {

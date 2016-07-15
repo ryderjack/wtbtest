@@ -11,7 +11,7 @@
 #import <Parse/Parse.h>
 #import "CameraController.h"
 
-@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate>
+@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -24,6 +24,7 @@
 @property (nonatomic, strong) JSQMessagesBubbleImage *outgoingBubbleImageData;
 @property (nonatomic, strong) JSQMessagesBubbleImage *incomingBubbleImageData;
 @property (nonatomic, strong) JSQMessagesBubbleImage *offerBubbleImageData;
+@property (nonatomic, strong) JSQMessagesBubbleImage *waitingBubbleImageData;
 @property (nonatomic, strong) JSQMessagesBubbleImageFactory *bubbleFactory;
 @property (nonatomic, strong) JSQMessagesMediaViewBubbleImageMasker *masker;
 
@@ -50,4 +51,12 @@
 
 @property (nonatomic) BOOL payBannerShowing;
 @property (nonatomic, strong) UIView *paidView;
+@property (nonatomic, strong) UIButton *paidButton;
+
+@property (nonatomic) BOOL successBannerShowing;
+@property (nonatomic, strong) UIView *successView;
+@property (nonatomic, strong) UIButton *successButton;
+
+@property (nonatomic) BOOL checkoutTapped;
+
 @end

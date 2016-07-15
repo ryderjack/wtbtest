@@ -113,13 +113,13 @@
     
     self.unseenMessages = [[NSMutableArray alloc]init];
         
-    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {  //commented out for simulator testing purposes
+//    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {  //commented out for simulator testing purposes
        NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:YES];
         [timer fire];
-    }
-    else{
-        [self checkMesages];
-    }
+//    }
+//    else{
+//        [self checkMesages];
+//    }
 
     return YES;
 }

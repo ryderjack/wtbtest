@@ -38,6 +38,7 @@
                 <outlet property="secondCam" destination="Xrx-ys-jfr" id="3sx-N7-PHP"/>
                 <outlet property="secondImageView" destination="gJg-aD-TcW" id="5ra-Bi-DkJ"/>
                 <outlet property="sellerButtons" destination="SAN-K4-zD0" id="Pmg-Ev-wCF"/>
+                <outlet property="sellerChatButton" destination="6LN-62-s8X" id="gBW-q8-TTz"/>
                 <outlet property="shippedButton" destination="asr-Zj-S1m" id="E65-H1-ScP"/>
                 <outlet property="shippingCell" destination="NqO-XK-acM" id="uWe-2n-N9Q"/>
                 <outlet property="simpleImagesCell" destination="keP-Kp-ubl" id="F9B-IU-oiQ"/>

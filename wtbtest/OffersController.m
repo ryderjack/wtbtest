@@ -225,6 +225,9 @@
             [query whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
             [query includeKey:@"sellerUser"];
         }
+        //to prevent showing unconfirmed orders
+        [query whereKey:@"status" notEqualTo:@"waiting"];
+        
         [query includeKey:@"offerObject"];
         [query orderByDescending:@"createdAt"];
         [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {

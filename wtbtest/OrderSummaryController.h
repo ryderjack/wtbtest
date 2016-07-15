@@ -75,9 +75,11 @@
 @property (weak, nonatomic) IBOutlet UIButton *shippedButton;
 @property (nonatomic) BOOL purchased;
 @property (nonatomic, strong) NSString *statusString;
+@property (weak, nonatomic) IBOutlet UIButton *chatButton;
 
 //in seller buttons
 @property (weak, nonatomic) IBOutlet UIButton *feedbackButton;
+@property (weak, nonatomic) IBOutlet UIButton *sellerChatButton;
 
 
 @property (weak, nonatomic) IBOutlet UIButton *otherFeedbackButton;

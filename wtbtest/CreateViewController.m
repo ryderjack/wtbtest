@@ -528,6 +528,7 @@
     self.webViewController.showPageTitles = NO;
     self.webViewController.delegate = self;
     self.webViewController.doneButtonTitle = @"Choose";
+    self.webViewController.paypalMode = NO;
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }

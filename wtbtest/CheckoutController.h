@@ -10,6 +10,8 @@
 #import <Parse/Parse.h>
 #import "ShippingController.h"
 #import <TOWebViewController.h>
+#import <SpinKit/RTSpinKitView.h>
+#import <MBProgressHUD.h>
 
 @interface CheckoutController : UITableViewController <UITextFieldDelegate, ShippingControllerDelegate, TOWebDelegate>
 
@@ -43,6 +45,11 @@
 
 //web view
 @property (nonatomic, strong) TOWebViewController *webViewController;
+@property (nonatomic, strong) PFObject *convo;
+
+//spinner
+@property (nonatomic, strong) RTSpinKitView *spinner;
+@property (nonatomic, strong) MBProgressHUD *hud;
 
 
 @end
