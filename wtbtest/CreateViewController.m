@@ -47,6 +47,8 @@
     [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
     [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
     
+    self.payField.placeholder = @"";
+    
     self.photostotal = 0;
     self.titleField.delegate = self;
     self.extraField.delegate = self;
@@ -87,12 +89,23 @@
         NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
         [self presentViewController:navController animated:YES completion:nil];
     }
+    else{
+        self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+        if ([self.currency isEqualToString:@"GBP"]) {
+            NSLog(@"currenct is here");
+            self.currencySymbol = @"£";
+            self.payField.placeholder = @"£100";
+        }
+        else{
+            self.currencySymbol = @"$";
+            self.payField.placeholder = @"$100";
+        }
+    }
     
     if ([self.status isEqualToString:@"new"]) {
         [self resetForm];
     }
-    
-    if ([self.status isEqualToString:@"edit"] && [self.resetButton.title isEqualToString:@"Reset"]) {
+    else if ([self.status isEqualToString:@"edit"] && [self.resetButton.title isEqualToString:@"Reset"]) {
         [self.navigationItem setRightBarButtonItems:nil animated:YES];
         [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     }
@@ -245,7 +258,6 @@
             SelectViewController *vc = [[SelectViewController alloc]init];
             vc.delegate = self;
             vc.setting = @"condition";
-            vc.offer = NO;
             self.selection = @"condition";
             
             if (![self.chooseCondition.text isEqualToString:@"Choose"]) {
@@ -260,7 +272,6 @@
             SelectViewController *vc = [[SelectViewController alloc]init];
             vc.delegate = self;
             vc.setting = @"category";
-            vc.offer = NO;
             self.selection = @"category";
             
             if (![self.chooseCategroy.text isEqualToString:@"Choose"]) {
@@ -281,7 +292,6 @@
                     SelectViewController *vc = [[SelectViewController alloc]init];
                     vc.delegate = self;
                     vc.setting = @"sizefoot";
-                    vc.offer = NO;
                     
                     // setup previously selected
                     if (![self.chooseSize.text isEqualToString:@"Choose"]) {
@@ -301,7 +311,6 @@
                     SelectViewController *vc = [[SelectViewController alloc]init];
                     vc.delegate = self;
                     vc.setting = @"sizeclothing";
-                    vc.offer = NO;
                     
                     // setup previously selected
                     if (![self.chooseSize.text isEqualToString:@"Choose"]) {
@@ -326,7 +335,6 @@
             SelectViewController *vc = [[SelectViewController alloc]init];
             vc.delegate = self;
             vc.setting = @"delivery";
-            vc.offer = NO;
             self.selection = @"delivery";
             
             if (![self.chooseDelivery.text isEqualToString:@"Choose"]) {
@@ -403,7 +411,7 @@
 
 -(void)textFieldDidBeginEditing:(UITextField *)textField{
     if (textField == self.payField) {
-        self.payField.text = @"£";
+        self.payField.text = [NSString stringWithFormat:@"%@", self.currencySymbol];
     }
 }
 
@@ -439,8 +447,8 @@
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
     if (textField == self.payField) {
-        // Check for deletion of the £ sign
-        if (range.location == 0 && [textField.text hasPrefix:@"£"])
+        // Check for deletion of the currency sign
+        if (range.location == 0 && [textField.text hasPrefix:[NSString stringWithFormat:@"%@", self.currencySymbol]])
             return NO;
         
         NSString *updatedText = [textField.text stringByReplacingCharactersInRange:range withString:string];
@@ -454,7 +462,7 @@
                 return NO;
             
             // not allowed to enter all 9s
-            if ([dollarAmount isEqualToString:@"£99999"]) {
+            if ([dollarAmount isEqualToString:[NSString stringWithFormat:@"%@99999", self.currencySymbol]]) {
                 return NO;
             }
         }
@@ -529,6 +537,7 @@
     self.webViewController.delegate = self;
     self.webViewController.doneButtonTitle = @"Choose";
     self.webViewController.paypalMode = NO;
+    self.webViewController.infoMode = NO;
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
@@ -766,13 +775,13 @@
             NSLog(@"sizes array from select VC %@, count %lu", self.sizesArray, (unsigned long)array.count);
             
             if (self.sizesArray.count == 1) {
-                self.chooseSize.text = [NSString stringWithFormat:@"%@",self.sizesArray[0]];
+                self.chooseSize.text = [NSString stringWithFormat:@"UK %@",self.sizesArray[0]];
             }
             else if (self.sizesArray.count == 2){
-                self.chooseSize.text = [NSString stringWithFormat:@"%@/%@",self.sizesArray[0],self.sizesArray[1]];
+                self.chooseSize.text = [NSString stringWithFormat:@"UK %@/%@",self.sizesArray[0],self.sizesArray[1]];
             }
             else if (self.sizesArray.count == 3){
-                self.chooseSize.text = [NSString stringWithFormat:@"%@/%@/%@",self.sizesArray[0],self.sizesArray[1],self.sizesArray[2]];
+                self.chooseSize.text = [NSString stringWithFormat:@"UK %@/%@/%@",self.sizesArray[0],self.sizesArray[1],self.sizesArray[2]];
             }
         }
         else{
@@ -805,14 +814,14 @@
     [self.saveButton setEnabled:NO];
     [self removeKeyboard];
     
-    if ([self.chooseCategroy.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:@"£"]) {
+    if ([self.chooseCategroy.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
         self.warningLabel.text = @"Fill out all the above fields";
         [self.saveButton setEnabled:YES];
     }
     else{
         [self showHUD];
         
-        NSString *prefixToRemove = @"£";
+        NSString *prefixToRemove = [NSString stringWithFormat:@"%@", self.currencySymbol];
         NSString *priceString = [[NSString alloc]init];
         priceString = [self.payField.text substringFromIndex:[prefixToRemove length]];
         
@@ -857,7 +866,29 @@
         }
         
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
-        self.listing[@"listingPrice"] = @(price);
+        [self.listing setObject:self.currency forKey:@"currency"];
+        
+        if ([self.currency isEqualToString:@"GBP"]) {
+            self.listing[@"listingPriceGBP"] = @(price);
+            int USD = price*1.32;
+            self.listing[@"listingPriceUSD"] = @(USD);
+            int AUD = price*1.74;
+            self.listing[@"listingPriceAUD"] = @(AUD);
+        }
+        else if ([self.currency isEqualToString:@"USD"]) {
+            self.listing[@"listingPriceUSD"] = @(price);
+            int GBP = price*0.76;
+            self.listing[@"listingPriceGBP"] = @(GBP);
+            int AUD = price*1.32;
+            self.listing[@"listingPriceAUD"] = @(AUD);
+        }
+        else if ([self.currency isEqualToString:@"AUD"]) {
+            self.listing[@"listingPriceAUD"] = @(price);
+            int GBP = price*0.57;
+            self.listing[@"listingPriceGBP"] = @(GBP);
+            int USD = price*0.76;
+            self.listing[@"listingPriceAUD"] = @(USD);
+        }
         
         [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
         
@@ -1047,7 +1078,16 @@
     [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     
     self.titleField.text = [self.listing objectForKey:@"title"];
-    self.payField.text = [NSString stringWithFormat:@"£%@",[self.listing objectForKey:@"listingPrice"]];
+    
+    NSString *symbol = @"";
+    
+    if ([[self.listing objectForKey:@"currency"] isEqualToString:@"GBP"]) {
+        symbol = @"£";
+    }
+    else{
+        symbol = @"$";
+    }
+    self.payField.text = [NSString stringWithFormat:@"%@%@",symbol,[self.listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", [self.listing objectForKey:@"currency"]]]];
     self.chooseCondition.text = [self.listing objectForKey:@"condition"];
     
     //location is not updatable when editing listing

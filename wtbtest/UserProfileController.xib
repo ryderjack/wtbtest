@@ -78,7 +78,7 @@
                         </mask>
                     </variation>
                 </label>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="4star.png" translatesAutoresizingMaskIntoConstraints="NO" id="TVo-mz-Z7Y">
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="0star.png" translatesAutoresizingMaskIntoConstraints="NO" id="TVo-mz-Z7Y">
                     <rect key="frame" x="109" y="134" width="126" height="26"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="26" id="0kx-qv-Vz8"/>
@@ -120,6 +120,6 @@
         </view>
     </objects>
     <resources>
-        <image name="4star.png" width="128" height="26"/>
+        <image name="0star.png" width="128" height="26"/>
     </resources>
 </document>

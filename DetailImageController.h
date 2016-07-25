@@ -32,5 +32,6 @@
 
 @property (nonatomic, strong) NSString *tagText;
 
+@property (nonatomic) BOOL offerMode;
 
 @end

@@ -145,7 +145,7 @@
                                     <constraint firstAttribute="width" secondItem="tPc-vC-rcE" secondAttribute="height" multiplier="1:1" id="uGj-I3-n0b"/>
                                 </constraints>
                             </imageView>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="4star.png" translatesAutoresizingMaskIntoConstraints="NO" id="O4V-lz-a47">
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="4star.png" translatesAutoresizingMaskIntoConstraints="NO" id="O4V-lz-a47">
                                 <rect key="frame" x="162" y="32" width="128" height="26"/>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="14 sales       3 purchases" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JOJ-4L-0c3">

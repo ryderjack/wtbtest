@@ -17,7 +17,6 @@
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *userCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *imageCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *shippingCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *itempriceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *deliveryCell;
@@ -48,14 +47,12 @@
 @property (weak, nonatomic) IBOutlet PFImageView *secondImageView;
 @property (weak, nonatomic) IBOutlet PFImageView *thirdImageView;
 @property (weak, nonatomic) IBOutlet PFImageView *fourthImageView;
-@property (weak, nonatomic) IBOutlet UILabel *explainLabel;
 
 //image buttons
 @property (weak, nonatomic) IBOutlet UIButton *firstCam;
 @property (weak, nonatomic) IBOutlet UIButton *secondCam;
 @property (weak, nonatomic) IBOutlet UIButton *thirdCam;
 @property (weak, nonatomic) IBOutlet UIButton *fourthCam;
-
 
 //shipping cell
 @property (weak, nonatomic) IBOutlet UILabel *addressLabel;
@@ -80,11 +77,13 @@
 //in seller buttons
 @property (weak, nonatomic) IBOutlet UIButton *feedbackButton;
 @property (weak, nonatomic) IBOutlet UIButton *sellerChatButton;
-
-
 @property (weak, nonatomic) IBOutlet UIButton *otherFeedbackButton;
 
 //detail image vc
 @property (nonatomic, strong) DetailImageController *detailController;
 @property (nonatomic) int numberOfPics;
+
+//currency
+@property (nonatomic, strong) NSString *currency;
+@property (nonatomic, strong) NSString *currencySymbol;
 @end

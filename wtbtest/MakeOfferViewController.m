@@ -768,7 +768,6 @@
                     vc.delegate = self;
                     vc.setting = @"condition";
                     self.selection = @"condition";
-                    vc.offer = YES;
                     
                     if (![self.chooseCondition.text isEqualToString:@"Choose"]) {
                         NSArray *selectedArray = [self.chooseCondition.text componentsSeparatedByString:@"."];
@@ -800,7 +799,6 @@
                             SelectViewController *vc = [[SelectViewController alloc]init];
                             vc.delegate = self;
                             vc.setting = @"sizefoot";
-                            vc.offer = YES;
                             self.selection = @"size";
                             
                             // setup previously selected
@@ -820,7 +818,6 @@
                             SelectViewController *vc = [[SelectViewController alloc]init];
                             vc.delegate = self;
                             vc.setting = @"sizeclothing";
-                            vc.offer = YES;
                             self.selection = @"size";
                             
                             // setup previously selected
@@ -843,7 +840,6 @@
                     SelectViewController *vc = [[SelectViewController alloc]init];
                     vc.delegate = self;
                     vc.setting = @"delivery";
-                    vc.offer = YES;
                     self.selection = @"delivery";
                     
                     if (![self.chooseDelivery.text isEqualToString:@"Choose"]) {

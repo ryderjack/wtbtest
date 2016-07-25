@@ -3,13 +3,19 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+        <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
+        <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="RegisterViewController">
             <connections>
+                <outlet property="AUDButton" destination="P2u-aQ-hNj" id="tDz-ft-3ZM"/>
+                <outlet property="GBPButton" destination="Cvh-OI-gYs" id="LXW-ig-arq"/>
+                <outlet property="USDButton" destination="cEa-Yn-PfW" id="I6q-Sm-Q4E"/>
                 <outlet property="chooseFromLib" destination="fhE-IH-lst" id="h8c-Jv-0T9"/>
+                <outlet property="currencyCell" destination="srK-IK-XBv" id="4ZB-Wz-LjM"/>
                 <outlet property="emailCell" destination="31R-2I-7WM" id="BEE-bT-C9t"/>
                 <outlet property="emailField" destination="daW-QA-8ze" id="vUi-QU-ivG"/>
                 <outlet property="nameCell" destination="7Gu-dy-uzr" id="AlK-L0-J60"/>
@@ -231,7 +237,7 @@
                     <constraint firstItem="fhE-IH-lst" firstAttribute="top" secondItem="f3Y-gk-RAf" secondAttribute="top" id="f85-iD-fzr"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-60" y="546.5"/>
+            <point key="canvasLocation" x="-62" y="672.5"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="140" id="m1m-sl-Qpn">
             <rect key="frame" x="0.0" y="0.0" width="320" height="140"/>
@@ -279,11 +285,93 @@
                     <constraint firstItem="QVT-Fd-dBr" firstAttribute="centerX" secondItem="MDh-ke-VUR" secondAttribute="centerX" id="u2Y-KC-Wus"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-56" y="784"/>
+            <point key="canvasLocation" x="-56" y="898"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="srK-IK-XBv">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="srK-IK-XBv" id="VPj-Tz-Sof">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="currencyIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="T7V-xg-gIc">
+                        <rect key="frame" x="18" y="14" width="15" height="15"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="15" id="gIM-cT-WYP"/>
+                        </constraints>
+                    </imageView>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Cvh-OI-gYs">
+                        <rect key="frame" x="49" y="7" width="46" height="30"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="46" id="CNv-12-gKV"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
+                        <state key="normal" title="GBP">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        </state>
+                        <state key="selected">
+                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="GBPPressed:" destination="-1" eventType="touchUpInside" id="6er-G6-MNa"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cEa-Yn-PfW">
+                        <rect key="frame" x="137" y="7" width="46" height="30"/>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
+                        <state key="normal" title="USD">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        </state>
+                        <state key="selected">
+                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="USDPressed:" destination="-1" eventType="touchUpInside" id="KHt-2E-0e7"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="P2u-aQ-hNj">
+                        <rect key="frame" x="225" y="7" width="46" height="30"/>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
+                        <state key="normal" title="AUD">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        </state>
+                        <state key="selected">
+                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="AUDPressed:" destination="-1" eventType="touchUpInside" id="TNx-80-sGW"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="Cvh-OI-gYs" firstAttribute="top" secondItem="cEa-Yn-PfW" secondAttribute="top" id="7py-bI-z4P"/>
+                    <constraint firstItem="T7V-xg-gIc" firstAttribute="top" secondItem="VPj-Tz-Sof" secondAttribute="topMargin" constant="6" id="Iqp-Jj-1eF"/>
+                    <constraint firstItem="Cvh-OI-gYs" firstAttribute="top" secondItem="VPj-Tz-Sof" secondAttribute="topMargin" constant="-1" id="JiO-EP-6if"/>
+                    <constraint firstItem="T7V-xg-gIc" firstAttribute="centerY" secondItem="Cvh-OI-gYs" secondAttribute="centerY" id="M4Q-E3-Reu"/>
+                    <constraint firstItem="cEa-Yn-PfW" firstAttribute="top" secondItem="P2u-aQ-hNj" secondAttribute="top" id="NTj-oE-fvc"/>
+                    <constraint firstItem="Cvh-OI-gYs" firstAttribute="baseline" secondItem="cEa-Yn-PfW" secondAttribute="baseline" id="Y9g-Kk-Tck"/>
+                    <constraint firstItem="cEa-Yn-PfW" firstAttribute="centerX" secondItem="VPj-Tz-Sof" secondAttribute="centerX" id="Ybe-LK-5vh"/>
+                    <constraint firstItem="cEa-Yn-PfW" firstAttribute="baseline" secondItem="P2u-aQ-hNj" secondAttribute="firstBaseline" id="dNg-Rf-qhr"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="P2u-aQ-hNj" secondAttribute="trailing" constant="41" id="eJo-3C-L3c"/>
+                    <constraint firstItem="T7V-xg-gIc" firstAttribute="centerY" secondItem="VPj-Tz-Sof" secondAttribute="centerY" id="fxx-Hz-gk2"/>
+                    <constraint firstItem="T7V-xg-gIc" firstAttribute="leading" secondItem="VPj-Tz-Sof" secondAttribute="leadingMargin" constant="10" id="jJL-c2-Z7Z"/>
+                    <constraint firstItem="cEa-Yn-PfW" firstAttribute="baseline" secondItem="Cvh-OI-gYs" secondAttribute="firstBaseline" id="lbx-hL-l9c"/>
+                    <constraint firstItem="Cvh-OI-gYs" firstAttribute="leading" secondItem="T7V-xg-gIc" secondAttribute="trailing" constant="16" id="lgz-ZS-09D"/>
+                    <constraint firstItem="cEa-Yn-PfW" firstAttribute="leading" secondItem="Cvh-OI-gYs" secondAttribute="trailing" constant="42" id="lyu-kB-pSh"/>
+                    <constraint firstItem="P2u-aQ-hNj" firstAttribute="leading" secondItem="cEa-Yn-PfW" secondAttribute="trailing" constant="42" id="tUV-5l-9ds"/>
+                    <constraint firstItem="cEa-Yn-PfW" firstAttribute="baseline" secondItem="P2u-aQ-hNj" secondAttribute="baseline" id="tYt-Hx-t0f"/>
+                    <constraint firstItem="Cvh-OI-gYs" firstAttribute="baseline" secondItem="cEa-Yn-PfW" secondAttribute="firstBaseline" id="wah-Sp-TcV"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-62" y="459"/>
         </tableViewCell>
     </objects>
     <resources>
         <image name="chooseLibButton.png" width="150" height="24"/>
+        <image name="currencyIcon.png" width="17" height="17"/>
         <image name="emailIcon.png" width="13" height="14"/>
         <image name="exit.png" width="27" height="26"/>
         <image name="globeIcon.png" width="13" height="14"/>

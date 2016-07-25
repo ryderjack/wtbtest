@@ -46,10 +46,16 @@
 //web view
 @property (nonatomic, strong) TOWebViewController *webViewController;
 @property (nonatomic, strong) PFObject *convo;
+@property (nonatomic, strong) NSString *sellerEmail;
 
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
 @property (nonatomic, strong) MBProgressHUD *hud;
 
+@property (nonatomic, strong) NSString *currency;
+@property (nonatomic, strong) NSString *currencySymbol;
+
+@property (nonatomic, strong) NSString *otherUserId;
+@property (nonatomic, strong) NSString *itemTitle;
 
 @end

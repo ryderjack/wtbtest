@@ -26,6 +26,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *cityCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *postcodeCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *phoneNumCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *countryCell;
 @property (weak, nonatomic) IBOutlet UILabel *warningLabel;
 
 //text fields
@@ -35,6 +36,7 @@
 @property (weak, nonatomic) IBOutlet UITextField *cityField;
 @property (weak, nonatomic) IBOutlet UITextField *postcodeField;
 @property (weak, nonatomic) IBOutlet UITextField *numberField;
+@property (weak, nonatomic) IBOutlet UITextField *countryField;
 
 @property (nonatomic) PFUser *currentUser;
 @property (nonatomic) BOOL settingsMode;

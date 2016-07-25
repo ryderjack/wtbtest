@@ -18,7 +18,7 @@
 @property (weak, nonatomic) IBOutlet PFImageView *wtbImageView;
 @property (weak, nonatomic) IBOutlet UILabel *wtbTitleLabel;
 @property (weak, nonatomic) IBOutlet UILabel *wtbPriceLabel;
-@property (weak, nonatomic) IBOutlet PFImageView *unreadIcon;
+@property (weak, nonatomic) IBOutlet PFImageView *seenImageView;
 
 
 @end

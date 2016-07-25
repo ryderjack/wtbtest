@@ -19,6 +19,10 @@
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(dismissVC)];
     tap.numberOfTapsRequired = 1;
     [self.view addGestureRecognizer:tap];
+    
+    UISwipeGestureRecognizer *swipe = [[UISwipeGestureRecognizer alloc]initWithTarget:self action:@selector(dismissVC)];
+    [self.view addGestureRecognizer:swipe];
+    
     [self.pageControl setNumberOfPages:self.numberOfPics];
     
     UISwipeGestureRecognizer *swipeLeft = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
@@ -54,7 +58,13 @@
         [self.imageView setImage:self.messagePicture];
     }
     else{
-        [self.imageView setFile:[self.listing objectForKey:@"image1"]];
+        if (self.offerMode == YES) {
+            [self.imageView setFile:[self.listing objectForKey:@"image"]];
+
+        }
+        else{
+            [self.imageView setFile:[self.listing objectForKey:@"image1"]];
+        }
     }
     
     [self.pageControl setCurrentPage:self.index];

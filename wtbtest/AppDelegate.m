@@ -68,7 +68,7 @@
     NavigationController *navController4 = [[NavigationController alloc] initWithRootViewController:self.inboxView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController4, navController2, navController3, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController4, navController2, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
 //    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
@@ -113,13 +113,13 @@
     
     self.unseenMessages = [[NSMutableArray alloc]init];
         
-//    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {  //commented out for simulator testing purposes
+    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {  //commented out for simulator testing purposes
        NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:YES];
         [timer fire];
-//    }
-//    else{
-//        [self checkMesages];
-//    }
+    }
+    else{
+        [self checkMesages];
+    }
 
     return YES;
 }
@@ -151,30 +151,47 @@
                     PFObject *msgObject = [convo objectForKey:@"lastSent"];
                     
                     if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                        if (![self.inboxView.selectedConvo isEqualToString:convo.objectId]) {
-                            //don't add to tab bar for a selected convo since the added badge could be confusing
-                            [self.unseenMessages addObject:convo];
-                        }
-                        
-                        PFUser *buyer = [convo objectForKey:@"buyerUser"];
-                        if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
-                            //current user is buyer so other user is seller
-                            unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                        [self.unseenMessages addObject:convo];
+                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+                            unseen = 1;
                         }
                         else{
-                            //other user is buyer, current is seller
-                            unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                            PFUser *buyer = [convo objectForKey:@"buyerUser"];
+                            if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+                                //current user is buyer so other user is seller
+                                unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                            }
+                            else{
+                                //other user is buyer, current is seller
+                                unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                            }
                         }
-                        
+
                         totalUnseen = totalUnseen + unseen;
                         
-                        NSLog(@"running total unseen: %d", totalUnseen);
+//                        NSLog(@"delegate: running total unseen: %d", totalUnseen);
                     }
                 }
                 
+//                NSLog(@"unseen convo's count %lu", (unsigned long)self.unseenMessages.count);
+                
                 if (self.unseenMessages.count != 0) {
-                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
+                    NSLog(@"posting notification!");
                     [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:self.unseenMessages];
+                    
+                    //remove current convo from array to avoid badge showing for current chat
+                    for (PFObject *convoObjs in self.unseenMessages) {
+                        if ([self.inboxView.selectedConvo isEqualToString:convoObjs.objectId]) {
+                            [self.unseenMessages removeObject:convoObjs];
+                        }
+                    }
+                    
+                    if (self.unseenMessages.count > 0) {
+                        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
+                    }
+                    else{
+                        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+                    }
                 }
                 else{
                     [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];

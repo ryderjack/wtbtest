@@ -58,7 +58,7 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    [self.searchController setActive:YES];
+//    [self.searchController setActive:YES];
     
     if (self.buttonShowing == NO) {
         [[UIApplication sharedApplication].keyWindow addSubview:self.button];

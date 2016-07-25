@@ -3,13 +3,19 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+        <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
+        <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="SettingsController">
             <connections>
+                <outlet property="AUDButton" destination="Jsv-9q-gMW" id="OB4-qG-XZk"/>
+                <outlet property="GBPButton" destination="CB9-iH-sRT" id="cQT-bD-WBC"/>
+                <outlet property="USDButton" destination="l7z-Yl-wR6" id="2Fe-6d-2bY"/>
                 <outlet property="addLabel" destination="bR0-RE-J9K" id="aWG-UH-O6h"/>
                 <outlet property="addressCell" destination="Aqh-7q-75q" id="Ner-g9-VUu"/>
+                <outlet property="currencyCell" destination="WnP-hy-I57" id="ZW3-Ee-RtO"/>
                 <outlet property="emailCell" destination="c20-Ec-Pex" id="kai-Y1-BWV"/>
                 <outlet property="emailFields" destination="iTI-ps-maX" id="e3F-E4-Zwr"/>
                 <outlet property="nameCell" destination="8IE-Et-7Cd" id="7ef-z6-r5i"/>
@@ -21,7 +27,7 @@
         <tableView opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" bouncesZoom="NO" style="grouped" separatorStyle="none" rowHeight="44" sectionHeaderHeight="18" sectionFooterHeight="18" id="i5M-Pr-FkT">
             <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-            <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+            <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="calibratedRGB"/>
             <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
             <inset key="separatorInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
             <connections>
@@ -61,8 +67,9 @@
                 <subviews>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="PayPal email" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="iTI-ps-maX">
                         <rect key="frame" x="8" y="7" width="304" height="30"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
-                        <textInputTraits key="textInputTraits" returnKeyType="done"/>
+                        <textInputTraits key="textInputTraits" keyboardType="emailAddress" returnKeyType="done"/>
                     </textField>
                 </subviews>
                 <constraints>
@@ -84,7 +91,7 @@
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Address" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bR0-RE-J9K">
                         <rect key="frame" x="8" y="11" width="271" height="21"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
-                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                 </subviews>
@@ -97,5 +104,89 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="-259" y="377"/>
         </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="WnP-hy-I57">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="WnP-hy-I57" id="VS1-jG-Epx">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="currencyIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="lhz-6P-7dC">
+                        <rect key="frame" x="18" y="14" width="15" height="15"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="15" id="6xl-EK-SiW"/>
+                        </constraints>
+                    </imageView>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="CB9-iH-sRT">
+                        <rect key="frame" x="49" y="7" width="46" height="30"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="46" id="xjE-21-8Nx"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
+                        <state key="normal" title="GBP">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        </state>
+                        <state key="selected">
+                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="GBPPressed:" destination="-1" eventType="touchUpInside" id="rdT-pC-jk9"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="l7z-Yl-wR6">
+                        <rect key="frame" x="137" y="7" width="46" height="30"/>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
+                        <state key="normal" title="USD">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        </state>
+                        <state key="selected">
+                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="USDPressed:" destination="-1" eventType="touchUpInside" id="tFh-Si-YqK"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Jsv-9q-gMW">
+                        <rect key="frame" x="225" y="7" width="46" height="30"/>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
+                        <state key="normal" title="AUD">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        </state>
+                        <state key="selected">
+                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="AUDPressed:" destination="-1" eventType="touchUpInside" id="bSz-4a-5Ym"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="Jsv-9q-gMW" firstAttribute="leading" secondItem="l7z-Yl-wR6" secondAttribute="trailing" constant="42" id="ALW-4l-gid"/>
+                    <constraint firstItem="l7z-Yl-wR6" firstAttribute="baseline" secondItem="CB9-iH-sRT" secondAttribute="firstBaseline" id="CJh-Wi-S2E"/>
+                    <constraint firstItem="l7z-Yl-wR6" firstAttribute="baseline" secondItem="Jsv-9q-gMW" secondAttribute="firstBaseline" id="F37-T5-8FM"/>
+                    <constraint firstItem="l7z-Yl-wR6" firstAttribute="baseline" secondItem="Jsv-9q-gMW" secondAttribute="baseline" id="GXu-2w-3x4"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="Jsv-9q-gMW" secondAttribute="trailing" constant="41" id="JMZ-lL-J4z"/>
+                    <constraint firstItem="lhz-6P-7dC" firstAttribute="leading" secondItem="VS1-jG-Epx" secondAttribute="leadingMargin" constant="10" id="Leu-ri-OaA"/>
+                    <constraint firstItem="l7z-Yl-wR6" firstAttribute="top" secondItem="Jsv-9q-gMW" secondAttribute="top" id="NcH-0S-y4o"/>
+                    <constraint firstItem="l7z-Yl-wR6" firstAttribute="centerX" secondItem="VS1-jG-Epx" secondAttribute="centerX" id="R6p-ts-Bd0"/>
+                    <constraint firstItem="lhz-6P-7dC" firstAttribute="centerY" secondItem="VS1-jG-Epx" secondAttribute="centerY" id="RbM-0G-w3K"/>
+                    <constraint firstItem="CB9-iH-sRT" firstAttribute="baseline" secondItem="l7z-Yl-wR6" secondAttribute="baseline" id="aKL-2i-hhJ"/>
+                    <constraint firstItem="lhz-6P-7dC" firstAttribute="top" secondItem="VS1-jG-Epx" secondAttribute="topMargin" constant="6" id="cUY-Hs-2nS"/>
+                    <constraint firstItem="lhz-6P-7dC" firstAttribute="centerY" secondItem="CB9-iH-sRT" secondAttribute="centerY" id="crX-s4-L15"/>
+                    <constraint firstItem="CB9-iH-sRT" firstAttribute="top" secondItem="VS1-jG-Epx" secondAttribute="topMargin" constant="-1" id="dRN-3n-WYS"/>
+                    <constraint firstItem="CB9-iH-sRT" firstAttribute="baseline" secondItem="l7z-Yl-wR6" secondAttribute="firstBaseline" id="fPv-g4-pNe"/>
+                    <constraint firstItem="CB9-iH-sRT" firstAttribute="leading" secondItem="lhz-6P-7dC" secondAttribute="trailing" constant="16" id="gUY-5U-lxP"/>
+                    <constraint firstItem="CB9-iH-sRT" firstAttribute="top" secondItem="l7z-Yl-wR6" secondAttribute="top" id="igx-hQ-1cX"/>
+                    <constraint firstItem="l7z-Yl-wR6" firstAttribute="leading" secondItem="CB9-iH-sRT" secondAttribute="trailing" constant="42" id="zgH-qA-PxN"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-227" y="494"/>
+        </tableViewCell>
     </objects>
+    <resources>
+        <image name="currencyIcon.png" width="17" height="17"/>
+    </resources>
 </document>

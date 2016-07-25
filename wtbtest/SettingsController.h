@@ -15,6 +15,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *addressCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *emailCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *currencyCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *emailFields;
@@ -23,5 +24,12 @@
 
 @property (nonatomic, strong) PFUser *currentUser;
 
+@property (nonnull, strong) NSString *currentEmail;
+
+//buttons
+@property (weak, nonatomic) IBOutlet UIButton *GBPButton;
+@property (weak, nonatomic) IBOutlet UIButton *USDButton;
+@property (weak, nonatomic) IBOutlet UIButton *AUDButton;
+@property (nonnull, strong) NSString *selectedCurrency;
 
 @end

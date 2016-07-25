@@ -92,5 +92,6 @@
 @property (nonatomic) BOOL hudShowing;
 @property (nonatomic) BOOL shouldShowHUD;
 
-
+@property (nonatomic, strong) NSString *currency;
+@property (nonatomic, strong) NSString *currencySymbol;
 @end

@@ -40,6 +40,8 @@
     self.warningLabel.text = @"";
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    
+    self.selectedCurrency = @"";
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -95,16 +97,19 @@
         [self setImageBorder];
         
         // setup feedback
-        [self.user setObject:@0 forKey:@"star1"];
-        [self.user setObject:@0 forKey:@"star2"];
-        [self.user setObject:@0 forKey:@"star3"];
-        [self.user setObject:@0 forKey:@"star4"];
-        [self.user setObject:@0 forKey:@"star5"];
+        PFObject *dealsData = [PFObject objectWithClassName:@"deals"];
+        [dealsData setObject:[PFUser currentUser] forKey:@"User"];
+        [dealsData setObject:@0 forKey:@"star1"];
+        [dealsData setObject:@0 forKey:@"star2"];
+        [dealsData setObject:@0 forKey:@"star3"];
+        [dealsData setObject:@0 forKey:@"star4"];
+        [dealsData setObject:@0 forKey:@"star5"];
         
-        [self.user setObject:@0 forKey:@"dealsTotal"];
-        [self.user setObject:@0 forKey:@"sold"];
-        [self.user setObject:@0 forKey:@"purchased"];
-        [self.user setObject:@0 forKey:@"currentRating"];
+        [dealsData setObject:@0 forKey:@"dealsTotal"];
+        [dealsData setObject:@0 forKey:@"sold"];
+        [dealsData setObject:@0 forKey:@"purchased"];
+        [dealsData setObject:@0 forKey:@"currentRating"];
+        [dealsData saveInBackground];
         
         //save image
         PFFile *picFile = [PFFile fileWithData:pic];
@@ -125,7 +130,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
     if (section == 0){
-        return 5;
+        return 6;
     }
     else if (section == 1){
         return 1;
@@ -150,6 +155,9 @@
             return self.usernameCell;
         }
         else if(indexPath.row == 4){
+            return self.currencyCell;
+        }
+        else if(indexPath.row == 5){
             return self.pictureCell;
         }
     }
@@ -164,16 +172,10 @@
         if (indexPath.row == 0) {
             return 58;
         }
-        else if(indexPath.row == 1){
+        else if(indexPath.row == 1 ||indexPath.row == 2 ||indexPath.row == 3 ||indexPath.row == 4){
             return 44;
         }
-        else if(indexPath.row == 2){
-            return 44;
-        }
-        else if(indexPath.row == 3){
-            return 44;
-        }
-        else if(indexPath.row == 4){
+        else if(indexPath.row == 5){
             return 197;
         }
     }
@@ -224,10 +226,6 @@
 -(void)setImageBorder{
     self.profileImageView.layer.cornerRadius = self.profileImageView.frame.size.width / 2;
     self.profileImageView.layer.masksToBounds = YES;
-    
-//    self.profileImageView.layer.borderWidth = 1.0f;
-//    self.profileImageView.layer.borderColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1].CGColor;
-    
     self.profileImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     self.profileImageView.contentMode = UIViewContentModeScaleAspectFill;
 }
@@ -255,9 +253,9 @@
     NSString *email = [self.emailField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSString *username = [self.usernameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     
-    if ([name length] == 0 || [email length] == 0 || [username length] == 0)  {
+    if ([name length] == 0 || [email length] == 0 || [username length] == 0 || [self.selectedCurrency isEqualToString:@""])  {
         
-        self.warningLabel.text = @"Enter your name, email and a username";
+        self.warningLabel.text = @"Enter all of the above!";
         [self.regButton setEnabled:YES];
     }
     else{
@@ -283,7 +281,7 @@
                         self.user[PF_USER_FULLNAME] = self.nameField.text;
                         self.user[PF_USER_EMAIL] = self.emailField.text;
                         self.user[PF_USER_USERNAME] = self.usernameField.text;
-                
+                        self.user[@"currency"] = self.selectedCurrency;
                         [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
                          {
                              if (error == nil)
@@ -348,6 +346,42 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [MBProgressHUD hideHUDForView:self.view animated:YES];
     });
+}
+- (IBAction)GBPPressed:(id)sender {
+    if (self.GBPButton.selected == YES) {
+        [self.GBPButton setSelected:NO];
+        self.selectedCurrency = @"";
+    }
+    else{
+        self.selectedCurrency = @"GBP";
+        [self.GBPButton setSelected:YES];
+        [self.AUDButton setSelected:NO];
+        [self.USDButton setSelected:NO];
+    }
+}
+- (IBAction)USDPressed:(id)sender {
+    if (self.USDButton.selected == YES) {
+        [self.USDButton setSelected:NO];
+        self.selectedCurrency = @"";
+    }
+    else{
+        self.selectedCurrency = @"USD";
+        [self.USDButton setSelected:YES];
+        [self.AUDButton setSelected:NO];
+        [self.GBPButton setSelected:NO];
+    }
+}
+- (IBAction)AUDPressed:(id)sender {
+    if (self.AUDButton.selected == YES) {
+        [self.AUDButton setSelected:NO];
+        self.selectedCurrency = @"";
+    }
+    else{
+        self.selectedCurrency = @"AUD";
+        [self.AUDButton setSelected:YES];
+        [self.GBPButton setSelected:NO];
+        [self.USDButton setSelected:NO];
+    }
 }
 
 @end

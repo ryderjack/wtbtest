@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
+#import <SpinKit/RTSpinKitView.h>
+#import <MBProgressHUD.h>
 
 @interface FeedbackController : UITableViewController <UITextFieldDelegate>
 
@@ -43,5 +45,10 @@
 
 @property (nonatomic, strong) PFObject *orderObject;
 @property (nonatomic, strong) NSString *statusString;
+
+
+//spinner
+@property (nonatomic, strong) RTSpinKitView *spinner;
+@property (nonatomic, strong) MBProgressHUD *hud;
 
 @end

@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
+#import <SpinKit/RTSpinKitView.h>
+#import <MBProgressHUD.h>
 
 @class ListingController;
 
@@ -36,6 +38,7 @@
 //main cell
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
 @property (weak, nonatomic) IBOutlet UIPageControl *picIndicator;
+@property (weak, nonatomic) IBOutlet UIButton *messageButton;
 
 @property (weak, nonatomic) IBOutlet UIButton *sellthisbutton;
 @property (weak, nonatomic) IBOutlet PFImageView *picView;
@@ -65,5 +68,12 @@
 
 @property (nonatomic) BOOL sellThisPressed;
 
+@property (nonatomic, strong) NSString *currency;
+@property (nonatomic, strong) NSString *currencySymbol;
 
+@property (weak, nonatomic) IBOutlet UIButton *saveButton;
+
+//spinner
+@property (nonatomic, strong) RTSpinKitView *spinner;
+@property (nonatomic, strong) MBProgressHUD *hud;
 @end

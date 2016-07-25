@@ -30,6 +30,12 @@
     self.unseenMessages = [[NSMutableArray alloc]init];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loadMessages) name:@"NewMessage" object:nil];
+    
+    self.dateFormat = [[NSDateFormatter alloc] init];
+    [self.dateFormat setLocale:[NSLocale currentLocale]];
+    
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -38,6 +44,14 @@
     self.selectedConvo = @"";
     [Flurry logEvent:@"Inbox_Tapped"];
     [self loadMessages];
+    
+    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+    if ([self.currency isEqualToString:@"GBP"]) {
+        self.currencySymbol = @"£";
+    }
+    else{
+        self.currencySymbol = @"$";
+    }
 }
 
 -(void)loadMessages{
@@ -48,7 +62,7 @@
     [convosQuery includeKey:@"sellerUser"];
     [convosQuery includeKey:@"wtbListing"];
     [convosQuery includeKey:@"lastSent"];
-    [convosQuery orderByDescending:@"updatedAt"];
+    [convosQuery orderByDescending:@"lastSentDate"];
     [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects) {
@@ -62,22 +76,32 @@
                 
                 for (PFObject *convo in objects) {
                     PFObject *msgObject = [convo objectForKey:@"lastSent"];
+                    
                     if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                         
                         if (![self.selectedConvo isEqualToString:convo.objectId]) {
+                            NSLog(@"adding %@ to unseenMessages!!", convo);
                             //don't add to tab bar for a selected convo since the added badge could be confusing
                             [self.unseenMessages addObject:convo];
                         }
                         
-                        PFUser *buyer = [convo objectForKey:@"buyerUser"];
+                        NSLog(@"unseen coversations array %lu", (unsigned long)self.unseenMessages.count);
                         
-                        if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
-                            //current user is buyer so other user is seller
-                            unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+                            unseen = 1;
                         }
                         else{
-                            //other user is buyer, current is seller
-                            unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                            PFUser *buyer = [convo objectForKey:@"buyerUser"];
+                            if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+                                //current user is buyer so other user is seller
+                                unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                                NSLog(@"unseen from buyer %d", unseen);
+                            }
+                            else{
+                                //other user is buyer, current is seller
+                                unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                                NSLog(@"unseen from seller %d", unseen);
+                            }
                         }
                         
                         totalUnseen = totalUnseen + unseen;
@@ -86,7 +110,7 @@
                     }
                 }
                 // careful! as only showing unseen messages that have been loaded
-                if (self.unseenMessages.count > 0) {
+                if (self.unseenMessages.count > 0 && totalUnseen > 0) {
                     [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", totalUnseen];
                     self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", totalUnseen];
                 }
@@ -161,28 +185,26 @@
     }
     
     //set timestamp
-    NSDate *convoDate = convoObject.updatedAt;
+    NSDate *convoDate = convoObject[@"lastSentDate"];
     NSCalendar* calendar = [NSCalendar currentCalendar];
     BOOL updatedToday = [calendar isDateInToday:convoDate];
-    NSDateFormatter *dateFormat = [[NSDateFormatter alloc] init];
-    [dateFormat setLocale:[NSLocale currentLocale]];
     
     if (updatedToday == YES) {
         //format into the time
-        [dateFormat setDateFormat:@"HH:mm"];
+        [self.dateFormat setDateFormat:@"HH:mm"];
     }
     else{
         //format into the day/month
-        [dateFormat setDateFormat:@"dd/MM"];
+        [self.dateFormat setDateFormat:@"EEE"];
     }
-    self.cell.timeLabel.text = [NSString stringWithFormat:@"%@", [dateFormat stringFromDate:convoDate]];
+    self.cell.timeLabel.text = [NSString stringWithFormat:@"%@", [self.dateFormat stringFromDate:convoDate]];
     [self setImageBorder:self.cell.userPicView];
     
     PFObject *wtbListing = [convoObject objectForKey:@"wtbListing"];
     [self.cell.wtbImageView setFile:[wtbListing objectForKey:@"image1"]];
     [self.cell.wtbImageView loadInBackground];
     self.cell.wtbTitleLabel.text = [NSString stringWithFormat:@"%@", [wtbListing objectForKey:@"title"]];
-    self.cell.wtbPriceLabel.text = [NSString stringWithFormat:@"£%@", [wtbListing objectForKey:@"listingPrice"]];
+    self.cell.wtbPriceLabel.text = [NSString stringWithFormat:@"%@%@",self.currencySymbol,[wtbListing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]];
     [self setImageBorder:self.cell.wtbImageView];
     
     PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
@@ -214,6 +236,7 @@
         [self boldFontForLabel:self.cell.messageLabel];
         self.cell.messageLabel.textColor = [UIColor blackColor];
         [self boldFontForLabel:self.cell.timeLabel];
+        self.cell.timeLabel.textColor = [UIColor blackColor];
     }
     else{
         //message has been seen
@@ -221,7 +244,20 @@
         [self unboldFontForLabel:self.cell.messageLabel];
         [self unboldFontForLabel:self.cell.timeLabel];
          self.cell.messageLabel.textColor = [UIColor lightGrayColor];
+         self.cell.timeLabel.textColor = [UIColor darkGrayColor];
     }
+    
+    if ([[msgObject objectForKey:@"status"] isEqualToString:@"seen"] && [[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+        //you sent and other guy has seen so show picture
+        [self.cell.seenImageView setHidden:NO];
+        [self setImageBorder:self.cell.seenImageView];
+        [self.cell.seenImageView setFile:[seller objectForKey:@"picture"]];
+        [self.cell.seenImageView loadInBackground];
+    }
+    else{
+        [self.cell.seenImageView setHidden:YES];
+    }
+    
     return self.cell;
 }
 
@@ -234,15 +270,16 @@
     
     PFObject *listing = [convoObject objectForKey:@"wtbListing"];
     
+    InboxCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    [self unboldFontForLabel:cell.usernameLabel];
+    [self unboldFontForLabel:cell.messageLabel];
+    [self unboldFontForLabel:cell.timeLabel];
+    self.cell.messageLabel.textColor = [UIColor lightGrayColor];
+    self.cell.timeLabel.textColor = [UIColor darkGrayColor];
+    
     if ([self.unseenMessages containsObject:convoObject]) {
         [self.unseenMessages removeObject:convoObject];
-        
-        InboxCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-        [self unboldFontForLabel:cell.usernameLabel];
-        [self unboldFontForLabel:cell.messageLabel];
-        [self unboldFontForLabel:cell.timeLabel];
-        self.cell.messageLabel.textColor = [UIColor lightGrayColor];
-        
+    
         if (self.unseenMessages.count == 0) {
             self.navigationItem.title = @"Messages";
             [self.navigationController tabBarItem].badgeValue = nil;
@@ -269,7 +306,7 @@
         vc.otherUser = buyer;
         vc.userIsBuyer = NO;
     }
-    vc.otherUserName = @"";
+    vc.otherUserName = @"";    
     [self.navigationController pushViewController:vc animated:YES];
 }
 
@@ -311,12 +348,7 @@
 -(void)unboldFontForLabel:(UILabel *)label{
     UIFont *currentFont = label.font;
     UIFont *newFont;
-    if (label == self.cell.timeLabel) {
-        newFont = [UIFont fontWithName:@"AvenirNext-UltraLight" size:currentFont.pointSize];
-    }
-    else{
-        newFont = [UIFont fontWithName:@"AvenirNext-Regular" size:currentFont.pointSize];
-    }
+    newFont = [UIFont fontWithName:@"AvenirNext-Regular" size:currentFont.pointSize];
     label.font = newFont;
 }
 

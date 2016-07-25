@@ -25,6 +25,7 @@
 @property (nonatomic, strong) JSQMessagesBubbleImage *incomingBubbleImageData;
 @property (nonatomic, strong) JSQMessagesBubbleImage *offerBubbleImageData;
 @property (nonatomic, strong) JSQMessagesBubbleImage *waitingBubbleImageData;
+@property (nonatomic, strong) JSQMessagesBubbleImage *purchasedBubbleImageData;
 @property (nonatomic, strong) JSQMessagesBubbleImageFactory *bubbleFactory;
 @property (nonatomic, strong) JSQMessagesMediaViewBubbleImageMasker *masker;
 
@@ -58,5 +59,10 @@
 @property (nonatomic, strong) UIButton *successButton;
 
 @property (nonatomic) BOOL checkoutTapped;
+
+@property (nonatomic, strong) NSString *currency;
+@property (nonatomic, strong) NSString *currencySymbol;
+
+@property (nonatomic) BOOL checkPayPalTapped;
 
 @end

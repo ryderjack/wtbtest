@@ -26,12 +26,14 @@
                 <outlet property="locationCell" destination="0iW-vp-780" id="Qzk-cs-9qt"/>
                 <outlet property="locationLabel" destination="xK3-6X-r7c" id="4iy-WT-ziS"/>
                 <outlet property="mainCell" destination="7oO-Et-nt3" id="Qg7-gu-Giq"/>
+                <outlet property="messageButton" destination="XWw-QY-9UR" id="vRz-zq-JWa"/>
                 <outlet property="pastDealsLabel" destination="x8B-MK-Pxw" id="omj-jc-YMt"/>
                 <outlet property="payCell" destination="HFS-yr-zNd" id="fZN-iD-NMX"/>
                 <outlet property="picIndicator" destination="q6d-Yh-gwu" id="mtO-UV-RP4"/>
                 <outlet property="picView" destination="dx5-PB-QpB" id="Xnq-o0-Obb"/>
                 <outlet property="postedLabel" destination="y6Q-G3-2lx" id="NdP-Fa-hnG"/>
                 <outlet property="priceLabel" destination="5sx-RB-gTv" id="Zyo-wl-fat"/>
+                <outlet property="saveButton" destination="Ebb-Cn-PfV" id="gda-VD-rI1"/>
                 <outlet property="sellthisbutton" destination="vV7-bV-E6t" id="jvl-0r-WDG"/>
                 <outlet property="sizeCell" destination="heo-GX-JcV" id="Py8-ii-ZMK"/>
                 <outlet property="sizeLabel" destination="HKy-Pd-Eab" id="Paf-Wj-R3E"/>
@@ -532,7 +534,7 @@
                             <constraint firstItem="x8B-MK-Pxw" firstAttribute="bottom" secondItem="lCL-d1-y7M" secondAttribute="bottomMargin" constant="-6" id="yOp-vC-ZgR"/>
                         </constraints>
                     </view>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="4star.png" translatesAutoresizingMaskIntoConstraints="NO" id="nDm-QT-8vg">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="0star.png" translatesAutoresizingMaskIntoConstraints="NO" id="nDm-QT-8vg">
                         <rect key="frame" x="173" y="66" width="128" height="26"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="128" id="We2-f2-Q6P"/>
@@ -557,7 +559,7 @@
         </tableViewCell>
     </objects>
     <resources>
-        <image name="4star.png" width="128" height="26"/>
+        <image name="0star.png" width="128" height="26"/>
         <image name="clock.png" width="17" height="17"/>
         <image name="dots.png" width="17" height="6"/>
         <image name="expand.png" width="17" height="17"/>

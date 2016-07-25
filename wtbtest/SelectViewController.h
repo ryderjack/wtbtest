@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 #import "selectCell.h"
+#import <Parse/Parse.h>
+
 
 @class SelectViewController;
 
@@ -19,13 +21,14 @@
 
 @property (nonatomic, weak) id <SelectViewControllerDelegate> delegate;
 @property (nonatomic, strong) NSString *setting;
-@property (nonatomic) BOOL offer;
 
 @property (nonatomic, strong) NSIndexPath *lastSelectedPath;
 
 @property (strong, nonatomic) NSString *genderSelected;
 
-@property (nonatomic, strong) NSArray *sizeArray;
+@property (nonatomic, strong) NSArray *mensSizeArray;
+@property (nonatomic, strong) NSArray *femaleSizeArray;
+
 @property (nonatomic, strong) NSArray *conditionArray;
 @property (nonatomic, strong) NSArray *deliveryArray;
 @property (nonatomic, strong) NSArray *categoryArray;
@@ -36,5 +39,4 @@
 @property (nonatomic, strong) NSString *holdingGender;
 
 @property (nonatomic, strong) selectCell *cell;
-@property (nonatomic) BOOL menSelected;
 @end

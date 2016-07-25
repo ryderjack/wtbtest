@@ -89,8 +89,6 @@
                                       NSFontAttributeName, nil];
     [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:searchAttributes];
     
-//    self.definesPresentationContext = YES;
-    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -120,6 +118,22 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
+    
+    if (![PFUser currentUser]) {
+        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+        [self presentViewController:navController animated:YES completion:nil];
+    }
+    else{
+        self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+        if ([self.currency isEqualToString:@"GBP"]) {
+            self.currencySymbol = @"£";
+        }
+        else{
+            self.currencySymbol = @"$";
+        }
+    }
+    
     if (!self.infiniteQuery) {
         self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     }
@@ -134,6 +148,7 @@
     if (self.searchEnabled == YES) {
         [self.searchController.searchBar setHidden:NO];
     }
+    
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -143,29 +158,23 @@
         [self searchPressed];
     }
     
-    if (![PFUser currentUser]) {
+    [Flurry logEvent:@"Explore_Tapped"];
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasUpdate1.0.49"])
+    {
+        // Has feedback update
+    }
+    else
+    {
+        [PFUser logOut];
+
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasUpdate1.0.49"];
+        
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
         NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
         [self presentViewController:navController animated:YES completion:nil];
+        
     }
-    
-    [Flurry logEvent:@"Explore_Tapped"];
-    
-//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasUpdate1.0.48"])
-//    {
-//        // Has feedback update
-//    }
-//    else
-//    {
-//        [PFUser logOut];
-//
-//        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasUpdate1.0.45"];
-//        
-//        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
-//        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
-//        [self presentViewController:navController animated:YES completion:nil];
-//        
-//    }
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -173,11 +182,7 @@
     
     PFObject *listing;
     
-    //add in if (!cell)????
-    
-    if (cell == nil) {
-        
-    }
+    cell.imageView.image = nil;
     
     if (self.searchEnabled == YES) {
         listing = [self.searchResults objectAtIndex:indexPath.row];
@@ -186,14 +191,34 @@
         listing = [self.results objectAtIndex:indexPath.row];
     }
     
+    //set placeholder spinner view
+    MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:cell.imageView animated:YES];
+    hud.square = YES;
+    hud.mode = MBProgressHUDModeCustomView;
+    hud.color = [UIColor whiteColor];
+    DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+    hud.customView = spinner;
+    [spinner startAnimating];
+    
     [cell.imageView setFile:[listing objectForKey:@"image1"]];
-    [cell.imageView loadInBackground];
+    [cell.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
+        
+    } progressBlock:^(int percentDone) {
+        if (percentDone == 100) {
+            //remove spinner
+            [spinner stopAnimating];
+            [MBProgressHUD hideHUDForView:cell.imageView animated:NO];
+            spinner = nil;
+            hud = nil;
+        }
+    }];
     
     cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
     
     NSString *condition = [listing objectForKey:@"condition"];
-    int price = [[listing objectForKey:@"listingPrice"] intValue];
-    cell.priceLabel.text = [NSString stringWithFormat:@"£%d", price];
+
+    int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+    cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
     
     if ([condition isEqualToString:@"BNWT"]) {
         [cell.conditionView setImage:[UIImage imageNamed:@"BNWTImg"]];
@@ -211,7 +236,7 @@
     if ([[listing objectForKey:@"size"] isEqualToString:@"One size"]) {
         cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"size"]];
     }else{
-        cell.sizeLabel.text = [NSString stringWithFormat:@"UK %@", [listing objectForKey:@"size"]];
+        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"size"]];
     }
     
     PFGeoPoint *location = [listing objectForKey:@"geopoint"];
@@ -220,7 +245,7 @@
         cell.distanceLabel.text = [NSString stringWithFormat:@"%dkm", distance];
     }
     else{
-        NSLog(@"nothing! %@ %@", self.currentLocation, location);
+        NSLog(@"no location data %@ %@", self.currentLocation, location);
         cell.distanceLabel.text = @"";
     }
 
@@ -277,6 +302,7 @@
         else{
             NSLog(@"error %@", error);
             self.infinFinished = YES;
+            [self showError];
         }
     }];
 }
@@ -328,6 +354,7 @@
         else{
             NSLog(@"error %@", error);
             self.pullFinished = YES;
+            [self showError];
         }
     }];
 }
@@ -434,10 +461,10 @@
 -(void)setupInfinQuery{
     if (self.filtersArray.count > 0) {
         if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.infiniteQuery orderByDescending:@"listingPrice"];
+            [self.infiniteQuery orderByDescending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
         }
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.infiniteQuery orderByAscending:@"listingPrice"];
+            [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
         }
         
         if ([self.filtersArray containsObject:@"BNWT"]){
@@ -567,10 +594,10 @@
 -(void)setupPullQuery{
     if (self.filtersArray.count > 0) {
         if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.pullQuery orderByDescending:@"listingPrice"];
+            [self.pullQuery orderByDescending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
         }
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.pullQuery orderByAscending:@"listingPrice"];
+            [self.pullQuery orderByAscending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
         }
         
         if ([self.filtersArray containsObject:@"BNWT"]){
@@ -856,5 +883,15 @@
         [self.pullQuery cancel];
         [self queryParsePull];
     }
+}
+
+-(void)showError{
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Error"
+                                  message:@"Make sure you're connected to the internet!"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 @end

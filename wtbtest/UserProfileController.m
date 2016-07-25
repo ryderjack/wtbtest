@@ -19,6 +19,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    self.dealsLabel.text = @"";
+    
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
@@ -76,35 +78,50 @@
     [self.headerImgView setFile:[self.user objectForKey:@"picture"]];
     [self.headerImgView loadInBackground];
     
-    int purchased = [[self.user objectForKey:@"purchased"]intValue];
-    int sold = [[self.user objectForKey:@"sold"] intValue];
-    
-    self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d Sold: %d", purchased, sold];
-    
-    int starNumber = [[self.user objectForKey:@"currentRating"] intValue];
-    
-    NSLog(@"star number %@", [self.user objectForKey:@"currentRating"]);
-    
-    if (starNumber == 0) {
-        [self.starImgView setImage:[UIImage imageNamed:@"0star"]];
-    }
-    else if (starNumber == 1){
-        [self.starImgView setImage:[UIImage imageNamed:@"1star"]];
-    }
-    else if (starNumber == 2){
-        [self.starImgView setImage:[UIImage imageNamed:@"2star"]];
-    }
-    else if (starNumber == 3){
-        [self.starImgView setImage:[UIImage imageNamed:@"3star"]];
-    }
-    else if (starNumber == 4){
-        [self.starImgView setImage:[UIImage imageNamed:@"4star"]];
-    }
-    else if (starNumber == 5){
-        [self.starImgView setImage:[UIImage imageNamed:@"5star"]];
-    }
+    PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+    [dealsQuery whereKey:@"User" equalTo:self.user];
+    [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            int starNumber = [[object objectForKey:@"currentRating"] intValue];
+            
+            if (starNumber == 0) {
+                [self.starImgView setImage:[UIImage imageNamed:@"0star"]];
+            }
+            else if (starNumber == 1){
+                [self.starImgView setImage:[UIImage imageNamed:@"1star"]];
+            }
+            else if (starNumber == 2){
+                [self.starImgView setImage:[UIImage imageNamed:@"2star"]];
+            }
+            else if (starNumber == 3){
+                [self.starImgView setImage:[UIImage imageNamed:@"3star"]];
+            }
+            else if (starNumber == 4){
+                [self.starImgView setImage:[UIImage imageNamed:@"4star"]];
+            }
+            else if (starNumber == 5){
+                [self.starImgView setImage:[UIImage imageNamed:@"5star"]];
+            }
+            
+            int purchased = [[object objectForKey:@"purchased"]intValue];
+            int sold = [[object objectForKey:@"sold"] intValue];
+            
+            self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d Sold: %d", purchased, sold];
+        }
+        else{
+            NSLog(@"error getting deals data!");
+        }
+    }];
     
     [self.segmentControl setSelectedSegmentIndex:0];
+    
+    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+    if ([self.currency isEqualToString:@"GBP"]) {
+        self.currencySymbol = @"£";
+    }
+    else{
+        self.currencySymbol = @"$";
+    }
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{
@@ -141,6 +158,7 @@
     [self.nothingLabel setHidden:YES];
     PFQuery *salesQuery = [PFQuery queryWithClassName:@"feedback"];
     [salesQuery whereKey:@"sellerUser" equalTo:self.user];
+    [salesQuery whereKey:@"gaveFeedback" notEqualTo:[PFUser currentUser]];
     [salesQuery includeKey:@"buyerUser"];
     [salesQuery orderByDescending:@"createdAt"];
     [salesQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -148,9 +166,9 @@
             [self.feedbackArray removeAllObjects];
             [self.feedbackArray addObjectsFromArray:objects];
             //query for purchase feedback
-            
             PFQuery *purchaseQuery = [PFQuery queryWithClassName:@"feedback"];
             [purchaseQuery whereKey:@"buyerUser" equalTo:self.user];
+            [purchaseQuery whereKey:@"gaveFeedback" notEqualTo:[PFUser currentUser]];
             [purchaseQuery includeKey:@"sellerUser"];
             [purchaseQuery orderByDescending:@"createdAt"];
             [purchaseQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -226,10 +244,13 @@
         }
         
         if (![[listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
-            cell.priceLabel.text = [NSString stringWithFormat:@"%@", [listingObject objectForKey:@"status"]];
+            NSString *status = [listingObject objectForKey:@"status"];
+            NSString *capitalizedString = [status capitalizedString];
+            cell.priceLabel.text = [NSString stringWithFormat:@"%@", capitalizedString];
         }
         else{
-            cell.priceLabel.text = [NSString stringWithFormat:@"£%@", [listingObject objectForKey:@"listingPrice"]];
+            int price = [[listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+            cell.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol,price];
         }
         
         // set date
@@ -278,8 +299,19 @@
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    
     if (self.segmentControl.selectedSegmentIndex == 0) {
-        [self showAlertViewWithPath:indexPath];
+        if ([PFUser currentUser]==self.user) {
+            //allow editing
+            [self showAlertViewWithPath:indexPath];
+        }
+        else{
+            //goto listing
+            PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
+            ListingController *vc = [[ListingController alloc]init];
+            vc.listingObject = selected;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
     }
 }
 

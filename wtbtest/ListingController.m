@@ -63,6 +63,9 @@
     self.titleLabel.adjustsFontSizeToFitWidth = YES;
     self.titleLabel.minimumScaleFactor=0.5;
     
+    self.buyernameLabel.text = @"";
+    self.pastDealsLabel.text = @"";
+    
     if ([self.listingObject objectForKey:@"image4"]){
         [self.picIndicator setNumberOfPages:4];
         self.numberOfPics = 4;
@@ -103,9 +106,19 @@
     self.buyerinfoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.buttonCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.conditionCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+    if ([self.currency isEqualToString:@"GBP"]) {
+        self.currencySymbol = @"£";
+    }
+    else{
+        self.currencySymbol = @"$";
+    }
 
     self.titleLabel.text = [self.listingObject objectForKey:@"title"];
-    self.priceLabel.text = [NSString stringWithFormat:@"£%@",[self.listingObject objectForKey:@"listingPrice"]];
+    
+    self.priceLabel.text = [NSString stringWithFormat:@"%@%@",self.currencySymbol ,[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]];
+    
     self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
     self.locationLabel.text = [self.listingObject objectForKey:@"location"];
     self.deliveryLabel.text = [self.listingObject objectForKey:@"delivery"];
@@ -114,7 +127,7 @@
         self.sizeLabel.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"size"]];
     }
     else{
-        self.sizeLabel.text = [NSString stringWithFormat:@"%@, UK %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"size"]];
+        self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"size"]];
     }
     
     if (![self.listingObject objectForKey:@"extra"]) {
@@ -149,36 +162,60 @@
             [self.buyerImgView loadInBackground];
             self.buyernameLabel.text = self.buyer.username;
             
-            int starNumber = [[self.buyer objectForKey:@"currentRating"] intValue];
-            
-            if (starNumber == 0) {
-                [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
-            }
-            else if (starNumber == 1){
-                [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
-            }
-            else if (starNumber == 2){
-                [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
-            }
-            else if (starNumber == 3){
-                [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
-            }
-            else if (starNumber == 4){
-                [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
-            }
-            else if (starNumber == 5){
-                [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
-            }
-            
-            int purchased = [[self.buyer objectForKey:@"purchased"]intValue];
-            int sold = [[self.buyer objectForKey:@"sold"] intValue];
-            
-            self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];            
+            PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+            [dealsQuery whereKey:@"User" equalTo:self.buyer];
+            [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    int starNumber = [[object objectForKey:@"currentRating"] intValue];
+                    
+                    if (starNumber == 0) {
+                        [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
+                    }
+                    else if (starNumber == 1){
+                        [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
+                    }
+                    else if (starNumber == 2){
+                        [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
+                    }
+                    else if (starNumber == 3){
+                        [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
+                    }
+                    else if (starNumber == 4){
+                        [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
+                    }
+                    else if (starNumber == 5){
+                        [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
+                    }
+                    
+                    int purchased = [[object objectForKey:@"purchased"]intValue];
+                    int sold = [[object objectForKey:@"sold"] intValue];
+                    
+                    self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
+                }
+                else{
+                    NSLog(@"error getting deals data!");
+                }
+            }];
         }
         else{
             NSLog(@"buyer error %@", error);
         }
     }];
+    
+    self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        [self.messageButton setEnabled:NO];
+    }
+    
+    //check if item has been saved previously
+    NSArray *savedItemsArray = [[PFUser currentUser] objectForKey:@"savedItems"];
+    for (NSString *wtb in savedItemsArray) {
+        if ([wtb isEqualToString:self.listingObject.objectId]) {
+            [self.saveButton setEnabled:NO];
+            break;
+        }
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -414,7 +451,19 @@
     }
 }
 - (IBAction)saveForLaterPressed:(id)sender {
+    [self.saveButton setEnabled:NO];
+    [[PFUser currentUser] addObject:self.listingObject.objectId forKey:@"savedItems"];
+    [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            NSLog(@"saved item");
+        }
+        else{
+            NSLog(@"error saving %@", error);
+            [self.saveButton setEnabled:YES];
+        }
+    }];
 }
+
 - (IBAction)sharePressed:(id)sender {
     NSMutableArray *items = [NSMutableArray new];
     [items addObject:[NSString stringWithFormat:@"Check out this WTB: %@ for %@", [self.listingObject objectForKey:@"title"], [self.listingObject objectForKey:@"listingPrice"]]];
@@ -422,14 +471,15 @@
     [self presentViewController:activityController animated:YES completion:nil];
 }
 - (IBAction)messageBuyerPressed:(id)sender {
-    if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) { //TESTING PURPOSES
+    if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         self.sellThisPressed = NO;
+        [self.messageButton setEnabled:NO];
         [self setupMessages];
     }
 }
 
 -(void)setupMessages{
-    
+    [self showHUD];
     PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     NSString *possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"postUser"]objectId], self.listingObject.objectId];
     NSString *otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"postUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
@@ -450,14 +500,15 @@
             }
             vc.otherUser = [object objectForKey:@"buyerUser"];
             vc.otherUserName = [[object objectForKey:@"buyerUser"]username];
+            [self.sellthisbutton setEnabled:YES];
+            [self.messageButton setEnabled:YES];
+            [self hideHUD];
             [self.navigationController pushViewController:vc animated:YES];
         }
         else{
             //create a new convo and goto it
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
-            
-            // make it clear whos the buyer and whos the seller in the convo object
-            
+                        
             convoObject[@"sellerUser"] = [PFUser currentUser];
             convoObject[@"buyerUser"] = [self.listingObject objectForKey:@"postUser"];
             convoObject[@"itemId"] = self.listingObject.objectId;
@@ -467,7 +518,6 @@
             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
                     //saved
-                    
                     MessageViewController *vc = [[MessageViewController alloc]init];
                     vc.convoId = [convoObject objectForKey:@"convoId"];
                     vc.convoObject = convoObject;
@@ -477,10 +527,16 @@
                     }
                     vc.otherUser = [self.listingObject objectForKey:@"postUser"];
                     vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
+                    [self hideHUD];
+                    [self.sellthisbutton setEnabled:YES];
+                    [self.messageButton setEnabled:YES];
                     [self.navigationController pushViewController:vc animated:YES];
                 }
                 else{
-                    NSLog(@"error");
+                    NSLog(@"error saving convo");
+                    [self hideHUD];
+                    [self.messageButton setEnabled:YES];
+                    [self.sellthisbutton setEnabled:YES];
                 }
             }];
         }
@@ -495,7 +551,6 @@
 }
 
 - (void)handleSwipe:(UISwipeGestureRecognizer *)swipe {
-    
     if (swipe.direction == UISwipeGestureRecognizerDirectionLeft) {
         NSLog(@"Left Swipe");
         if (self.picIndicator.currentPage != 4) {
@@ -566,6 +621,7 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 - (IBAction)sellthisPressed:(id)sender {
+    [self.sellthisbutton setEnabled:NO];
     
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         CreateViewController *vc = [[CreateViewController alloc]init];
@@ -573,16 +629,12 @@
         vc.lastId = self.listingObject.objectId;
         vc.editFromListing = YES;
         vc.listing = self.listingObject;
+        [self.sellthisbutton setEnabled:YES];
         [self.navigationController pushViewController:vc animated:YES];
     }
     else{
         self.sellThisPressed = YES;
         [self setupMessages];
-        
-//        MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
-//        vc.listingObject = self.listingObject;
-//        vc.reviewMode = NO;
-//        [self.navigationController pushViewController:vc animated:YES];
     }
 }
 
@@ -617,5 +669,19 @@
     }]];
     
     [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+-(void)showHUD{
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+}
+
+-(void)hideHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
+    });
 }
 @end

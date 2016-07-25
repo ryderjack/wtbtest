@@ -38,36 +38,51 @@
     
     self.itemTitleLabel.adjustsFontSizeToFitWidth = YES;
     self.itemTitleLabel.minimumScaleFactor=0.5;
-    
     self.userName.adjustsFontSizeToFitWidth = YES;
     self.userName.minimumScaleFactor=0.5;
-    
     self.dealsLabel.adjustsFontSizeToFitWidth = YES;
     self.dealsLabel.minimumScaleFactor=0.5;
-    
     self.addressLabel.adjustsFontSizeToFitWidth = YES;
     self.addressLabel.minimumScaleFactor=0.5;
-    
     self.totalCostLabel.adjustsFontSizeToFitWidth = YES;
     self.totalCostLabel.minimumScaleFactor=0.5;
-    
     self.dateLabel.adjustsFontSizeToFitWidth = YES;
     self.dateLabel.minimumScaleFactor=0.5;
     
-    //setup title cell
+    self.userName.text = @"";
+    self.dealsLabel.text = @"";
     
+    //fetch offer to setup title cell/totals/images
     self.confirmedOffer = [self.orderObject objectForKey:@"offerObject"];
-    
     [self.confirmedOffer fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             self.itemTitleLabel.text = [self.confirmedOffer objectForKey:@"title"];
             self.conditionLabel.text = [NSString stringWithFormat:@"Condition: %@", [self.confirmedOffer objectForKey:@"condition"]];
             
-            // set date
+            //setup currency
+            self.currency = [self.confirmedOffer objectForKey:@"currency"];
+
+            if ([self.currency isEqualToString:@"GBP"]) {
+                self.currencySymbol = @"£";
+            }
+            else{
+                self.currencySymbol = @"$";
+            }
+            self.itemPrice.text = [NSString stringWithFormat: @"%@%.2f",self.currencySymbol ,[[self.confirmedOffer objectForKey:@"salePrice"]floatValue]];
+            self.totalLabel.text = self.itemPrice.text;
+
+            //setup order image
+            [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image"]];
+            [self.firstImageView loadInBackground];
+            self.numberOfPics = 1;
+            [self.secondCam setEnabled:NO];
+            [self.thirdCam setEnabled:NO];
+            [self.fourthCam setEnabled:NO];
+            
+            // set purchase date
             NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
             [dateFormatter setLocale:[NSLocale currentLocale]];
             [dateFormatter setDateFormat:@"dd MMM YY"];
-            
             self.dateLabel.text = [NSString stringWithFormat:@"%@",[dateFormatter stringFromDate:self.orderDate]];
             dateFormatter = nil;
         }
@@ -93,6 +108,20 @@
         self.aboutLabel.text = @"About the buyer";
         self.totalCostLabel.text = @"Amount received";
     }
+    
+    PFUser *shippingUser = [[PFUser alloc]init];
+    
+    if (self.purchased == YES) {
+        shippingUser = [PFUser currentUser];
+        //could put different prices in here RE buyer price vs seller price
+        
+        self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[shippingUser objectForKey:@"fullname"], [shippingUser objectForKey:@"building"], [shippingUser objectForKey:@"street"], [shippingUser objectForKey:@"city"], [shippingUser objectForKey:@"postcode"], [shippingUser objectForKey:@"phonenumber"]];
+    }
+    else{
+        shippingUser = self.otherUser;
+    }
+    
+    NSLog(@"OTHER USER SHOULD HAVE BEEN FETCHED %@", self.otherUser);
     
     [self.otherUser fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
@@ -123,97 +152,71 @@
             
             int purchased = [[self.otherUser objectForKey:@"purchased"]intValue];
             int sold = [[self.otherUser objectForKey:@"sold"] intValue];
-            
             self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
+            
+            if (self.purchased == NO) {
+                //address
+                self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[shippingUser objectForKey:@"fullname"], [shippingUser objectForKey:@"building"], [shippingUser objectForKey:@"street"], [shippingUser objectForKey:@"city"], [shippingUser objectForKey:@"postcode"], [shippingUser objectForKey:@"phonenumber"]];
+            }
         }
+            
         else{
             NSLog(@"error %@", error);
         }
     }];
     
-    //setup images cell
-    
-    NSMutableAttributedString *string = [[NSMutableAttributedString alloc] initWithString:self.explainLabel.text];
-    NSRange selectedRange = NSMakeRange(54, 4); // 4 characters, starting at index 22
-    
-    [string beginEditing];
-    [string addAttribute:NSForegroundColorAttributeName
-                   value:[UIColor colorWithRed:0.29 green:0.565 blue:0.886 alpha:1]
-                   range:selectedRange];
-    
-    [string endEditing];
-    [self.explainLabel setAttributedText:string];
-    
-    if ([self.confirmedOffer objectForKey:@"image4"]){
-        self.numberOfPics = 4;
-        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
-        [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
-        [self.thirdImageView setFile:[self.confirmedOffer objectForKey:@"image3"]];
-        [self.fourthImageView setFile:[self.confirmedOffer objectForKey:@"image4"]];
-    }
-    else if ([self.confirmedOffer objectForKey:@"image3"]){
-        self.numberOfPics = 3;
-        [self.fourthCam setEnabled:NO];
-        
-        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
-        [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
-        [self.thirdImageView setFile:[self.confirmedOffer objectForKey:@"image3"]];
-    }
-    
-    else if ([self.confirmedOffer objectForKey:@"image2"]) {
-        self.numberOfPics = 2;
-        [self.thirdCam setEnabled:NO];
-        [self.fourthCam setEnabled:NO];
-        
-        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
-        [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
-    }
-    else{
-        self.numberOfPics = 1;
-        [self.secondCam setEnabled:NO];
-        [self.thirdCam setEnabled:NO];
-        [self.fourthCam setEnabled:NO];
-        
-        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
-    }
-    
     // create detail vc for use with camera buttons
     self.detailController = [[DetailImageController alloc]init];
     self.detailController.listingPic = NO;
+
+//    if ([self.confirmedOffer objectForKey:@"image4"]){
+//        self.numberOfPics = 4;
+//        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
+//        [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
+//        [self.thirdImageView setFile:[self.confirmedOffer objectForKey:@"image3"]];
+//        [self.fourthImageView setFile:[self.confirmedOffer objectForKey:@"image4"]];
+//    }
+//    else if ([self.confirmedOffer objectForKey:@"image3"]){
+//        self.numberOfPics = 3;
+//        [self.fourthCam setEnabled:NO];
+//        
+//        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
+//        [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
+//        [self.thirdImageView setFile:[self.confirmedOffer objectForKey:@"image3"]];
+//    }
+//    
+//    else if ([self.confirmedOffer objectForKey:@"image2"]) {
+//        self.numberOfPics = 2;
+//        [self.thirdCam setEnabled:NO];
+//        [self.fourthCam setEnabled:NO];
+//        
+//        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
+//        [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
+//    }
+//    else{
+//        self.numberOfPics = 1;
+//        [self.secondCam setEnabled:NO];
+//        [self.thirdCam setEnabled:NO];
+//        [self.fourthCam setEnabled:NO];
+//        
+//        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image"]];
+//    }
     
-    [self.firstImageView loadInBackground];
-    [self.secondImageView loadInBackground];
-    [self.thirdImageView loadInBackground];
-    [self.fourthImageView loadInBackground];
-    
-    //shipping cell
-    
-    PFUser *shippingUser = [[PFUser alloc]init];
-    
-    if (self.purchased == YES) {
-        shippingUser = [PFUser currentUser];
-        self.totalLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"buyerTotal"]floatValue]];
-    }
-    else{
-        shippingUser = self.otherUser;
-        self.totalLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"sellerTotal"]floatValue]];
-    }
-    
-    self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[shippingUser objectForKey:@"fullname"], [shippingUser objectForKey:@"building"], [shippingUser objectForKey:@"street"], [shippingUser objectForKey:@"city"], [shippingUser objectForKey:@"postcode"], [shippingUser objectForKey:@"phonenumber"]];
+//    [self.secondImageView loadInBackground];
+//    [self.thirdImageView loadInBackground];
+//    [self.fourthImageView loadInBackground];
     
     //main cells
     
-    if ([[self.orderObject objectForKey:@"check"]isEqualToString:@"YES"]) {
-        self.checkLabel.text = @"£15.00";
-    }
-    else{
-        self.checkLabel.text = @"-";
-    }
+//    if ([[self.orderObject objectForKey:@"check"]isEqualToString:@"YES"]) {
+//        self.checkLabel.text = @"£15.00";
+//    }
+//    else{
+//        self.checkLabel.text = @"-";
+//    }
     
-    self.itemPrice.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"salePrice"]floatValue]];
-    self.deliveryLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"delivery"]floatValue]];
-    self.feeLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"fee"]floatValue]];
-    
+//    self.deliveryLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"delivery"]floatValue]];
+//    self.feeLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"fee"]floatValue]];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -391,9 +394,6 @@
     self.userImageView.layer.cornerRadius = self.userImageView.frame.size.width / 2;
     self.userImageView.layer.masksToBounds = YES;
     
-    self.userImageView.layer.borderWidth = 1.0f;
-    self.userImageView.layer.borderColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1].CGColor;
-    
     self.userImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     self.userImageView.contentMode = UIViewContentModeScaleAspectFill;
 }
@@ -493,19 +493,20 @@
     if (self.numberOfPics == 1) {
         self.detailController.numberOfPics = 1;
         self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
+        self.detailController.offerMode = YES;
     }
-    else if (self.numberOfPics == 2){
-        self.detailController.numberOfPics = 2;
-        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
-    }
-    else if (self.numberOfPics == 3){
-        self.detailController.numberOfPics = 3;
-        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
-    }
-    else if (self.numberOfPics == 4){
-        self.detailController.numberOfPics = 4;
-        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
-    }
+//    else if (self.numberOfPics == 2){
+//        self.detailController.numberOfPics = 2;
+//        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
+//    }
+//    else if (self.numberOfPics == 3){
+//        self.detailController.numberOfPics = 3;
+//        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
+//    }
+//    else if (self.numberOfPics == 4){
+//        self.detailController.numberOfPics = 4;
+//        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
+//    }
     self.detailController.tagText = [self.orderObject objectForKey:@"tagString"];
     
     [self presentViewController:self.detailController animated:YES completion:nil];

@@ -33,9 +33,12 @@
     
     [self.confirmedOfferObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
-            self.priceField.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
+            self.priceField.text = [NSString stringWithFormat:@"%@%.2f",[self.confirmedOfferObject objectForKey:@"symbol"] ,[[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
             self.price = [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue];
-            self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",self.price];
+            self.totalLabel.text = [NSString stringWithFormat:@"%@ %@%.2f",[self.confirmedOfferObject objectForKey:@"currency"] ,[self.confirmedOfferObject objectForKey:@"symbol"],self.price];
+        }
+        else{
+            [self showError];
         }
     }];
     
@@ -83,10 +86,6 @@
     // Dispose of any resources that can be recreated.
 }
 
--(void)viewDidAppear:(BOOL)animated{
-    
-}
-
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -128,7 +127,7 @@
         
         return;
     }
-    else if ([self.priceField.text isEqualToString:@"£"]){
+    else if ([self.priceField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]){
         // havent entered valid price
         [self.payButton setEnabled:YES];
         UIAlertController * alert=   [UIAlertController
@@ -155,6 +154,9 @@
     self.webViewController.delegate = self;
     self.webViewController.doneButtonTitle = @"Paid";
     self.webViewController.paypalMode = YES;
+    self.webViewController.emailToPay = self.sellerEmail;
+    self.webViewController.amountToPay = self.totalLabel.text;
+    self.webViewController.infoMode = YES;
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
@@ -165,20 +167,21 @@
     [orderObject setObject:self.confirmedOfferObject forKey:@"offerObject"];
     [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
     [orderObject setObject:[self.confirmedOfferObject objectForKey:@"sellerUser"] forKey:@"sellerUser"];
+    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"title"] forKey:@"title"];
     [orderObject setObject:@"waiting" forKey:@"status"];
+    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
+    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"currency"] forKey:@"currency"];
     [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"paid"];
     [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"shipped"];
     [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"sellerFeedback"];
     [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"buyerFeedback"];
     
-    NSString *prefixToRemove = @"£";
+    NSString *prefixToRemove = [NSString stringWithFormat:@"%@", self.currencySymbol];
     NSString *buyerTotal = [[NSString alloc]init];
     buyerTotal = [self.totalLabel.text substringFromIndex:[prefixToRemove length]];
     float buyerTotalFloat = [buyerTotal floatValue];
     orderObject[@"buyerTotal"] = @(buyerTotalFloat);
-    
-    [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
-    
+        
     [orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
             NSLog(@"order placed! %@", orderObject);
@@ -219,6 +222,7 @@
             [self hideHUD];
             [self.payButton setEnabled:YES];
             NSLog(@"error saving %@", error);
+            [self showError];
             [self.navigationController popViewControllerAnimated:YES];
         }
     }];
@@ -300,13 +304,13 @@
     if (self.authenticitySwitch.isSelected == YES) {
         [self.authenticitySwitch setSelected:NO];
         float total = (self.price + self.delivery ); //+ self.fee
-        self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",(total + 15)];
+        self.totalLabel.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol,(total + 15)];
     }
     else{
         [self.authenticitySwitch setSelected:YES];
         NSLog(self.authenticitySwitch.isSelected ? @"Yes" : @"No");
         float total = (self.price + self.delivery); //+ self.fee
-        self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",(total)];
+        self.totalLabel.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol,(total)];
     }
 }
 
@@ -357,6 +361,7 @@
     
     if (indexPath.section ==0){
         if(indexPath.row == 0){
+            [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
             ShippingController *vc = [[ShippingController alloc]init];
             vc.delegate = self;
             vc.settingsMode = NO;
@@ -375,7 +380,7 @@
 {
     if (textField == self.priceField) {
         // Check for deletion of the £ sign
-        if (range.location == 0 && [textField.text hasPrefix:@"£"])
+        if (range.location == 0 && [textField.text hasPrefix:[NSString stringWithFormat:@"%@", self.currencySymbol]])
             return NO;
         
         NSString *updatedText = [textField.text stringByReplacingCharactersInRange:range withString:string];
@@ -389,7 +394,7 @@
                 return NO;
             
             // not allowed to enter all 9s
-            if ([dollarAmount isEqualToString:@"£99999"]) {
+            if ([dollarAmount isEqualToString:[NSString stringWithFormat:@"%@99999", self.currencySymbol]]) {
                 return NO;
             }
         }
@@ -402,7 +407,7 @@
 
 -(void)textFieldDidBeginEditing:(UITextField *)textField{
     if (textField == self.priceField) {
-        self.priceField.text = @"£";
+        self.priceField.text = [NSString stringWithFormat:@"%@", self.currencySymbol];
     }
 }
 
@@ -419,6 +424,35 @@
 -(void)didPressDone:(UIImage *)screenshot{
     [self.webViewController dismissViewControllerAnimated:YES completion:nil];
     [self createOrder];
+    
+    //send push to other user
+    NSString *pushString = [NSString stringWithFormat:@"%@ has said they've paid for %@, check and confirm now.",[[PFUser currentUser]username], [self.confirmedOfferObject objectForKey:@"title"]];
+    NSDictionary *params = @{@"userId": self.otherUserId, @"message": pushString, @"sender": [PFUser currentUser].username};
+    [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            NSLog(@"response sending paid push %@", response);
+        }
+        else{
+            NSLog(@"image push error %@", error);
+        }
+    }];
+    
+    //invalidate all other offers in convo
+    PFQuery *offerQuery = [PFQuery queryWithClassName:@"offers"];
+    [offerQuery whereKey:@"convo" equalTo:self.convo];
+    [offerQuery whereKey:@"objectId" notEqualTo:self.confirmedOfferObject.objectId];
+    [offerQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            
+            for (PFObject *offer in objects) {
+                [offer setObject:@"expired" forKey:@"status"];
+                [offer saveInBackground];
+            }
+        }
+        else{
+            NSLog(@"no other offers outstanding");
+        }
+    }];
 }
 
 -(void)showHUD{
@@ -433,5 +467,15 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
     });
+}
+
+-(void)showError{
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Error"
+                                  message:@"Make sure you're connected to the internet!"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 @end

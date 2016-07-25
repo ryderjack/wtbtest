@@ -23,6 +23,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *usernameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *pictureCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *regCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *currencyCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *nameField;
@@ -44,5 +45,12 @@
 
 @property (nonatomic, strong) RTSpinKitView *spinner;
 @property (nonatomic, strong) MBProgressHUD *hud;
+
+//currency buttons
+@property (weak, nonatomic) IBOutlet UIButton *GBPButton;
+@property (weak, nonatomic) IBOutlet UIButton *USDButton;
+@property (weak, nonatomic) IBOutlet UIButton *AUDButton;
+@property (nonnull, strong) NSString *selectedCurrency;
+
 
 @end

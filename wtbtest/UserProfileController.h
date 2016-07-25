@@ -21,4 +21,8 @@
 @property (weak, nonatomic) IBOutlet UIImageView *starImgView;
 @property (nonatomic, strong) PFUser *user;
 @property (weak, nonatomic) IBOutlet UILabel *nothingLabel;
+
+//currency
+@property (nonatomic, strong) NSString *currency;
+@property (nonatomic, strong) NSString *currencySymbol;
 @end

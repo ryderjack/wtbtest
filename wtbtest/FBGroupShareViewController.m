@@ -38,9 +38,10 @@
     self.navigationItem.leftBarButtonItem = cancelButton;
     
     //fb group stuff
-    self.arrayOfGroups = [[NSMutableArray alloc]init];
+    self.arrayOfGroups = [NSMutableArray array];
     self.filteredGroups = [NSMutableArray array];
     
+    //deleting schema on backend messes with undeleted objects so watch out!
     
     PFQuery *groupsQuery = [PFQuery queryWithClassName:@"groups"];
     [groupsQuery orderByAscending:@"groupName"];
@@ -50,7 +51,7 @@
             [self.tableView reloadData];
         }
         else{
-            NSLog(@"error %@", error);
+            NSLog(@"error getting groups%@", error);
         }
     }];
 }
@@ -70,7 +71,7 @@
             NSString *condition = [object objectForKey:@"condition"];
             NSString *size = [object objectForKey:@"size"];
             
-            self.textView.text = [NSString stringWithFormat:@"WTB: %@ %@ in a %@. More details on bump", condition, title, size];
+            self.textView.text = [NSString stringWithFormat:@"WTB:\n%@\nCondition: %@\nSize: %@ UK\nMore details on bump http://sobump.com", title, condition, size];
         }
         else{
             NSLog(@"error %@", error);
@@ -85,12 +86,12 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (self.filtered) {
-        return self.filteredGroups.count;
-    }
-    else{
+//    if (self.filtered) {
+//        return self.filteredGroups.count;
+//    }
+//    else{
        return self.arrayOfGroups.count;
-    }
+//    }
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath

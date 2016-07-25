@@ -9,6 +9,7 @@
 #import "OffersController.h"
 #import "MakeOfferViewController.h"
 #import "OrderSummaryController.h"
+#import "ListingController.h"
 
 @interface OffersController ()
 
@@ -21,17 +22,14 @@
     
     [self.noResultsLabel setHidden:YES];
     
-    if ([self.mode isEqualToString:@"sent"]) {
-        self.navigationItem.title = @"Sent offers";
-    }
-    else if ([self.mode isEqualToString:@"received"]){
-        self.navigationItem.title = @"Received offers";
-    }
-    else if ([self.mode isEqualToString:@"purchased"]){
+    if ([self.mode isEqualToString:@"purchased"]){
         self.navigationItem.title = @"Purchased";
     }
     else if ([self.mode isEqualToString:@"sold"]){
         self.navigationItem.title = @"Sold";
+    }
+    else if ([self.mode isEqualToString:@"saved"]){
+        self.navigationItem.title = @"Saved for later";
     }
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
@@ -85,81 +83,57 @@
     OfferCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.backgroundColor = [UIColor whiteColor];
     
-    PFObject *offerObject = [self.results objectAtIndex:indexPath.row];
+    PFObject *orderObject = [self.results objectAtIndex:indexPath.row];
     
-    if ([self.mode isEqualToString:@"sent"]) {
-        //labels relevant to seller
-        if ([[offerObject objectForKey:@"status"]isEqualToString:@"purchased"]) {
-            cell.priceLabel.text = @"Sold";
-            cell.priceLabel.textColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
-        }
-        else if ([[offerObject objectForKey:@"status"]isEqualToString:@"declined"]) {
-            cell.priceLabel.text = @"Declined";
-            cell.priceLabel.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
-        }
-        else if ([[offerObject objectForKey:@"status"]isEqualToString:@"expired"]) {
-            cell.priceLabel.text = @"Expired";
-            cell.priceLabel.textColor = [UIColor lightGrayColor];
-        }
-        else{
-            cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"totalCost"] floatValue]];
-            cell.priceLabel.textColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
-        }
-    }
-    else if ([self.mode isEqualToString:@"received"]){
-        //labels relevant to buyer
-        if ([[offerObject objectForKey:@"status"]isEqualToString:@"purchased"]) {
-            cell.priceLabel.text = @"Purchased";
-            cell.priceLabel.textColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
-        }
-        else if ([[offerObject objectForKey:@"status"]isEqualToString:@"declined"]) {
-            cell.priceLabel.text = @"Declined";
-            cell.priceLabel.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
-        }
-        else if ([[offerObject objectForKey:@"status"]isEqualToString:@"expired"]) {
-            cell.priceLabel.text = @"Expired";
-            cell.priceLabel.textColor = [UIColor lightGrayColor];
-        }
-        else{
-            cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"totalCost"] floatValue]];
-            cell.priceLabel.textColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
-        }
-    }
-    else if ([self.mode isEqualToString:@"purchased"]){
-        //display total price including fees that buyer pays
-        cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"buyerTotal"] floatValue]];
-    }
-    else if ([self.mode isEqualToString:@"sold"]){
-        //display just sale price that they'll receieve
-        cell.priceLabel.text = [NSString stringWithFormat:@"£%.2f", [[offerObject objectForKey:@"sellerTotal"] floatValue]];
-    }
-    
-    if ([self.mode isEqualToString:@"sent"] || [self.mode isEqualToString:@"received"]) {
-        cell.itemTitle.text = [offerObject objectForKey:@"title"];
-        [cell.imageView setFile:[offerObject objectForKey:@"image1"]];
+    //setup currency
+    NSString *currency = [orderObject objectForKey:@"currency"];
+    NSString *currencySymbol = @"";
+    if ([currency isEqualToString:@"GBP"]) {
+        currencySymbol = @"£";
     }
     else{
-        PFObject *confirmedOffer = [offerObject objectForKey:@"offerObject"];
+        currencySymbol = @"$";
+    }
+    
+    if ([self.mode isEqualToString:@"saved"]) {
+        //saved items so orderObject is actually a listingOb
+        cell.itemTitle.text = [orderObject objectForKey:@"title"];
+        [cell.imageView setFile:[orderObject objectForKey:@"image1"]];
+        
+        NSLog(@"currency %@", currency);
+        
+        int price = [[orderObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", currency]]intValue];
+        cell.priceLabel.text = [NSString stringWithFormat:@"%@%d",currencySymbol,price];
+    }
+    else{
+        //sold or purchased items
+        PFObject *confirmedOffer = [orderObject objectForKey:@"offerObject"];
         cell.itemTitle.text = [confirmedOffer objectForKey:@"title"];
-        [cell.imageView setFile:[confirmedOffer objectForKey:@"image1"]];
+        [cell.imageView setFile:[confirmedOffer objectForKey:@"image"]];
+        
+        //could do a check here for mode and display different prices if fees intro'd
+        cell.priceLabel.text = [NSString stringWithFormat:@"%@%.2f",currencySymbol,[[orderObject objectForKey:@"salePrice"] floatValue]];
     }
     [cell.imageView loadInBackground];
     
-    if ([self.mode isEqualToString:@"sent"] || [self.mode isEqualToString:@"sold"]) {
-        PFUser *buyer = [offerObject objectForKey:@"buyerUser"];
+    if ([self.mode isEqualToString:@"sold"]) {
+        PFUser *buyer = [orderObject objectForKey:@"buyerUser"];
         cell.buyerName.text = [NSString stringWithFormat:@"Buyer: %@", buyer.username];
     }
-    else{
-        PFUser *seller = [offerObject objectForKey:@"sellerUser"];
+    else if ([self.mode isEqualToString:@"purchased"]) {
+        PFUser *seller = [orderObject objectForKey:@"sellerUser"];
         cell.buyerName.text = [NSString stringWithFormat:@"Seller: %@", seller.username];
+    }
+    else if ([self.mode isEqualToString:@"saved"]){
+        PFUser *buyer = [orderObject objectForKey:@"postUser"];
+        cell.buyerName.text = [NSString stringWithFormat:@"Buyer: %@", buyer.username];
     }
     
     // set date
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     [dateFormatter setLocale:[NSLocale currentLocale]];
     [dateFormatter setDateFormat:@"dd MMM"];
-    
-    NSDate *formattedDate = offerObject.createdAt;
+    NSDate *formattedDate = orderObject.createdAt;
     cell.dateLabel.text = [NSString stringWithFormat:@"%@",[dateFormatter stringFromDate:formattedDate]];
     dateFormatter = nil;
     
@@ -181,29 +155,21 @@
 
 -(void)offerQuery{
     
-    if ([self.mode isEqualToString:@"sent"] || [self.mode isEqualToString:@"received"]) {
-        PFQuery *query = [PFQuery queryWithClassName:@"offers"];
+    if ([self.mode isEqualToString:@"saved"]) {
         
-        if ([self.mode isEqualToString:@"sent"]) {
-            [query whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-            [query includeKey:@"buyerUser"];
-        }
-        else if ([self.mode isEqualToString:@"received"]){
-            [query whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
-            [query includeKey:@"sellerUser"];
-        }
-        [query includeKey:@"wtbListing"];
-        [query orderByDescending:@"createdAt"];
-        [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        NSArray *savedItems = [[PFUser currentUser]objectForKey:@"savedItems"];
+        PFQuery *listingQuery = [PFQuery queryWithClassName:@"wantobuys"];
+        [listingQuery whereKey:@"objectId" containedIn:savedItems];
+        [listingQuery orderByDescending:@"createdAt"];
+        [listingQuery includeKey:@"postUser"];
+        [listingQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
             if (objects) {
-                
                 if (objects.count == 0) {
                     [self.noResultsLabel setHidden:NO];
                 }
                 else{
                     [self.noResultsLabel setHidden:YES];
                 }
-                
                 [self.results removeAllObjects];
                 [self.results addObjectsFromArray:objects];
                 [self.collectionView reloadData];
@@ -212,6 +178,7 @@
                 NSLog(@"error %@", error);
             }
         }];
+        
     }
     else{
         //purchased or sold
@@ -225,6 +192,7 @@
             [query whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
             [query includeKey:@"sellerUser"];
         }
+        
         //to prevent showing unconfirmed orders
         [query whereKey:@"status" notEqualTo:@"waiting"];
         
@@ -252,24 +220,7 @@
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     PFObject *selectedOffer = [self.results objectAtIndex:indexPath.item];
     
-    if ([self.mode isEqualToString:@"sent"]) {
-    }
-    else if ([self.mode isEqualToString:@"received"]){
-        if ([[selectedOffer objectForKey:@"status"]isEqualToString:@"purchased"]) {
-            //show order summary
-            
-        }
-        else if ([[selectedOffer objectForKey:@"status"]isEqualToString:@"expired"]){
-            //do nothing
-        }
-        else{
-            MakeOfferViewController *vc = [[MakeOfferViewController alloc]init];
-            vc.reviewMode = YES;
-            vc.listingObject = selectedOffer;
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-    }
-    else if ([self.mode isEqualToString:@"purchased"]){
+    if ([self.mode isEqualToString:@"purchased"]){
         //goto order summary
         OrderSummaryController *vc = [[OrderSummaryController alloc]init];
         vc.purchased = YES;
@@ -283,6 +234,12 @@
         vc.purchased = NO;
         vc.orderDate = selectedOffer.createdAt;
         vc.orderObject = selectedOffer;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else if ([self.mode isEqualToString:@"saved"]){
+        //goto order summary
+        ListingController *vc = [[ListingController alloc]init];
+        vc.listingObject = selectedOffer;
         [self.navigationController pushViewController:vc animated:YES];
     }
 }

@@ -23,7 +23,7 @@
         self.title = @"Category";
     }
     else if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]){
-        self.title = @"Size UK";
+        self.title = @"Size";
     }
     else if ([self.setting isEqualToString:@"delivery"]){
         self.title = @"Delivery";
@@ -42,13 +42,26 @@
     
     self.conditionArray = [NSArray arrayWithObjects:@"BNWT",@"BNWOT", @"Used", @"Any",nil];
     self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear", nil];
-    self.sizeArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", @"Any", nil];
+    self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3 | US 3.5", @"UK 3.5 | US 4",@"UK 4 | US 4.5", @"UK 4.5 | US 5", @"UK 5 | US 5.5", @"UK 5.5 | US 6", @"UK 6 | US 6.5",@"UK 6.5 | US 7",@"UK 7 | US 7.5", @"UK 7.5 | US 8", @"UK 8 | US 8.5",@"UK 8.5 | US 9",@"UK 9 | US 9.5", @"UK 9.5 | US 10", @"UK 10 | US 10.5",@"UK 10.5 | US 11",@"UK 11 | US 11.5", @"UK 11.5 | US 12", @"UK 12 | US 12.5",@"UK 12.5 | US 13",@"UK 13 | US 13.5", @"UK 13.5 | US 14", @"UK 14 | US 14.5", @"Any", nil];
+    self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1 | US 3", @"UK 1.5 | US 3.5",@"UK 2 | US 4", @"UK 2.5 | US 4.5", @"UK 3 | US 5", @"UK 3.5 | US 5.5", @"UK 4 | US 6",@"UK 4.5 | US 6.5",@"UK 5 | US 7", @"UK 5.5 | US 7.5", @"UK 6 | US 8",@"UK 6.5 | US 8.5",@"UK 7 | US 9", @"UK 7.5 | US 9.5", @"UK 8 | US 10",@"UK 9 | US 11", @"Any", nil];
     self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"OS", @"Any", nil];
     self.deliveryArray = [NSArray arrayWithObjects:@"Meetup",@"Courier", @"Any", nil];
     
     [self.tableView registerNib:[UINib nibWithNibName:@"selectCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
     
-    self.menSelected = YES;
+    //holding array is just if user has previously selected an option then is coming back to the VC
+    if (![self.holdingGender isEqualToString:@""]) {
+        self.genderSelected = self.holdingGender;
+        NSLog(@"holding gender %@", self.holdingGender);
+    }
+    else{
+        if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"male"]) {
+            self.genderSelected = @"Mens";
+        }
+        else{
+            self.genderSelected = @"Womens";
+        }
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -65,42 +78,26 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
-    //if self.offer == yes then user is making an offer. Encourage specificity so remove 'Any' options
     if ([self.setting isEqualToString:@"condition"]) {
-        if (self.offer == YES) {
-            return 3;
-        }
-        return 4;
+        return self.conditionArray.count;
     }
     else if ([self.setting isEqualToString:@"category"]){
-        return 2;
+        return self.categoryArray.count;
     }
     else if ([self.setting isEqualToString:@"sizeclothing"]){
-        if (self.offer == YES) {
-            return 8;
-        }
-        return 9;
+        return self.clothingyArray.count;
     }
     else if ([self.setting isEqualToString:@"sizefoot"]){
        
-        if (![self.holdingGender isEqualToString:@""]) {
-            self.genderSelected = self.holdingGender;
-            NSLog(@"holding gender %@", self.holdingGender);
+        if ([self.genderSelected isEqualToString:@"Mens"]) {
+            return self.mensSizeArray.count+1;
         }
         else{
-            self.genderSelected = @"Mens";
+            return self.femaleSizeArray.count+1;
         }
-        
-        if (self.offer == YES) {
-            return 24;
-        }
-        return 25;
     }
     else if ([self.setting isEqualToString:@"delivery"]){
-        if (self.offer == YES) {
-            return 2;
-        }
-        return 3;
+        return self.deliveryArray.count;
     }
     else{
         return 1;
@@ -127,7 +124,6 @@
             //hasnt already been selected
             self.cell.accessoryType = UITableViewCellAccessoryNone;
         }
-        
     }
     else if ([self.setting isEqualToString:@"category"]){
         self.cell.textLabel.text = [self.categoryArray objectAtIndex:indexPath.row];
@@ -136,6 +132,7 @@
         if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
             //already been selected, show checkmark
             self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+
         }
         else{
             //hasnt already been selected
@@ -172,15 +169,32 @@
             }
         }
         else{
-            self.cell.textLabel.text = [self.sizeArray objectAtIndex:indexPath.row-1];
-            [self.cell.segmentControl setHidden:YES];
-            
-            if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
-                //already been selected, show checkmark
-                self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            if ([self.genderSelected isEqualToString:@"Mens"]) {
+                self.cell.textLabel.text = [self.mensSizeArray objectAtIndex:indexPath.row-1];
             }
             else{
-                //hasnt already been selected
+                self.cell.textLabel.text = [self.femaleSizeArray objectAtIndex:indexPath.row-1];
+            }
+            
+            [self.cell.segmentControl setHidden:YES];
+
+            if ([self.holdingGender isEqualToString:self.genderSelected]) {
+                //highlight previously chosen sizes
+                for (NSString *size in self.selectedSizes) {
+                    if ([self.cell.textLabel.text containsString:[NSString stringWithFormat:@"%@ |", size]]) {
+                        self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+                        break;
+                    }
+                    else if ([self.cell.textLabel.text containsString:[NSString stringWithFormat:@"UK %@ |", size]]) {
+                        self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+                        break;
+                    }
+                    else{
+                        self.cell.accessoryType = UITableViewCellAccessoryNone;
+                    }
+                }
+            }
+            else{
                 self.cell.accessoryType = UITableViewCellAccessoryNone;
             }
         }
@@ -226,7 +240,12 @@
         selected.accessoryType = UITableViewCellAccessoryNone;
         
         if ([self.setting isEqualToString:@"sizefoot"]) {
-            [self.selectedSizes removeObject:[self.sizeArray objectAtIndex:indexPath.row-1]];
+            if ([self.genderSelected isEqualToString:@"Mens"]) {
+                [self.selectedSizes removeObject:[self.mensSizeArray objectAtIndex:indexPath.row-1]];
+            }
+            else{
+                [self.selectedSizes removeObject:[self.femaleSizeArray objectAtIndex:indexPath.row-1]];
+            }
         }
         else if ([self.setting isEqualToString:@"sizeclothing"]) {
             [self.selectedSizes removeObject:[self.clothingyArray objectAtIndex:indexPath.row]];
@@ -252,7 +271,7 @@
         }
         
         //if setting is size add a checkmark if array is < 3
-        if (([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"])&& self.offer == NO) {
+        if (([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"])) {
             
             // if selected index is last (='Any') then clear the array and removes all checkmarks
             if (indexPath == pathToLastRow) {
@@ -293,7 +312,12 @@
                     }
                     else{
                         //add adjusted index path (due to segment control at 0 ^
-                        [self.selectedSizes addObject:[self.sizeArray objectAtIndex:indexPath.row-1]];
+                        if ([self.genderSelected isEqualToString:@"Mens"]) {
+                            [self.selectedSizes addObject:[self.mensSizeArray objectAtIndex:indexPath.row-1]];
+                        }
+                        else{
+                            [self.selectedSizes addObject:[self.femaleSizeArray objectAtIndex:indexPath.row-1]];
+                        }
                     }
                 }
                 else if ([self.setting isEqualToString:@"sizeclothing"]) {
@@ -335,10 +359,15 @@
     else if ([self.setting isEqualToString:@"delivery"]) {
         selectionString = [self.deliveryArray objectAtIndex:indexPath.row];
     }
-    else if ([self.setting isEqualToString:@"sizefoot"] && self.offer == YES && indexPath != firstPath) {
-        selectionString = [self.sizeArray objectAtIndex:indexPath.row-1];
+    else if ([self.setting isEqualToString:@"sizefoot"] && indexPath != firstPath) {
+        if ([self.genderSelected isEqualToString:@"Mens"]) {
+            selectionString = [self.mensSizeArray objectAtIndex:indexPath.row-1];
+        }
+        else{
+            selectionString = [self.femaleSizeArray objectAtIndex:indexPath.row-1];
+        }
     }
-    else if ([self.setting isEqualToString:@"sizeclothing"] && self.offer == YES && indexPath != firstPath) {
+    else if ([self.setting isEqualToString:@"sizeclothing"] && indexPath != firstPath) {
         selectionString = [self.clothingyArray objectAtIndex:indexPath.row];
     }
     
@@ -348,7 +377,6 @@
     if (![selectionString isEqualToString:@""]) {
 
             [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withgender:self.genderSelected andsizes:nil];
-            
             [self.navigationController popViewControllerAnimated:YES];
     }
 }
@@ -356,18 +384,35 @@
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     
-     if ([self.setting isEqualToString:@"sizefoot"] && self.offer == NO && self.selectedSizes.count > 0 && ![self.selectedSizes containsObject:@"Any"]){
+     if ([self.setting isEqualToString:@"sizefoot"] && self.selectedSizes.count > 0 && ![self.selectedSizes containsObject:@"Any"]){
         
          //convert array strings into numbers to sort into ascending order
-         NSArray *strings = [NSArray arrayWithArray:self.selectedSizes];
+         NSArray *sizeStrings = [NSArray arrayWithArray:self.selectedSizes];
          [self.selectedSizes removeAllObjects];
          
-         for (int i = 0; i<strings.count; i++) {
-             double number = [[strings objectAtIndex:i]doubleValue];
+         NSMutableArray *numbersArray = [NSMutableArray array];
+         
+         for (NSString *size in sizeStrings) {
+             //split string to get first part before |
+             NSArray *strings = [size componentsSeparatedByString:@"|"];
+             
+             //get only number from that initial part of the string
+             
+             NSString *numberString = [strings[0] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
+             NSString *finalNumberString = [numberString stringByReplacingOccurrencesOfString:@" " withString:@""];
+             NSLog(@"number string %@", finalNumberString);
+             
+             //save that number as a string to the array
+             [numbersArray addObject:finalNumberString];
+         }
+         
+         //convert each number string into a double for comparison
+         for (int i = 0; i<numbersArray.count; i++) {
+             double number = [[numbersArray objectAtIndex:i]doubleValue];
              [self.selectedSizes addObject:@(number)];
          }
          
-         // sort clothing sizes array in order of string length for appearance
+         // sort numbers
          NSSortDescriptor *sortDescriptor;
          sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"floatValue"
                                                       ascending:YES];
@@ -375,7 +420,7 @@
          [self.selectedSizes sortUsingDescriptors:sortDescriptors];
     }
     
-    else if ([self.setting isEqualToString:@"sizeclothing"] && self.offer == NO){
+    else if ([self.setting isEqualToString:@"sizeclothing"]){
         
         // sort clothing sizes array in order of string length for appearance
         NSSortDescriptor *sortDescriptor;
@@ -385,7 +430,7 @@
         [self.selectedSizes sortUsingDescriptors:sortDescriptors];
     }
     
-    if (([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]) && self.offer == NO) {
+    if (([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"])) {
         NSArray *finalSelection = [NSArray arrayWithArray:self.selectedSizes];
         NSLog(@"final selection is %@", finalSelection);
         [self.delegate addItemViewController:self didFinishEnteringItem:nil withgender:self.genderSelected andsizes:finalSelection];
@@ -393,12 +438,17 @@
 }
 
 -(void)genderSelected:(NSString *)gender{
-    if (self.cell.firstSelected == YES) {
-        self.genderSelected = @"Mens";
+
+    //different segment tapped
+    
+    self.genderSelected = gender;
+    [self.tableView reloadData];
+    
+    //remove all checkmarks in tableview
+    for (UITableViewCell *cell in [self.tableView visibleCells]) {
+        cell.accessoryType = UITableViewCellAccessoryNone;
     }
-    else{
-        self.genderSelected = @"Womens";
-    }
+    [self.selectedSizes removeAllObjects];
 }
 
 @end

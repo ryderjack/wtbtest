@@ -39,6 +39,8 @@
     self.commentField.delegate= self;
     
     self.user = [[PFUser alloc]init];
+    
+    self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -59,31 +61,40 @@
             [self.pictureView setFile:[self.user objectForKey:@"picture"]];
             [self.pictureView loadInBackground];
             
-            int starNumber = [[self.user objectForKey:@"currentRating"] intValue];
-            
-            if (starNumber == 0) {
-                [self.starView setImage:[UIImage imageNamed:@"0star"]];
-            }
-            else if (starNumber == 1){
-                [self.starView setImage:[UIImage imageNamed:@"1star"]];
-            }
-            else if (starNumber == 2){
-                [self.starView setImage:[UIImage imageNamed:@"2star"]];
-            }
-            else if (starNumber == 3){
-                [self.starView setImage:[UIImage imageNamed:@"3star"]];
-            }
-            else if (starNumber == 4){
-                [self.starView setImage:[UIImage imageNamed:@"4star"]];
-            }
-            else if (starNumber == 5){
-                [self.starView setImage:[UIImage imageNamed:@"5star"]];
-            }
-            
-            int purchased = [[self.user objectForKey:@"purchased"]intValue];
-            int sold = [[self.user objectForKey:@"sold"] intValue];
-            
-            self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
+            PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+            [dealsQuery whereKey:@"User" equalTo:self.user];
+            [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    int starNumber = [[object objectForKey:@"currentRating"] intValue];
+                    
+                    if (starNumber == 0) {
+                        [self.starView setImage:[UIImage imageNamed:@"0star"]];
+                    }
+                    else if (starNumber == 1){
+                        [self.starView setImage:[UIImage imageNamed:@"1star"]];
+                    }
+                    else if (starNumber == 2){
+                        [self.starView setImage:[UIImage imageNamed:@"2star"]];
+                    }
+                    else if (starNumber == 3){
+                        [self.starView setImage:[UIImage imageNamed:@"3star"]];
+                    }
+                    else if (starNumber == 4){
+                        [self.starView setImage:[UIImage imageNamed:@"4star"]];
+                    }
+                    else if (starNumber == 5){
+                        [self.starView setImage:[UIImage imageNamed:@"5star"]];
+                    }
+                    
+                    int purchased = [[object objectForKey:@"purchased"]intValue];
+                    int sold = [[object objectForKey:@"sold"] intValue];
+                    
+                    self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
+                }
+                else{
+                    NSLog(@"error getting deals data!");
+                }
+            }];
         }
         else{
             NSLog(@"error %@", error);
@@ -161,9 +172,12 @@
         [self.feedbackButton setEnabled:YES];
     }
     else{
+        [self showHUD];
+        
         PFObject *feedbackObject = [PFObject objectWithClassName:@"feedback"];
         
         [feedbackObject setObject:[NSNumber numberWithInt:self.starNumber] forKey:@"rating"];
+        [feedbackObject setObject:[PFUser currentUser] forKey:@"gaveFeedback"];
         
         if (self.purchased == YES) {
             [feedbackObject setObject:self.user forKey:@"sellerUser"];
@@ -177,7 +191,7 @@
         [feedbackObject setObject:self.commentField.text forKey:@"comment"];
         [feedbackObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (!error) {
-                
+
                 //update order status
 
                 if (self.purchased == YES) {
@@ -188,55 +202,87 @@
                 }
                 [self.orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                     if (!error) {
-                        if (self.starNumber == 1) {
-                            [self.user incrementKey:@"star1"];
-                        }
-                        else if (self.starNumber == 2){
-                            [self.user incrementKey:@"star2"];
-                        }
-                        else if (self.starNumber == 3){
-                            [self.user incrementKey:@"star3"];
-                        }
-                        else if (self.starNumber == 4){
-                            [self.user incrementKey:@"star4"];
-                        }
-                        else if (self.starNumber == 5){
-                            [self.user incrementKey:@"star5"];
-                        }
+                        //send push to other user
+                        NSString *pushString = [NSString stringWithFormat:@"%@ just left you feedback",[[PFUser currentUser]username]];
+                        NSDictionary *params = @{@"userId": self.user.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+                        [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                            if (!error) {
+                                NSLog(@"response sending feedback push %@", response);
+                            }
+                            else{
+                                NSLog(@"image push error %@", error);
+                            }
+                        }];
                         
-                        [self.user incrementKey:@"dealsTotal"];
-                        
-                        if (self.purchased == YES) {
-                            [self.user incrementKey:@"sold"];
-                        }
-                        else{
-                            [self.user incrementKey:@"purchased"];
-                        }
-                        
-                        // weight the different stars
-                        int star1 = [[self.user objectForKey:@"star1"]intValue]*5;
-                        int star2 = [[self.user objectForKey:@"star2"]intValue]*4;
-                        int star3 = [[self.user objectForKey:@"star3"]intValue]*3;
-                        int star4 = [[self.user objectForKey:@"star4"]intValue]*2;
-                        int star5 = [[self.user objectForKey:@"star5"]intValue]*1;
-                        
-                        NSArray *ratings = [NSArray arrayWithObjects:@(star1), @(star2), @(star3), @(star4), @(star5), nil];
-                        int max = [[ratings valueForKeyPath:@"@max.intValue"] intValue];
-                        int star = (int) [ratings indexOfObject:@(max)]+1;
-                        [self.user setObject:[NSNumber numberWithInt:star] forKey:@"currentRating"];
-                        [self.user saveInBackground];
-                        
-                        [self.navigationController popViewControllerAnimated:YES];
+                        //update user's deals data
+                        PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+                        [dealsQuery whereKey:@"User" equalTo:self.user];
+                        [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                            if (object) {
+                                NSLog(@"got the user's deal info");
+                                
+                                if (self.starNumber == 1) {
+                                    [object incrementKey:@"star1"];
+                                }
+                                else if (self.starNumber == 2){
+                                    [object incrementKey:@"star2"];
+                                }
+                                else if (self.starNumber == 3){
+                                    [object incrementKey:@"star3"];
+                                }
+                                else if (self.starNumber == 4){
+                                    [object incrementKey:@"star4"];
+                                }
+                                else if (self.starNumber == 5){
+                                    [object incrementKey:@"star5"];
+                                }
+                                
+                                [object incrementKey:@"dealsTotal"];
+                                
+                                if (self.purchased == YES) {
+                                    [object incrementKey:@"sold"];
+                                }
+                                else{
+                                    [object incrementKey:@"purchased"];
+                                }
+                                
+                                // weight the different stars
+                                int star1 = [[object objectForKey:@"star1"]intValue]*5;
+                                int star2 = [[object objectForKey:@"star2"]intValue]*4;
+                                int star3 = [[object objectForKey:@"star3"]intValue]*3;
+                                int star4 = [[object objectForKey:@"star4"]intValue]*2;
+                                int star5 = [[object objectForKey:@"star5"]intValue]*1;
+                                
+                                NSArray *ratings = [NSArray arrayWithObjects:@(star1), @(star2), @(star3), @(star4), @(star5), nil];
+                                int max = [[ratings valueForKeyPath:@"@max.intValue"] intValue];
+                                int star = (int) [ratings indexOfObject:@(max)]+1;
+                                [object setObject:[NSNumber numberWithInt:star] forKey:@"currentRating"];
+                                [object saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                    if (succeeded) {
+                                        NSLog(@"saved user's deal data! %@", object);
+                                        [self hideHUD];
+                                        [self.navigationController popViewControllerAnimated:YES];
+                                    }
+                                    else{
+                                        NSLog(@"error saving deals data %@", error);
+                                        [self hideHUD];
+                                    }
+                                }];
+                                
+                            }
+                        }];
                     }
                     else{
                         NSLog(@"error %@", error);
                         [self.feedbackButton setEnabled:YES];
+                        [self hideHUD];
                     }
                 }];
             }
             else{
                 NSLog(@"error %@", error);
                 [self.feedbackButton setEnabled:YES];
+                [self hideHUD];
             }
         }];
     }
@@ -321,9 +367,6 @@
     self.pictureView.layer.cornerRadius = self.pictureView.frame.size.width / 2;
     self.pictureView.layer.masksToBounds = YES;
     
-    self.pictureView.layer.borderWidth = 1.0f;
-    self.pictureView.layer.borderColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1].CGColor;
-    
     self.pictureView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     self.pictureView.contentMode = UIViewContentModeScaleAspectFill;
 }
@@ -361,5 +404,19 @@
     
     [footerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     return footerView;
+}
+
+-(void)showHUD{
+    self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+}
+
+-(void)hideHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:self.view animated:YES];
+    });
 }
 @end

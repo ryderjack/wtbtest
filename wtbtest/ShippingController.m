@@ -31,6 +31,15 @@
     self.cityCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.postcodeCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.phoneNumCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.countryCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    self.nameField.delegate = self;
+    self.buildingField.delegate = self;
+    self.streetField.delegate = self;
+    self.cityField.delegate = self;
+    self.postcodeField.delegate = self;
+    self.numberField.delegate = self;
+    self.countryField.delegate = self;
     
     self.currentUser = [PFUser currentUser];
     
@@ -51,6 +60,9 @@
     if ([self.currentUser objectForKey:@"phonenumber"]) {
         self.numberField.text = [self.currentUser objectForKey:@"phonenumber"];
     }
+    if ([self.currentUser objectForKey:@"country"]) {
+        self.countryField.text = [self.currentUser objectForKey:@"country"];
+    }
      [self addDoneButton];
 }
 
@@ -66,7 +78,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 6;
+    return 7;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -88,6 +100,9 @@
             return self.postcodeCell;
         }
         else if (indexPath.row == 5){
+            return self.countryCell;
+        }
+        else if (indexPath.row == 6){
             return self.phoneNumCell;
         }
     }
@@ -95,7 +110,7 @@
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
 
-    if (indexPath.row == 5) {
+    if (indexPath.row == 6) {
         return 99;
     }
     return 44;
@@ -109,8 +124,9 @@
 -(void)saveStuff{
     [self.navigationItem.rightBarButtonItem setEnabled:NO];
     
-    if ([self.nameField.text isEqualToString:@""] || [self.buildingField.text isEqualToString:@""]||[self.streetField.text isEqualToString:@""] || [self.numberField.text isEqualToString:@""] || [self.cityField.text isEqualToString:@""] || [self.postcodeField.text isEqualToString:@""]) {
+    if ([self.nameField.text isEqualToString:@""] || [self.buildingField.text isEqualToString:@""]||[self.streetField.text isEqualToString:@""] || [self.numberField.text isEqualToString:@""] || [self.cityField.text isEqualToString:@""] || [self.postcodeField.text isEqualToString:@""] || [self.countryField.text isEqualToString:@""]) {
         self.warningLabel.text = @"Fill out all the above fields!";
+        [self.navigationItem.rightBarButtonItem setEnabled:YES];
     }
     else{
         //pass back & save to current user
@@ -119,6 +135,8 @@
         [self.currentUser setObject:self.cityField.text forKey:@"city"];
         [self.currentUser setObject:self.numberField.text forKey:@"phonenumber"];
         [self.currentUser setObject:self.postcodeField.text forKey:@"postcode"];
+        [self.currentUser setObject:self.countryField.text forKey:@"country"];
+        
         [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
                 NSString *addressString = @"";
@@ -127,9 +145,8 @@
                     addressString = [NSString stringWithFormat:@"%@ %@, %@\n%@\n%@",self.buildingField.text, self.streetField.text, self.cityField.text, self.numberField.text, self.postcodeField.text];
                 }
                 else{
-                    addressString = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.buildingField.text, self.streetField.text, self.cityField.text, self.numberField.text, self.postcodeField.text];
+                    addressString = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.buildingField.text, self.streetField.text, self.cityField.text, self.postcodeField.text,self.countryField.text ,self.numberField.text];
                 }
-                
                 [self.delegate addItemViewController:self didFinishEnteringAddress:addressString];
                 [self.navigationController popViewControllerAnimated:YES];
             }

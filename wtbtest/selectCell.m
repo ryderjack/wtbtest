@@ -23,7 +23,7 @@
 - (IBAction)segmentChanged:(id)sender {
     if (self.segmentControl.selectedSegmentIndex == 0) {
         self.firstSelected = YES;
-        [self.delegate genderSelected:@"Male"];
+        [self.delegate genderSelected:@"Mens"];
     }
     else{
         self.firstSelected = NO;

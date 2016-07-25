@@ -20,5 +20,6 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *profileCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *howItWorks;
 @property (strong, nonatomic) IBOutlet UITableViewCell *feedbackCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *savedLaterCell;
 
 @end

@@ -59,7 +59,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return 1;
+        return 2;
     }
     else if (section == 1){
         return 2;
@@ -80,6 +80,9 @@
     if (indexPath.section == 0){
         if (indexPath.row == 0) {
             return self.profileCell;
+        }
+        else if (indexPath.row == 1) {
+            return self.savedLaterCell;
         }
     }
     else if (indexPath.section == 1){
@@ -121,6 +124,12 @@
             vc.user = [PFUser currentUser];
             [self.navigationController pushViewController:vc animated:YES];
         }
+        else if (indexPath.row == 1){
+            //saved for later pressed
+            OffersController *vc = [[OffersController alloc]init];
+            vc.mode = @"saved";
+            [self.navigationController pushViewController:vc animated:YES];
+        }
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
@@ -159,7 +168,7 @@
 
 - (void)showEmail{
     NSString *emailTitle = @"Help us make bump better!";
-    NSString *messageBody = @"Yo\n\n Tell us how we can make bump even better or any problems you've faced! We promise to reply within an hour.";
+    NSString *messageBody = @"Yo\n\n Tell us how we can make bump even better or any problems you've faced! We promise to reply within an hour.\nPS send us screenshots of anything not working properly!";
     NSArray *toRecipents = [NSArray arrayWithObject:@"ryder_jack@hotmail.co.uk"];
     MFMailComposeViewController *mc = [[MFMailComposeViewController alloc] init];
     mc.mailComposeDelegate = self;

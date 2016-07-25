@@ -12,6 +12,8 @@
 #import "FilterVC.h"
 #import "ListingController.h"
 #import "searchResultsController.h"
+#import <MBProgressHUD.h>
+#import <DGActivityIndicatorView.h>
 
 @interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, UISearchControllerDelegate, UISearchResultsUpdating, UISearchBarDelegate, searchResultsDelegate>
 
@@ -40,4 +42,8 @@
 @property (nonatomic, strong) NSMutableArray *searchResults;
 @property (nonatomic) BOOL searchEnabled;
 @property (nonatomic, strong) searchResultsController *resultsController;
+
+@property (nonatomic, strong) NSString *currency;
+@property (nonatomic, strong) NSString *currencySymbol;
+
 @end

@@ -13,6 +13,7 @@
 #import "SettingsController.h"
 #import <TOWebViewController.h>
 #import "FeedbackController.h"
+#import "OrderSummaryController.h"
 
 @interface MessageViewController ()
 
@@ -99,6 +100,8 @@
     
     self.waitingBubbleImageData = [bubbleFactoryOutline incomingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
     
+    self.purchasedBubbleImageData = [bubbleFactoryOutline incomingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
+    
     self.offerBubbleImageData = [self.bubbleFactory outgoingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
     
      self.masker = [[JSQMessagesMediaViewBubbleImageMasker alloc]initWithBubbleImageFactory:self.bubbleFactory];
@@ -112,142 +115,168 @@
     [messageQuery orderByDescending :@"createdAt"];
     [messageQuery includeKey:@"offerObject"];
     [messageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            if (self.earlierPressed == NO) {
-                self.lastMessage = [objects objectAtIndex:0];
-            }
-            
-            if (objects.count < 10) {
-                self.showLoadEarlierMessagesHeader = NO;
-            }
-            else{
-                self.showLoadEarlierMessagesHeader = YES;
-            }
-            
-            int count = (int)[objects count];
-            self.skipped = count + self.skipped;
-            
-            for (PFObject *messageOb in objects) {
-                
-                if (![self.messagesParseArray containsObject:messageOb]) {
-                    [self.messagesParseArray addObject:messageOb];
+        if (!error) {
+            if (objects) {
+                if (self.earlierPressed == NO) {
+                    self.lastMessage = [objects objectAtIndex:0];
                 }
-            
-                __block JSQMessage *message = nil;
                 
-                if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                    [messageOb setObject:@"seen" forKey:@"status"];
-                    [messageOb saveInBackground];
-                    
-                    if (self.userIsBuyer == YES) {
-                        [self.convoObject setObject:@0 forKey:@"buyerUnseen"];
-                    }
-                    else{
-                        [self.convoObject setObject:@0 forKey:@"sellerUnseen"];
-                    }
+                if (objects.count < 10) {
+                    self.showLoadEarlierMessagesHeader = NO;
                 }
                 else{
-                    // only add current user's messages to parse array so last one's status can be displayed
-                    if (![self.sentMessagesParseArray containsObject:messageOb]) {
-                        [self.sentMessagesParseArray addObject:messageOb];
-                    }
+                    self.showLoadEarlierMessagesHeader = YES;
                 }
-
-                if ([[messageOb objectForKey:@"mediaMessage"] isEqualToString:@"YES"]) {
+                
+                int count = (int)[objects count];
+                self.skipped = count + self.skipped;
+                
+                for (PFObject *messageOb in objects) {
                     
-                    //media message
+                    // is status message set as seen so badge number decrements and then continue to add other messages to arrays
+                    if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+                        [messageOb setObject:@"seen" forKey:@"status"];
+                        [messageOb saveInBackground];
+                        continue;
+                    }
                     
-                    __block id<JSQMessageMediaData> newMediaData = nil;
-                    __block id newMediaAttachmentCopy = nil;
-                    __block JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc]init];
-                    photoItem.image = nil;
+                    if (![self.messagesParseArray containsObject:messageOb]) {
+                        [self.messagesParseArray addObject:messageOb];
+                    }
                     
-                    message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
-                    [self.messages insertObject:message atIndex:0];
+                    __block JSQMessage *message = nil;
                     
-                    message.msgObject = messageOb;
-
-                    PFQuery *imageQuery = [PFQuery queryWithClassName:@"messageImages"];
-                    [imageQuery whereKey:@"objectId" equalTo:[messageOb objectForKey:@"message"]];
-                    
-                    [imageQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                        if (!error) {
-                            PFFile *img = [object objectForKey:@"Image"];
-                            [img getDataInBackgroundWithBlock:^(NSData *data, NSError *error) {
-                                if (!error) {
-                                    
-                                    UIImage *messageImage = [UIImage imageWithData:data];
-                                    photoItem.image = messageImage;
-                                    
-                                    newMediaAttachmentCopy = [UIImage imageWithCGImage:photoItem.image.CGImage];
-                                    newMediaData = photoItem;
-                                    [message setValue:newMediaData forKey:@"media"];
-//                                    [self.collectionView reloadData];
-
-                                    if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                                        [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
-                                    }
-                                    else{
-                                        [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView]; //needs to change?
-                                    }
-                                    
-                                    [self.collectionView reloadData];
-                                    
-//                                    if (self.earlierPressed == NO) {
-//                                        [self scrollToBottomAnimated:NO];
-//                                    }
-                                }
-                            }];
+                    if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                        [messageOb setObject:@"seen" forKey:@"status"];
+                        [messageOb saveInBackground];
+                        if (self.userIsBuyer == YES) {
+                            [self.convoObject setObject:@0 forKey:@"buyerUnseen"];
                         }
                         else{
-                            NSLog(@"error with image query %@", error);
+                            [self.convoObject setObject:@0 forKey:@"sellerUnseen"];
                         }
-                    }];
-                }
-                else{
-                    NSString *messageText = [messageOb objectForKey:@"message"];
-                    
-                    if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
-                        PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
-                        if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
-                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
-                        }
-                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
-                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nPurchased"];
-                        }
-                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
-                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for seller to confirm"];
+                    }
+                    else{
+                        // only add current user's messages to parse array so last one's status can be displayed
+                        if (![self.sentMessagesParseArray containsObject:messageOb]) {
+                            [self.sentMessagesParseArray addObject:messageOb];
                         }
                     }
                     
-                    message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
-                    
-                    if ([[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
+                    if ([[messageOb objectForKey:@"mediaMessage"] isEqualToString:@"YES"]) {
                         
-                        PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
-                        if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
-                            message.isOfferMessage = YES;
-                            message.offerObject = offerOb;
-                        }
-                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
-                            message.isOfferMessage = NO;
-                            message.isWaiting = YES;
-                        }
+                        //media message
+                        __block id<JSQMessageMediaData> newMediaData = nil;
+                        __block id newMediaAttachmentCopy = nil;
+                        __block JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc]init];
+                        photoItem.image = nil;
+                        
+                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
+                        [self.messages insertObject:message atIndex:0];
+                        
+                        message.msgObject = messageOb;
+                        
+                        PFQuery *imageQuery = [PFQuery queryWithClassName:@"messageImages"];
+                        [imageQuery whereKey:@"objectId" equalTo:[messageOb objectForKey:@"message"]];
+                        
+                        [imageQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                            if (!error) {
+                                PFFile *img = [object objectForKey:@"Image"];
+                                [img getDataInBackgroundWithBlock:^(NSData *data, NSError *error) {
+                                    if (!error) {
+                                        
+                                        UIImage *messageImage = [UIImage imageWithData:data];
+                                        photoItem.image = messageImage;
+                                        
+                                        newMediaAttachmentCopy = [UIImage imageWithCGImage:photoItem.image.CGImage];
+                                        newMediaData = photoItem;
+                                        [message setValue:newMediaData forKey:@"media"];
+                                        
+                                        if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                                            [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
+                                        }
+                                        else{
+                                            [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView]; //needs to change?
+                                        }
+                                        
+                                        [self.collectionView reloadData];
+                                        
+                                        //                                    if (self.earlierPressed == NO) {
+                                        //                                        [self scrollToBottomAnimated:NO];
+                                        //                                    }
+                                    }
+                                }];
+                            }
+                            else{
+                                NSLog(@"error with image query %@", error);
+                            }
+                        }];
                     }
-                    [self.messages insertObject:message atIndex:0];
+                    else{
+                        NSString *messageText = [messageOb objectForKey:@"message"];
+                        
+                        if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
+                            PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
+                            if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
+                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
+                            }
+                            else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
+                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nPurchased"];
+                            }
+                            else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
+                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for seller to confirm"];
+                            }
+                        }
+                        else if([[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]){
+                            // user sent the message and it is an offer message
+                            PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
+                            if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
+                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for you to confirm payment"];
+                            }
+                            else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
+                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nSold"];
+                            }
+                        }
+                        
+                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
+                        
+                        if ([[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
+                            
+                            PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
+                            if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
+                                message.isOfferMessage = YES;
+                                message.offerObject = offerOb;
+                            }
+                            else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
+                                message.isOfferMessage = NO;
+                                message.isWaiting = YES;
+                            }
+                            else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
+                                message.isOfferMessage = NO;
+                                message.offerObject = offerOb;
+                                message.isWaiting = NO;
+                                message.isPurchased = YES;
+                            }
+                        }
+                        [self.messages insertObject:message atIndex:0];
+                    }
+                }
+                [self.convoObject saveInBackground];
+                [self.collectionView reloadData];
+                
+                if (self.earlierPressed == NO) {
+                    [self scrollToBottomAnimated:NO];
                 }
             }
-            [self.convoObject saveInBackground];
-            
-            [self.collectionView reloadData];
-            
-            if (self.earlierPressed == NO) {
-                [self scrollToBottomAnimated:NO];
+            else{
+                NSLog(@"no messages");
             }
         }
         else{
-            NSLog(@"no messages");
+            //error retrieving messages
+            [self showError];
         }
+        
     }];
 }
 
@@ -266,12 +295,26 @@
         [self loadMessages];
     }
     
-    [self.convoObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (!error) {
-            //get order status
-            [self refreshStatus];
+    if (self.checkPayPalTapped == YES) {
+        self.checkPayPalTapped = NO;
+    }
+    else{
+        //to avoid needless calls only fetch once we know somethings changed
+        [self.convoObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (!error) {
+                //get order status
+                [self refreshStatus];
+            }
+        }];
+        
+        self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+        if ([self.currency isEqualToString:@"GBP"]) {
+            self.currencySymbol = @"£";
         }
-    }];
+        else{
+            self.currencySymbol = @"$";
+        }
+    }
 }
 
 - (void)handleNotification:(NSNotification*)note {
@@ -293,159 +336,167 @@
     NSDate *lastDate = [self.lastMessage createdAt];
     [newMessageQuery whereKey:@"createdAt" greaterThan:lastDate];
     [newMessageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            //update skipped number
-            int count = (int)[objects count];
-            self.skipped = count + self.skipped;
-            
-            //add new message(s) to UI
-            for (PFObject *messageOb in objects) {
+        
+        if (!error) {
+            if (objects) {
+                //update skipped number
+                int count = (int)[objects count];
+                self.skipped = count + self.skipped;
                 
-                if (![self.messagesParseArray containsObject:messageOb]) {
-                    // insets new messages at beginning of array (bottom of CV) so status labels are correct
-                    [self.messagesParseArray insertObject:messageOb atIndex:0];
-                }
-                
-                __block JSQMessage *message = nil;
-                
-                if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                    [messageOb setObject:@"seen" forKey:@"status"];
-                    [messageOb saveInBackground];
+                //add new message(s) to UI
+                for (PFObject *messageOb in objects) {
                     
-                    if (self.userIsBuyer == YES) {
-                        [self.convoObject setObject:@0 forKey:@"buyerUnseen"];
+                    if (![self.messagesParseArray containsObject:messageOb]) {
+                        // insets new messages at beginning of array (bottom of CV) so status labels are correct
+                        [self.messagesParseArray insertObject:messageOb atIndex:0];
                     }
-                    else{
-                        [self.convoObject setObject:@0 forKey:@"sellerUnseen"];
-                    }
-                }
-                else{
-                    // only add current user's messages to parse array so last one's status can be displayed
-                    if (![self.sentMessagesParseArray containsObject:messageOb]) {
-                        [self.sentMessagesParseArray addObject:messageOb];
-                    }
-                }
-                
-                if ([[messageOb objectForKey:@"mediaMessage"] isEqualToString:@"YES"]) {
                     
-                    //media message
+                    __block JSQMessage *message = nil;
                     
-                    __block id<JSQMessageMediaData> newMediaData = nil;
-                    __block id newMediaAttachmentCopy = nil;
-                    __block JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc]init];
-                    photoItem.image = nil;
-                    
-                    message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
-                    [self.messages addObject:message];
-                    message.msgObject = messageOb;
-                    
-                    PFQuery *imageQuery = [PFQuery queryWithClassName:@"messageImages"];
-                    [imageQuery whereKey:@"objectId" equalTo:[messageOb objectForKey:@"message"]];
-                    
-                    [imageQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                        if (!error) {
-                            PFFile *img = [object objectForKey:@"Image"];
-                            [img getDataInBackgroundWithBlock:^(NSData *data, NSError *error) {
-                                if (!error) {
-                                    
-                                    UIImage *messageImage = [UIImage imageWithData:data];
-                                    photoItem.image = messageImage;
-                                    
-                                    newMediaAttachmentCopy = [UIImage imageWithCGImage:photoItem.image.CGImage];
-                                    newMediaData = photoItem;
-                                    [message setValue:newMediaData forKey:@"media"];
-                                    [self.collectionView reloadData];
-                                    
-                                    if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                                        [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
-                                    }
-                                    else{
-                                        [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView]; //needs to change?
-                                    }
-                                }
-                            }];
+                    if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                        [messageOb setObject:@"seen" forKey:@"status"];
+                        [messageOb saveInBackground];
+                        
+                        if (self.userIsBuyer == YES) {
+                            [self.convoObject setObject:@0 forKey:@"buyerUnseen"];
                         }
                         else{
-                            NSLog(@"error with image query %@", error);
+                            [self.convoObject setObject:@0 forKey:@"sellerUnseen"];
                         }
-                    }];
+                    }
+                    else{
+                        // only add current user's messages to parse array so last one's status can be displayed
+                        if (![self.sentMessagesParseArray containsObject:messageOb]) {
+                            [self.sentMessagesParseArray addObject:messageOb];
+                        }
+                    }
+                    
+                    if ([[messageOb objectForKey:@"mediaMessage"] isEqualToString:@"YES"]) {
+                        
+                        //media message
+                        
+                        __block id<JSQMessageMediaData> newMediaData = nil;
+                        __block id newMediaAttachmentCopy = nil;
+                        __block JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc]init];
+                        photoItem.image = nil;
+                        
+                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
+                        [self.messages addObject:message];
+                        message.msgObject = messageOb;
+                        
+                        PFQuery *imageQuery = [PFQuery queryWithClassName:@"messageImages"];
+                        [imageQuery whereKey:@"objectId" equalTo:[messageOb objectForKey:@"message"]];
+                        
+                        [imageQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                            if (!error) {
+                                PFFile *img = [object objectForKey:@"Image"];
+                                [img getDataInBackgroundWithBlock:^(NSData *data, NSError *error) {
+                                    if (!error) {
+                                        
+                                        UIImage *messageImage = [UIImage imageWithData:data];
+                                        photoItem.image = messageImage;
+                                        
+                                        newMediaAttachmentCopy = [UIImage imageWithCGImage:photoItem.image.CGImage];
+                                        newMediaData = photoItem;
+                                        [message setValue:newMediaData forKey:@"media"];
+                                        [self.collectionView reloadData];
+                                        
+                                        if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                                            [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
+                                        }
+                                        else{
+                                            [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView]; //needs to change?
+                                        }
+                                    }
+                                }];
+                            }
+                            else{
+                                NSLog(@"error with image query %@", error);
+                            }
+                        }];
+                    }
+                    else{
+                        NSString *messageText = [messageOb objectForKey:@"message"];
+                        
+                        if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
+                            PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
+                            if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
+                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
+                            }
+                            else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
+                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nPurchased"];
+                            }
+                            else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
+                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for seller to confirm"];
+                            }
+                        }
+                        
+                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
+                        
+                        if ([[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
+                            
+                            PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
+                            if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
+                                message.isOfferMessage = YES;
+                                message.offerObject = offerOb;
+                            }
+                            else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
+                                message.isOfferMessage = NO;
+                                message.isWaiting = YES;
+                            }
+                        }
+                        //was ere
+                        [self.messages addObject:message];
+                    }
+                    self.lastMessage = messageOb;
+                }
+                
+                //save new unseen counter number
+                [self.convoObject saveInBackground];
+                
+                //scroll to bottom
+                [self scrollToBottomAnimated:YES];
+                
+                //call attributedString method to update labels
+                NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
+                
+                NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
+                NSLog(@"last item index %ld", (long)lastItemIndex);
+                
+                NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
+                NSLog(@"last path %@", pathToLastItem);
+                
+                self.checkoutTapped = NO;
+                
+                [self collectionView:self.collectionView attributedTextForCellBottomLabelAtIndexPath:pathToLastItem];
+                [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
+                //            [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
+                [self.collectionView reloadData];
+                
+                //minus number of new messages that have just been seen off tab bar badge
+                NSString *badgeString =[[self.tabBarController.tabBar.items objectAtIndex:2] badgeValue];
+                int badgeInt = [badgeString intValue];
+                int newCount = (int)[objects count];
+                int updatedBadge = badgeInt - newCount;
+                if (updatedBadge == 0) {
+                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
                 }
                 else{
-                    NSString *messageText = [messageOb objectForKey:@"message"];
-                    
-                    if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
-                        PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
-                        if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
-                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
-                        }
-                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
-                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nPurchased"];
-                        }
-                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
-                            messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for seller to confirm"];
-                        }
-                    }
-                    
-                    message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
-                    
-                    if ([[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
-                        
-                        PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
-                        if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
-                            message.isOfferMessage = YES;
-                            message.offerObject = offerOb;
-                        }
-                        else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
-                            message.isOfferMessage = NO;
-                            message.isWaiting = YES;
-                        }
-                    }
-                    //was ere
-                    [self.messages addObject:message];
+                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", updatedBadge]];
                 }
-                self.lastMessage = messageOb;
-            }
-            
-            //save new unseen counter number
-            [self.convoObject saveInBackground];
-            
-            //scroll to bottom
-            [self scrollToBottomAnimated:YES];
-            
-            //call attributedString method to update labels
-            NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
-            
-            NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
-            NSLog(@"last item index %ld", (long)lastItemIndex);
-            
-            NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
-            NSLog(@"last path %@", pathToLastItem);
-
-            self.checkoutTapped = NO;
-
-            [self collectionView:self.collectionView attributedTextForCellBottomLabelAtIndexPath:pathToLastItem];
-            [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
-//            [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
-            [self.collectionView reloadData];
-            
-            //minus number of new messages that have just been seen off tab bar badge
-            NSString *badgeString =[[self.tabBarController.tabBar.items objectAtIndex:2] badgeValue];
-            int badgeInt = [badgeString intValue];
-            int newCount = (int)[objects count];
-            int updatedBadge = badgeInt - newCount;
-            if (updatedBadge == 0) {
-                [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+                
+                //reregister for notifications again
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleNotification:) name:@"NewMessage" object:nil];
             }
             else{
-                [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", updatedBadge]];
+                NSLog(@"no new objects");
             }
-
-            //reregister for notifications again
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleNotification:) name:@"NewMessage" object:nil];
         }
         else{
-            NSLog(@"no new objects");
+            //error getting new messages
+            [self showError];
         }
+        
     }];
 }
 - (void)viewDidAppear:(BOOL)animated
@@ -457,7 +508,7 @@
     if (self.sellThisPressed == YES) {
         self.sellThisPressed = NO;
         self.offerMode = YES;
-        self.inputToolbar.contentView.textView.text = @"Selling: \nCondition: \nPrice: £\nMeetup: ";
+        self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Selling: \nCondition: \nPrice: %@\nMeetup: ", self.currencySymbol];
     }
 }
 
@@ -509,13 +560,6 @@
     
     if (self.offerMode == YES) {
         
-        //check if paypal email has been checked before proceeding
-        if (![[[PFUser currentUser]objectForKey:@"paypalChecked"]isEqualToString:@"YES"]) {
-            [self showPayPalAlert];
-            [[PFUser currentUser] setObject:@"YES" forKey:@"paypalChecked"];
-            [[PFUser currentUser]saveInBackground];
-        }
-        
         //create offer object in bg
         NSArray *strings = [text componentsSeparatedByString:@"\n"];
         
@@ -553,15 +597,15 @@
                 
                 NSArray *priceArray = [offerPriceString componentsSeparatedByString:@"."];
                 
-                if ([priceArray[0] isEqualToString:@"£"]) {
-                    priceString = @"£0.00";
+                if ([priceArray[0] isEqualToString:self.currencySymbol]) {
+                    priceString = [NSString stringWithFormat:@"%@0.00", self.currencySymbol];
                 }
                 else if (priceArray.count > 1){
                     NSString *intAmount = priceArray[0];
                     
                     if (intAmount.length == 1){
-                        NSLog(@"just the £ then a decimal point");
-                        intAmount = @"£00";
+                        NSLog(@"just the currency symbol then a decimal point");
+                        intAmount = [NSString stringWithFormat:@"%@00", self.currencySymbol];
                     }
                     else{
                         NSLog(@"got a number + the £");
@@ -587,7 +631,7 @@
                     NSLog(@"no decimal point so price is %@", priceString);
                 }
                 
-                if ([priceString isEqualToString:@"£0.00"] || [priceString isEqualToString:@""] || [priceString isEqualToString:@" £.00"] || [priceString isEqualToString:@"  "]) {
+                if ([priceString isEqualToString:[NSString stringWithFormat:@"%@0.00", self.currencySymbol]] || [priceString isEqualToString:@""] || [priceString isEqualToString:[NSString stringWithFormat:@"%@.00", self.currencySymbol]] || [priceString isEqualToString:@"  "]) {
                     NSLog(@"invalid price entered! %@", priceString);
                     [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Not sure even I'd sell for that much.."];
                     return;
@@ -606,7 +650,7 @@
         
         [JSQSystemSoundPlayer jsq_playMessageSentSound];
         
-        NSString *prefixToRemove = @"£";
+        NSString *prefixToRemove = self.currencySymbol;
         NSString *salePrice = [[NSString alloc]init];
         salePrice = [priceString substringFromIndex:[prefixToRemove length]];
         float salePriceFloat = [salePrice intValue];
@@ -621,6 +665,8 @@
         [self.offerObject setObject:[PFUser currentUser] forKey:@"sellerUser"];
         [self.offerObject setObject:self.convoObject forKey:@"convo"];
         [self.offerObject setObject:@"open" forKey:@"status"];
+        [self.offerObject setObject:self.currencySymbol forKey:@"symbol"];
+        [self.offerObject setObject:self.currency forKey:@"currency"];
     }
     
     if (self.offerMode == YES) {
@@ -658,9 +704,9 @@
     messageObject[@"mediaMessage"] = @"NO";
     [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded == YES) {
-            NSString *pushText = messageString;
+            NSString *pushText = [NSString stringWithFormat:@"%@: %@", [[PFUser currentUser]username], messageString];
             if (self.offerMode == YES) {
-                pushText = @"sent an offer 🔌";
+                pushText = [NSString stringWithFormat:@"%@ sent an offer 🔌", [[PFUser currentUser]username]];
             }
             else{
                 self.lastMessage = messageObject;
@@ -704,6 +750,13 @@
             [self presentViewController:vc animated:YES completion:nil];
         }
         else{
+            //check if paypal email has been checked before proceeding
+            if (![[[PFUser currentUser]objectForKey:@"paypalChecked"]isEqualToString:@"YES"]) {
+                [self showPayPalAlert];
+                [[PFUser currentUser] setObject:@"YES" forKey:@"paypalChecked"];
+                [[PFUser currentUser]saveInBackground];
+            }
+            
             self.offerMode = NO;
             PFQuery *convoImagesQuery = [PFQuery queryWithClassName:@"messageImages"];
             [convoImagesQuery whereKey:@"convo" equalTo:self.convoObject];
@@ -711,14 +764,13 @@
             [convoImagesQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
                     PFFile *imgFile = [object objectForKey:@"Image"];
-                    [imgFile getDataInBackgroundWithBlock:^(NSData * _Nullable data, NSError * _Nullable error) {
-                        if (data) {
-                            UIImage *image = [UIImage imageWithData:data];
-                            [self.offerObject setObject:image forKey:@"image"];
-                            [self.offerObject saveInBackground];
+                    [self.offerObject setObject:imgFile forKey:@"image"];
+                    [self.offerObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded == YES) {
+                            NSLog(@"success saving img!");
                         }
                         else{
-                            NSLog(@"error getting img data %@", error);
+                            NSLog(@"error saving! %@", error);
                         }
                     }];
                 }
@@ -732,6 +784,7 @@
     //update convo object after every message sent
     [self.convoObject incrementKey:@"totalMessages"];
     [self.convoObject setObject:messageObject forKey:@"lastSent"];
+    [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
     
     if (self.userIsBuyer == YES) {
        [self.convoObject incrementKey:@"sellerUnseen"];
@@ -773,7 +826,7 @@
         if (order == nil) {
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 self.offerMode = YES;
-                self.inputToolbar.contentView.textView.text = @"Selling: \nCondition: \nPrice: £\nMeetup: ";
+                self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Selling: \nCondition: \nPrice: %@\nMeetup: ", self.currencySymbol];
                 self.navigationItem.rightBarButtonItem = self.cancelButton;
             }]];
         }
@@ -830,6 +883,21 @@
     webViewController.showPageTitles = NO;
     webViewController.doneButtonTitle = @"Paid";
     webViewController.paypalMode = YES;
+    if ([self.convoObject objectForKey:@"order"]) {
+        //got an order object so get email and amount info
+        webViewController.infoMode = YES;
+        if ([self.otherUser objectForKey:@"email"]) {
+            webViewController.emailToPay = [self.otherUser objectForKey:@"email"];
+            webViewController.amountToPay = @"";
+        }
+        else{
+            webViewController.infoMode = NO;
+        }
+    }
+    else{
+        //hide toolbar banner
+        webViewController.infoMode = NO;
+    }
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
@@ -842,6 +910,8 @@
     webViewController.showPageTitles = NO;
     webViewController.doneButtonTitle = @"";
     webViewController.paypalMode = NO;
+    webViewController.infoMode = NO;
+    self.checkPayPalTapped = YES;
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
@@ -900,14 +970,32 @@
 //            NSLog(self.offerMode ? @"YES":@"NO");
             
             if (self.offerMode == YES) {
-                [self.offerObject setObject:picObject forKey:@"image"];
-                [self.offerObject saveEventually];
+                NSLog(@"file %@", filePicture);
+                [self.offerObject setObject:filePicture forKey:@"image"];
+                [self.offerObject saveEventually:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded == YES) {
+                        NSLog(@"saved image with offer");
+                    }
+                    
+                    else{
+                        NSLog(@"error saving image with offer %@", error);
+                    }
+                }];
+                
+                //check if paypal email has been checked before proceeding
+                if (![[[PFUser currentUser]objectForKey:@"paypalChecked"]isEqualToString:@"YES"]) {
+                    [self showPayPalAlert];
+                    [[PFUser currentUser] setObject:@"YES" forKey:@"paypalChecked"];
+                    [[PFUser currentUser]saveInBackground];
+                }
             }
             else{
                 [self.convoObject setObject:self.messageObject forKey:@"lastSent"];
                 
+                NSString *pushString = [NSString stringWithFormat:@"%@ sent a picture 📸",[[PFUser currentUser]username]];
+                
                 //send push to other user
-                NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": @"📸", @"sender": [PFUser currentUser].username};
+                NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
                 [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                     if (!error) {
                         NSLog(@"response %@", response);
@@ -926,6 +1014,8 @@
             else{
                 [self.convoObject incrementKey:@"buyerUnseen"];
             }
+            
+            [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
             [self.convoObject saveInBackground];
             
             // add new message object to relevant arrays
@@ -995,6 +1085,9 @@
     }
     else if (message.isWaiting == YES){
         return self.waitingBubbleImageData;
+    }
+    else if (message.isPurchased == YES){
+        return self.purchasedBubbleImageData;
     }
     
     if ([message.senderId isEqualToString:self.senderId])
@@ -1279,7 +1372,19 @@
         
         [self presentViewController:vc animated:YES completion:nil];
     }
-    
+    else if (tappedMessage.isPurchased == YES){
+        //goto order summary
+        OrderSummaryController *vc = [[OrderSummaryController alloc]init];
+        if ([tappedMessage.senderId isEqualToString:[PFUser currentUser].objectId]) {
+            vc.purchased = NO;
+        }
+        else{
+            vc.purchased = YES;
+        }
+        vc.orderDate = tappedMessage.offerObject.createdAt;
+        vc.orderObject = [self.convoObject objectForKey:@"order"];
+        [self.navigationController pushViewController:vc animated:YES];
+    }
     else if ([tappedMessage.senderId isEqualToString:[PFUser currentUser].objectId]) {
         if (tappedMessage.isOfferMessage == YES) {
             
@@ -1305,6 +1410,8 @@
                 CheckoutController *vc = [[CheckoutController alloc]init];
                 vc.confirmedOfferObject = tappedMessage.offerObject;
                 vc.convo = self.convoObject;
+                vc.sellerEmail = [self.otherUser objectForKey:@"email"];
+                vc.otherUserId = self.otherUser.objectId;
                 [self.navigationController pushViewController:vc animated:YES];
             }
         }
@@ -1339,8 +1446,6 @@
 }
 
 -(void)markTapped{
-    NSLog(@"mark payment as received!");
-    
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Payment Received" message:@"Tap 'Confirm' to tell us you have received the agreed amount into your PayPal account. Tap 'Check' to make sure." preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -1364,15 +1469,15 @@
     else{
         if (!self.paidView) {
             self.paidView = [[UIView alloc]initWithFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, self.navigationController.navigationBar.frame.size.width, 30)];
-            
-            UIButton *paidButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, self.paidView.frame.size.width, self.paidView.frame.size.height)];
-            [paidButton setTitle:@"Tap to confirm you've received payment" forState:UIControlStateNormal];
-            [paidButton addTarget:self action:@selector(markTapped) forControlEvents:UIControlEventTouchUpInside];
-            paidButton.backgroundColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
-            [paidButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-            paidButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
-            [self.paidView addSubview:paidButton];
-            [paidButton setCenter:CGPointMake(self.paidView.frame.size.width / 2, self.paidView.frame.size.height / 2)];
+            [self.paidView setAlpha:1.0];
+            self.paidButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, self.paidView.frame.size.width, self.paidView.frame.size.height)];
+            [self.paidButton setTitle:@"Tap to confirm you've received payment" forState:UIControlStateNormal];
+            [self.paidButton addTarget:self action:@selector(markTapped) forControlEvents:UIControlEventTouchUpInside];
+            self.paidButton.backgroundColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
+            [self.paidButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+            self.paidButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
+            [self.paidView addSubview:self.paidButton];
+            [self.paidButton setCenter:CGPointMake(self.paidView.frame.size.width / 2, self.paidView.frame.size.height / 2)];
         }
         [self.view addSubview:self.paidView];
         self.payBannerShowing = YES;
@@ -1387,9 +1492,9 @@
     else{
         if (!self.successView) {
             self.successView = [[UIView alloc]initWithFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, self.navigationController.navigationBar.frame.size.width, 30)];
+            [self.successView setAlpha:1.0];
             self.successButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, self.successView.frame.size.width, self.successView.frame.size.height)];
             [self.successButton setTitle:text forState:UIControlStateNormal];
-            [self.successButton addTarget:self action:@selector(markTapped) forControlEvents:UIControlEventTouchUpInside];
             self.successButton.backgroundColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
             [self.successButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
             self.successButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
@@ -1404,9 +1509,14 @@
 -(void)confirmOrder{
     [self.paidButton setEnabled:NO];
     
-    [self showConfirmBanner]; //hide
-    [self showSuccessBannerWithText:@"Payment received"]; // show
-    [self.successButton addTarget:self action:@selector(feedbackTapped) forControlEvents:UIControlEventTouchUpInside];
+    [self.paidView removeFromSuperview];
+    self.paidView = nil;
+    self.payBannerShowing = NO;
+    [self.paidButton removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
+    [self.paidButton removeFromSuperview];
+    
+//    [self showSuccessBannerWithText:@"Payment received - Tap to leave feedback"]; // show
+//    [self.successButton addTarget:self action:@selector(feedbackTapped) forControlEvents:UIControlEventTouchUpInside];
     
     PFObject *order = [self.convoObject objectForKey:@"order"];
     [order setObject:@"paid" forKey:@"status"];
@@ -1417,9 +1527,53 @@
             NSLog(@"order has been paid for!");
             [self refreshStatus];
             
+            //send push to other user
+            NSString *pushString = [NSString stringWithFormat:@"%@ confirmed they received your payment!",[[PFUser currentUser]username]];
+            NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+            [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                if (!error) {
+                    NSLog(@"response sending confirm push %@", response);
+                }
+                else{
+                    NSLog(@"image push error %@", error);
+                }
+            }];
+            
+            //create a status message & save as last sent
+            NSString *messageString = @"Payment received!";
+            
+            PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
+            messageObject[@"message"] = messageString;
+            messageObject[@"sender"] = [PFUser currentUser];
+            messageObject[@"senderId"] = [PFUser currentUser].objectId;
+            messageObject[@"senderName"] = [PFUser currentUser].username;
+            messageObject[@"convoId"] = self.convoId;
+            messageObject[@"status"] = @"sent";
+            messageObject[@"offer"] = @"NO";
+            messageObject[@"mediaMessage"] = @"NO";
+            messageObject[@"isStatusMsg"] = @"YES";
+            
+            [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    NSLog(@"saved status message!");
+                    
+                    [self.convoObject setObject:messageObject forKey:@"lastSent"];
+                    [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
+                    [self.convoObject saveInBackground];
+                }
+            }];
+            
             PFObject *offer = [self.convoObject objectForKey:@"offer"];
             [offer setObject:@"purchased" forKey:@"status"];
-            [offer saveInBackground];
+            [offer saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    //reset collectionView
+                    self.skipped = 0;
+                    [self.messages removeAllObjects];
+                    [self.collectionView reloadData];
+                    [self loadMessages];
+                }
+            }];
             
             PFObject *listing = [self.convoObject objectForKey:@"listing"];
             [listing setObject:@"purchased" forKey:@"status"];
@@ -1440,17 +1594,56 @@
 -(void)markAsShipped{
     [self.successButton setEnabled:NO];
     [self.successButton setTitle:@"Shipped!" forState:UIControlStateNormal];
+    
     PFObject *order = [self.convoObject objectForKey:@"order"];
     [order setObject:[NSNumber numberWithBool:YES] forKey:@"shipped"];
     [order saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
+            [self refreshStatus];
             [self.successButton setEnabled:YES];
+            
+            //send push to other user
+            NSString *pushString = [NSString stringWithFormat:@"%@ has shipped %@!",[[PFUser currentUser]username], order[@"title"]];
+            NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+            [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                if (!error) {
+                    NSLog(@"response sending shipping push %@", response);
+                }
+                else{
+                    NSLog(@"image push error %@", error);
+                }
+            }];
+            
+            //create a status message & save as last sent
+            NSString *messageString = @"Item shipped";
+            
+            PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
+            messageObject[@"message"] = messageString;
+            messageObject[@"sender"] = [PFUser currentUser];
+            messageObject[@"senderId"] = [PFUser currentUser].objectId;
+            messageObject[@"senderName"] = [PFUser currentUser].username;
+            messageObject[@"convoId"] = self.convoId;
+            messageObject[@"status"] = @"sent";
+            messageObject[@"offer"] = @"NO";
+            messageObject[@"mediaMessage"] = @"NO";
+            messageObject[@"isStatusMsg"] = @"YES";
+            
+            [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    NSLog(@"saved status message!");
+                    
+                    [self.convoObject setObject:messageObject forKey:@"lastSent"];
+                    [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
+                    [self.convoObject saveInBackground];
+                }
+            }];
         }
         else{
             NSLog(@"error updating order %@", error);
+            
+            [self refreshStatus];
             [self.successButton setEnabled:YES];
         }
-        [self refreshStatus];
     }];
 }
 
@@ -1474,8 +1667,9 @@
     if (order !=nil) {
 
         [order fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                NSLog(@"got the order %@", order);
+            if (object) {                
+                //clear all targets on button
+                [self.successButton removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
                 
                 BOOL paid = [[order objectForKey:@"paid"]boolValue];
                 BOOL shipped = [[order objectForKey:@"shipped"]boolValue];
@@ -1487,10 +1681,14 @@
                     feedback = [[order objectForKey:@"sellerFeedback"]boolValue];
                 }
                 
+                if (self.successBannerShowing == NO) {
+                    [self showSuccessBannerWithText:@""];
+                }
+                
                 if (paid == NO && shipped == NO && feedback == NO) {
                     //next step is for payment to be confirmed
                     if (self.userIsBuyer == YES) {
-                        [self showSuccessBannerWithText:@"Waiting for seller to confirm payment"];
+                        [self.successButton setTitle:@"Waiting for seller to confirm payment" forState:UIControlStateNormal];
                     }
                     else{
                         [self showConfirmBanner];
@@ -1499,34 +1697,36 @@
                 else if (paid == YES && shipped == NO && feedback == NO) {
                     //next step is to leave feedback for buyer and for seller to mark as shipped
                     if (self.userIsBuyer == YES) {
-                        [self showSuccessBannerWithText:@"Seller has confirmed payment - Tap to leave feedback"];
+                        [self.successButton setTitle:@"Seller has confirmed payment - Tap to leave feedback" forState:UIControlStateNormal];
                         [self.successButton addTarget:self action:@selector(feedbackTapped) forControlEvents:UIControlEventTouchUpInside];
                     }
                     else{
-                        [self showSuccessBannerWithText:@"Payment received - Tap to mark as shipped"];
-                        // mark as shipped
-                        [self markAsShipped];
+                        [self.successButton setTitle:@"Payment received - Tap to mark as shipped" forState:UIControlStateNormal];
+                        [self.successButton addTarget:self action:@selector(markAsShipped) forControlEvents:UIControlEventTouchUpInside];
                     }
                 }
                 else if (paid == YES && shipped == YES && feedback == NO) {
                     //next step is to leave feedback for seller once shipped or buyer to leave feedback
                     if (self.userIsBuyer == YES) {
-                        [self showSuccessBannerWithText:@"Item shipped - Tap to leave feedback"];
+                        [self.successButton setTitle:@"Item shipped - Tap to leave feedback" forState:UIControlStateNormal];
                     }
                     else{
-                        [self showSuccessBannerWithText:@"Payment received - Tap to leave feedback"];
+                        [self.successButton setTitle:@"Payment received - Tap to leave feedback" forState:UIControlStateNormal];
                     }
                     [self.successButton addTarget:self action:@selector(feedbackTapped) forControlEvents:UIControlEventTouchUpInside];
                 }
                 else if (paid == YES && shipped == YES && feedback == YES) {
                     //next step is to leave feedback for seller once shipped or buyer to leave feedback
                     if (self.userIsBuyer == YES) {
-                        [self showSuccessBannerWithText:@"Item shipped - Tap to report a problem"];
-                        [self reportUser];
+                        [self.successButton setTitle:@"Item shipped - Tap to report a problem" forState:UIControlStateNormal];
+                        [self.successButton addTarget:self action:@selector(reportUser) forControlEvents:UIControlEventTouchUpInside];
                     }
                     else{
-                        [self showSuccessBannerWithText:@"Payment received & feedback left"];
+                        [self.successButton setTitle:@"Payment received & feedback left" forState:UIControlStateNormal];
                     }
+                }
+                else{
+                    NSLog(@"DOESNT FIT IN");
                 }
             }
             else{
@@ -1543,19 +1743,54 @@
     float edge = scrollView.contentOffset.y + scrollView.frame.size.height;
     if (edge <= (scrollView.contentSize.height-(scrollView.contentSize.height/2))){
         if (self.successBannerShowing == YES) {
-            [self.successView setAlpha:0.0];
+            [UIView animateWithDuration:0.5
+                                  delay:0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.successView setAlpha:0.0];
+                             }
+                             completion:^(BOOL finished) {}];
+            
         }
         else if(self.payBannerShowing == YES){
-            [self.paidView setAlpha:0.0];
+            [UIView animateWithDuration:0.5
+                                  delay:0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.paidView setAlpha:0.0];
+                             }
+                             completion:^(BOOL finished) {}];
         }
     }
     else{
         if (self.successBannerShowing == YES) {
-            [self.successView setAlpha:1.0];
+            [UIView animateWithDuration:0.5
+                                  delay:0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.successView setAlpha:1.0];
+                             }
+                             completion:^(BOOL finished) {}];
         }
         else if(self.payBannerShowing == YES){
-            [self.paidView setAlpha:1.0];
+            [UIView animateWithDuration:0.5
+                                  delay:0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.paidView setAlpha:1.0];
+                             }
+                             completion:^(BOOL finished) {}];
         }
     }
+}
+
+-(void)showError{
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Error"
+                                  message:@"Make sure you're connected to the internet!"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 @end
