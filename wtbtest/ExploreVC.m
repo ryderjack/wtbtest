@@ -96,14 +96,17 @@
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
-    [super didMoveToParentViewController:parent];
-    
+    [super didMoveToParentViewController:parent];    
     //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
     [self.collectionView addPullToRefreshWithActionHandler:^{
         if (self.pullFinished == YES) {
             [self queryParsePull];
         }
     }];
+    
+     self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+    [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
+    [self.spinner startAnimating];
     
     [self.collectionView addInfiniteScrollingWithActionHandler:^{
         self.infiniteQuery.skip = self.lastInfinSkipped;
@@ -148,6 +151,7 @@
     if (self.searchEnabled == YES) {
         [self.searchController.searchBar setHidden:NO];
     }
+    
     
 }
 

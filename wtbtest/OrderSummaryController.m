@@ -115,48 +115,56 @@
         shippingUser = [PFUser currentUser];
         //could put different prices in here RE buyer price vs seller price
         
-        self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[shippingUser objectForKey:@"fullname"], [shippingUser objectForKey:@"building"], [shippingUser objectForKey:@"street"], [shippingUser objectForKey:@"city"], [shippingUser objectForKey:@"postcode"], [shippingUser objectForKey:@"phonenumber"]];
+        self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@\n%@",[shippingUser objectForKey:@"fullname"], [shippingUser objectForKey:@"building"], [shippingUser objectForKey:@"street"], [shippingUser objectForKey:@"city"], [shippingUser objectForKey:@"postcode"], [shippingUser objectForKey:@"country"],[shippingUser objectForKey:@"phonenumber"]];
     }
     else{
         shippingUser = self.otherUser;
     }
-    
-    NSLog(@"OTHER USER SHOULD HAVE BEEN FETCHED %@", self.otherUser);
-    
+        
     [self.otherUser fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             self.userName.text = self.otherUser.username;
             [self.userImageView setFile:[self.otherUser objectForKey:@"picture"]];
             [self.userImageView loadInBackground];
             
-            int starNumber = [[self.otherUser objectForKey:@"currentRating"] intValue];
-            
-            if (starNumber == 0) {
-                [self.starsImgView setImage:[UIImage imageNamed:@"0star"]];
-            }
-            else if (starNumber == 1){
-                [self.starsImgView setImage:[UIImage imageNamed:@"1star"]];
-            }
-            else if (starNumber == 2){
-                [self.starsImgView setImage:[UIImage imageNamed:@"2star"]];
-            }
-            else if (starNumber == 3){
-                [self.starsImgView setImage:[UIImage imageNamed:@"3star"]];
-            }
-            else if (starNumber == 4){
-                [self.starsImgView setImage:[UIImage imageNamed:@"4star"]];
-            }
-            else if (starNumber == 5){
-                [self.starsImgView setImage:[UIImage imageNamed:@"5star"]];
-            }
-            
-            int purchased = [[self.otherUser objectForKey:@"purchased"]intValue];
-            int sold = [[self.otherUser objectForKey:@"sold"] intValue];
-            self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
+            PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+            [dealsQuery whereKey:@"User" equalTo:self.otherUser];
+            [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    int starNumber = [[object objectForKey:@"currentRating"] intValue];
+                    
+                    if (starNumber == 0) {
+                        [self.starsImgView setImage:[UIImage imageNamed:@"0star"]];
+                    }
+                    else if (starNumber == 1){
+                        [self.starsImgView setImage:[UIImage imageNamed:@"1star"]];
+                    }
+                    else if (starNumber == 2){
+                        [self.starsImgView setImage:[UIImage imageNamed:@"2star"]];
+                    }
+                    else if (starNumber == 3){
+                        [self.starsImgView setImage:[UIImage imageNamed:@"3star"]];
+                    }
+                    else if (starNumber == 4){
+                        [self.starsImgView setImage:[UIImage imageNamed:@"4star"]];
+                    }
+                    else if (starNumber == 5){
+                        [self.starsImgView setImage:[UIImage imageNamed:@"5star"]];
+                    }
+                    
+                    int purchased = [[object objectForKey:@"purchased"]intValue];
+                    int sold = [[object objectForKey:@"sold"] intValue];
+                    
+                    self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
+                }
+                else{
+                    NSLog(@"error getting deals data!");
+                }
+            }];
             
             if (self.purchased == NO) {
                 //address
-                self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@",[shippingUser objectForKey:@"fullname"], [shippingUser objectForKey:@"building"], [shippingUser objectForKey:@"street"], [shippingUser objectForKey:@"city"], [shippingUser objectForKey:@"postcode"], [shippingUser objectForKey:@"phonenumber"]];
+                self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@\n%@",[shippingUser objectForKey:@"fullname"], [shippingUser objectForKey:@"building"], [shippingUser objectForKey:@"street"], [shippingUser objectForKey:@"city"], [shippingUser objectForKey:@"postcode"],[shippingUser objectForKey:@"country"],[shippingUser objectForKey:@"phonenumber"]];
             }
         }
             

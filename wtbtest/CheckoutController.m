@@ -61,7 +61,7 @@
     
     if ([currentUser objectForKey:@"building"]) {
         //address been set before
-        self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@\n%@\n%@\n%@",[currentUser objectForKey:@"fullname"], [currentUser objectForKey:@"building"], [currentUser objectForKey:@"street"], [currentUser objectForKey:@"city"], [currentUser objectForKey:@"postcode"], [currentUser objectForKey:@"phonenumber"]];
+        self.addressLabel.text = [NSString stringWithFormat:@"%@\n%@ %@\n%@\n%@\n%@\n%@",[currentUser objectForKey:@"fullname"], [currentUser objectForKey:@"building"], [currentUser objectForKey:@"street"], [currentUser objectForKey:@"city"], [currentUser objectForKey:@"postcode"],[currentUser objectForKey:@"country"] ,[currentUser objectForKey:@"phonenumber"]];
     }
     else{
         self.addressLabel.text = @"Add address";

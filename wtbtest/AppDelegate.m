@@ -37,7 +37,8 @@
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
 //        configuration.server = @"http://localhost:1337/parse";
-        configuration.server = @"http://wantobuy.herokuapp.com/parse";
+//        configuration.server = @"http://wantobuy.herokuapp.com/parse";
+        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
     }]];
 
     [Flurry startSession:@"9Y63FGHCCGZQJDQTCTMP"];

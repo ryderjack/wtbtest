@@ -10,6 +10,7 @@
 #import "MessageViewController.h"
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "Flurry.h"
+#import <DGActivityIndicatorView.h>
 
 @interface InboxViewController ()
 
@@ -144,6 +145,10 @@
     [self.tableView addPullToRefreshWithActionHandler:^{
         [weakSelf loadMessages];
     }];
+    
+    DGActivityIndicatorView *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+    [self.tableView.pullToRefreshView setCustomView:spinner forState:SVPullToRefreshStateAll];
+    [spinner startAnimating];
 }
 
 - (void)didReceiveMemoryWarning {

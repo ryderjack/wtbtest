@@ -13,6 +13,7 @@
 #import "CreateViewController.h"
 #import "FeedbackController.h"
 #import "MessageViewController.h"
+#import "FBGroupShareViewController.h"
 
 @interface ListingController ()
 
@@ -148,6 +149,7 @@
     
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
+        [self.saveButton setEnabled:NO];
     }
     else{
         //not the same buyer
@@ -465,10 +467,28 @@
 }
 
 - (IBAction)sharePressed:(id)sender {
-    NSMutableArray *items = [NSMutableArray new];
-    [items addObject:[NSString stringWithFormat:@"Check out this WTB: %@ for %@", [self.listingObject objectForKey:@"title"], [self.listingObject objectForKey:@"listingPrice"]]];
-    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
-    [self presentViewController:activityController animated:YES completion:nil];
+    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self dismissViewControllerAnimated:YES completion:^{
+        }];
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share to Facebook Group" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        FBGroupShareViewController *vc = [[FBGroupShareViewController alloc]init];
+        vc.objectId = self.listingObject.objectId;
+        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:vc];
+        [self presentViewController:navigationController animated:YES completion:nil];
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSMutableArray *items = [NSMutableArray new];
+        [items addObject:[NSString stringWithFormat:@"Check out this WTB: %@ for %@", [self.listingObject objectForKey:@"title"], [self.listingObject objectForKey:@"listingPrice"]]];
+        UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+        [self presentViewController:activityController animated:YES completion:nil];
+    }]];
+    
+    [self presentViewController:actionSheet animated:YES completion:nil];
 }
 - (IBAction)messageBuyerPressed:(id)sender {
     if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {

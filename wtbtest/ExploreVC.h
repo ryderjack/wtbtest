@@ -46,4 +46,6 @@
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
 
+@property (nonatomic, strong) DGActivityIndicatorView *spinner;
+
 @end

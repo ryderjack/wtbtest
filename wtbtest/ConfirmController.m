@@ -41,7 +41,7 @@
     //send image to create / offer vc
 
     [self.delegate imageConfirmed:self.capturedImage.fullImage];
-    [self dismissViewControllerAnimated:YES completion:nil];
+//    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)setImagesReady:(BOOL)imagesReady
@@ -55,6 +55,8 @@
 {
 }
 - (IBAction)backButtonPressed:(id)sender {
+    NSLog(@"back pressed");
+    [self dismissViewControllerAnimated:YES completion:nil];
     [self.delegate dismissConfirmController:self];
 }
 @end

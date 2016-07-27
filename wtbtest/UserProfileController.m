@@ -342,14 +342,14 @@
     }]];
     
     if ([[selected objectForKey:@"status"] isEqualToString:@"purchased"]) {
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [selected setObject:@"live" forKey:@"status"];
-            [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                if (succeeded) {
-                    [self.collectionView reloadData];
-                }
-            }];
-        }]];
+//        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//            [selected setObject:@"live" forKey:@"status"];
+//            [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                if (succeeded) {
+//                    [self.collectionView reloadData];
+//                }
+//            }];
+//        }]];
     }
     else{
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {

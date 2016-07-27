@@ -10,7 +10,6 @@
 #import <Parse/Parse.h>
 #import "OffersController.h"
 #import "FBGroupShareViewController.h"
-#import "SummaryCollectionView.h"
 #import "UserProfileController.h"
 #import "SettingsController.h"
 #import "ExplainViewController.h"

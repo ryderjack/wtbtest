@@ -42,6 +42,10 @@
     [self.fourthDelete setHidden:YES];
     
     self.firstImageView.contentMode = UIViewContentModeScaleAspectFit;
+    self.secondImageView.contentMode = UIViewContentModeScaleAspectFit;
+    self.thirdImageView.contentMode = UIViewContentModeScaleAspectFit;
+    self.fourthImageView.contentMode = UIViewContentModeScaleAspectFit;
+    
     [self.firstImageView setImage:[UIImage imageNamed:@"addImage"]];
     [self.secondImageView setImage:[UIImage imageNamed:@"camHolder"]];
     [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
@@ -865,6 +869,8 @@
             [self.listing setObject:self.geopoint forKey:@"geopoint"];
         }
         
+        NSLog(@"currencies");
+        
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
         [self.listing setObject:self.currency forKey:@"currency"];
         
@@ -890,7 +896,13 @@
             self.listing[@"listingPriceAUD"] = @(USD);
         }
         
+        NSLog(@"just set post user");
+        
         [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
+        
+        
+        
+        NSLog(@"pre images");
         
         if (self.photostotal == 1) {
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
@@ -957,7 +969,7 @@
         else{
             [self.listing setObject:extraInfo forKey:@"extra"];
         }
-        
+        NSLog(@"about to save");
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
                 [self hidHUD];
@@ -1002,6 +1014,10 @@
     self.warningLabel.text = @"";
     
     self.firstImageView.contentMode = UIViewContentModeScaleAspectFit;
+    self.secondImageView.contentMode = UIViewContentModeScaleAspectFit;
+    self.thirdImageView.contentMode = UIViewContentModeScaleAspectFit;
+    self.fourthImageView.contentMode = UIViewContentModeScaleAspectFit;
+    
     [self.firstImageView setImage:[UIImage imageNamed:@"addImage"]];
     [self.secondImageView setImage:[UIImage imageNamed:@"camHolder"]];
     [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];

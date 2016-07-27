@@ -108,7 +108,9 @@
         self.confirmController.tagText = self.tageLabel.text;
     }
     
-    [self fastttAddChildViewController:self.confirmController];
+//    [self fastttAddChildViewController:self.confirmController];
+
+    [self presentViewController:self.confirmController animated:YES completion:nil];
 }
 
 - (void)cameraController:(id<FastttCameraInterface>)cameraController didFinishNormalizingCapturedImage:(FastttCapturedImage *)capturedImage
@@ -119,11 +121,17 @@
 }
 
 -(void)dismissConfirmController:(ConfirmController *)controller{
-    [self fastttRemoveChildViewController:controller];
+    //adding children VCs was causing xib's to be < full screen so just presenting/dimissing modallying
+    
+//    [self fastttRemoveChildViewController:controller];
     self.confirmController = nil;
 }
 
 -(void)imageConfirmed:(UIImage *)image{
+    [self dismissViewControllerAnimated:NO completion:^{
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }];
+    
     self.finishedImage = image;
     [self.delegate finalImage:image];
     

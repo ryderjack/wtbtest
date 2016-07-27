@@ -23,7 +23,7 @@
             <subviews>
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="R2B-xG-3vZ">
                     <rect key="frame" x="0.0" y="66" width="375" height="375"/>
-                    <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                    <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                     <constraints>
                         <constraint firstAttribute="width" secondItem="R2B-xG-3vZ" secondAttribute="height" multiplier="1:1" id="D63-Id-KTe"/>
                     </constraints>
@@ -110,7 +110,6 @@
                 <constraint firstItem="eOf-7j-TyT" firstAttribute="top" secondItem="x0J-KN-XUF" secondAttribute="top" id="boe-BE-6aP"/>
                 <constraint firstItem="R2B-xG-3vZ" firstAttribute="top" secondItem="sEq-WB-dTW" secondAttribute="bottom" constant="10" id="jq9-mL-iiZ"/>
                 <constraint firstItem="eOf-7j-TyT" firstAttribute="bottom" secondItem="x0J-KN-XUF" secondAttribute="bottom" id="kDM-vZ-fBt"/>
-                <constraint firstAttribute="bottom" secondItem="oJO-pp-7GF" secondAttribute="bottom" constant="68" id="nNQ-yg-B0O"/>
                 <constraint firstItem="x0J-KN-XUF" firstAttribute="top" secondItem="R2B-xG-3vZ" secondAttribute="bottom" constant="18" id="oct-6f-KdO"/>
                 <constraint firstItem="Rdh-fj-9qE" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="24" id="pi0-tm-Ii8"/>
                 <constraint firstItem="sEq-WB-dTW" firstAttribute="centerY" secondItem="Rdh-fj-9qE" secondAttribute="centerY" id="sjf-ox-khb"/>
