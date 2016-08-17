@@ -14,6 +14,7 @@
 #import "Flurry.h"
 #import <Fabric/Fabric.h>
 #import <Crashlytics/Crashlytics.h>
+#import "iRate.h"
 
 @interface AppDelegate ()
 
@@ -21,6 +22,12 @@
 
 @implementation AppDelegate
 
++ (void)initialize
+{
+    //configure iRate
+    [iRate sharedInstance].daysUntilPrompt = 5;
+    [iRate sharedInstance].usesUntilPrompt = 15;
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     
@@ -28,7 +35,7 @@
     
     [Parse initializeWithConfiguration:[ParseClientConfiguration configurationWithBlock:^(id<ParseMutableClientConfiguration> configuration) {
 
-        // checks before sending to test:
+        // checks prior to distributing:
             //1. server
             //2. tab number
             //3. messaging/offering items to yourself
@@ -42,12 +49,14 @@
     }]];
 
     [Flurry startSession:@"9Y63FGHCCGZQJDQTCTMP"];
-//    [Flurry setDebugLogEnabled:YES];
     [Fabric with:@[[Crashlytics class]]];
     
     if ([PFUser currentUser]) {
         [Flurry setUserID:[NSString stringWithFormat:@"%@", [PFUser currentUser].objectId]];
         [self logUser];
+    }
+    else{
+        //no current user
     }
     
     [PFFacebookUtils initializeFacebookWithApplicationLaunchOptions:launchOptions];
@@ -72,7 +81,6 @@
     self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController4, navController2, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
-//    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.961 green:0.651 blue:0.137 alpha:1]];
     [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
     
     UITabBarItem *tabBarItem1 = [self.tabBarController.tabBar.items objectAtIndex:0];
@@ -121,6 +129,9 @@
     else{
         [self checkMesages];
     }
+    
+    [iRate sharedInstance].previewMode = NO;
+    [iRate sharedInstance].message = @"Enjoying Bump? Please leave us a review or send us some feedback!";
 
     return YES;
 }
@@ -177,7 +188,6 @@
 //                NSLog(@"unseen convo's count %lu", (unsigned long)self.unseenMessages.count);
                 
                 if (self.unseenMessages.count != 0) {
-                    NSLog(@"posting notification!");
                     [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:self.unseenMessages];
                     
                     //remove current convo from array to avoid badge showing for current chat
@@ -200,7 +210,7 @@
             }
             else{
                 //no convos
-                NSLog(@"no convos");
+//                NSLog(@"no convos");
             }
         }
         else{
@@ -256,7 +266,7 @@
 
 //prevent user going back on create VC by tapping tab bar
 - (BOOL)tabBarController:(UITabBarController *)theTabBarController shouldSelectViewController:(UIViewController *)viewController
-{
+{    
     return (theTabBarController.selectedViewController != viewController);
 }
 

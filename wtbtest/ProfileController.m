@@ -30,13 +30,15 @@
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
-    //paypal icons in footer
-    UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 60)];
-    [footerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
-    
-//    UILabel *versionLabel = [[UILabel alloc]initWithFrame:CGRectMake(12, 0, 30, 30)];
-    
-    //insert version when have current installation data via push
+    //version in footer
+    UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, -30, self.view.frame.size.width, 30)];
+    [footerView setBackgroundColor:self.tableView.backgroundColor];
+    UILabel *versionLabel = [[UILabel alloc]initWithFrame:CGRectMake(20, 0, 50, 20)];
+    [versionLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:12]];
+    versionLabel.textColor = [UIColor lightGrayColor];
+    PFInstallation *thisInstall = [PFInstallation currentInstallation];
+    versionLabel.text = [NSString stringWithFormat:@"%@", [thisInstall objectForKey:@"appVersion"]];
+    [footerView addSubview:versionLabel];
     self.tableView.tableFooterView = footerView;
 }
 
@@ -155,7 +157,6 @@
         if (indexPath.row == 0) {
             //how it works pressed
             ExplainViewController *vc = [[ExplainViewController alloc]init];
-            vc.setting = @"process";
             [self presentViewController:vc animated:YES completion:nil];
         }
         else if (indexPath.row == 1) {
@@ -166,9 +167,9 @@
 }
 
 - (void)showEmail{
-    NSString *emailTitle = @"Help us make bump better!";
-    NSString *messageBody = @"Yo\n\n Tell us how we can make bump even better or any problems you've faced! We promise to reply within an hour.\nPS send us screenshots of anything not working properly!";
-    NSArray *toRecipents = [NSArray arrayWithObject:@"ryder_jack@hotmail.co.uk"];
+    NSString *emailTitle = @"Help us make Bump better!";
+    NSString *messageBody = @"Yo\n\n Tell us how we can make Bump even better or any problems you've faced! We promise to reply within an hour.\nPS send us screenshots of anything not working properly!";
+    NSArray *toRecipents = [NSArray arrayWithObject:@"hello@supbump.com"];
     MFMailComposeViewController *mc = [[MFMailComposeViewController alloc] init];
     mc.mailComposeDelegate = self;
     [mc setSubject:emailTitle];

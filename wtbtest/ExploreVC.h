@@ -48,4 +48,8 @@
 
 @property (nonatomic, strong) DGActivityIndicatorView *spinner;
 
+@property (nonatomic) BOOL filtersTapped;
+@property (nonatomic) BOOL searchShowing;
+@property (nonatomic) BOOL resultsShowing;
+@property (nonatomic) BOOL listingTapped;
 @end

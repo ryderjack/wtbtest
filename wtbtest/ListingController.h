@@ -56,6 +56,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *buyernameLabel;
 @property (weak, nonatomic) IBOutlet UILabel *pastDealsLabel;
 @property (weak, nonatomic) IBOutlet PFImageView *buyerImgView;
+@property (weak, nonatomic) IBOutlet UIButton *buyerButton;
 
 @property (nonatomic, strong) PFFile *firstImage;
 @property (nonatomic, strong) PFFile *secondImage;

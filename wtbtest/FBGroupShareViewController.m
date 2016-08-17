@@ -71,7 +71,7 @@
             NSString *condition = [object objectForKey:@"condition"];
             NSString *size = [object objectForKey:@"size"];
             
-            self.textView.text = [NSString stringWithFormat:@"WTB:\n%@\nCondition: %@\nSize: %@ UK\nMore details on bump http://sobump.com", title, condition, size];
+            self.textView.text = [NSString stringWithFormat:@"WTB:\n%@\nCondition: %@\nSize: %@ UK\nPosted via Bump http://apple.co/2aY3rBk", title, condition, size];
         }
         else{
             NSLog(@"error %@", error);

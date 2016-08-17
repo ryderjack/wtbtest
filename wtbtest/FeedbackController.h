@@ -13,7 +13,7 @@
 #import <MBProgressHUD.h>
 
 @interface FeedbackController : UITableViewController <UITextFieldDelegate>
-
+NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *userCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *starCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *buttonCell;
@@ -51,4 +51,7 @@
 @property (nonatomic, strong) RTSpinKitView *spinner;
 @property (nonatomic, strong) MBProgressHUD *hud;
 
+@property (nonatomic, strong) NSArray *profanityList;
+
+NS_ASSUME_NONNULL_END
 @end

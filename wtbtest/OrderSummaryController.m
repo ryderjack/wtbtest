@@ -9,6 +9,7 @@
 #import "OrderSummaryController.h"
 #import "FeedbackController.h"
 #import "MessageViewController.h"
+#import "UserProfileController.h"
 
 @interface OrderSummaryController ()
 
@@ -68,7 +69,7 @@
             else{
                 self.currencySymbol = @"$";
             }
-            self.itemPrice.text = [NSString stringWithFormat: @"%@%.2f",self.currencySymbol ,[[self.confirmedOffer objectForKey:@"salePrice"]floatValue]];
+            self.itemPrice.text = [NSString stringWithFormat: @"%@ %@%.2f", self.currency, self.currencySymbol ,[[self.confirmedOffer objectForKey:@"salePrice"]floatValue]];
             self.totalLabel.text = self.itemPrice.text;
 
             //setup order image
@@ -413,7 +414,7 @@
     [self.navigationController pushViewController:vc animated:YES];
 }
 - (IBAction)reportPressed:(id)sender {
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"bump takes inappropriate behaviour very seriously.\nIf you feel although this transaction has violated our terms let us know so we can make your experience on bump as brilliant as possible. We'll be in touch within the hour to find out how we can help" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel although this transaction has violated our terms let us know so we can make your experience on Bump as brilliant as possible. We'll be in touch within the hour to find out how we can help" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         
@@ -610,5 +611,10 @@
             [self.shippedButton setSelected:NO];
         }
     }
+}
+- (IBAction)buyerPressed:(id)sender {
+    UserProfileController *vc = [[UserProfileController alloc]init];
+    vc.user = self.otherUser;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 @end

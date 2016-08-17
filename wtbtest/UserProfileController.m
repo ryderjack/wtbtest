@@ -9,6 +9,7 @@
 #import "UserProfileController.h"
 #import "OfferCell.h"
 #import "ListingController.h"
+#import <TOWebViewController.h>
 
 @interface UserProfileController ()
 
@@ -68,6 +69,13 @@
     
     [self setAutomaticallyAdjustsScrollViewInsets:NO];
 
+    [self.segmentControl setSelectedSegmentIndex:0];
+    
+    if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        //show link to users' FB if not looking at own profile
+        UIBarButtonItem *fbButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"FBIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(fbPressed)];
+        self.navigationItem.rightBarButtonItem = fbButton;
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -107,13 +115,19 @@
             int sold = [[object objectForKey:@"sold"] intValue];
             
             self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d Sold: %d", purchased, sold];
+            
+            if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                // looking at other user's profile
+                NSArray *friends = [[PFUser currentUser] objectForKey:@"friends"];
+                if ([friends containsObject:[self.user objectForKey:@"facebookId"]]) {
+                    self.dealsLabel.text = [NSString stringWithFormat:@"You're friends on Facebook\nPurchased: %d Sold: %d", purchased, sold];
+                }
+            }
         }
         else{
             NSLog(@"error getting deals data!");
         }
     }];
-    
-    [self.segmentControl setSelectedSegmentIndex:0];
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
@@ -138,12 +152,12 @@
     [wtbQuery orderByDescending:@"createdAt"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
-            if (objects) {
+            if (objects.count > 0) {
                 self.lisitngsArray = objects;
                 [self.collectionView reloadData];
             }
             else{
-                NSLog(@"no listings");
+                // no WTBs
                 [self.nothingLabel setHidden:NO];
             }
         }
@@ -158,9 +172,9 @@
     [self.nothingLabel setHidden:YES];
     PFQuery *salesQuery = [PFQuery queryWithClassName:@"feedback"];
     [salesQuery whereKey:@"sellerUser" equalTo:self.user];
-    [salesQuery whereKey:@"gaveFeedback" notEqualTo:[PFUser currentUser]];
+    [salesQuery whereKey:@"gaveFeedback" notEqualTo:self.user];
     [salesQuery includeKey:@"buyerUser"];
-    [salesQuery orderByDescending:@"createdAt"];
+    [salesQuery orderByAscending:@"createdAt"];
     [salesQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             [self.feedbackArray removeAllObjects];
@@ -168,9 +182,9 @@
             //query for purchase feedback
             PFQuery *purchaseQuery = [PFQuery queryWithClassName:@"feedback"];
             [purchaseQuery whereKey:@"buyerUser" equalTo:self.user];
-            [purchaseQuery whereKey:@"gaveFeedback" notEqualTo:[PFUser currentUser]];
+            [purchaseQuery whereKey:@"gaveFeedback" notEqualTo:self.user];
             [purchaseQuery includeKey:@"sellerUser"];
-            [purchaseQuery orderByDescending:@"createdAt"];
+            [purchaseQuery orderByAscending:@"createdAt"];
             [purchaseQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                 if (!error) {
                     [self.feedbackArray addObjectsFromArray:objects];
@@ -263,9 +277,9 @@
         dateFormatter = nil;
     }
     else{
-        PFObject *feedbackObject = [self.feedbackArray objectAtIndex:indexPath.row];
-        if ([feedbackObject objectForKey:@"sellerUser"]==[PFUser currentUser]) {
-            NSLog(@"current user was seller");
+        PFObject *feedbackObject = [self.feedbackArray objectAtIndex:indexPath.row];        
+        if ([[[feedbackObject objectForKey:@"sellerUser"]objectId] isEqualToString:self.user.objectId]) {
+            NSLog(@"user was seller");
             cell.buyerName.text = @"Sale";
             PFUser *buyer = [feedbackObject objectForKey:@"buyerUser"];
             [buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -274,7 +288,7 @@
             }];
         }
         else{
-            NSLog(@"current user was buyer");
+            NSLog(@"user was buyer");
             cell.buyerName.text = @"Purchase";
             PFUser *seller = [feedbackObject objectForKey:@"sellerUser"];
             [seller fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -306,11 +320,13 @@
             [self showAlertViewWithPath:indexPath];
         }
         else{
-            //goto listing
+            //goto listing if its live
             PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
-            ListingController *vc = [[ListingController alloc]init];
-            vc.listingObject = selected;
-            [self.navigationController pushViewController:vc animated:YES];
+            if ([[selected objectForKey:@"status"] isEqualToString:@"live"]) {
+                ListingController *vc = [[ListingController alloc]init];
+                vc.listingObject = selected;
+                [self.navigationController pushViewController:vc animated:YES];
+            }
         }
     }
 }
@@ -369,6 +385,34 @@
             }]];
             [self presentViewController:alertView animated:YES completion:nil];
         }]];
+        
+        if ([[selected objectForKey:@"status"]isEqualToString:@"ended"]) {
+           
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Relist WTB" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Relist" message:@"Are you sure you want to relist your WTB?" preferredStyle:UIAlertControllerStyleAlert];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    
+                }]];
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [selected setObject:@"live" forKey:@"status"];
+                    
+                    //expiration in 2 weeks
+                    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                    dayComponent.day = 14;
+                    NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                    NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                    [selected setObject:expirationDate forKey:@"expiration"];
+                    
+                    [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            [self.collectionView reloadData];
+                        }
+                    }];
+                }]];
+                [self presentViewController:alertView animated:YES completion:nil];
+            }]];
+        }
     }
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
@@ -390,6 +434,19 @@
     }]];
     
     [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+-(void)fbPressed{
+    NSString *URLString = [NSString stringWithFormat:@"https://facebook.com/%@", [self.user objectForKey:@"facebookId"]];
+    TOWebViewController *webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+    webViewController.title = @"Facebook";
+    webViewController.showUrlWhileLoading = YES;
+    webViewController.showPageTitles = NO;
+    webViewController.doneButtonTitle = @"";
+    webViewController.paypalMode = NO;
+    webViewController.infoMode = NO;
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
+    [self presentViewController:navigationController animated:YES completion:nil];
 }
 
 @end

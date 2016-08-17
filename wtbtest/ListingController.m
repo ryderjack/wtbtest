@@ -9,11 +9,11 @@
 #import "ListingController.h"
 #import "DetailImageController.h"
 #import "ExplainViewController.h"
-#import "MakeOfferViewController.h"
 #import "CreateViewController.h"
 #import "FeedbackController.h"
 #import "MessageViewController.h"
 #import "FBGroupShareViewController.h"
+#import "UserProfileController.h"
 
 @interface ListingController ()
 
@@ -637,7 +637,6 @@
 
 -(void)showExtraInfo{
     ExplainViewController *vc = [[ExplainViewController alloc]init];
-    vc.setting = @"process";
     [self presentViewController:vc animated:YES completion:nil];
 }
 - (IBAction)sellthisPressed:(id)sender {
@@ -670,7 +669,7 @@
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report listing" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         
-        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"bump takes inappropriate behaviour very seriously.\nIf you feel although this post has violated our terms let us know so we can make your experience on bump as brilliant as possible." preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel although this post has violated our terms let us know so we can make your experience on Bump as brilliant as possible." preferredStyle:UIAlertControllerStyleAlert];
         
         [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
             
@@ -703,5 +702,10 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
     });
+}
+- (IBAction)buyerPressed:(id)sender {
+    UserProfileController *vc = [[UserProfileController alloc]init];
+    vc.user = self.buyer;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 @end

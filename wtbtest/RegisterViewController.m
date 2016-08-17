@@ -11,9 +11,9 @@
 #import "ContainerViewController.h"
 #import "NavigationController.h"
 #import "AppConstant.h"
+#import <TOWebViewController.h>
 
 @interface RegisterViewController ()
-
 @end
 
 @implementation RegisterViewController
@@ -42,15 +42,12 @@
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
     self.selectedCurrency = @"";
+    
+    self.profanityList = @[@"fuck", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"#", @"?", @"!", @"£", @"/", @"(", @")", @":", @",", @"'", @"$", @" ",@"<", @">", @"+", @"=", @"%", @"[", @"]", @"{", @"}", @"^"];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-}
-
--(void)viewDidAppear:(BOOL)animated{
-    [super viewDidAppear:animated];
-    
     [self requestFacebook:self.user];
 }
 
@@ -230,6 +227,14 @@
     self.profileImageView.contentMode = UIViewContentModeScaleAspectFill;
 }
 
+-(void)textFieldDidEndEditing:(UITextField *)textField{
+    if (textField == self.usernameField) {
+        if ([self.profanityList containsObject:textField.text.lowercaseString]) {
+            textField.text = @"";
+        }
+    }
+}
+
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
 
     if (textField == self.usernameField) {
@@ -287,7 +292,8 @@
                              if (error == nil)
                              {
                                  NSLog(@"saved new user! %@", [PFUser currentUser]);
-//                                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"completedReg"];
+                                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"completedReg"]; /////////////////////////UNCOMMENT FOR RELEASE
+                                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"showHowWorks"];
                                  
                                  //progress to tutorial
                                  ContainerViewController *vc = [[ContainerViewController alloc]init];
@@ -349,8 +355,6 @@
 }
 - (IBAction)GBPPressed:(id)sender {
     if (self.GBPButton.selected == YES) {
-        [self.GBPButton setSelected:NO];
-        self.selectedCurrency = @"";
     }
     else{
         self.selectedCurrency = @"GBP";
@@ -361,8 +365,6 @@
 }
 - (IBAction)USDPressed:(id)sender {
     if (self.USDButton.selected == YES) {
-        [self.USDButton setSelected:NO];
-        self.selectedCurrency = @"";
     }
     else{
         self.selectedCurrency = @"USD";
@@ -373,8 +375,6 @@
 }
 - (IBAction)AUDPressed:(id)sender {
     if (self.AUDButton.selected == YES) {
-        [self.AUDButton setSelected:NO];
-        self.selectedCurrency = @"";
     }
     else{
         self.selectedCurrency = @"AUD";
@@ -382,6 +382,19 @@
         [self.GBPButton setSelected:NO];
         [self.USDButton setSelected:NO];
     }
+}
+- (IBAction)termsPressed:(id)sender {
+    NSString *URLString = @"http://www.sobump.com/terms.html";
+    TOWebViewController *webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+    webViewController.title = @"Terms & Conditions";
+    webViewController.showUrlWhileLoading = YES;
+    webViewController.showPageTitles = NO;
+    webViewController.doneButtonTitle = @"";
+    webViewController.paypalMode = NO;
+    //hide toolbar banner
+    webViewController.infoMode = NO;
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
+    [self presentViewController:navigationController animated:YES completion:nil];
 }
 
 @end

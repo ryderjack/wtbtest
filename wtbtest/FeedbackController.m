@@ -41,6 +41,8 @@
     self.user = [[PFUser alloc]init];
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    
+    self.profanityList = @[@"fuck", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -418,5 +420,13 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [MBProgressHUD hideHUDForView:self.view animated:YES];
     });
+}
+
+-(void)textFieldDidEndEditing:(UITextField *)textField{
+    if (textField == self.commentField) {
+        if ([self.profanityList containsObject:textField.text]) {
+            textField.text = @"";
+        }
+    }
 }
 @end

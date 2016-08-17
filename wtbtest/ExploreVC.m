@@ -13,6 +13,9 @@
 #import "WelcomeViewController.h"
 #import "NavigationController.h"
 #import "Flurry.h"
+#import <ParseFacebookUtilsV4/PFFacebookUtils.h>
+#import <FBSDKCoreKit/FBSDKCoreKit.h>
+
 
 @interface ExploreVC ()
 
@@ -30,7 +33,7 @@
     self.searchString = @"";
     self.searchEnabled = NO;
     
-    self.navigationItem.title = @"bump";
+    self.navigationItem.title = @"Bump";
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
@@ -83,12 +86,48 @@
     self.lastInfinSkipped = 0;
     
     self.filtersArray = [NSMutableArray array];
+    self.filtersTapped = NO;
     
     // set searchbar font
     NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:13],
                                       NSFontAttributeName, nil];
     [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:searchAttributes];
     
+    if ([FBSDKAccessToken currentAccessToken] == nil) {
+        //invalid access token
+        [PFUser logOut];
+        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+        [self presentViewController:navController animated:YES completion:nil];
+    }
+    else{
+        //get updated friends list
+        FBSDKGraphRequest *request = [[FBSDKGraphRequest alloc]
+                                      initWithGraphPath:@"me/friends"
+                                      parameters:@{@"fields": @"id, name"}
+                                      HTTPMethod:@"GET"];
+        [request startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection,
+                                              id result,
+                                              NSError *error) {
+            // Handle the result
+            if (!error) {
+                NSArray* friends = [result objectForKey:@"data"];
+                NSLog(@"Found: %lu friends with bump installed", (unsigned long)friends.count);
+                NSArray *currentList = [[PFUser currentUser] objectForKey:@"friends"];
+                for (NSDictionary *friend in friends) {
+                    if (![currentList containsObject:[friend objectForKey:@"id"]]) {
+                        //add to friend's list
+//                        NSLog(@"I have a friend named %@ with id %@", [friend objectForKey:@"name"], [friend objectForKey:@"id"]);
+                        [[PFUser currentUser]addObject:[friend objectForKey:@"id"] forKey:@"friends"];
+                        [[PFUser currentUser] saveInBackground];
+                    }
+                }
+            }
+            else{
+                NSLog(@"error on friends %@", error);
+            }
+        }];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -151,33 +190,42 @@
     if (self.searchEnabled == YES) {
         [self.searchController.searchBar setHidden:NO];
     }
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    if (self.listingTapped == NO) {
+        self.searchShowing = NO;
+    }
     
-    
+    self.filtersTapped = NO;
 }
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
-    if (self.searchEnabled == YES) {
+    if (self.searchEnabled == YES && self.filtersTapped == NO && self.listingTapped == NO) {
+        NSLog(@"about to call search pressed");
+        self.searchShowing = NO;
         [self searchPressed];
     }
+    else if (self.searchEnabled == YES && self.filtersTapped == NO && self.listingTapped == YES) {
+        //if not active then show (could have changed tabs from looking at the listing)
+        NSLog(@"checking if should show as been on a listing and could have switched tabs");
+        [self ShouldShowSearch];
+    }
+    
+    self.listingTapped = NO;
+    self.filtersTapped = NO;
     
     [Flurry logEvent:@"Explore_Tapped"];
     
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HasUpdate1.0.49"])
+    //upon first open show 'How it works' VC modally
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"showHowWorks"])
     {
-        // Has feedback update
-    }
-    else
-    {
-        [PFUser logOut];
-
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasUpdate1.0.49"];
-        
-        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
-        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
-        [self presentViewController:navController animated:YES completion:nil];
-        
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"showHowWorks"];
+        ExplainViewController *vc = [[ExplainViewController alloc]init];
+        [self presentViewController:vc animated:YES completion:nil];
     }
 }
 
@@ -277,7 +325,7 @@
     }
     self.infinFinished = NO;
     self.infiniteQuery.limit = 8;
-    [self.infiniteQuery whereKey:@"status" notEqualTo:@"purchased"];
+    [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
     [self setupInfinQuery];
     
     if (self.searchEnabled == YES) {
@@ -314,12 +362,12 @@
     self.pullFinished = NO;
     self.pullQuery.limit = 8;
     [self setupPullQuery];
-    
     if (self.searchEnabled == YES) {
+        NSLog(@"search string %@", self.searchString);
         [self.pullQuery whereKey:@"titleLower" containsString:self.searchString];
     }
     
-    [self.pullQuery whereKey:@"status" notEqualTo:@"purchased"];
+    [self.pullQuery whereKey:@"status" equalTo:@"live"];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
@@ -341,13 +389,6 @@
             else{
                 //save in normal results array
                 [self.results removeAllObjects];
-                
-//                NSSortDescriptor *sortDescriptor;
-//                sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"listingPrice"
-//                                                             ascending:NO];
-//                NSArray *sortDescriptors = [NSArray arrayWithObject:sortDescriptor];
-//                NSArray *sortedArray = [objects sortedArrayUsingDescriptors:sortDescriptors];
-                
                 [self.results addObjectsFromArray:objects];
             }
             
@@ -356,9 +397,18 @@
             self.pullFinished = YES;
         }
         else{
-            NSLog(@"error %@", error);
+            NSLog(@"error on pull %@", error);
             self.pullFinished = YES;
-            [self showError];
+            if (error.code == 209) {
+                //invalid access token
+                [PFUser logOut];
+                WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+                NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+                [self presentViewController:navController animated:YES completion:nil];
+            }
+            else{
+                [self showError];
+            }
         }
     }];
 }
@@ -447,6 +497,8 @@
 }
 
 -(void)filtersReturned:(NSMutableArray *)filters{
+    self.filtersTapped = YES;
+    
     self.filtersArray = filters;
     if (self.filtersArray.count > 0) {
         [self.filterButton setImage:[UIImage imageNamed:@"filterOn"] forState:UIControlStateNormal];
@@ -472,13 +524,13 @@
         }
         
         if ([self.filtersArray containsObject:@"BNWT"]){
-            [self.infiniteQuery whereKey:@"condition" containsString:@"BNWT"];
+            [self.infiniteQuery whereKey:@"condition" containedIn:@[@"BNWT", @"Any"]];
         }
         else if ([self.filtersArray containsObject:@"used"]){
-            [self.infiniteQuery whereKey:@"condition" equalTo:@"Used"];
+            [self.infiniteQuery whereKey:@"condition" containedIn:@[@"Used", @"Any"]];
         }
         else if ([self.filtersArray containsObject:@"BNWOT"]){
-            [self.infiniteQuery whereKey:@"condition" equalTo:@"BNWOT"];
+            [self.infiniteQuery whereKey:@"condition" containedIn:@[@"BNWOT", @"Any"]];
         }
         
         if ([self.filtersArray containsObject:@"clothing"]){
@@ -486,84 +538,84 @@
         }
         else if ([self.filtersArray containsObject:@"footwear"]){
             [self.infiniteQuery whereKey:@"category" equalTo:@"Footwear"];
-            
-            if ([self.filtersArray containsObject:@"male"]){
-                [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Mens"];
-            }
-            else if ([self.filtersArray containsObject:@"female"]){
-                [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Womens"];
-            }
+        }
+        
+        if ([self.filtersArray containsObject:@"male"]){
+            [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Mens"];
+        }
+        else if ([self.filtersArray containsObject:@"female"]){
+            [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Womens"];
         }
         
         //footwear sizes
         if ([self.filtersArray containsObject:@"3"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"3"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 3"];
         }
         else if ([self.filtersArray containsObject:@"3.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"3.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 3.5"];
         }
         else if ([self.filtersArray containsObject:@"4"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"4"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 4"];
         }
         else if ([self.filtersArray containsObject:@"4.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"4.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 4.5"];
         }
         else if ([self.filtersArray containsObject:@"5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 5"];
         }
         else if ([self.filtersArray containsObject:@"5.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"5.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 5.5"];
         }
         else if ([self.filtersArray containsObject:@"6"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"6"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 6"];
         }
         else if ([self.filtersArray containsObject:@"6.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"6.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 6.5"];
         }
         else if ([self.filtersArray containsObject:@"7"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"7"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 7"];
         }
         else if ([self.filtersArray containsObject:@"7.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"7.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 7.5"];
         }
         else if ([self.filtersArray containsObject:@"8"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"8"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 8"];
         }
         else if ([self.filtersArray containsObject:@"8.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"8.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 8.5"];
         }
         else if ([self.filtersArray containsObject:@"9"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"9"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 9"];
         }
         else if ([self.filtersArray containsObject:@"9.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"9.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 9.5"];
         }
         else if ([self.filtersArray containsObject:@"10"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"10"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 10"];
         }
         else if ([self.filtersArray containsObject:@"10.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"10.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 10.5"];
         }
         else if ([self.filtersArray containsObject:@"11"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"11"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 11"];
         }
         else if ([self.filtersArray containsObject:@"11.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"11.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 11.5"];
         }
         else if ([self.filtersArray containsObject:@"12"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"12"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 12"];
         }
         else if ([self.filtersArray containsObject:@"12.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"12.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 12.5"];
         }
         else if ([self.filtersArray containsObject:@"13"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"13"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 13"];
         }
         else if ([self.filtersArray containsObject:@"13.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"13.5"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 13.5"];
         }
         else if ([self.filtersArray containsObject:@"14"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"14"];
+            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 14"];
         }
         
         if ([self.filtersArray containsObject:@"XXS"]){
@@ -605,13 +657,13 @@
         }
         
         if ([self.filtersArray containsObject:@"BNWT"]){
-            [self.pullQuery whereKey:@"condition" containsString:@"BNWT"];
+            [self.pullQuery whereKey:@"condition" containedIn:@[@"BNWT", @"Any"]];
         }
         else if ([self.filtersArray containsObject:@"used"]){
-            [self.pullQuery whereKey:@"condition" equalTo:@"Used"];
+            [self.pullQuery whereKey:@"condition" containedIn:@[@"Used", @"Any"]];
         }
         else if ([self.filtersArray containsObject:@"BNWOT"]){
-            [self.pullQuery whereKey:@"condition" equalTo:@"BNWOT"];
+            [self.pullQuery whereKey:@"condition" containedIn:@[@"BNWOT", @"Any"]];
         }
         
         if ([self.filtersArray containsObject:@"clothing"]){
@@ -619,84 +671,84 @@
         }
         else if ([self.filtersArray containsObject:@"footwear"]){
             [self.pullQuery whereKey:@"category" equalTo:@"Footwear"];
-            
-            if ([self.filtersArray containsObject:@"male"]){
-                [self.pullQuery whereKey:@"sizeGender" equalTo:@"Mens"];
-            }
-            else if ([self.filtersArray containsObject:@"female"]){
-                [self.pullQuery whereKey:@"sizeGender" equalTo:@"Womens"];
-            }
+        }
+        
+        if ([self.filtersArray containsObject:@"male"]){
+            [self.pullQuery whereKey:@"sizeGender" equalTo:@"Mens"];
+        }
+        else if ([self.filtersArray containsObject:@"female"]){
+            [self.pullQuery whereKey:@"sizeGender" equalTo:@"Womens"];
         }
         
         //footwear sizes
         if ([self.filtersArray containsObject:@"3"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"3"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 3"];
         }
         else if ([self.filtersArray containsObject:@"3.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"3.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 3.5"];
         }
         else if ([self.filtersArray containsObject:@"4"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"4"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 4"];
         }
         else if ([self.filtersArray containsObject:@"4.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"4.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 4.5"];
         }
         else if ([self.filtersArray containsObject:@"5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 5"];
         }
         else if ([self.filtersArray containsObject:@"5.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"5.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 5.5"];
         }
         else if ([self.filtersArray containsObject:@"6"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"6"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 6"];
         }
         else if ([self.filtersArray containsObject:@"6.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"6.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 6.5"];
         }
         else if ([self.filtersArray containsObject:@"7"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"7"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 7"];
         }
         else if ([self.filtersArray containsObject:@"7.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"7.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 7.5"];
         }
         else if ([self.filtersArray containsObject:@"8"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"8"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 8"];
         }
         else if ([self.filtersArray containsObject:@"8.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"8.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 8.5"];
         }
         else if ([self.filtersArray containsObject:@"9"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"9"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 9"];
         }
         else if ([self.filtersArray containsObject:@"9.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"9.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 9.5"];
         }
         else if ([self.filtersArray containsObject:@"10"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"10"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 10"];
         }
         else if ([self.filtersArray containsObject:@"10.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"10.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 10.5"];
         }
         else if ([self.filtersArray containsObject:@"11"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"11"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 11"];
         }
         else if ([self.filtersArray containsObject:@"11.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"11.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 11.5"];
         }
         else if ([self.filtersArray containsObject:@"12"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"12"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 12"];
         }
         else if ([self.filtersArray containsObject:@"12.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"12.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 12.5"];
         }
         else if ([self.filtersArray containsObject:@"13"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"13"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 13"];
         }
         else if ([self.filtersArray containsObject:@"13.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"13.5"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 13.5"];
         }
         else if ([self.filtersArray containsObject:@"14"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"14"];
+            [self.pullQuery whereKey:@"size" equalTo:@"UK 14"];
         }
        
         //clothing sizes
@@ -746,6 +798,7 @@
     if (self.searchEnabled == YES) {
         [self.searchController.searchBar setHidden:YES];
     }
+    self.listingTapped = YES;
     [self.navigationController pushViewController:vc animated:YES];
 }
 
@@ -755,35 +808,59 @@
     self.resultsController.delegate = self;
     
     // Create the search controller and make it perform the results updating.
-    self.searchController = [[UISearchController alloc] initWithSearchResultsController:self.resultsController];
-    self.searchController.delegate = self;
-    
-    self.searchController.searchResultsUpdater = self.resultsController;
-    self.searchController.hidesNavigationBarDuringPresentation = NO;
-    self.searchController.dimsBackgroundDuringPresentation = NO;
-    self.searchController.searchBar.searchBarStyle = UISearchBarStyleDefault;
-    self.searchController.searchBar.delegate = self;
-    self.searchController.searchBar.placeholder = @"Search for stuff you're selling";
-    self.searchController.searchBar.barTintColor = [UIColor blackColor];
-    self.searchController.searchBar.tintColor = [UIColor whiteColor];
-    
-    //change cursor colour
-    for ( UIView *v in [self.searchController.searchBar.subviews.firstObject subviews] ){
-        if ( YES == [v isKindOfClass:[UITextField class]] ){
-            [((UITextField*)v) setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
-            break;
+    if (!self.searchController) {
+        NSLog(@"must create a new search controller");
+        
+        self.searchController = [[UISearchController alloc] initWithSearchResultsController:self.resultsController];
+        self.searchController.delegate = self;
+        
+        self.searchController.searchResultsUpdater = self.resultsController;
+        self.searchController.hidesNavigationBarDuringPresentation = NO;
+        self.searchController.dimsBackgroundDuringPresentation = NO;
+        self.searchController.searchBar.searchBarStyle = UISearchBarStyleDefault;
+        self.searchController.searchBar.delegate = self;
+        self.searchController.searchBar.placeholder = @"Search for stuff you're selling";
+        self.searchController.searchBar.barTintColor = [UIColor blackColor];
+        self.searchController.searchBar.tintColor = [UIColor whiteColor];
+        
+        //change cursor colour
+        for ( UIView *v in [self.searchController.searchBar.subviews.firstObject subviews] ){
+            if ( YES == [v isKindOfClass:[UITextField class]] ){
+                [((UITextField*)v) setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
+                break;
+            }
         }
+        
+        [self.searchController.searchBar setTranslucent:YES];
+        
+        // reset filters
+        [self.filtersArray removeAllObjects];
+        [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
+    }
+    else{
+        NSLog(@"already got a search controller");
     }
     
-    [self.searchController.searchBar setTranslucent:YES];
-    self.searchEnabled = YES;
+    NSLog(self.listingTapped ? @"yep listing tapped in pressed": @"nope listing tapped");
     
-    // reset filters
-    [self.filtersArray removeAllObjects];
-    [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
-        
-    // Present the view controller.
-    [self presentViewController:self.searchController animated:YES completion:nil];
+    if (self.searchController.isActive == NO) {
+        // Present the view controller.
+        [self presentViewController:self.searchController animated:YES completion:nil];
+        self.resultsShowing = YES;
+        self.searchShowing = YES;
+    }
+    
+    self.searchEnabled = YES;
+}
+
+-(void)ShouldShowSearch{
+    if (self.searchController.isActive == NO) {
+        [self presentViewController:self.searchController animated:YES completion:^{
+            [self.searchController.searchBar resignFirstResponder];
+            [self.searchController.searchResultsController.view setHidden:YES];
+        }];
+        self.searchShowing = YES;
+    }
 }
 
 -(void)updateSearchResultsForSearchController:(UISearchController *)searchController
@@ -845,12 +922,15 @@
         
         //query
         [self.searchController.searchResultsController.view setHidden:YES];
+        self.resultsShowing = NO;
         [self queryParsePull];
     }
 }
 
 -(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
     self.searchEnabled = NO;
+    self.searchShowing = NO;
+    self.resultsShowing = NO;
     
     if (self.results.count == 0) {
         [self.noresultsLabel setHidden:NO];
@@ -876,14 +956,14 @@
     self.pullQuery = nil;
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     
-    [self.collectionView reloadData];
+    [self queryParsePull];
 }
 
 -(void)favouriteTapped:(NSString *)favourite{
     if (self.searchEnabled == YES) {
         self.searchController.searchBar.text = favourite;
         [self.searchController.searchBar resignFirstResponder];
-        self.searchString = favourite;
+        self.searchString = [favourite lowercaseString];
         [self.pullQuery cancel];
         [self queryParsePull];
     }

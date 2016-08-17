@@ -47,7 +47,7 @@
     
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
     self.inputToolbar.contentView.textView.pasteDelegate = self;
-    self.inputToolbar.contentView.textView.placeHolder = @"Tap the tag icon to send an offer";
+    self.inputToolbar.contentView.textView.placeHolder = @"Tap the tag for more actions";
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagIcon"] forState:UIControlStateNormal];
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagIconG"] forState:UIControlStateHighlighted];
     
@@ -200,10 +200,6 @@
                                         }
                                         
                                         [self.collectionView reloadData];
-                                        
-                                        //                                    if (self.earlierPressed == NO) {
-                                        //                                        [self scrollToBottomAnimated:NO];
-                                        //                                    }
                                     }
                                 }];
                             }
@@ -276,7 +272,6 @@
             //error retrieving messages
             [self showError];
         }
-        
     }];
 }
 
@@ -318,7 +313,6 @@
 }
 
 - (void)handleNotification:(NSNotification*)note {
-    
     NSMutableArray *unseenConvos = [note object];
     PFObject *currentConvo = self.convoObject;
     for (PFObject *convo in unseenConvos) {
@@ -345,6 +339,13 @@
                 
                 //add new message(s) to UI
                 for (PFObject *messageOb in objects) {
+                    
+                    // if status message, set as seen & don't add to array so not in thread
+                    if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+                        [messageOb setObject:@"seen" forKey:@"status"];
+                        [messageOb saveInBackground];
+                        continue;
+                    }
                     
                     if (![self.messagesParseArray containsObject:messageOb]) {
                         // insets new messages at beginning of array (bottom of CV) so status labels are correct
@@ -459,12 +460,8 @@
                 
                 //call attributedString method to update labels
                 NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
-                
                 NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
-                NSLog(@"last item index %ld", (long)lastItemIndex);
-                
                 NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
-                NSLog(@"last path %@", pathToLastItem);
                 
                 self.checkoutTapped = NO;
                 
@@ -496,7 +493,6 @@
             //error getting new messages
             [self showError];
         }
-        
     }];
 }
 - (void)viewDidAppear:(BOOL)animated
@@ -528,7 +524,6 @@
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -538,7 +533,6 @@
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"PayPal" message:[NSString stringWithFormat:@"Make sure your PayPal email address is correct to ensure seemless payment. Is it %@?", [PFUser currentUser].email] preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        
     }]];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Change" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -860,7 +854,7 @@
 }
 
 -(void)reportUser{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report inappropriate behaviour" message:@"bump takes inappropriate behaviour very seriously.\nIf you feel like this user has behaved wrongly please let us know so we can make your experience on bump as brilliant as possible." preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report inappropriate behaviour" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this user has behaved wrongly please let us know so we can make your experience on Bump as brilliant as possible." preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -1614,29 +1608,29 @@
                 }
             }];
             
-            //create a status message & save as last sent
-            NSString *messageString = @"Item shipped";
-            
-            PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
-            messageObject[@"message"] = messageString;
-            messageObject[@"sender"] = [PFUser currentUser];
-            messageObject[@"senderId"] = [PFUser currentUser].objectId;
-            messageObject[@"senderName"] = [PFUser currentUser].username;
-            messageObject[@"convoId"] = self.convoId;
-            messageObject[@"status"] = @"sent";
-            messageObject[@"offer"] = @"NO";
-            messageObject[@"mediaMessage"] = @"NO";
-            messageObject[@"isStatusMsg"] = @"YES";
-            
-            [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                if (succeeded) {
-                    NSLog(@"saved status message!");
-                    
-                    [self.convoObject setObject:messageObject forKey:@"lastSent"];
-                    [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
-                    [self.convoObject saveInBackground];
-                }
-            }];
+//            //create a status message & save as last sent
+//            NSString *messageString = @"Item shipped";
+//            
+//            PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
+//            messageObject[@"message"] = messageString;
+//            messageObject[@"sender"] = [PFUser currentUser];
+//            messageObject[@"senderId"] = [PFUser currentUser].objectId;
+//            messageObject[@"senderName"] = [PFUser currentUser].username;
+//            messageObject[@"convoId"] = self.convoId;
+//            messageObject[@"status"] = @"sent";
+//            messageObject[@"offer"] = @"NO";
+//            messageObject[@"mediaMessage"] = @"NO";
+//            messageObject[@"isStatusMsg"] = @"YES";
+//            
+//            [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                if (succeeded) {
+//                    NSLog(@"saved status message!");
+//                    
+//                    [self.convoObject setObject:messageObject forKey:@"lastSent"];
+//                    [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
+//                    [self.convoObject saveInBackground];
+//                }
+//            }];
         }
         else{
             NSLog(@"error updating order %@", error);
@@ -1723,6 +1717,7 @@
                     }
                     else{
                         [self.successButton setTitle:@"Payment received & feedback left" forState:UIControlStateNormal];
+                        self.successButton.backgroundColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
                     }
                 }
                 else{

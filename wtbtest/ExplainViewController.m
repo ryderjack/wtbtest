@@ -30,28 +30,15 @@
     self.labelThree.adjustsFontSizeToFitWidth = YES;
     self.labelThree.minimumScaleFactor=0.5;
     
-    if ([self.setting isEqualToString:@"process"]) {
-        self.titleLabel.text = @"How does bump work?";
-        [self.segmentControl setHidden:NO];
-        [self.firstImageView setImage:[UIImage imageNamed:@"compose"]];
-        [self.secondImageView setImage:[UIImage imageNamed:@"chat"]];
-        [self.thirdImageView setImage:[UIImage imageNamed:@"cart"]];
-        
-        self.labelOne.text = @"Create a listing for an item you want";
-        self.labelTwo.text = @"Sellers see your listing and send you offers to buy their item ";
-        self.labelThree.text = @"Choose to accept/reject offers until you reach a deal, pay and its shipped!";
-    }
-    else if ([self.setting isEqualToString:@"tagged"]){
-        self.titleLabel.text = @"What are tagged photos?";
-        [self.segmentControl setHidden:YES];
-        [self.firstImageView setImage:[UIImage imageNamed:@"taggedPic"]];
-        [self.secondImageView setImage:[UIImage imageNamed:@"bigTag"]];
-        [self.thirdImageView setImage:[UIImage imageNamed:@"send"]];
-        
-        self.labelOne.text = @"To prove that you own the item you’re selling, bump requires tagged photos";
-        self.labelTwo.text = @"Simply write your username and the date on a piece of paper and place this next to your item when taking photos";
-        self.labelThree.text = @"Failure to do so could result in a selling ban, so get tagging!";
-    }
+    self.titleLabel.text = @"How does Bump work?";
+    [self.segmentControl setHidden:NO];
+    [self.firstImageView setImage:[UIImage imageNamed:@"compose"]];
+    [self.secondImageView setImage:[UIImage imageNamed:@"chat"]];
+    [self.thirdImageView setImage:[UIImage imageNamed:@"cart"]];
+    
+    self.labelOne.text = @"Create a listing for an item you want";
+    self.labelTwo.text = @"Sellers see your listing and send you offers to buy their item ";
+    self.labelThree.text = @"Choose to accept/reject offers until you reach a deal, pay and its shipped!";
 }
 
 - (void)didReceiveMemoryWarning {
@@ -122,7 +109,6 @@
     return 190;
 }
 - (IBAction)segmentPressed:(id)sender {
-    if ([self.setting isEqualToString:@"process"]) {
         if (self.segmentControl.selectedSegmentIndex == 1) {
             //sellers selected
             [self.firstImageView setImage:[UIImage imageNamed:@"grid"]];
@@ -137,7 +123,6 @@
             self.labelTwo.text = @"Sellers see your listing and send you offers to buy their item";
             self.labelThree.text = @"Accept your ideal offer, pay and its shipped!";
         }
-    }
 }
 - (IBAction)dismissPressed:(id)sender {
     [self dismissViewControllerAnimated:YES completion:nil];

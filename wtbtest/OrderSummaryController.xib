@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15G31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
@@ -218,6 +218,12 @@
                             </mask>
                         </variation>
                     </view>
+                    <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ZdU-JT-Ggx">
+                        <rect key="frame" x="11" y="37" width="298" height="87"/>
+                        <connections>
+                            <action selector="buyerPressed:" destination="-1" eventType="touchUpInside" id="aYb-xG-W7r"/>
+                        </connections>
+                    </button>
                 </subviews>
                 <color key="backgroundColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
                 <constraints>
@@ -469,9 +475,9 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="total" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gCZ-V9-2pw">
-                        <rect key="frame" x="190" y="12" width="97" height="21"/>
+                        <rect key="frame" x="159" y="12" width="128" height="21"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="97" id="GkG-yu-3v9"/>
+                            <constraint firstAttribute="width" constant="128" id="GkG-yu-3v9"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="AvenirNext-Medium" family="Avenir Next" pointSize="17"/>
                         <color key="textColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
@@ -480,7 +486,7 @@
                 </subviews>
                 <constraints>
                     <constraint firstItem="bW4-J1-Sho" firstAttribute="top" secondItem="XLy-Yb-ysb" secondAttribute="topMargin" constant="1" id="8Yh-k8-ZSi"/>
-                    <constraint firstItem="gCZ-V9-2pw" firstAttribute="leading" secondItem="bW4-J1-Sho" secondAttribute="trailing" constant="1" id="93p-Sa-1Am"/>
+                    <constraint firstItem="gCZ-V9-2pw" firstAttribute="leading" secondItem="bW4-J1-Sho" secondAttribute="trailing" constant="-30" id="93p-Sa-1Am"/>
                     <constraint firstItem="gCZ-V9-2pw" firstAttribute="centerY" secondItem="XLy-Yb-ysb" secondAttribute="centerY" id="IOK-Am-2og"/>
                     <constraint firstAttribute="trailingMargin" secondItem="gCZ-V9-2pw" secondAttribute="trailing" constant="25" id="a0h-Se-qdA"/>
                     <constraint firstItem="4tc-vf-VdQ" firstAttribute="centerY" secondItem="bW4-J1-Sho" secondAttribute="centerY" id="i4I-Pg-rXj"/>

@@ -7,11 +7,9 @@
 //
 
 #import "CreateViewController.h"
-#import <TWPhotoPickerController.h>
 #import "NavigationController.h"
 #import "Flurry.h"
 #import "WelcomeViewController.h"
-
 
 @interface CreateViewController ()
 
@@ -83,6 +81,8 @@
     [self addDoneButton];
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    
+    self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -96,7 +96,6 @@
     else{
         self.currency = [[PFUser currentUser]objectForKey:@"currency"];
         if ([self.currency isEqualToString:@"GBP"]) {
-            NSLog(@"currenct is here");
             self.currencySymbol = @"£";
             self.payField.placeholder = @"£100";
         }
@@ -425,10 +424,31 @@
         textView.textColor = [UIColor colorWithRed:74/255.0f green:74/255.0f blue:74/255.0f alpha:1.0f];
     }
 }
+
+-(void)textFieldDidEndEditing:(UITextField *)textField{
+    if (textField == self.titleField) {
+        NSArray *words = [textField.text componentsSeparatedByString:@" "];
+        for (NSString *string in words) {
+            if ([self.profanityList containsObject:string.lowercaseString]) {
+                textField.text = @"";
+            }
+        }
+    }
+}
 -(void)textViewDidEndEditing:(UITextView *)textView{
     if ([textView.text isEqualToString:@""]) {
         textView.text = @"eg. Must come with original box";
         textView.textColor = [UIColor lightGrayColor];
+    }
+    else{
+        //they've wrote something so do the check for profanity
+        NSArray *words = [textView.text componentsSeparatedByString:@" "];
+        for (NSString *string in words) {
+            if ([self.profanityList containsObject:string.lowercaseString]) {
+                textView.text = @"eg. Must come with original box";
+                textView.textColor = [UIColor lightGrayColor];
+            }
+        }
     }
 }
 
@@ -493,12 +513,6 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//        TWPhotoPickerController *photoPicker = [[TWPhotoPickerController alloc] init];
-//        photoPicker.cropBlock = ^(UIImage *image) {
-//            [self finalImage:image];
-//        };
-//        [self presentViewController:photoPicker animated:YES completion:nil];
-        
         UIImagePickerController *picker = [[UIImagePickerController alloc] init];
         picker.delegate = self;
         picker.allowsEditing = NO;
@@ -516,7 +530,8 @@
         }
         
         // instructions on saving images from google
-        if (![[NSUserDefaults standardUserDefaults] boolForKey:@"seenGoogle"] == YES) {
+        BOOL seen = [[NSUserDefaults standardUserDefaults] boolForKey:@"seenGoogle"];
+        if (!seen) {
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Search Google" message:@"Simply tap the image you'd like to use to get it fullscreen and when you're happy, hit Choose!" preferredStyle:UIAlertControllerStyleAlert];
             [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 [self showGoogle];
@@ -858,7 +873,14 @@
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
         [self.listing setObject:self.chooseSize.text forKey:@"size"];
         [self.listing setObject:@"live" forKey:@"status"];
-
+        
+        //expiration in 2 weeks
+        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+        dayComponent.minute = 1;
+        NSCalendar *theCalendar = [NSCalendar currentCalendar];
+        NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+        [self.listing setObject:expirationDate forKey:@"expiration"];
+        
         if (![self.genderSize isEqualToString:@""]) {
             [self.listing setObject:self.genderSize forKey:@"sizeGender"];
         }
@@ -868,8 +890,6 @@
             [self.listing setObject:self.chooseLocation.text forKey:@"location"];
             [self.listing setObject:self.geopoint forKey:@"geopoint"];
         }
-        
-        NSLog(@"currencies");
         
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
         [self.listing setObject:self.currency forKey:@"currency"];
@@ -895,14 +915,7 @@
             int USD = price*0.76;
             self.listing[@"listingPriceAUD"] = @(USD);
         }
-        
-        NSLog(@"just set post user");
-        
         [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
-        
-        
-        
-        NSLog(@"pre images");
         
         if (self.photostotal == 1) {
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
@@ -1045,6 +1058,9 @@
 }
 
 -(void)finalImage:(UIImage *)image{
+    //save image
+    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+    
     if (self.camButtonTapped == 1) {
         [self.firstImageView setHidden:NO];
         [self.firstImageView setImage:image];

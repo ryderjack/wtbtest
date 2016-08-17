@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15G31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
@@ -13,6 +13,8 @@
                 <outlet property="BNWTconditionButton" destination="86v-Yb-IBl" id="QuH-8b-b1r"/>
                 <outlet property="applyButton" destination="OB9-GK-tFP" id="cfT-yl-Kbh"/>
                 <outlet property="applyCell" destination="9JT-Jg-S3f" id="Bvm-uN-bt2"/>
+                <outlet property="brandCell" destination="h02-MB-3b5" id="C16-7m-3yE"/>
+                <outlet property="brandScrollView" destination="ZfH-OG-F1L" id="FdO-fg-zgO"/>
                 <outlet property="categoryCell" destination="hZa-Zs-XNS" id="yJI-O0-j3T"/>
                 <outlet property="clothingButton" destination="q7z-KB-89k" id="WZE-Sf-hqY"/>
                 <outlet property="conditionCell" destination="7Yh-cu-X3X" id="gaQ-fz-LEz"/>
@@ -316,7 +318,7 @@
                 </constraints>
             </tableViewCellContentView>
             <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-            <point key="canvasLocation" x="-65" y="847"/>
+            <point key="canvasLocation" x="-65" y="1063"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="100" id="9JT-Jg-S3f">
             <rect key="frame" x="0.0" y="0.0" width="320" height="100"/>
@@ -342,7 +344,40 @@
                 </constraints>
             </tableViewCellContentView>
             <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-            <point key="canvasLocation" x="-65" y="1078"/>
+            <point key="canvasLocation" x="-64" y="1287"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="159" id="h02-MB-3b5">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="159"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="h02-MB-3b5" id="g0A-NH-jxh">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="158.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Brand" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Kdg-y6-ewH">
+                        <rect key="frame" x="100" y="12" width="121" height="31"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="31" id="cRh-fa-6d7"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
+                        <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ZfH-OG-F1L">
+                        <rect key="frame" x="0.0" y="44" width="320" height="96"/>
+                    </scrollView>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="ZfH-OG-F1L" firstAttribute="leading" secondItem="g0A-NH-jxh" secondAttribute="leading" id="0Mu-Up-CKT"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="ZfH-OG-F1L" secondAttribute="bottom" constant="10.5" id="MiU-cv-kWt"/>
+                    <constraint firstAttribute="trailing" secondItem="ZfH-OG-F1L" secondAttribute="trailing" id="Y0d-he-sGW"/>
+                    <constraint firstItem="Kdg-y6-ewH" firstAttribute="top" secondItem="g0A-NH-jxh" secondAttribute="topMargin" constant="4" id="Zd1-pG-9aF"/>
+                    <constraint firstItem="Kdg-y6-ewH" firstAttribute="centerX" secondItem="ZfH-OG-F1L" secondAttribute="centerX" id="bUt-jG-KFV"/>
+                    <constraint firstItem="ZfH-OG-F1L" firstAttribute="top" secondItem="Kdg-y6-ewH" secondAttribute="bottom" constant="1" id="nua-cG-Nja"/>
+                    <constraint firstItem="Kdg-y6-ewH" firstAttribute="leading" secondItem="g0A-NH-jxh" secondAttribute="leadingMargin" constant="92" id="u6K-M0-qow"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+            <point key="canvasLocation" x="-65" y="802.5"/>
         </tableViewCell>
     </objects>
     <resources>

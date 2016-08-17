@@ -7,7 +7,6 @@
 //
 
 #import "OffersController.h"
-#import "MakeOfferViewController.h"
 #import "OrderSummaryController.h"
 #import "ListingController.h"
 

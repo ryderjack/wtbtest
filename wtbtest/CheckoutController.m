@@ -30,12 +30,16 @@
     self.voucherCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.priceField.delegate = self;
+    self.voucherField.delegate = self;
     
     [self.confirmedOfferObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
-            self.priceField.text = [NSString stringWithFormat:@"%@%.2f",[self.confirmedOfferObject objectForKey:@"symbol"] ,[[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
+            self.currency = [self.confirmedOfferObject objectForKey:@"currency"];
+            self.currencySymbol = [self.confirmedOfferObject objectForKey:@"symbol"];
+            
+            self.priceField.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,[[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
             self.price = [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue];
-            self.totalLabel.text = [NSString stringWithFormat:@"%@ %@%.2f",[self.confirmedOfferObject objectForKey:@"currency"] ,[self.confirmedOfferObject objectForKey:@"symbol"],self.price];
+            self.totalLabel.text = [NSString stringWithFormat:@"%@ %@%.2f",self.currency ,self.currencySymbol,self.price];
         }
         else{
             [self showError];
@@ -233,6 +237,14 @@
     UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
     
     [footerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    
+    if (section == 2) {
+        UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(20, 0, tableView.bounds.size.width, 20)];
+        label.text = @"Avoid gifting payments to maximise protection";
+        label.textColor = [UIColor lightGrayColor];
+        [label setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:11]];
+        [footerView addSubview:label];
+    }
     return footerView;
 }
 
@@ -323,7 +335,7 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
-    if (section ==3 || section == 4 || section == 2) {
+    if (section ==3 || section == 4) {
         return 0.0;
     }
     return 32.0f;
@@ -355,6 +367,7 @@
 }
 -(void)textFieldDidEndEditing:(UITextField *)textField{
     //query if voucher code is legit and display a tick if so + another savings cell?
+    self.totalLabel.text = [NSString stringWithFormat:@"%@ %@",self.currency ,self.priceField.text];
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{

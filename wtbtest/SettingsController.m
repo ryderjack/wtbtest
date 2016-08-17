@@ -174,8 +174,6 @@
 
 - (IBAction)GBPPressed:(id)sender {
     if (self.GBPButton.selected == YES) {
-        [self.GBPButton setSelected:NO];
-        self.selectedCurrency = @"";
     }
     else{
         self.selectedCurrency = @"GBP";
@@ -186,8 +184,6 @@
 }
 - (IBAction)USDPressed:(id)sender {
     if (self.USDButton.selected == YES) {
-        [self.USDButton setSelected:NO];
-        self.selectedCurrency = @"";
     }
     else{
         self.selectedCurrency = @"USD";
@@ -198,8 +194,6 @@
 }
 - (IBAction)AUDPressed:(id)sender {
     if (self.AUDButton.selected == YES) {
-        [self.AUDButton setSelected:NO];
-        self.selectedCurrency = @"";
     }
     else{
         self.selectedCurrency = @"AUD";

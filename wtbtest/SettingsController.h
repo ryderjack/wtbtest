@@ -11,7 +11,7 @@
 #import "ShippingController.h"
 
 @interface SettingsController : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate>
-
+NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *addressCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *emailCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
@@ -31,5 +31,5 @@
 @property (weak, nonatomic) IBOutlet UIButton *USDButton;
 @property (weak, nonatomic) IBOutlet UIButton *AUDButton;
 @property (nonnull, strong) NSString *selectedCurrency;
-
+NS_ASSUME_NONNULL_END
 @end

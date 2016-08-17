@@ -13,6 +13,7 @@
             <connections>
                 <outlet property="adminCell" destination="vBi-EB-vSC" id="UV3-rV-C8n"/>
                 <outlet property="buttonCell" destination="15I-2T-vWl" id="QNA-uk-2Yc"/>
+                <outlet property="buyerButton" destination="ldJ-N6-20G" id="g3K-fH-lOl"/>
                 <outlet property="buyerImgView" destination="wfg-yD-IRF" id="Mja-Co-PFX"/>
                 <outlet property="buyerinfoCell" destination="vll-s6-WMk" id="yv2-BA-kzN"/>
                 <outlet property="buyernameLabel" destination="c20-QR-DwN" id="GJ8-NB-fD4"/>
@@ -483,7 +484,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="158"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="vll-s6-WMk" id="0Ic-Fz-yjL">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="157.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="158"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="About the buyer" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="F8I-Py-L1I">
@@ -540,15 +541,25 @@
                             <constraint firstAttribute="width" constant="128" id="We2-f2-Q6P"/>
                         </constraints>
                     </imageView>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ldJ-N6-20G">
+                        <rect key="frame" x="11" y="37" width="298" height="87"/>
+                        <connections>
+                            <action selector="buyerPressed:" destination="-1" eventType="touchUpInside" id="SZv-ZZ-Kvc"/>
+                        </connections>
+                    </button>
                 </subviews>
                 <color key="backgroundColor" red="0.96470588235294119" green="0.96862745098039216" blue="0.9882352941176471" alpha="1" colorSpace="calibratedRGB"/>
                 <constraints>
+                    <constraint firstItem="ldJ-N6-20G" firstAttribute="leading" secondItem="lCL-d1-y7M" secondAttribute="leading" id="3dm-hq-b8l"/>
                     <constraint firstItem="lCL-d1-y7M" firstAttribute="leading" secondItem="0Ic-Fz-yjL" secondAttribute="leadingMargin" constant="3" id="5oe-H4-VpT"/>
                     <constraint firstItem="lCL-d1-y7M" firstAttribute="centerY" secondItem="0Ic-Fz-yjL" secondAttribute="centerY" id="8Xi-Y5-tVY"/>
+                    <constraint firstItem="ldJ-N6-20G" firstAttribute="bottom" secondItem="lCL-d1-y7M" secondAttribute="bottom" id="AhJ-Nr-MFO"/>
                     <constraint firstAttribute="bottomMargin" secondItem="lCL-d1-y7M" secondAttribute="bottom" constant="25.5" id="Bdk-km-e0f"/>
                     <constraint firstItem="F8I-Py-L1I" firstAttribute="top" secondItem="0Ic-Fz-yjL" secondAttribute="topMargin" id="Dom-aX-l4l"/>
+                    <constraint firstItem="ldJ-N6-20G" firstAttribute="trailing" secondItem="lCL-d1-y7M" secondAttribute="trailing" id="G6o-nc-j65"/>
                     <constraint firstAttribute="trailingMargin" secondItem="nDm-QT-8vg" secondAttribute="trailing" constant="11" id="PaV-by-gPQ"/>
                     <constraint firstItem="nDm-QT-8vg" firstAttribute="centerY" secondItem="lCL-d1-y7M" secondAttribute="centerY" id="RiA-El-7wm"/>
+                    <constraint firstItem="ldJ-N6-20G" firstAttribute="top" secondItem="F8I-Py-L1I" secondAttribute="bottom" constant="8" symbolic="YES" id="Xac-DZ-gVF"/>
                     <constraint firstItem="lCL-d1-y7M" firstAttribute="centerX" secondItem="0Ic-Fz-yjL" secondAttribute="centerX" id="fw1-Ui-bHQ"/>
                     <constraint firstItem="F8I-Py-L1I" firstAttribute="leading" secondItem="0Ic-Fz-yjL" secondAttribute="leadingMargin" constant="6" id="mPW-Lu-hDx"/>
                     <constraint firstItem="lCL-d1-y7M" firstAttribute="top" secondItem="F8I-Py-L1I" secondAttribute="bottom" constant="5" id="wjF-67-kRb"/>

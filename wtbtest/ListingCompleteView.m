@@ -130,7 +130,7 @@
 
 - (IBAction)sharePressed:(id)sender {
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"I just listed a WTB on bump! Know anyone that can sell it to me?"];
+    [items addObject:@"I just listed a WTB on Bump! Know anyone that can sell it to me? Download now: http://apple.co/2aY3rBk"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
 }

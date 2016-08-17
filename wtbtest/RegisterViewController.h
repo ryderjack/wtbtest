@@ -15,6 +15,7 @@
 #import <MBProgressHUD.h>
 
 @interface RegisterViewController : UITableViewController <UITextFieldDelegate>
+NS_ASSUME_NONNULL_BEGIN
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
@@ -52,5 +53,8 @@
 @property (weak, nonatomic) IBOutlet UIButton *AUDButton;
 @property (nonnull, strong) NSString *selectedCurrency;
 
+//profanity
+@property (nonatomic, strong) NSArray *profanityList;
+NS_ASSUME_NONNULL_END
 
 @end

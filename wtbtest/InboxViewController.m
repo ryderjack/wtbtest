@@ -176,6 +176,8 @@
     PFUser *seller = [convoObject objectForKey:@"sellerUser"];
     PFUser *buyer = [convoObject objectForKey:@"buyerUser"];
     
+    BOOL isBuyer = NO;
+    
     if ([seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
         //current user is seller
         self.cell.usernameLabel.text = [NSString stringWithFormat:@"%@", buyer.username];
@@ -184,6 +186,7 @@
     }
     else{
         //current user is buyer
+        isBuyer = YES;
         self.cell.usernameLabel.text = [NSString stringWithFormat:@"%@", seller.username];
         [self.cell.userPicView setFile:[seller objectForKey:@"picture"]];
         [self.cell.userPicView loadInBackground];
@@ -256,7 +259,12 @@
         //you sent and other guy has seen so show picture
         [self.cell.seenImageView setHidden:NO];
         [self setImageBorder:self.cell.seenImageView];
-        [self.cell.seenImageView setFile:[seller objectForKey:@"picture"]];
+        if (isBuyer == YES) {
+            [self.cell.seenImageView setFile:[seller objectForKey:@"picture"]];
+        }
+        else{
+            [self.cell.seenImageView setFile:[buyer objectForKey:@"picture"]];
+        }
         [self.cell.seenImageView loadInBackground];
     }
     else{

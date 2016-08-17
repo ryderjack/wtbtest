@@ -68,6 +68,8 @@
 #pragma mark - UITableViewDataSource
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    //filter always NO atm
+    
     if (self.filterEnabled == YES) {
         return self.visibleResults.count;
     }
