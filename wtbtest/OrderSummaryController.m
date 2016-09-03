@@ -51,7 +51,7 @@
     self.dateLabel.minimumScaleFactor=0.5;
     
     self.userName.text = @"";
-    self.dealsLabel.text = @"";
+    self.dealsLabel.text = @"Loading";
     
     //fetch offer to setup title cell/totals/images
     self.confirmedOffer = [self.orderObject objectForKey:@"offerObject"];
@@ -414,7 +414,7 @@
     [self.navigationController pushViewController:vc animated:YES];
 }
 - (IBAction)reportPressed:(id)sender {
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel although this transaction has violated our terms let us know so we can make your experience on Bump as brilliant as possible. We'll be in touch within the hour to find out how we can help" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this transaction has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         

@@ -79,6 +79,11 @@
 @property (nonatomic, strong) PFObject *listing;
 
 @property (nonatomic, strong) NSString *genderSize;
+@property (nonatomic, strong) NSString *firstSize;
+@property (nonatomic, strong) NSString *secondSize;
+@property (nonatomic, strong) NSString *thirdSize;
+
+
 @property (nonatomic) BOOL editFromListing;
 @property (weak, nonatomic) IBOutlet UIButton *saveButton;
 @property (nonatomic, strong) UIBarButtonItem *resetButton;

@@ -35,14 +35,29 @@
     self.selectedSizes = [NSMutableArray array];
     
     if (self.holdingArray.count >0) {
-        [self.selectedSizes addObjectsFromArray:self.holdingArray];
+        for (NSString *size in self.holdingArray) {
+            if ([size containsString:@"UK "]) {
+                NSString *newString = [size stringByReplacingOccurrencesOfString:@"UK " withString:@""];
+                [self.selectedSizes addObject:newString];
+            }
+            else{
+                [self.selectedSizes addObject:size];
+            }
+        }
     }
     
     NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
     
     self.conditionArray = [NSArray arrayWithObjects:@"BNWT",@"BNWOT", @"Used", @"Any",nil];
     self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear", nil];
+    
+    
     self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3 | US 3.5", @"UK 3.5 | US 4",@"UK 4 | US 4.5", @"UK 4.5 | US 5", @"UK 5 | US 5.5", @"UK 5.5 | US 6", @"UK 6 | US 6.5",@"UK 6.5 | US 7",@"UK 7 | US 7.5", @"UK 7.5 | US 8", @"UK 8 | US 8.5",@"UK 8.5 | US 9",@"UK 9 | US 9.5", @"UK 9.5 | US 10", @"UK 10 | US 10.5",@"UK 10.5 | US 11",@"UK 11 | US 11.5", @"UK 11.5 | US 12", @"UK 12 | US 12.5",@"UK 12.5 | US 13",@"UK 13 | US 13.5", @"UK 13.5 | US 14", @"UK 14 | US 14.5", @"Any", nil];
+    
+    self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", @"Any", nil];
+    
+    self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9", @"Any", nil];
+    
     self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1 | US 3", @"UK 1.5 | US 3.5",@"UK 2 | US 4", @"UK 2.5 | US 4.5", @"UK 3 | US 5", @"UK 3.5 | US 5.5", @"UK 4 | US 6",@"UK 4.5 | US 6.5",@"UK 5 | US 7", @"UK 5.5 | US 7.5", @"UK 6 | US 8",@"UK 6.5 | US 8.5",@"UK 7 | US 9", @"UK 7.5 | US 9.5", @"UK 8 | US 10",@"UK 9 | US 11", @"Any", nil];
     self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"OS", @"Any", nil];
     self.deliveryArray = [NSArray arrayWithObjects:@"Meetup",@"Courier", @"Any", nil];
@@ -179,18 +194,30 @@
             [self.cell.segmentControl setHidden:YES];
 
             if ([self.holdingGender isEqualToString:self.genderSelected]) {
+                
                 //highlight previously chosen sizes
+                
                 for (NSString *size in self.selectedSizes) {
-                    if ([self.cell.textLabel.text containsString:[NSString stringWithFormat:@"%@ |", size]]) {
-                        self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
-                        break;
-                    }
-                    else if ([self.cell.textLabel.text containsString:[NSString stringWithFormat:@"UK %@ |", size]]) {
-                        self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
-                        break;
+                    
+                    if ([self.genderSelected isEqualToString:@"Mens"]) {
+                        //mens
+                        if ([[self.mensSizeUKArray objectAtIndex:indexPath.row-1] isEqualToString:size]) {
+                            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+                            break;
+                        }
+                        else{
+                            self.cell.accessoryType = UITableViewCellAccessoryNone;
+                        }
                     }
                     else{
-                        self.cell.accessoryType = UITableViewCellAccessoryNone;
+                        //womens
+                        if ([[self.femaleSizeUKArray objectAtIndex:indexPath.row-1] isEqualToString:size]) {
+                            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+                            break;
+                        }
+                        else{
+                            self.cell.accessoryType = UITableViewCellAccessoryNone;
+                        }
                     }
                 }
             }
@@ -241,10 +268,14 @@
         
         if ([self.setting isEqualToString:@"sizefoot"]) {
             if ([self.genderSelected isEqualToString:@"Mens"]) {
-                [self.selectedSizes removeObject:[self.mensSizeArray objectAtIndex:indexPath.row-1]];
+                NSLog(@"removing mens size %@ and array %@", [self.mensSizeUKArray objectAtIndex:indexPath.row-1], self.selectedSizes);
+                [self.selectedSizes removeObject:[self.mensSizeUKArray objectAtIndex:indexPath.row-1]];
+                
+                NSLog(@"new array %@", self.selectedSizes);
             }
             else{
-                [self.selectedSizes removeObject:[self.femaleSizeArray objectAtIndex:indexPath.row-1]];
+                NSLog(@"removing female size %@",[self.femaleSizeUKArray objectAtIndex:indexPath.row-1] );
+                [self.selectedSizes removeObject:[self.femaleSizeUKArray objectAtIndex:indexPath.row-1]];
             }
         }
         else if ([self.setting isEqualToString:@"sizeclothing"]) {
@@ -256,7 +287,6 @@
     if (selected.segmentControl.isHidden == NO) {
         // that means its the segment control cell, do nothing!
     }
-    
     else{
         if(self.lastSelectedPath) {
             
@@ -313,10 +343,10 @@
                     else{
                         //add adjusted index path (due to segment control at 0 ^
                         if ([self.genderSelected isEqualToString:@"Mens"]) {
-                            [self.selectedSizes addObject:[self.mensSizeArray objectAtIndex:indexPath.row-1]];
+                            [self.selectedSizes addObject:[self.mensSizeUKArray objectAtIndex:indexPath.row-1]];
                         }
                         else{
-                            [self.selectedSizes addObject:[self.femaleSizeArray objectAtIndex:indexPath.row-1]];
+                            [self.selectedSizes addObject:[self.femaleSizeUKArray objectAtIndex:indexPath.row-1]];
                         }
                     }
                 }

@@ -478,7 +478,8 @@
                 if (updatedBadge == 0) {
                     [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
                 }
-                else{
+                //only set updated badge if its a +ve no.
+                else if (updatedBadge > 0){
                     [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", updatedBadge]];
                 }
                 
@@ -590,8 +591,9 @@
                 NSLog(@"entered string for price: %@", offerPriceString);
                 
                 NSArray *priceArray = [offerPriceString componentsSeparatedByString:@"."];
-                
+                NSLog(@"price array %@", priceArray);
                 if ([priceArray[0] isEqualToString:self.currencySymbol]) {
+                    
                     priceString = [NSString stringWithFormat:@"%@0.00", self.currencySymbol];
                 }
                 else if (priceArray.count > 1){
@@ -602,12 +604,13 @@
                         intAmount = [NSString stringWithFormat:@"%@00", self.currencySymbol];
                     }
                     else{
-                        NSLog(@"got a number + the £");
+                        //all good
+                        NSLog(@"length of int %lu", (unsigned long)intAmount.length);
                     }
                     
                     NSMutableString *centAmount = priceArray[1];
                     if (centAmount.length == 2){
-                        NSLog(@"all good");
+                        //all good
                     }
                     else if (centAmount.length == 1){
                         NSLog(@"got 1 decimal place");
@@ -621,13 +624,29 @@
                     priceString = [NSString stringWithFormat:@"%@.%@", intAmount, centAmount];
                 }
                 else{
+                    if (offerPriceString.length > 5){
+                        [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Your offer does not contain a valid Price value"];
+                        return;
+                    }
+                    
                     priceString = [NSString stringWithFormat:@"%@.00", offerPriceString];
                     NSLog(@"no decimal point so price is %@", priceString);
                 }
                 
+                NSCharacterSet* notDigits = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+                NSString *newbie = [priceString stringByReplacingOccurrencesOfString:@"£" withString:@""];
+                NSString *newbie1 = [newbie stringByReplacingOccurrencesOfString:@"." withString:@""];
+                
+                if (!([newbie1 rangeOfCharacterFromSet:notDigits].location == NSNotFound))
+                {
+                    //price supplied must contain non number characters
+                    [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Your offer does not contain a valid Price value"];
+                    return;
+                }
+                
                 if ([priceString isEqualToString:[NSString stringWithFormat:@"%@0.00", self.currencySymbol]] || [priceString isEqualToString:@""] || [priceString isEqualToString:[NSString stringWithFormat:@"%@.00", self.currencySymbol]] || [priceString isEqualToString:@"  "]) {
-                    NSLog(@"invalid price entered! %@", priceString);
-                    [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Not sure even I'd sell for that much.."];
+                    //invalid price number
+                    [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Your offer does not contain a valid Price value"];
                     return;
                 }
             }
@@ -854,7 +873,7 @@
 }
 
 -(void)reportUser{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report inappropriate behaviour" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this user has behaved wrongly please let us know so we can make your experience on Bump as brilliant as possible." preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this user has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];

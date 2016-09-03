@@ -66,7 +66,9 @@
     
     self.warningLabel.text = @"";
     self.genderSize = @"";
-    
+    self.firstSize = @"";
+    self.secondSize = @"";
+    self.thirdSize = @"";
     self.resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain target:self action:@selector(resetForm)];
     
     if (self.editFromListing == YES) {
@@ -461,7 +463,6 @@
     return YES;
 }
 
-
 -(void)removeKeyboard{
     [self.titleField resignFirstResponder];
     [self.extraField resignFirstResponder];
@@ -791,16 +792,38 @@
         if (array) {
             self.sizesArray = [NSArray arrayWithArray:array];
             
-            NSLog(@"sizes array from select VC %@, count %lu", self.sizesArray, (unsigned long)array.count);
-            
             if (self.sizesArray.count == 1) {
-                self.chooseSize.text = [NSString stringWithFormat:@"UK %@",self.sizesArray[0]];
+                if ([self.sizesArray[0] isKindOfClass:[NSString class]]) {
+                    if ([self.sizesArray[0] isEqualToString:@"Any"]) {
+                        self.chooseSize.text = @"Any";
+                    }
+                    else if ([self.sizesArray[0] isEqualToString:@"OS"]) {
+                        self.chooseSize.text = @"OS";
+                    }
+                    else{
+                        self.chooseSize.text = [NSString stringWithFormat:@"UK %@",self.sizesArray[0]];
+                    }
+                }
+                else{
+                    self.chooseSize.text = [NSString stringWithFormat:@"UK %@",self.sizesArray[0]];
+                }
+                self.firstSize = [NSString stringWithFormat:@"%@",self.sizesArray[0]];
+                self.secondSize = @"";
+                self.thirdSize = @"";
             }
             else if (self.sizesArray.count == 2){
                 self.chooseSize.text = [NSString stringWithFormat:@"UK %@/%@",self.sizesArray[0],self.sizesArray[1]];
+                
+                self.firstSize = [NSString stringWithFormat:@"%@",self.sizesArray[0]];
+                self.secondSize = [NSString stringWithFormat:@"%@",self.sizesArray[1]];
+                self.thirdSize = @"";
             }
             else if (self.sizesArray.count == 3){
                 self.chooseSize.text = [NSString stringWithFormat:@"UK %@/%@/%@",self.sizesArray[0],self.sizesArray[1],self.sizesArray[2]];
+                
+                self.firstSize = [NSString stringWithFormat:@"%@",self.sizesArray[0]];
+                self.secondSize = [NSString stringWithFormat:@"%@",self.sizesArray[1]];
+                self.thirdSize = [NSString stringWithFormat:@"%@",self.sizesArray[2]];
             }
         }
         else{
@@ -871,7 +894,45 @@
         [self.listing setObject:[itemTitle lowercaseString]forKey:@"titleLower"];
         [self.listing setObject:self.chooseCondition.text forKey:@"condition"];
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
-        [self.listing setObject:self.chooseSize.text forKey:@"size"];
+        
+        if (![self.firstSize isEqualToString:@""]) {
+            [self.listing setObject:self.firstSize forKey:@"firstSize"];
+            NSString *newKey = [self.firstSize stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", newKey]];
+        }
+
+        
+        if (![self.secondSize isEqualToString:@""]) {
+            [self.listing setObject:self.secondSize forKey:@"secondSize"];
+            NSString *newKey = [self.secondSize stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", newKey]];
+        }
+
+        
+        if (![self.thirdSize isEqualToString:@""]) {
+            [self.listing setObject:self.thirdSize forKey:@"thirdSize"];
+            NSString *newKey = [self.thirdSize stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", newKey]];
+        }
+
+        if ([self.chooseSize.text isEqualToString:@"Any"]) {
+            //set YES to all sizes for search purposes
+            
+            NSArray *allSizes = [NSArray array];
+            
+            if ([self.chooseCategroy.text isEqualToString:@"Clothing"]) {
+                //clothing sizes
+                allSizes = @[@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"OS"];
+            }
+            else{
+                //footwear sizes
+                allSizes = @[@"size1", @"size1dot5", @"size2", @"size2dot5", @"size3", @"size3dot5",@"size4", @"size4dot5", @"size5", @"size5dot5", @"size6",@"size6dot5",@"size7", @"size7dot5", @"size8",@"size8dot5",@"size9", @"size9dot5", @"size10",@"size10dot5",@"size11", @"size11dot5", @"size12",@"size12dot5",@"size13", @"size13dot5", @"size14"];
+            }
+            for (NSString *stringKey in allSizes) {
+                [self.listing setObject:@"YES" forKey:stringKey];
+            }
+        }
+        [self.listing setObject:self.chooseSize.text forKey:@"sizeLabel"];
         [self.listing setObject:@"live" forKey:@"status"];
         
         //expiration in 2 weeks
@@ -982,7 +1043,6 @@
         else{
             [self.listing setObject:extraInfo forKey:@"extra"];
         }
-        NSLog(@"about to save");
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
                 [self hidHUD];
@@ -1025,6 +1085,9 @@
     self.titleField.text = @"";
     self.extraField.text = @"eg. Must come with original box";
     self.warningLabel.text = @"";
+    self.firstSize = @"";
+    self.secondSize = @"";
+    self.thirdSize = @"";
     
     self.firstImageView.contentMode = UIViewContentModeScaleAspectFit;
     self.secondImageView.contentMode = UIViewContentModeScaleAspectFit;
@@ -1135,12 +1198,61 @@
        self.genderSize = [self.listing objectForKey:@"sizeGender"];
     }
     
-    self.chooseSize.text = [self.listing objectForKey:@"size"];
+    //sizing
+    self.chooseSize.text = [self.listing objectForKey:@"sizeLabel"];
+    if ([self.listing objectForKey:@"firstSize"]) {
+        self.firstSize = [NSString stringWithFormat:@"%@",[self.listing objectForKey:@"firstSize"]];
+        NSLog(@"setting 1st %@",[self.listing objectForKey:@"firstSize"]);
+        
+        //get string
+        NSString *first = [self.listing objectForKey:@"firstSize"];
+        
+        //change string to get key
+        NSString *keyS = [first stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+        NSString *finalKey = [NSString stringWithFormat:@"size%@", keyS];
+        
+        //set key to NO or delete key?
+        [self.listing removeObjectForKey:finalKey];
+        
+        //don't save because if they hit save the new keys will be set
+    }
     
+    if ([self.listing objectForKey:@"secondSize"]) {
+        self.secondSize = [NSString stringWithFormat:@"%@",[self.listing objectForKey:@"secondSize"]];
+        NSLog(@"setting 2nd %@",[self.listing objectForKey:@"secondSize"]);
+        
+        //get string
+        NSString *first = [self.listing objectForKey:@"secondSize"];
+        
+        //change string to get key
+        NSString *keyS = [first stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+        NSString *finalKey = [NSString stringWithFormat:@"size%@", keyS];
+        
+        //set key to NO or delete key?
+        [self.listing removeObjectForKey:finalKey];
+    }
+    
+    if ([self.listing objectForKey:@"thirdSize"]) {
+        self.thirdSize = [NSString stringWithFormat:@"%@",[self.listing objectForKey:@"thirdSize"]];
+        NSLog(@"setting 3rd %@",[self.listing objectForKey:@"thirdSize"]);
+        
+        //get string
+        NSString *first = [self.listing objectForKey:@"thirdSize"];
+        
+        //change string to get key
+        NSString *keyS = [first stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+        NSString *finalKey = [NSString stringWithFormat:@"size%@", keyS];
+        
+        //set key to NO or delete key?
+        [self.listing removeObjectForKey:finalKey];
+    }
+    
+    //extra info
     if ([self.listing objectForKey:@"extra"]) {
         self.extraField.text = [self.listing objectForKey:@"extra"];
     }
     
+    //images
     if ([self.listing objectForKey:@"image1"]) {
         [self.firstImageView setFile:[self.listing objectForKey:@"image1"]];
         [self.firstImageView loadInBackground];

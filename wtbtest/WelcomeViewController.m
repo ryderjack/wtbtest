@@ -68,18 +68,20 @@
             
             [self hidHUD];
             
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg"] == YES) {//////////////////update before release (remove the 1)
-                //take to app
-                NSLog(@"dismiss popup");
-                [self dismissViewControllerAnimated:YES completion:nil];
-            }
-            else{
+            //always take to reg for now to avoid missing data entry
+            
+//            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg"] == YES) {//////////////////update before release (remove the 1)
+//                //take to app
+//                NSLog(@"dismiss popup");
+//                [self dismissViewControllerAnimated:YES completion:nil];
+//            }
+//            else{
                 //haven't completed it take them there
                 NSLog(@"to reg screen");
                 RegisterViewController *vc = [[RegisterViewController alloc]init];
                 vc.user = user;
                 [self.navigationController pushViewController:vc animated:YES];
-            }
+//            }
         }
     }];
 }

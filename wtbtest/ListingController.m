@@ -65,7 +65,7 @@
     self.titleLabel.minimumScaleFactor=0.5;
     
     self.buyernameLabel.text = @"";
-    self.pastDealsLabel.text = @"";
+    self.pastDealsLabel.text = @"Loading";
     
     if ([self.listingObject objectForKey:@"image4"]){
         [self.picIndicator setNumberOfPages:4];
@@ -125,10 +125,10 @@
     self.deliveryLabel.text = [self.listingObject objectForKey:@"delivery"];
     
     if (![self.listingObject objectForKey:@"sizeGender"]) {
-        self.sizeLabel.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"size"]];
+        self.sizeLabel.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"sizeLabel"]];
     }
     else{
-        self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"size"]];
+        self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
     }
     
     if (![self.listingObject objectForKey:@"extra"]) {
@@ -483,7 +483,8 @@
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSMutableArray *items = [NSMutableArray new];
-        [items addObject:[NSString stringWithFormat:@"Check out this WTB: %@ for %@", [self.listingObject objectForKey:@"title"], [self.listingObject objectForKey:@"listingPrice"]]];
+        NSLog(@"currency %@", self.currency);
+        [items addObject:[NSString stringWithFormat:@"Check out this WTB: %@ for %@%@\nPosted on Bump http://apple.co/2aY3rBk", [self.listingObject objectForKey:@"title"],self.currency,[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]]];
         UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
         [self presentViewController:activityController animated:YES completion:nil];
     }]];
@@ -669,7 +670,7 @@
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report listing" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         
-        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel although this post has violated our terms let us know so we can make your experience on Bump as brilliant as possible." preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this post has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
         
         [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
             

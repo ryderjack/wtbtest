@@ -9,6 +9,7 @@
 #import "FBGroupShareViewController.h"
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import "groupWVController.h"
+#import "Flurry.h"
 
 @interface FBGroupShareViewController ()
 
@@ -69,7 +70,7 @@
         if (object) {
             NSString *title = [object objectForKey:@"title"];
             NSString *condition = [object objectForKey:@"condition"];
-            NSString *size = [object objectForKey:@"size"];
+            NSString *size = [object objectForKey:@"sizeLabel"];
             
             self.textView.text = [NSString stringWithFormat:@"WTB:\n%@\nCondition: %@\nSize: %@ UK\nPosted via Bump http://apple.co/2aY3rBk", title, condition, size];
         }
@@ -105,6 +106,9 @@
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    [Flurry logEvent:@"Group_Tapped"];
+
     
     NSString *groupId = [[NSString alloc]init];
 //    

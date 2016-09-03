@@ -34,9 +34,6 @@
     self.searchEnabled = NO;
     
     self.navigationItem.title = @"Bump";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"searchBarIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(searchPressed)];
     self.navigationItem.leftBarButtonItem = searchButton;
@@ -161,6 +158,10 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-HeavyItalic" size:17],
+                                    NSFontAttributeName, [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0], NSForegroundColorAttributeName,  nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
     if (![PFUser currentUser]) {
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
         NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
@@ -203,6 +204,8 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    
+    [self.collectionView.infiniteScrollingView stopAnimating];
     
     if (self.searchEnabled == YES && self.filtersTapped == NO && self.listingTapped == NO) {
         NSLog(@"about to call search pressed");
@@ -285,10 +288,10 @@
         [cell.conditionView setImage:[UIImage imageNamed:@"UsedImg"]];
     }
     
-    if ([[listing objectForKey:@"size"] isEqualToString:@"One size"]) {
-        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"size"]];
+    if ([[listing objectForKey:@"sizeLabel"] isEqualToString:@"One size"]) {
+        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"sizeLabel"]];
     }else{
-        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"size"]];
+        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"sizeLabel"]];
     }
     
     PFGeoPoint *location = [listing objectForKey:@"geopoint"];
@@ -549,98 +552,99 @@
         
         //footwear sizes
         if ([self.filtersArray containsObject:@"3"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 3"];
+            [self.infiniteQuery whereKey:@"size3" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"3.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 3.5"];
+            [self.infiniteQuery whereKey:@"size3dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"4"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 4"];
+            [self.infiniteQuery whereKey:@"size4" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"4.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 4.5"];
+            [self.infiniteQuery whereKey:@"size4dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 5"];
+            [self.infiniteQuery whereKey:@"size5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"5.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 5.5"];
+            [self.infiniteQuery whereKey:@"size5dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"6"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 6"];
+            [self.infiniteQuery whereKey:@"size6" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"6.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 6.5"];
+            [self.infiniteQuery whereKey:@"size6dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"7"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 7"];
+            [self.infiniteQuery whereKey:@"size7" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"7.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 7.5"];
+            [self.infiniteQuery whereKey:@"size7dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"8"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 8"];
+            [self.infiniteQuery whereKey:@"size8" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"8.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 8.5"];
+            [self.infiniteQuery whereKey:@"size8dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"9"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 9"];
+            [self.infiniteQuery whereKey:@"size9" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"9.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 9.5"];
+            [self.infiniteQuery whereKey:@"size9dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"10"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 10"];
+            [self.infiniteQuery whereKey:@"size10" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"10.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 10.5"];
+            [self.infiniteQuery whereKey:@"size10dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"11"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 11"];
+            [self.infiniteQuery whereKey:@"size11" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"11.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 11.5"];
+            [self.infiniteQuery whereKey:@"size11dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"12"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 12"];
+            [self.infiniteQuery whereKey:@"size12" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"12.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 12.5"];
+            [self.infiniteQuery whereKey:@"size12dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"13"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 13"];
+            [self.infiniteQuery whereKey:@"size13" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"13.5"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 13.5"];
+            [self.infiniteQuery whereKey:@"size13dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"14"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"UK 14"];
+            [self.infiniteQuery whereKey:@"size14" equalTo:@"YES"];
         }
         
+        //clothing sizes
         if ([self.filtersArray containsObject:@"XXS"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"XXS"];
+            [self.infiniteQuery whereKey:@"XXS" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"XS"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"XS"];
+            [self.infiniteQuery whereKey:@"XS" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"S"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"S"];
+            [self.infiniteQuery whereKey:@"S" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"M"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"M"];
+            [self.infiniteQuery whereKey:@"M" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"L"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"L"];
+            [self.infiniteQuery whereKey:@"L" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"XL"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"XL"];
+            [self.infiniteQuery whereKey:@"XL" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"XXL"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"XXL"];
+            [self.infiniteQuery whereKey:@"XXL" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"OS"]){
-            [self.infiniteQuery whereKey:@"size" equalTo:@"OS"];
+            [self.infiniteQuery whereKey:@"OS" equalTo:@"YES"];
         }
     }
     else{
@@ -682,99 +686,99 @@
         
         //footwear sizes
         if ([self.filtersArray containsObject:@"3"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 3"];
+            [self.pullQuery whereKey:@"size3" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"3.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 3.5"];
+            [self.pullQuery whereKey:@"size3dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"4"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 4"];
+            [self.pullQuery whereKey:@"size4" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"4.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 4.5"];
+            [self.pullQuery whereKey:@"size4dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 5"];
+            [self.pullQuery whereKey:@"size5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"5.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 5.5"];
+            [self.pullQuery whereKey:@"size5dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"6"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 6"];
+            [self.pullQuery whereKey:@"size6" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"6.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 6.5"];
+            [self.pullQuery whereKey:@"size6dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"7"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 7"];
+            [self.pullQuery whereKey:@"size7" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"7.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 7.5"];
+            [self.pullQuery whereKey:@"size7dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"8"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 8"];
+            [self.pullQuery whereKey:@"size8" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"8.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 8.5"];
+            [self.pullQuery whereKey:@"size8dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"9"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 9"];
+            [self.pullQuery whereKey:@"size9" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"9.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 9.5"];
+            [self.pullQuery whereKey:@"size9dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"10"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 10"];
+            [self.pullQuery whereKey:@"size10" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"10.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 10.5"];
+            [self.pullQuery whereKey:@"size10dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"11"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 11"];
+            [self.pullQuery whereKey:@"size11" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"11.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 11.5"];
+            [self.pullQuery whereKey:@"size11dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"12"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 12"];
+            [self.pullQuery whereKey:@"size12" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"12.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 12.5"];
+            [self.pullQuery whereKey:@"size12dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"13"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 13"];
+            [self.pullQuery whereKey:@"size13" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"13.5"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 13.5"];
+            [self.pullQuery whereKey:@"size13dot5" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"14"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"UK 14"];
+            [self.pullQuery whereKey:@"size14" equalTo:@"YES"];
         }
        
         //clothing sizes
         if ([self.filtersArray containsObject:@"XXS"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"XXS"];
+            [self.pullQuery whereKey:@"sizeXXS" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"XS"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"XS"];
+            [self.pullQuery whereKey:@"sizeXS" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"S"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"S"];
+            [self.pullQuery whereKey:@"sizeS" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"M"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"M"];
+            [self.pullQuery whereKey:@"sizeM" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"L"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"L"];
+            [self.pullQuery whereKey:@"sizeL" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"XL"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"XL"];
+            [self.pullQuery whereKey:@"sizeXL" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"XXL"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"XXL"];
+            [self.pullQuery whereKey:@"sizeXXL" equalTo:@"YES"];
         }
         else if ([self.filtersArray containsObject:@"OS"]){
-            [self.pullQuery whereKey:@"size" equalTo:@"OS"];
+            [self.pullQuery whereKey:@"sizeOS" equalTo:@"YES"];
         }
     }
     else{

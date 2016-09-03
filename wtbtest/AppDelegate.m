@@ -117,6 +117,10 @@
         [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
     }
     else{
+        //if app badge not zero, reset to zero
+        self.installation.badge = 0;
+        [self.installation saveEventually];
+        
         [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%ld", (long)self.installation.badge]];
     }
     

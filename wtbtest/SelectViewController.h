@@ -29,6 +29,9 @@
 @property (nonatomic, strong) NSArray *mensSizeArray;
 @property (nonatomic, strong) NSArray *femaleSizeArray;
 
+@property (nonatomic, strong) NSArray *mensSizeUKArray;
+@property (nonatomic, strong) NSArray *femaleSizeUKArray;
+
 @property (nonatomic, strong) NSArray *conditionArray;
 @property (nonatomic, strong) NSArray *deliveryArray;
 @property (nonatomic, strong) NSArray *categoryArray;

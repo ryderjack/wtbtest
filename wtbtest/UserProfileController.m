@@ -20,7 +20,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.dealsLabel.text = @"";
+    self.dealsLabel.text = @"Loading";
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
@@ -423,7 +423,8 @@
         }]];
         [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
             PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
-            [selected deleteInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            [selected setObject:@"deleted" forKey:@"status"];
+            [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
                     [self.collectionView reloadData];
                 }
