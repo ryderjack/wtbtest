@@ -49,6 +49,8 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     [self requestFacebook:self.user];
+    
+    NSLog(@"my username %@", [PFUser currentUser].username);
 }
 
 - (void)requestFacebook:(PFUser *)user{
@@ -253,7 +255,6 @@
     [self.regButton setEnabled:NO];
     
     //check values entered
-    
     NSString *name = [self.nameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSString *email = [self.emailField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSString *username = [self.usernameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -292,8 +293,14 @@
                              if (error == nil)
                              {
                                  NSLog(@"saved new user! %@", [PFUser currentUser]);
-                                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"completedReg"]; /////////////////////////UNCOMMENT FOR RELEASE
+                                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"completedReg"];
                                  [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"showHowWorks"];
+                                 
+                                 //update installation object w/ current user
+                                 PFInstallation *installation = [PFInstallation currentInstallation];
+                                 [installation setObject:[PFUser currentUser] forKey:@"user"];
+                                 [installation setObject:[PFUser currentUser].objectId forKey:@"userId"];
+                                 [installation saveInBackground];
                                  
                                  //progress to tutorial
                                  ContainerViewController *vc = [[ContainerViewController alloc]init];

@@ -526,6 +526,9 @@
 		04F82CBF1C9EAA9400C4E250 /* trackingshipped@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04F82CBC1C9EAA9400C4E250 /* trackingshipped@3x.png */; };
 		04F82CC01C9EAA9400C4E250 /* trackingshipped.png in Resources */ = {isa = PBXBuildFile; fileRef = 04F82CBD1C9EAA9400C4E250 /* trackingshipped.png */; };
 		04F82CC11C9EAA9400C4E250 /* trackingshipped@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04F82CBE1C9EAA9400C4E250 /* trackingshipped@2x.png */; };
+		04FA62A41D8559AC00D3118A /* listingIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04FA62A11D8559AC00D3118A /* listingIcon@3x.png */; };
+		04FA62A51D8559AC00D3118A /* listingIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 04FA62A21D8559AC00D3118A /* listingIcon.png */; };
+		04FA62A61D8559AC00D3118A /* listingIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04FA62A31D8559AC00D3118A /* listingIcon@2x.png */; };
 		FF01755CEEDACAD3F566E096 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 41446D500506B0AA7C4F6887 /* libPods.a */; };
 /* End PBXBuildFile section */
 
@@ -1109,6 +1112,9 @@
 		04F82CBC1C9EAA9400C4E250 /* trackingshipped@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "trackingshipped@3x.png"; sourceTree = "<group>"; };
 		04F82CBD1C9EAA9400C4E250 /* trackingshipped.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = trackingshipped.png; sourceTree = "<group>"; };
 		04F82CBE1C9EAA9400C4E250 /* trackingshipped@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "trackingshipped@2x.png"; sourceTree = "<group>"; };
+		04FA62A11D8559AC00D3118A /* listingIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "listingIcon@3x.png"; sourceTree = "<group>"; };
+		04FA62A21D8559AC00D3118A /* listingIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = listingIcon.png; sourceTree = "<group>"; };
+		04FA62A31D8559AC00D3118A /* listingIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "listingIcon@2x.png"; sourceTree = "<group>"; };
 		2A1CA57F790FE4384B22E1A7 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		41446D500506B0AA7C4F6887 /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DBFE0CA73A57E5A95AFAD6A /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
@@ -1167,6 +1173,9 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				04FA62A11D8559AC00D3118A /* listingIcon@3x.png */,
+				04FA62A21D8559AC00D3118A /* listingIcon.png */,
+				04FA62A31D8559AC00D3118A /* listingIcon@2x.png */,
 				0484568F1D64B633001544A5 /* SellingImg1.png */,
 				048456901D64B633001544A5 /* SellingImg1@2x.png */,
 				048456911D64B633001544A5 /* SellingImg1@3x.png */,
@@ -2051,6 +2060,7 @@
 				0472B6511C7DB21600529B2E /* chooseLibButton@2x.png in Resources */,
 				049D51951D59E54300E83C08 /* FBIcon@3x.png in Resources */,
 				04B462531CB02C4F003755B2 /* planeOn@2x.png in Resources */,
+				04FA62A51D8559AC00D3118A /* listingIcon.png in Resources */,
 				04C080381C8469DE00B8682C /* location@2x.png in Resources */,
 				04CD30FA1D1ED57F00E2850D /* chatButton@1x.png in Resources */,
 				04C0803B1C8469DE00B8682C /* plane.png in Resources */,
@@ -2367,6 +2377,7 @@
 				04D9B9D41C8B8219004AF0F2 /* cartIcon@3x.png in Resources */,
 				04A91D911C87583200035F55 /* hightolowgrey@3x.png in Resources */,
 				04CD30E31D159FE200E2850D /* tagIconG@3x.png in Resources */,
+				04FA62A61D8559AC00D3118A /* listingIcon@2x.png in Resources */,
 				04CD30F91D1ED57F00E2850D /* chatButton@3x.png in Resources */,
 				048B6F601C90887400F0894A /* checkIcon@3x.png in Resources */,
 				0475A6FD1C7F67400049AD61 /* camHolder.png in Resources */,
@@ -2493,6 +2504,7 @@
 				049EF45B1C776E58000A599F /* Podfile in Resources */,
 				0447CFFA1CA02B5500BE5638 /* markShipped@2x.png in Resources */,
 				040CDC421D48B49500F738D0 /* trackingfeedback@3x.png in Resources */,
+				04FA62A41D8559AC00D3118A /* listingIcon@3x.png in Resources */,
 				042B8FC11D5C9E48000D30CE /* supreme@2x.png in Resources */,
 				04F82CAE1C9D8A7F00C4E250 /* feedbackbutton@2x.png in Resources */,
 				040CDC431D48B49500F738D0 /* trackingfeedback@2x.png in Resources */,

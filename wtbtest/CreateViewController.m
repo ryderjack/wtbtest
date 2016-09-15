@@ -312,6 +312,23 @@
                     self.selection = @"size";
                     [self.navigationController pushViewController:vc animated:YES];
                 }
+                else if ([self.chooseCategroy.text isEqualToString:@"Clothing"]){
+                    SelectViewController *vc = [[SelectViewController alloc]init];
+                    vc.delegate = self;
+                    vc.setting = @"sizeclothing";
+                    
+                    // setup previously selected
+                    if (![self.chooseSize.text isEqualToString:@"Choose"]) {
+                        NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+                    }
+                    
+                    self.selection = @"size";
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
+//                else if ([self.chooseCategroy.text isEqualToString:@"Accessories"]){
+//                    // can't select accessory sizing for now
+//                }
                 else{
                     SelectViewController *vc = [[SelectViewController alloc]init];
                     vc.delegate = self;
@@ -509,7 +526,7 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         CameraController *vc = [[CameraController alloc]init];
         vc.delegate = self;
-        vc.offerMode = NO;
+        vc.offerMode = YES;
         [self presentViewController:vc animated:YES completion:nil];
     }]];
     
@@ -579,7 +596,7 @@
 -(void)displayCropperWithImage:(UIImage *)image{
     BASSquareCropperViewController *squareCropperViewController = [[BASSquareCropperViewController alloc] initWithImage:image minimumCroppedImageSideLength:375.0f];
     squareCropperViewController.squareCropperDelegate = self;
-    squareCropperViewController.backgroundColor = [UIColor blackColor];
+    squareCropperViewController.backgroundColor = [UIColor whiteColor];
     squareCropperViewController.borderColor = [UIColor whiteColor];
     squareCropperViewController.doneFont = [UIFont fontWithName:@"AvenirNext-Regular" size:18.0f];
     squareCropperViewController.cancelFont = [UIFont fontWithName:@"AvenirNext-Regular" size:16.0f];
@@ -782,7 +799,12 @@
     }
     else if ([self.selection isEqualToString:@"category"]){
         self.chooseCategroy.text = selectionString;
-        self.chooseSize.text = @"Choose";
+//        if ([selectionString isEqualToString:@"Accessories"]) {
+//            self.chooseSize.text = @"One size";
+//        }
+//        else{
+          self.chooseSize.text = @"Choose";
+//        }
     }
     else if ([self.selection isEqualToString:@"size"]){
         if (genderString) {
@@ -1070,10 +1092,12 @@
 }
 
 -(void)listingEdit:(ListingCompleteView *)controller didFinishEnteringItem:(NSString *)item{
+    NSLog(@"updating status to %@", item);
     self.status = item;
 }
 
 -(void)resetForm{
+    NSLog(@"reset form with status %@", self.status);
     [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
     self.status = @"";
     self.chooseCategroy.text = @"Choose";

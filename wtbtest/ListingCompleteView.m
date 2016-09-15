@@ -40,6 +40,7 @@
     self.cellButtonFour.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.shareMode = NO;
+    self.anotherPressed = NO;
 }
 
 -(void)viewDidDisappear:(BOOL)animated{
@@ -49,7 +50,9 @@
     }
     
     else if (self.orderMode == NO) {
-        [self.delegate listingEdit:self didFinishEnteringItem:@"new"];
+        if (self.anotherPressed == NO) {
+            [self.delegate listingEdit:self didFinishEnteringItem:@"new"];
+        }
         [self.navigationController popViewControllerAnimated:NO];
     }
 }
@@ -146,6 +149,7 @@
         self.tabBarController.selectedIndex = 1;
     }
     else{
+        self.anotherPressed = YES;
         [self.delegate listingEdit:self didFinishEnteringItem:@"new"];
         [self.navigationController popViewControllerAnimated:YES];
     }

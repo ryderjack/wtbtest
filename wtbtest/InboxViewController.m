@@ -36,11 +36,16 @@
     [self.dateFormat setLocale:[NSLocale currentLocale]];
     
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    //load when app comes into foreground
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(loadMessages)
+                                                 name:UIApplicationWillEnterForegroundNotification
+                                               object:[UIApplication sharedApplication]];
     
     self.selectedConvo = @"";
     [Flurry logEvent:@"Inbox_Tapped"];
@@ -156,6 +161,11 @@
     // Dispose of any resources that can be recreated.
 }
 
+-(void)viewWillDisappear:(BOOL)animated{
+    //load when app comes into foreground
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillEnterForegroundNotification object:nil];
+}
+
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -245,6 +255,7 @@
         self.cell.messageLabel.textColor = [UIColor blackColor];
         [self boldFontForLabel:self.cell.timeLabel];
         self.cell.timeLabel.textColor = [UIColor blackColor];
+        [self unboldFontForLabel:self.cell.wtbTitleLabel];
     }
     else{
         //message has been seen
@@ -253,6 +264,7 @@
         [self unboldFontForLabel:self.cell.timeLabel];
          self.cell.messageLabel.textColor = [UIColor lightGrayColor];
          self.cell.timeLabel.textColor = [UIColor darkGrayColor];
+        [self.cell.wtbTitleLabel setFont:[UIFont fontWithName:@"AvenirNext-UltraLight" size:14]];
     }
     
     if ([[msgObject objectForKey:@"status"] isEqualToString:@"seen"] && [[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
@@ -289,6 +301,7 @@
     [self unboldFontForLabel:cell.timeLabel];
     self.cell.messageLabel.textColor = [UIColor lightGrayColor];
     self.cell.timeLabel.textColor = [UIColor darkGrayColor];
+    [self.cell.wtbTitleLabel setFont:[UIFont fontWithName:@"AvenirNext-UltraLight" size:14]];
     
     if ([self.unseenMessages containsObject:convoObject]) {
         [self.unseenMessages removeObject:convoObject];

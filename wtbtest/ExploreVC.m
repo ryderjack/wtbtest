@@ -121,7 +121,17 @@
                 }
             }
             else{
-                NSLog(@"error on friends %@", error);
+                NSLog(@"error on friends %li", (long)error.code);
+                if (error.code == 8) {
+                    //invalid access token
+                    [PFUser logOut];
+                    WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+                    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+                    [self presentViewController:navController animated:YES completion:nil];
+                }
+                else{
+                    [self showError];
+                }
             }
         }];
     }
@@ -185,7 +195,9 @@
     }
     
     if (self.pullFinished == YES) {
-        [self queryParsePull];
+        if (self.listingTapped == NO) {
+            [self queryParsePull];
+        }
     }
     
     if (self.searchEnabled == YES) {
@@ -327,14 +339,14 @@
         return;
     }
     self.infinFinished = NO;
-    self.infiniteQuery.limit = 8;
+    self.infiniteQuery.limit = 12;
     [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
     [self setupInfinQuery];
     
     if (self.searchEnabled == YES) {
         [self.infiniteQuery whereKey:@"titleLower" containsString:self.searchString];
     }
-    
+    [self.infiniteQuery cancel];
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
@@ -362,15 +374,16 @@
     }];
 }
 -(void)queryParsePull{
+    NSLog(@"query here");
     self.pullFinished = NO;
-    self.pullQuery.limit = 8;
+    self.pullQuery.limit = 12;
     [self setupPullQuery];
     if (self.searchEnabled == YES) {
-        NSLog(@"search string %@", self.searchString);
         [self.pullQuery whereKey:@"titleLower" containsString:self.searchString];
     }
     
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
+    [self.pullQuery cancel];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
@@ -822,6 +835,7 @@
         self.searchController.hidesNavigationBarDuringPresentation = NO;
         self.searchController.dimsBackgroundDuringPresentation = NO;
         self.searchController.searchBar.searchBarStyle = UISearchBarStyleDefault;
+        self.searchController.searchBar.autocapitalizationType = UITextAutocapitalizationTypeWords;
         self.searchController.searchBar.delegate = self;
         self.searchController.searchBar.placeholder = @"Search for stuff you're selling";
         self.searchController.searchBar.barTintColor = [UIColor blackColor];
@@ -944,10 +958,6 @@
         [self.noresultsLabel setHidden:YES];
         [self.noResultsImageView setHidden:YES];
     }
-    
-    // cancel existing search queries
-    [self.pullQuery cancel];
-    [self.infiniteQuery cancel];
     
     // reset filters
     [self.filtersArray removeAllObjects];

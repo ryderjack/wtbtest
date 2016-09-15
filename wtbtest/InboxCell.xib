@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15G1004" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
@@ -14,7 +14,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="119"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="119"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="118.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="z1v-Yi-InH" customClass="PFImageView">
@@ -40,13 +40,13 @@
                             <constraint firstAttribute="height" constant="21" id="2YY-id-KcN"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
-                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="wtb title" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="woK-SC-lqe">
                         <rect key="frame" x="125" y="81" width="103" height="30"/>
-                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="14"/>
-                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                        <fontDescription key="fontDescription" name="AvenirNext-UltraLight" family="Avenir Next" pointSize="14"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="price" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ukJ-f6-0ID">
@@ -65,7 +65,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="message text label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="r5J-L9-oQO">
-                        <rect key="frame" x="87" y="45" width="213" height="21"/>
+                        <rect key="frame" x="87" y="45" width="191" height="21"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <nil key="highlightedColor"/>
@@ -83,7 +83,7 @@
                 <constraints>
                     <constraint firstItem="v5j-1H-bzC" firstAttribute="top" secondItem="woK-SC-lqe" secondAttribute="top" id="5G8-VN-h1d"/>
                     <constraint firstItem="v5j-1H-bzC" firstAttribute="top" secondItem="r5J-L9-oQO" secondAttribute="bottom" constant="15" id="5pN-Kh-rjm"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="r5J-L9-oQO" secondAttribute="trailing" constant="12" id="ACB-nD-gHJ"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="r5J-L9-oQO" secondAttribute="trailing" constant="34" id="ACB-nD-gHJ"/>
                     <constraint firstAttribute="bottomMargin" secondItem="woK-SC-lqe" secondAttribute="bottom" constant="-0.5" id="AgP-1F-pd2"/>
                     <constraint firstItem="Sk5-aV-EbF" firstAttribute="leading" secondItem="z1v-Yi-InH" secondAttribute="trailing" constant="17" id="BLj-4W-aUi"/>
                     <constraint firstItem="ukJ-f6-0ID" firstAttribute="top" secondItem="r5J-L9-oQO" secondAttribute="bottom" constant="19" id="BWt-zc-mmG"/>
@@ -95,7 +95,7 @@
                     <constraint firstItem="Sk5-aV-EbF" firstAttribute="baseline" secondItem="Fqy-0L-x9S" secondAttribute="baseline" id="QuN-Dc-KRO"/>
                     <constraint firstItem="ukJ-f6-0ID" firstAttribute="leading" secondItem="v5j-1H-bzC" secondAttribute="trailing" constant="119" id="V9q-ga-CLn"/>
                     <constraint firstItem="z1v-Yi-InH" firstAttribute="bottom" secondItem="r5J-L9-oQO" secondAttribute="bottom" id="baB-X3-jDB"/>
-                    <constraint firstItem="dcn-Ds-cjm" firstAttribute="trailing" secondItem="r5J-L9-oQO" secondAttribute="trailing" id="csK-6F-tl7"/>
+                    <constraint firstItem="dcn-Ds-cjm" firstAttribute="trailing" secondItem="r5J-L9-oQO" secondAttribute="trailing" constant="22" id="csK-6F-tl7"/>
                     <constraint firstItem="Fqy-0L-x9S" firstAttribute="leading" secondItem="Sk5-aV-EbF" secondAttribute="trailing" constant="86" id="fcn-4d-oW7"/>
                     <constraint firstItem="r5J-L9-oQO" firstAttribute="top" secondItem="Sk5-aV-EbF" secondAttribute="bottom" constant="8" symbolic="YES" id="gDW-Yh-kOO"/>
                     <constraint firstItem="v5j-1H-bzC" firstAttribute="centerY" secondItem="ukJ-f6-0ID" secondAttribute="centerY" id="gLy-Dh-zk6"/>

@@ -34,4 +34,6 @@
 
 @property (strong, nonatomic) NSString *orderTitle;
 
+@property (nonatomic) BOOL anotherPressed;
+
 @end

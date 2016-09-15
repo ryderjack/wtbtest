@@ -10,8 +10,9 @@
 #import "JSQMessages.h"
 #import <Parse/Parse.h>
 #import "CameraController.h"
+#import <BASSquareCropperViewController.h>
 
-@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate>
+@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -36,6 +37,7 @@
 @property (nonatomic, strong) NSMutableArray *sentMessagesParseArray;
 
 @property (nonatomic) BOOL offerMode;
+@property (nonatomic) BOOL fromForeGround;
 
 @property (nonatomic, strong) PFObject *listing;
 @property (nonatomic, strong) PFObject *offerObject;
@@ -44,6 +46,8 @@
 
 @property (nonatomic, strong) UIBarButtonItem *cancelButton;
 @property (nonatomic, strong) UIBarButtonItem *profileButton;
+@property (nonatomic, strong) UIBarButtonItem *listingButton;
+
 @property (nonatomic, strong) PFObject *messageObject;
 @property (nonatomic, strong) PFObject *lastMessage;
 
@@ -64,5 +68,7 @@
 @property (nonatomic, strong) NSString *currencySymbol;
 
 @property (nonatomic) BOOL checkPayPalTapped;
+
+@property (nonatomic) BOOL receivedNew;
 
 @end

@@ -136,6 +136,14 @@
     
     [iRate sharedInstance].previewMode = NO;
     [iRate sharedInstance].message = @"Enjoying Bump? Please leave us a review or send us some feedback!";
+    
+    NSDictionary *notification = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+    if (notification) {
+        NSLog(@"app recieved notification from remote%@",notification);
+        [self application:application didReceiveRemoteNotification:notification];
+    }else{
+        NSLog(@"app did not recieve notification");
+    }
 
     return YES;
 }
@@ -201,6 +209,8 @@
                         }
                     }
                     
+                    NSLog(@"unseen messages %lu and unseentotal %d and selected convo %@", (unsigned long)self.unseenMessages.count, totalUnseen, self.inboxView.selectedConvo);
+                    
                     if (self.unseenMessages.count > 0) {
                         [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
                     }
@@ -236,6 +246,11 @@
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     [self checkMesages];
+    if ( application.applicationState == UIApplicationStateInactive || application.applicationState == UIApplicationStateBackground  )
+    {
+        //opened from a push notification when the app in background
+        self.tabBarController.selectedIndex = 2;
+    }
 }
 
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {

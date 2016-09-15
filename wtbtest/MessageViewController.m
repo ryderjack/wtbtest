@@ -14,6 +14,7 @@
 #import <TOWebViewController.h>
 #import "FeedbackController.h"
 #import "OrderSummaryController.h"
+#import "ListingController.h"
 
 @interface MessageViewController ()
 
@@ -42,8 +43,10 @@
     }
     
     self.cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(clearOffer)];
-    self.profileButton = [[UIBarButtonItem alloc] initWithTitle:@"Profile" style:UIBarButtonItemStylePlain target:self action:@selector(profileTapped)];
-    self.navigationItem.rightBarButtonItem = self.profileButton;
+    self.profileButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"profileIcon2"] style:UIBarButtonItemStylePlain target:self action:@selector(profileTapped)];
+    self.listingButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"listingIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(listingTapped)];
+    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
+
     
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
     self.inputToolbar.contentView.textView.pasteDelegate = self;
@@ -82,7 +85,7 @@
     self.showLoadEarlierMessagesHeader = NO;
     
     self.skipped = 0;
-    
+    self.fromForeGround = NO;
     self.offerMode = NO;
     self.earlierPressed = NO;
     
@@ -105,6 +108,15 @@
     self.offerBubbleImageData = [self.bubbleFactory outgoingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
     
      self.masker = [[JSQMessagesMediaViewBubbleImageMasker alloc]initWithBubbleImageFactory:self.bubbleFactory];
+    
+    //load when app comes into foreground
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(fromForeGroundRefresh)
+                                                 name:UIApplicationWillEnterForegroundNotification
+                                               object:[UIApplication sharedApplication]];
+    
+    //to update status to seen of last sent when new messages come through
+    self.receivedNew = NO;
 }
 
 -(void)loadMessages{
@@ -130,6 +142,12 @@
                 
                 int count = (int)[objects count];
                 self.skipped = count + self.skipped;
+                
+                if (self.fromForeGround == YES) {
+                    //clear so index path can be found of last item and updated 'seen' label displayed
+                    [self.sentMessagesParseArray removeAllObjects];
+                    [self.messagesParseArray removeAllObjects];
+                }
                 
                 for (PFObject *messageOb in objects) {
                     
@@ -258,6 +276,18 @@
                     }
                 }
                 [self.convoObject saveInBackground];
+                
+                if (self.fromForeGround == YES) {
+                    NSLog(@"hello");
+                    //call attributedString method to update labels
+                    NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
+                    NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
+                    NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
+                    
+                    [self collectionView:self.collectionView attributedTextForCellBottomLabelAtIndexPath:pathToLastItem];
+                    [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
+                    self.fromForeGround = NO;
+                }
                 [self.collectionView reloadData];
                 
                 if (self.earlierPressed == NO) {
@@ -310,6 +340,11 @@
             self.currencySymbol = @"$";
         }
     }
+}
+
+-(void)fromForeGroundRefresh{
+    self.fromForeGround = YES;
+    [self loadMessages];
 }
 
 - (void)handleNotification:(NSNotification*)note {
@@ -375,7 +410,6 @@
                     if ([[messageOb objectForKey:@"mediaMessage"] isEqualToString:@"YES"]) {
                         
                         //media message
-                        
                         __block id<JSQMessageMediaData> newMediaData = nil;
                         __block id newMediaAttachmentCopy = nil;
                         __block JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc]init];
@@ -455,20 +489,21 @@
                 //save new unseen counter number
                 [self.convoObject saveInBackground];
                 
-                //scroll to bottom
-                [self scrollToBottomAnimated:YES];
-                
+                self.receivedNew = YES;
+
                 //call attributedString method to update labels
                 NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
                 NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
                 NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
-                
+
                 self.checkoutTapped = NO;
                 
                 [self collectionView:self.collectionView attributedTextForCellBottomLabelAtIndexPath:pathToLastItem];
                 [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
-                //            [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
                 [self.collectionView reloadData];
+                
+                //scroll to bottom
+                [self scrollToBottomAnimated:NO];
                 
                 //minus number of new messages that have just been seen off tab bar badge
                 NSString *badgeString =[[self.tabBarController.tabBar.items objectAtIndex:2] badgeValue];
@@ -634,7 +669,7 @@
                 }
                 
                 NSCharacterSet* notDigits = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
-                NSString *newbie = [priceString stringByReplacingOccurrencesOfString:@"£" withString:@""];
+                NSString *newbie = [priceString stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%@", self.currencySymbol] withString:@""];
                 NSString *newbie1 = [newbie stringByReplacingOccurrencesOfString:@"." withString:@""];
                 
                 if (!([newbie1 rangeOfCharacterFromSet:notDigits].location == NSNotFound))
@@ -718,12 +753,14 @@
     [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded == YES) {
             NSString *pushText = [NSString stringWithFormat:@"%@: %@", [[PFUser currentUser]username], messageString];
-            if (self.offerMode == YES) {
-                pushText = [NSString stringWithFormat:@"%@ sent an offer 🔌", [[PFUser currentUser]username]];
+            
+            if (message.isOfferMessage == YES) {
+                pushText = [NSString stringWithFormat:@"%@ sent an offer to purchase their item 🔌", [[PFUser currentUser]username]];
             }
             else{
                 self.lastMessage = messageObject;
             }
+            
             //send push to other user
             NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username};
             [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
@@ -753,7 +790,7 @@
     [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
     
     if (self.offerMode == YES) {
-        self.navigationItem.rightBarButtonItem = self.profileButton;
+        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
         
         if ([self.convoObject objectForKey:@"convoImages"] == 0) {
             //images have been previously sent in the chat so don't need to send anymore
@@ -840,7 +877,7 @@
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 self.offerMode = YES;
                 self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Selling: \nCondition: \nPrice: %@\nMeetup: ", self.currencySymbol];
-                self.navigationItem.rightBarButtonItem = self.cancelButton;
+                [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.cancelButton, nil]];
             }]];
         }
         else{
@@ -858,18 +895,67 @@
             [self presentViewController:vc animated:YES completion:nil];
         }]];
         
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+            picker.delegate = self;
+            picker.allowsEditing = NO;
+            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+            
+            [self presentViewController:picker animated:YES completion:nil];
+        }]];
+        
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Goto my PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [self showMyPaypal];
         }]];
     }
     else{
         //pay with paypal at all times here? not just used as a backup when an order has been created?
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+            picker.delegate = self;
+            picker.allowsEditing = NO;
+            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+            
+            [self presentViewController:picker animated:YES completion:nil];
+        }]];
     }
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report user" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         [self reportUser];
     }]];
     [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+    UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
+    //display crop picker
+    [picker dismissViewControllerAnimated:YES completion:^{
+        [self displayCropperWithImage:chosenImage];
+    }];
+}
+
+-(void)displayCropperWithImage:(UIImage *)image{
+    BASSquareCropperViewController *squareCropperViewController = [[BASSquareCropperViewController alloc] initWithImage:image minimumCroppedImageSideLength:375.0f];
+    squareCropperViewController.squareCropperDelegate = self;
+    squareCropperViewController.backgroundColor = [UIColor whiteColor];
+    squareCropperViewController.borderColor = [UIColor whiteColor];
+    squareCropperViewController.doneFont = [UIFont fontWithName:@"AvenirNext-Regular" size:18.0f];
+    squareCropperViewController.cancelFont = [UIFont fontWithName:@"AvenirNext-Regular" size:16.0f];
+    squareCropperViewController.excludedBackgroundColor = [UIColor blackColor];
+    [self.navigationController presentViewController:squareCropperViewController animated:YES completion:nil];
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    [picker dismissViewControllerAnimated:YES completion:NULL];
+}
+
+- (void)squareCropperDidCropImage:(UIImage *)croppedImage inCropper:(BASSquareCropperViewController *)cropper{
+    [cropper dismissViewControllerAnimated:YES completion:NULL];
+    [self finalImage:croppedImage];
+}
+
+- (void)squareCropperDidCancelCropInCropper:(BASSquareCropperViewController *)cropper{
+    [cropper dismissViewControllerAnimated:YES completion:NULL];
 }
 
 -(void)reportUser{
@@ -1009,7 +1095,7 @@
                 
                 //send push to other user
                 NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
-                [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                [PFCloud callFunctionInBackground:@"sendPush" withParameters: params block:^(NSDictionary *response, NSError *error) {
                     if (!error) {
                         NSLog(@"response %@", response);
                     }
@@ -1053,9 +1139,7 @@
 -(void)dismissPressed:(BOOL)yesorno{
     if (yesorno == YES && self.offerMode == YES) {
         UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Take a picture of the item you're selling" message:@"Take a picture now of the item you're selling. Tap the tag icon then 'Take a picture'" preferredStyle:UIAlertControllerStyleAlert];
-        
         [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-            
         }]];
         [self presentViewController:alertView animated:YES completion:nil];
     }
@@ -1161,7 +1245,6 @@
         JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
         return [[JSQMessagesTimestampFormatter sharedFormatter] attributedTimestampForDate:message.date];
     }
-    
     return nil;
 }
 
@@ -1175,7 +1258,6 @@
 
     if (self.sentMessagesParseArray.count > 0 && self.messagesParseArray.count > 0) {
         if ([self.messagesParseArray containsObject:self.sentMessagesParseArray[0]]) {
-            
             //user has sent a message
             NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
             NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
@@ -1184,7 +1266,12 @@
             if (indexPath == pathToLastItem) {
                 NSString *statusString = [[self.sentMessagesParseArray objectAtIndex:0]objectForKey:@"status"];
                 
-                if ([statusString isEqualToString:@"sent"]||[statusString isEqualToString:@"seen"]) {
+                if (self.receivedNew == YES) {
+                    NSAttributedString *newString = [[NSAttributedString alloc]initWithString:@"seen"];
+                    self.receivedNew = NO;
+                    return newString;
+                }
+                else if ([statusString isEqualToString:@"sent"]||[statusString isEqualToString:@"seen"]) {
                     //valid status, go ahead
                     NSAttributedString *string = [[NSAttributedString alloc]initWithString:statusString];
                     return string;
@@ -1440,13 +1527,20 @@
 
 - (BOOL)composerTextView:(JSQMessagesComposerTextView *)textView shouldPasteWithSender:(id)sender
 {
-    return NO;
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    NSString *string = pasteboard.string;
+    if (string) {
+        return YES;
+    }
+    else{
+        return NO;
+    }
 }
 
 -(void)clearOffer{
     self.inputToolbar.contentView.textView.text = @"";
     self.offerMode = NO;
-    self.navigationItem.rightBarButtonItem = self.profileButton;
+    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
 }
 
 -(void)profileTapped{
@@ -1456,6 +1550,12 @@
         vc.user = self.otherUser;
         [self.navigationController pushViewController:vc animated:YES];
     }
+}
+
+-(void)listingTapped{
+    ListingController *vc = [[ListingController alloc]init];
+    vc.listingObject = [self.convoObject objectForKey:@"wtbListing"];
+    [self.navigationController pushViewController:vc animated:YES];
 }
 
 -(void)markTapped{
@@ -1688,6 +1788,7 @@
                 BOOL shipped = [[order objectForKey:@"shipped"]boolValue];
                 BOOL feedback;
                 if (self.userIsBuyer == YES) {
+                    //buyer has left feedback if this is yes
                     feedback = [[order objectForKey:@"buyerFeedback"]boolValue];
                 }
                 else{
@@ -1712,6 +1813,17 @@
                     if (self.userIsBuyer == YES) {
                         [self.successButton setTitle:@"Seller has confirmed payment - Tap to leave feedback" forState:UIControlStateNormal];
                         [self.successButton addTarget:self action:@selector(feedbackTapped) forControlEvents:UIControlEventTouchUpInside];
+                    }
+                    else{
+                        [self.successButton setTitle:@"Payment received - Tap to mark as shipped" forState:UIControlStateNormal];
+                        [self.successButton addTarget:self action:@selector(markAsShipped) forControlEvents:UIControlEventTouchUpInside];
+                    }
+                }
+                else if (paid == YES && shipped == NO && feedback == YES) {
+                    //next step is for seller to mark as shipped
+                    if (self.userIsBuyer == YES) {
+                        [self.successButton setTitle:@"Feedback left - Tap to report a problem" forState:UIControlStateNormal];
+                        [self.successButton addTarget:self action:@selector(reportUser) forControlEvents:UIControlEventTouchUpInside];
                     }
                     else{
                         [self.successButton setTitle:@"Payment received - Tap to mark as shipped" forState:UIControlStateNormal];

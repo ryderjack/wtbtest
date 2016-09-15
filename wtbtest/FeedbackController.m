@@ -19,7 +19,7 @@
     
     //reset user cell
     self.userNameLabel.text = @"";
-    self.dealsLabel.text = @"";
+    self.dealsLabel.text = @"Loading";
     
     self.starNumber = 0;
     self.warningLabel.text = @"";

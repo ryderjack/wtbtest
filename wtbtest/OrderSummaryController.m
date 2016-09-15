@@ -73,9 +73,16 @@
             self.totalLabel.text = self.itemPrice.text;
 
             //setup order image
-            [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image"]];
-            [self.firstImageView loadInBackground];
-            self.numberOfPics = 1;
+            if ([self.confirmedOffer objectForKey:@"image"]) {
+                [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image"]];
+                [self.firstImageView loadInBackground];
+                self.numberOfPics = 1;
+            }
+            else{
+                //if no images been sent
+               [self.firstCam setEnabled:NO];
+            }
+            
             [self.secondCam setEnabled:NO];
             [self.thirdCam setEnabled:NO];
             [self.fourthCam setEnabled:NO];

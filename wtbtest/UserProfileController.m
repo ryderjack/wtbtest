@@ -136,6 +136,23 @@
     else{
         self.currencySymbol = @"$";
     }
+    
+    PFQuery *wtbNummber = [PFQuery queryWithClassName:@"wantobuys"];
+    [wtbNummber whereKey:@"postUser" equalTo:self.user];
+    [wtbNummber whereKey:@"status" notEqualTo:@"deleted"];
+    [wtbNummber countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+        if (!error) {
+            if (number == 1) {
+                [self.segmentControl setTitle:@"1 WTB" forSegmentAtIndex:0];
+            }
+            else if (number > 0){
+                [self.segmentControl setTitle:[NSString stringWithFormat:@"%d WTBs", number] forSegmentAtIndex:0];
+            }
+        }
+        else{
+            NSLog(@"count errror %@", error);
+        }
+    }];
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{
@@ -149,6 +166,7 @@
     [self.nothingLabel setHidden:YES];
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [wtbQuery whereKey:@"postUser" equalTo:self.user];
+    [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
     [wtbQuery orderByDescending:@"createdAt"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
@@ -174,7 +192,7 @@
     [salesQuery whereKey:@"sellerUser" equalTo:self.user];
     [salesQuery whereKey:@"gaveFeedback" notEqualTo:self.user];
     [salesQuery includeKey:@"buyerUser"];
-    [salesQuery orderByAscending:@"createdAt"];
+    [salesQuery orderByDescending:@"createdAt"];
     [salesQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             [self.feedbackArray removeAllObjects];
@@ -184,7 +202,7 @@
             [purchaseQuery whereKey:@"buyerUser" equalTo:self.user];
             [purchaseQuery whereKey:@"gaveFeedback" notEqualTo:self.user];
             [purchaseQuery includeKey:@"sellerUser"];
-            [purchaseQuery orderByAscending:@"createdAt"];
+            [purchaseQuery orderByDescending:@"createdAt"];
             [purchaseQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                 if (!error) {
                     [self.feedbackArray addObjectsFromArray:objects];

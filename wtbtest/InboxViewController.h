@@ -23,10 +23,6 @@
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
 
-//@property (nonatomic, strong) PFLiveQueryClient *client;
-//@property (nonatomic, strong) PFQuery *query;
-//@property (nonatomic, strong) PFLiveQuerySubscription *subscription;
-
 @property (nonatomic, strong) NSDateFormatter *dateFormat;
 
 @end

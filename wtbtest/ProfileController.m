@@ -171,6 +171,10 @@
     NSString *messageBody = @"Yo\n\n Tell us how we can make Bump even better or any problems you've faced! We promise to reply within an hour.\nPS send us screenshots of anything not working properly!";
     NSArray *toRecipents = [NSArray arrayWithObject:@"hello@supbump.com"];
     MFMailComposeViewController *mc = [[MFMailComposeViewController alloc] init];
+    if (!mc) {
+        //no email accounts setup so return
+        return;
+    }
     mc.mailComposeDelegate = self;
     [mc setSubject:emailTitle];
     [mc setMessageBody:messageBody isHTML:NO];

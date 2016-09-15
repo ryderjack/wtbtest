@@ -11,6 +11,7 @@
 #import <ParseUI/ParseUI.h>
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
+#import <DGActivityIndicatorView.h>
 
 @class ListingController;
 

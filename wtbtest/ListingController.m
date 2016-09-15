@@ -31,7 +31,143 @@
     
     UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
     
-    self.navigationItem.rightBarButtonItem = infoButton;
+    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+    if ([self.currency isEqualToString:@"GBP"]) {
+        self.currencySymbol = @"£";
+    }
+    else{
+        self.currencySymbol = @"$";
+    }
+    
+    [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (!error) {
+            if ([self.listingObject objectForKey:@"image4"]){
+                [self.picIndicator setNumberOfPages:4];
+                self.numberOfPics = 4;
+                self.firstImage = [self.listingObject objectForKey:@"image1"];
+                self.secondImage = [self.listingObject objectForKey:@"image2"];
+                self.thirdImage = [self.listingObject objectForKey:@"image3"];
+                self.fourthImage = [self.listingObject objectForKey:@"image4"];
+            }
+            else if ([self.listingObject objectForKey:@"image3"]){
+                [self.picIndicator setNumberOfPages:3];
+                self.numberOfPics = 3;
+                self.firstImage = [self.listingObject objectForKey:@"image1"];
+                self.secondImage = [self.listingObject objectForKey:@"image2"];
+                self.thirdImage = [self.listingObject objectForKey:@"image3"];
+            }
+            else if ([self.listingObject objectForKey:@"image2"]) {
+                [self.picIndicator setNumberOfPages:2];
+                self.numberOfPics = 2;
+                self.firstImage = [self.listingObject objectForKey:@"image1"];
+                self.secondImage = [self.listingObject objectForKey:@"image2"];
+            }
+            else{
+                [self.picIndicator setHidden:YES];
+                self.numberOfPics = 1;
+            }
+            
+            self.picView.contentMode = UIViewContentModeScaleAspectFit;
+            [self.picView setFile:[self.listingObject objectForKey:@"image1"]];
+            [self.picView loadInBackground];
+            
+            self.titleLabel.text = [self.listingObject objectForKey:@"title"];
+            
+            self.priceLabel.text = [NSString stringWithFormat:@"%@%@",self.currencySymbol ,[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]];
+            
+            self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
+            self.locationLabel.text = [self.listingObject objectForKey:@"location"];
+            self.deliveryLabel.text = [self.listingObject objectForKey:@"delivery"];
+            
+            if (![self.listingObject objectForKey:@"sizeGender"]) {
+                self.sizeLabel.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"sizeLabel"]];
+            }
+            else{
+                self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
+            }
+            
+            if (![self.listingObject objectForKey:@"extra"]) {
+                self.extraCellNeeded = NO;
+                self.extraLabel.text = @"";
+            }
+            else{
+                self.extraCellNeeded = YES;
+                self.extraLabel.text = [self.listingObject objectForKey:@"extra"];
+            }
+            
+            [self calcPostedDate];
+            
+            self.idLabel.text = [NSString stringWithFormat:@"ID: %@",self.listingObject.objectId];
+            
+            //buyer info
+            self.buyer = [self.listingObject objectForKey:@"postUser"];
+            
+            if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
+                [self.saveButton setEnabled:NO];
+            }
+            else{
+                //not the same buyer
+                self.navigationItem.rightBarButtonItem = infoButton;
+            }
+            
+            [self setImageBorder];
+            [self.buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    
+                    PFFile *pic = [self.buyer objectForKey:@"picture"];
+                    [self.buyerImgView setFile:pic];
+                    [self.buyerImgView loadInBackground];
+                    self.buyernameLabel.text = self.buyer.username;
+                    
+                    PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+                    [dealsQuery whereKey:@"User" equalTo:self.buyer];
+                    [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                        if (object) {
+                            int starNumber = [[object objectForKey:@"currentRating"] intValue];
+                            
+                            if (starNumber == 0) {
+                                [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
+                            }
+                            else if (starNumber == 1){
+                                [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
+                            }
+                            else if (starNumber == 2){
+                                [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
+                            }
+                            else if (starNumber == 3){
+                                [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
+                            }
+                            else if (starNumber == 4){
+                                [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
+                            }
+                            else if (starNumber == 5){
+                                [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
+                            }
+                            
+                            int purchased = [[object objectForKey:@"purchased"]intValue];
+                            int sold = [[object objectForKey:@"sold"] intValue];
+                            
+                            self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
+                        }
+                        else{
+                            NSLog(@"error getting deals data!");
+                        }
+                    }];
+                }
+                else{
+                    NSLog(@"buyer error %@", error);
+                }
+            }];
+            
+            if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                [self.messageButton setEnabled:NO];
+            }
+        }
+        else{
+            NSLog(@"error fetching listing %@", error);
+        }
+    }];
     
     UISwipeGestureRecognizer *swipeLeft = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
     UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
@@ -67,36 +203,6 @@
     self.buyernameLabel.text = @"";
     self.pastDealsLabel.text = @"Loading";
     
-    if ([self.listingObject objectForKey:@"image4"]){
-        [self.picIndicator setNumberOfPages:4];
-        self.numberOfPics = 4;
-        self.firstImage = [self.listingObject objectForKey:@"image1"];
-        self.secondImage = [self.listingObject objectForKey:@"image2"];
-        self.thirdImage = [self.listingObject objectForKey:@"image3"];
-        self.fourthImage = [self.listingObject objectForKey:@"image4"];
-    }
-    else if ([self.listingObject objectForKey:@"image3"]){
-        [self.picIndicator setNumberOfPages:3];
-        self.numberOfPics = 3;
-        self.firstImage = [self.listingObject objectForKey:@"image1"];
-        self.secondImage = [self.listingObject objectForKey:@"image2"];
-        self.thirdImage = [self.listingObject objectForKey:@"image3"];
-    }
-    else if ([self.listingObject objectForKey:@"image2"]) {
-        [self.picIndicator setNumberOfPages:2];
-        self.numberOfPics = 2;
-        self.firstImage = [self.listingObject objectForKey:@"image1"];
-        self.secondImage = [self.listingObject objectForKey:@"image2"];
-    }
-    else{
-        [self.picIndicator setHidden:YES];
-        self.numberOfPics = 1;
-    }
-    
-    self.picView.contentMode = UIViewContentModeScaleAspectFit;
-    [self.picView setFile:[self.listingObject objectForKey:@"image1"]];
-    [self.picView loadInBackground];
-    
     self.mainCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.payCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.sizeCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -108,107 +214,7 @@
     self.buttonCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.conditionCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
-    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
-    if ([self.currency isEqualToString:@"GBP"]) {
-        self.currencySymbol = @"£";
-    }
-    else{
-        self.currencySymbol = @"$";
-    }
-
-    self.titleLabel.text = [self.listingObject objectForKey:@"title"];
-    
-    self.priceLabel.text = [NSString stringWithFormat:@"%@%@",self.currencySymbol ,[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]];
-    
-    self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
-    self.locationLabel.text = [self.listingObject objectForKey:@"location"];
-    self.deliveryLabel.text = [self.listingObject objectForKey:@"delivery"];
-    
-    if (![self.listingObject objectForKey:@"sizeGender"]) {
-        self.sizeLabel.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"sizeLabel"]];
-    }
-    else{
-        self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
-    }
-    
-    if (![self.listingObject objectForKey:@"extra"]) {
-        self.extraCellNeeded = NO;
-        self.extraLabel.text = @"";
-    }
-    else{
-        self.extraCellNeeded = YES;
-        self.extraLabel.text = [self.listingObject objectForKey:@"extra"];
-    }
-    
-    [self calcPostedDate];
-    
-    self.idLabel.text = [NSString stringWithFormat:@"ID: %@",self.listingObject.objectId];
-    
-    //buyer info
-    self.buyer = [self.listingObject objectForKey:@"postUser"];
-    
-    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
-        [self.saveButton setEnabled:NO];
-    }
-    else{
-        //not the same buyer
-    }
-    
-    [self setImageBorder];
-    [self.buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            
-            PFFile *pic = [self.buyer objectForKey:@"picture"];
-            [self.buyerImgView setFile:pic];
-            [self.buyerImgView loadInBackground];
-            self.buyernameLabel.text = self.buyer.username;
-            
-            PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
-            [dealsQuery whereKey:@"User" equalTo:self.buyer];
-            [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                if (object) {
-                    int starNumber = [[object objectForKey:@"currentRating"] intValue];
-                    
-                    if (starNumber == 0) {
-                        [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
-                    }
-                    else if (starNumber == 1){
-                        [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
-                    }
-                    else if (starNumber == 2){
-                        [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
-                    }
-                    else if (starNumber == 3){
-                        [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
-                    }
-                    else if (starNumber == 4){
-                        [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
-                    }
-                    else if (starNumber == 5){
-                        [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
-                    }
-                    
-                    int purchased = [[object objectForKey:@"purchased"]intValue];
-                    int sold = [[object objectForKey:@"sold"] intValue];
-                    
-                    self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
-                }
-                else{
-                    NSLog(@"error getting deals data!");
-                }
-            }];
-        }
-        else{
-            NSLog(@"buyer error %@", error);
-        }
-    }];
-    
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
-    
-    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        [self.messageButton setEnabled:NO];
-    }
     
     //check if item has been saved previously
     NSArray *savedItemsArray = [[PFUser currentUser] objectForKey:@"savedItems"];
@@ -572,6 +578,9 @@
 }
 
 - (void)handleSwipe:(UISwipeGestureRecognizer *)swipe {
+    if (self.numberOfPics > 1) {
+        self.picView.image = nil;
+    }
     if (swipe.direction == UISwipeGestureRecognizerDirectionLeft) {
         NSLog(@"Left Swipe");
         if (self.picIndicator.currentPage != 4) {
@@ -587,7 +596,6 @@
                 [self.picView setFile:self.fourthImage];
                 [self.picIndicator setCurrentPage:3];
             }
-            [self.picView loadInBackground];
         }
     }
     if (swipe.direction == UISwipeGestureRecognizerDirectionRight) {
@@ -607,8 +615,28 @@
                 [self.picView setFile:self.thirdImage];
                 [self.picIndicator setCurrentPage:2];
             }
-            [self.picView loadInBackground];
         }
+    }
+    if (self.numberOfPics > 1) {
+        //set placeholder spinner view
+        MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:self.picView animated:YES];
+        hud.square = YES;
+        hud.mode = MBProgressHUDModeCustomView;
+        hud.color = [UIColor whiteColor];
+        DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+        hud.customView = spinner;
+        [spinner startAnimating];
+        
+        [self.picView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
+        } progressBlock:^(int percentDone) {
+            if (percentDone == 100) {
+                //remove spinner
+                [spinner stopAnimating];
+                [MBProgressHUD hideHUDForView:self.picView animated:NO];
+                spinner = nil;
+                hud = nil;
+            }
+        }];
     }
 }
 

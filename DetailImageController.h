@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
+#import <MBProgressHUD.h>
+#import <DGActivityIndicatorView.h>
 
 @interface DetailImageController : UIViewController
 
@@ -33,5 +35,8 @@
 @property (nonatomic, strong) NSString *tagText;
 
 @property (nonatomic) BOOL offerMode;
+
+//spinner
+@property (nonatomic, strong) MBProgressHUD *hud;
 
 @end

@@ -87,7 +87,6 @@
 - (void)searchForText:(NSString*)searchText
 {
     NSMutableArray *searchResults = [[NSMutableArray alloc] init];
-
     // Create a search request with a string
     MKLocalSearchRequest *searchRequest = [[MKLocalSearchRequest alloc] init];
     [searchRequest setNaturalLanguageQuery:searchText];
@@ -113,11 +112,13 @@
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
     UITableViewCell *cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
+    
     cell.textLabel.text = [[[self.searchResults objectAtIndex:indexPath.row] placemark] title];
     return cell;
 }
 
 -(void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar{
+    [self.searchResults removeAllObjects];
 }
 -(void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
     [self updateSearchResultsForSearchController:self.searchController];
@@ -133,11 +134,12 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
-    NSString *selectionString = [self.tableView cellForRowAtIndexPath:indexPath].textLabel.text;
-    CLLocationCoordinate2D selectedItem = [[[[self.searchResults objectAtIndex:indexPath.row] placemark]location]coordinate];
-    [self.delegate addLocation:self didFinishEnteringItem:selectionString longi:selectedItem.longitude lati:selectedItem.latitude];
-    [self.navigationController popViewControllerAnimated:YES];
-    
+    if (self.searchResults.count >0) {
+        NSString *selectionString = [self.tableView cellForRowAtIndexPath:indexPath].textLabel.text;
+        CLLocationCoordinate2D selectedItem = [[[[self.searchResults objectAtIndex:indexPath.row] placemark]location]coordinate];
+        [self.delegate addLocation:self didFinishEnteringItem:selectionString longi:selectedItem.longitude lati:selectedItem.latitude];
+        [self.navigationController popViewControllerAnimated:YES];
+    } 
 }
 
 -(void)useCurrentLoc{

@@ -67,15 +67,23 @@
                 [self.clothingButton setSelected:YES];
                 self.clothingEnabled = YES;
                 [self setupclothingsizes];
+                
+                [self.menButton setEnabled:NO];
+                [self.womenButton setEnabled:NO];
             }
             else if ([self.filtersArray containsObject:@"footwear"]){
                 [self.footButton setSelected:YES];
                 self.clothingEnabled = NO;
                 [self setupFootwearSizes];
+                [self.menButton setEnabled:YES];
+                [self.womenButton setEnabled:YES];
+                
             }
             else{
                 self.clothingEnabled = YES;
                 [self setupclothingsizes];
+                [self.menButton setEnabled:NO];
+                [self.womenButton setEnabled:NO];
             }
             
             if ([self.filtersArray containsObject:@"male"]){
@@ -89,6 +97,8 @@
     else{
         self.clothingEnabled = YES;
         [self setupclothingsizes];
+        [self.menButton setEnabled:NO];
+        [self.womenButton setEnabled:NO];
     }
     
     [self setupBrandButtons];
@@ -288,6 +298,10 @@
         [self.filtersArray addObject:@"clothing"];
         [self.footButton setSelected:NO];
         [self.filtersArray removeObject:@"footwear"];
+        [self.menButton setEnabled:NO];
+        [self.womenButton setEnabled:NO];
+        [self.filtersArray removeObject:@"male"];
+        [self.filtersArray removeObject:@"female"];
         
         [self setupclothingsizes];
     }
@@ -302,6 +316,8 @@
         [self.filtersArray addObject:@"footwear"];
         [self.clothingButton setSelected:NO];
         [self.filtersArray removeObject:@"clothing"];
+        [self.menButton setEnabled:YES];
+        [self.womenButton setEnabled:YES];
         
         [self setupFootwearSizes];
     }

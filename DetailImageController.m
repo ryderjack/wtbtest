@@ -76,7 +76,9 @@
 }
 
 - (void)handleSwipe:(UISwipeGestureRecognizer *)swipe {
-    
+    if (self.numberOfPics > 1) {
+       self.imageView.image = nil;
+    }
     if (swipe.direction == UISwipeGestureRecognizerDirectionLeft) {
         NSLog(@"Left Swipe");
         if (self.pageControl.currentPage != 4) {
@@ -92,7 +94,6 @@
                  [self.imageView setFile:[self.listing objectForKey:@"image4"]];
                 [self.pageControl setCurrentPage:3];
             }
-            [self.imageView loadInBackground];
         }
     }
     if (swipe.direction == UISwipeGestureRecognizerDirectionRight) {
@@ -110,8 +111,28 @@
                  [self.imageView setFile:[self.listing objectForKey:@"image3"]];
                 [self.pageControl setCurrentPage:2];
             }
-            [self.imageView loadInBackground];
         }
+    }
+    if (self.numberOfPics > 1) {
+        //set placeholder spinner view
+        MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:self.imageView animated:YES];
+        hud.square = YES;
+        hud.mode = MBProgressHUDModeCustomView;
+        hud.color = [UIColor blackColor];
+        DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor whiteColor] size:20.0f];
+        hud.customView = spinner;
+        [spinner startAnimating];
+        
+        [self.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
+        } progressBlock:^(int percentDone) {
+            if (percentDone == 100) {
+                //remove spinner
+                [spinner stopAnimating];
+                [MBProgressHUD hideHUDForView:self.imageView animated:NO];
+                spinner = nil;
+                hud = nil;
+            }
+        }];
     }
 }
 @end
