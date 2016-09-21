@@ -7,6 +7,7 @@
 //
 
 #import "ExplainViewController.h"
+#import "NavigationController.h"
 
 @interface ExplainViewController ()
 
@@ -20,6 +21,15 @@
     self.gridCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.chatCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.cartCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    if (self.introMode == YES) {
+        [self.dismissButton setHidden:YES];
+        [self.nextButton setHidden:NO];
+    }
+    else{
+        [self.dismissButton setHidden:NO];
+        [self.nextButton setHidden:YES];
+    }
     
     self.labelOne.adjustsFontSizeToFitWidth = YES;
     self.labelOne.minimumScaleFactor=0.5;
@@ -40,7 +50,11 @@
     self.labelTwo.text = @"Sellers see your listing and send you offers to buy their item ";
     self.labelThree.text = @"Choose to accept/reject offers until you reach a deal, pay (zero fees!) and its shipped!";
 }
-
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    self.navigationController.navigationBarHidden = YES;
+}
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
 }
@@ -126,6 +140,17 @@
 }
 - (IBAction)dismissPressed:(id)sender {
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+- (IBAction)nextPressed:(id)sender {
+    CreateViewController *vc = [[CreateViewController alloc]init];
+    vc.introMode = YES;
+    vc.delegate = self;
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+-(void)dismissCreateController:(CreateViewController *)controller{
+    NSLog(@"dismissing in explain");
+//    [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 
 @end

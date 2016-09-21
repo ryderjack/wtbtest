@@ -19,6 +19,13 @@
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
 
+@class CreateViewController;
+
+@protocol CreateViewControllerDelegate <NSObject>
+- (void)dismissCreateController:(CreateViewController *)controller;
+@end
+
+
 @interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, DZNPhotoPickerControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate, TOWebDelegate>
 
 //cells
@@ -32,6 +39,9 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *payCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *infoCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *buttonCell;
+
+//delegate
+@property (nonatomic, weak) id <CreateViewControllerDelegate> delegate;
 
 //choose buttons
 @property (weak, nonatomic) IBOutlet UILabel *chooseCondition;
@@ -101,4 +111,7 @@
 @property (nonatomic, strong) NSString *currencySymbol;
 
 @property (nonatomic, strong) NSArray *profanityList;
+
+@property (weak, nonatomic) IBOutlet UIButton *skipButton;
+@property (nonatomic) BOOL introMode;
 @end

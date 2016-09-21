@@ -11,6 +11,8 @@
 @implementation OfferCell
 
 - (void)awakeFromNib {
+    [super awakeFromNib];
+    
     self.itemTitle.adjustsFontSizeToFitWidth = YES;
     self.itemTitle.minimumScaleFactor=0.5;
     

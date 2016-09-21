@@ -308,6 +308,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    NSLog(@"appearing");
     
     //to prevent double tapping profile button
     self.profileBTapped = NO;
@@ -360,10 +361,12 @@
 }
 
 -(void)loadNewMessages{
+    NSLog(@"loading more!");
     PFQuery *newMessageQuery = [PFQuery queryWithClassName:@"messages"];
     [newMessageQuery whereKey:@"convoId" equalTo:self.convoId];
     NSDate *lastDate = [self.lastMessage createdAt];
     [newMessageQuery whereKey:@"createdAt" greaterThan:lastDate];
+    [newMessageQuery includeKey:@"offerObject"];
     [newMessageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         
         if (!error) {
@@ -458,6 +461,7 @@
                             if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
                                 messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
                             }
+                            
                             else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
                                 messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nPurchased"];
                             }
@@ -467,9 +471,7 @@
                         }
                         
                         message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
-                        
                         if ([[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
-                            
                             PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
                             if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
                                 message.isOfferMessage = YES;
@@ -480,7 +482,6 @@
                                 message.isWaiting = YES;
                             }
                         }
-                        //was ere
                         [self.messages addObject:message];
                     }
                     self.lastMessage = messageOb;
@@ -551,8 +552,8 @@
     /**
      *  Display custom menu actions for cells.
      */
-    UIMenuController *menu = [notification object];
-    menu.menuItems = @[ [[UIMenuItem alloc] initWithTitle:@"Custom Action" action:@selector(customAction:)] ];
+//    UIMenuController *menu = [notification object];
+//    menu.menuItems = @[ [[UIMenuItem alloc] initWithTitle:@"Custom Action" action:@selector(customAction:)] ];
 }
 
 -(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
@@ -772,6 +773,13 @@
                 }
             }];
         }
+        else{
+            NSLog(@"error sending message %@", error);
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Error sending message" message:@"Make sure you're connected to the internet" preferredStyle:UIAlertControllerStyleAlert];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            }]];
+            [self presentViewController:alertView animated:YES completion:nil];
+        }
     }];
     
     [self finishSendingMessageAnimated:YES];
@@ -842,7 +850,14 @@
     else{
         [self.convoObject incrementKey:@"buyerUnseen"];
     }
-    [self.convoObject saveInBackground];
+    [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded){
+            NSLog(@"done");
+        }
+        else{
+            NSLog(@"error with conv %@", error);
+        }
+    }];
 }
 
 -(void)textViewDidChange:(UITextView *)textView{
@@ -1131,7 +1146,11 @@
             [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
         }
         else{
-            NSLog(@"error saving %@", error);
+            NSLog(@"error saving pic msg %@", error);
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Error sending image" message:@"Make sure you're connected to the internet" preferredStyle:UIAlertControllerStyleAlert];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            }]];
+            [self presentViewController:alertView animated:YES completion:nil];
         }
     }];
 }

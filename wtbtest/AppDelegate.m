@@ -36,16 +36,23 @@
     [Parse initializeWithConfiguration:[ParseClientConfiguration configurationWithBlock:^(id<ParseMutableClientConfiguration> configuration) {
 
         // checks prior to distributing:
-            //1. server
+            //1. server NOT PREPROD!
             //2. tab number
             //3. messaging/offering items to yourself
-            //4. push check for non-simulator devices
         
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
+        //local host
 //        configuration.server = @"http://localhost:1337/parse";
+        
+        //heroku
 //        configuration.server = @"http://wantobuy.herokuapp.com/parse";
+        
+        //production
         configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
+        
+        //preproduction
+//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE BACK BEFORE RELEASE
     }]];
 
     [Flurry startSession:@"9Y63FGHCCGZQJDQTCTMP"];

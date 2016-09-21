@@ -741,6 +741,7 @@
 		0475A7731C821D5E0049AD61 /* share@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "share@3x.png"; sourceTree = "<group>"; };
 		0475A7741C821D5E0049AD61 /* fb share.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fb share.png"; sourceTree = "<group>"; };
 		0475A7751C821D5E0049AD61 /* fb share@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fb share@2x.png"; sourceTree = "<group>"; };
+		047E9E371D8C4E44001F581D /* wtbtest.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = wtbtest.entitlements; sourceTree = "<group>"; };
 		0484568F1D64B633001544A5 /* SellingImg1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = SellingImg1.png; sourceTree = "<group>"; };
 		048456901D64B633001544A5 /* SellingImg1@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "SellingImg1@2x.png"; sourceTree = "<group>"; };
 		048456911D64B633001544A5 /* SellingImg1@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "SellingImg1@3x.png"; sourceTree = "<group>"; };
@@ -1689,6 +1690,7 @@
 		049EF4261C776E49000A599F /* wtbtest */ = {
 			isa = PBXGroup;
 			children = (
+				047E9E371D8C4E44001F581D /* wtbtest.entitlements */,
 				049EF42A1C776E49000A599F /* AppDelegate.h */,
 				049EF42B1C776E49000A599F /* AppDelegate.m */,
 				0472B6251C7CCC9F00529B2E /* Navbar */,
@@ -1988,13 +1990,17 @@
 		049EF41C1C776E49000A599F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0720;
+				LastUpgradeCheck = 0800;
 				ORGANIZATIONNAME = "Jack Ryder";
 				TargetAttributes = {
 					049EF4231C776E49000A599F = {
 						CreatedOnToolsVersion = 7.2.1;
 						DevelopmentTeam = E5T2M36RR8;
+						ProvisioningStyle = Manual;
 						SystemCapabilities = {
+							com.apple.Keychain = {
+								enabled = 1;
+							};
 							com.apple.Push = {
 								enabled = 1;
 							};
@@ -2002,10 +2008,13 @@
 					};
 					049EF43C1C776E49000A599F = {
 						CreatedOnToolsVersion = 7.2.1;
+						DevelopmentTeam = E5T2M36RR8;
+						ProvisioningStyle = Manual;
 						TestTargetID = 049EF4231C776E49000A599F;
 					};
 					049EF4471C776E49000A599F = {
 						CreatedOnToolsVersion = 7.2.1;
+						DevelopmentTeam = E5T2M36RR8;
 						TestTargetID = 049EF4231C776E49000A599F;
 					};
 				};
@@ -2698,13 +2707,17 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = E5T2M36RR8;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -2742,13 +2755,17 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = E5T2M36RR8;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -2773,14 +2790,17 @@
 			baseConfigurationReference = 4DBFE0CA73A57E5A95AFAD6A /* Pods.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer: Jack Ryder (64V9LW78AN)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jack Ryder (64V9LW78AN)";
+				CODE_SIGN_ENTITLEMENTS = wtbtest/wtbtest.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = E5T2M36RR8;
 				INFOPLIST_FILE = wtbtest/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = ryderjack.wtbtest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "7eafe20f-ceee-42af-a850-7dde5f7a5183";
+				PROVISIONING_PROFILE_SPECIFIER = bumpPushTest1;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -2790,13 +2810,16 @@
 			baseConfigurationReference = 2A1CA57F790FE4384B22E1A7 /* Pods.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: Jack Ryder (E5T2M36RR8)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jack Ryder (E5T2M36RR8)";
+				CODE_SIGN_ENTITLEMENTS = wtbtest/wtbtest.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				DEVELOPMENT_TEAM = E5T2M36RR8;
 				INFOPLIST_FILE = wtbtest/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = ryderjack.wtbtest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "37930c29-b05f-4ddb-b118-e504651d06c1";
+				PROVISIONING_PROFILE = "07121388-41ec-4acd-901d-d1fd190e0197";
+				PROVISIONING_PROFILE_SPECIFIER = BumpAppStore3;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
@@ -2805,10 +2828,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = E5T2M36RR8;
 				INFOPLIST_FILE = wtbtestTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = ryderjack.wtbtestTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "7eafe20f-ceee-42af-a850-7dde5f7a5183";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/wtbtest.app/wtbtest";
 			};
 			name = Debug;
@@ -2817,10 +2843,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = wtbtestTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = ryderjack.wtbtestTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "07121388-41ec-4acd-901d-d1fd190e0197";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/wtbtest.app/wtbtest";
 			};
 			name = Release;

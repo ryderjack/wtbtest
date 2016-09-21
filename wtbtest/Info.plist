@@ -33,7 +33,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1.0.84</string>
+	<string>1.0.91</string>
 	<key>Fabric</key>
 	<dict>
 		<key>APIKey</key>
@@ -59,8 +59,12 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Bump needs the camera for photos!</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Bump uses your location to find listings around you</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Bump automatically saves your WTB images to your camera roll so its easier to share them elsewhere!</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

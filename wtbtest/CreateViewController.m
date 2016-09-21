@@ -27,6 +27,10 @@
     
     //hide first table view header
     self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
+    
+    if (self.introMode == NO) {
+        [self.skipButton setHidden:YES];
+    }
         
     //button setup
     [self.firstCam setEnabled:YES];
@@ -89,6 +93,8 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    [[self navigationController] setNavigationBarHidden:NO animated:YES];
     
     if (![PFUser currentUser]) {
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
@@ -230,7 +236,7 @@
         return 105;
     }
     else if (indexPath.section ==4){
-        return 156;
+        return 138;
     }
     return 44;
 }
@@ -438,7 +444,7 @@
 }
 
 -(void)textViewDidBeginEditing:(UITextView *)textView{
-    if ([textView.text isEqualToString:@"eg. Must come with original box"]) {
+    if ([textView.text isEqualToString:@"(optional)"]) {
         textView.text = @"";
         textView.textColor = [UIColor colorWithRed:74/255.0f green:74/255.0f blue:74/255.0f alpha:1.0f];
     }
@@ -456,7 +462,7 @@
 }
 -(void)textViewDidEndEditing:(UITextView *)textView{
     if ([textView.text isEqualToString:@""]) {
-        textView.text = @"eg. Must come with original box";
+        textView.text = @"(optional)";
         textView.textColor = [UIColor lightGrayColor];
     }
     else{
@@ -464,7 +470,7 @@
         NSArray *words = [textView.text componentsSeparatedByString:@" "];
         for (NSString *string in words) {
             if ([self.profanityList containsObject:string.lowercaseString]) {
-                textView.text = @"eg. Must come with original box";
+                textView.text = @"(optional)";
                 textView.textColor = [UIColor lightGrayColor];
             }
         }
@@ -496,13 +502,16 @@
         NSString *updatedText = [textField.text stringByReplacingCharactersInRange:range withString:string];
         NSArray *stringsArray = [updatedText componentsSeparatedByString:@"."];
         
-        // Check for an absurdly large amount
+        // Check for an absurdly large amount & 0
         if (stringsArray.count > 0)
         {
             NSString *dollarAmount = stringsArray[0];
+
+            if ([dollarAmount isEqualToString:@"£0"]) {
+                return NO;
+            }
             if (dollarAmount.length > 6)
                 return NO;
-            
             // not allowed to enter all 9s
             if ([dollarAmount isEqualToString:[NSString stringWithFormat:@"%@99999", self.currencySymbol]]) {
                 return NO;
@@ -1059,7 +1068,7 @@
             PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
             [self.listing setObject:imageFile4 forKey:@"image4"];
         }
-        if ([self.extraField.text isEqualToString:@"eg. Must come with original box"]) {
+        if ([self.extraField.text isEqualToString:@"(optional)"]) {
             //don't save its placeholder
         }
         else{
@@ -1067,25 +1076,46 @@
         }
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
-                [self hidHUD];
-                [self.saveButton setEnabled:YES];
-                if (self.editFromListing == YES) {
-                    [self.navigationController popToRootViewControllerAnimated:YES];
+                if (self.introMode == YES) {
+                    self.hud.labelText = @"Posted!";
+                    [Flurry logEvent:@"WTB_INTRO_DONE"];
+                    double delayInSeconds = 1.0; // number of seconds to wait
+                    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+                    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+                    });
                 }
                 else{
-                    NSLog(@"listing saved! %@", self.listing.objectId);
-                    ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-                    vc.delegate = self;
-                    vc.lastObjectId = self.listing.objectId;
-                    vc.orderMode = NO;
-                    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
-                    [self.navigationController pushViewController:vc animated:YES];
+                    [self hidHUD];
+                }
+                if (self.introMode == YES) {
+                    
+                }
+                else{
+                    [self.saveButton setEnabled:YES];
+                    if (self.editFromListing == YES) {
+                        [self.navigationController popToRootViewControllerAnimated:YES];
+                    }
+                    else{
+                        NSLog(@"listing saved! %@", self.listing.objectId);
+                        
+                        ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+                        vc.delegate = self;
+                        vc.lastObjectId = self.listing.objectId;
+                        vc.orderMode = NO;
+                        [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
+                        [self.navigationController pushViewController:vc animated:YES];
+                    }
                 }
             }
             else{
-//                [self hidHUD];
+                [self hidHUD];
                 [self.saveButton setEnabled:YES];
                 NSLog(@"error saving %@", error);
+                if (self.introMode == YES) {
+                    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+                    [self.delegate dismissCreateController:self];
+                }
             }
         }];
     }
@@ -1107,7 +1137,7 @@
     self.chooseSize.text = @"Choose";
     self.payField.text = @"";
     self.titleField.text = @"";
-    self.extraField.text = @"eg. Must come with original box";
+    self.extraField.text = @"(optional)";
     self.warningLabel.text = @"";
     self.firstSize = @"";
     self.secondSize = @"";
@@ -1386,6 +1416,9 @@
     [self.spinner startAnimating];
     self.hudShowing = YES;
     self.shouldShowHUD = YES;
+}
+- (IBAction)skipPressed:(id)sender {
+    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end

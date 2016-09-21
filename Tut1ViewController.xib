@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15G31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1004" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="Tut1ViewController">
@@ -22,40 +23,35 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <pageControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" numberOfPages="4" translatesAutoresizingMaskIntoConstraints="NO" id="FOh-AZ-FPU">
-                    <rect key="frame" x="149" y="545" width="77" height="37"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="77" id="LrD-RV-boN"/>
                         <constraint firstAttribute="height" constant="37" id="p2L-2C-Um2"/>
                     </constraints>
-                    <color key="pageIndicatorTintColor" red="0.95686274509803915" green="0.95686274509803915" blue="0.95686274509803915" alpha="1" colorSpace="calibratedRGB"/>
-                    <color key="currentPageIndicatorTintColor" red="0.31372549019607843" green="0.8901960784313725" blue="0.76078431372549016" alpha="1" colorSpace="calibratedRGB"/>
+                    <color key="pageIndicatorTintColor" red="0.95686274509803915" green="0.95686274509803915" blue="0.95686274509803915" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <color key="currentPageIndicatorTintColor" red="0.31372549019607843" green="0.8901960784313725" blue="0.76078431372549016" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                 </pageControl>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Selling" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="o9d-fu-Nsb">
-                    <rect key="frame" x="83" y="46" width="209" height="48"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="48" id="OfG-2a-KG8"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="AvenirNext-UltraLight" family="Avenir Next" pointSize="34"/>
-                    <color key="textColor" red="0.96078431372549022" green="0.65098039215686276" blue="0.13725490196078433" alpha="1" colorSpace="calibratedRGB"/>
+                    <color key="textColor" red="0.96078431372549022" green="0.65098039215686276" blue="0.13725490196078433" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Listings show how much the buyer is willing to pay and the condition of the item they wantobuy" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gKd-oI-wib">
-                    <rect key="frame" x="39" y="94" width="297" height="111"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="111" id="zBs-3v-2PE"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
-                    <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <color key="textColor" red="0.22546875476837158" green="0.22546195983886719" blue="0.22546583414077759" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="SellingImg1.png" translatesAutoresizingMaskIntoConstraints="NO" id="GIp-i0-qXp">
-                    <rect key="frame" x="7" y="208" width="361" height="321"/>
                     <constraints>
                         <constraint firstAttribute="width" secondItem="GIp-i0-qXp" secondAttribute="height" multiplier="125:111" id="h2H-T7-sNa"/>
                     </constraints>
                 </imageView>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="LnB-DY-Rkf">
-                    <rect key="frame" x="81" y="595" width="212" height="40"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="40" id="64u-Dd-1zo"/>
                     </constraints>
@@ -80,12 +76,11 @@
                 <constraint firstItem="gKd-oI-wib" firstAttribute="centerX" secondItem="GIp-i0-qXp" secondAttribute="centerX" id="wgv-KL-bUO"/>
                 <constraint firstItem="o9d-fu-Nsb" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="83" id="xee-1e-M0A"/>
             </constraints>
-            <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
             <point key="canvasLocation" x="353" y="282"/>
         </view>
     </objects>
     <resources>
-        <image name="SellingImg1.png" width="250" height="210"/>
+        <image name="SellingImg1.png" width="361" height="321"/>
         <image name="startButton.png" width="212" height="40"/>
     </resources>
 </document>

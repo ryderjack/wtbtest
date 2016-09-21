@@ -7,8 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "CreateViewController.h"
 
-@interface ExplainViewController : UITableViewController
+@interface ExplainViewController : UITableViewController <CreateViewControllerDelegate>
 
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *gridCell;
@@ -23,5 +24,9 @@
 @property (weak, nonatomic) IBOutlet UIImageView *secondImageView;
 @property (weak, nonatomic) IBOutlet UIImageView *thirdImageView;
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+
+@property (nonatomic) BOOL introMode;
+@property (weak, nonatomic) IBOutlet UIButton *dismissButton;
+@property (weak, nonatomic) IBOutlet UIButton *nextButton;
 
 @end

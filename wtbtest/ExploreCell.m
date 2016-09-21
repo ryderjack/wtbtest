@@ -12,6 +12,8 @@
 
 - (void)awakeFromNib {
     // Initialization code
+    [super awakeFromNib];
+    
     self.titleLabel.adjustsFontSizeToFitWidth = YES;
     self.titleLabel.minimumScaleFactor=0.5;
     

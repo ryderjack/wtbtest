@@ -49,6 +49,7 @@
     
     [PFFacebookUtils logInInBackgroundWithReadPermissions:@[@"public_profile", @"email", @"user_friends"] block:^(PFUser *user, NSError *error) {
         if (!user) {
+            NSLog(@"error %@", error);
             NSLog(@"Uh oh. The user cancelled the Facebook login.");
             [self hidHUD];
             
@@ -72,12 +73,10 @@
             
             if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg"] == YES) {//////////////////update before release (remove the 1)
                 //take to app
-                NSLog(@"dismiss popup");
                 [self dismissViewControllerAnimated:YES completion:nil];
             }
             else{
                 //haven't completed it take them there
-                NSLog(@"to reg screen");
                 RegisterViewController *vc = [[RegisterViewController alloc]init];
                 vc.user = user;
                 [self.navigationController pushViewController:vc animated:YES];

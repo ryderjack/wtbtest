@@ -84,7 +84,7 @@
     
     self.filtersArray = [NSMutableArray array];
     self.filtersTapped = NO;
-    
+        
     // set searchbar font
     NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:13],
                                       NSFontAttributeName, nil];
@@ -235,13 +235,13 @@
     
     [Flurry logEvent:@"Explore_Tapped"];
     
-    //upon first open show 'How it works' VC modally
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"showHowWorks"])
-    {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"showHowWorks"];
-        ExplainViewController *vc = [[ExplainViewController alloc]init];
-        [self presentViewController:vc animated:YES completion:nil];
-    }
+//    //upon first open show 'How it works' VC modally
+//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"showHowWorks"])
+//    {
+//        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"showHowWorks"];
+//        ExplainViewController *vc = [[ExplainViewController alloc]init];
+//        [self presentViewController:vc animated:YES completion:nil];
+//    }
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{

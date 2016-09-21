@@ -7,6 +7,8 @@
 //
 
 #import "Tut1ViewController.h"
+#import "CreateViewController.h"
+#import "NavigationController.h"
 
 @interface Tut1ViewController ()
 
@@ -57,7 +59,17 @@
     }
 }
 - (IBAction)startPressed:(id)sender {
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+//    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    CreateViewController *vc = [[CreateViewController alloc]init];
+    vc.introMode = YES;
+    vc.delegate = self;
+    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+    [self presentViewController:navController animated:YES completion:nil];
+}
+
+-(void)dismissCreateController:(CreateViewController *)controller{
+    NSLog(@"dismissing in tut");
+    [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 
 @end

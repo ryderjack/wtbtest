@@ -7,8 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "CreateViewController.h"
 
-@interface Tut1ViewController : UIViewController
+@interface Tut1ViewController : UIViewController <CreateViewControllerDelegate>
 
 @property (assign, nonatomic) NSInteger index;
 @property (weak, nonatomic) IBOutlet UIPageControl *pageControl;

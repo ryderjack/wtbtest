@@ -12,6 +12,7 @@
 #import "NavigationController.h"
 #import "AppConstant.h"
 #import <TOWebViewController.h>
+#import "ExplainViewController.h"
 
 @interface RegisterViewController ()
 @end
@@ -41,7 +42,8 @@
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
-    self.selectedCurrency = @"";
+    self.selectedCurrency = @"GBP";
+    [self.GBPButton setSelected:YES];
     
     self.profanityList = @[@"fuck", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"#", @"?", @"!", @"£", @"/", @"(", @")", @":", @",", @"'", @"$", @" ",@"<", @">", @"+", @"=", @"%", @"[", @"]", @"{", @"}", @"^"];
 }
@@ -303,8 +305,12 @@
                                  [installation saveInBackground];
                                  
                                  //progress to tutorial
-                                 ContainerViewController *vc = [[ContainerViewController alloc]init];
+//                                 ContainerViewController *vc = [[ContainerViewController alloc]init];
+//                                 [self.navigationController pushViewController:vc animated:YES];
+                                 
                                  [self dismissHUD];
+                                 ExplainViewController *vc = [[ExplainViewController alloc]init];
+                                 vc.introMode = YES;
                                  [self.navigationController pushViewController:vc animated:YES];
                              }
                              else
