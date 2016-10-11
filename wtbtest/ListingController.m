@@ -35,7 +35,10 @@
     if ([self.currency isEqualToString:@"GBP"]) {
         self.currencySymbol = @"£";
     }
-    else{
+    else if ([self.currency isEqualToString:@"EUR"]) {
+        self.currencySymbol = @"€";
+    }
+    else if ([self.currency isEqualToString:@"USD"]) {
         self.currencySymbol = @"$";
     }
     
@@ -73,7 +76,19 @@
             
             self.titleLabel.text = [self.listingObject objectForKey:@"title"];
             
-            self.priceLabel.text = [NSString stringWithFormat:@"%@%@",self.currencySymbol ,[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]];
+            int price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+            
+            //since EUR has been recently added, do a check if the listing has a EUR price. If not, calc and save
+            if ([self.currency isEqualToString:@"EUR"] && price == 0) {
+                NSLog(@"no EUR so saving for em %d", price);
+                int pounds = [[self.listingObject objectForKey:@"listingPriceGBP"]intValue];
+                int EUR = pounds*1.16;
+                self.listingObject[@"listingPriceEUR"] = @(EUR);
+                price = EUR;
+                [self.listingObject saveInBackground];
+            }
+            
+            self.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol ,price];
             
             self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
             self.locationLabel.text = [self.listingObject objectForKey:@"location"];
@@ -114,11 +129,16 @@
             [self setImageBorder];
             [self.buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
+                    self.buyernameLabel.text = self.buyer.username;
                     
                     PFFile *pic = [self.buyer objectForKey:@"picture"];
-                    [self.buyerImgView setFile:pic];
-                    [self.buyerImgView loadInBackground];
-                    self.buyernameLabel.text = self.buyer.username;
+                    if (pic != nil) {
+                        [self.buyerImgView setFile:pic];
+                        [self.buyerImgView loadInBackground];
+                    }
+                    else{
+                        [self.buyerImgView setImage:[UIImage imageNamed:@"empty"]];
+                    }
                     
                     PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
                     [dealsQuery whereKey:@"User" equalTo:self.buyer];
@@ -199,6 +219,9 @@
     
     self.titleLabel.adjustsFontSizeToFitWidth = YES;
     self.titleLabel.minimumScaleFactor=0.5;
+    
+    self.extraLabel.adjustsFontSizeToFitWidth = YES;
+    self.extraLabel.minimumScaleFactor=0.5;
     
     self.buyernameLabel.text = @"";
     self.pastDealsLabel.text = @"Loading";
@@ -419,7 +442,6 @@
 -(void) calcPostedDate{
     NSDate *createdDate = self.listingObject.createdAt;
     NSDate *now = [NSDate date];
-    
     NSTimeInterval distanceBetweenDates = [now timeIntervalSinceDate:createdDate];
     double secondsInAnHour = 3600;
     float minsBetweenDates = (distanceBetweenDates / secondsInAnHour)*60;
@@ -456,6 +478,14 @@
         self.postedLabel.text = [NSString stringWithFormat:@"Posted: %.fw ago", (minsBetweenDates/10080)];
     }
     else{
+        //fail safe :D
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setLocale:[NSLocale currentLocale]];
+        [dateFormatter setDateFormat:@"MMM YY"];
+        
+        NSDate *formattedDate = [NSDate date];
+        self.postedLabel.text = [NSString stringWithFormat:@"%@", [dateFormatter stringFromDate:formattedDate]];
+        dateFormatter = nil;
     }
 }
 - (IBAction)saveForLaterPressed:(id)sender {
@@ -489,7 +519,6 @@
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSMutableArray *items = [NSMutableArray new];
-        NSLog(@"currency %@", self.currency);
         [items addObject:[NSString stringWithFormat:@"Check out this WTB: %@ for %@%@\nPosted on Bump http://apple.co/2aY3rBk", [self.listingObject objectForKey:@"title"],self.currency,[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]]];
         UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
         [self presentViewController:activityController animated:YES completion:nil];
@@ -571,7 +600,7 @@
 }
 
 -(void)setImageBorder{
-    self.buyerImgView.layer.cornerRadius = self.buyerImgView.frame.size.width / 2;
+    self.buyerImgView.layer.cornerRadius = 25;
     self.buyerImgView.layer.masksToBounds = YES;
     self.buyerImgView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     self.buyerImgView.contentMode = UIViewContentModeScaleAspectFill;

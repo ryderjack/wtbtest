@@ -26,12 +26,6 @@
     self.mainText.adjustsFontSizeToFitWidth = YES;
     self.mainText.minimumScaleFactor=0.5;
     
-    if (self.orderMode == YES) {
-        self.mainText.text = [NSString stringWithFormat:@"Purchase completed! You've just purchased %@!",self.orderTitle];
-        UIBarButtonItem *backButton = [[UIBarButtonItem alloc] initWithTitle:@"< Back" style:UIBarButtonItemStylePlain target:self action:@selector(resetNavStack)];
-        self.navigationItem.leftBarButtonItem = backButton;
-    }
-    
     self.navigationItem.hidesBackButton = YES;
     self.mainCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.cellButtonOne.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -41,18 +35,28 @@
     
     self.shareMode = NO;
     self.anotherPressed = NO;
+    self.resetOnDisappear = YES;
+}
+
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+    NSLog(@"setting to yes");
+    self.resetOnDisappear = YES;
 }
 
 -(void)viewDidDisappear:(BOOL)animated{
     
+    //reset the share mode so doesn't dismiss VC
     if (self.shareMode == YES) {
         self.shareMode = NO;
     }
-    
-    else if (self.orderMode == NO) {
-        if (self.anotherPressed == NO) {
+    else{
+        //need to reset if change tabs but not if click edit
+        NSLog(self.resetOnDisappear ? @"Yes" : @"No");
+        if (self.resetOnDisappear == YES) {
             [self.delegate listingEdit:self didFinishEnteringItem:@"new"];
         }
+        
         [self.navigationController popViewControllerAnimated:NO];
     }
 }
@@ -68,12 +72,8 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (self.orderMode == YES) {
-        return 4;
-    }
-    else{
-        return 5;
-    }
+
+    return 5;
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -84,27 +84,13 @@
             return self.cellButtonOne;
         }
         else if(indexPath.row == 2){
-            if (self.orderMode == YES) {
-                return self.cellButtonThree;
-            }
-            else{
-                return self.cellButtonTwo;
-            }
+            return self.cellButtonTwo;
         }
         else if(indexPath.row == 3){
-            if (self.orderMode == YES) {
-                return self.orderCell;
-            }
-            else{
-                return self.cellButtonThree;
-            }
+            return self.cellButtonThree;
         }
         else if(indexPath.row == 4){
-            if (self.orderMode == YES) {
-            }
-            else{
-                return self.cellButtonFour;
-            }
+            return self.cellButtonFour;
         }
 
     return nil;
@@ -133,6 +119,7 @@
 
 - (IBAction)sharePressed:(id)sender {
     NSMutableArray *items = [NSMutableArray new];
+    self.resetOnDisappear = NO;
     [items addObject:@"I just listed a WTB on Bump! Know anyone that can sell it to me? Download now: http://apple.co/2aY3rBk"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
@@ -145,25 +132,19 @@
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 - (IBAction)createAnotherPressed:(id)sender {
-    if (self.orderMode == YES) {
-        self.tabBarController.selectedIndex = 1;
-    }
-    else{
-        self.anotherPressed = YES;
-        [self.delegate listingEdit:self didFinishEnteringItem:@"new"];
-        [self.navigationController popViewControllerAnimated:YES];
-    }
+    self.anotherPressed = YES;
+    [self.delegate listingEdit:self didFinishEnteringItem:@"new"];
+    self.resetOnDisappear = NO;
+    [self.navigationController popViewControllerAnimated:YES];
 }
 - (IBAction)editListingPressed:(id)sender {
     [self.delegate lastId:self didFinishEnteringItem:self.lastObjectId];
     [self.delegate listingEdit:self didFinishEnteringItem:@"edit"];
+    self.resetOnDisappear = NO;
     [self.navigationController popViewControllerAnimated:YES];
 }
 -(void)resetNavStack{
     [self.navigationController popToRootViewControllerAnimated:YES];
-}
-- (IBAction)viewOrderPressed:(id)sender {
-    // goto order summary
 }
 
 @end

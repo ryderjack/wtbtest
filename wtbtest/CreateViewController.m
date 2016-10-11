@@ -107,7 +107,11 @@
             self.currencySymbol = @"£";
             self.payField.placeholder = @"£100";
         }
-        else{
+        else if ([self.currency isEqualToString:@"EUR"]) {
+            self.currencySymbol = @"€";
+            self.payField.placeholder = @"€100";
+        }
+        else if ([self.currency isEqualToString:@"USD"]) {
             self.currencySymbol = @"$";
             self.payField.placeholder = @"$100";
         }
@@ -128,6 +132,8 @@
     if (self.shouldShowHUD == YES) {
         [self showHUD];
     }
+    
+    [self useCurrentLoc];
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -271,7 +277,7 @@
             vc.setting = @"condition";
             self.selection = @"condition";
             
-            if (![self.chooseCondition.text isEqualToString:@"Choose"]) {
+            if (![self.chooseCondition.text isEqualToString:@"select"]) {
                 NSArray *selectedArray = [self.chooseCondition.text componentsSeparatedByString:@"."];
                 vc.holdingArray = [NSArray arrayWithArray:selectedArray];
             }
@@ -285,7 +291,7 @@
             vc.setting = @"category";
             self.selection = @"category";
             
-            if (![self.chooseCategroy.text isEqualToString:@"Choose"]) {
+            if (![self.chooseCategroy.text isEqualToString:@"select"]) {
                 NSArray *selectedArray = [self.chooseCategroy.text componentsSeparatedByString:@"."];
                 vc.holdingArray = [NSArray arrayWithArray:selectedArray];
             }
@@ -293,7 +299,7 @@
             [self.navigationController pushViewController:vc animated:YES];
         }
         else if(indexPath.row == 2){
-            if ([self.chooseCategroy.text isEqualToString:@"Choose"]) {
+            if ([self.chooseCategroy.text isEqualToString:@"select"]) {
                 [self sizePopUp];
                 [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
                 
@@ -305,7 +311,7 @@
                     vc.setting = @"sizefoot";
                     
                     // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"Choose"]) {
+                    if (![self.chooseSize.text isEqualToString:@"select"]) {
                         NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
                         NSLog(@"selected already %@", selectedArray);
                         vc.holdingArray = [NSArray arrayWithArray:selectedArray];
@@ -324,7 +330,7 @@
                     vc.setting = @"sizeclothing";
                     
                     // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"Choose"]) {
+                    if (![self.chooseSize.text isEqualToString:@"select"]) {
                         NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
                         vc.holdingArray = [NSArray arrayWithArray:selectedArray];
                     }
@@ -341,7 +347,7 @@
                     vc.setting = @"sizeclothing";
                     
                     // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"Choose"]) {
+                    if (![self.chooseSize.text isEqualToString:@"select"]) {
                         NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
                         vc.holdingArray = [NSArray arrayWithArray:selectedArray];
                     }
@@ -365,7 +371,7 @@
             vc.setting = @"delivery";
             self.selection = @"delivery";
             
-            if (![self.chooseDelivery.text isEqualToString:@"Choose"]) {
+            if (![self.chooseDelivery.text isEqualToString:@"select"]) {
                 NSArray *selectedArray = [self.chooseDelivery.text componentsSeparatedByString:@"."];
                 vc.holdingArray = [NSArray arrayWithArray:selectedArray];
             }
@@ -581,7 +587,7 @@
     self.webViewController.showUrlWhileLoading = NO;
     self.webViewController.showPageTitles = NO;
     self.webViewController.delegate = self;
-    self.webViewController.doneButtonTitle = @"Choose";
+    self.webViewController.doneButtonTitle = @"select";
     self.webViewController.paypalMode = NO;
     self.webViewController.infoMode = NO;
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
@@ -812,7 +818,7 @@
 //            self.chooseSize.text = @"One size";
 //        }
 //        else{
-          self.chooseSize.text = @"Choose";
+          self.chooseSize.text = @"select";
 //        }
     }
     else if ([self.selection isEqualToString:@"size"]){
@@ -879,7 +885,7 @@
         }
         else{
             NSLog(@"error with location");
-            self.chooseLocation.text = @"Choose";
+            self.chooseLocation.text = @"select";
         }
 }
 
@@ -887,7 +893,7 @@
     [self.saveButton setEnabled:NO];
     [self removeKeyboard];
     
-    if ([self.chooseCategroy.text isEqualToString:@"Choose"] || [self.chooseCondition.text isEqualToString:@"Choose"] || [self.chooseDelivery.text isEqualToString:@"Choose"] || [self.chooseLocation.text isEqualToString:@"Choose"] || [self.chooseSize.text isEqualToString:@"Choose"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
+    if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseDelivery.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
         self.warningLabel.text = @"Fill out all the above fields";
         [self.saveButton setEnabled:YES];
     }
@@ -901,7 +907,9 @@
         int price = [priceString intValue];
         
         NSString *itemTitle = self.titleField.text;
-        NSString *extraInfo = self.extraField.text;
+        NSString *extraInfo = [self.extraField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+        
+        
         
         if ([self.status isEqualToString:@"edit"]) {
             PFQuery *query = [PFQuery queryWithClassName:@"wantobuys"];
@@ -919,6 +927,7 @@
         }
         else{
             self.listing =[PFObject objectWithClassName:@"wantobuys"];
+            
         }
         
         [self.listing setObject:itemTitle forKey:@"title"];
@@ -990,22 +999,22 @@
             self.listing[@"listingPriceGBP"] = @(price);
             int USD = price*1.32;
             self.listing[@"listingPriceUSD"] = @(USD);
-            int AUD = price*1.74;
-            self.listing[@"listingPriceAUD"] = @(AUD);
+            int EUR = price*1.16;
+            self.listing[@"listingPriceEUR"] = @(EUR);
         }
         else if ([self.currency isEqualToString:@"USD"]) {
             self.listing[@"listingPriceUSD"] = @(price);
             int GBP = price*0.76;
             self.listing[@"listingPriceGBP"] = @(GBP);
-            int AUD = price*1.32;
-            self.listing[@"listingPriceAUD"] = @(AUD);
+            int EUR = price*0.89;
+            self.listing[@"listingPriceEUR"] = @(EUR);
         }
-        else if ([self.currency isEqualToString:@"AUD"]) {
-            self.listing[@"listingPriceAUD"] = @(price);
-            int GBP = price*0.57;
+        else if ([self.currency isEqualToString:@"EUR"]) {
+            self.listing[@"listingPriceEUR"] = @(price);
+            int GBP = price*0.86;
             self.listing[@"listingPriceGBP"] = @(GBP);
-            int USD = price*0.76;
-            self.listing[@"listingPriceAUD"] = @(USD);
+            int USD = price*1.12;
+            self.listing[@"listingPriceUSD"] = @(USD);
         }
         [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
         
@@ -1068,7 +1077,7 @@
             PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
             [self.listing setObject:imageFile4 forKey:@"image4"];
         }
-        if ([self.extraField.text isEqualToString:@"(optional)"]) {
+        if ([self.extraField.text isEqualToString:@"(optional)"] || [extraInfo isEqualToString:@""]) {
             //don't save its placeholder
         }
         else{
@@ -1076,6 +1085,8 @@
         }
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
+                
+                //check if intro mode so can show posted HUD otherwise just hide it
                 if (self.introMode == YES) {
                     self.hud.labelText = @"Posted!";
                     [Flurry logEvent:@"WTB_INTRO_DONE"];
@@ -1088,30 +1099,39 @@
                 else{
                     [self hidHUD];
                 }
-                if (self.introMode == YES) {
-                    
+                
+                //check if in edit mode as only increment post number if not in edit mode
+                if (![self.status isEqualToString:@"edit"]) {
+                    NSLog(@"not in edit mode so increment post number");
+                    [[PFUser currentUser]incrementKey:@"postNumber"];
+                    [[PFUser currentUser] saveInBackground];
+                }
+                
+                [self.saveButton setEnabled:YES];
+                
+                //check if editing from listing as need to pop VC rather than display a 'listing complete' VC
+                if (self.editFromListing == YES) {
+                    [self.navigationController popToRootViewControllerAnimated:YES];
+                }
+                else if (self.introMode == YES){
+                    //do nothing as intro screens will be dismissed automatically
                 }
                 else{
-                    [self.saveButton setEnabled:YES];
-                    if (self.editFromListing == YES) {
-                        [self.navigationController popToRootViewControllerAnimated:YES];
-                    }
-                    else{
-                        NSLog(@"listing saved! %@", self.listing.objectId);
-                        
-                        ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-                        vc.delegate = self;
-                        vc.lastObjectId = self.listing.objectId;
-                        vc.orderMode = NO;
-                        [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
-                        [self.navigationController pushViewController:vc animated:YES];
-                    }
+                    NSLog(@"listing saved! %@", self.listing.objectId);
+                    
+                    ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+                    vc.delegate = self;
+                    vc.lastObjectId = self.listing.objectId;
+                    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
+                    [self.navigationController pushViewController:vc animated:YES];
                 }
             }
             else{
+                //error saving listing
                 [self hidHUD];
                 [self.saveButton setEnabled:YES];
                 NSLog(@"error saving %@", error);
+                
                 if (self.introMode == YES) {
                     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
                     [self.delegate dismissCreateController:self];
@@ -1130,11 +1150,11 @@
     NSLog(@"reset form with status %@", self.status);
     [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
     self.status = @"";
-    self.chooseCategroy.text = @"Choose";
-    self.chooseCondition.text = @"Choose";
-    self.chooseDelivery.text = @"Choose";
-    self.chooseLocation.text = @"Choose";
-    self.chooseSize.text = @"Choose";
+    self.chooseCategroy.text = @"select";
+    self.chooseCondition.text = @"select";
+    self.chooseDelivery.text = @"select";
+    self.chooseLocation.text = @"select";
+    self.chooseSize.text = @"select";
     self.payField.text = @"";
     self.titleField.text = @"";
     self.extraField.text = @"(optional)";
@@ -1419,6 +1439,40 @@
 }
 - (IBAction)skipPressed:(id)sender {
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)useCurrentLoc{
+    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
+        if (!error) {
+            double latitude = geoPoint.latitude;
+            double longitude = geoPoint.longitude;
+            
+            CLLocation *loc = [[CLLocation alloc]initWithLatitude:latitude longitude:longitude];
+            CLGeocoder *geocoder = [[CLGeocoder alloc]init];
+            [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
+                if (placemarks) {
+                    CLPlacemark *placemark = [placemarks lastObject];
+                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.administrativeArea];
+                    
+                    if (geoPoint) {
+                        self.geopoint = geoPoint;
+                        self.chooseLocation.text = [NSString stringWithFormat:@"%@",titleString];
+                    }
+                    else{
+                        NSLog(@"error with location");
+                        self.chooseLocation.text = @"select";
+                    }
+                }
+                else{
+                    NSLog(@"error %@", error);
+                }
+            }];
+        }
+        else{
+            NSLog(@"error %@", error);
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    }];
 }
 
 @end

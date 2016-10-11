@@ -32,6 +32,7 @@
     self.nameField.delegate = self;
     self.emailField.delegate = self;
     self.usernameField.delegate = self;
+    self.depopField.delegate = self;
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -131,7 +132,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
     if (section == 0){
-        return 6;
+        return 7;
     }
     else if (section == 1){
         return 1;
@@ -159,6 +160,9 @@
             return self.currencyCell;
         }
         else if(indexPath.row == 5){
+            return self.depopCell;
+        }
+        else if(indexPath.row == 6){
             return self.pictureCell;
         }
     }
@@ -173,10 +177,10 @@
         if (indexPath.row == 0) {
             return 58;
         }
-        else if(indexPath.row == 1 ||indexPath.row == 2 ||indexPath.row == 3 ||indexPath.row == 4){
+        else if(indexPath.row == 1 ||indexPath.row == 2 ||indexPath.row == 3 ||indexPath.row == 4 ||indexPath.row == 5){
             return 44;
         }
-        else if(indexPath.row == 5){
+        else if(indexPath.row == 6){
             return 197;
         }
     }
@@ -288,8 +292,21 @@
                         NSLog(@"username is available!");
                         self.user[PF_USER_FULLNAME] = self.nameField.text;
                         self.user[PF_USER_EMAIL] = self.emailField.text;
-                        self.user[PF_USER_USERNAME] = self.usernameField.text;
+                        self.user[@"paypal"] = self.emailField.text;
+                        self.user[PF_USER_USERNAME] = [self.usernameField.text lowercaseString];
                         self.user[@"currency"] = self.selectedCurrency;
+                        self.user[@"completedReg"] = @"YES";
+                        
+                        if (![self.depopField.text isEqualToString:@""]) {
+                            //entered a depop account
+                            NSString *depopHandle = [self.depopField.text stringByReplacingOccurrencesOfString:@"@" withString:@""];
+                            self.user[@"depopHandle"] = depopHandle;
+                            PFObject *depopObj = [PFObject objectWithClassName:@"Depop"];
+                            depopObj[@"user"] = self.user;
+                            depopObj[@"handle"] = depopHandle;
+                            [depopObj saveInBackground];
+                        }
+                        
                         [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
                          {
                              if (error == nil)
@@ -304,6 +321,50 @@
                                  [installation setObject:[PFUser currentUser].objectId forKey:@"userId"];
                                  [installation saveInBackground];
                                  
+                                 //create team bump convo
+                                 PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
+                                 convoObject[@"otherUser"] = [PFUser currentUser];
+                                 convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+                                 convoObject[@"totalMessages"] = @0;
+                                 [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                     if (succeeded) {
+                                         NSString *messageString = @"Welcome to Bump!\n\nWant to buy something?\nCreate listings for items you want then sit back and wait for sellers to send you offers to buy their stuff (Plus there's ZERO fees)!\n\nSelling something?\nUse the search & filter tools to find people that want what you're selling then start chatting to sort out a deal. Hassle free, fee free.\n\nGot any questions? Just message us here - we're available 24/7/365 #wehavenolife\n\nHappy Bumping!\nTeam Bump";
+                                         
+                                         //saved, create intro message
+                                         PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
+                                         messageObject[@"message"] = messageString;
+                                         messageObject[@"sender"] = [PFUser currentUser];
+                                         messageObject[@"senderId"] = @"BUMP";
+                                         messageObject[@"senderName"] = @"Team Bump";
+                                         messageObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+                                         messageObject[@"status"] = @"sent";
+                                         messageObject[@"offer"] = @"NO";
+                                         messageObject[@"mediaMessage"] = @"NO";
+                                         [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                             if (succeeded == YES) {
+                                                 
+//                                                 NSLog(@"saved message, here it is: %@", messageObject);
+                                                 
+                                                 //update convo
+                                                 [convoObject incrementKey:@"totalMessages"];
+                                                 [convoObject setObject:messageObject forKey:@"lastSent"];
+                                                 [convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
+                                                 [convoObject incrementKey:@"userUnseen"];
+                                                 [convoObject saveInBackground];
+
+                                             }
+                                             else{
+                                                 NSLog(@"error sending message %@", error);
+                                             }
+                                         }];
+                                         
+
+                                     }
+                                     else{
+                                         NSLog(@"error saving convo");
+                                     }
+                                 }];
+
                                  //progress to tutorial
 //                                 ContainerViewController *vc = [[ContainerViewController alloc]init];
 //                                 [self.navigationController pushViewController:vc animated:YES];
@@ -349,6 +410,7 @@
     [self.nameField resignFirstResponder];
     [self.emailField resignFirstResponder];
     [self.usernameField resignFirstResponder];
+    [self.depopField resignFirstResponder];
 }
 
 -(BOOL) NSStringIsValidEmail:(NSString *)checkString
@@ -372,7 +434,7 @@
     else{
         self.selectedCurrency = @"GBP";
         [self.GBPButton setSelected:YES];
-        [self.AUDButton setSelected:NO];
+        [self.EURButton setSelected:NO];
         [self.USDButton setSelected:NO];
     }
 }
@@ -382,16 +444,16 @@
     else{
         self.selectedCurrency = @"USD";
         [self.USDButton setSelected:YES];
-        [self.AUDButton setSelected:NO];
+        [self.EURButton setSelected:NO];
         [self.GBPButton setSelected:NO];
     }
 }
 - (IBAction)AUDPressed:(id)sender {
-    if (self.AUDButton.selected == YES) {
+    if (self.EURButton.selected == YES) {
     }
     else{
-        self.selectedCurrency = @"AUD";
-        [self.AUDButton setSelected:YES];
+        self.selectedCurrency = @"EUR";
+        [self.EURButton setSelected:YES];
         [self.GBPButton setSelected:NO];
         [self.USDButton setSelected:NO];
     }
@@ -408,6 +470,15 @@
     webViewController.infoMode = NO;
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
+}
+- (IBAction)depopInfoPressed:(id)sender {
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Depop matching"
+                                  message:@"Already selling loads of stuff on depop? Let us know your depop handle and our clever code will check out your account then let you know on Bump when someone wants what you're selling.\nSit back and relax 🐸☕️"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 @end

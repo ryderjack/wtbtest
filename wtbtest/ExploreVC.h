@@ -52,4 +52,6 @@
 @property (nonatomic) BOOL searchShowing;
 @property (nonatomic) BOOL resultsShowing;
 @property (nonatomic) BOOL listingTapped;
+
+@property (nonatomic, strong) NSArray *uselessWords;
 @end

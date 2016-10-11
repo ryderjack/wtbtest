@@ -10,6 +10,7 @@
 #import "OfferCell.h"
 #import "ListingController.h"
 #import <TOWebViewController.h>
+#import <SVPullToRefresh/SVPullToRefresh.h>
 
 @interface UserProfileController ()
 
@@ -37,19 +38,19 @@
     
     if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
         //iPhone5
-        [flowLayout setItemSize:CGSizeMake(self.collectionView.frame.size.width-40, 72)];
+        [flowLayout setItemSize:CGSizeMake(self.view.frame.size.width-40, 72)];
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.height == 736){
         //iPhone 6 plus
-        [flowLayout setItemSize:CGSizeMake(self.collectionView.frame.size.width-20, 72)];
+        [flowLayout setItemSize:CGSizeMake(self.view.frame.size.width-20, 72)];
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.height == 480){
         //iPhone 4
-        [flowLayout setItemSize:CGSizeMake(self.collectionView.frame.size.width-40, 72)];
+        [flowLayout setItemSize:CGSizeMake(self.view.frame.size.width-40, 72)];
     }
     else{
         //iPhone 6
-        [flowLayout setItemSize:CGSizeMake(self.collectionView.frame.size.width-20, 72)];
+        [flowLayout setItemSize:CGSizeMake(self.view.frame.size.width-20, 72)];
     }
     
     [flowLayout setMinimumInteritemSpacing:0.0];
@@ -65,16 +66,20 @@
     
     [self.nothingLabel setHidden:YES];
     [self loadListings];
-    [self setImageBorder:self.headerImgView];
+
+    self.headerImgView.layer.cornerRadius = 40;
+    self.headerImgView.layer.masksToBounds = YES;
+    self.headerImgView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    self.headerImgView.contentMode = UIViewContentModeScaleAspectFill;
     
     [self setAutomaticallyAdjustsScrollViewInsets:NO];
-
     [self.segmentControl setSelectedSegmentIndex:0];
     
     if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
         //show link to users' FB if not looking at own profile
         UIBarButtonItem *fbButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"FBIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(fbPressed)];
-        self.navigationItem.rightBarButtonItem = fbButton;
+        UIBarButtonItem *extraButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(reportUser)];
+        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:extraButton, fbButton, nil]];
     }
 }
 
@@ -83,9 +88,15 @@
     
     self.navigationItem.title = [NSString stringWithFormat:@"%@", self.user.username];
     
-    [self.headerImgView setFile:[self.user objectForKey:@"picture"]];
-    [self.headerImgView loadInBackground];
-    
+    PFFile *img = [self.user objectForKey:@"picture"];
+    if ( img != nil) {
+        [self.headerImgView setFile:[self.user objectForKey:@"picture"]];
+        [self.headerImgView loadInBackground];
+    }
+    else{
+        [self.headerImgView setImage:[UIImage imageNamed:@"empty"]];
+    }
+
     PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
     [dealsQuery whereKey:@"User" equalTo:self.user];
     [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -133,7 +144,10 @@
     if ([self.currency isEqualToString:@"GBP"]) {
         self.currencySymbol = @"£";
     }
-    else{
+    else if ([self.currency isEqualToString:@"EUR"]) {
+        self.currencySymbol = @"€";
+    }
+    else if ([self.currency isEqualToString:@"USD"]) {
         self.currencySymbol = @"$";
     }
     
@@ -197,6 +211,7 @@
         if (!error) {
             [self.feedbackArray removeAllObjects];
             [self.feedbackArray addObjectsFromArray:objects];
+            
             //query for purchase feedback
             PFQuery *purchaseQuery = [PFQuery queryWithClassName:@"feedback"];
             [purchaseQuery whereKey:@"buyerUser" equalTo:self.user];
@@ -208,7 +223,7 @@
                     [self.feedbackArray addObjectsFromArray:objects];
                     NSSortDescriptor *sortDescriptor;
                     sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"createdAt"
-                                                                 ascending:YES];
+                                                                 ascending:NO];
                     NSArray *sortDescriptors = [NSArray arrayWithObject:sortDescriptor];
                     NSArray *sortedArray = [self.feedbackArray sortedArrayUsingDescriptors:sortDescriptors];
                     
@@ -466,6 +481,21 @@
     webViewController.infoMode = NO;
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
+}
+
+-(void)reportUser{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this user has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+        PFObject *reportObject = [PFObject objectWithClassName:@"ReportedUsers"];
+        reportObject[@"reportedUser"] = self.user;
+        reportObject[@"reporter"] = [PFUser currentUser];
+        [reportObject saveInBackground];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 
 @end

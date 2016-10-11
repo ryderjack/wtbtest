@@ -1,25 +1,32 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1004" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="SettingsController">
             <connections>
-                <outlet property="AUDButton" destination="Jsv-9q-gMW" id="OB4-qG-XZk"/>
+                <outlet property="EURButton" destination="Jsv-9q-gMW" id="mgN-fp-13k"/>
                 <outlet property="GBPButton" destination="CB9-iH-sRT" id="cQT-bD-WBC"/>
                 <outlet property="USDButton" destination="l7z-Yl-wR6" id="2Fe-6d-2bY"/>
                 <outlet property="addLabel" destination="bR0-RE-J9K" id="aWG-UH-O6h"/>
                 <outlet property="addressCell" destination="Aqh-7q-75q" id="Ner-g9-VUu"/>
+                <outlet property="contactEmailCell" destination="lzo-FI-RXh" id="NTm-HT-ppf"/>
+                <outlet property="contactEmailField" destination="GcE-lD-fAY" id="0OE-HO-Q8w"/>
                 <outlet property="currencyCell" destination="WnP-hy-I57" id="ZW3-Ee-RtO"/>
+                <outlet property="depopCell" destination="OrY-cm-bR4" id="cQC-P8-Mjb"/>
+                <outlet property="depopField" destination="oc8-Ku-0l4" id="awI-uS-es3"/>
                 <outlet property="emailCell" destination="c20-Ec-Pex" id="kai-Y1-BWV"/>
                 <outlet property="emailFields" destination="iTI-ps-maX" id="e3F-E4-Zwr"/>
                 <outlet property="nameCell" destination="8IE-Et-7Cd" id="7ef-z6-r5i"/>
                 <outlet property="nameLabel" destination="79W-d3-tBd" id="8mF-pw-Z7t"/>
+                <outlet property="pictureCelll" destination="ku0-Td-kJz" id="sWa-Qy-uBg"/>
+                <outlet property="testingView" destination="ThM-kz-zvl" id="2wL-sh-e0f"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -27,8 +34,7 @@
         <tableView opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" bouncesZoom="NO" style="grouped" separatorStyle="none" rowHeight="44" sectionHeaderHeight="18" sectionFooterHeight="18" id="i5M-Pr-FkT">
             <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-            <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="calibratedRGB"/>
-            <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
+            <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <inset key="separatorInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
             <connections>
                 <outlet property="dataSource" destination="-1" id="Tng-2m-Rnh"/>
@@ -39,13 +45,12 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="8IE-Et-7Cd" id="PNf-FE-fsZ">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <frame key="frameInset" width="320" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Name" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="79W-d3-tBd">
-                        <rect key="frame" x="8" y="5" width="304" height="34"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
-                        <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                 </subviews>
@@ -56,18 +61,17 @@
                     <constraint firstItem="79W-d3-tBd" firstAttribute="trailing" secondItem="PNf-FE-fsZ" secondAttribute="trailingMargin" id="hVR-OH-UQJ"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-63" y="184"/>
+            <point key="canvasLocation" x="-348" y="-7"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="c20-Ec-Pex">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="c20-Ec-Pex" id="AAX-3d-N3I">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <frame key="frameInset" width="320" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="PayPal email" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="iTI-ps-maX">
-                        <rect key="frame" x="8" y="7" width="304" height="30"/>
-                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
                         <textInputTraits key="textInputTraits" keyboardType="emailAddress" returnKeyType="done"/>
                     </textField>
@@ -79,19 +83,18 @@
                     <constraint firstItem="iTI-ps-maX" firstAttribute="centerY" secondItem="AAX-3d-N3I" secondAttribute="centerY" id="vnP-vC-8sC"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-63" y="285"/>
+            <point key="canvasLocation" x="-348" y="93"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" id="Aqh-7q-75q">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Aqh-7q-75q" id="6fy-z8-Hc5">
-                <rect key="frame" x="0.0" y="0.0" width="287" height="43.5"/>
+                <frame key="frameInset" width="287" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Address" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bR0-RE-J9K">
-                        <rect key="frame" x="8" y="11" width="271" height="21"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
-                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                 </subviews>
@@ -102,64 +105,60 @@
                     <constraint firstItem="bR0-RE-J9K" firstAttribute="trailing" secondItem="6fy-z8-Hc5" secondAttribute="trailingMargin" id="hcQ-au-bvR"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-259" y="377"/>
+            <point key="canvasLocation" x="-348" y="201"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="WnP-hy-I57">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="WnP-hy-I57" id="VS1-jG-Epx">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <frame key="frameInset" width="320" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="currencyIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="lhz-6P-7dC">
-                        <rect key="frame" x="18" y="14" width="15" height="15"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="15" id="6xl-EK-SiW"/>
                         </constraints>
                     </imageView>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="CB9-iH-sRT">
-                        <rect key="frame" x="49" y="7" width="46" height="30"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="46" id="xjE-21-8Nx"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
-                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <state key="normal" title="GBP">
-                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                            <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         </state>
                         <state key="selected">
-                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         </state>
                         <connections>
                             <action selector="GBPPressed:" destination="-1" eventType="touchUpInside" id="rdT-pC-jk9"/>
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="l7z-Yl-wR6">
-                        <rect key="frame" x="137" y="7" width="46" height="30"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
-                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <state key="normal" title="USD">
-                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                            <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         </state>
                         <state key="selected">
-                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         </state>
                         <connections>
                             <action selector="USDPressed:" destination="-1" eventType="touchUpInside" id="tFh-Si-YqK"/>
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Jsv-9q-gMW">
-                        <rect key="frame" x="225" y="7" width="46" height="30"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
-                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
-                        <state key="normal" title="AUD">
-                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <state key="normal" title="EUR">
+                            <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         </state>
                         <state key="selected">
-                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                            <color key="titleColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         </state>
                         <connections>
-                            <action selector="AUDPressed:" destination="-1" eventType="touchUpInside" id="bSz-4a-5Ym"/>
+                            <action selector="EURPressed:" destination="-1" eventType="touchUpInside" id="Ja5-VI-Vzl"/>
                         </connections>
                     </button>
                 </subviews>
@@ -183,10 +182,113 @@
                     <constraint firstItem="l7z-Yl-wR6" firstAttribute="leading" secondItem="CB9-iH-sRT" secondAttribute="trailing" constant="42" id="zgH-qA-PxN"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-227" y="494"/>
+            <point key="canvasLocation" x="-348" y="312"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="OrY-cm-bR4">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" ambiguous="YES" tableViewCell="OrY-cm-bR4" id="5Va-Ud-ami">
+                <frame key="frameInset" width="320" height="43"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="depop username" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="oc8-Ku-0l4">
+                        <frame key="frameInset" width="1000" height="1000"/>
+                        <color key="tintColor" red="1" green="0.5" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="16"/>
+                        <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" returnKeyType="done"/>
+                    </textField>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" image="link.png" translatesAutoresizingMaskIntoConstraints="NO" id="hZu-hx-G2c">
+                        <frame key="frameInset" width="1000" height="1000"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="15" id="G1S-qx-gl4"/>
+                        </constraints>
+                    </imageView>
+                    <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zBn-hu-JJ3">
+                        <frame key="frameInset" width="1000" height="1000"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="20" id="ex3-XI-SQr"/>
+                            <constraint firstAttribute="width" constant="20" id="nzq-OR-zZB"/>
+                        </constraints>
+                        <state key="normal" image="infoB.png"/>
+                        <connections>
+                            <action selector="depopInfoPressed:" destination="-1" eventType="touchUpInside" id="8uR-aQ-ZDO"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="hZu-hx-G2c" firstAttribute="centerY" secondItem="5Va-Ud-ami" secondAttribute="centerY" id="AeJ-WZ-AEx"/>
+                    <constraint firstItem="zBn-hu-JJ3" firstAttribute="trailing" secondItem="5Va-Ud-ami" secondAttribute="trailingMargin" id="B65-fM-kHT"/>
+                    <constraint firstItem="zBn-hu-JJ3" firstAttribute="leading" secondItem="oc8-Ku-0l4" secondAttribute="trailing" constant="20" id="Lef-Xx-Uq6"/>
+                    <constraint firstItem="hZu-hx-G2c" firstAttribute="centerY" secondItem="oc8-Ku-0l4" secondAttribute="centerY" id="OaE-z3-Dnr"/>
+                    <constraint firstItem="zBn-hu-JJ3" firstAttribute="top" secondItem="5Va-Ud-ami" secondAttribute="topMargin" constant="4" id="RGz-rI-EIG"/>
+                    <constraint firstItem="hZu-hx-G2c" firstAttribute="top" secondItem="5Va-Ud-ami" secondAttribute="topMargin" constant="6" id="SL8-JM-EVF"/>
+                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="centerX" secondItem="5Va-Ud-ami" secondAttribute="centerX" id="hLl-3Q-lhr"/>
+                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="leading" secondItem="hZu-hx-G2c" secondAttribute="trailing" constant="16" id="pHP-ks-hfJ"/>
+                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="top" secondItem="5Va-Ud-ami" secondAttribute="top" id="uhg-Pn-QaC"/>
+                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="centerY" secondItem="zBn-hu-JJ3" secondAttribute="centerY" id="wKT-Mz-VG8"/>
+                    <constraint firstItem="hZu-hx-G2c" firstAttribute="leading" secondItem="5Va-Ud-ami" secondAttribute="leadingMargin" constant="10" id="yxf-Ns-ouL"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-348" y="419"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="ku0-Td-kJz">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" ambiguous="YES" tableViewCell="ku0-Td-kJz" id="QX7-5k-LPh">
+                <frame key="frameInset" width="320" height="43.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Change profile picture" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c3m-ss-zd7">
+                        <frame key="frameInset" width="1000" height="1000"/>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ThM-kz-zvl" customClass="PFImageView">
+                        <frame key="frameInset" width="1000" height="1000"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="40" id="LJ6-K5-6IC"/>
+                            <constraint firstAttribute="width" constant="40" id="pdO-x6-xHM"/>
+                        </constraints>
+                    </imageView>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="ThM-kz-zvl" firstAttribute="trailing" secondItem="QX7-5k-LPh" secondAttribute="trailingMargin" id="8Op-os-T4f"/>
+                    <constraint firstItem="c3m-ss-zd7" firstAttribute="centerY" secondItem="ThM-kz-zvl" secondAttribute="centerY" id="LAA-3Q-AA0"/>
+                    <constraint firstItem="ThM-kz-zvl" firstAttribute="top" secondItem="QX7-5k-LPh" secondAttribute="topMargin" constant="-6" id="OSz-LB-xqi"/>
+                    <constraint firstItem="ThM-kz-zvl" firstAttribute="centerY" secondItem="QX7-5k-LPh" secondAttribute="centerY" id="eb2-A4-8Nq"/>
+                    <constraint firstItem="c3m-ss-zd7" firstAttribute="leading" secondItem="QX7-5k-LPh" secondAttribute="leadingMargin" id="y5g-sY-1CV"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-348" y="566"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="lzo-FI-RXh">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="lzo-FI-RXh" id="Ca3-Bc-Jxv">
+                <frame key="frameInset" width="320" height="43"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Email" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="GcE-lD-fAY">
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="15"/>
+                        <textInputTraits key="textInputTraits" keyboardType="emailAddress" returnKeyType="done"/>
+                    </textField>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="GcE-lD-fAY" firstAttribute="top" secondItem="Ca3-Bc-Jxv" secondAttribute="topMargin" constant="-1" id="AtX-wC-KxD"/>
+                    <constraint firstItem="GcE-lD-fAY" firstAttribute="trailing" secondItem="Ca3-Bc-Jxv" secondAttribute="trailingMargin" id="bBb-3B-67r"/>
+                    <constraint firstItem="GcE-lD-fAY" firstAttribute="centerY" secondItem="Ca3-Bc-Jxv" secondAttribute="centerY" id="cEp-3A-FNe"/>
+                    <constraint firstItem="GcE-lD-fAY" firstAttribute="leading" secondItem="Ca3-Bc-Jxv" secondAttribute="leadingMargin" id="iRv-6u-cky"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-348" y="-15"/>
         </tableViewCell>
     </objects>
     <resources>
         <image name="currencyIcon.png" width="17" height="17"/>
+        <image name="infoB.png" width="22" height="22"/>
+        <image name="link.png" width="17" height="17"/>
     </resources>
 </document>

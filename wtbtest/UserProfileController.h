@@ -25,4 +25,9 @@
 //currency
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
+
+//infin
+@property (nonatomic) int lastSkipped;
+@property (nonatomic) BOOL pullFinished;
+@property (nonatomic) BOOL infinFinished;
 @end

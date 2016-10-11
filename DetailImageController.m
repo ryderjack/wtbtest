@@ -45,10 +45,24 @@
         [self.tagLabel setHidden:NO];
         self.tagLabel.text = self.tagText;
     }
+    
+    self.scrollView.minimumZoomScale = 1;
+    self.scrollView.maximumZoomScale = 6.0;
+    self.scrollView.contentSize = self.imageView.frame.size;
+    self.scrollView.delegate = self;
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
+}
+
+- (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView
+{
+    return self.imageView;
+}
+
+- (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(CGFloat)scale
+{
 }
 
 -(void)viewWillAppear:(BOOL)animated{

@@ -14,7 +14,7 @@
 @interface InboxViewController : UITableViewController
 
 @property (nonatomic, strong) InboxCell *cell;
-@property (nonatomic, strong) NSArray *convoObjects;
+@property (nonatomic, strong) NSMutableArray *convoObjects;
 
 @property (nonatomic, strong) NSMutableArray *unseenMessages;
 
@@ -24,5 +24,15 @@
 @property (nonatomic, strong) NSString *currencySymbol;
 
 @property (nonatomic, strong) NSDateFormatter *dateFormat;
+
+@property (nonatomic, strong) PFQuery *infiniteQuery;
+@property (nonatomic, strong) PFQuery *pullQuery;
+
+@property (nonatomic) int lastSkipped;
+@property (nonatomic) BOOL pullFinished;
+@property (nonatomic) BOOL infinFinished;
+
+@property (nonatomic, strong) UILabel *topLabel;
+@property (nonatomic, strong) UILabel *bottomLabel;
 
 @end

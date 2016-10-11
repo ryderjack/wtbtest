@@ -15,6 +15,8 @@
 #import "FeedbackController.h"
 #import "OrderSummaryController.h"
 #import "ListingController.h"
+#import "MessageTutorial.h"
+#import <PulsingHaloLayer.h>
 
 @interface MessageViewController ()
 
@@ -44,15 +46,36 @@
     
     self.cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(clearOffer)];
     self.profileButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"profileIcon2"] style:UIBarButtonItemStylePlain target:self action:@selector(profileTapped)];
-    self.listingButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"listingIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(listingTapped)];
-    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
 
+    UIButton *btn =  [UIButton buttonWithType:UIButtonTypeCustom];
+    btn.frame = CGRectMake(0,0,25,25);
+    [btn addTarget:self action:@selector(listingTapped) forControlEvents:UIControlEventTouchUpInside];
+    PFImageView *buttonView = [[PFImageView alloc]initWithFrame:btn.frame];
+    PFFile *listingFile = [self.listing objectForKey:@"image1"];
+    [buttonView setFile:listingFile];
+    [buttonView loadInBackground];
+    [self setImageBorder:buttonView];
+    [btn addSubview:buttonView];
+    self.listingButton = [[UIBarButtonItem alloc] initWithCustomView:btn];
+    
+    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
+    
     
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
     self.inputToolbar.contentView.textView.pasteDelegate = self;
     self.inputToolbar.contentView.textView.placeHolder = @"Tap the tag for more actions";
-    [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagIcon"] forState:UIControlStateNormal];
+    [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagFill"] forState:UIControlStateNormal];
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagIconG"] forState:UIControlStateHighlighted];
+    
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"pulsingDone"] == YES) {
+        PulsingHaloLayer *halo = [PulsingHaloLayer layer];
+        halo.position = self.inputToolbar.contentView.leftBarButtonItem.center;
+        [self.inputToolbar.contentView.leftBarButtonItem.layer addSublayer:halo];
+        UIColor *color = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
+        halo.backgroundColor = color.CGColor;
+        [halo start];
+    }
     
     //no avatar images
     self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeZero;
@@ -117,6 +140,14 @@
     
     //to update status to seen of last sent when new messages come through
     self.receivedNew = NO;
+    
+    if (self.userIsBuyer == NO) {
+        //check if paypal email has been entered
+        if (![[[PFUser currentUser]objectForKey:@"paypalUpdated"]isEqualToString:@"YES"]) {
+            [self showPayPalAlert];
+            [[PFUser currentUser]saveInBackground];
+        }
+    }
 }
 
 -(void)loadMessages{
@@ -202,7 +233,6 @@
                                 PFFile *img = [object objectForKey:@"Image"];
                                 [img getDataInBackgroundWithBlock:^(NSData *data, NSError *error) {
                                     if (!error) {
-                                        
                                         UIImage *messageImage = [UIImage imageWithData:data];
                                         photoItem.image = messageImage;
                                         
@@ -216,7 +246,6 @@
                                         else{
                                             [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView]; //needs to change?
                                         }
-                                        
                                         [self.collectionView reloadData];
                                     }
                                 }];
@@ -278,7 +307,6 @@
                 [self.convoObject saveInBackground];
                 
                 if (self.fromForeGround == YES) {
-                    NSLog(@"hello");
                     //call attributedString method to update labels
                     NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
                     NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
@@ -308,7 +336,6 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    NSLog(@"appearing");
     
     //to prevent double tapping profile button
     self.profileBTapped = NO;
@@ -337,7 +364,10 @@
         if ([self.currency isEqualToString:@"GBP"]) {
             self.currencySymbol = @"£";
         }
-        else{
+        else if ([self.currency isEqualToString:@"EUR"]) {
+            self.currencySymbol = @"€";
+        }
+        else if ([self.currency isEqualToString:@"USD"]) {
             self.currencySymbol = @"$";
         }
     }
@@ -361,7 +391,6 @@
 }
 
 -(void)loadNewMessages{
-    NSLog(@"loading more!");
     PFQuery *newMessageQuery = [PFQuery queryWithClassName:@"messages"];
     [newMessageQuery whereKey:@"convoId" equalTo:self.convoId];
     NSDate *lastDate = [self.lastMessage createdAt];
@@ -543,6 +572,7 @@
         self.offerMode = YES;
         self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Selling: \nCondition: \nPrice: %@\nMeetup: ", self.currencySymbol];
     }
+    
 }
 
 #pragma mark - Custom menu actions for cells
@@ -567,17 +597,40 @@
 
 -(void)showPayPalAlert{
     
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"PayPal" message:[NSString stringWithFormat:@"Make sure your PayPal email address is correct to ensure seemless payment. Is it %@?", [PFUser currentUser].email] preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"PayPal" message:[NSString stringWithFormat:@"Make sure your PayPal email address is correct to ensure seemless payment. Please enter it in Settings now"] preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }]];
-    
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Change" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Settings" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         SettingsController *vc = [[SettingsController alloc]init];
         [self.navigationController pushViewController:vc animated:YES];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
+
+//-(void)createConvoPOPUP{
+//    UIAlertController *alertController = [UIAlertController
+//                                          alertControllerWithTitle:@"New convo"
+//                                          message:@"Enter username"
+//                                          preferredStyle:UIAlertControllerStyleAlert];
+//    
+//    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+//     {
+//         textField.placeholder = @"PayPal email";
+//     }];
+//    
+//    UIAlertAction *okAction = [UIAlertAction
+//                               actionWithTitle:@"Done"
+//                               style:UIAlertActionStyleDefault
+//                               handler:^(UIAlertAction *action)
+//                               {
+//                                   UITextField *paypalField = alertController.textFields.firstObject;
+//                                   NSLog(@"paypal email %@", paypalField.text);
+//                                   [PFUser currentUser][@"paypal"] = paypalField.textColor;
+//                               }];
+//    
+//    [alertController addAction:okAction];
+//    
+//    [self presentViewController:alertController animated:YES completion:nil];
+//}
 
 #pragma mark - JSQMessagesViewController method overrides
 
@@ -799,22 +852,18 @@
     
     if (self.offerMode == YES) {
         [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
-        
+    
         if ([self.convoObject objectForKey:@"convoImages"] == 0) {
             //images have been previously sent in the chat so don't need to send anymore
-            CameraController *vc = [[CameraController alloc]init];
-            vc.delegate = self;
-            vc.offerMode = YES;
-            [self presentViewController:vc animated:YES completion:nil];
+            if ([UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera])
+            {
+                CameraController *vc = [[CameraController alloc]init];
+                vc.delegate = self;
+                vc.offerMode = YES;
+                [self presentViewController:vc animated:YES completion:nil];
+            }
         }
         else{
-            //check if paypal email has been checked before proceeding
-            if (![[[PFUser currentUser]objectForKey:@"paypalChecked"]isEqualToString:@"YES"]) {
-                [self showPayPalAlert];
-                [[PFUser currentUser] setObject:@"YES" forKey:@"paypalChecked"];
-                [[PFUser currentUser]saveInBackground];
-            }
-            
             self.offerMode = NO;
             PFQuery *convoImagesQuery = [PFQuery queryWithClassName:@"messageImages"];
             [convoImagesQuery whereKey:@"convo" equalTo:self.convoObject];
@@ -871,6 +920,7 @@
 
 - (void)didPressAccessoryButton:(UIButton *)sender
 {
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"pulsingDone"];
     [self.inputToolbar.contentView.textView resignFirstResponder];
     [self alertSheet];
 }
@@ -884,22 +934,15 @@
         }];
     }]];
     
+    PFObject *order = [self.convoObject objectForKey:@"order"];
+    
     if (self.userIsBuyer == NO) {
-        
-        PFObject *order = [self.convoObject objectForKey:@"order"];
         
         if (order == nil) {
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 self.offerMode = YES;
                 self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Selling: \nCondition: \nPrice: %@\nMeetup: ", self.currencySymbol];
                 [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.cancelButton, nil]];
-            }]];
-        }
-        else{
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Pay with PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                //used as a backup way to pay if user has clicked paid but didn't actually pay.
-                //order object already created so just need to an easy way to pay
-                [self payPaypal];
             }]];
         }
         
@@ -910,12 +953,18 @@
             [self presentViewController:vc animated:YES completion:nil];
         }]];
         
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
-            picker.delegate = self;
-            picker.allowsEditing = NO;
-            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose pictures" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+//            picker.delegate = self;
+//            picker.allowsEditing = NO;
+//            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
             
+            GMImagePickerController *picker = [[GMImagePickerController alloc] init];
+            picker.delegate = self;
+            picker.displaySelectionInfoToolbar = YES;
+            picker.displayAlbumsNumberOfAssets = YES;
+            picker.title = @"Choose pictures";
+            picker.mediaTypes = @[@(PHAssetMediaTypeImage)];
             [self presentViewController:picker animated:YES completion:nil];
         }]];
         
@@ -924,21 +973,57 @@
         }]];
     }
     else{
+        if (order != nil) {
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Pay with PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                //used as a backup way to pay if buyer has clicked paid but didn't actually pay.
+                //order object already created so just need to an easy way to pay
+                [self payPaypal];
+            }]];
+        }
+        
         //pay with paypal at all times here? not just used as a backup when an order has been created?
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose pictures" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            GMImagePickerController *picker = [[GMImagePickerController alloc] init];
             picker.delegate = self;
-            picker.allowsEditing = NO;
-            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-            
+            picker.displaySelectionInfoToolbar = YES;
+            picker.displayAlbumsNumberOfAssets = YES;
+            picker.title = @"Choose pictures";
+            picker.mediaTypes = @[@(PHAssetMediaTypeImage)];
             [self presentViewController:picker animated:YES completion:nil];
         }]];
     }
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report user" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-        [self reportUser];
-    }]];
     [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+- (BOOL)assetsPickerController:(GMImagePickerController *)picker shouldSelectAsset:(PHAsset *)asset{
+    if (picker.selectedAssets.count == 4) {
+        return NO;
+    }
+    return YES;
+}
+
+- (void)assetsPickerController:(GMImagePickerController *)picker didFinishPickingAssets:(NSArray *)assetArray
+{
+    [picker.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+    NSLog(@"GMImagePicker: User ended picking assets. Number of selected items is: %lu", (unsigned long)assetArray.count);
+    
+    PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+    requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
+    requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+    
+    PHImageManager *manager = [PHImageManager defaultManager];
+    
+    for (PHAsset *asset in assetArray) {
+        [manager requestImageForAsset:asset
+                           targetSize:PHImageManagerMaximumSize
+                          contentMode:PHImageContentModeDefault
+                              options:requestOptions
+                        resultHandler:^void(UIImage *image, NSDictionary *info) {
+                            NSLog(@"image %@", image);
+                            [self finalImage:image];
+                        }];
+    }
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
@@ -947,6 +1032,11 @@
     [picker dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:chosenImage];
     }];
+}
+
+-(void)assetsPickerControllerDidCancel:(GMImagePickerController *)picker
+{
+    //cancel
 }
 
 -(void)displayCropperWithImage:(UIImage *)image{
@@ -971,22 +1061,6 @@
 
 - (void)squareCropperDidCancelCropInCropper:(BASSquareCropperViewController *)cropper{
     [cropper dismissViewControllerAnimated:YES completion:NULL];
-}
-
--(void)reportUser{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this user has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
-    
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }]];
-    
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-        PFObject *reportObject = [PFObject objectWithClassName:@"ReportedUsers"];
-        reportObject[@"reportedUser"] = self.otherUser;
-        reportObject[@"reporter"] = [PFUser currentUser];
-        reportObject[@"convo"] = self.convoObject;
-        [reportObject saveInBackground];
-    }]];
-    [self presentViewController:alertView animated:YES completion:nil];
 }
 
 -(void)payPaypal{
@@ -1042,7 +1116,7 @@
     [self.messages addObject:photoMessage];
     [self finishSendingMessageAnimated:YES];
     
-    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(image, 0.6)];
+    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(image, 0.5)];
     [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
      {
          if (error) {
@@ -1632,10 +1706,87 @@
             self.successButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
             [self.successView addSubview:self.successButton];
             [self.successButton setCenter:CGPointMake(self.successView.frame.size.width / 2, self.successView.frame.size.height / 2)];
+            
+            UIButton *dismissButton = [[UIButton alloc]initWithFrame:CGRectMake(self.successView.frame.size.width-40,(self.successView.frame.size.height/2)-10, 20, 20)];
+            [dismissButton setTitle:@"x" forState:UIControlStateNormal];
+            [dismissButton addTarget:self action:@selector(dismissSuccessBanner) forControlEvents:UIControlEventTouchUpInside];
+            [self.successButton addSubview:dismissButton];
         }
         [self.view addSubview:self.successView];
         self.successBannerShowing = YES;
     }
+}
+
+-(void)dismissSuccessBanner{
+    if (self.successBannerShowing == YES) {
+        [UIView animateWithDuration:0.5
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.successView setAlpha:0.0];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.successView removeFromSuperview];
+                             self.successBannerShowing = NO;
+                         }];
+    }
+}
+
+-(void)showInfoBanner{
+    if (self.infoBannerShowing == YES) {
+
+    }
+    else{
+        if (!self.infoView) {
+            self.infoView = [[UIView alloc]initWithFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, self.navigationController.navigationBar.frame.size.width, 30)];
+            [self.infoView setAlpha:1.0];
+            UIButton *infoButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, self.infoView.frame.size.width, self.infoView.frame.size.height)];
+            [infoButton addTarget:self action:@selector(infoTapped) forControlEvents:UIControlEventTouchUpInside];
+            infoButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+            infoButton.titleLabel.minimumScaleFactor=0.5;
+            
+            UIButton *dismissButton = [[UIButton alloc]initWithFrame:CGRectMake(self.infoView.frame.size.width-40,(self.infoView.frame.size.height/2)-10, 20, 20)];
+            [dismissButton setTitle:@"x" forState:UIControlStateNormal];
+            [dismissButton addTarget:self action:@selector(dismissInfoBanner) forControlEvents:UIControlEventTouchUpInside];
+            [infoButton addSubview:dismissButton];
+            
+            if (self.userIsBuyer == YES) {
+                [infoButton setTitle:@"Buyer Protection & Zero Fees on Bump" forState:UIControlStateNormal];
+            }
+            else{
+                [infoButton setTitle:@"Seller Protection & Zero Fees on Bump" forState:UIControlStateNormal];
+            }
+            
+            infoButton.backgroundColor = [UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0];
+            [infoButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+            infoButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
+            [self.infoView addSubview:infoButton];
+            [infoButton setCenter:CGPointMake(self.infoView.frame.size.width / 2, self.infoView.frame.size.height / 2)];
+        }
+        [self.view addSubview:self.infoView];
+        self.infoBannerShowing = YES;
+    }
+}
+
+-(void)dismissInfoBanner{
+    if (self.infoBannerShowing == YES) {
+        [UIView animateWithDuration:0.5
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.infoView setAlpha:0.0];
+                             
+                         }
+                         completion:^(BOOL finished) {
+                             [self.infoView removeFromSuperview];
+                             self.infoBannerShowing = NO;
+                         }];
+    }
+}
+
+-(void)infoTapped{
+    MessageTutorial *vc = [[MessageTutorial alloc]init];
+    [self presentViewController:vc animated:YES completion:nil];
 }
 
 -(void)confirmOrder{
@@ -1710,6 +1861,8 @@
             PFObject *listing = [self.convoObject objectForKey:@"listing"];
             [listing setObject:@"purchased" forKey:@"status"];
             [listing saveInBackground];
+            
+            [self viewOrderDetails];
         }
         else{
             NSLog(@"error saving order %@", error);
@@ -1721,6 +1874,20 @@
             [self.paidButton setEnabled:YES];
         }
     }];
+}
+
+-(void)viewOrderDetails{
+    OrderSummaryController *vc = [[OrderSummaryController alloc]init];
+    if (self.userIsBuyer == NO) {
+        vc.purchased = NO;
+    }
+    else{
+        vc.purchased = YES;
+    }
+    PFObject *order = [self.convoObject objectForKey:@"order"];
+    vc.orderDate = order.createdAt;
+    vc.orderObject = order;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 
 -(void)markAsShipped{
@@ -1801,6 +1968,12 @@
         [order fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {                
                 //clear all targets on button
+                
+                if (self.infoBannerShowing == YES) {
+                    [self.infoView removeFromSuperview];
+                    self.infoBannerShowing = NO;
+                }
+                
                 [self.successButton removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
                 
                 BOOL paid = [[order objectForKey:@"paid"]boolValue];
@@ -1831,22 +2004,26 @@
                     //next step is to leave feedback for buyer and for seller to mark as shipped
                     if (self.userIsBuyer == YES) {
                         [self.successButton setTitle:@"Seller has confirmed payment - Tap to leave feedback" forState:UIControlStateNormal];
-                        [self.successButton addTarget:self action:@selector(feedbackTapped) forControlEvents:UIControlEventTouchUpInside];
+                        [self.successButton addTarget:self action:@selector(viewOrderDetails) forControlEvents:UIControlEventTouchUpInside];
+                        //feedbacktapped
                     }
                     else{
                         [self.successButton setTitle:@"Payment received - Tap to mark as shipped" forState:UIControlStateNormal];
-                        [self.successButton addTarget:self action:@selector(markAsShipped) forControlEvents:UIControlEventTouchUpInside];
+                        [self.successButton addTarget:self action:@selector(viewOrderDetails) forControlEvents:UIControlEventTouchUpInside];
+                        //markasshipped
                     }
                 }
                 else if (paid == YES && shipped == NO && feedback == YES) {
                     //next step is for seller to mark as shipped
                     if (self.userIsBuyer == YES) {
                         [self.successButton setTitle:@"Feedback left - Tap to report a problem" forState:UIControlStateNormal];
-                        [self.successButton addTarget:self action:@selector(reportUser) forControlEvents:UIControlEventTouchUpInside];
+                        [self.successButton addTarget:self action:@selector(viewOrderDetails) forControlEvents:UIControlEventTouchUpInside];
+                        //reportUser
                     }
                     else{
                         [self.successButton setTitle:@"Payment received - Tap to mark as shipped" forState:UIControlStateNormal];
-                        [self.successButton addTarget:self action:@selector(markAsShipped) forControlEvents:UIControlEventTouchUpInside];
+                        [self.successButton addTarget:self action:@selector(viewOrderDetails) forControlEvents:UIControlEventTouchUpInside];
+                        //markasshipped
                     }
                 }
                 else if (paid == YES && shipped == YES && feedback == NO) {
@@ -1857,18 +2034,20 @@
                     else{
                         [self.successButton setTitle:@"Payment received - Tap to leave feedback" forState:UIControlStateNormal];
                     }
-                    [self.successButton addTarget:self action:@selector(feedbackTapped) forControlEvents:UIControlEventTouchUpInside];
+                    [self.successButton addTarget:self action:@selector(viewOrderDetails) forControlEvents:UIControlEventTouchUpInside];
+                    //feedbacktapped
                 }
                 else if (paid == YES && shipped == YES && feedback == YES) {
                     //next step is to leave feedback for seller once shipped or buyer to leave feedback
                     if (self.userIsBuyer == YES) {
                         [self.successButton setTitle:@"Item shipped - Tap to report a problem" forState:UIControlStateNormal];
-                        [self.successButton addTarget:self action:@selector(reportUser) forControlEvents:UIControlEventTouchUpInside];
+//                        [self.successButton addTarget:self action:@selector(reportUser) forControlEvents:UIControlEventTouchUpInside];
                     }
                     else{
-                        [self.successButton setTitle:@"Payment received & feedback left" forState:UIControlStateNormal];
+                        [self.successButton setTitle:@"Paid - Tap for order details" forState:UIControlStateNormal];
                         self.successButton.backgroundColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
                     }
+                    [self.successButton addTarget:self action:@selector(viewOrderDetails) forControlEvents:UIControlEventTouchUpInside];
                 }
                 else{
                     NSLog(@"DOESNT FIT IN");
@@ -1880,7 +2059,8 @@
         }];
     }
     else{
-        NSLog(@"no confirmed order yet!");
+        NSLog(@"no confirmed order yet so put the other banner in the bar");
+        [self showInfoBanner];
     }
 }
 
@@ -1906,6 +2086,15 @@
                              }
                              completion:^(BOOL finished) {}];
         }
+        else if(self.infoBannerShowing == YES){
+            [UIView animateWithDuration:0.5
+                                  delay:0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.infoView setAlpha:0.0];
+                             }
+                             completion:^(BOOL finished) {}];
+        }
     }
     else{
         if (self.successBannerShowing == YES) {
@@ -1926,6 +2115,15 @@
                              }
                              completion:^(BOOL finished) {}];
         }
+        else if(self.infoBannerShowing == YES){
+            [UIView animateWithDuration:0.5
+                                  delay:0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.infoView setAlpha:1.0];
+                             }
+                             completion:^(BOOL finished) {}];
+        }
     }
 }
 
@@ -1937,5 +2135,12 @@
     UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
     [alert addAction:ok];
     [self presentViewController:alert animated:YES completion:nil];
+}
+
+-(void)setImageBorder:(UIImageView *)imageView{
+    imageView.layer.cornerRadius = imageView.frame.size.width / 2;
+    imageView.layer.masksToBounds = YES;
+    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    imageView.contentMode = UIViewContentModeScaleAspectFill;
 }
 @end

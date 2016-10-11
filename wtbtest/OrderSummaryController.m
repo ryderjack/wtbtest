@@ -66,9 +66,13 @@
             if ([self.currency isEqualToString:@"GBP"]) {
                 self.currencySymbol = @"£";
             }
-            else{
+            else if ([self.currency isEqualToString:@"EUR"]) {
+                self.currencySymbol = @"€";
+            }
+            else if ([self.currency isEqualToString:@"USD"]) {
                 self.currencySymbol = @"$";
             }
+            
             self.itemPrice.text = [NSString stringWithFormat: @"%@ %@%.2f", self.currency, self.currencySymbol ,[[self.confirmedOffer objectForKey:@"salePrice"]floatValue]];
             self.totalLabel.text = self.itemPrice.text;
 
@@ -260,7 +264,7 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 6;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -271,21 +275,9 @@
         return 1;
     }
     else if (section ==2){
-        return 1;
+        return 2;
     }
     else if (section ==3){
-        return 1;
-//        if (self.purchased == YES) {
-//            return 3; //add another for fee
-//        }
-//        else{
-//            return 2;
-//        }
-    }
-    else if (section ==4){
-        return 1;
-    }
-    else if (section ==5){
         return 1;
     }
     return 1;
@@ -298,25 +290,25 @@
             return 184;
         }
         else if (indexPath.row == 1){
-            return 160;
+            if (self.purchased == YES) {
+                return 119;
+            }
+            else{
+                return 179;
+            }
         }
     }
+//    else if (indexPath.section ==1){
+//        return 104;
+//    }
     else if (indexPath.section ==1){
-        return 104;
-    }
-    else if (indexPath.section ==2){
         return 124;
     }
-    else if (indexPath.section ==3 || indexPath.section == 4){
+    else if (indexPath.section ==2){
         return 44;
     }
-    else if (indexPath.section ==5){
-        if (self.purchased == YES) {
-            return 179;
-        }
-        else{
-            return 238;
-        }
+    else if (indexPath.section ==3){
+        return 160;
     }
     return 1;
 }
@@ -328,40 +320,6 @@
             return self.titleCell;
         }
         else if (indexPath.row == 1){
-            return self.userCell;
-        }
-    }
-    else if (indexPath.section == 1){
-        if (indexPath.row == 0) {
-            return self.simpleImagesCell;
-        }
-    }
-    else if (indexPath.section == 2){
-        if (indexPath.row == 0) {
-            return self.shippingCell;
-        }
-    }
-    else if (indexPath.section ==3){
-        if (indexPath.row == 0){
-            return self.itempriceCell;
-        }
-//        else if (indexPath.row == 1){
-//            return self.deliveryCell;
-//        }
-//        else if (indexPath.row == 2){
-//            return self.checkCell;
-//        }
-//        else if (indexPath.row == 3){    swap with cell above
-//            return self.feeCell;
-//        }
-    }
-    else if (indexPath.section == 4){
-        if (indexPath.row == 0) {
-            return self.totalCell;
-        }
-    }
-    else if (indexPath.section == 5){
-        if (indexPath.row == 0) {
             if (self.purchased == YES) {
                 return self.buttonCell;
             }
@@ -370,12 +328,35 @@
             }
         }
     }
+//    else if (indexPath.section == 1){
+//        if (indexPath.row == 0) {
+//            return self.simpleImagesCell;
+//        }
+//    }
+    else if (indexPath.section == 1){
+        if (indexPath.row == 0) {
+            return self.shippingCell;
+        }
+    }
+    else if (indexPath.section ==2){
+        if (indexPath.row == 0){
+            return self.itempriceCell;
+        }
+        else if (indexPath.row == 1){
+            return self.totalCell;
+        }
+    }
+    else if (indexPath.section == 3){
+        if (indexPath.row == 0) {
+            return self.userCell;
+        }
+    }
     return nil;
 }
 
 - (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    if (section == 2 || section == 0)
+    if (section == 2 || section == 0 || section == 3)
         return 0.0f;
     else if (section == 1){
         return 1.0f;
@@ -384,7 +365,7 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
-    if (section ==3 || section == 4 || section == 5 || section == 6 || section == 0 || section == 2) {
+    if (section ==3 || section == 4 || section == 5 || section == 2) {
         return 0.0;
     }
     return 32.0f;
@@ -407,9 +388,8 @@
 }
 
 -(void)setImageBorder{
-    self.userImageView.layer.cornerRadius = self.userImageView.frame.size.width / 2;
+    self.userImageView.layer.cornerRadius = 25;
     self.userImageView.layer.masksToBounds = YES;
-    
     self.userImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     self.userImageView.contentMode = UIViewContentModeScaleAspectFill;
 }

@@ -110,17 +110,11 @@
         if(indexPath.row == 0){
             return 107;
         }
-        else if(indexPath.row == 1){
-            return 190;
-        }
-        else if(indexPath.row == 2){
-            return 190;
-        }
-        else if(indexPath.row == 3){
-            return 190;
+        else if(indexPath.row == 1 || indexPath.row == 2 || indexPath.row == 3){
+            return 176;
         }
     }
-    return 190;
+    return 176;
 }
 - (IBAction)segmentPressed:(id)sender {
         if (self.segmentControl.selectedSegmentIndex == 1) {
@@ -128,14 +122,14 @@
             [self.firstImageView setImage:[UIImage imageNamed:@"grid"]];
             self.labelOne.text = @"Browse through items people are looking to purchase";
             self.labelTwo.text = @"Spot an item you’re selling? Send the buyer an offer to buy your item";
-            self.labelThree.text = @"Chat until you reach a deal, receive payment (zero fees!) and then ship!";
+            self.labelThree.text = @"Chat until you reach a deal, receive payment (zero fees) and then ship!";
         }
         else{
             //buyers selected
             [self.firstImageView setImage:[UIImage imageNamed:@"compose"]];
             self.labelOne.text = @"Create a listing for an item you want";
             self.labelTwo.text = @"Sellers see your listing and send you offers to buy their item";
-            self.labelThree.text = @"Accept your ideal offer, pay (zero fees!) and its shipped!";
+            self.labelThree.text = @"Accept your ideal offer, pay (zero fees) and it's shipped!";
         }
 }
 - (IBAction)dismissPressed:(id)sender {

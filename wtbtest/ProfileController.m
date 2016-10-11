@@ -15,6 +15,8 @@
 #import "ExplainViewController.h"
 #import "Flurry.h"
 #import <Crashlytics/Crashlytics.h>
+#import <TOWebViewController.h>
+#import "ChatWithBump.h"
 
 @interface ProfileController ()
 
@@ -50,6 +52,15 @@
     [super viewWillAppear:animated];
     self.navigationItem.title = [NSString stringWithFormat:@"%@", [PFUser currentUser].username];
     [Flurry logEvent:@"Profile_Tapped"];
+    
+    if ([self.navigationController tabBarItem].badgeValue != nil) {
+        NSLog(@"unseen TB msg");
+        [self.unreadView setHidden:NO];
+    }
+    else{
+        [self.unreadView setHidden:YES];
+    }
+    
 }
 
 #pragma mark - Table view data source
@@ -69,7 +80,7 @@
         return 1;
     }
     else if (section == 3){
-        return 2;
+        return 3;
     }
     else{
         return 1;
@@ -100,11 +111,14 @@
         }
     }
     else if (indexPath.section == 3){
-        if (indexPath.row == 0) {
+        if (indexPath.row == 1) {
             return self.howItWorks;
         }
-        else if (indexPath.row == 1) {
+        else if (indexPath.row == 0) {
             return self.feedbackCell;
+        }
+        else if (indexPath.row == 2) {
+            return self.termsCell;
         }
     }
     return nil;
@@ -154,14 +168,65 @@
         }
     }
     else if (indexPath.section == 3){
-        if (indexPath.row == 0) {
+        if (indexPath.row == 1) {
             //how it works pressed
             ExplainViewController *vc = [[ExplainViewController alloc]init];
             [self presentViewController:vc animated:YES completion:nil];
         }
-        else if (indexPath.row == 1) {
-            //send us feedback
-            [self showEmail];
+        else if (indexPath.row == 0) {
+            //chat w/ Bump
+            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
+            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+            [convoQuery whereKey:@"convoId" equalTo:convoId];
+            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    //convo exists, go there
+                    ChatWithBump *vc = [[ChatWithBump alloc]init];
+                    vc.convoId = [object objectForKey:@"convoId"];
+                    vc.convoObject = object;
+                    vc.otherUser = [PFUser currentUser];
+                    [self.unreadView setHidden:YES];
+                    [self.navigationController tabBarItem].badgeValue = nil;
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
+                else{
+                    //create a new one
+                    PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
+                    convoObject[@"otherUser"] = [PFUser currentUser];
+                    convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+                    convoObject[@"totalMessages"] = @0;
+                    [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            //saved, goto VC
+                            ChatWithBump *vc = [[ChatWithBump alloc]init];
+                            vc.convoId = [convoObject objectForKey:@"convoId"];
+                            vc.convoObject = convoObject;
+                            vc.otherUser = [PFUser currentUser];
+                            [self.unreadView setHidden:YES];
+                            [self.navigationController tabBarItem].badgeValue = nil;
+                            [self.navigationController pushViewController:vc animated:YES];
+                        }
+                        else{
+                            NSLog(@"error saving convo");
+                        }
+                    }];
+                }
+            }];
+//            [self showEmail];
+        }
+        else if (indexPath.row == 2) {
+            //terms pressed
+            NSString *URLString = @"http://www.sobump.com/terms.html";
+            TOWebViewController *webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+            webViewController.title = @"Terms & Conditions";
+            webViewController.showUrlWhileLoading = YES;
+            webViewController.showPageTitles = NO;
+            webViewController.doneButtonTitle = @"";
+            webViewController.paypalMode = NO;
+            //hide toolbar banner
+            webViewController.infoMode = NO;
+            UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
+            [self presentViewController:navigationController animated:YES completion:nil];
         }
     }
 }

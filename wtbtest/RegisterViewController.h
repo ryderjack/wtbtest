@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *pictureCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *regCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *currencyCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *depopCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *nameField;
@@ -50,11 +51,15 @@ NS_ASSUME_NONNULL_BEGIN
 //currency buttons
 @property (weak, nonatomic) IBOutlet UIButton *GBPButton;
 @property (weak, nonatomic) IBOutlet UIButton *USDButton;
-@property (weak, nonatomic) IBOutlet UIButton *AUDButton;
+@property (weak, nonatomic) IBOutlet UIButton *EURButton;
 @property (nonnull, strong) NSString *selectedCurrency;
 
 //profanity
 @property (nonatomic, strong) NSArray *profanityList;
+
+//depop
+@property (weak, nonatomic) IBOutlet UITextField *depopField;
+
 NS_ASSUME_NONNULL_END
 
 @end

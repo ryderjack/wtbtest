@@ -8,7 +8,6 @@
 
 #import "SettingsController.h"
 
-
 @interface SettingsController ()
 
 @end
@@ -30,22 +29,38 @@
     self.emailCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.addressCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.currencyCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.depopCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.contactEmailCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.emailFields.delegate = self;
+    self.depopField.delegate = self;
+    self.contactEmailField.delegate = self;
+    
+    [self setImageBorder:self.testingView];
     
     self.currentUser = [PFUser currentUser];
     
-    self.currentEmail = [self.currentUser objectForKey:@"email"];
+    self.currentPaypal = [self.currentUser objectForKey:@"paypal"];
+    self.currentContact = [self.currentUser objectForKey:@"email"];
     
     self.nameLabel.text = [NSString stringWithFormat:@"Name: %@",[self.currentUser objectForKey:@"fullname"]];
-    self.emailFields.placeholder = [NSString stringWithFormat:@"PayPal email: %@",self.currentEmail];
+    
+    //check if got paypal email
+    if ([self.currentUser objectForKey:@"paypal"]) {
+        self.emailFields.placeholder = [NSString stringWithFormat:@"PayPal: %@",self.currentPaypal];
+    }
+    else{
+        self.emailFields.placeholder = @"Enter your PayPal email";
+    }
+    
+    self.contactEmailField.placeholder = [NSString stringWithFormat:@"Email: %@",self.currentContact];
     
     if ([self.currentUser objectForKey:@"building"]) {
         //address been set before
-        self.addLabel.text = [NSString stringWithFormat:@"%@ %@ %@ %@ %@",[self.currentUser objectForKey:@"building"], [self.currentUser objectForKey:@"street"], [self.currentUser objectForKey:@"city"], [self.currentUser objectForKey:@"postcode"], [self.currentUser objectForKey:@"phonenumber"]];
+        self.addLabel.text = [NSString stringWithFormat:@"Address: %@ %@ %@ %@ %@",[self.currentUser objectForKey:@"building"], [self.currentUser objectForKey:@"street"], [self.currentUser objectForKey:@"city"], [self.currentUser objectForKey:@"postcode"], [self.currentUser objectForKey:@"phonenumber"]];
     }
     else{
-        self.addLabel.text = @"Address";
+        self.addLabel.text = @"Enter address";
     }
     
     NSString *currency = [[PFUser currentUser]objectForKey:@"currency"];
@@ -55,10 +70,26 @@
     else if ([currency isEqualToString:@"USD"]) {
         [self.USDButton setSelected:YES];
     }
-    else if ([currency isEqualToString:@"AUD"]) {
-        [self.AUDButton setSelected:YES];
+    else if ([currency isEqualToString:@"EUR"]) {
+        [self.EURButton setSelected:YES];
     }
     self.selectedCurrency = @"";
+    
+    NSString *depopHan = [[PFUser currentUser]objectForKey:@"depopHandle"];
+    
+    if ([self.currentUser objectForKey:@"depopHandle"]) {
+        self.depopField.placeholder = [NSString stringWithFormat:@"Depop username: %@", depopHan];
+    }
+    else{
+        self.depopField.placeholder = @"Enter your Depop username";
+    }
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [self.testingView setFile:[[PFUser currentUser]objectForKey:@"picture"]];
+    [self.testingView loadInBackground];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -69,14 +100,17 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 2;
+    return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return 3;
+        return 5;
     }
     else if (section == 1){
+        return 1;
+    }
+    else if (section == 2){
         return 1;
     }
     else{
@@ -90,15 +124,26 @@
             return self.nameCell;
         }
         else if (indexPath.row == 1) {
-            return self.emailCell;
+            return self.contactEmailCell;
         }
         else if (indexPath.row == 2) {
+            return self.emailCell;
+        }
+        else if (indexPath.row == 3) {
             return self.addressCell;
+        }
+        else if (indexPath.row == 4) {
+            return self.pictureCelll;
         }
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
             return self.currencyCell;
+        }
+    }
+    else if (indexPath.section == 2){
+        if (indexPath.row == 0) {
+            return self.depopCell;
         }
     }
     return nil;
@@ -115,21 +160,59 @@
             vc.settingsMode = YES;
             [self.navigationController pushViewController:vc animated:YES];
         }
+        else if (indexPath.row == 3){
+            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+            picker.delegate = self;
+            picker.allowsEditing = NO;
+            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+            
+            [self presentViewController:picker animated:YES completion:nil];
+        }
     }
 }
 
--(void)addItemViewController:(ShippingController *)controller didFinishEnteringAddress:(NSString *)address{
-    self.addLabel.text = address;
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+    self.profileImage = info[UIImagePickerControllerOriginalImage];
+    self.testingView.image = nil;
+    
+    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(self.profileImage, 0.6)];
+    [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
+     {
+         if (error) {
+             NSLog(@"error %@", error);
+         }
+         else{
+             [self.testingView setFile:filePicture];
+             [self.testingView loadInBackground];
+             
+             [PFUser currentUser][@"picture"] = filePicture;
+             [[PFUser currentUser]saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                 if (succeeded) {
+                     NSLog(@"saved!");
+                 }
+                 else{
+                     NSLog(@"error saving %@", error);
+                 }
+             }];
+         }
+     }];
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    [picker dismissViewControllerAnimated:YES completion:NULL];
 }
 
 -(void)textFieldDidEndEditing:(UITextField *)textField{
     if (textField == self.emailFields && ![textField.text isEqualToString:@""]) {
         if ([self NSStringIsValidEmail:self.emailFields.text] == YES) {
-            [self.currentUser setObject:self.emailFields.text forKey:@"email"];
+            [self.currentUser setObject:self.emailFields.text forKey:@"paypal"];
+            [self.currentUser setObject:@"YES" forKey:@"paypalUpdated"];
+            
             [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (error.code == 203) {
-                    self.emailFields.text = self.currentEmail;
-                    [self.currentUser saveInBackground];
+                    self.emailFields.text = self.currentPaypal;
+                    
                     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"This email address is already in use. Please try another email." preferredStyle:UIAlertControllerStyleAlert];
                     
                     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -145,7 +228,40 @@
             }];
         }
         else{
-            self.emailFields.text = self.currentEmail;
+            self.emailFields.text = self.currentPaypal;
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"Please enter a valid email address. If you think this is a mistake please get in touch!" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            }]];
+            [self presentViewController:alertView animated:YES completion:^{
+                self.navigationItem.hidesBackButton = NO;
+            }];
+        }
+    }
+    
+    else if (textField == self.contactEmailField && ![textField.text isEqualToString:@""]){
+        if ([self NSStringIsValidEmail:self.contactEmailField.text] == YES) {
+            [self.currentUser setObject:self.contactEmailField.text forKey:@"email"];
+            [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (error.code == 203) {
+                    self.contactEmailField.text = self.currentContact;
+
+                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"This email address is already in use. Please try another email." preferredStyle:UIAlertControllerStyleAlert];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    }]];
+                    
+                    [self presentViewController:alertView animated:YES completion:^{
+                        self.navigationItem.hidesBackButton = NO;
+                    }];
+                }
+                else{
+                    self.navigationItem.hidesBackButton = NO;
+                }
+            }];
+        }
+        else{
+            self.emailFields.text = self.currentContact;
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"Please enter a valid email address. If you think this is a mistake please get in touch!" preferredStyle:UIAlertControllerStyleAlert];
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -168,8 +284,37 @@
 -(void)viewWillDisappear:(BOOL)animated{
     if (![self.selectedCurrency isEqualToString:@""]) {
         [[PFUser currentUser] setObject:self.selectedCurrency forKey:@"currency"];
-        [[PFUser currentUser]saveInBackground];
     }
+    
+    NSString *depopString = [self.depopField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
+    if (![depopString isEqualToString:@""]) {
+        //entered a depop account
+        NSString *depopHandle = [self.depopField.text stringByReplacingOccurrencesOfString:@"@" withString:@""];
+        [PFUser currentUser][@"depopHandle"] = depopHandle;
+        
+        PFQuery *depopQuery = [PFQuery queryWithClassName:@"Depop"];
+        [depopQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+        [depopQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+//                NSLog(@"already entered their depop handle at some point, update it here");
+                object[@"handle"] = depopHandle;
+                [object saveInBackground];
+            }
+            else{
+//                NSLog(@"no depop handle currently saved so create a new one");
+                PFObject *depopObj = [PFObject objectWithClassName:@"Depop"];
+                depopObj[@"user"] = [PFUser currentUser];
+                depopObj[@"handle"] = depopHandle;
+                NSLog(@"saving");
+                [depopObj saveInBackground];
+            }
+        }];
+    }
+    else{
+        //entered blank depop handle
+    }
+    [[PFUser currentUser]saveInBackground];
 }
 
 - (IBAction)GBPPressed:(id)sender {
@@ -178,7 +323,7 @@
     else{
         self.selectedCurrency = @"GBP";
         [self.GBPButton setSelected:YES];
-        [self.AUDButton setSelected:NO];
+        [self.EURButton setSelected:NO];
         [self.USDButton setSelected:NO];
     }
 }
@@ -188,16 +333,16 @@
     else{
         self.selectedCurrency = @"USD";
         [self.USDButton setSelected:YES];
-        [self.AUDButton setSelected:NO];
+        [self.EURButton setSelected:NO];
         [self.GBPButton setSelected:NO];
     }
 }
-- (IBAction)AUDPressed:(id)sender {
-    if (self.AUDButton.selected == YES) {
+- (IBAction)EURPressed:(id)sender {
+    if (self.EURButton.selected == YES) {
     }
     else{
-        self.selectedCurrency = @"AUD";
-        [self.AUDButton setSelected:YES];
+        self.selectedCurrency = @"EUR";
+        [self.EURButton setSelected:YES];
         [self.GBPButton setSelected:NO];
         [self.USDButton setSelected:NO];
     }
@@ -217,6 +362,9 @@
     else if (section == 0){
         header.textLabel.text = @"    Account";
     }
+    else if (section == 2){
+        header.textLabel.text = @"    Depop Matching";
+    }
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
@@ -227,12 +375,14 @@
     else if (section == 0){
         return @"    Account";
     }
+    else if (section == 2){
+        return @"    Depop Matching";
+    }
     return nil;
 }
 
 - (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-
     return 32.0f;
 }
 
@@ -248,5 +398,25 @@
 
 -(void)textFieldDidBeginEditing:(UITextField *)textField{
     self.navigationItem.hidesBackButton = YES;
+}
+- (IBAction)depopInfoPressed:(id)sender {
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Depop matching"
+                                  message:@"Already selling loads of stuff on depop? Let us know your depop handle and our clever code will check out your account then let you know on Bump when someone wants what you're selling.\nSit back and relax 🐸☕️"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+-(void)setImageBorder:(UIImageView *)imageView{
+    imageView.layer.cornerRadius = 20;
+    imageView.layer.masksToBounds = YES;
+    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    imageView.contentMode = UIViewContentModeScaleAspectFill;
+}
+
+-(void)addItemViewController:(ShippingController *)controller didFinishEnteringAddress:(NSString *)address{
+    self.addLabel.text = address;
 }
 @end

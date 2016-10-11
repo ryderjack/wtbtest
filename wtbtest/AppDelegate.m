@@ -88,22 +88,25 @@
     self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController4, navController2, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
-    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
+//    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
+    [self.tabBarController.tabBar setTintColor:[UIColor whiteColor]];
+
+    [self.tabBarController.tabBar setBarTintColor:[UIColor blackColor]];
     
     UITabBarItem *tabBarItem1 = [self.tabBarController.tabBar.items objectAtIndex:0];
-    tabBarItem1.image = [UIImage imageNamed:@"homeIcon"];
+    tabBarItem1.image = [UIImage imageNamed:@"homeIconNEW"];
     tabBarItem1.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     UITabBarItem *tabBarItem2 = [self.tabBarController.tabBar.items objectAtIndex:1];
-    tabBarItem2.image = [UIImage imageNamed:@"plusIcon"];
+    tabBarItem2.image = [UIImage imageNamed:@"createIconNEW"];
     tabBarItem2.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     UITabBarItem *tabBarItem3 = [self.tabBarController.tabBar.items objectAtIndex:2];
-    tabBarItem3.image = [UIImage imageNamed:@"messagesIcon2"];
+    tabBarItem3.image = [UIImage imageNamed:@"messageIconNEW"];
     tabBarItem3.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     UITabBarItem *tabBarItem4 = [self.tabBarController.tabBar.items objectAtIndex:3];
-    tabBarItem4.image = [UIImage imageNamed:@"profileIcon2"];
+    tabBarItem4.image = [UIImage imageNamed:@"userIconNEW"];
     tabBarItem4.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);    
     
     [self.tabBarController setDelegate:self];
@@ -136,9 +139,14 @@
     if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {  //commented out for simulator testing purposes
        NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:YES];
         [timer fire];
+        NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
+        [timer2 fire];
+        NSLog(@"fired timers");
     }
     else{
+        NSLog(@"hello");
         [self checkMesages];
+        [self checkForTBMessages];
     }
     
     [iRate sharedInstance].previewMode = NO;
@@ -240,6 +248,26 @@
     }];
 }
 
+-(void)checkForTBMessages{
+    PFQuery *convosQuery = [PFQuery queryWithClassName:@"teamConvos"];
+    [convosQuery whereKey:@"convoId" equalTo: [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId]];
+    [convosQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            //is there anything unseen in the convo
+            int userUnseen = [[object objectForKey:@"userUnseen"]intValue];
+            if (userUnseen > 0) {
+                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", userUnseen]];
+            }
+            else{
+                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+            }
+        }
+        else{
+            NSLog(@"error finding %@", error);
+        }
+    }];
+}
+
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
     // Store the deviceToken in the current installation and save it to Parse.
     [self.installation setDeviceTokenFromData:deviceToken];
@@ -253,6 +281,7 @@
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     [self checkMesages];
+    [self checkForTBMessages];
     if ( application.applicationState == UIApplicationStateInactive || application.applicationState == UIApplicationStateBackground  )
     {
         //opened from a push notification when the app in background

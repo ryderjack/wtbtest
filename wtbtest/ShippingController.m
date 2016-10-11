@@ -142,7 +142,7 @@
                 NSString *addressString = @"";
                 
                 if (self.settingsMode == YES) {
-                    addressString = [NSString stringWithFormat:@"%@ %@, %@\n%@\n%@",self.buildingField.text, self.streetField.text, self.cityField.text, self.numberField.text, self.postcodeField.text];
+                    addressString = [NSString stringWithFormat:@"Address: %@ %@, %@, %@, %@",self.buildingField.text, self.streetField.text, self.cityField.text, self.postcodeField.text, self.numberField.text];
                 }
                 else{
                     addressString = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.buildingField.text, self.streetField.text, self.cityField.text, self.postcodeField.text,self.countryField.text ,self.numberField.text];

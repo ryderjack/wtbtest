@@ -7,7 +7,6 @@
 //
 
 #import "CheckoutController.h"
-#import "ListingCompleteView.h"
 
 @interface CheckoutController ()
 
@@ -216,11 +215,6 @@
                     [self.navigationController popViewControllerAnimated:YES];
                 }
             }];
-            
-//            ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-//            vc.orderMode = YES;
-//            vc.orderTitle = [self.confirmedOfferObject objectForKey:@"title"];
-//            [self.navigationController pushViewController:vc animated:YES];
         }
         else{
             [self hideHUD];

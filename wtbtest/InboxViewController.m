@@ -11,6 +11,7 @@
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "Flurry.h"
 #import <DGActivityIndicatorView.h>
+#import "MessageTutorial.h"
 
 @interface InboxViewController ()
 
@@ -27,7 +28,7 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     [self.tableView registerNib:[UINib nibWithNibName:@"InboxCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
-    self.convoObjects = [[NSArray alloc]init];
+    self.convoObjects = [[NSMutableArray alloc]init];
     self.unseenMessages = [[NSMutableArray alloc]init];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loadMessages) name:@"NewMessage" object:nil];
@@ -36,6 +37,18 @@
     [self.dateFormat setLocale:[NSLocale currentLocale]];
     
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    
+    PFUser *current = [PFUser currentUser];
+    
+    if (![[current objectForKey:@"completedMsgIntro"]isEqualToString:@"YES"]) {
+        //show intro VC
+        MessageTutorial *vc = [[MessageTutorial alloc]init];
+        [self presentViewController:vc animated:YES completion:nil];
+    }
+    
+    self.pullFinished = YES;
+    self.infinFinished = YES;
+    self.lastSkipped = 0;
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -55,89 +68,164 @@
     if ([self.currency isEqualToString:@"GBP"]) {
         self.currencySymbol = @"£";
     }
-    else{
+    else if ([self.currency isEqualToString:@"EUR"]) {
+        self.currencySymbol = @"€";
+    }
+    else if ([self.currency isEqualToString:@"USD"]) {
         self.currencySymbol = @"$";
     }
 }
 
 -(void)loadMessages{
-    PFQuery *convosQuery = [PFQuery queryWithClassName:@"convos"];
-    [convosQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
-    [convosQuery whereKey:@"totalMessages" notEqualTo:@0];
-    [convosQuery includeKey:@"buyerUser"];
-    [convosQuery includeKey:@"sellerUser"];
-    [convosQuery includeKey:@"wtbListing"];
-    [convosQuery includeKey:@"lastSent"];
-    [convosQuery orderByDescending:@"lastSentDate"];
-    [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+    self.pullFinished = NO;
+    self.pullQuery = [PFQuery queryWithClassName:@"convos"];
+    [self.pullQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
+    [self.pullQuery whereKey:@"totalMessages" notEqualTo:@0];
+    [self.pullQuery includeKey:@"buyerUser"];
+    [self.pullQuery includeKey:@"sellerUser"];
+    [self.pullQuery includeKey:@"wtbListing"];
+    [self.pullQuery includeKey:@"lastSent"];
+    [self.pullQuery orderByDescending:@"lastSentDate"];
+    self.pullQuery.limit = 10;
+    [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects) {
-                self.convoObjects = objects;
-                [self.tableView reloadData];
-                [self.tableView.pullToRefreshView stopAnimating];
-                
+                [self.convoObjects removeAllObjects];
                 [self.unseenMessages removeAllObjects];
-                int totalUnseen = 0;
-                int unseen = 0;
                 
-                for (PFObject *convo in objects) {
-                    PFObject *msgObject = [convo objectForKey:@"lastSent"];
-                    
-                    if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                if (objects.count == 0) {
+                    if (!self.topLabel && !self.bottomLabel) {
+                        self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
+                        self.topLabel.textAlignment = NSTextAlignmentCenter;
+                        self.topLabel.text = @"No messages";
+                        [self.topLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:20]];
+                        self.topLabel.numberOfLines = 1;
+                        self.topLabel.textColor = [UIColor lightGrayColor];
+                        [self.view addSubview:self.topLabel];
                         
-                        if (![self.selectedConvo isEqualToString:convo.objectId]) {
-                            NSLog(@"adding %@ to unseenMessages!!", convo);
-                            //don't add to tab bar for a selected convo since the added badge could be confusing
-                            [self.unseenMessages addObject:convo];
-                        }
-                        
-                        NSLog(@"unseen coversations array %lu", (unsigned long)self.unseenMessages.count);
-                        
-                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
-                            unseen = 1;
-                        }
-                        else{
-                            PFUser *buyer = [convo objectForKey:@"buyerUser"];
-                            if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
-                                //current user is buyer so other user is seller
-                                unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
-                                NSLog(@"unseen from buyer %d", unseen);
-                            }
-                            else{
-                                //other user is buyer, current is seller
-                                unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
-                                NSLog(@"unseen from seller %d", unseen);
-                            }
-                        }
-                        
-                        totalUnseen = totalUnseen + unseen;
-                        
-                        NSLog(@"running total unseen: %d", totalUnseen);
+                        self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+50, 250, 200)];
+                        self.bottomLabel.textAlignment = NSTextAlignmentCenter;
+                        self.bottomLabel.text = @"Create WTBs so sellers can message you or explore listings to message buyers now";
+                        [self.bottomLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:17]];
+                        self.bottomLabel.numberOfLines = 0;
+                        self.bottomLabel.textColor = [UIColor lightGrayColor];
+                        [self.view addSubview:self.bottomLabel];
                     }
-                }
-                // careful! as only showing unseen messages that have been loaded
-                if (self.unseenMessages.count > 0 && totalUnseen > 0) {
-                    [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", totalUnseen];
-                    self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", totalUnseen];
+                    else{
+                        [self.topLabel setHidden:NO];
+                        [self.bottomLabel setHidden:NO];
+                    }
+                    
+                    [self.tableView reloadData];
+                    [self.tableView.pullToRefreshView stopAnimating];
+                    self.pullFinished = YES;
                 }
                 else{
-                    self.navigationItem.title = @"Messages";
-                    [self.navigationController tabBarItem].badgeValue = nil;
-                    
-                    PFInstallation *installation = [PFInstallation currentInstallation];
-                    if (installation.badge != 0) {
-                        installation.badge = 0;
+                    if (self.topLabel && self.bottomLabel) {
+                        [self.topLabel setHidden:YES];
+                        [self.bottomLabel setHidden:YES];
                     }
-                    [installation saveInBackground];
+                    
+                    [self.convoObjects addObjectsFromArray:objects];
+                    
+                    int count = (int)[objects count];
+                    self.lastSkipped = count;
+                    
+                    [self.tableView reloadData];
+                    [self.tableView.pullToRefreshView stopAnimating];
+                    self.pullFinished = YES;
+                    
+                    int totalUnseen = 0;
+                    int unseen = 0;
+                    
+                    for (PFObject *convo in objects) {
+                        PFObject *msgObject = [convo objectForKey:@"lastSent"];
+                        
+                        if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                            
+                            if (![self.selectedConvo isEqualToString:convo.objectId]) {
+                                NSLog(@"adding %@ to unseenMessages!!", convo);
+                                //don't add to tab bar for a selected convo since the added badge could be confusing
+                                [self.unseenMessages addObject:convo];
+                            }
+                            
+                            NSLog(@"unseen coversations array %lu", (unsigned long)self.unseenMessages.count);
+                            
+                            if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+                                unseen = 1;
+                            }
+                            else{
+                                PFUser *buyer = [convo objectForKey:@"buyerUser"];
+                                if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+                                    //current user is buyer so other user is seller
+                                    unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                                    NSLog(@"unseen from buyer %d", unseen);
+                                }
+                                else{
+                                    //other user is buyer, current is seller
+                                    unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                                    NSLog(@"unseen from seller %d", unseen);
+                                }
+                            }
+                            
+                            totalUnseen = totalUnseen + unseen;
+                            
+                            NSLog(@"running total unseen: %d", totalUnseen);
+                        }
+                    }
+                    // careful! as only showing unseen messages that have been loaded
+                    if (self.unseenMessages.count > 0 && totalUnseen > 0) {
+                        [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", totalUnseen];
+                        self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", totalUnseen];
+                    }
+                    else{
+                        self.navigationItem.title = @"Messages";
+                        [self.navigationController tabBarItem].badgeValue = nil;
+                        
+                        PFInstallation *installation = [PFInstallation currentInstallation];
+                        if (installation.badge != 0) {
+                            installation.badge = 0;
+                        }
+                        [installation saveInBackground];
+                    }
                 }
             }
             else{
-                NSLog(@"no convos");
+                NSLog(@"error");
                 //update table view
             }
         }
         else{
             NSLog(@"error %@", error);
+        }
+    }];
+}
+
+-(void)loadMoreConvos{
+    if (self.pullFinished == NO) {
+        return;
+    }
+    self.infinFinished = NO;
+    self.infiniteQuery = [PFQuery queryWithClassName:@"convos"];
+    [self.infiniteQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
+    [self.infiniteQuery whereKey:@"totalMessages" notEqualTo:@0];
+    [self.infiniteQuery includeKey:@"buyerUser"];
+    [self.infiniteQuery includeKey:@"sellerUser"];
+    [self.infiniteQuery includeKey:@"wtbListing"];
+    [self.infiniteQuery includeKey:@"lastSent"];
+    [self.infiniteQuery orderByDescending:@"lastSentDate"];
+    self.infiniteQuery.limit = 10;
+    self.infiniteQuery.skip = self.lastSkipped;
+    [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (!error) {
+            if (objects) {
+                int count = (int)[objects count];
+                self.lastSkipped = self.lastSkipped + count;
+                [self.convoObjects addObjectsFromArray:objects];
+                [self.tableView reloadData];
+                [self.tableView.infiniteScrollingView stopAnimating];
+                self.infinFinished = YES;
+            }
         }
     }];
 }
@@ -154,6 +242,12 @@
     DGActivityIndicatorView *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
     [self.tableView.pullToRefreshView setCustomView:spinner forState:SVPullToRefreshStateAll];
     [spinner startAnimating];
+    
+    [self.tableView addInfiniteScrollingWithActionHandler:^{
+        if (self.infinFinished == YES) {
+            [weakSelf loadMoreConvos];
+        }
+    }];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -181,6 +275,10 @@
     if (!self.cell) {
         self.cell = [[InboxCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
     }
+    
+    self.cell.wtbImageView.image = nil;
+    self.cell.userPicView.image = nil;
+    
     PFObject *convoObject = [self.convoObjects objectAtIndex:indexPath.row];
     
     PFUser *seller = [convoObject objectForKey:@"sellerUser"];
@@ -216,14 +314,25 @@
         [self.dateFormat setDateFormat:@"EEE"];
     }
     self.cell.timeLabel.text = [NSString stringWithFormat:@"%@", [self.dateFormat stringFromDate:convoDate]];
-    [self setImageBorder:self.cell.userPicView];
+    [self setProfImageBorder];
     
     PFObject *wtbListing = [convoObject objectForKey:@"wtbListing"];
     [self.cell.wtbImageView setFile:[wtbListing objectForKey:@"image1"]];
     [self.cell.wtbImageView loadInBackground];
     self.cell.wtbTitleLabel.text = [NSString stringWithFormat:@"%@", [wtbListing objectForKey:@"title"]];
-    self.cell.wtbPriceLabel.text = [NSString stringWithFormat:@"%@%@",self.currencySymbol,[wtbListing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]];
-    [self setImageBorder:self.cell.wtbImageView];
+    
+    //add in a check for a EUR price before setting since recent;y added this currency
+    int price = [[wtbListing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+    
+    if ([self.currency isEqualToString:@"EUR"] && price == 0) {
+        int pounds = [[wtbListing objectForKey:@"listingPriceGBP"]intValue];
+        int EUR = pounds*1.16;
+        wtbListing[@"listingPriceEUR"] = @(EUR);
+        price = EUR;
+        [wtbListing saveInBackground];
+    }
+    self.cell.wtbPriceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol,price];
+    [self setWTBImageBorder];
     
     PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
     NSString *text = [msgObject objectForKey:@"message"];
@@ -270,7 +379,7 @@
     if ([[msgObject objectForKey:@"status"] isEqualToString:@"seen"] && [[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
         //you sent and other guy has seen so show picture
         [self.cell.seenImageView setHidden:NO];
-        [self setImageBorder:self.cell.seenImageView];
+        [self setSeenImageBorder];
         if (isBuyer == YES) {
             [self.cell.seenImageView setFile:[seller objectForKey:@"picture"]];
         }
@@ -336,11 +445,25 @@
     [self.navigationController pushViewController:vc animated:YES];
 }
 
--(void)setImageBorder:(UIImageView *)imageView{
-    imageView.layer.cornerRadius = imageView.frame.size.width / 2;
-    imageView.layer.masksToBounds = YES;
-    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-    imageView.contentMode = UIViewContentModeScaleAspectFill;
+-(void)setWTBImageBorder{
+    self.cell.wtbImageView.layer.cornerRadius = 15;
+    self.cell.wtbImageView.layer.masksToBounds = YES;
+    self.cell.wtbImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    self.cell.wtbImageView.contentMode = UIViewContentModeScaleAspectFill;
+}
+
+-(void)setProfImageBorder{
+    self.cell.userPicView.layer.cornerRadius = 25;
+    self.cell.userPicView.layer.masksToBounds = YES;
+    self.cell.userPicView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    self.cell.userPicView.contentMode = UIViewContentModeScaleAspectFill;
+}
+
+-(void)setSeenImageBorder{
+    self.cell.seenImageView.layer.cornerRadius = 10;
+    self.cell.seenImageView.layer.masksToBounds = YES;
+    self.cell.seenImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    self.cell.seenImageView.contentMode = UIViewContentModeScaleAspectFill;
 }
                      
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{

@@ -55,7 +55,6 @@
 {
 }
 - (IBAction)backButtonPressed:(id)sender {
-    NSLog(@"back pressed");
     [self dismissViewControllerAnimated:YES completion:nil];
     [self.delegate dismissConfirmController:self];
 }

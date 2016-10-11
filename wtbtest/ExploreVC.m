@@ -48,15 +48,15 @@
     
     if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
         //iphone5
-        [flowLayout setItemSize:CGSizeMake((self.collectionView.frame.size.width/2)-40, 300)];
+        [flowLayout setItemSize:CGSizeMake((self.view.frame.size.width/2)-40, 300)];
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.height == 736){
         //iphone 6 plus
-        [flowLayout setItemSize:CGSizeMake((self.collectionView.frame.size.width/2), 300)];
+        [flowLayout setItemSize:CGSizeMake((self.view.frame.size.width/2), 300)];
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.height == 480){
         //iphone 4
-        [flowLayout setItemSize:CGSizeMake((self.collectionView.frame.size.width/2)-40, 300)];
+        [flowLayout setItemSize:CGSizeMake((self.view.frame.size.width/2)-40, 300)];
     }
     else{
         [flowLayout setItemSize:CGSizeMake(175, 300)]; //iPhone 6 specific
@@ -84,7 +84,7 @@
     
     self.filtersArray = [NSMutableArray array];
     self.filtersTapped = NO;
-        
+    
     // set searchbar font
     NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:13],
                                       NSFontAttributeName, nil];
@@ -135,6 +135,25 @@
             }
         }];
     }
+    
+    if (![[[PFUser currentUser] objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
+        [PFUser currentUser][@"completedReg"] = @"YES";
+        [[PFUser currentUser] saveInBackground];
+    }
+    
+    self.uselessWords = [NSArray arrayWithObjects:@"and", @"or", @"very", nil];
+    
+    //remove duplicate searches
+    if (![[[PFUser currentUser]objectForKey:@"clearSearches"]isEqualToString:@"YES"]) {
+        //clear duplicate searches
+        NSMutableArray *searches = [NSMutableArray array];
+        searches = [[PFUser currentUser]objectForKey:@"searches"];
+        NSOrderedSet *orderedSet = [NSOrderedSet orderedSetWithArray:searches];
+        NSArray *arrayWithoutDuplicates = [orderedSet array];
+        [[PFUser currentUser]setObject:arrayWithoutDuplicates forKey:@"searches"];
+        [[PFUser currentUser] setObject:@"YES" forKey:@"clearSearches"];
+        [[PFUser currentUser]saveInBackground];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -178,11 +197,14 @@
         [self presentViewController:navController animated:YES completion:nil];
     }
     else{
-        self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+        self.currency = [[PFUser currentUser]objectForKey:@"currency"];        
         if ([self.currency isEqualToString:@"GBP"]) {
             self.currencySymbol = @"£";
         }
-        else{
+        else if ([self.currency isEqualToString:@"EUR"]) {
+            self.currencySymbol = @"€";
+        }
+        else if ([self.currency isEqualToString:@"USD"]) {
             self.currencySymbol = @"$";
         }
     }
@@ -283,8 +305,17 @@
     cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
     
     NSString *condition = [listing objectForKey:@"condition"];
-
+    
     int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+
+    //since EUR has been recently added, do a check if the listing has a EUR price. If not, calc and save
+    if ([self.currency isEqualToString:@"EUR"] && price == 0) {
+        int pounds = [[listing objectForKey:@"listingPriceGBP"]intValue];
+        int EUR = pounds*1.16;
+        listing[@"listingPriceEUR"] = @(EUR);
+        price = EUR;
+        [listing saveInBackground];
+    }
     cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
     
     if ([condition isEqualToString:@"BNWT"]) {
@@ -379,6 +410,47 @@
     self.pullQuery.limit = 12;
     [self setupPullQuery];
     if (self.searchEnabled == YES) {
+        
+//        NSArray *searchWords = [self.searchString componentsSeparatedByString:@" "];
+//        NSMutableArray *wordsToSearch = [NSMutableArray array];
+//        
+//        NSLog(@"words %@", wordsToSearch);
+//        
+//        //remove pointless words from search
+////        for (NSString *word in wordsToSearch) {
+////            if ([self.uselessWords containsObject:word]) {
+////                [wordsToSearch removeObject:word];
+////            }
+////        }
+//        
+//        //create a combo of search terms then add to array
+//        
+//        int ogCount = (int)[searchWords count];
+//        
+//        for (int i = 0; i<=ogCount; i++) {
+//            if (i+1 < searchWords.count) {
+//                
+//                NSString *string1 = [NSString stringWithFormat:@"%@ %@", searchWords[i], searchWords[i+1]];
+//                NSString *string2 = [NSString stringWithFormat:@"%@ %@", searchWords[i+1], searchWords[i]];
+//                
+//                [wordsToSearch addObject:string1];
+//                [wordsToSearch addObject:string2];
+//                
+//                NSLog(@"added strings");
+//            }
+//        }
+//        
+//        NSLog(@"out the loop");
+//        
+//        //add whole search term to array in case it's a perfect match
+//        [wordsToSearch addObject:self.searchString];
+//        
+//        wordsToSearch= [[[wordsToSearch reverseObjectEnumerator] allObjects] mutableCopy];
+//
+//        
+//        NSLog(@"words to search final %@", wordsToSearch);
+        
+        
         [self.pullQuery whereKey:@"titleLower" containsString:self.searchString];
     }
     
@@ -923,7 +995,10 @@
             if (history.count >= 15) {
                 [history removeObjectAtIndex:0];
             }
-            [history addObject:self.searchString];
+            
+            if (![history containsObject:self.searchString]) {
+                [history addObject:self.searchString];
+            }
             
             [[PFUser currentUser] setObject:history forKey:@"searches"];
             [[PFUser currentUser] saveEventually];
@@ -932,7 +1007,12 @@
         //update results controller UI since only updated via query every time search button pressed
         
         NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.resultsController.allResults];
-        [searchesList insertObject:self.searchString atIndex:0];
+        
+        
+        if (![searchesList containsObject:self.searchString]) {
+            [searchesList insertObject:self.searchString atIndex:0];
+        }
+        
         self.resultsController.allResults = searchesList;
         [self.resultsController.tableView reloadData];
         

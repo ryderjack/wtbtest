@@ -12,7 +12,7 @@
 #import <MBProgressHUD.h>
 #import <DGActivityIndicatorView.h>
 
-@interface DetailImageController : UIViewController
+@interface DetailImageController : UIViewController <UIScrollViewDelegate>
 
 
 @property (weak, nonatomic) IBOutlet PFImageView *imageView;
@@ -38,5 +38,8 @@
 
 //spinner
 @property (nonatomic, strong) MBProgressHUD *hud;
+
+//scroll view
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
 
 @end

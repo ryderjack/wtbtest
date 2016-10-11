@@ -17,3 +17,6 @@ pod 'BASSquareCropper', '~> 0.0'
 pod 'TOWebViewController'
 pod 'DGActivityIndicatorView'
 pod 'iRate', '~> 1.11'
+pod 'GMImagePicker', '~> 0.0.2'
+pod 'PulsingHalo'
+

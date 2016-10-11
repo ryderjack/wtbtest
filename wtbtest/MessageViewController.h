@@ -11,8 +11,10 @@
 #import <Parse/Parse.h>
 #import "CameraController.h"
 #import <BASSquareCropperViewController.h>
+#import "GMImagePickerController.h"
 
-@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate>
+
+@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate, GMImagePickerControllerDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -61,6 +63,9 @@
 @property (nonatomic) BOOL successBannerShowing;
 @property (nonatomic, strong) UIView *successView;
 @property (nonatomic, strong) UIButton *successButton;
+
+@property (nonatomic) BOOL infoBannerShowing;
+@property (nonatomic, strong) UIView *infoView;
 
 @property (nonatomic) BOOL checkoutTapped;
 

@@ -21,5 +21,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *howItWorks;
 @property (strong, nonatomic) IBOutlet UITableViewCell *feedbackCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *savedLaterCell;
+@property (weak, nonatomic) IBOutlet UIImageView *unreadView;
+@property (strong, nonatomic) IBOutlet UITableViewCell *termsCell;
 
 @end

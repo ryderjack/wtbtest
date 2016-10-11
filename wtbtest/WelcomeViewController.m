@@ -58,20 +58,28 @@
             //take to reg VC & save data
             RegisterViewController *vc = [[RegisterViewController alloc]init];
             vc.user = user;
-            
             [self hidHUD];
-            
             [self.navigationController pushViewController:vc animated:YES];
             
         } else {
             NSLog(@"User logged in through Facebook!");
-            //check if completed reg/tutorial via NSUserDefaults
-            
+            //check if completed reg/tutorial via NSUserDefaults/user object
             [self hidHUD];
-            
-            //always take to reg for now to avoid missing data entry
-            
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg"] == YES) {//////////////////update before release (remove the 1)
+                        
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg11"] == YES || [[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"] ) {
+                
+                //if haven't got the updated install independent variable for completing reg then give it to them lad!
+                if (![[[PFUser currentUser]objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
+                    user[@"completedReg"] = @"YES";
+                    [user saveInBackground];
+                }
+                
+                //update installation object w/ current user
+                PFInstallation *installation = [PFInstallation currentInstallation];
+                [installation setObject:[PFUser currentUser] forKey:@"user"];
+                [installation setObject:[PFUser currentUser].objectId forKey:@"userId"];
+                [installation saveInBackground];
+                
                 //take to app
                 [self dismissViewControllerAnimated:YES completion:nil];
             }
