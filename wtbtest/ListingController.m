@@ -14,6 +14,7 @@
 #import "MessageViewController.h"
 #import "FBGroupShareViewController.h"
 #import "UserProfileController.h"
+#import "Flurry.h"
 
 @interface ListingController ()
 
@@ -25,11 +26,9 @@
     [super viewDidLoad];
     
     self.navigationItem.title = @"WTB";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
-    
     UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
+    
+    [self.checkImageView setHidden:YES];
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
@@ -80,7 +79,6 @@
             
             //since EUR has been recently added, do a check if the listing has a EUR price. If not, calc and save
             if ([self.currency isEqualToString:@"EUR"] && price == 0) {
-                NSLog(@"no EUR so saving for em %d", price);
                 int pounds = [[self.listingObject objectForKey:@"listingPriceGBP"]intValue];
                 int EUR = pounds*1.16;
                 self.listingObject[@"listingPriceEUR"] = @(EUR);
@@ -138,6 +136,13 @@
                     }
                     else{
                         [self.buyerImgView setImage:[UIImage imageNamed:@"empty"]];
+                    }
+                    
+                    if ([[self.buyer objectForKey:@"trustedSeller"] isEqualToString:@"YES"]) {
+                        [self.checkImageView setHidden:NO];
+                    }
+                    else{
+                        [self.checkImageView setHidden:YES];
                     }
                     
                     PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
@@ -247,6 +252,12 @@
             break;
         }
     }
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -428,7 +439,7 @@
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
-            return 207;
+            return 80;
         }
     }
     else if (indexPath.section ==3){
@@ -489,6 +500,7 @@
     }
 }
 - (IBAction)saveForLaterPressed:(id)sender {
+    [Flurry logEvent:@"Save_Tapped"];
     [self.saveButton setEnabled:NO];
     [[PFUser currentUser] addObject:self.listingObject.objectId forKey:@"savedItems"];
     [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
@@ -535,7 +547,6 @@
 }
 
 -(void)setupMessages{
-    [self showHUD];
     PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     NSString *possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"postUser"]objectId], self.listingObject.objectId];
     NSString *otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"postUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
@@ -552,7 +563,7 @@
             vc.convoObject = object;
             vc.listing = self.listingObject;
             if (self.sellThisPressed == YES) {
-                vc.sellThisPressed = YES;
+                vc.sellThisPressed = NO;
             }
             vc.otherUser = [object objectForKey:@"buyerUser"];
             vc.otherUserName = [[object objectForKey:@"buyerUser"]username];
@@ -564,7 +575,6 @@
         else{
             //create a new convo and goto it
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
-                        
             convoObject[@"sellerUser"] = [PFUser currentUser];
             convoObject[@"buyerUser"] = [self.listingObject objectForKey:@"postUser"];
             convoObject[@"itemId"] = self.listingObject.objectId;
@@ -579,7 +589,7 @@
                     vc.convoObject = convoObject;
                     vc.listing = self.listingObject;
                     if (self.sellThisPressed == YES) {
-                        vc.sellThisPressed = YES;
+                        vc.sellThisPressed = NO;
                     }
                     vc.otherUser = [self.listingObject objectForKey:@"postUser"];
                     vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
@@ -648,22 +658,13 @@
     }
     if (self.numberOfPics > 1) {
         //set placeholder spinner view
-        MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:self.picView animated:YES];
-        hud.square = YES;
-        hud.mode = MBProgressHUDModeCustomView;
-        hud.color = [UIColor whiteColor];
-        DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-        hud.customView = spinner;
-        [spinner startAnimating];
+        [self showimageHUD];
         
         [self.picView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
         } progressBlock:^(int percentDone) {
             if (percentDone == 100) {
                 //remove spinner
-                [spinner stopAnimating];
-                [MBProgressHUD hideHUDForView:self.picView animated:NO];
-                spinner = nil;
-                hud = nil;
+                [self hideImageHud];
             }
         }];
     }
@@ -711,6 +712,7 @@
     }
     else{
         self.sellThisPressed = YES;
+        [self showHUD];
         [self setupMessages];
     }
 }
@@ -749,11 +751,36 @@
 }
 
 -(void)showHUD{
-    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    if (!self.hud) {
+     self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    }
     self.hud.square = YES;
     self.hud.mode = MBProgressHUDModeCustomView;
     self.hud.customView = self.spinner;
     [self.spinner startAnimating];
+}
+
+-(void)showimageHUD{
+    if (!self.imageHud) {
+        self.imageHud = [MBProgressHUD showHUDAddedTo:self.picView animated:YES];
+    }
+    self.imageHud.square = YES;
+    self.imageHud.mode = MBProgressHUDModeCustomView;
+    self.imageHud.color = [UIColor whiteColor];
+    
+    if (!self.imageSpinner) {
+       self.imageSpinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+    }
+    
+    self.imageHud.customView = self.imageSpinner;
+    [self.imageSpinner startAnimating];
+}
+
+-(void)hideImageHud{
+    [self.imageSpinner stopAnimating];
+    [MBProgressHUD hideHUDForView:self.picView animated:NO];
+    self.imageSpinner = nil;
+    self.imageHud = nil;
 }
 
 -(void)hideHUD{

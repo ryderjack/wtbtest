@@ -58,6 +58,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *pastDealsLabel;
 @property (weak, nonatomic) IBOutlet PFImageView *buyerImgView;
 @property (weak, nonatomic) IBOutlet UIButton *buyerButton;
+    @property (weak, nonatomic) IBOutlet PFImageView *checkImageView;
 
 @property (nonatomic, strong) PFFile *firstImage;
 @property (nonatomic, strong) PFFile *secondImage;
@@ -78,4 +79,8 @@
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
 @property (nonatomic, strong) MBProgressHUD *hud;
+
+@property (nonatomic, strong) DGActivityIndicatorView *imageSpinner;
+@property (nonatomic, strong) MBProgressHUD *imageHud;
+
 @end

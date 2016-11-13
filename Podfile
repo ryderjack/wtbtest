@@ -1,3 +1,5 @@
+source "https://github.com/CocoaPods/Old-Specs"
+
 pod 'Parse'
 pod 'FBSDKCoreKit'
 pod 'FBSDKShareKit'
@@ -6,7 +8,6 @@ pod 'ParseUI'
 pod 'ParseFacebookUtilsV4'
 pod 'SVPullToRefresh'
 pod 'FastttCamera'
-pod 'DZNPhotoPickerController'
 pod 'JSQMessagesViewController'
 pod 'Flurry-iOS-SDK/FlurrySDK'
 pod 'SpinKit', '~> 1.1'
@@ -19,4 +20,5 @@ pod 'DGActivityIndicatorView'
 pod 'iRate', '~> 1.11'
 pod 'GMImagePicker', '~> 0.0.2'
 pod 'PulsingHalo'
+pod 'HNKGooglePlacesAutocomplete', '~> 1.1'
 

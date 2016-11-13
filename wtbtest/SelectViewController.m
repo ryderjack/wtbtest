@@ -46,28 +46,43 @@
         }
     }
     
-    NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
+//    NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
     
-    self.conditionArray = [NSArray arrayWithObjects:@"BNWT",@"BNWOT", @"Used", @"Any",nil];
     self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear", nil];
     
-    
-    self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3 | US 3.5", @"UK 3.5 | US 4",@"UK 4 | US 4.5", @"UK 4.5 | US 5", @"UK 5 | US 5.5", @"UK 5.5 | US 6", @"UK 6 | US 6.5",@"UK 6.5 | US 7",@"UK 7 | US 7.5", @"UK 7.5 | US 8", @"UK 8 | US 8.5",@"UK 8.5 | US 9",@"UK 9 | US 9.5", @"UK 9.5 | US 10", @"UK 10 | US 10.5",@"UK 10.5 | US 11",@"UK 11 | US 11.5", @"UK 11.5 | US 12", @"UK 12 | US 12.5",@"UK 12.5 | US 13",@"UK 13 | US 13.5", @"UK 13.5 | US 14", @"UK 14 | US 14.5", @"Any", nil];
-    
-    self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", @"Any", nil];
-    
-    self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9", @"Any", nil];
-    
-    self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1 | US 3", @"UK 1.5 | US 3.5",@"UK 2 | US 4", @"UK 2.5 | US 4.5", @"UK 3 | US 5", @"UK 3.5 | US 5.5", @"UK 4 | US 6",@"UK 4.5 | US 6.5",@"UK 5 | US 7", @"UK 5.5 | US 7.5", @"UK 6 | US 8",@"UK 6.5 | US 8.5",@"UK 7 | US 9", @"UK 7.5 | US 9.5", @"UK 8 | US 10",@"UK 9 | US 11", @"Any", nil];
-    self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"OS", @"Any", nil];
-    self.deliveryArray = [NSArray arrayWithObjects:@"Meetup",@"Courier", @"Any", nil];
+    if (self.sellListing == YES) {
+        self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3 | US 3.5", @"UK 3.5 | US 4",@"UK 4 | US 4.5", @"UK 4.5 | US 5", @"UK 5 | US 5.5", @"UK 5.5 | US 6", @"UK 6 | US 6.5",@"UK 6.5 | US 7",@"UK 7 | US 7.5", @"UK 7.5 | US 8", @"UK 8 | US 8.5",@"UK 8.5 | US 9",@"UK 9 | US 9.5", @"UK 9.5 | US 10", @"UK 10 | US 10.5",@"UK 10.5 | US 11",@"UK 11 | US 11.5", @"UK 11.5 | US 12", @"UK 12 | US 12.5",@"UK 12.5 | US 13",@"UK 13 | US 13.5", @"UK 13.5 | US 14", @"UK 14 | US 14.5",@"Other", nil];
+        
+        self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14",@"Other", nil];
+        
+        self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9",@"Other", nil];
+        
+        self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1 | US 3", @"UK 1.5 | US 3.5",@"UK 2 | US 4", @"UK 2.5 | US 4.5", @"UK 3 | US 5", @"UK 3.5 | US 5.5", @"UK 4 | US 6",@"UK 4.5 | US 6.5",@"UK 5 | US 7", @"UK 5.5 | US 7.5", @"UK 6 | US 8",@"UK 6.5 | US 8.5",@"UK 7 | US 9", @"UK 7.5 | US 9.5", @"UK 8 | US 10",@"UK 9 | US 11",@"Other", nil];
+        
+        self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL",@"Other", nil];
+        
+        self.conditionArray = [NSArray arrayWithObjects:@"Brand New With Tags",@"Brand New Without Tags", @"Used", @"Other",nil];
+    }
+    else{
+        self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3 | US 3.5", @"UK 3.5 | US 4",@"UK 4 | US 4.5", @"UK 4.5 | US 5", @"UK 5 | US 5.5", @"UK 5.5 | US 6", @"UK 6 | US 6.5",@"UK 6.5 | US 7",@"UK 7 | US 7.5", @"UK 7.5 | US 8", @"UK 8 | US 8.5",@"UK 8.5 | US 9",@"UK 9 | US 9.5", @"UK 9.5 | US 10", @"UK 10 | US 10.5",@"UK 10.5 | US 11",@"UK 11 | US 11.5", @"UK 11.5 | US 12", @"UK 12 | US 12.5",@"UK 12.5 | US 13",@"UK 13 | US 13.5", @"UK 13.5 | US 14", @"UK 14 | US 14.5", @"Any", nil];
+        
+        self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", @"Any", nil];
+        
+        self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9", @"Any", nil];
+        
+        self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1 | US 3", @"UK 1.5 | US 3.5",@"UK 2 | US 4", @"UK 2.5 | US 4.5", @"UK 3 | US 5", @"UK 3.5 | US 5.5", @"UK 4 | US 6",@"UK 4.5 | US 6.5",@"UK 5 | US 7", @"UK 5.5 | US 7.5", @"UK 6 | US 8",@"UK 6.5 | US 8.5",@"UK 7 | US 9", @"UK 7.5 | US 9.5", @"UK 8 | US 10",@"UK 9 | US 11", @"Any", nil];
+        
+        self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"Any", nil];
+        self.deliveryArray = [NSArray arrayWithObjects:@"Meetup",@"Courier", @"Any", nil];
+        self.conditionArray = [NSArray arrayWithObjects:@"Brand New With Tags",@"Brand New Without Tags", @"Used", @"Any",nil];
+    }
     
     [self.tableView registerNib:[UINib nibWithNibName:@"selectCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
     
     //holding array is just if user has previously selected an option then is coming back to the VC
     if (![self.holdingGender isEqualToString:@""]) {
         self.genderSelected = self.holdingGender;
-        NSLog(@"holding gender %@", self.holdingGender);
+//        NSLog(@"holding gender %@", self.holdingGender);
     }
     else{
         if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"male"]) {
@@ -87,7 +102,6 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-
     return 1;
 }
 
@@ -303,45 +317,16 @@
         //if setting is size add a checkmark if array is < 3
         if (([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"])) {
             
-            // if selected index is last (='Any') then clear the array and removes all checkmarks
-            if (indexPath == pathToLastRow) {
-                //clear sizes array
+            if (self.sellListing == YES) {
+                //put the pop logic here
                 [self.selectedSizes removeAllObjects];
-                [self.selectedSizes addObject:@"Any"];
-                
-                //remove all checkmarks in tableview
-                for (UITableViewCell *cell in [tableView visibleCells]) {
-                    cell.accessoryType = UITableViewCellAccessoryNone;
-                }
-                
-                //add checkmark
-                UITableViewCell *currentCell = [tableView cellForRowAtIndexPath:indexPath];
-                currentCell.accessoryType = UITableViewCellAccessoryCheckmark;
-
-                return;
-            }
-
-            if (self.selectedSizes.count <3) {
-                
-                if ([self.selectedSizes containsObject:@"Any"]) {
-                    [self.selectedSizes removeObject:@"Any"];
-                    UITableViewCell *anyCell = [tableView cellForRowAtIndexPath:pathToLastRow];
-                    anyCell.accessoryType = UITableViewCellAccessoryNone;
-                }
-                
-                //select cell, got space left in the selection array
-                NSLog(@"got space in the array, add a checkmark!");
-                UITableViewCell *currentCell = [tableView cellForRowAtIndexPath:indexPath];
-                currentCell.accessoryType = UITableViewCellAccessoryCheckmark;
-                
-                //update selected sizes array
                 
                 if ([self.setting isEqualToString:@"sizefoot"]) {
                     if (indexPath.row == 0) {
                         //segment control so don't add anything
                     }
                     else{
-                        //add adjusted index path (due to segment control at 0 ^
+                        //add adjusted index path (due to segment control at 0
                         if ([self.genderSelected isEqualToString:@"Mens"]) {
                             [self.selectedSizes addObject:[self.mensSizeUKArray objectAtIndex:indexPath.row-1]];
                         }
@@ -354,17 +339,108 @@
                     [self.selectedSizes addObject:[self.clothingyArray objectAtIndex:indexPath.row]];
                 }
                 
-                NSLog(@"updated selected sizes array %@", self.selectedSizes);
-                
                 self.lastSelectedPath = indexPath;
+                
+                //remove all checkmarks in tableview
+                for (UITableViewCell *cell in [tableView visibleCells]) {
+                    cell.accessoryType = UITableViewCellAccessoryNone;
+                }
+                
+                //add checkmark
+                UITableViewCell *currentCell = [tableView cellForRowAtIndexPath:indexPath];
+                currentCell.accessoryType = UITableViewCellAccessoryCheckmark;
+                
+                [self.navigationController popViewControllerAnimated:YES];
+                
+                return;
             }
             else{
-                //don't select the cell, already reached the max selection
-                NSLog(@"array is full! need to deselect something");
+                // if selected index is last (='Any' or 'Other') then clear the array and remove all checkmarks
+                if (indexPath == pathToLastRow) {
+                    //clear sizes array
+                    [self.selectedSizes removeAllObjects];
+                    if (self.sellListing == YES) {
+                        [self.selectedSizes addObject:@"Other"];
+                        [self.delegate addItemViewController:self didFinishEnteringItem:@"Other" withgender:self.genderSelected andsizes:nil];
+                    }
+                    else{
+                        [self.selectedSizes addObject:@"Any"];
+                        [self.delegate addItemViewController:self didFinishEnteringItem:@"Any" withgender:self.genderSelected andsizes:nil];
+                    }
+                    
+                    //remove all checkmarks in tableview
+                    for (UITableViewCell *cell in [tableView visibleCells]) {
+                        cell.accessoryType = UITableViewCellAccessoryNone;
+                    }
+                    
+                    //add checkmark
+                    UITableViewCell *currentCell = [tableView cellForRowAtIndexPath:indexPath];
+                    currentCell.accessoryType = UITableViewCellAccessoryCheckmark;
+                    
+                    [self.navigationController popViewControllerAnimated:YES];
+                    
+                    return;
+                }
+                
+                int limit = 0;
+                
+                if (self.sellListing == YES) {
+                    limit = 1;
+                }
+                else{
+                    limit = 3;
+                }
+                
+                if (self.selectedSizes.count <limit) {
+                    
+                    if ([self.selectedSizes containsObject:@"Any"]) {
+                        [self.selectedSizes removeObject:@"Any"];
+                        UITableViewCell *anyCell = [tableView cellForRowAtIndexPath:pathToLastRow];
+                        anyCell.accessoryType = UITableViewCellAccessoryNone;
+                    }
+                    else if ([self.selectedSizes containsObject:@"Other"]) {
+                        [self.selectedSizes removeObject:@"Other"];
+                        UITableViewCell *anyCell = [tableView cellForRowAtIndexPath:pathToLastRow];
+                        anyCell.accessoryType = UITableViewCellAccessoryNone;
+                    }
+                    
+                    //select cell, got space left in the selection array
+                    NSLog(@"got space in the array, add a checkmark!");
+                    UITableViewCell *currentCell = [tableView cellForRowAtIndexPath:indexPath];
+                    currentCell.accessoryType = UITableViewCellAccessoryCheckmark;
+                    
+                    //update selected sizes array
+                    
+                    if ([self.setting isEqualToString:@"sizefoot"]) {
+                        if (indexPath.row == 0) {
+                            //segment control so don't add anything
+                        }
+                        else{
+                            //add adjusted index path (due to segment control at 0 ^
+                            if ([self.genderSelected isEqualToString:@"Mens"]) {
+                                [self.selectedSizes addObject:[self.mensSizeUKArray objectAtIndex:indexPath.row-1]];
+                            }
+                            else{
+                                [self.selectedSizes addObject:[self.femaleSizeUKArray objectAtIndex:indexPath.row-1]];
+                            }
+                        }
+                    }
+                    else if ([self.setting isEqualToString:@"sizeclothing"]) {
+                        [self.selectedSizes addObject:[self.clothingyArray objectAtIndex:indexPath.row]];
+                    }
+                    
+                    NSLog(@"updated selected sizes array %@", self.selectedSizes);
+                    
+                    self.lastSelectedPath = indexPath;
+                }
+                else{
+                    //don't select the cell, already reached the max selection
+                    NSLog(@"array is full! need to deselect something");
+                }
+                
+                //can return beacuse other code is for other settings
+                return;
             }
-            
-            //can return beacuse other code is for other settings
-            return;
         }
         else{
             //add a checkmark to latest cell because its not a size selection VC
@@ -405,7 +481,6 @@
     NSLog(@"selected: %@", selectionString);
     
     if (![selectionString isEqualToString:@""]) {
-
             [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withgender:self.genderSelected andsizes:nil];
             [self.navigationController popViewControllerAnimated:YES];
     }
@@ -414,7 +489,7 @@
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     
-     if ([self.setting isEqualToString:@"sizefoot"] && self.selectedSizes.count > 0 && ![self.selectedSizes containsObject:@"Any"]){
+     if ([self.setting isEqualToString:@"sizefoot"] && self.selectedSizes.count > 0 && ![self.selectedSizes containsObject:@"Any"] && ![self.selectedSizes containsObject:@"Other"]){
         
          //convert array strings into numbers to sort into ascending order
          NSArray *sizeStrings = [NSArray arrayWithArray:self.selectedSizes];

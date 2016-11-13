@@ -12,9 +12,9 @@
 #import "CameraController.h"
 #import <BASSquareCropperViewController.h>
 #import "GMImagePickerController.h"
+#import <TOWebViewController.h>
 
-
-@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate, GMImagePickerControllerDelegate>
+@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate, GMImagePickerControllerDelegate,TOWebDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -46,6 +46,9 @@
 
 @property (nonatomic) BOOL sellThisPressed;
 
+@property (nonatomic) BOOL messageSellerPressed;
+@property (nonatomic, strong) NSString *sellerItemTitle;
+
 @property (nonatomic, strong) UIBarButtonItem *cancelButton;
 @property (nonatomic, strong) UIBarButtonItem *profileButton;
 @property (nonatomic, strong) UIBarButtonItem *listingButton;
@@ -75,5 +78,7 @@
 @property (nonatomic) BOOL checkPayPalTapped;
 
 @property (nonatomic) BOOL receivedNew;
+
+@property (nonatomic, strong) TOWebViewController *webViewController;
 
 @end

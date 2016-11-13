@@ -48,7 +48,7 @@
     
     self.labelOne.text = @"Create a listing for an item you want";
     self.labelTwo.text = @"Sellers see your listing and send you offers to buy their item ";
-    self.labelThree.text = @"Choose to accept/reject offers until you reach a deal, pay (zero fees!) and its shipped!";
+    self.labelThree.text = @"Choose to accept/reject offers until you reach a deal, pay (ZERO fees) and it's shipped!";
 }
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
@@ -122,14 +122,14 @@
             [self.firstImageView setImage:[UIImage imageNamed:@"grid"]];
             self.labelOne.text = @"Browse through items people are looking to purchase";
             self.labelTwo.text = @"Spot an item you’re selling? Send the buyer an offer to buy your item";
-            self.labelThree.text = @"Chat until you reach a deal, receive payment (zero fees) and then ship!";
+            self.labelThree.text = @"Chat until you reach a deal, receive payment (ZERO fees) and then ship!";
         }
         else{
             //buyers selected
             [self.firstImageView setImage:[UIImage imageNamed:@"compose"]];
             self.labelOne.text = @"Create a listing for an item you want";
             self.labelTwo.text = @"Sellers see your listing and send you offers to buy their item";
-            self.labelThree.text = @"Accept your ideal offer, pay (zero fees) and it's shipped!";
+            self.labelThree.text = @"Accept your ideal offer, pay (ZERO fees) and it's shipped!";
         }
 }
 - (IBAction)dismissPressed:(id)sender {

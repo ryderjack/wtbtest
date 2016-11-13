@@ -41,6 +41,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *dealsLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *starsImgView;
 @property (weak, nonatomic) IBOutlet PFImageView *userImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *checkImageView;
 
 //image cell
 @property (weak, nonatomic) IBOutlet PFImageView *firstImageView;
@@ -86,4 +87,7 @@
 //currency
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
+
+//messageMode
+@property (nonatomic) BOOL fromMessage;
 @end

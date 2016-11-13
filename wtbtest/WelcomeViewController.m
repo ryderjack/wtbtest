@@ -66,13 +66,7 @@
             //check if completed reg/tutorial via NSUserDefaults/user object
             [self hidHUD];
                         
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"completedReg11"] == YES || [[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"] ) {
-                
-                //if haven't got the updated install independent variable for completing reg then give it to them lad!
-                if (![[[PFUser currentUser]objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
-                    user[@"completedReg"] = @"YES";
-                    [user saveInBackground];
-                }
+            if ([[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"] ) {
                 
                 //update installation object w/ current user
                 PFInstallation *installation = [PFInstallation currentInstallation];

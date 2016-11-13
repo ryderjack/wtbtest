@@ -11,12 +11,13 @@
 #import "DetailImageController.h"
 #import "UserProfileController.h"
 #import "SettingsController.h"
-#import <TOWebViewController.h>
 #import "FeedbackController.h"
 #import "OrderSummaryController.h"
 #import "ListingController.h"
-#import "MessageTutorial.h"
+#import "MessagesTutorial.h"
 #import <PulsingHaloLayer.h>
+#import "NavigationController.h"
+#import "MessagesTutorial.h"
 
 @interface MessageViewController ()
 
@@ -60,15 +61,13 @@
     
     [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
     
-    
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
     self.inputToolbar.contentView.textView.pasteDelegate = self;
     self.inputToolbar.contentView.textView.placeHolder = @"Tap the tag for more actions";
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagFill"] forState:UIControlStateNormal];
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagIconG"] forState:UIControlStateHighlighted];
     
-    
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"pulsingDone"] == YES) {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"pulsingDone"] != YES) {
         PulsingHaloLayer *halo = [PulsingHaloLayer layer];
         halo.position = self.inputToolbar.contentView.leftBarButtonItem.center;
         [self.inputToolbar.contentView.leftBarButtonItem.layer addSublayer:halo];
@@ -84,19 +83,6 @@
     //Register custom menu actions for cells.
 
     [JSQMessagesCollectionViewCell registerMenuAction:@selector(customAction:)];
-
-    /**
-     *  Customize your toolbar buttons
-     *
-     *  self.inputToolbar.contentView.leftBarButtonItem = custom button or nil to remove
-     *  self.inputToolbar.contentView.rightBarButtonItem = custom button or nil to remove
-     */
-    
-    /**
-     *  Set a maximum height for the input toolbar
-     *
-     *  self.inputToolbar.maximumHeight = 150;
-     */
     
     self.senderId = [PFUser currentUser].objectId;
     
@@ -141,12 +127,20 @@
     //to update status to seen of last sent when new messages come through
     self.receivedNew = NO;
     
-    if (self.userIsBuyer == NO) {
-        //check if paypal email has been entered
-        if (![[[PFUser currentUser]objectForKey:@"paypalUpdated"]isEqualToString:@"YES"]) {
-            [self showPayPalAlert];
-            [[PFUser currentUser]saveInBackground];
-        }
+    PFUser *current = [PFUser currentUser];
+    if (![[current objectForKey:@"completedMsgIntro2"]isEqualToString:@"YES"]) {
+        //show intro VC
+        MessagesTutorial *vc = [[MessagesTutorial alloc]init];
+        [self presentViewController:vc animated:YES completion:nil];
+    }
+    else{
+        if (self.userIsBuyer == NO) {
+            //check if paypal email has been entered
+            if (![[[PFUser currentUser]objectForKey:@"paypalUpdated"]isEqualToString:@"YES"]) {
+                [self showPayPalAlert];
+                [[PFUser currentUser]saveInBackground];
+            }
+        } 
     }
 }
 
@@ -182,15 +176,15 @@
                 
                 for (PFObject *messageOb in objects) {
                     
+                    if (![self.messagesParseArray containsObject:messageOb]) {
+                        [self.messagesParseArray addObject:messageOb];
+                    }
+                    
                     // is status message set as seen so badge number decrements and then continue to add other messages to arrays
                     if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
                         [messageOb setObject:@"seen" forKey:@"status"];
                         [messageOb saveInBackground];
                         continue;
-                    }
-                    
-                    if (![self.messagesParseArray containsObject:messageOb]) {
-                        [self.messagesParseArray addObject:messageOb];
                     }
                     
                     __block JSQMessage *message = nil;
@@ -219,6 +213,12 @@
                         __block id newMediaAttachmentCopy = nil;
                         __block JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc]init];
                         photoItem.image = nil;
+                        if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                            photoItem.appliesMediaViewMaskAsOutgoing = YES;
+                        }
+                        else{
+                            photoItem.appliesMediaViewMaskAsOutgoing = NO;
+                        }
                         
                         message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
                         [self.messages insertObject:message atIndex:0];
@@ -227,7 +227,6 @@
                         
                         PFQuery *imageQuery = [PFQuery queryWithClassName:@"messageImages"];
                         [imageQuery whereKey:@"objectId" equalTo:[messageOb objectForKey:@"message"]];
-                        
                         [imageQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                             if (!error) {
                                 PFFile *img = [object objectForKey:@"Image"];
@@ -244,9 +243,14 @@
                                             [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
                                         }
                                         else{
-                                            [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView]; //needs to change?
+                                            [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView];
                                         }
                                         [self.collectionView reloadData];
+                                        
+                                        message = nil;
+                                    }
+                                    else{
+                                        NSLog(@"error getting img data %@", error);
                                     }
                                 }];
                             }
@@ -255,6 +259,29 @@
                             }
                         }];
                     }
+//                    else if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]){
+//                        
+//                        JSQMediaItem *statusItem = [[JSQMediaItem alloc]init];
+//                        
+//                        NSLog(@"in status message");
+//                        
+//                        NSString *statusText = [messageOb objectForKey:@"message"];
+//                        
+//                        UIView *statusView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 50, 50)];
+//                        
+//                        UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 40, 40)];
+//                        label.text = statusText;
+//                        label.backgroundColor = [UIColor greenColor];
+//                        
+//                        [statusView addSubview:label];
+//                        
+//                        
+//                        message = [[JSQMessage alloc] initWithSenderId:@"statusMessage"  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:statusItem];
+//                        
+//                        NSLog(@"message %@", message);
+//                       
+//                        [self.messages insertObject:message atIndex:0];
+//                    }
                     else{
                         NSString *messageText = [messageOb objectForKey:@"message"];
                         
@@ -301,7 +328,9 @@
                                 message.isPurchased = YES;
                             }
                         }
-                        [self.messages insertObject:message atIndex:0];
+                        if (![self.messages containsObject:message]) {
+                            [self.messages insertObject:message atIndex:0];
+                        }
                     }
                 }
                 [self.convoObject saveInBackground];
@@ -316,6 +345,7 @@
                     [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
                     self.fromForeGround = NO;
                 }
+                
                 [self.collectionView reloadData];
                 
                 if (self.earlierPressed == NO) {
@@ -573,6 +603,11 @@
         self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Selling: \nCondition: \nPrice: %@\nMeetup: ", self.currencySymbol];
     }
     
+    if (self.messageSellerPressed == YES) {
+        self.messageSellerPressed = NO;
+        //is the description most appropriate thing here???
+        self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"I'm interested in buying your '%@'", self.sellerItemTitle];
+    }
 }
 
 #pragma mark - Custom menu actions for cells
@@ -597,11 +632,13 @@
 
 -(void)showPayPalAlert{
     
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"PayPal" message:[NSString stringWithFormat:@"Make sure your PayPal email address is correct to ensure seemless payment. Please enter it in Settings now"] preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"PayPal" message:[NSString stringWithFormat:@"Is this your PayPal email address? %@ Make sure your PayPal email address is correct to ensure seemless payment.", [[PFUser currentUser] objectForKey:@"paypal"]] preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Settings" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Change" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         SettingsController *vc = [[SettingsController alloc]init];
         [self.navigationController pushViewController:vc animated:YES];
+    }]];
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Yes, it's correct" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -819,7 +856,7 @@
             NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username};
             [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                 if (!error) {
-                    NSLog(@"response %@", response);
+                    NSLog(@"push response %@", response);
                 }
                 else{
                     NSLog(@"push error %@", error);
@@ -971,6 +1008,21 @@
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Goto my PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [self showMyPaypal];
         }]];
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send Pics from my Depop" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            BOOL seen = [[NSUserDefaults standardUserDefaults] boolForKey:@"seenDepop"];
+            if (!seen) {
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Send Pics from your Depop" message:@"When you have the images of the items you'd like to send in the middle of your screen, hit Choose!" preferredStyle:UIAlertControllerStyleAlert];
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [self showDepop];
+                }]];
+                [self presentViewController:alertView animated:YES completion:nil];
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenDepop"];
+            }
+            else{
+                [self showDepop];
+            }
+        }]];
     }
     else{
         if (order != nil) {
@@ -994,6 +1046,34 @@
     }
     
     [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+-(void)showDepop{
+    if ([[PFUser currentUser]objectForKey:@"depopHandle"]) {
+        //has added their depop handle
+        NSString *handle = [[PFUser currentUser]objectForKey:@"depopHandle"];
+        NSString *URLString = [NSString stringWithFormat:@"http://depop.com/%@",handle];
+        self.webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+        self.webViewController.title = [NSString stringWithFormat:@"%@", handle];
+        self.webViewController.showUrlWhileLoading = NO;
+        self.webViewController.showPageTitles = NO;
+        self.webViewController.delegate = self;
+        self.webViewController.doneButtonTitle = @"Choose";
+        self.webViewController.paypalMode = NO;
+        self.webViewController.infoMode = NO;
+        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
+        [self presentViewController:navigationController animated:YES completion:nil];
+    }
+    else{
+        //hasn't added handle, prompt to do so
+        [self showAlertWithTitle:@"No Depop Username added" andMsg:@"Add your Depop Username in Settings on Bump and you'll be able to add images of items you've already listed on there without leaving your conversation #zerofees"];
+    }
+}
+
+-(void)didPressDone:(UIImage *)screenshot{
+    [self.webViewController dismissViewControllerAnimated:YES completion:^{
+        [self displayCropperWithImage:screenshot];
+    }];
 }
 
 - (BOOL)assetsPickerController:(GMImagePickerController *)picker shouldSelectAsset:(PHAsset *)asset{
@@ -1020,8 +1100,15 @@
                           contentMode:PHImageContentModeDefault
                               options:requestOptions
                         resultHandler:^void(UIImage *image, NSDictionary *info) {
-                            NSLog(@"image %@", image);
-                            [self finalImage:image];
+                            NSData *imgData = UIImageJPEGRepresentation(image, 0.5);
+//                            NSLog(@"Size of Image(bytes):%lu",(unsigned long)[imgData length]);
+                            if ([imgData length] > 3500000) {
+                                //show alert
+                                [self showAlertWithTitle:@"Image too big!" andMsg:@"Try cropping your image or use a different one completely! 📸"];
+                            }
+                            else{
+                                [self finalImage:image];
+                            }
                         }];
     }
 }
@@ -1117,6 +1204,7 @@
     [self finishSendingMessageAnimated:YES];
     
     PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(image, 0.5)];
+
     [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
      {
          if (error) {
@@ -1289,40 +1377,6 @@
 
 - (id<JSQMessageAvatarImageDataSource>)collectionView:(JSQMessagesCollectionView *)collectionView avatarImageDataForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    /**
-     *  Return `nil` here if you do not want avatars.
-     *  If you do return `nil`, be sure to do the following in `viewDidLoad`:
-     *
-     *  self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeZero;
-     *  self.collectionView.collectionViewLayout.outgoingAvatarViewSize = CGSizeZero;
-     *
-     *  It is possible to have only outgoing avatars or only incoming avatars, too.
-     */
-    
-    /**
-     *  Return your previously created avatar image data objects.
-     *
-     *  Note: these the avatars will be sized according to these values:
-     *
-     *  self.collectionView.collectionViewLayout.incomingAvatarViewSize
-     *  self.collectionView.collectionViewLayout.outgoingAvatarViewSize
-     *
-     *  Override the defaults in `viewDidLoad`
-     */
-//    JSQMessage *message = [self.demoData.messages objectAtIndex:indexPath.item];
-//    
-//    if ([message.senderId isEqualToString:self.senderId]) {
-//        if (![NSUserDefaults outgoingAvatarSetting]) {
-//            return nil;
-//        }
-//    }
-//    else {
-//        if (![NSUserDefaults incomingAvatarSetting]) {
-//            return nil;
-//        }
-//    }
-    
-    
     return nil;
 }
 
@@ -1751,10 +1805,10 @@
             [infoButton addSubview:dismissButton];
             
             if (self.userIsBuyer == YES) {
-                [infoButton setTitle:@"Buyer Protection & Zero Fees on Bump" forState:UIControlStateNormal];
+                [infoButton setTitle:@"How to buy with ZERO Fees on Bump" forState:UIControlStateNormal];
             }
             else{
-                [infoButton setTitle:@"Seller Protection & Zero Fees on Bump" forState:UIControlStateNormal];
+                [infoButton setTitle:@"How to sell with ZERO Fees on Bump" forState:UIControlStateNormal];
             }
             
             infoButton.backgroundColor = [UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0];
@@ -1785,7 +1839,8 @@
 }
 
 -(void)infoTapped{
-    MessageTutorial *vc = [[MessageTutorial alloc]init];
+    MessagesTutorial *vc = [[MessagesTutorial alloc]init];
+    vc.sellerMode = NO;
     [self presentViewController:vc animated:YES completion:nil];
 }
 
@@ -1887,7 +1942,9 @@
     PFObject *order = [self.convoObject objectForKey:@"order"];
     vc.orderDate = order.createdAt;
     vc.orderObject = order;
-    [self.navigationController pushViewController:vc animated:YES];
+    vc.fromMessage = YES;
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    [self presentViewController:nav animated:YES completion:nil];
 }
 
 -(void)markAsShipped{
@@ -2003,7 +2060,7 @@
                 else if (paid == YES && shipped == NO && feedback == NO) {
                     //next step is to leave feedback for buyer and for seller to mark as shipped
                     if (self.userIsBuyer == YES) {
-                        [self.successButton setTitle:@"Seller has confirmed payment - Tap to leave feedback" forState:UIControlStateNormal];
+                        [self.successButton setTitle:@"Payment confirmed - Tap to leave feedback" forState:UIControlStateNormal];
                         [self.successButton addTarget:self action:@selector(viewOrderDetails) forControlEvents:UIControlEventTouchUpInside];
                         //feedbacktapped
                     }

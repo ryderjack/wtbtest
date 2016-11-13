@@ -71,7 +71,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return 2;
+        return 1;
     }
     else if (section == 1){
         return 2;
@@ -92,9 +92,6 @@
     if (indexPath.section == 0){
         if (indexPath.row == 0) {
             return self.profileCell;
-        }
-        else if (indexPath.row == 1) {
-            return self.savedLaterCell;
         }
     }
     else if (indexPath.section == 1){
@@ -139,12 +136,12 @@
             vc.user = [PFUser currentUser];
             [self.navigationController pushViewController:vc animated:YES];
         }
-        else if (indexPath.row == 1){
-            //saved for later pressed
-            OffersController *vc = [[OffersController alloc]init];
-            vc.mode = @"saved";
-            [self.navigationController pushViewController:vc animated:YES];
-        }
+//        else if (indexPath.row == 1){
+//            //saved for later pressed
+//            OffersController *vc = [[OffersController alloc]init];
+//            vc.mode = @"saved";
+//            [self.navigationController pushViewController:vc animated:YES];
+//        }
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {

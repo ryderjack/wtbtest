@@ -24,6 +24,8 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     self.navigationItem.title = @"Order details";
     
+    [self.checkImageView setHidden:YES];
+    
     self.titleCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.simpleImagesCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.shippingCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -52,6 +54,11 @@
     
     self.userName.text = @"";
     self.dealsLabel.text = @"Loading";
+    
+    if (self.fromMessage == YES) {
+        UIBarButtonItem *dismissButton = [[UIBarButtonItem alloc]initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
+        self.navigationItem.leftBarButtonItem = dismissButton;
+    }
     
     //fetch offer to setup title cell/totals/images
     self.confirmedOffer = [self.orderObject objectForKey:@"offerObject"];
@@ -138,6 +145,13 @@
             self.userName.text = self.otherUser.username;
             [self.userImageView setFile:[self.otherUser objectForKey:@"picture"]];
             [self.userImageView loadInBackground];
+            
+            if ([[self.otherUser objectForKey:@"trustedSeller"] isEqualToString:@"YES"]) {
+                [self.checkImageView setHidden:NO];
+            }
+            else{
+                [self.checkImageView setHidden:YES];
+            }
             
             PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
             [dealsQuery whereKey:@"User" equalTo:self.otherUser];
@@ -603,5 +617,9 @@
     UserProfileController *vc = [[UserProfileController alloc]init];
     vc.user = self.otherUser;
     [self.navigationController pushViewController:vc animated:YES];
+}
+
+-(void)dismissVC{
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 @end

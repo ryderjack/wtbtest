@@ -11,6 +11,10 @@
 #import "ListingController.h"
 #import <TOWebViewController.h>
 #import <SVPullToRefresh/SVPullToRefresh.h>
+#import "CreateForSaleListing.h"
+#import "NavigationController.h"
+#import "ProfileItemCell.h"
+#import "ReviewsVC.h"
 
 @interface UserProfileController ()
 
@@ -21,40 +25,42 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.dealsLabel.text = @"Loading";
+    self.dealsLabel.text = @"Reviews";
+    self.numberLabel.text = @"";
+    [self.sellerLabel setHidden:YES];
+    [self.checkImageView setHidden:YES];
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
-    [self.collectionView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
     // Register cell classes
-    [self.collectionView registerClass:[OfferCell class] forCellWithReuseIdentifier:@"Cell"];
-    
-    UINib *cellNib = [UINib nibWithNibName:@"OfferCell" bundle:nil];
+    [self.collectionView registerClass:[ProfileItemCell class] forCellWithReuseIdentifier:@"Cell"];
+    UINib *cellNib = [UINib nibWithNibName:@"ProfileItemCell" bundle:nil];
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"Cell"];
-    
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
     
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-        //iPhone5
-        [flowLayout setItemSize:CGSizeMake(self.view.frame.size.width-40, 72)];
+    //calc screen width to avoid hard coding but bug with collection view so width always = 1000
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+        //iPhone6/7
+        [flowLayout setItemSize:CGSizeMake(124,124)];
     }
-    else if([ [ UIScreen mainScreen ] bounds ].size.height == 736){
+    else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
         //iPhone 6 plus
-        [flowLayout setItemSize:CGSizeMake(self.view.frame.size.width-20, 72)];
+        [flowLayout setItemSize:CGSizeMake(137, 137)];
     }
-    else if([ [ UIScreen mainScreen ] bounds ].size.height == 480){
-        //iPhone 4
-        [flowLayout setItemSize:CGSizeMake(self.view.frame.size.width-40, 72)];
+    else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
+        //iPhone 4/5
+        [flowLayout setItemSize:CGSizeMake(106, 106)];
     }
     else{
-        //iPhone 6
-        [flowLayout setItemSize:CGSizeMake(self.view.frame.size.width-20, 72)];
+        //fall back
+        [flowLayout setItemSize:CGSizeMake(124,124)];
     }
     
-    [flowLayout setMinimumInteritemSpacing:0.0];
-    [flowLayout setMinimumLineSpacing:8.0];
+    [flowLayout setMinimumInteritemSpacing:1.0];
+    [flowLayout setMinimumLineSpacing:1.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.delegate = self;
@@ -65,7 +71,20 @@
     self.feedbackArray = [[NSMutableArray alloc]init];
     
     [self.nothingLabel setHidden:YES];
-    [self loadListings];
+    
+    if ([[self.user objectForKey:@"trustedSeller"] isEqualToString:@"YES"]) {
+        //trusted seller so load WTSs
+        self.isSeller = YES;
+        [self.checkImageView setHidden:NO];
+        [self.sellerLabel setHidden:NO];
+        [self loadWTSListings];
+    }
+    else{
+        self.isSeller = NO;
+        [self.checkImageView setHidden:NO]; ///////////////////////////////////////////////////
+        [self.sellerLabel setHidden:NO];
+        [self loadWTBListings];
+    }
 
     self.headerImgView.layer.cornerRadius = 40;
     self.headerImgView.layer.masksToBounds = YES;
@@ -80,6 +99,10 @@
         UIBarButtonItem *fbButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"FBIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(fbPressed)];
         UIBarButtonItem *extraButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(reportUser)];
         [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:extraButton, fbButton, nil]];
+    }
+    else{
+        UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
+        self.navigationItem.rightBarButtonItem = addForSaleItem;
     }
 }
 
@@ -125,13 +148,25 @@
             int purchased = [[object objectForKey:@"purchased"]intValue];
             int sold = [[object objectForKey:@"sold"] intValue];
             
-            self.dealsLabel.text = [NSString stringWithFormat:@"Purchased: %d Sold: %d", purchased, sold];
+            int total = purchased+sold;
+            
+            if (total != 0) {
+                self.dealsLabel.text = [NSString stringWithFormat:@"%d Reviews",total];
+            }
+            else{
+                self.dealsLabel.text = @"No reviews";
+            }
             
             if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
                 // looking at other user's profile
                 NSArray *friends = [[PFUser currentUser] objectForKey:@"friends"];
                 if ([friends containsObject:[self.user objectForKey:@"facebookId"]]) {
-                    self.dealsLabel.text = [NSString stringWithFormat:@"You're friends on Facebook\nPurchased: %d Sold: %d", purchased, sold];
+                    if (total != 0) {
+                        self.dealsLabel.text = [NSString stringWithFormat:@"%d Reviews\nYou're friends on Facebook", total];
+                    }
+                    else{
+                        self.dealsLabel.text = @"No reviews\nYou're friends on Facebook";
+                    }
                 }
             }
         }
@@ -176,7 +211,7 @@
     imageView.contentMode = UIViewContentModeScaleAspectFill;
 }
 
--(void)loadListings{
+-(void)loadWTBListings{
     [self.nothingLabel setHidden:YES];
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [wtbQuery whereKey:@"postUser" equalTo:self.user];
@@ -186,6 +221,31 @@
         if (!error) {
             if (objects.count > 0) {
                 self.lisitngsArray = objects;
+                self.numberLabel.text = [NSString stringWithFormat:@"%lu wanted items", objects.count];
+                [self.collectionView reloadData];
+            }
+            else{
+                // no WTBs
+                [self.nothingLabel setHidden:NO];
+            }
+        }
+        else{
+            NSLog(@"error %@", error);
+        }
+    }];
+}
+
+-(void)loadWTSListings{
+    [self.nothingLabel setHidden:YES];
+    PFQuery *wtbQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    [wtbQuery whereKey:@"sellerUser" equalTo:self.user];
+    [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
+    [wtbQuery orderByDescending:@"createdAt"];
+    [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (!error) {
+            if (objects.count > 0) {
+                self.lisitngsArray = objects;
+                self.numberLabel.text = [NSString stringWithFormat:@"%lu items for sale", objects.count];
                 [self.collectionView reloadData];
             }
             else{
@@ -258,96 +318,39 @@
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    if (self.segmentControl.selectedSegmentIndex == 0) {
-        return self.lisitngsArray.count;
-    }
-    else{
-        return self.feedbackArray.count;
-    }
-}
-
-- (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
-    return UIEdgeInsetsMake(8, 8, 8, 8); // top, left, bottom, right
+    return self.lisitngsArray.count;
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
 
-    OfferCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
+    ProfileItemCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.backgroundColor = [UIColor whiteColor];
+    [cell.purchasedImageView setHidden:YES];
+    cell.itemImageView.image = nil;
     
-    [self setImageBorder:cell.imageView];
-    
-    if (self.segmentControl.selectedSegmentIndex == 0) {
-        PFObject *listingObject = [self.lisitngsArray objectAtIndex:indexPath.row];
-        [cell.imageView setFile:[listingObject objectForKey:@"image1"]];
-        [cell.imageView loadInBackground];
-        
-        cell.itemTitle.text = [NSString stringWithFormat:@"%@", [listingObject objectForKey:@"title"]];
-        if ([[listingObject objectForKey:@"condition"] isEqualToString:@"Any"]) {
-            cell.buyerName.text = @"Any condition";
-        }
-        else{
-            cell.buyerName.text = [NSString stringWithFormat:@"%@", [listingObject objectForKey:@"condition"]];
-        }
-        
-        if (![[listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
-            NSString *status = [listingObject objectForKey:@"status"];
-            NSString *capitalizedString = [status capitalizedString];
-            cell.priceLabel.text = [NSString stringWithFormat:@"%@", capitalizedString];
-        }
-        else{
-            int price = [[listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
-            cell.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol,price];
-        }
-        
-        // set date
-        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-        [dateFormatter setLocale:[NSLocale currentLocale]];
-        [dateFormatter setDateFormat:@"dd MMM"];
-        
-        NSDate *formattedDate = listingObject.createdAt;
-        cell.dateLabel.text = [NSString stringWithFormat:@"%@",[dateFormatter stringFromDate:formattedDate]];
-        dateFormatter = nil;
+    PFObject *listingObject = [self.lisitngsArray objectAtIndex:indexPath.row];
+    [cell.itemImageView setFile:[listingObject objectForKey:@"image1"]];
+    [cell.itemImageView loadInBackground];
+
+    if ([[listingObject objectForKey:@"status"]isEqualToString:@"purchased"]) {
+        cell.itemImageView.alpha = 0.5;
+        [cell.purchasedImageView setImage:[UIImage imageNamed:@"purchasedIcon"]];
+        [cell.purchasedImageView setHidden:NO];
+    }
+    else if ([[listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
+        cell.itemImageView.alpha = 0.5;
+        [cell.purchasedImageView setImage:[UIImage imageNamed:@"soldIcon"]];
+        [cell.purchasedImageView setHidden:NO];
     }
     else{
-        PFObject *feedbackObject = [self.feedbackArray objectAtIndex:indexPath.row];        
-        if ([[[feedbackObject objectForKey:@"sellerUser"]objectId] isEqualToString:self.user.objectId]) {
-            NSLog(@"user was seller");
-            cell.buyerName.text = @"Sale";
-            PFUser *buyer = [feedbackObject objectForKey:@"buyerUser"];
-            [buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                [cell.imageView setFile:[buyer objectForKey:@"picture"]];
-                [cell.imageView loadInBackground];
-            }];
-        }
-        else{
-            NSLog(@"user was buyer");
-            cell.buyerName.text = @"Purchase";
-            PFUser *seller = [feedbackObject objectForKey:@"sellerUser"];
-            [seller fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                [cell.imageView setFile:[seller objectForKey:@"picture"]];
-                [cell.imageView loadInBackground];
-            }];
-        }
-        
-        cell.itemTitle.text = [NSString stringWithFormat:@"%@", [feedbackObject objectForKey:@"comment"]];
-        cell.priceLabel.text = [NSString stringWithFormat:@"%@ stars", [feedbackObject objectForKey:@"rating"]];
-        
-        // set date
-        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-        [dateFormatter setLocale:[NSLocale currentLocale]];
-        [dateFormatter setDateFormat:@"dd MMM"];
-        
-        NSDate *formattedDate = feedbackObject.createdAt;
-        cell.dateLabel.text = [NSString stringWithFormat:@"%@",[dateFormatter stringFromDate:formattedDate]];
-        dateFormatter = nil;
+        cell.itemImageView.alpha = 1.0;
+        [cell.purchasedImageView setHidden:YES];
     }
     return cell;
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
-    if (self.segmentControl.selectedSegmentIndex == 0) {
         if ([PFUser currentUser]==self.user) {
             //allow editing
             [self showAlertViewWithPath:indexPath];
@@ -361,16 +364,6 @@
                 [self.navigationController pushViewController:vc animated:YES];
             }
         }
-    }
-}
-
-- (IBAction)segmentControlChanged:(id)sender {
-    if (self.segmentControl.selectedSegmentIndex == 0) {
-        [self loadListings];
-    }
-    else{
-        [self loadFeedback];
-    }
 }
 
 -(void)showAlertViewWithPath:(NSIndexPath *)indexPath{
@@ -484,7 +477,7 @@
 }
 
 -(void)reportUser{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this user has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this user has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately or message Team Bump from the Profile Tab within the app." preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -496,6 +489,18 @@
         [reportObject saveInBackground];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)addForSalePressed{
+    CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    [self presentViewController:nav animated:YES completion:nil];
+}
+- (IBAction)reviewsPressed:(id)sender {
+    NSLog(@"reviews pressed");
+    ReviewsVC *vc = [[ReviewsVC alloc]init];
+    vc.user = self.user;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 
 @end

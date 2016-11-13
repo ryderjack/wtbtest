@@ -15,6 +15,7 @@
 #import <Fabric/Fabric.h>
 #import <Crashlytics/Crashlytics.h>
 #import "iRate.h"
+#import <HNKGooglePlacesAutocomplete/HNKGooglePlacesAutocomplete.h>
 
 @interface AppDelegate ()
 
@@ -58,6 +59,9 @@
     [Flurry startSession:@"9Y63FGHCCGZQJDQTCTMP"];
     [Fabric with:@[[Crashlytics class]]];
     
+    [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
+
+    
     if ([PFUser currentUser]) {
         [Flurry setUserID:[NSString stringWithFormat:@"%@", [PFUser currentUser].objectId]];
         [self logUser];
@@ -75,17 +79,19 @@
     self.exploreView = [[ExploreVC alloc]init];
     self.profileView = [[ProfileController alloc]init];
     self.inboxView = [[InboxViewController alloc]init];
+    self.buyView = [[BuyNowController alloc]init];
         
     [self.window setBackgroundColor:[UIColor whiteColor]];
     
     NavigationController *navController = [[NavigationController alloc] initWithRootViewController:self.exploreView];
     NavigationController *navController1 = [[NavigationController alloc] initWithRootViewController:self.createView];
     NavigationController *navController2 = [[NavigationController alloc] initWithRootViewController:self.profileView];
-    NavigationController *navController3 = [[NavigationController alloc] initWithRootViewController:self.welcomeView];
+//    NavigationController *navController3 = [[NavigationController alloc] initWithRootViewController:self.welcomeView];
     NavigationController *navController4 = [[NavigationController alloc] initWithRootViewController:self.inboxView];
+    NavigationController *navController5 = [[NavigationController alloc] initWithRootViewController:self.buyView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController, navController1,navController4, navController2, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController,navController5,navController1,navController4, navController2, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
 //    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
@@ -97,17 +103,21 @@
     tabBarItem1.image = [UIImage imageNamed:@"homeIconNEW"];
     tabBarItem1.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
-    UITabBarItem *tabBarItem2 = [self.tabBarController.tabBar.items objectAtIndex:1];
+    UITabBarItem *tabBarItem5 = [self.tabBarController.tabBar.items objectAtIndex:1];
+    tabBarItem5.image = [UIImage imageNamed:@"buyNowIcon"];
+    tabBarItem5.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
+    
+    UITabBarItem *tabBarItem2 = [self.tabBarController.tabBar.items objectAtIndex:2];
     tabBarItem2.image = [UIImage imageNamed:@"createIconNEW"];
     tabBarItem2.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
-    UITabBarItem *tabBarItem3 = [self.tabBarController.tabBar.items objectAtIndex:2];
+    UITabBarItem *tabBarItem3 = [self.tabBarController.tabBar.items objectAtIndex:3];
     tabBarItem3.image = [UIImage imageNamed:@"messageIconNEW"];
     tabBarItem3.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
-    UITabBarItem *tabBarItem4 = [self.tabBarController.tabBar.items objectAtIndex:3];
+    UITabBarItem *tabBarItem4 = [self.tabBarController.tabBar.items objectAtIndex:4];
     tabBarItem4.image = [UIImage imageNamed:@"userIconNEW"];
-    tabBarItem4.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);    
+    tabBarItem4.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
     [self.tabBarController setDelegate:self];
     
@@ -124,14 +134,14 @@
     
     self.installation = [PFInstallation currentInstallation];
     if (self.installation.badge == 0) {
-        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
     }
     else{
         //if app badge not zero, reset to zero
         self.installation.badge = 0;
         [self.installation saveEventually];
         
-        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%ld", (long)self.installation.badge]];
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%ld", (long)self.installation.badge]];
     }
     
     self.unseenMessages = [[NSMutableArray alloc]init];
@@ -141,10 +151,8 @@
         [timer fire];
         NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
         [timer2 fire];
-        NSLog(@"fired timers");
     }
     else{
-        NSLog(@"hello");
         [self checkMesages];
         [self checkForTBMessages];
     }
@@ -159,7 +167,6 @@
     }else{
         NSLog(@"app did not recieve notification");
     }
-
     return YES;
 }
 
@@ -227,14 +234,14 @@
                     NSLog(@"unseen messages %lu and unseentotal %d and selected convo %@", (unsigned long)self.unseenMessages.count, totalUnseen, self.inboxView.selectedConvo);
                     
                     if (self.unseenMessages.count > 0) {
-                        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
+                        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
                     }
                     else{
-                        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+                        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
                     }
                 }
                 else{
-                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+                    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
                 }
             }
             else{
@@ -285,7 +292,7 @@
     if ( application.applicationState == UIApplicationStateInactive || application.applicationState == UIApplicationStateBackground  )
     {
         //opened from a push notification when the app in background
-        self.tabBarController.selectedIndex = 2;
+        self.tabBarController.selectedIndex = 3;
     }
 }
 

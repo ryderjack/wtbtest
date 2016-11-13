@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UILabel *dealsLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *starView;
 @property (weak, nonatomic) IBOutlet PFImageView *pictureView;
+@property (weak, nonatomic) IBOutlet PFImageView *checkImageView;
 
 //star cell
 @property (weak, nonatomic) IBOutlet UIButton *firstStar;

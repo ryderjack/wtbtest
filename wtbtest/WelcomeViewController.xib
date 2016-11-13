@@ -27,8 +27,8 @@
                     <color key="textColor" red="0.22546875476837158" green="0.22546195983886719" blue="0.22546583414077759" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="explorePic.png" translatesAutoresizingMaskIntoConstraints="NO" id="Iur-vO-F7d">
-                    <frame key="frameInset" minX="60" minY="200" width="200" height="181"/>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="welcomeOne.png" translatesAutoresizingMaskIntoConstraints="NO" id="Iur-vO-F7d">
+                    <frame key="frameInset" minX="60" minY="200" width="200" height="178"/>
                 </imageView>
                 <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Y4l-da-WYp">
                     <frame key="frameInset" minX="54" minY="442" width="212" height="40"/>
@@ -71,7 +71,7 @@
         </view>
     </objects>
     <resources>
-        <image name="explorePic.png" width="200" height="181"/>
         <image name="fblogin.png" width="212" height="40"/>
+        <image name="welcomeOne.png" width="200" height="178"/>
     </resources>
 </document>

@@ -23,8 +23,6 @@
     [super viewDidLoad];
     
     self.navigationController.navigationBarHidden = YES;
-    [self.takePic setHidden:YES];
-    [self.chooseFromLib setHidden:YES];
     
     //hide first table view header
     self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
@@ -46,14 +44,14 @@
     self.selectedCurrency = @"GBP";
     [self.GBPButton setSelected:YES];
     
-    self.profanityList = @[@"fuck", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"#", @"?", @"!", @"£", @"/", @"(", @")", @":", @",", @"'", @"$", @" ",@"<", @">", @"+", @"=", @"%", @"[", @"]", @"{", @"}", @"^"];
+    self.profanityList = @[@"fuck", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"#", @"?", @"!", @"£", @"/", @"(", @")", @":", @",", @"'", @"$", @" ",@"<", @">", @"+", @"=", @"%", @"[", @"]", @"{", @"}", @"^", @"..fuckfuck"];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    [self requestFacebook:self.user];
-    
-    NSLog(@"my username %@", [PFUser currentUser].username);
+    if (self.pressedCam != YES) {
+        [self requestFacebook:self.user];
+    }
 }
 
 - (void)requestFacebook:(PFUser *)user{
@@ -181,7 +179,7 @@
             return 44;
         }
         else if(indexPath.row == 6){
-            return 197;
+            return 147;
         }
     }
     else if (indexPath.section ==1){
@@ -240,12 +238,20 @@
         if ([self.profanityList containsObject:textField.text.lowercaseString]) {
             textField.text = @"";
         }
+        if ([textField.text containsString:@" "]) {
+            textField.text = @"";
+        }
     }
 }
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
 
     if (textField == self.usernameField) {
+        
+        if ([string isEqualToString:@" "]) {
+            return NO;
+        }
+        
         if(range.length + range.location > textField.text.length)
         {
             return NO;
@@ -260,10 +266,14 @@
     
     [self.regButton setEnabled:NO];
     
+    if ([self.profanityList containsObject:self.usernameField.text.lowercaseString]) {
+        self.usernameField.text = @"";
+    }
+    
     //check values entered
     NSString *name = [self.nameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSString *email = [self.emailField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    NSString *username = [self.usernameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSString *username = [self.usernameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     if ([name length] == 0 || [email length] == 0 || [username length] == 0 || [self.selectedCurrency isEqualToString:@""])  {
         
@@ -285,21 +295,22 @@
             
             //check username entered is unique
             PFQuery *usernameQuery = [PFQuery queryWithClassName:@"_User"];
-            [usernameQuery whereKey:@"username" equalTo:self.usernameField.text];
+            [usernameQuery whereKey:@"username" equalTo:username];
             [usernameQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
                 if (!error) {
                     if (number == 0) {
                         NSLog(@"username is available!");
-                        self.user[PF_USER_FULLNAME] = self.nameField.text;
-                        self.user[PF_USER_EMAIL] = self.emailField.text;
-                        self.user[@"paypal"] = self.emailField.text;
-                        self.user[PF_USER_USERNAME] = [self.usernameField.text lowercaseString];
+                        self.user[PF_USER_FULLNAME] = name;
+                        self.user[PF_USER_EMAIL] = email;
+                        self.user[@"paypal"] = email;
+                        self.user[PF_USER_USERNAME] = [username lowercaseString];
                         self.user[@"currency"] = self.selectedCurrency;
                         self.user[@"completedReg"] = @"YES";
                         
                         if (![self.depopField.text isEqualToString:@""]) {
                             //entered a depop account
                             NSString *depopHandle = [self.depopField.text stringByReplacingOccurrencesOfString:@"@" withString:@""];
+                            [depopHandle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
                             self.user[@"depopHandle"] = depopHandle;
                             PFObject *depopObj = [PFObject objectWithClassName:@"Depop"];
                             depopObj[@"user"] = self.user;
@@ -309,10 +320,9 @@
                         
                         [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
                          {
-                             if (error == nil)
+                             if (succeeded)
                              {
                                  NSLog(@"saved new user! %@", [PFUser currentUser]);
-                                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"completedReg"];
                                  [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"showHowWorks"];
                                  
                                  //update installation object w/ current user
@@ -328,7 +338,7 @@
                                  convoObject[@"totalMessages"] = @0;
                                  [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                                      if (succeeded) {
-                                         NSString *messageString = @"Welcome to Bump!\n\nWant to buy something?\nCreate listings for items you want then sit back and wait for sellers to send you offers to buy their stuff (Plus there's ZERO fees)!\n\nSelling something?\nUse the search & filter tools to find people that want what you're selling then start chatting to sort out a deal. Hassle free, fee free.\n\nGot any questions? Just message us here - we're available 24/7/365 #wehavenolife\n\nHappy Bumping!\nTeam Bump";
+                                         NSString *messageString = @"Welcome to Bump!\n\nWant to buy something?\nCreate listings for items you want then sit back and wait for sellers to send you offers to buy their stuff (Plus there's ZERO fees)!\n\nSelling something?\nUse the search & filter tools to find people that want what you're selling.\n\nHow to send an offer?\nJust tap the tag icon in a chat and fill in what you're selling. Buyers can then tap the offer message to complete the purchase using PayPal without leaving Bump! Hassle free, fee free.\n\nGot any questions? Just message us here - we're available 24/7/365 #wehavenolife\n\nHappy Bumping!\nTeam Bump";
                                          
                                          //saved, create intro message
                                          PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
@@ -396,6 +406,11 @@
                         self.warningLabel.text = @"Username taken";
                         self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
                     }
+                }
+                else{
+                    NSLog(@"error checking username");
+                    self.warningLabel.text = @"Error with username";
+                    [self.regButton setEnabled:YES];
                 }
             }];
         }
@@ -479,6 +494,29 @@
     UIAlertAction* ok = [UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:nil];
     [alert addAction:ok];
     [self presentViewController:alert animated:YES completion:nil];
+}
+- (IBAction)pressedChoose:(id)sender {
+    if (!self.picker) {
+        self.picker = [[UIImagePickerController alloc] init];
+        self.picker.delegate = self;
+        self.picker.allowsEditing = NO;
+        self.picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+    }
+    [self presentViewController:self.picker animated:YES completion:nil];
+}
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+    self.profileImageView.image = info[UIImagePickerControllerOriginalImage];
+    NSData* data = UIImageJPEGRepresentation(self.profileImageView.image, 0.5f);
+    PFFile *imageFile = [PFFile fileWithName:@"Image.jpg" data:data];
+    self.user[PF_USER_PICTURE] = imageFile;
+    self.pressedCam = YES;
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    self.pressedCam = YES;
+    [picker dismissViewControllerAnimated:YES completion:NULL];
 }
 
 @end

@@ -11,7 +11,6 @@
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "Flurry.h"
 #import <DGActivityIndicatorView.h>
-#import "MessageTutorial.h"
 
 @interface InboxViewController ()
 
@@ -29,7 +28,7 @@
     
     [self.tableView registerNib:[UINib nibWithNibName:@"InboxCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
     self.convoObjects = [[NSMutableArray alloc]init];
-    self.unseenMessages = [[NSMutableArray alloc]init];
+    self.unseenConvos = [[NSMutableArray alloc]init];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loadMessages) name:@"NewMessage" object:nil];
     
@@ -38,16 +37,9 @@
     
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     
-    PFUser *current = [PFUser currentUser];
-    
-    if (![[current objectForKey:@"completedMsgIntro"]isEqualToString:@"YES"]) {
-        //show intro VC
-        MessageTutorial *vc = [[MessageTutorial alloc]init];
-        [self presentViewController:vc animated:YES completion:nil];
-    }
-    
     self.pullFinished = YES;
     self.infinFinished = YES;
+    self.justViewedMsg = NO;
     self.lastSkipped = 0;
 }
 
@@ -62,7 +54,10 @@
     
     self.selectedConvo = @"";
     [Flurry logEvent:@"Inbox_Tapped"];
-    [self loadMessages];
+    
+    if (self.justViewedMsg == NO) {
+        [self loadMessages];
+    }
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
@@ -74,10 +69,15 @@
     else if ([self.currency isEqualToString:@"USD"]) {
         self.currencySymbol = @"$";
     }
+    
+    [self.infiniteQuery cancel];
+    self.infinFinished = YES;
 }
 
 -(void)loadMessages{
     self.pullFinished = NO;
+    self.justViewedMsg = NO;
+    
     self.pullQuery = [PFQuery queryWithClassName:@"convos"];
     [self.pullQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
     [self.pullQuery whereKey:@"totalMessages" notEqualTo:@0];
@@ -91,7 +91,7 @@
         if (!error) {
             if (objects) {
                 [self.convoObjects removeAllObjects];
-                [self.unseenMessages removeAllObjects];
+                [self.unseenConvos removeAllObjects];
                 
                 if (objects.count == 0) {
                     if (!self.topLabel && !self.bottomLabel) {
@@ -135,59 +135,61 @@
                     [self.tableView.pullToRefreshView stopAnimating];
                     self.pullFinished = YES;
                     
-                    int totalUnseen = 0;
-                    int unseen = 0;
+                    [self updateUnseenCount];
                     
-                    for (PFObject *convo in objects) {
-                        PFObject *msgObject = [convo objectForKey:@"lastSent"];
-                        
-                        if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                            
-                            if (![self.selectedConvo isEqualToString:convo.objectId]) {
-                                NSLog(@"adding %@ to unseenMessages!!", convo);
-                                //don't add to tab bar for a selected convo since the added badge could be confusing
-                                [self.unseenMessages addObject:convo];
-                            }
-                            
-                            NSLog(@"unseen coversations array %lu", (unsigned long)self.unseenMessages.count);
-                            
-                            if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
-                                unseen = 1;
-                            }
-                            else{
-                                PFUser *buyer = [convo objectForKey:@"buyerUser"];
-                                if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
-                                    //current user is buyer so other user is seller
-                                    unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
-                                    NSLog(@"unseen from buyer %d", unseen);
-                                }
-                                else{
-                                    //other user is buyer, current is seller
-                                    unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
-                                    NSLog(@"unseen from seller %d", unseen);
-                                }
-                            }
-                            
-                            totalUnseen = totalUnseen + unseen;
-                            
-                            NSLog(@"running total unseen: %d", totalUnseen);
-                        }
-                    }
-                    // careful! as only showing unseen messages that have been loaded
-                    if (self.unseenMessages.count > 0 && totalUnseen > 0) {
-                        [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", totalUnseen];
-                        self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", totalUnseen];
-                    }
-                    else{
-                        self.navigationItem.title = @"Messages";
-                        [self.navigationController tabBarItem].badgeValue = nil;
-                        
-                        PFInstallation *installation = [PFInstallation currentInstallation];
-                        if (installation.badge != 0) {
-                            installation.badge = 0;
-                        }
-                        [installation saveInBackground];
-                    }
+//                    int totalUnseen = 0;
+//                    int unseen = 0;
+//                    
+//                    for (PFObject *convo in objects) {
+//                        PFObject *msgObject = [convo objectForKey:@"lastSent"];
+//                        
+//                        if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+//                            
+//                            if (![self.selectedConvo isEqualToString:convo.objectId]) {
+//                                NSLog(@"adding %@ to unseenConvos!!", convo);
+//                                //don't add to tab bar for a selected convo since the added badge could be confusing
+//                                [self.unseenConvos addObject:convo];
+//                            }
+//                            
+//                            NSLog(@"unseen coversations array %lu", (unsigned long)self.unseenConvos.count);
+//                            
+//                            if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+//                                unseen = 1;
+//                            }
+//                            else{
+//                                PFUser *buyer = [convo objectForKey:@"buyerUser"];
+//                                if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+//                                    //current user is buyer so other user is seller
+//                                    unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+//                                    NSLog(@"unseen from buyer %d", unseen);
+//                                }
+//                                else{
+//                                    //other user is buyer, current is seller
+//                                    unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+//                                    NSLog(@"unseen from seller %d", unseen);
+//                                }
+//                            }
+//                            
+//                            totalUnseen = totalUnseen + unseen;
+//                            
+//                            NSLog(@"running total unseen: %d", totalUnseen);
+//                        }
+//                    }
+//                    // careful! as only showing unseen messages that have been loaded
+//                    if (self.unseenConvos.count > 0 && totalUnseen > 0) {
+//                        [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", totalUnseen];
+//                        self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", totalUnseen];
+//                    }
+//                    else{
+//                        self.navigationItem.title = @"Messages";
+//                        [self.navigationController tabBarItem].badgeValue = nil;
+//                        
+//                        PFInstallation *installation = [PFInstallation currentInstallation];
+//                        if (installation.badge != 0) {
+//                            installation.badge = 0;
+//                        }
+//                        [installation saveInBackground];
+//                    }
                 }
             }
             else{
@@ -198,6 +200,65 @@
         else{
             NSLog(@"error %@", error);
         }
+    }];
+}
+
+-(void)updateUnseenCount{
+    PFQuery *convosQuery = [PFQuery queryWithClassName:@"convos"];
+    [convosQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
+    [convosQuery whereKey:@"totalMessages" notEqualTo:@0];
+    [convosQuery orderByDescending:@"createdAt"];
+    [convosQuery includeKey:@"lastSent"];
+    [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            if (objects) {
+                //check if last msg sent is seen
+                //if no then retrieves the relevant unseen counter for the user
+                //use that on the tab
+                
+                [self.unseenConvos removeAllObjects];
+                int totalUnseen = 0;
+                int unseen = 0;
+                
+                for (PFObject *convo in objects) {
+                    PFObject *msgObject = [convo objectForKey:@"lastSent"];
+                    
+                    if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                        [self.unseenConvos addObject:convo];
+                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+                            unseen = 1;
+                        }
+                        else{
+                            PFUser *buyer = [convo objectForKey:@"buyerUser"];
+                            if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+                                //current user is buyer so other user is seller
+                                unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                            }
+                            else{
+                                //other user is buyer, current is seller
+                                unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                            }
+                        }
+                        totalUnseen = totalUnseen + unseen;
+                    }
+                }
+                
+                if (self.unseenConvos.count != 0) {
+                    
+                    if (self.unseenConvos.count > 0) {
+                        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
+                    }
+                    else{
+                        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                    }
+                }
+                else{
+                    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                }
+            }
+            else{
+                //no convos
+                NSLog(@"error getting convos %@", error);
+            }
     }];
 }
 
@@ -338,6 +399,7 @@
     NSString *text = [msgObject objectForKey:@"message"];
     
     if ([[msgObject objectForKey:@"mediaMessage"]isEqualToString:@"YES"]) {
+        
         if ([[msgObject objectForKey:@"senderName"]isEqualToString:[PFUser currentUser].username]) {
             self.cell.messageLabel.text = @"you sent a photo 📸";
         }
@@ -354,7 +416,12 @@
         }
     }
     else{
-        self.cell.messageLabel.text = [NSString stringWithFormat:@"%@",text];
+        if ([[msgObject objectForKey:@"senderName"]isEqualToString:[PFUser currentUser].username]) {
+            self.cell.messageLabel.text = [NSString stringWithFormat:@"You: %@",text];
+        }
+        else{
+            self.cell.messageLabel.text = [NSString stringWithFormat:@"%@",text];
+        }
     }
     
     if ([[msgObject objectForKey:@"status"] isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
@@ -400,30 +467,24 @@
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     
     PFObject *convoObject = [self.convoObjects objectAtIndex:indexPath.row];
-    self.selectedConvo = convoObject.objectId;
+    PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
+    [msgObject setObject:@"seen" forKey:@"status"];
+    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationNone];
     
-    PFObject *listing = [convoObject objectForKey:@"wtbListing"];
+    if ([self.unseenConvos containsObject:convoObject]) {
+        [self.unseenConvos removeObject:convoObject];
     
-    InboxCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-    [self unboldFontForLabel:cell.usernameLabel];
-    [self unboldFontForLabel:cell.messageLabel];
-    [self unboldFontForLabel:cell.timeLabel];
-    self.cell.messageLabel.textColor = [UIColor lightGrayColor];
-    self.cell.timeLabel.textColor = [UIColor darkGrayColor];
-    [self.cell.wtbTitleLabel setFont:[UIFont fontWithName:@"AvenirNext-UltraLight" size:14]];
-    
-    if ([self.unseenMessages containsObject:convoObject]) {
-        [self.unseenMessages removeObject:convoObject];
-    
-        if (self.unseenMessages.count == 0) {
+        if (self.unseenConvos.count == 0) {
             self.navigationItem.title = @"Messages";
             [self.navigationController tabBarItem].badgeValue = nil;
         }
         else{
-            self.navigationItem.title = [NSString stringWithFormat:@"Messages (%lu)", (unsigned long)self.unseenMessages.count];
-            [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%ld", (unsigned long)self.unseenMessages.count];
+            self.navigationItem.title = [NSString stringWithFormat:@"Messages (%lu)", (unsigned long)self.unseenConvos.count];
+            [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%ld", (unsigned long)self.unseenConvos.count];
         }
     }
+    PFObject *listing = [convoObject objectForKey:@"wtbListing"];
+    self.selectedConvo = convoObject.objectId;
     
     MessageViewController *vc = [[MessageViewController alloc]init];
     vc.convoId = [convoObject objectForKey:@"convoId"];
@@ -441,7 +502,8 @@
         vc.otherUser = buyer;
         vc.userIsBuyer = NO;
     }
-    vc.otherUserName = @"";    
+    vc.otherUserName = @"";
+    self.justViewedMsg = YES;
     [self.navigationController pushViewController:vc animated:YES];
 }
 

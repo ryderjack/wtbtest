@@ -27,7 +27,6 @@
     
     self.nameCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.emailCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.addressCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.currencyCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.depopCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.contactEmailCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -78,10 +77,10 @@
     NSString *depopHan = [[PFUser currentUser]objectForKey:@"depopHandle"];
     
     if ([self.currentUser objectForKey:@"depopHandle"]) {
-        self.depopField.placeholder = [NSString stringWithFormat:@"Depop username: %@", depopHan];
+        self.depopField.placeholder = [NSString stringWithFormat:@"Depop: %@", depopHan];
     }
     else{
-        self.depopField.placeholder = @"Enter your Depop username";
+        self.depopField.placeholder = @"Enter Depop username";
     }
 }
 
@@ -153,20 +152,21 @@
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     
     if (indexPath.section == 0) {
-        if (indexPath.row == 2) {
+        if (indexPath.row == 3) {
             //goto shipping controller
             ShippingController *vc = [[ShippingController alloc]init];
             vc.delegate = self;
             vc.settingsMode = YES;
             [self.navigationController pushViewController:vc animated:YES];
         }
-        else if (indexPath.row == 3){
-            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
-            picker.delegate = self;
-            picker.allowsEditing = NO;
-            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-            
-            [self presentViewController:picker animated:YES completion:nil];
+        else if (indexPath.row == 4){
+            if (!self.picker) {
+                self.picker = [[UIImagePickerController alloc] init];
+                self.picker.delegate = self;
+                self.picker.allowsEditing = NO;
+                self.picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+            }
+            [self presentViewController:self.picker animated:YES completion:nil];
         }
     }
 }
@@ -291,6 +291,7 @@
     if (![depopString isEqualToString:@""]) {
         //entered a depop account
         NSString *depopHandle = [self.depopField.text stringByReplacingOccurrencesOfString:@"@" withString:@""];
+        depopHandle = [depopHandle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         [PFUser currentUser][@"depopHandle"] = depopHandle;
         
         PFQuery *depopQuery = [PFQuery queryWithClassName:@"Depop"];

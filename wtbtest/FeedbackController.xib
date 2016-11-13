@@ -12,6 +12,7 @@
             <connections>
                 <outlet property="aboutLabel" destination="zmu-88-loO" id="Lfj-SS-F3S"/>
                 <outlet property="buttonCell" destination="LYY-ii-CsW" id="dAK-ft-wQS"/>
+                <outlet property="checkImageView" destination="iPB-ru-93i" id="KHB-Zr-RT3"/>
                 <outlet property="commentField" destination="Ydx-uW-AZw" id="DfN-1V-3hx"/>
                 <outlet property="dealsLabel" destination="8jq-lo-Yld" id="rG0-hm-Z6J"/>
                 <outlet property="feedbackButton" destination="7Pt-Da-gbG" id="0XS-Mf-jkZ"/>
@@ -67,10 +68,18 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="b9S-dX-Lf8" customClass="PFImageView">
+                                <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="50" id="7ee-QU-zBw"/>
+                                    <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="50" id="Is8-sp-u21"/>
                                     <constraint firstAttribute="width" constant="50" id="bpv-6K-gyE"/>
-                                    <constraint firstAttribute="width" secondItem="b9S-dX-Lf8" secondAttribute="height" multiplier="1:1" id="zaO-N6-wn7"/>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="50" id="hva-zG-4w8"/>
+                                </constraints>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="trustedCheck.png" translatesAutoresizingMaskIntoConstraints="NO" id="iPB-ru-93i" customClass="PFImageView">
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="20" id="Zq7-ne-6YT"/>
+                                    <constraint firstAttribute="width" constant="20" id="e1f-0P-cid"/>
                                 </constraints>
                             </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="0star.png" translatesAutoresizingMaskIntoConstraints="NO" id="Crf-qQ-t3q">
@@ -91,10 +100,12 @@
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="plm-r5-nD8" firstAttribute="leading" secondItem="b9S-dX-Lf8" secondAttribute="trailing" constant="11" id="1ld-AT-6mi"/>
+                            <constraint firstItem="iPB-ru-93i" firstAttribute="leading" secondItem="b9S-dX-Lf8" secondAttribute="leading" id="BBU-5h-toW"/>
                             <constraint firstItem="Crf-qQ-t3q" firstAttribute="trailing" secondItem="Irf-sm-6kw" secondAttribute="trailingMargin" id="FBm-zK-1qB"/>
                             <constraint firstItem="8jq-lo-Yld" firstAttribute="leading" secondItem="b9S-dX-Lf8" secondAttribute="trailing" constant="8" symbolic="YES" id="O4y-z0-pwt"/>
                             <constraint firstItem="b9S-dX-Lf8" firstAttribute="top" secondItem="Irf-sm-6kw" secondAttribute="top" constant="20" id="RYg-cR-2cI"/>
                             <constraint firstAttribute="bottom" secondItem="8jq-lo-Yld" secondAttribute="bottom" id="YPV-nX-PZu"/>
+                            <constraint firstItem="iPB-ru-93i" firstAttribute="bottom" secondItem="b9S-dX-Lf8" secondAttribute="bottom" id="bo0-l6-phF"/>
                             <constraint firstAttribute="trailing" secondItem="Crf-qQ-t3q" secondAttribute="trailing" constant="8" id="gSW-QC-Kzj"/>
                             <constraint firstItem="Crf-qQ-t3q" firstAttribute="leading" secondItem="8jq-lo-Yld" secondAttribute="trailing" constant="8" symbolic="YES" id="hk1-aW-fbg"/>
                             <constraint firstItem="Crf-qQ-t3q" firstAttribute="centerY" secondItem="b9S-dX-Lf8" secondAttribute="centerY" id="iKV-oJ-F4Q"/>
@@ -190,7 +201,7 @@
                         </connections>
                     </button>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Write a comment" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Ydx-uW-AZw">
-                        <color key="tintColor" red="0.96078431369999995" green="0.65098039220000004" blue="0.13725490200000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="41" id="4Qi-Co-rqS"/>
                         </constraints>
@@ -274,5 +285,6 @@
         <image name="problembutton.png" width="220" height="41"/>
         <image name="starBlkIcon.png" width="32" height="32"/>
         <image name="starIcon.png" width="30" height="30"/>
+        <image name="trustedCheck.png" width="20" height="20"/>
     </resources>
 </document>

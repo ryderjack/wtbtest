@@ -21,13 +21,16 @@
 @property (weak, nonatomic) IBOutlet UIImageView *starImgView;
 @property (nonatomic, strong) PFUser *user;
 @property (weak, nonatomic) IBOutlet UILabel *nothingLabel;
+@property (weak, nonatomic) IBOutlet PFImageView *checkImageView;
 
 //currency
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
 
-//infin
-@property (nonatomic) int lastSkipped;
-@property (nonatomic) BOOL pullFinished;
-@property (nonatomic) BOOL infinFinished;
+//other labels
+@property (weak, nonatomic) IBOutlet UILabel *sellerLabel;
+@property (weak, nonatomic) IBOutlet UILabel *numberLabel;
+
+@property (nonatomic) BOOL isSeller;
+
 @end

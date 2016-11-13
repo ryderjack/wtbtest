@@ -7,6 +7,8 @@
 //
 
 #import "LocationView.h"
+#import <HNKGooglePlacesAutocomplete/HNKGooglePlacesAutocomplete.h>
+#import "CLPlacemark+HNKAdditions.h"
 
 @interface LocationView ()
 
@@ -87,33 +89,25 @@
 - (void)searchForText:(NSString*)searchText
 {
     NSMutableArray *searchResults = [[NSMutableArray alloc] init];
-    // Create a search request with a string
-    MKLocalSearchRequest *searchRequest = [[MKLocalSearchRequest alloc] init];
-    [searchRequest setNaturalLanguageQuery:searchText];
-    
-    CLLocationCoordinate2D ukCenter = CLLocationCoordinate2DMake(53.323536, -1.488300);
-    MKCoordinateRegion uk = MKCoordinateRegionMakeWithDistance(ukCenter, 10000, 10000);
-    [searchRequest setRegion:uk];
-    
-    // Create the local search to perform the search
-    MKLocalSearch *localSearch = [[MKLocalSearch alloc] initWithRequest:searchRequest];
-    
-    [localSearch startWithCompletionHandler:^(MKLocalSearchResponse *response, NSError *error) {
-        if (!error) {
-            for (MKMapItem *mapItem in [response mapItems]) {
-                [searchResults addObject:mapItem];
-                self.searchResults = searchResults;
-            }
-        } else {
-            NSLog(@"Search Request Error: %@", [error localizedDescription]);
-        }
-    }];
+    [[HNKGooglePlacesAutocompleteQuery sharedQuery] fetchPlacesForSearchQuery:searchText
+                                                                   completion:^(NSArray *places, NSError *error)  {
+                                                                       if (error) {
+                                                                           NSLog(@"ERROR: %@", error);
+                                                                       } else {
+                                                                           for (HNKGooglePlacesAutocompletePlace *place in places) {
+                                                                               NSLog(@"%@", place.name);
+                                                                               [searchResults addObject:place];
+                                                                                self.searchResults = searchResults;
+                                                                           }
+                                                                       }
+                                                                   }
+     ];
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
     UITableViewCell *cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
     
-    cell.textLabel.text = [[[self.searchResults objectAtIndex:indexPath.row] placemark] title];
+    cell.textLabel.text = [[self.searchResults objectAtIndex:indexPath.row]valueForKey:@"name"];
     return cell;
 }
 
@@ -127,6 +121,10 @@
     [self updateSearchResultsForSearchController:self.searchController];
 }
 
+-(void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText{
+    [self updateSearchResultsForSearchController:self.searchController];
+}
+
 - (void)showKeyboard
 {
     [self.searchController.searchBar becomeFirstResponder];
@@ -134,11 +132,28 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+    self.tableView.userInteractionEnabled = NO;
+    
     if (self.searchResults.count >0) {
         NSString *selectionString = [self.tableView cellForRowAtIndexPath:indexPath].textLabel.text;
-        CLLocationCoordinate2D selectedItem = [[[[self.searchResults objectAtIndex:indexPath.row] placemark]location]coordinate];
-        [self.delegate addLocation:self didFinishEnteringItem:selectionString longi:selectedItem.longitude lati:selectedItem.latitude];
-        [self.navigationController popViewControllerAnimated:YES];
+        
+        [CLPlacemark hnk_placemarkFromGooglePlace:[self.searchResults objectAtIndex:indexPath.row]
+                                           apiKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"
+                                       completion:^(CLPlacemark *placemark, NSString *addressString, NSError *error) {
+                                           if(error) {
+                                               NSLog(@"ERROR: %@", error);
+                                               [self showError];
+                                               self.tableView.userInteractionEnabled = YES;
+                                           } else {
+                                               NSLog(@"PLACEMARK: %@", placemark);
+                                               CLLocationCoordinate2D selectedItem = [[placemark location]coordinate];
+                                               
+                                               [self.delegate addLocation:self didFinishEnteringItem:selectionString longi:selectedItem.longitude lati:selectedItem.latitude];
+                                               self.tableView.userInteractionEnabled = YES;
+                                               [self.navigationController popViewControllerAnimated:YES];
+                                           }
+                                       }
+         ];
     } 
 }
 
@@ -153,12 +168,20 @@
             [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
                 if (placemarks) {
                     CLPlacemark *placemark = [placemarks lastObject];
-                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.administrativeArea];
+                    NSString *titleString = @"";
+                    if (placemark.locality) {
+                        titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.country];
+                    }
+                    else{
+                        titleString = [NSString stringWithFormat:@"%@", placemark.country];
+                    }
+                    
                     [self.delegate addCurrentLocation:self didPress:geoPoint title:titleString];
                     [self.navigationController popViewControllerAnimated:YES];
                 }
                 else{
                     NSLog(@"error %@", error);
+                    [self showError];
                 }
             }];
         }
@@ -167,6 +190,16 @@
             [self.navigationController popViewControllerAnimated:YES];
         }
     }];
+}
+
+-(void)showError{
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Error getting location"
+                                  message:@"Make sure you're connected to the internet!"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 @end

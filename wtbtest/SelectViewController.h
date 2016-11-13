@@ -42,4 +42,6 @@
 @property (nonatomic, strong) NSString *holdingGender;
 
 @property (nonatomic, strong) selectCell *cell;
+
+@property (nonatomic) BOOL sellListing;
 @end

@@ -15,7 +15,6 @@
                 <outlet property="EURButton" destination="P2u-aQ-hNj" id="WAk-vX-QiT"/>
                 <outlet property="GBPButton" destination="Cvh-OI-gYs" id="LXW-ig-arq"/>
                 <outlet property="USDButton" destination="cEa-Yn-PfW" id="I6q-Sm-Q4E"/>
-                <outlet property="chooseFromLib" destination="fhE-IH-lst" id="h8c-Jv-0T9"/>
                 <outlet property="currencyCell" destination="srK-IK-XBv" id="4ZB-Wz-LjM"/>
                 <outlet property="depopCell" destination="UiZ-we-GRX" id="ehR-BQ-KeM"/>
                 <outlet property="depopField" destination="5ss-h2-8KT" id="IXl-ka-M2G"/>
@@ -27,7 +26,6 @@
                 <outlet property="profileImageView" destination="TNt-d3-tiV" id="drw-XP-His"/>
                 <outlet property="regButton" destination="QVT-Fd-dBr" id="6Gw-a8-uHI"/>
                 <outlet property="regCell" destination="m1m-sl-Qpn" id="kyt-ly-wvn"/>
-                <outlet property="takePic" destination="f3Y-gk-RAf" id="eCM-qD-dws"/>
                 <outlet property="titleCell" destination="Cj6-OJ-qkh" id="l2n-Ab-mgz"/>
                 <outlet property="usernameCell" destination="dKZ-Ec-gNl" id="Qho-n7-k0k"/>
                 <outlet property="usernameField" destination="JoL-Uf-d1i" id="JMD-ef-Gsx"/>
@@ -57,29 +55,10 @@
                         <color key="textColor" red="0.22546875476837158" green="0.22546195983886719" blue="0.22546583414077759" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dCX-3V-mf6">
-                        <constraints>
-                            <constraint firstAttribute="width" constant="20" id="7JB-u7-gET"/>
-                            <constraint firstAttribute="width" secondItem="dCX-3V-mf6" secondAttribute="height" multiplier="1:1" id="wKM-0o-vnQ"/>
-                        </constraints>
-                        <state key="normal" image="exit.png"/>
-                        <variation key="default">
-                            <mask key="constraints">
-                                <exclude reference="7JB-u7-gET"/>
-                            </mask>
-                        </variation>
-                        <connections>
-                            <action selector="dismissPressed:" destination="-1" eventType="touchUpInside" id="K1T-CS-Nfo"/>
-                        </connections>
-                    </button>
                 </subviews>
                 <constraints>
                     <constraint firstItem="yG8-HO-iiQ" firstAttribute="top" secondItem="yMS-Hp-0gY" secondAttribute="topMargin" constant="18" id="1Ku-Vy-xV7"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="dCX-3V-mf6" secondAttribute="trailing" constant="7" id="2ue-1u-sNq"/>
                     <constraint firstItem="yG8-HO-iiQ" firstAttribute="centerX" secondItem="yMS-Hp-0gY" secondAttribute="centerX" id="7Rd-0o-3Y5"/>
-                    <constraint firstItem="dCX-3V-mf6" firstAttribute="leading" secondItem="yG8-HO-iiQ" secondAttribute="trailing" constant="78" id="7rD-OW-zeD"/>
-                    <constraint firstItem="dCX-3V-mf6" firstAttribute="centerY" secondItem="yG8-HO-iiQ" secondAttribute="centerY" id="Iur-bj-LrI"/>
-                    <constraint firstItem="yG8-HO-iiQ" firstAttribute="bottom" secondItem="dCX-3V-mf6" secondAttribute="bottom" id="Qh9-aU-QDt"/>
                     <constraint firstAttribute="bottomMargin" secondItem="yG8-HO-iiQ" secondAttribute="bottom" constant="2.5" id="fSb-qb-p8Q"/>
                 </constraints>
             </tableViewCellContentView>
@@ -99,7 +78,7 @@
                         </constraints>
                     </imageView>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="name" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="VED-Fr-fFt">
-                        <color key="tintColor" red="1" green="0.5" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="tintColor" red="0.43137254899999999" green="0.87450980389999999" blue="0.92156862750000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="textColor" red="0.22546875476837158" green="0.22546195983886719" blue="0.22546583414077759" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="16"/>
                         <textInputTraits key="textInputTraits" returnKeyType="done"/>
@@ -132,7 +111,7 @@
                     </imageView>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="email" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="daW-QA-8ze">
                         <frame key="frameInset" width="1000" height="1000"/>
-                        <color key="tintColor" red="1" green="0.5" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="tintColor" red="0.43137254899999999" green="0.87450980389999999" blue="0.92156862750000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="textColor" red="0.22546875476837158" green="0.22546195983886719" blue="0.22546583414077759" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="16"/>
                         <textInputTraits key="textInputTraits" keyboardType="emailAddress" returnKeyType="done"/>
@@ -159,10 +138,10 @@
                 <subviews>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="username" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="JoL-Uf-d1i">
                         <frame key="frameInset" width="1000" height="1000"/>
-                        <color key="tintColor" red="1" green="0.5" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="tintColor" red="0.43137254899999999" green="0.87450980389999999" blue="0.92156862750000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="textColor" red="0.22546875476837158" green="0.22546195983886719" blue="0.22546583414077759" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="16"/>
-                        <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" returnKeyType="done"/>
+                        <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="alphabet" returnKeyType="done"/>
                     </textField>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" image="globeIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="1uH-0b-XhF">
                         <frame key="frameInset" width="1000" height="1000"/>
@@ -184,16 +163,16 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="-62" y="371"/>
         </tableViewCell>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="197" id="X40-2w-7JG">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="197"/>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="147" id="X40-2w-7JG">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="147"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="X40-2w-7JG" id="zTO-I7-1Ra">
-                <frame key="frameInset" width="320" height="196"/>
+                <frame key="frameInset" width="320" height="147"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Picture" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4rO-7b-Q08">
                         <constraints>
-                            <constraint firstAttribute="width" constant="134" id="Ctf-WD-Xoh"/>
+                            <constraint firstAttribute="height" constant="18" id="6S5-ND-KSF"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
                         <color key="textColor" red="0.22546875476837158" green="0.22546195983886719" blue="0.22546583414077759" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -201,37 +180,34 @@
                     </label>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="TNt-d3-tiV">
                         <constraints>
-                            <constraint firstAttribute="height" constant="80" id="BrK-M7-oMN"/>
-                            <constraint firstAttribute="width" constant="80" id="dlj-nJ-hKd"/>
-                            <constraint firstAttribute="width" secondItem="TNt-d3-tiV" secondAttribute="height" multiplier="1:1" id="tm2-ZZ-nVs"/>
+                            <constraint firstAttribute="width" constant="80" id="Qwt-vF-Sxh"/>
+                            <constraint firstAttribute="width" secondItem="TNt-d3-tiV" secondAttribute="height" multiplier="1:1" id="mLg-MU-yu9"/>
                         </constraints>
                     </imageView>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="f3Y-gk-RAf">
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MmZ-dZ-81L">
                         <constraints>
-                            <constraint firstAttribute="width" secondItem="f3Y-gk-RAf" secondAttribute="height" multiplier="25:4" id="s3C-jt-YqZ"/>
+                            <constraint firstAttribute="width" constant="82" id="kjr-Id-rVd"/>
                         </constraints>
-                        <state key="normal" image="takepicButton.png"/>
-                    </button>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fhE-IH-lst">
-                        <constraints>
-                            <constraint firstAttribute="width" secondItem="fhE-IH-lst" secondAttribute="height" multiplier="25:4" id="fgW-X7-Apy"/>
-                        </constraints>
-                        <state key="normal" image="chooseLibButton.png"/>
+                        <state key="normal" title="Choose">
+                            <color key="titleColor" red="0.59215686270000001" green="0.59215686270000001" blue="0.59215686270000001" alpha="1" colorSpace="calibratedRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="pressedChoose:" destination="-1" eventType="touchUpInside" id="KFW-4K-1OT"/>
+                        </connections>
                     </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="TNt-d3-tiV" firstAttribute="centerX" secondItem="zTO-I7-1Ra" secondAttribute="centerX" id="75G-pY-xlB"/>
-                    <constraint firstItem="fhE-IH-lst" firstAttribute="top" secondItem="TNt-d3-tiV" secondAttribute="bottom" constant="22" id="9ei-Zk-lXQ"/>
-                    <constraint firstItem="fhE-IH-lst" firstAttribute="trailing" secondItem="zTO-I7-1Ra" secondAttribute="trailingMargin" id="Gq5-4G-HMK"/>
-                    <constraint firstItem="f3Y-gk-RAf" firstAttribute="leading" secondItem="zTO-I7-1Ra" secondAttribute="leadingMargin" id="IBZ-3R-EGn"/>
-                    <constraint firstItem="TNt-d3-tiV" firstAttribute="centerY" secondItem="zTO-I7-1Ra" secondAttribute="centerY" id="Jbb-PS-zCe"/>
-                    <constraint firstItem="4rO-7b-Q08" firstAttribute="top" secondItem="zTO-I7-1Ra" secondAttribute="topMargin" id="NYs-9o-kUF"/>
-                    <constraint firstItem="TNt-d3-tiV" firstAttribute="top" secondItem="4rO-7b-Q08" secondAttribute="bottom" constant="19" id="Puz-Tu-1gU"/>
-                    <constraint firstItem="4rO-7b-Q08" firstAttribute="leading" secondItem="zTO-I7-1Ra" secondAttribute="leadingMargin" constant="10" id="bIM-9D-qX4"/>
-                    <constraint firstItem="fhE-IH-lst" firstAttribute="top" secondItem="f3Y-gk-RAf" secondAttribute="top" id="f85-iD-fzr"/>
+                    <constraint firstItem="MmZ-dZ-81L" firstAttribute="trailing" secondItem="zTO-I7-1Ra" secondAttribute="trailingMargin" id="7Z2-LL-J1Z"/>
+                    <constraint firstItem="TNt-d3-tiV" firstAttribute="top" secondItem="4rO-7b-Q08" secondAttribute="bottom" constant="19" id="BnB-vR-BhN"/>
+                    <constraint firstItem="MmZ-dZ-81L" firstAttribute="leading" secondItem="4rO-7b-Q08" secondAttribute="trailing" constant="78" id="BoG-Ba-Lgb"/>
+                    <constraint firstItem="4rO-7b-Q08" firstAttribute="leading" secondItem="zTO-I7-1Ra" secondAttribute="leadingMargin" constant="10" id="ZbT-2y-t0o"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="TNt-d3-tiV" secondAttribute="bottom" constant="13" id="ccW-yy-zAT"/>
+                    <constraint firstItem="4rO-7b-Q08" firstAttribute="top" secondItem="zTO-I7-1Ra" secondAttribute="topMargin" id="kVR-ho-ooj"/>
+                    <constraint firstItem="4rO-7b-Q08" firstAttribute="centerY" secondItem="MmZ-dZ-81L" secondAttribute="centerY" id="oIr-f4-qhH"/>
+                    <constraint firstItem="TNt-d3-tiV" firstAttribute="centerX" secondItem="zTO-I7-1Ra" secondAttribute="centerX" id="pzy-wr-QWv"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-62" y="744"/>
+            <point key="canvasLocation" x="-62" y="718.5"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="140" id="m1m-sl-Qpn">
             <rect key="frame" x="0.0" y="0.0" width="320" height="140"/>
@@ -371,7 +347,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="depop username (optional)" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="5ss-h2-8KT">
-                        <color key="tintColor" red="1" green="0.5" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="tintColor" red="0.43137254899999999" green="0.87450980389999999" blue="0.92156862750000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="16"/>
                         <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" returnKeyType="done"/>
@@ -406,15 +382,12 @@
         </tableViewCell>
     </objects>
     <resources>
-        <image name="chooseLibButton.png" width="150" height="24"/>
         <image name="currencyIcon.png" width="17" height="17"/>
         <image name="emailIcon.png" width="13" height="14"/>
-        <image name="exit.png" width="27" height="26"/>
         <image name="globeIcon.png" width="13" height="14"/>
         <image name="infoB.png" width="22" height="22"/>
         <image name="link.png" width="17" height="17"/>
         <image name="regButton.png" width="212" height="40"/>
-        <image name="takepicButton.png" width="150" height="24"/>
         <image name="userIcon.png" width="13" height="14"/>
     </resources>
 </document>

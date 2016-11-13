@@ -14,7 +14,7 @@
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
 
-@interface RegisterViewController : UITableViewController <UITextFieldDelegate>
+@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate>
 NS_ASSUME_NONNULL_BEGIN
 
 //cells
@@ -32,11 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UITextField *emailField;
 @property (weak, nonatomic) IBOutlet UITextField *usernameField;
 
-@property (weak, nonatomic) IBOutlet UIButton *chooseFromLib;
-
 //picture cell
 @property (weak, nonatomic) IBOutlet UIImageView *profileImageView;
-@property (weak, nonatomic) IBOutlet UIButton *takePic;
 
 //user
 @property (strong, nonatomic) PFUser *user;
@@ -59,6 +56,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 //depop
 @property (weak, nonatomic) IBOutlet UITextField *depopField;
+
+@property (nonatomic) BOOL pressedCam;
+
+@property (nonatomic, strong) UIImagePickerController *picker;
 
 NS_ASSUME_NONNULL_END
 

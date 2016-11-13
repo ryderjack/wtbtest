@@ -124,25 +124,33 @@
 -(void)saveStuff{
     [self.navigationItem.rightBarButtonItem setEnabled:NO];
     
-    if ([self.nameField.text isEqualToString:@""] || [self.buildingField.text isEqualToString:@""]||[self.streetField.text isEqualToString:@""] || [self.numberField.text isEqualToString:@""] || [self.cityField.text isEqualToString:@""] || [self.postcodeField.text isEqualToString:@""] || [self.countryField.text isEqualToString:@""]) {
+    NSString *name = [self.nameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *building = [self.buildingField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *street = [self.streetField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *number = [self.numberField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *city = [self.cityField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *postcode = [self.postcodeField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *country = [self.countryField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
+    if ([name isEqualToString:@""] || [building isEqualToString:@""]||[street isEqualToString:@""] || [number isEqualToString:@""] || [city isEqualToString:@""] || [postcode isEqualToString:@""] || [country isEqualToString:@""]) {
         self.warningLabel.text = @"Fill out all the above fields!";
         [self.navigationItem.rightBarButtonItem setEnabled:YES];
     }
     else{
         //pass back & save to current user
-        [self.currentUser setObject:self.buildingField.text forKey:@"building"];
-        [self.currentUser setObject:self.streetField.text forKey:@"street"];
-        [self.currentUser setObject:self.cityField.text forKey:@"city"];
-        [self.currentUser setObject:self.numberField.text forKey:@"phonenumber"];
-        [self.currentUser setObject:self.postcodeField.text forKey:@"postcode"];
-        [self.currentUser setObject:self.countryField.text forKey:@"country"];
+        [self.currentUser setObject:[self.buildingField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"building"];
+        [self.currentUser setObject:[self.streetField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"street"];
+        [self.currentUser setObject:[self.cityField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"city"];
+        [self.currentUser setObject:[self.numberField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"phonenumber"];
+        [self.currentUser setObject:[self.postcodeField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"postcode"];
+        [self.currentUser setObject:[self.countryField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"country"];
         
         [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
                 NSString *addressString = @"";
                 
                 if (self.settingsMode == YES) {
-                    addressString = [NSString stringWithFormat:@"Address: %@ %@, %@, %@, %@",self.buildingField.text, self.streetField.text, self.cityField.text, self.postcodeField.text, self.numberField.text];
+                    addressString = [NSString stringWithFormat:@"Address: %@ %@ %@ %@ %@",self.buildingField.text, self.streetField.text, self.cityField.text, self.postcodeField.text, self.numberField.text];
                 }
                 else{
                     addressString = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.buildingField.text, self.streetField.text, self.cityField.text, self.postcodeField.text,self.countryField.text ,self.numberField.text];

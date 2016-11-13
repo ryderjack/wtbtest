@@ -20,7 +20,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"Create a listing";
+    self.navigationItem.title = @"Create a WTB";
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
@@ -129,11 +129,13 @@
         [Flurry logEvent:@"Create_Tapped"];
     }
     
+    if (![self.status isEqualToString:@"edit"]) {
+        [self useCurrentLoc];
+    }
+    
     if (self.shouldShowHUD == YES) {
         [self showHUD];
     }
-    
-    [self useCurrentLoc];
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -546,12 +548,13 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        UIImagePickerController *picker = [[UIImagePickerController alloc] init];
-        picker.delegate = self;
-        picker.allowsEditing = NO;
-        picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-        
-        [self presentViewController:picker animated:YES completion:nil];
+        if (!self.picker) {
+            self.picker = [[UIImagePickerController alloc] init];
+            self.picker.delegate = self;
+            self.picker.allowsEditing = NO;
+            self.picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+        }
+        [self presentViewController:self.picker animated:YES completion:nil];
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Search Google" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -587,7 +590,7 @@
     self.webViewController.showUrlWhileLoading = NO;
     self.webViewController.showPageTitles = NO;
     self.webViewController.delegate = self;
-    self.webViewController.doneButtonTitle = @"select";
+    self.webViewController.doneButtonTitle = @"Choose";
     self.webViewController.paypalMode = NO;
     self.webViewController.infoMode = NO;
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
@@ -653,30 +656,6 @@
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
-}
-
-#pragma web picker delegates
-
--(void)photoPickerControllerDidCancel:(DZNPhotoPickerController *)picker{
-}
-
--(void)photoPickerController:(DZNPhotoPickerController *)picker didFinishPickingPhotoWithInfo:(NSDictionary *)userInfo{
-}
-
-- (void)handleImagePicker:(DZNPhotoPickerController *)picker withMediaInfo:(NSDictionary *)info
-{
-    [self updateImageWithPayload:info];
-}
-
-- (void)updateImageWithPayload:(NSDictionary *)payload
-{
-    UIImage *image = payload[UIImagePickerControllerEditedImage];
-    if (!image) image = payload[UIImagePickerControllerOriginalImage];
-    
-    [self finalImage:image];
-}
-
--(void)photoPickerController:(DZNPhotoPickerController *)picker didFailedPickingPhotoWithError:(NSError *)error{
 }
 
 #pragma camera buttons
@@ -810,16 +789,17 @@
 
 -(void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)selectionString withgender:(NSString *)genderString andsizes:(NSArray *)array{
     if ([self.selection isEqualToString:@"condition"]) {
+        if ([selectionString isEqualToString:@"Brand New With Tags"]) {
+            selectionString = @"BNWT";
+        }
+        else if ([selectionString isEqualToString:@"Brand New Without Tags"]) {
+            selectionString = @"BNWOT";
+        }
         self.chooseCondition.text = selectionString;
     }
     else if ([self.selection isEqualToString:@"category"]){
         self.chooseCategroy.text = selectionString;
-//        if ([selectionString isEqualToString:@"Accessories"]) {
-//            self.chooseSize.text = @"One size";
-//        }
-//        else{
           self.chooseSize.text = @"select";
-//        }
     }
     else if ([self.selection isEqualToString:@"size"]){
         if (genderString) {
@@ -833,9 +813,6 @@
                 if ([self.sizesArray[0] isKindOfClass:[NSString class]]) {
                     if ([self.sizesArray[0] isEqualToString:@"Any"]) {
                         self.chooseSize.text = @"Any";
-                    }
-                    else if ([self.sizesArray[0] isEqualToString:@"OS"]) {
-                        self.chooseSize.text = @"OS";
                     }
                     else{
                         self.chooseSize.text = [NSString stringWithFormat:@"UK %@",self.sizesArray[0]];
@@ -906,10 +883,8 @@
         
         int price = [priceString intValue];
         
-        NSString *itemTitle = self.titleField.text;
+        NSString *itemTitle = [self.titleField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         NSString *extraInfo = [self.extraField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
-        
-        
         
         if ([self.status isEqualToString:@"edit"]) {
             PFQuery *query = [PFQuery queryWithClassName:@"wantobuys"];
@@ -927,13 +902,45 @@
         }
         else{
             self.listing =[PFObject objectWithClassName:@"wantobuys"];
-            
         }
         
         [self.listing setObject:itemTitle forKey:@"title"];
         [self.listing setObject:[itemTitle lowercaseString]forKey:@"titleLower"];
         [self.listing setObject:self.chooseCondition.text forKey:@"condition"];
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
+        
+        //save keywords (minus useless words)
+        NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", nil];
+        NSString *title = [itemTitle lowercaseString];
+        NSArray *strings = [title componentsSeparatedByString:@" "];
+        NSMutableArray *mutableStrings = [NSMutableArray arrayWithArray:strings];
+        [mutableStrings removeObjectsInArray:wasteWords];
+        
+        if ([mutableStrings containsObject:@"bogo"]) {
+            [mutableStrings addObject:@"box"];
+            [mutableStrings addObject:@"logo"];
+        }
+        
+        if ([mutableStrings containsObject:@"tee"]) {
+            [mutableStrings addObject:@"t"];
+        }
+        
+        if ([mutableStrings containsObject:@"camo"]) {
+            [mutableStrings addObject:@"camouflage"];
+        }
+        
+        if ([mutableStrings containsObject:@"hoodie"]) {
+            [mutableStrings addObject:@"hoody"];
+        }
+        
+        if ([mutableStrings containsObject:@"crew"]) {
+            [mutableStrings addObject:@"crewneck"];
+            [mutableStrings addObject:@"sweatshirt"];
+            [mutableStrings addObject:@"sweater"];
+            [mutableStrings addObject:@"sweat"];
+        }
+        
+        [self.listing setObject:mutableStrings forKey:@"keywords"];
         
         if (![self.firstSize isEqualToString:@""]) {
             [self.listing setObject:self.firstSize forKey:@"firstSize"];
@@ -1081,7 +1088,7 @@
             //don't save its placeholder
         }
         else{
-            [self.listing setObject:extraInfo forKey:@"extra"];
+            [self.listing setObject:self.extraField.text forKey:@"extra"];
         }
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
@@ -1403,10 +1410,6 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
-+ (void)initialize
-{
-    [DZNPhotoPickerController registerFreeService:DZNPhotoPickerControllerServiceInstagram consumerKey:@"c25462a25bea4d61ac285d30ab5bd802" consumerSecret:@"13236e6d23644697ac9b81945c90dd1a"];
-}
 -(void)tagString:(NSString *)tag{
     //do nothing only for images shown in offer mode
 }
@@ -1470,7 +1473,6 @@
         }
         else{
             NSLog(@"error %@", error);
-            [self.navigationController popViewControllerAnimated:YES];
         }
     }];
 }

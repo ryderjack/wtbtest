@@ -13,7 +13,6 @@
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
 #import "CameraController.h"
-#import <DZNPhotoPickerController/DZNPhotoPickerController.h>
 #import <BASSquareCropperViewController.h>
 #import <TOWebViewController.h>
 #import <SpinKit/RTSpinKitView.h>
@@ -26,7 +25,7 @@
 @end
 
 
-@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, DZNPhotoPickerControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate, TOWebDelegate>
+@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate, TOWebDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
@@ -114,4 +113,6 @@
 
 @property (weak, nonatomic) IBOutlet UIButton *skipButton;
 @property (nonatomic) BOOL introMode;
+
+@property (nonatomic, strong) UIImagePickerController *picker;
 @end

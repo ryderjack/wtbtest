@@ -21,6 +21,8 @@
     self.userNameLabel.text = @"";
     self.dealsLabel.text = @"Loading";
     
+    [self.checkImageView setHidden:YES];
+    
     self.starNumber = 0;
     self.warningLabel.text = @"";
     
@@ -62,6 +64,13 @@
             self.userNameLabel.text = self.user.username;
             [self.pictureView setFile:[self.user objectForKey:@"picture"]];
             [self.pictureView loadInBackground];
+            
+            if ([[self.user objectForKey:@"trustedSeller"] isEqualToString:@"YES"]) {
+                [self.checkImageView setHidden:NO];
+            }
+            else{
+                [self.checkImageView setHidden:YES];
+            }
             
             PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
             [dealsQuery whereKey:@"User" equalTo:self.user];
@@ -177,7 +186,10 @@
         [self showHUD];
         
         PFObject *feedbackObject = [PFObject objectWithClassName:@"feedback"];
+        PFObject *offer = [self.orderObject objectForKey:@"offerObject"];
+        PFObject *WTB = [offer objectForKey:@"wtbListing"];
         
+        [feedbackObject setObject:WTB forKey:@"WTB"];
         [feedbackObject setObject:[NSNumber numberWithInt:self.starNumber] forKey:@"rating"];
         [feedbackObject setObject:[PFUser currentUser] forKey:@"gaveFeedback"];
         
@@ -290,6 +302,18 @@
     }
 }
 - (IBAction)reportPressed:(id)sender {
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this user has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately or message Team Bump from the profile tab." preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+        PFObject *reportObject = [PFObject objectWithClassName:@"ReportedUsers"];
+        reportObject[@"reportedUser"] = self.user;
+        reportObject[@"reporter"] = [PFUser currentUser];
+        reportObject[@"order"] = self.orderObject;
+        [reportObject saveInBackground];
+    }]];
 }
 - (IBAction)firstStarPressed:(id)sender {
     if (self.firstStar.selected == YES) {
@@ -366,7 +390,7 @@
     }
 }
 -(void)setImageBorder{
-    self.pictureView.layer.cornerRadius = self.pictureView.frame.size.width / 2;
+    self.pictureView.layer.cornerRadius = 25;
     self.pictureView.layer.masksToBounds = YES;
     
     self.pictureView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);

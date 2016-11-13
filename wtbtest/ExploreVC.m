@@ -15,7 +15,7 @@
 #import "Flurry.h"
 #import <ParseFacebookUtilsV4/PFFacebookUtils.h>
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
-
+#import "AppConstant.h"
 
 @interface ExploreVC ()
 
@@ -82,6 +82,8 @@
     self.infinFinished = YES;
     self.lastInfinSkipped = 0;
     
+    [self.collectionView setScrollsToTop:YES];
+    
     self.filtersArray = [NSMutableArray array];
     self.filtersTapped = NO;
     
@@ -136,24 +138,32 @@
         }];
     }
     
-    if (![[[PFUser currentUser] objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
-        [PFUser currentUser][@"completedReg"] = @"YES";
-        [[PFUser currentUser] saveInBackground];
-    }
+    PFUser *currentUser = [PFUser currentUser];
     
-    self.uselessWords = [NSArray arrayWithObjects:@"and", @"or", @"very", nil];
-    
-    //remove duplicate searches
-    if (![[[PFUser currentUser]objectForKey:@"clearSearches"]isEqualToString:@"YES"]) {
-        //clear duplicate searches
-        NSMutableArray *searches = [NSMutableArray array];
-        searches = [[PFUser currentUser]objectForKey:@"searches"];
-        NSOrderedSet *orderedSet = [NSOrderedSet orderedSetWithArray:searches];
-        NSArray *arrayWithoutDuplicates = [orderedSet array];
-        [[PFUser currentUser]setObject:arrayWithoutDuplicates forKey:@"searches"];
-        [[PFUser currentUser] setObject:@"YES" forKey:@"clearSearches"];
-        [[PFUser currentUser]saveInBackground];
+    if (currentUser) {
+        if (![[currentUser objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
+            [PFUser logOut];
+        }
+        
+        //remove duplicate searches
+        if (![[currentUser objectForKey:@"clearSearches"]isEqualToString:@"YES"]) {
+            //clear duplicate searches
+            NSMutableArray *searches = [NSMutableArray array];
+            searches = [[PFUser currentUser]objectForKey:@"searches"];
+            NSOrderedSet *orderedSet = [NSOrderedSet orderedSetWithArray:searches];
+            NSArray *arrayWithoutDuplicates = [orderedSet array];
+            [[PFUser currentUser]setObject:arrayWithoutDuplicates forKey:@"searches"];
+            [[PFUser currentUser] setObject:@"YES" forKey:@"clearSearches"];
+            [[PFUser currentUser]saveInBackground];
+        }
+        
+        if (![currentUser objectForKey:PF_USER_FULLNAME] || ![currentUser objectForKey:PF_USER_EMAIL] || ![currentUser objectForKey:@"currency"] || ![currentUser objectForKey:PF_USER_FACEBOOKID] || ![currentUser objectForKey: PF_USER_GENDER] || ![currentUser objectForKey:@"picture"] || currentUser.username.length > 10) {
+            //been an error on sign up as user doesn't have all info saved
+            currentUser[@"completedReg"] = @"NO";
+            [PFUser logOut];
+        }
     }
+    self.uselessWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", nil];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -373,9 +383,16 @@
     self.infiniteQuery.limit = 12;
     [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
     [self setupInfinQuery];
+    __block NSMutableArray *wordsToSearch = [NSMutableArray array];
     
     if (self.searchEnabled == YES) {
-        [self.infiniteQuery whereKey:@"titleLower" containsString:self.searchString];
+        
+        NSArray *searchWords = [self.searchString componentsSeparatedByString:@" "];
+        [wordsToSearch addObjectsFromArray:searchWords];
+        
+        //remove useless words
+        [wordsToSearch removeObjectsInArray:self.uselessWords];
+        [self.infiniteQuery whereKey:@"keywords" containsAllObjectsInArray:wordsToSearch];
     }
     [self.infiniteQuery cancel];
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -384,7 +401,6 @@
             self.lastInfinSkipped = self.lastInfinSkipped + count;
             
             if (self.searchEnabled == YES) {
-                //save in searchResults array
                 [self.searchResults addObjectsFromArray:objects];
             }
             else{
@@ -393,7 +409,6 @@
             }
             
             [self.collectionView reloadData];
-            
             [self.collectionView.infiniteScrollingView stopAnimating];
             self.infinFinished = YES;
         }
@@ -405,53 +420,19 @@
     }];
 }
 -(void)queryParsePull{
-    NSLog(@"query here");
     self.pullFinished = NO;
     self.pullQuery.limit = 12;
     [self setupPullQuery];
+    __block NSMutableArray *wordsToSearch = [NSMutableArray array];
+    
     if (self.searchEnabled == YES) {
         
-//        NSArray *searchWords = [self.searchString componentsSeparatedByString:@" "];
-//        NSMutableArray *wordsToSearch = [NSMutableArray array];
-//        
-//        NSLog(@"words %@", wordsToSearch);
-//        
-//        //remove pointless words from search
-////        for (NSString *word in wordsToSearch) {
-////            if ([self.uselessWords containsObject:word]) {
-////                [wordsToSearch removeObject:word];
-////            }
-////        }
-//        
-//        //create a combo of search terms then add to array
-//        
-//        int ogCount = (int)[searchWords count];
-//        
-//        for (int i = 0; i<=ogCount; i++) {
-//            if (i+1 < searchWords.count) {
-//                
-//                NSString *string1 = [NSString stringWithFormat:@"%@ %@", searchWords[i], searchWords[i+1]];
-//                NSString *string2 = [NSString stringWithFormat:@"%@ %@", searchWords[i+1], searchWords[i]];
-//                
-//                [wordsToSearch addObject:string1];
-//                [wordsToSearch addObject:string2];
-//                
-//                NSLog(@"added strings");
-//            }
-//        }
-//        
-//        NSLog(@"out the loop");
-//        
-//        //add whole search term to array in case it's a perfect match
-//        [wordsToSearch addObject:self.searchString];
-//        
-//        wordsToSearch= [[[wordsToSearch reverseObjectEnumerator] allObjects] mutableCopy];
-//
-//        
-//        NSLog(@"words to search final %@", wordsToSearch);
+        NSArray *searchWords = [self.searchString componentsSeparatedByString:@" "];
+        [wordsToSearch addObjectsFromArray:searchWords];
         
-        
-        [self.pullQuery whereKey:@"titleLower" containsString:self.searchString];
+        //remove useless words
+        [wordsToSearch removeObjectsInArray:self.uselessWords];
+        [self.pullQuery whereKey:@"keywords" containsAllObjectsInArray:wordsToSearch];
     }
     
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
@@ -459,6 +440,8 @@
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
+            self.lastInfinSkipped = count;
+            
             if (count == 0) {
                 [self.noresultsLabel setHidden:NO];
                 [self.noResultsImageView setHidden:YES];
@@ -467,10 +450,8 @@
                 [self.noresultsLabel setHidden:YES];
                 [self.noResultsImageView setHidden:YES];
             }
-            self.lastInfinSkipped = count;
             
             if (self.searchEnabled == YES) {
-                //save in searchResults array
                 [self.searchResults removeAllObjects];
                 [self.searchResults addObjectsFromArray:objects];
             }
@@ -580,7 +561,7 @@
     if (self.filtersArray.count > 0) {
         vc.sendArray = [NSMutableArray arrayWithArray:self.filtersArray];
     }
-    self.modalPresentationStyle = UIModalPresentationCurrentContext;
+    vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
     [self presentViewController:vc animated:YES completion:nil];
 }
 
@@ -898,7 +879,7 @@
     
     // Create the search controller and make it perform the results updating.
     if (!self.searchController) {
-        NSLog(@"must create a new search controller");
+        //create new search controller
         
         self.searchController = [[UISearchController alloc] initWithSearchResultsController:self.resultsController];
         self.searchController.delegate = self;
@@ -970,11 +951,12 @@
 }
 -(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
     if (self.searchEnabled == YES) {
-        
         self.searchString = searchBar.text;
 
         //clear search array
         [self.searchResults removeAllObjects];
+        [self.collectionView reloadData];
+        
         [self.noresultsLabel setHidden:YES];
         [self.noResultsImageView setHidden:YES];
         
@@ -984,7 +966,6 @@
         if (![self.searchString isEqualToString:@""]) {
             
             // if haven't searched before create empty array to avoid crashing
-            
             if ([[PFUser currentUser] objectForKey:@"searches"]) {
                 history = [[PFUser currentUser] objectForKey:@"searches"];
             }
@@ -996,7 +977,7 @@
                 [history removeObjectAtIndex:0];
             }
             
-            if (![history containsObject:self.searchString]) {
+            if (![[history lastObject] isEqualToString:self.searchString]) {
                 [history addObject:self.searchString];
             }
             
@@ -1005,17 +986,17 @@
         }
         
         //update results controller UI since only updated via query every time search button pressed
-        
         NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.resultsController.allResults];
         
-        
-        if (![searchesList containsObject:self.searchString]) {
+//        if (![searchesList containsObject:self.searchString]) {
+//            [searchesList insertObject:self.searchString atIndex:0];
+//        }
+        if (![searchesList[0] isEqualToString:self.searchString]) {
             [searchesList insertObject:self.searchString atIndex:0];
         }
         
         self.resultsController.allResults = searchesList;
         [self.resultsController.tableView reloadData];
-        
         self.searchString = [searchBar.text lowercaseString];
         
         //query
@@ -1029,6 +1010,10 @@
     self.searchEnabled = NO;
     self.searchShowing = NO;
     self.resultsShowing = NO;
+    
+    [self.searchResults removeAllObjects];
+    [self.collectionView setContentOffset:CGPointMake(0, -100) animated:NO];
+    [self.collectionView reloadData];
     
     if (self.results.count == 0) {
         [self.noresultsLabel setHidden:NO];

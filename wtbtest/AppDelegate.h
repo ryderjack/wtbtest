@@ -12,6 +12,7 @@
 #import "ExploreVC.h"
 #import "ProfileController.h"
 #import "InboxViewController.h"
+#import "BuyNowController.h"
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate, UITabBarControllerDelegate>
 
@@ -23,6 +24,7 @@
 @property (strong, nonatomic) ProfileController *profileView;
 @property (strong, nonatomic) InboxViewController *inboxView;
 @property (nonatomic, strong) PFInstallation *installation;
+@property (nonatomic, strong) BuyNowController *buyView;
 @property (nonatomic, strong) NSMutableArray *unseenMessages;
 
 @end

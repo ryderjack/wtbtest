@@ -42,5 +42,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet PFImageView *testingView;
 
 @property (nonatomic) UIImage *profileImage;
+@property (nonatomic, strong) UIImagePickerController *picker;
 NS_ASSUME_NONNULL_END
 @end

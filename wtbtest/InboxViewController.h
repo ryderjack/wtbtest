@@ -16,7 +16,7 @@
 @property (nonatomic, strong) InboxCell *cell;
 @property (nonatomic, strong) NSMutableArray *convoObjects;
 
-@property (nonatomic, strong) NSMutableArray *unseenMessages;
+@property (nonatomic, strong) NSMutableArray *unseenConvos;
 
 @property (nonatomic, strong) NSString *selectedConvo;
 
@@ -34,5 +34,7 @@
 
 @property (nonatomic, strong) UILabel *topLabel;
 @property (nonatomic, strong) UILabel *bottomLabel;
+
+@property (nonatomic) BOOL justViewedMsg;
 
 @end
