@@ -25,7 +25,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"WTB";
+    self.navigationItem.title = @"Wanted";
     UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
     
     [self.checkImageView setHidden:YES];
@@ -40,6 +40,9 @@
     else if ([self.currency isEqualToString:@"USD"]) {
         self.currencySymbol = @"$";
     }
+    
+    self.buyernameLabel.text = @"";
+    self.pastDealsLabel.text = @"Loading";
     
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
@@ -117,17 +120,29 @@
             
             if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
                 [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
-                [self.saveButton setEnabled:NO];
             }
             else{
                 //not the same buyer
+                [self.listingObject incrementKey:@"views"];
+                [self.listingObject saveInBackground];
+            }
+            
+            if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"purchased"]) {
+                [self.purchasedLabel setHidden:NO];
+                [self.purchasedCheckView setHidden:NO];
+            }
+            else{
                 self.navigationItem.rightBarButtonItem = infoButton;
+                [self.purchasedLabel setHidden:YES];
+                [self.purchasedCheckView setHidden:YES];
             }
             
             [self setImageBorder];
             [self.buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
-                    self.buyernameLabel.text = self.buyer.username;
+//                    dispatch_async(dispatch_get_main_queue(), ^{
+                        self.buyernameLabel.text = self.buyer.username;
+//                    });
                     
                     PFFile *pic = [self.buyer objectForKey:@"picture"];
                     if (pic != nil) {
@@ -228,9 +243,6 @@
     self.extraLabel.adjustsFontSizeToFitWidth = YES;
     self.extraLabel.minimumScaleFactor=0.5;
     
-    self.buyernameLabel.text = @"";
-    self.pastDealsLabel.text = @"Loading";
-    
     self.mainCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.payCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.sizeCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -245,13 +257,13 @@
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
     //check if item has been saved previously
-    NSArray *savedItemsArray = [[PFUser currentUser] objectForKey:@"savedItems"];
-    for (NSString *wtb in savedItemsArray) {
-        if ([wtb isEqualToString:self.listingObject.objectId]) {
-            [self.saveButton setEnabled:NO];
-            break;
-        }
-    }
+//    NSArray *savedItemsArray = [[PFUser currentUser] objectForKey:@"savedItems"];
+//    for (NSString *wtb in savedItemsArray) {
+//        if ([wtb isEqualToString:self.listingObject.objectId]) {
+//            [self.saveButton setEnabled:NO];
+//            break;
+//        }
+//    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -591,6 +603,7 @@
                     if (self.sellThisPressed == YES) {
                         vc.sellThisPressed = NO;
                     }
+                    vc.userIsBuyer = NO;
                     vc.otherUser = [self.listingObject objectForKey:@"postUser"];
                     vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
                     [self hideHUD];
@@ -623,15 +636,15 @@
     if (swipe.direction == UISwipeGestureRecognizerDirectionLeft) {
         NSLog(@"Left Swipe");
         if (self.picIndicator.currentPage != 4) {
-            if (self.picIndicator.currentPage == 0) {
+            if (self.picIndicator.currentPage == 0 && self.numberOfPics >1) {
                 [self.picView setFile:self.secondImage];
                 [self.picIndicator setCurrentPage:1];
             }
-            else if (self.picIndicator.currentPage == 1){
+            else if (self.picIndicator.currentPage == 1 && self.numberOfPics >2){
                 [self.picView setFile:self.thirdImage];
                 [self.picIndicator setCurrentPage:2];
             }
-            else if (self.picIndicator.currentPage == 2){
+            else if (self.picIndicator.currentPage == 2 && self.numberOfPics >3){
                 [self.picView setFile:self.fourthImage];
                 [self.picIndicator setCurrentPage:3];
             }
@@ -656,7 +669,7 @@
             }
         }
     }
-    if (self.numberOfPics > 1) {
+    if (self.numberOfPics > self.picIndicator.currentPage) {
         //set placeholder spinner view
         [self showimageHUD];
         
@@ -727,25 +740,74 @@
         }];
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report listing" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         
-        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this post has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"purchased"]) {
+//                    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//                        [self.listingObject setObject:@"live" forKey:@"status"];
+//                        [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                            if (succeeded) {
+//                                [self.collectionView reloadData];
+//                            }
+//                        }];
+//                    }]];
+        }
+        else if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"live"]) {
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as purchased" message:@"Are you sure you want to mark your WTB as purchased? Sellers will no longer be able to view your WTB and offer to sell you items" preferredStyle:UIAlertControllerStyleAlert];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    
+                }]];
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [self.listingObject setObject:@"purchased" forKey:@"status"];
+                    [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            //unhide label
+                            self.purchasedLabel.alpha = 0.0;
+                            self.purchasedCheckView.alpha = 0.0;
+                            
+                            [self.purchasedLabel setHidden:NO];
+                            [self.purchasedCheckView setHidden:NO];
+                            
+                            [UIView animateWithDuration:0.5
+                                                  delay:0
+                                                options:UIViewAnimationOptionCurveEaseIn
+                                             animations:^{
+                                                 self.purchasedLabel.alpha = 1.0;
+                                                 self.purchasedCheckView.alpha = 1.0;
+                                                 
+                                             }
+                                             completion:nil];
+                        }
+                    }];
+                }]];
+                [self presentViewController:alertView animated:YES completion:nil];
+            }]];
+        }
+    }
+    else{
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report listing" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this post has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                PFObject *reportObject = [PFObject objectWithClassName:@"Reported"];
+                reportObject[@"reportedUser"] = self.buyer;
+                reportObject[@"reporter"] = [PFUser currentUser];
+                reportObject[@"listing"] = self.listingObject;
+                [reportObject saveInBackground];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
             
         }]];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-            PFObject *reportObject = [PFObject objectWithClassName:@"Reported"];
-            reportObject[@"reportedUser"] = self.buyer;
-            reportObject[@"reporter"] = [PFUser currentUser];
-            reportObject[@"listing"] = self.listingObject;
-            [reportObject saveInBackground];
-        }]];
-        
-        [self presentViewController:alertView animated:YES completion:nil];
-        
-    }]];
+    }
+    
     
     [self presentViewController:actionSheet animated:YES completion:nil];
 }

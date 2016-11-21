@@ -71,6 +71,7 @@
     }
     
     [self.infiniteQuery cancel];
+    [self.tableView.infiniteScrollingView stopAnimating];
     self.infinFinished = YES;
 }
 
@@ -84,6 +85,7 @@
     [self.pullQuery includeKey:@"buyerUser"];
     [self.pullQuery includeKey:@"sellerUser"];
     [self.pullQuery includeKey:@"wtbListing"];
+    [self.pullQuery includeKey:@"wtsListing"];
     [self.pullQuery includeKey:@"lastSent"];
     [self.pullQuery orderByDescending:@"lastSentDate"];
     self.pullQuery.limit = 10;
@@ -136,60 +138,6 @@
                     self.pullFinished = YES;
                     
                     [self updateUnseenCount];
-                    
-//                    int totalUnseen = 0;
-//                    int unseen = 0;
-//                    
-//                    for (PFObject *convo in objects) {
-//                        PFObject *msgObject = [convo objectForKey:@"lastSent"];
-//                        
-//                        if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-//                            
-//                            if (![self.selectedConvo isEqualToString:convo.objectId]) {
-//                                NSLog(@"adding %@ to unseenConvos!!", convo);
-//                                //don't add to tab bar for a selected convo since the added badge could be confusing
-//                                [self.unseenConvos addObject:convo];
-//                            }
-//                            
-//                            NSLog(@"unseen coversations array %lu", (unsigned long)self.unseenConvos.count);
-//                            
-//                            if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
-//                                unseen = 1;
-//                            }
-//                            else{
-//                                PFUser *buyer = [convo objectForKey:@"buyerUser"];
-//                                if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
-//                                    //current user is buyer so other user is seller
-//                                    unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
-//                                    NSLog(@"unseen from buyer %d", unseen);
-//                                }
-//                                else{
-//                                    //other user is buyer, current is seller
-//                                    unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
-//                                    NSLog(@"unseen from seller %d", unseen);
-//                                }
-//                            }
-//                            
-//                            totalUnseen = totalUnseen + unseen;
-//                            
-//                            NSLog(@"running total unseen: %d", totalUnseen);
-//                        }
-//                    }
-//                    // careful! as only showing unseen messages that have been loaded
-//                    if (self.unseenConvos.count > 0 && totalUnseen > 0) {
-//                        [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", totalUnseen];
-//                        self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", totalUnseen];
-//                    }
-//                    else{
-//                        self.navigationItem.title = @"Messages";
-//                        [self.navigationController tabBarItem].badgeValue = nil;
-//                        
-//                        PFInstallation *installation = [PFInstallation currentInstallation];
-//                        if (installation.badge != 0) {
-//                            installation.badge = 0;
-//                        }
-//                        [installation saveInBackground];
-//                    }
                 }
             }
             else{
@@ -224,10 +172,10 @@
                     
                     if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                         [self.unseenConvos addObject:convo];
-                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
-                            unseen = 1;
-                        }
-                        else{
+//                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+//                            unseen = 1;
+//                        }
+//                        else{
                             PFUser *buyer = [convo objectForKey:@"buyerUser"];
                             if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
                                 //current user is buyer so other user is seller
@@ -237,7 +185,7 @@
                                 //other user is buyer, current is seller
                                 unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
                             }
-                        }
+//                        }
                         totalUnseen = totalUnseen + unseen;
                     }
                 }
@@ -246,9 +194,11 @@
                     
                     if (self.unseenConvos.count > 0) {
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
+                        self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", totalUnseen];
                     }
                     else{
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                        self.navigationItem.title = @"Messages";
                     }
                 }
                 else{
@@ -273,20 +223,24 @@
     [self.infiniteQuery includeKey:@"buyerUser"];
     [self.infiniteQuery includeKey:@"sellerUser"];
     [self.infiniteQuery includeKey:@"wtbListing"];
+    [self.infiniteQuery includeKey:@"wtsListing"];
     [self.infiniteQuery includeKey:@"lastSent"];
     [self.infiniteQuery orderByDescending:@"lastSentDate"];
     self.infiniteQuery.limit = 10;
     self.infiniteQuery.skip = self.lastSkipped;
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (!error) {
-            if (objects) {
-                int count = (int)[objects count];
-                self.lastSkipped = self.lastSkipped + count;
-                [self.convoObjects addObjectsFromArray:objects];
-                [self.tableView reloadData];
-                [self.tableView.infiniteScrollingView stopAnimating];
-                self.infinFinished = YES;
-            }
+        if (objects) {
+            int count = (int)[objects count];
+            self.lastSkipped = self.lastSkipped + count;
+            [self.convoObjects addObjectsFromArray:objects];
+            [self.tableView reloadData];
+            [self.tableView.infiniteScrollingView stopAnimating];
+            self.infinFinished = YES;
+        }
+        else{
+            NSLog(@"error on infin %@", error);
+            [self.tableView.infiniteScrollingView stopAnimating];
+            self.infinFinished = YES;
         }
     }];
 }
@@ -376,25 +330,35 @@
     }
     self.cell.timeLabel.text = [NSString stringWithFormat:@"%@", [self.dateFormat stringFromDate:convoDate]];
     [self setProfImageBorder];
-    
-    PFObject *wtbListing = [convoObject objectForKey:@"wtbListing"];
-    [self.cell.wtbImageView setFile:[wtbListing objectForKey:@"image1"]];
-    [self.cell.wtbImageView loadInBackground];
-    self.cell.wtbTitleLabel.text = [NSString stringWithFormat:@"%@", [wtbListing objectForKey:@"title"]];
-    
-    //add in a check for a EUR price before setting since recent;y added this currency
-    int price = [[wtbListing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
-    
-    if ([self.currency isEqualToString:@"EUR"] && price == 0) {
-        int pounds = [[wtbListing objectForKey:@"listingPriceGBP"]intValue];
-        int EUR = pounds*1.16;
-        wtbListing[@"listingPriceEUR"] = @(EUR);
-        price = EUR;
-        [wtbListing saveInBackground];
+
+    if ([[convoObject objectForKey:@"pureWTS"]isEqualToString:@"YES"]) {
+        //no WTB associated with this convo
+        PFObject *saleListing = [convoObject objectForKey:@"wtsListing"];
+        [self.cell.wtbImageView setFile:[saleListing objectForKey:@"thumbnail"]];
+        [self.cell.wtbImageView loadInBackground];
+        self.cell.wtbTitleLabel.text = @"";
+        self.cell.wtbPriceLabel.text = @"";
     }
-    self.cell.wtbPriceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol,price];
+    else{
+        PFObject *wtbListing = [convoObject objectForKey:@"wtbListing"];
+        [self.cell.wtbImageView setFile:[wtbListing objectForKey:@"image1"]];
+        [self.cell.wtbImageView loadInBackground];
+        self.cell.wtbTitleLabel.text = [NSString stringWithFormat:@"%@", [wtbListing objectForKey:@"title"]];
+        
+        //add in a check for a EUR price before setting since recent;y added this currency
+        int price = [[wtbListing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+        
+        if ([self.currency isEqualToString:@"EUR"] && price == 0) {
+            int pounds = [[wtbListing objectForKey:@"listingPriceGBP"]intValue];
+            int EUR = pounds*1.16;
+            wtbListing[@"listingPriceEUR"] = @(EUR);
+            price = EUR;
+            [wtbListing saveInBackground];
+        }
+        self.cell.wtbPriceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol,price];
+    }
     [self setWTBImageBorder];
-    
+
     PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
     NSString *text = [msgObject objectForKey:@"message"];
     
@@ -471,27 +435,57 @@
     [msgObject setObject:@"seen" forKey:@"status"];
     [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationNone];
     
-    if ([self.unseenConvos containsObject:convoObject]) {
-        [self.unseenConvos removeObject:convoObject];
+    int unseen = 0;
     
-        if (self.unseenConvos.count == 0) {
-            self.navigationItem.title = @"Messages";
-            [self.navigationController tabBarItem].badgeValue = nil;
+    PFUser *buyer = [convoObject objectForKey:@"buyerUser"];
+    
+//    if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+//        unseen = 1;
+//    }
+//    else{
+        if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+            //current user is buyer so other user is seller
+            unseen = [[convoObject objectForKey:@"buyerUnseen"] intValue];
+            NSLog(@"buyer");
         }
         else{
-            self.navigationItem.title = [NSString stringWithFormat:@"Messages (%lu)", (unsigned long)self.unseenConvos.count];
-            [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%ld", (unsigned long)self.unseenConvos.count];
+            //other user is buyer, current is seller
+            unseen = [[convoObject objectForKey:@"sellerUnseen"] intValue];
+            NSLog(@"seller");
         }
+        NSLog(@"unseen %d", unseen);
+//    }
+    
+    UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[3];
+    int currentTabValue = [itemToBadge.badgeValue intValue];
+    int newTabValue = currentTabValue - unseen;
+    if (newTabValue == 0) {
+        self.navigationItem.title = @"Messages";
+        [self.navigationController tabBarItem].badgeValue = nil;
     }
-    PFObject *listing = [convoObject objectForKey:@"wtbListing"];
+    else if (newTabValue > 0){
+        self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", newTabValue];
+        [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
+    }
+    else{
+        NSLog(@"error calc'n %d", newTabValue);
+    }
+    
     self.selectedConvo = convoObject.objectId;
     
     MessageViewController *vc = [[MessageViewController alloc]init];
     vc.convoId = [convoObject objectForKey:@"convoId"];
     vc.convoObject = convoObject;
-    vc.listing = listing;
     
-    PFUser *buyer = [convoObject objectForKey:@"buyerUser"];
+    if ([[convoObject objectForKey:@"pureWTS"]isEqualToString:@"YES"]) {
+        vc.pureWTS = YES;
+    }
+    else{
+        PFObject *listing = [convoObject objectForKey:@"wtbListing"];
+        vc.listing = listing;
+    }
+    
+    
     if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
         //current user is buyer so other user is seller
         vc.otherUser = [convoObject objectForKey:@"sellerUser"];

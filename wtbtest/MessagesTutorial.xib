@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1004" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
@@ -8,6 +8,7 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="MessagesTutorial">
             <connections>
+                <outlet property="crossButton" destination="NtF-u5-jGg" id="tYz-0d-SA9"/>
                 <outlet property="explainLabel" destination="jnV-z2-sey" id="qp6-PE-CHE"/>
                 <outlet property="heroImageView" destination="8L8-Es-663" id="HtF-6a-bRR"/>
                 <outlet property="progressButton" destination="Emv-5e-AcQ" id="PLv-eO-bjl"/>
@@ -53,17 +54,30 @@
                     <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="NtF-u5-jGg">
+                    <constraints>
+                        <constraint firstAttribute="width" constant="25" id="4NW-MW-BsA"/>
+                        <constraint firstAttribute="height" constant="25" id="XX2-o1-X53"/>
+                    </constraints>
+                    <state key="normal" image="crossIcon.png"/>
+                    <connections>
+                        <action selector="cancelPressed:" destination="-1" eventType="touchUpInside" id="6qM-NK-Igd"/>
+                    </connections>
+                </button>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
                 <constraint firstItem="jnV-z2-sey" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="46" id="1rs-HU-Pb5"/>
                 <constraint firstItem="8L8-Es-663" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="7Au-lg-w5J"/>
                 <constraint firstItem="8L8-Es-663" firstAttribute="top" secondItem="fZd-Xa-5TE" secondAttribute="bottom" constant="15" id="Dzr-V0-mXZ"/>
+                <constraint firstItem="NtF-u5-jGg" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="16" id="JEm-8v-jsI"/>
+                <constraint firstItem="NtF-u5-jGg" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="48" id="JO3-Aa-lnx"/>
                 <constraint firstItem="jnV-z2-sey" firstAttribute="centerX" secondItem="Emv-5e-AcQ" secondAttribute="centerX" id="O6a-pd-NCa"/>
                 <constraint firstItem="8L8-Es-663" firstAttribute="centerX" secondItem="Emv-5e-AcQ" secondAttribute="centerX" id="SDK-1t-KNd"/>
                 <constraint firstItem="8L8-Es-663" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="VIK-KX-rj0"/>
                 <constraint firstItem="Emv-5e-AcQ" firstAttribute="top" secondItem="jnV-z2-sey" secondAttribute="bottom" constant="24" id="Xts-cj-Djw"/>
                 <constraint firstItem="jnV-z2-sey" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="a17-NM-2OC"/>
+                <constraint firstItem="NtF-u5-jGg" firstAttribute="centerY" secondItem="fZd-Xa-5TE" secondAttribute="centerY" id="cXW-CY-WHA"/>
                 <constraint firstItem="fZd-Xa-5TE" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="dKu-Bi-elE"/>
                 <constraint firstItem="fZd-Xa-5TE" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="20" id="ioZ-mj-XgN"/>
                 <constraint firstItem="fZd-Xa-5TE" firstAttribute="centerX" secondItem="8L8-Es-663" secondAttribute="centerX" id="p7S-sI-r9s"/>
@@ -72,4 +86,7 @@
             <point key="canvasLocation" x="34.5" y="54.5"/>
         </view>
     </objects>
+    <resources>
+        <image name="crossIcon.png" width="47" height="47"/>
+    </resources>
 </document>

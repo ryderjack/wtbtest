@@ -81,6 +81,7 @@
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     OfferCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.backgroundColor = [UIColor whiteColor];
+    [cell.imageView setBackgroundColor:[UIColor whiteColor]];
     
     PFObject *orderObject = [self.results objectAtIndex:indexPath.row];
     
@@ -108,7 +109,12 @@
         //sold or purchased items
         PFObject *confirmedOffer = [orderObject objectForKey:@"offerObject"];
         cell.itemTitle.text = [confirmedOffer objectForKey:@"title"];
-        [cell.imageView setFile:[confirmedOffer objectForKey:@"image"]];
+        if ([confirmedOffer objectForKey:@"image"]) {
+            [cell.imageView setFile:[confirmedOffer objectForKey:@"image"]];
+        }
+        else{
+            cell.imageView.image = nil;
+        }
         
         //could do a check here for mode and display different prices if fees intro'd
         cell.priceLabel.text = [NSString stringWithFormat:@"%@%.2f",currencySymbol,[[orderObject objectForKey:@"salePrice"] floatValue]];

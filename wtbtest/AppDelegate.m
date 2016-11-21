@@ -198,10 +198,10 @@
                     
                     if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                         [self.unseenMessages addObject:convo];
-                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
-                            unseen = 1;
-                        }
-                        else{
+//                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+//                            unseen = 1;
+//                        }
+//                        else{
                             PFUser *buyer = [convo objectForKey:@"buyerUser"];
                             if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
                                 //current user is buyer so other user is seller
@@ -211,7 +211,7 @@
                                 //other user is buyer, current is seller
                                 unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
                             }
-                        }
+//                        }
 
                         totalUnseen = totalUnseen + unseen;
                         
@@ -231,7 +231,7 @@
                         }
                     }
                     
-                    NSLog(@"unseen messages %lu and unseentotal %d and selected convo %@", (unsigned long)self.unseenMessages.count, totalUnseen, self.inboxView.selectedConvo);
+//                    NSLog(@"unseen messages %lu and unseentotal %d and selected convo %@", (unsigned long)self.unseenMessages.count, totalUnseen, self.inboxView.selectedConvo);
                     
                     if (self.unseenMessages.count > 0) {
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
@@ -263,10 +263,10 @@
             //is there anything unseen in the convo
             int userUnseen = [[object objectForKey:@"userUnseen"]intValue];
             if (userUnseen > 0) {
-                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", userUnseen]];
+                [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:[NSString stringWithFormat:@"%d", userUnseen]];
             }
             else{
-                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:nil];
             }
         }
         else{

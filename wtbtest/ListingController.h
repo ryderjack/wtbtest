@@ -83,4 +83,9 @@
 @property (nonatomic, strong) DGActivityIndicatorView *imageSpinner;
 @property (nonatomic, strong) MBProgressHUD *imageHud;
 
+//purchased
+@property (weak, nonatomic) IBOutlet UILabel *purchasedLabel;
+@property (weak, nonatomic) IBOutlet UIImageView *purchasedCheckView;
+
+
 @end

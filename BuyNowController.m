@@ -14,6 +14,8 @@
 #import "ForSaleListing.h"
 #import "NavigationController.h"
 #import "MessagesTutorial.h"
+#import "FeaturedItems.h"
+#import "Flurry.h"
 
 @interface BuyNowController ()
 
@@ -26,10 +28,6 @@
     
     self.navigationItem.title = @"Buy it now";
     
-    NSArray *colours = [NSArray arrayWithObjects:[UIColor redColor],[UIColor greenColor],[UIColor blueColor],[UIColor redColor],[UIColor greenColor],[UIColor blueColor],[UIColor redColor],[UIColor greenColor],[UIColor blueColor],[UIColor redColor],[UIColor greenColor],[UIColor blueColor], nil];
-    
-    self.colorArray = [NSArray arrayWithObjects:colours,colours,colours, nil];
-    
     self.tableView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     
     [self.tableView registerNib:[UINib nibWithNibName:@"RecommendCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
@@ -37,6 +35,7 @@
     self.contentOffsetDictionary = [NSMutableDictionary dictionary];
     
     self.wtbArray = [NSMutableArray array];
+    self.viewsArray = [NSMutableArray array];
     self.pullFinished = YES;
     self.infinFinished = YES;
     
@@ -78,7 +77,8 @@
 -(void)loadWTBs{
     [self.topLabel setHidden:YES];
     [self.bottomLabel setHidden:YES];
-    
+    [self.tableView.infiniteScrollingView stopAnimating];
+
     self.pullFinished = NO;
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self.pullQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
@@ -118,7 +118,7 @@
                 return;
             }
         
-            NSLog(@"got WTBs: %lu", objects.count);
+            NSLog(@"got WTBs: %u", objects.count);
             
             int count = (int)[objects count];
             __block int WTBCheck = 0;
@@ -163,14 +163,14 @@
                         
                         if (matches.count > 0) {
                             [self.wtbArray addObject:WTB];
-                            [WTB saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                                if (succeeded) {
-                                    NSLog(@"saved WTB!");
-                                }
-                                else{
-                                    NSLog(@"error saving WTB %@", error);
-                                }
-                            }];
+//                            [WTB saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                                if (succeeded) {
+//                                    NSLog(@"saved WTB!");
+//                                }
+//                                else{
+//                                    NSLog(@"error saving WTB %@", error);
+//                                }
+//                            }];
                         }
 
                         if (count == WTBCheck) {
@@ -185,27 +185,28 @@
                             [self.wtbArray removeAllObjects];
                             [self.wtbArray addObjectsFromArray:sortedArray];
                             
+                            //labels
                             if (self.wtbArray.count == 0) {
                                 if (!self.topLabel && !self.bottomLabel) {
                                     self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                                     self.topLabel.textAlignment = NSTextAlignmentCenter;
-                                    [self.topLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:20]];
+                                    [self.topLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:18]];
                                     self.topLabel.numberOfLines = 1;
                                     self.topLabel.textColor = [UIColor lightGrayColor];
                                     self.topLabel.text = @"No recommended items";
                                     [self.view addSubview:self.topLabel];
                                     
-                                    self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+50, 250, 200)];
+                                    self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+60, 250, 200)];
                                     self.bottomLabel.textAlignment = NSTextAlignmentCenter;
-                                    [self.bottomLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:17]];
+                                    [self.bottomLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:15]];
                                     self.bottomLabel.numberOfLines = 0;
                                     self.bottomLabel.textColor = [UIColor lightGrayColor];
-                                    self.bottomLabel.text = @"We're adding items everyday so check back soon";
+                                    self.bottomLabel.text = @"Check back soon for recommended products based on your WTBs - In the meantime tap above to browse featured items for sale";
                                     [self.view addSubview:self.bottomLabel];
                                 }
                                 else{
                                     self.topLabel.text = @"No recommended items";
-                                    self.bottomLabel.text = @"We're adding items everyday so check back soon";
+                                    self.bottomLabel.text = @"Check back soon for recommended products based on your WTBs - In the meantime tap above to browse featured items for sale";
 
                                     [self.topLabel setHidden:NO];
                                     [self.bottomLabel setHidden:NO];
@@ -237,8 +238,6 @@
     if (self.pullFinished == NO) {
         return;
     }
-    [self.topLabel setHidden:YES];
-    [self.bottomLabel setHidden:YES];
     
     self.infinFinished = NO;
     self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
@@ -256,7 +255,7 @@
                 self.infinFinished = YES;
                 return;
             }
-            NSLog(@"infinite: got %lu WTBs", objects.count);
+            NSLog(@"infinite: got %u WTBs", objects.count);
             
             int count = (int)[objects count];
             self.skipped = self.skipped + count;
@@ -287,10 +286,10 @@
                             
                             //calc 70% of WTB keyword counts
                             float sixty = WTBKeywords.count*0.7;
-                            NSLog(@" float %f", sixty);
+//                            NSLog(@" float %f", sixty);
                             int roundedFloat = roundf(sixty);
-                            NSLog(@"rounded float %d", roundedFloat);
-                            NSLog(@"results count %lu", (unsigned long)result.count);
+//                            NSLog(@"rounded float %d", roundedFloat);
+//                            NSLog(@"results count %lu", (unsigned long)result.count);
                             
                             if (result.count >= roundedFloat && roundedFloat>0 && result.count >2) {
                                 //WTB has at least 2 matching keywords to this WTS and 70% keywords match
@@ -399,12 +398,15 @@
         dateFormatter = nil;
     }
     
+    NSLog(@"at end of table view cell");
+    
     return cell;
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+    NSLog(@"memory warning!!!!!!");
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -430,7 +432,6 @@ numberOfRowsInSection:(NSInteger)section
 -(NSInteger)collectionView:(AFCollectionView *)collectionView
     numberOfItemsInSection:(NSInteger)section
 {
-//    NSArray *collectionViewArray = self.colorArray[collectionView.indexPath.row];
     NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
     
     return collectionViewArray.count;
@@ -439,48 +440,28 @@ numberOfRowsInSection:(NSInteger)section
 -(UICollectionViewCell *)collectionView:(AFCollectionView *)collectionView
                  cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-//    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
-
     ForSaleCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
-
     NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
-//    cell.backgroundColor = collectionViewArray[indexPath.item];
-//    NSLog(@"in this collection view %@", collectionViewArray[indexPath.item]);
     
     PFObject *WTS = collectionViewArray[indexPath.item];
+    if ([self.viewsArray containsObject:WTS.objectId]) {
+    }
+    else{
+        [self.viewsArray addObject:WTS.objectId];
+    }
+    
     PFObject *WTB = [self.wtbArray objectAtIndex:self.currentIndexPath.row];
-    
-    cell.saleImageView.image = nil;
-    
-    //set placeholder spinner view
-    MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:cell.saleImageView animated:YES];
-    hud.square = YES;
-    hud.mode = MBProgressHUDModeCustomView;
-    hud.color = [UIColor whiteColor];
-    DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-    hud.customView = spinner;
-    [spinner startAnimating];
+    cell.itemView.image = nil;
     
     //setup cell
-    [cell.saleImageView setFile:[WTS objectForKey:@"image1"]];
-    [cell.saleImageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
-        
-    } progressBlock:^(int percentDone) {
-        if (percentDone == 100) {
-            //remove spinner
-            [spinner stopAnimating];
-            [MBProgressHUD hideHUDForView:cell.saleImageView animated:NO];
-            spinner = nil;
-            hud = nil;
-        }
-    }];
-    
+    [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
+    [cell.itemView loadInBackground];
     [WTS setObject:WTB forKey:@"WTB"];
     
-    cell.saleImageView.layer.cornerRadius = 35;
-    cell.saleImageView.layer.masksToBounds = YES;
-    cell.saleImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-    cell.saleImageView.contentMode = UIViewContentModeScaleAspectFill;
+    cell.itemView.layer.cornerRadius = 35;
+    cell.itemView.layer.masksToBounds = YES;
+    cell.itemView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    cell.itemView.contentMode = UIViewContentModeScaleAspectFill;
 
     return cell;
 }
@@ -514,8 +495,75 @@ numberOfRowsInSection:(NSInteger)section
     ForSaleListing *vc = [[ForSaleListing alloc]init];
     vc.listingObject = WTS;
     vc.WTBObject = [WTS objectForKey:@"WTB"];
+    vc.source = @"recommended";
+    vc.pureWTS = NO;
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
     [self presentViewController:nav animated:YES completion:nil];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+    [Flurry logEvent:@"BuyNow_Tapped"];
+}
+
+-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+    if (section == 0) {
+        UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.frame.size.width, 70)];
+        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake((tableView.frame.size.width/2)-105, 26, 250, 18)];
+        [label setFont:[UIFont fontWithName:@"AvenirNext-Medium" size:13]];
+        label.text = @"Tap to browse related items for sale";
+        label.textAlignment = NSTextAlignmentCenter;
+        label.textColor = [UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0];
+        [view addSubview:label];
+//        label.center = view.center;
+        [view setBackgroundColor:[UIColor whiteColor]];
+        
+        UIImageView *imageView = [[UIImageView alloc]initWithFrame:CGRectMake((label.frame.origin.x-15), 26, 15, 15)];
+        [imageView setImage:[UIImage imageNamed:@"cartBlue"]];
+        [view addSubview:imageView];
+        
+        UIButton *button = [[UIButton alloc]initWithFrame:view.frame];
+        [button addTarget:self action:@selector(pushFeatured) forControlEvents:UIControlEventTouchUpInside];
+        [view addSubview:button];
+        return view;
+    }
+    else{
+        return nil;
+    }
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+    if (section == 0) {
+        return 70;
+    }
+    else{
+        return 0;
+    }
+}
+
+-(void)pushFeatured{
+    [Flurry logEvent:@"Featured_Tapped"];
+    FeaturedItems *vc = [[FeaturedItems alloc]init];
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+-(void)viewDidDisappear:(BOOL)animated{
+    PFObject *viewObj = [PFObject objectWithClassName:@"views"];
+    [viewObj setObject:self.viewsArray forKey:@"IDs"];
+    [viewObj saveEventually:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            NSLog(@"saved!");
+            [self.viewsArray removeAllObjects];
+        }
+        else{
+            NSLog(@"error saving views %@", error);
+        }
+    }];
 }
 
 @end

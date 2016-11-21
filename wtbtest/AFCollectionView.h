@@ -11,5 +11,6 @@
 @interface AFCollectionView : UICollectionView
 
 @property (nonatomic, strong) NSIndexPath *indexPath;
+@property (nonatomic) NSInteger section;
 
 @end

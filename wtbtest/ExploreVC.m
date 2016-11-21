@@ -991,8 +991,11 @@
 //        if (![searchesList containsObject:self.searchString]) {
 //            [searchesList insertObject:self.searchString atIndex:0];
 //        }
-        if (![searchesList[0] isEqualToString:self.searchString]) {
-            [searchesList insertObject:self.searchString atIndex:0];
+        
+        if (searchesList.count > 0) {
+            if (![searchesList[0] isEqualToString:self.searchString]) {
+                [searchesList insertObject:self.searchString atIndex:0];
+            }
         }
         
         self.resultsController.allResults = searchesList;

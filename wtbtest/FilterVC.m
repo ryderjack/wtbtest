@@ -41,6 +41,9 @@
     self.applyCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.brandCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
+//    self.sizeScrollButton.contentSize = CGSizeMake(self.sizeScrollButton.contentSize.width,self.sizeScrollButton.frame.size.height);
+
+    
     //sendarray containts the filters selected last time. Use to select previous search buttons & relevant sizing buttons
     self.filtersArray = [NSMutableArray array];
     NSLog(@"self.send %@", self.sendArray);
@@ -865,7 +868,7 @@
             NSLog(@"just set last tapped setting up clothing %@", self.lasttapped.titleLabel.text);
         }
     }
-    self.sizeScrollButton.contentSize = CGSizeMake(x, self.sizeScrollButton.frame.size.height);
+    self.sizeScrollButton.contentSize = CGSizeMake(x, 67);
     
     for (int k = 2; k<23; k++) {
         if ([self.filtersArray containsObject:[NSString stringWithFormat:@"%d", k]]) {

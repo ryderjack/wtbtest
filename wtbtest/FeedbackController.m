@@ -187,9 +187,11 @@
         
         PFObject *feedbackObject = [PFObject objectWithClassName:@"feedback"];
         PFObject *offer = [self.orderObject objectForKey:@"offerObject"];
-        PFObject *WTB = [offer objectForKey:@"wtbListing"];
-        
-        [feedbackObject setObject:WTB forKey:@"WTB"];
+        if (![[offer objectForKey:@"pureWTS"]isEqualToString:@"YES"]) {
+            PFObject *WTB = [offer objectForKey:@"wtbListing"];
+            [feedbackObject setObject:WTB forKey:@"WTB"];
+        }
+
         [feedbackObject setObject:[NSNumber numberWithInt:self.starNumber] forKey:@"rating"];
         [feedbackObject setObject:[PFUser currentUser] forKey:@"gaveFeedback"];
         

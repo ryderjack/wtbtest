@@ -18,6 +18,7 @@
 #import <PulsingHaloLayer.h>
 #import "NavigationController.h"
 #import "MessagesTutorial.h"
+#import "UIImage+Resize.h"
 
 @interface MessageViewController ()
 
@@ -45,21 +46,27 @@
        self.title = self.otherUserName;
     }
     
+    self.savedString = @"";
+    
     self.cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(clearOffer)];
     self.profileButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"profileIcon2"] style:UIBarButtonItemStylePlain target:self action:@selector(profileTapped)];
 
-    UIButton *btn =  [UIButton buttonWithType:UIButtonTypeCustom];
-    btn.frame = CGRectMake(0,0,25,25);
-    [btn addTarget:self action:@selector(listingTapped) forControlEvents:UIControlEventTouchUpInside];
-    PFImageView *buttonView = [[PFImageView alloc]initWithFrame:btn.frame];
-    PFFile *listingFile = [self.listing objectForKey:@"image1"];
-    [buttonView setFile:listingFile];
-    [buttonView loadInBackground];
-    [self setImageBorder:buttonView];
-    [btn addSubview:buttonView];
-    self.listingButton = [[UIBarButtonItem alloc] initWithCustomView:btn];
-    
-    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
+    if (self.pureWTS != YES) {
+        UIButton *btn =  [UIButton buttonWithType:UIButtonTypeCustom];
+        btn.frame = CGRectMake(0,0,25,25);
+        [btn addTarget:self action:@selector(listingTapped) forControlEvents:UIControlEventTouchUpInside];
+        PFImageView *buttonView = [[PFImageView alloc]initWithFrame:btn.frame];
+        PFFile *listingFile = [self.listing objectForKey:@"image1"];
+        [buttonView setFile:listingFile];
+        [buttonView loadInBackground];
+        [self setImageBorder:buttonView];
+        [btn addSubview:buttonView];
+        self.listingButton = [[UIBarButtonItem alloc] initWithCustomView:btn];
+        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
+    }
+    else{
+        [self.navigationItem setRightBarButtonItem:self.profileButton];
+    }
     
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
     self.inputToolbar.contentView.textView.pasteDelegate = self;
@@ -131,7 +138,10 @@
     if (![[current objectForKey:@"completedMsgIntro2"]isEqualToString:@"YES"]) {
         //show intro VC
         MessagesTutorial *vc = [[MessagesTutorial alloc]init];
-        [self presentViewController:vc animated:YES completion:nil];
+        [self presentViewController:vc animated:YES completion:^{
+           self.inputToolbar.contentView.textView.text = @"";
+            self.savedSomin = YES;
+        }];
     }
     else{
         if (self.userIsBuyer == NO) {
@@ -142,6 +152,9 @@
             }
         } 
     }
+    
+    NSLog(self.pureWTS ? @"Yes" : @"No");
+
 }
 
 -(void)loadMessages{
@@ -181,9 +194,18 @@
                     }
                     
                     // is status message set as seen so badge number decrements and then continue to add other messages to arrays
-                    if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+                    if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"] && ![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                        NSLog(@"status message %@", messageOb);
                         [messageOb setObject:@"seen" forKey:@"status"];
                         [messageOb saveInBackground];
+                        
+                        if (self.userIsBuyer == YES) {
+                            [self.convoObject setObject:@0 forKey:@"buyerUnseen"];
+                        }
+                        else{
+                            [self.convoObject setObject:@0 forKey:@"sellerUnseen"];
+                        }
+                        
                         continue;
                     }
                     
@@ -288,23 +310,32 @@
                         if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
                             PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
                             if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
-                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
+                                messageText = [NSString stringWithFormat:@"%@\nTap to buy now",[messageOb objectForKey:@"message"]];
+                                
+//                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
                             }
                             else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
-                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nPurchased"];
+                                messageText = [NSString stringWithFormat:@"%@\nPurchased",[messageOb objectForKey:@"message"]];
+
+//                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nPurchased"];
                             }
                             else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
-                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for seller to confirm"];
+                                messageText = [NSString stringWithFormat:@"%@\nWaiting for seller to confirm payment",[messageOb objectForKey:@"message"]];
+//
+//                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for seller to confirm"];
                             }
                         }
                         else if([[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]){
                             // user sent the message and it is an offer message
                             PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
                             if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
-                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for you to confirm payment"];
+                                messageText = [NSString stringWithFormat:@"%@\nWaiting for seller to confirm payment",[messageOb objectForKey:@"message"]];
+//                                
+//                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for you to confirm payment"];
                             }
                             else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
-                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nSold"];
+                                messageText = [NSString stringWithFormat:@"%@\nSold",[messageOb objectForKey:@"message"]];
+//                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nSold"];
                             }
                         }
                         
@@ -518,14 +549,15 @@
                         if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"offer"]isEqualToString:@"YES"]) {
                             PFObject *offerOb = [messageOb objectForKey:@"offerObject"];
                             if ([[offerOb objectForKey:@"status"]isEqualToString:@"open"]) {
-                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nTap to buy now"];
+                                messageText = [NSString stringWithFormat:@"%@\nTap to buy now",[messageOb objectForKey:@"message"]];
                             }
                             
                             else if ([[offerOb objectForKey:@"status"]isEqualToString:@"purchased"]) {
-                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nPurchased"];
+                                messageText = [NSString stringWithFormat:@"%@\nPurchased",[messageOb objectForKey:@"message"]];
+
                             }
                             else if ([[offerOb objectForKey:@"status"]isEqualToString:@"waiting"]) {
-                                messageText = [[messageOb objectForKey:@"message"]stringByReplacingOccurrencesOfString:@"\nTap to cancel offer" withString:@"\nWaiting for seller to confirm"];
+                                messageText = [NSString stringWithFormat:@"%@\nWaiting for seller to confirm payment",[messageOb objectForKey:@"message"]];
                             }
                         }
                         
@@ -607,6 +639,14 @@
         self.messageSellerPressed = NO;
         //is the description most appropriate thing here???
         self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"I'm interested in buying your '%@'", self.sellerItemTitle];
+        self.savedString = self.inputToolbar.contentView.textView.text;
+        [self.inputToolbar toggleSendButtonEnabled];
+    }
+    
+    if (![self.savedString isEqualToString:@""] && self.savedSomin == YES) {
+        self.inputToolbar.contentView.textView.text = self.savedString;
+        self.savedSomin = NO;
+        self.savedString = @"";
     }
 }
 
@@ -631,7 +671,6 @@
 }
 
 -(void)showPayPalAlert{
-    
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"PayPal" message:[NSString stringWithFormat:@"Is this your PayPal email address? %@ Make sure your PayPal email address is correct to ensure seemless payment.", [[PFUser currentUser] objectForKey:@"paypal"]] preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Change" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -639,6 +678,8 @@
         [self.navigationController pushViewController:vc animated:YES];
     }]];
     [alertView addAction:[UIAlertAction actionWithTitle:@"Yes, it's correct" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        //save as updated
+        [[PFUser currentUser] setObject:@"YES" forKey:@"paypalUpdated"];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -796,7 +837,14 @@
         
         self.offerObject = nil;
         self.offerObject = [PFObject objectWithClassName:@"offers"];
-        [self.offerObject setObject:self.listing forKey:@"wtbListing"];
+        
+        if (self.pureWTS != YES) {
+            [self.offerObject setObject:self.listing forKey:@"wtbListing"];
+        }
+        else{
+            [self.offerObject setObject:@"YES" forKey:@"pureWTS"];
+        }
+        
         [self.offerObject setObject:itemTitle forKey:@"title"];
         [self.offerObject setObject:condition forKey:@"condition"];
         self.offerObject[@"salePrice"] = @(salePriceFloat);
@@ -808,9 +856,9 @@
         [self.offerObject setObject:self.currency forKey:@"currency"];
     }
     
-    if (self.offerMode == YES) {
-        messageString = [NSString stringWithFormat:@"%@\nTap to cancel offer", text];
-    }
+//    if (self.offerMode == YES) {
+//        messageString = [NSString stringWithFormat:@"%@\nTap to cancel offer", text];
+//    }
     
     JSQMessage *message = [[JSQMessage alloc] initWithSenderId:senderId
                                              senderDisplayName:senderDisplayName
@@ -888,9 +936,14 @@
     [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
     
     if (self.offerMode == YES) {
-        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
+        if (self.pureWTS != YES) {
+            [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
+        }
+        else{
+            [self.navigationItem setRightBarButtonItem:self.profileButton];
+        }
     
-        if ([self.convoObject objectForKey:@"convoImages"] == 0) {
+        if ([self.convoObject objectForKey:@"convoImages"] != 0) {
             //images have been previously sent in the chat so don't need to send anymore
             if ([UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera])
             {
@@ -977,9 +1030,14 @@
         
         if (order == nil) {
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                self.offerMode = YES;
-                self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Selling: \nCondition: \nPrice: %@\nMeetup: ", self.currencySymbol];
-                [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.cancelButton, nil]];
+                MakeOfferController *vc = [[MakeOfferController alloc]init];
+                vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
+                vc.currencySymbol = self.currencySymbol;
+                vc.delegate = self;
+                [self.navigationController presentViewController:vc animated:YES completion:nil];
+//                self.offerMode = YES;
+//                self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Selling: \nCondition: \nPrice: %@\nMeetup: ", self.currencySymbol];
+//                [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.cancelButton, nil]];
             }]];
         }
         
@@ -1086,7 +1144,7 @@
 - (void)assetsPickerController:(GMImagePickerController *)picker didFinishPickingAssets:(NSArray *)assetArray
 {
     [picker.presentingViewController dismissViewControllerAnimated:YES completion:nil];
-    NSLog(@"GMImagePicker: User ended picking assets. Number of selected items is: %lu", (unsigned long)assetArray.count);
+//    NSLog(@"GMImagePicker: User ended picking assets. Number of selected items is: %lu", (unsigned long)assetArray.count);
     
     PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
     requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
@@ -1100,15 +1158,24 @@
                           contentMode:PHImageContentModeDefault
                               options:requestOptions
                         resultHandler:^void(UIImage *image, NSDictionary *info) {
-                            NSData *imgData = UIImageJPEGRepresentation(image, 0.5);
-//                            NSLog(@"Size of Image(bytes):%lu",(unsigned long)[imgData length]);
-                            if ([imgData length] > 3500000) {
-                                //show alert
-                                [self showAlertWithTitle:@"Image too big!" andMsg:@"Try cropping your image or use a different one completely! 📸"];
-                            }
-                            else{
-                                [self finalImage:image];
-                            }
+                            
+                            NSData *imgData = UIImageJPEGRepresentation(image, 1.0);
+                            NSLog(@"BEFORE (bytes):%lu",(unsigned long)[imgData length]);
+                            
+                            UIImage *newImage = [image resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
+                            
+//                            if ([imgData length] > 3500000) {
+//                                //show alert
+//                                [self showAlertWithTitle:@"Image too big!" andMsg:@"Try cropping your image or use a different one completely! 📸"];
+//                            }
+//                            else{
+//                                
+//                                NSData *imgData1 = UIImageJPEGRepresentation(newImage, 1.0);
+//                                NSLog(@"AFTER (bytes):%lu",(unsigned long)[imgData1 length]);
+                            
+                            
+                                [self finalImage:newImage];
+//                            }
                         }];
     }
 }
@@ -1143,7 +1210,8 @@
 
 - (void)squareCropperDidCropImage:(UIImage *)croppedImage inCropper:(BASSquareCropperViewController *)cropper{
     [cropper dismissViewControllerAnimated:YES completion:NULL];
-    [self finalImage:croppedImage];
+    UIImage *newImage = [croppedImage resizedImage:CGSizeMake(750.00, 750.00) interpolationQuality:kCGInterpolationHigh];
+    [self finalImage:newImage];
 }
 
 - (void)squareCropperDidCancelCropInCropper:(BASSquareCropperViewController *)cropper{
@@ -1633,22 +1701,22 @@
         [self.navigationController pushViewController:vc animated:YES];
     }
     else if ([tappedMessage.senderId isEqualToString:[PFUser currentUser].objectId]) {
-        if (tappedMessage.isOfferMessage == YES) {
-            
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Cancel offer" message:@"Are you sure you want to cancel your offer? If the buyer has already purchased the item then you must explain the situation asap" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-            }]];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-                PFObject *offerObj = tappedMessage.offerObject;
-                [offerObj setObject:@"cancelled" forKey:@"status"];
-                [offerObj saveInBackground];
-                tappedMessage.isOfferMessage = NO;
-                [self.collectionView reloadData];
-            }]];
-            [self presentViewController:alertView animated:YES completion:nil];
-        }
+//        if (tappedMessage.isOfferMessage == YES) {
+//            
+//            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Cancel offer" message:@"Are you sure you want to cancel your offer? If the buyer has already purchased the item then you must explain the situation asap" preferredStyle:UIAlertControllerStyleAlert];
+//            
+//            [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+//            }]];
+//            
+//            [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+//                PFObject *offerObj = tappedMessage.offerObject;
+//                [offerObj setObject:@"cancelled" forKey:@"status"];
+//                [offerObj saveInBackground];
+//                tappedMessage.isOfferMessage = NO;
+//                [self.collectionView reloadData];
+//            }]];
+//            [self presentViewController:alertView animated:YES completion:nil];
+//        }
     }
     else{
         if (tappedMessage.isOfferMessage == YES) { //doesnt work after offer with image just been sent but does that matter because seller shouldnt click thru to offer
@@ -1841,6 +1909,7 @@
 -(void)infoTapped{
     MessagesTutorial *vc = [[MessagesTutorial alloc]init];
     vc.sellerMode = NO;
+    vc.fromMessageVC = YES;
     [self presentViewController:vc animated:YES completion:nil];
 }
 
@@ -2199,5 +2268,11 @@
     imageView.layer.masksToBounds = YES;
     imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     imageView.contentMode = UIViewContentModeScaleAspectFill;
+}
+
+-(void)sendOffer:(NSString *)offerString{
+    self.offerMode = YES;
+    UIButton *button = [[UIButton alloc]init];
+    [self didPressSendButton:button withMessageText:offerString senderId:self.senderId senderDisplayName:self.senderDisplayName date:[NSDate date]];
 }
 @end

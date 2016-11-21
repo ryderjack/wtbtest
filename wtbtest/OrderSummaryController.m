@@ -442,7 +442,14 @@
         if (!error) {
             vc.convoId = [convoObject objectForKey:@"convoId"];
             vc.convoObject = convoObject;
-            vc.listing = [self.confirmedOffer objectForKey:@"wtbListing"];
+            
+            if ([[convoObject objectForKey:@"pureWTS"]isEqualToString:@"YES"]) {
+                //no WTB
+                vc.pureWTS = YES;
+            }
+            else{
+                vc.listing = [self.confirmedOffer objectForKey:@"wtbListing"];
+            }
             if (self.purchased == YES) {
                 //other user is seller, current is buyer
                 vc.otherUser = [PFUser currentUser];

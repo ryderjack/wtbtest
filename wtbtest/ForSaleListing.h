@@ -59,5 +59,13 @@
 @property (nonatomic, strong) PFFile *thirdImage;
 @property (nonatomic, strong) PFFile *fourthImage;
 @property (nonatomic) int numberOfPics;
+@property (weak, nonatomic) IBOutlet UILabel *soldLabel;
+@property (weak, nonatomic) IBOutlet UIImageView *soldCheckImageVoew;
+
+@property (nonatomic, strong) UIBarButtonItem *infoButton;
+
+@property (nonatomic, strong) NSString *source;
+@property (nonatomic) BOOL pureWTS;
+
 
 @end

@@ -95,23 +95,25 @@
     if (self.numberOfPics > 1) {
        self.imageView.image = nil;
     }
+    
     if (swipe.direction == UISwipeGestureRecognizerDirectionLeft) {
         NSLog(@"Left Swipe");
         if (self.pageControl.currentPage != 4) {
-            if (self.pageControl.currentPage == 0) {
+            if (self.pageControl.currentPage == 0 && self.numberOfPics >1) {
                  [self.imageView setFile:[self.listing objectForKey:@"image2"]];
                 [self.pageControl setCurrentPage:1];
             }
-            else if (self.pageControl.currentPage == 1){
+            else if (self.pageControl.currentPage == 1 && self.numberOfPics >2){
                  [self.imageView setFile:[self.listing objectForKey:@"image3"]];
                 [self.pageControl setCurrentPage:2];
             }
-            else if (self.pageControl.currentPage == 2){
+            else if (self.pageControl.currentPage == 2 && self.numberOfPics >3){
                  [self.imageView setFile:[self.listing objectForKey:@"image4"]];
                 [self.pageControl setCurrentPage:3];
             }
         }
     }
+    
     if (swipe.direction == UISwipeGestureRecognizerDirectionRight) {
         NSLog(@"Right Swipe");
         if (self.pageControl.currentPage != 0) {
@@ -129,7 +131,7 @@
             }
         }
     }
-    if (self.numberOfPics > 1) {
+    if (self.numberOfPics > self.pageControl.currentPage) {
         //set placeholder spinner view
         MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:self.imageView animated:YES];
         hud.square = YES;

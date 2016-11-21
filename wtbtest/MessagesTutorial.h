@@ -15,5 +15,8 @@
 @property (weak, nonatomic) IBOutlet UIButton *progressButton;
 @property (nonatomic) int progressNumber;
 
+@property (weak, nonatomic) IBOutlet UIButton *crossButton;
 @property (nonatomic) BOOL sellerMode;
+@property (nonatomic) BOOL fromMessageVC;
+
 @end

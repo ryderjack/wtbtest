@@ -7,6 +7,7 @@
 //
 
 #import "CreateForSaleListing.h"
+#import "UIImage+Resize.h"
 
 @interface CreateForSaleListing ()
 
@@ -52,6 +53,8 @@
     self.descriptionField.delegate = self;
     self.payField.delegate = self;
     
+    [self addDoneButton];
+    
     self.descriptionCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.buttonCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.payCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -65,6 +68,19 @@
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
     self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
+    
+    if (self.editMode == YES) {
+        [self listingSetup];
+    }
+    
+//    PFQuery *userQueryForRand = [PFUser query];
+//    [userQueryForRand whereKey:@"username" containedIn:@[self.usernameToCheck]];
+//    [userQueryForRand findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//        for (PFUser *user in objects) {
+//            self.cabin = user;
+//            NSLog(@"cabin set %@",self.cabin);
+//        }
+//    }];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -293,13 +309,32 @@
 }
 
 -(void)dismissVC{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Cancel listing?" message:@"Are you sure you want to cancel your for-sale listing?" preferredStyle:UIAlertControllerStyleAlert];
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Stay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }]];
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    //only show warning if listing is partially completed
+    if ([self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"] && [self.chooseCondition.text isEqualToString:@"select"] && [self.chooseCategroy.text isEqualToString:@"select"] && [self.chooseSize.text isEqualToString:@"select"] && [self.payField.text isEqualToString:@""] && [self.firstImageView.image isEqual:[UIImage imageNamed:@"addImage"]]){
+        NSLog(@"empty");
         [self dismissViewControllerAnimated:YES completion:nil];
-    }]];
-    [self presentViewController:alertView animated:YES completion:nil];
+    }
+    else{
+        UIAlertController *alertView;
+        if (self.editMode == YES) {
+            alertView = [UIAlertController alertControllerWithTitle:@"Leave this page?" message:@"Are you sure you want to leave? Your changes won't be saved!" preferredStyle:UIAlertControllerStyleAlert];
+        }
+        else{
+            alertView = [UIAlertController alertControllerWithTitle:@"Cancel listing?" message:@"Are you sure you want to cancel your for-sale listing?" preferredStyle:UIAlertControllerStyleAlert];
+        }
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Stay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }]];
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            if (self.editMode == YES) {
+                [self.navigationController popViewControllerAnimated:YES];
+            }
+            else{
+                [self dismissViewControllerAnimated:YES completion:nil];
+            }
+        }]];
+        [self presentViewController:alertView animated:YES completion:nil];
+    }
 }
 
 #pragma mark - Text field/view delegate methods
@@ -323,7 +358,76 @@
 }
 
 -(void)textFieldDidEndEditing:(UITextField *)textField{
-
+    if (textField == self.payField) {
+        NSString *prefixToRemove = [NSString stringWithFormat:@"%@", self.currencySymbol];
+        NSString *priceString = [[NSString alloc]init];
+        priceString = [self.payField.text substringFromIndex:[prefixToRemove length]];
+        
+        NSArray *priceArray = [priceString componentsSeparatedByString:@"."];
+        
+        NSMutableArray *priceArrayMutable = [NSMutableArray arrayWithArray:priceArray];
+        
+        [priceArrayMutable removeObject:@""];
+        
+        priceArray = priceArrayMutable;
+        
+        NSLog(@"price array %lu", (unsigned long)priceArray.count);
+        
+        if (priceArray.count == 0) {
+            priceString = @"0.00";
+        }
+        else if (priceArray.count > 2) {
+            NSLog(@"multiple decimal points added");
+            priceString = @"0.00";
+        }
+        else if (priceArray.count == 1){
+            NSString *intAmount = priceArray[0];
+            NSLog(@"length of this int %@   int %lu",intAmount ,(unsigned long)intAmount.length);
+            priceString = [NSString stringWithFormat:@"%@.00", intAmount];
+        }
+        else if (priceArray.count > 1){
+            NSString *intAmount = priceArray[0];
+            
+            if (intAmount.length == 1){
+                NSLog(@"single digit then a decimal point");
+                intAmount = [NSString stringWithFormat:@"%@.00", intAmount];
+            }
+            else{
+                //all good
+                NSLog(@"length of int %lu", (unsigned long)intAmount.length);
+            }
+            
+            NSMutableString *centAmount = priceArray[1];
+            if (centAmount.length == 2){
+                //all good
+                NSLog(@"all good");
+            }
+            else if (centAmount.length == 1){
+                NSLog(@"got 1 decimal place");
+                centAmount = [NSMutableString stringWithFormat:@"%@0", centAmount];
+            }
+            else{
+                NSLog(@"point but no numbers after it");
+                centAmount = [NSMutableString stringWithFormat:@"00"];
+            }
+            
+            priceString = [NSString stringWithFormat:@"%@.%@", intAmount, centAmount];
+        }
+        else{
+            priceString = [NSString stringWithFormat:@"%@.00", priceString];
+            NSLog(@"no decimal point so price is %@", priceString);
+        }
+        
+        if ([priceString isEqualToString:[NSString stringWithFormat:@"%@0.00", self.currencySymbol]] || [priceString isEqualToString:@""] || [priceString isEqualToString:[NSString stringWithFormat:@"%@.00", self.currencySymbol]] || [priceString isEqualToString:@"  "]) {
+            //invalid price number
+            NSLog(@"invalid price number");
+            self.warningLabel.text = @"Enter a valid price!";
+            self.payField.text = @"";
+        }
+        else{
+            self.payField.text = [NSString stringWithFormat:@"%@%@", self.currencySymbol, priceString];
+        }
+    }
 }
 -(void)textViewDidEndEditing:(UITextView *)textView{
     if ([textView.text isEqualToString:@""]) {
@@ -391,8 +495,6 @@
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        [self dismissViewControllerAnimated:YES completion:^{
-        }];
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -417,10 +519,28 @@
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
+    
+//    NSLog(@"size of OG image %f %f", chosenImage.size.width, chosenImage.size.height);
+    
+//    NSData *imgData1 = UIImageJPEGRepresentation(chosenImage, 1.0);
+//    NSLog(@"BEFORE (bytes):%lu",(unsigned long)[imgData1 length]);
+    
     //display crop picker
     [picker dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:chosenImage];
     }];
+}
+
+- (UIImage *)resizeImage:(UIImage *)image toWidth:(float)width andHeight:(float)height {
+    
+    CGSize newSize = CGSizeMake(width, height);
+    CGRect newRectangle = CGRectMake(0, 0, width, height);
+    UIGraphicsBeginImageContext(newSize);
+    [image drawInRect:newRectangle];
+    UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return resizedImage;
 }
 
 -(void)displayCropperWithImage:(UIImage *)image{
@@ -440,7 +560,18 @@
 
 - (void)squareCropperDidCropImage:(UIImage *)croppedImage inCropper:(BASSquareCropperViewController *)cropper{
     [cropper dismissViewControllerAnimated:YES completion:NULL];
-    [self finalImage:croppedImage];
+    
+    UIImage *newImage = [croppedImage resizedImage:CGSizeMake(750.00, 750.00) interpolationQuality:kCGInterpolationHigh];
+    
+//    NSLog(@"size of Cropped image %f %f", croppedImage.size.width, croppedImage.size.height);
+//    
+//    NSData *imgData = UIImageJPEGRepresentation(croppedImage, 1.0);
+//    NSLog(@"CROPPED (bytes):%lu",(unsigned long)[imgData length]);
+//    
+//    NSData *imgData1 = UIImageJPEGRepresentation(newImage, 1.0);
+//    NSLog(@"RESIZED (bytes):%lu",(unsigned long)[imgData1 length]);
+
+    [self finalImage:newImage];
 }
 
 - (void)squareCropperDidCancelCropInCropper:(BASSquareCropperViewController *)cropper{
@@ -822,6 +953,8 @@
     [self.fourthDelete setHidden:YES];
 }
 - (IBAction)listItemPressed:(id)sender {
+    [self.saveButton setEnabled:NO];
+    
     NSString *descriptionCheck = [self.descriptionField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"]|| [descriptionCheck isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
@@ -836,7 +969,6 @@
         priceString = [self.payField.text substringFromIndex:[prefixToRemove length]];
         
         NSArray *priceArray = [priceString componentsSeparatedByString:@"."];
-        NSLog(@"price array %@", priceArray);
         if ([priceArray[0] isEqualToString:self.currencySymbol]) {
             
             priceString = [NSString stringWithFormat:@"%@0.00", self.currencySymbol];
@@ -883,7 +1015,15 @@
         
         CGFloat strFloat = (CGFloat)[priceString floatValue];
         
-        PFObject *forSaleItem =[PFObject objectWithClassName:@"forSaleItems"];
+        PFObject *forSaleItem;
+        
+        if (self.editMode == YES) {
+            forSaleItem = self.listing;
+        }
+        else{
+            forSaleItem = [PFObject objectWithClassName:@"forSaleItems"];
+            [forSaleItem setObject:@0 forKey:@"views"];
+        }
         
         if ([self.currency isEqualToString:@"GBP"]) {
             forSaleItem[@"salePriceGBP"] = @(strFloat);
@@ -932,11 +1072,23 @@
         [forSaleItem setObject:self.geopoint forKey:@"geopoint"];
         [forSaleItem setObject:self.currency forKey:@"currency"];
         [forSaleItem setObject:[PFUser currentUser] forKey:@"sellerUser"];
+//        [forSaleItem setObject:self.cabin forKey:@"sellerUser"];
+        
+        UIImage *imageOne = [self.firstImageView.image resizedImage:CGSizeMake(200.0, 200.0) interpolationQuality:kCGInterpolationHigh];
+        NSData* dataOne = UIImageJPEGRepresentation(imageOne, 0.7f);
+        PFFile *thumbFile = [PFFile fileWithName:@"thumb1.jpg" data:dataOne];
+        [forSaleItem setObject:thumbFile forKey:@"thumbnail"];
         
         if (self.photostotal == 1) {
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
             [forSaleItem setObject:imageFile1 forKey:@"image1"];
+            
+            if (self.editMode == YES) {
+                [self.listing removeObjectForKey:@"image2"];
+                [self.listing removeObjectForKey:@"image3"];
+                [self.listing removeObjectForKey:@"image4"];
+            }
         }
         else if (self.photostotal == 2){
             NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
@@ -946,9 +1098,14 @@
             NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
             PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
             [forSaleItem setObject:imageFile2 forKey:@"image2"];
+            
+            if (self.editMode == YES) {
+                [self.listing removeObjectForKey:@"image3"];
+                [self.listing removeObjectForKey:@"image4"];
+            }
         }
         else if (self.photostotal == 3){
-            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7);
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
             [forSaleItem setObject:imageFile1 forKey:@"image1"];
             
@@ -959,6 +1116,10 @@
             NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
             PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
             [forSaleItem setObject:imageFile3 forKey:@"image3"];
+            
+            if (self.editMode == YES) {
+                [self.listing removeObjectForKey:@"image4"];
+            }
         }
         else if (self.photostotal == 4){
             NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
@@ -982,6 +1143,8 @@
             if (succeeded) {
                 [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
                 [[PFUser currentUser] saveInBackground];
+//                [self.cabin incrementKey:@"forSalePostNumber"];
+//                [self.cabin saveInBackground];
                 
                 [self.saveButton setEnabled:YES];
                 
@@ -990,7 +1153,12 @@
                 double delayInSeconds = 1.0; // number of seconds to wait
                 dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
                 dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-                     [self dismissViewControllerAnimated:YES completion:nil];
+                    if (self.editMode == YES) {
+                        [self.navigationController popViewControllerAnimated:YES];
+                    }
+                    else{
+                        [self dismissViewControllerAnimated:YES completion:nil];
+                    }
                 });
             }
             else{
@@ -1020,6 +1188,92 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [self hidHUD];
-    
 }
+
+-(void)listingSetup{
+    self.navigationItem.title = @"Edit";
+    
+    [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
+    
+    self.descriptionField.text = [self.listing objectForKey:@"description"];
+    
+    NSString *symbol = @"";
+    
+    if ([[self.listing objectForKey:@"currency"] isEqualToString:@"GBP"]) {
+        symbol = @"£";
+    }
+    else{
+        symbol = @"$";
+    }
+    self.payField.text = [NSString stringWithFormat:@"%@%@",symbol,[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", [self.listing objectForKey:@"currency"]]]];
+    
+    
+    self.chooseCondition.text = [self.listing objectForKey:@"condition"];
+    
+    //location is not updatable when editing listing
+    self.chooseLocation.text = [self.listing objectForKey:@"location"];
+    self.locationCell.accessoryType = UITableViewCellAccessoryNone;
+    self.locationCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    self.chooseCategroy.text = [self.listing objectForKey:@"category"];
+    
+    //sizing
+    self.chooseSize.text = [self.listing objectForKey:@"sizeLabel"];
+    //if gendersize required (if category is footwear) set variable
+    if ([self.listing objectForKey:@"sizeGender"]) {
+        self.genderSize = [self.listing objectForKey:@"sizeGender"];
+    }
+    
+    self.geopoint = [self.listing objectForKey:@"geopoint"];
+    
+    //images
+    if ([self.listing objectForKey:@"image1"]) {
+        [self.firstImageView setFile:[self.listing objectForKey:@"image1"]];
+        [self.firstImageView loadInBackground];
+        
+        [self.firstDelete setHidden:NO];
+        [self.secondCam setEnabled:YES];
+        [self.firstCam setEnabled:NO];
+        
+        [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
+        [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        self.photostotal = 1;
+    }
+    
+    if ([self.listing objectForKey:@"image2"]) {
+        [self.secondImageView setFile:[self.listing objectForKey:@"image2"]];
+        [self.secondImageView loadInBackground];
+        
+        [self.secondDelete setHidden:NO];
+        [self.thirdCam setEnabled:YES];
+        [self.secondCam setEnabled:NO];
+        
+        [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
+        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        self.photostotal = 2;
+    }
+    
+    if ([self.listing objectForKey:@"image3"]) {
+        [self.thirdImageView setFile:[self.listing objectForKey:@"image3"]];
+        [self.thirdImageView loadInBackground];
+        
+        [self.thirdDelete setHidden:NO];
+        [self.fourthCam setEnabled:YES];
+        [self.thirdCam setEnabled:NO];
+        
+        [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
+        self.photostotal = 3;
+    }
+    
+    if ([self.listing objectForKey:@"image4"]) {
+        [self.fourthImageView setFile:[self.listing objectForKey:@"image4"]];
+        [self.fourthImageView loadInBackground];
+        
+        [self.fourthDelete setHidden:NO];
+        [self.fourthCam setEnabled:NO];
+        self.photostotal = 4;
+    }
+}
+
 @end

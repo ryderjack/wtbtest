@@ -78,4 +78,10 @@
 
 @property (nonatomic, strong) UIImagePickerController *picker;
 
+//edit
+@property (nonatomic) BOOL editMode;
+@property (nonatomic, strong) PFObject *listing;
+
+@property (nonatomic, strong) NSString *usernameToCheck;
+@property (nonatomic, strong) PFUser *cabin;
 @end

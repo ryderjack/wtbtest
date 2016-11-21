@@ -13,8 +13,9 @@
 #import <BASSquareCropperViewController.h>
 #import "GMImagePickerController.h"
 #import <TOWebViewController.h>
+#import "MakeOfferController.h"
 
-@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate, GMImagePickerControllerDelegate,TOWebDelegate>
+@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate, GMImagePickerControllerDelegate,TOWebDelegate, MakeOfferDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -80,5 +81,10 @@
 @property (nonatomic) BOOL receivedNew;
 
 @property (nonatomic, strong) TOWebViewController *webViewController;
+
+@property (nonatomic) BOOL pureWTS;
+
+@property (nonatomic) BOOL savedSomin;
+@property (nonatomic, strong) NSString *savedString;
 
 @end

@@ -11,6 +11,7 @@
 #import "DetailImageController.h"
 #import "MessageViewController.h"
 #import "UserProfileController.h"
+#import "CreateForSaleListing.h"
 
 @interface ForSaleListing ()
 
@@ -26,7 +27,11 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
+    [self.soldLabel setHidden:YES];
+    [self.soldCheckImageVoew setHidden:YES];
+    
+    self.infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
+    self.navigationItem.rightBarButtonItem = self.infoButton;
     
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
     
@@ -53,6 +58,53 @@
     self.sizeLabel.minimumScaleFactor=0.5;
     
     [self.descriptionLabel sizeToFit];
+    
+    UISwipeGestureRecognizer *swipeLeft = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
+    UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
+    
+    // Setting the swipe direction.
+    [swipeLeft setDirection:UISwipeGestureRecognizerDirectionLeft];
+    [swipeRight setDirection:UISwipeGestureRecognizerDirectionRight];
+    
+    // Adding the swipe gesture on image view
+    [self.imageViewTwo addGestureRecognizer:swipeLeft];
+    [self.imageViewTwo addGestureRecognizer:swipeRight];
+    
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(presentDetailImage)];
+    tap.numberOfTapsRequired = 1;
+    [self.imageViewTwo addGestureRecognizer:tap];
+    [self.imageViewTwo setUserInteractionEnabled:YES];
+    
+//    [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    
+    //hide first table view header
+    self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
+    
+    self.sellerNameLabel.adjustsFontSizeToFitWidth = YES;
+    self.sellerNameLabel.minimumScaleFactor=0.5;
+    
+    self.locationLabel.adjustsFontSizeToFitWidth = YES;
+    self.locationLabel.minimumScaleFactor=0.5;
+    
+    self.descriptionLabel.adjustsFontSizeToFitWidth = YES;
+    self.descriptionLabel.minimumScaleFactor=0.5;
+    
+    self.sellerNameLabel.text = @"";
+    self.pastDealsLabel.text = @"Loading";
+    
+    self.mainCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.descriptionCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.buttonCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.sellerCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.infoCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
@@ -86,6 +138,11 @@
             [self.imageViewTwo setFile:[self.listingObject objectForKey:@"image1"]];
             [self.imageViewTwo loadInBackground];
             
+            if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
+                [self.soldLabel setHidden:NO];
+                [self.soldCheckImageVoew setHidden:NO];
+            }
+            
             self.descriptionLabel.text = [self.listingObject objectForKey:@"description"];
             
             float price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
@@ -115,13 +172,13 @@
             self.seller = [self.listingObject objectForKey:@"sellerUser"];
             
             if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-//                [self.messageSellerButton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
-                [self.messageSellerButton setEnabled:NO];
+                [self.messageSellerButton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
             }
             else{
                 //not the same buyer
                 [self.messageSellerButton setEnabled:YES];
-                self.navigationItem.rightBarButtonItem = infoButton;
+                [self.listingObject incrementKey:@"views"];
+                [self.listingObject saveInBackground];
             }
             
             [self setImageBorder];
@@ -182,54 +239,6 @@
             NSLog(@"error fetching listing %@", error);
         }
     }];
-    
-    UISwipeGestureRecognizer *swipeLeft = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
-    UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
-    
-    // Setting the swipe direction.
-    [swipeLeft setDirection:UISwipeGestureRecognizerDirectionLeft];
-    [swipeRight setDirection:UISwipeGestureRecognizerDirectionRight];
-    
-    // Adding the swipe gesture on image view
-    [self.imageViewTwo addGestureRecognizer:swipeLeft];
-    [self.imageViewTwo addGestureRecognizer:swipeRight];
-    
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(presentDetailImage)];
-    tap.numberOfTapsRequired = 1;
-    [self.imageViewTwo addGestureRecognizer:tap];
-    [self.imageViewTwo setUserInteractionEnabled:YES];
-    
-//    [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
-    
-    //hide first table view header
-    self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
-    
-    self.sellerNameLabel.adjustsFontSizeToFitWidth = YES;
-    self.sellerNameLabel.minimumScaleFactor=0.5;
-    
-    self.locationLabel.adjustsFontSizeToFitWidth = YES;
-    self.locationLabel.minimumScaleFactor=0.5;
-    
-    self.descriptionLabel.adjustsFontSizeToFitWidth = YES;
-    self.descriptionLabel.minimumScaleFactor=0.5;
-    
-    self.sellerNameLabel.text = @"";
-    self.pastDealsLabel.text = @"Loading";
-    
-    self.mainCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.descriptionCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.buttonCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.sellerCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.infoCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    
-    self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
-
-}
-
--(void)viewWillAppear:(BOOL)animated{
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -371,7 +380,6 @@
 - (UIView *) tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-    
 //    [headerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     return headerView;
 }
@@ -427,35 +435,110 @@
 }
 
 -(void)showAlertView{
-    
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        
-        [self dismissViewControllerAnimated:YES completion:^{
-        }];
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report listing" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
         
-        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this post has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
+        if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"sold"]) {
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as sold" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [self.listingObject setObject:@"live" forKey:@"status"];
+                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        //hide label
+                        self.soldLabel.alpha = 1.0;
+                        self.soldCheckImageVoew.alpha = 1.0;
+                        
+                        [UIView animateWithDuration:0.5
+                                              delay:0
+                                            options:UIViewAnimationOptionCurveEaseIn
+                                         animations:^{
+                                             self.soldLabel.alpha = 0.0;
+                                             self.soldCheckImageVoew.alpha = 0.0;
+
+                                         }
+                                         completion:^(BOOL finished) {
+                                             [self.soldLabel setHidden:YES];
+                                             [self.soldCheckImageVoew setHidden:YES];
+                                         }];
+                    }
+                }];
+            }]];
+        }
+        else{
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as sold" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as sold" message:@"Are you sure you want to mark your item as sold? It will no longer be recommended to interested buyers" preferredStyle:UIAlertControllerStyleAlert];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    
+                }]];
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [self.listingObject setObject:@"sold" forKey:@"status"];
+                    [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            //unhide label
+                            self.soldLabel.alpha = 0.0;
+                            self.soldCheckImageVoew.alpha = 0.0;
+                            
+                            [self.soldLabel setHidden:NO];
+                            [self.soldCheckImageVoew setHidden:NO];
+                            
+                            [UIView animateWithDuration:0.5
+                                                  delay:0
+                                                options:UIViewAnimationOptionCurveEaseIn
+                                             animations:^{
+                                                 self.soldLabel.alpha = 1.0;
+                                                 self.soldCheckImageVoew.alpha = 1.0;
+                                                 
+                                             }
+                                             completion:nil];
+                        }
+                    }];
+                }]];
+                [self presentViewController:alertView animated:YES completion:nil];
+            }]];
+        }
         
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            }]];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+                [self.listingObject setObject:@"deleted" forKey:@"status"];
+                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        [self dismissViewControllerAnimated:YES completion:nil];
+                    }
+                }];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
+        }]];
+    }
+    else{
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report listing" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this post has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                PFObject *reportObject = [PFObject objectWithClassName:@"Reported"];
+                reportObject[@"reportedUser"] = self.seller;
+                reportObject[@"reporter"] = [PFUser currentUser];
+                reportObject[@"wtslisting"] = self.listingObject;
+                [reportObject saveInBackground];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
             
         }]];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-            PFObject *reportObject = [PFObject objectWithClassName:@"Reported"];
-            reportObject[@"reportedUser"] = self.seller;
-            reportObject[@"reporter"] = [PFUser currentUser];
-            reportObject[@"wtslisting"] = self.listingObject;
-            [reportObject saveInBackground];
-        }]];
-        
-        [self presentViewController:alertView animated:YES completion:nil];
-        
-    }]];
-    
+    }
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
@@ -467,26 +550,30 @@
 }
 
 - (void)handleSwipe:(UISwipeGestureRecognizer *)swipe {
+    NSLog(@"number of pics %d", self.numberOfPics);
+    
     if (self.numberOfPics > 1) {
         self.imageViewTwo.image = nil;
     }
+    
     if (swipe.direction == UISwipeGestureRecognizerDirectionLeft) {
         NSLog(@"Left Swipe");
-        if (self.pageIndicator.currentPage != 4) {
-            if (self.pageIndicator.currentPage == 0) {
-                [self.imageViewTwo setFile:self.secondImage];
-                [self.pageIndicator setCurrentPage:1];
+            if (self.pageIndicator.currentPage != 4) {
+                if (self.pageIndicator.currentPage == 0 && self.numberOfPics >1) {
+                    [self.imageViewTwo setFile:self.secondImage];
+                    [self.pageIndicator setCurrentPage:1];
+                }
+                else if (self.pageIndicator.currentPage == 1 && self.numberOfPics >2){
+                    [self.imageViewTwo setFile:self.thirdImage];
+                    [self.pageIndicator setCurrentPage:2];
+                }
+                else if (self.pageIndicator.currentPage == 2 && self.numberOfPics >3){
+                    [self.imageViewTwo setFile:self.fourthImage];
+                    [self.pageIndicator setCurrentPage:3];
+                }
             }
-            else if (self.pageIndicator.currentPage == 1){
-                [self.sellerImgView setFile:self.thirdImage];
-                [self.pageIndicator setCurrentPage:2];
-            }
-            else if (self.pageIndicator.currentPage == 2){
-                [self.sellerImgView setFile:self.fourthImage];
-                [self.pageIndicator setCurrentPage:3];
-            }
-        }
     }
+    
     if (swipe.direction == UISwipeGestureRecognizerDirectionRight) {
         NSLog(@"Right Swipe");
         if (self.pageIndicator.currentPage != 0) {
@@ -506,7 +593,7 @@
             }
         }
     }
-    if (self.numberOfPics > 1) {
+    if (self.numberOfPics > self.pageIndicator.currentPage) {
         //set placeholder spinner view
         MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:self.imageViewTwo animated:YES];
         hud.square = YES;
@@ -571,15 +658,37 @@
         [self.messageSellerButton setEnabled:NO];
         [self setupMessages];
     }
+    else{
+        NSLog(@"edit listing");
+        CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+        vc.editMode = YES;
+        vc.listing = self.listingObject;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
 }
 -(void)setupMessages{
     PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
-    NSString *possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"sellerUser"]objectId], self.WTBObject.objectId];
-    NSString *otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.WTBObject.objectId];
+    
+    NSString *possID = @"";
+    NSString *otherId = @"";
+    
+    if (self.pureWTS == YES) {
+        //no WTB so use WTS to create convo ID
+        possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"sellerUser"]objectId], self.listingObject.objectId];
+        otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
+    }
+    else{
+        //there's a WTB so use that for convo ID
+        possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"sellerUser"]objectId], self.WTBObject.objectId];
+        otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.WTBObject.objectId];
+    }
+    
     NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
     
     [convoQuery whereKey:@"convoId" containedIn:idArray];
     [convoQuery includeKey:@"buyerUser"];
+    [convoQuery includeKey:@"sellerUser"];
+    
     [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //convo exists, goto that one but pretype a message like "I'm interested in your Supreme bogo" etc.
@@ -591,6 +700,14 @@
             vc.otherUserName = [[object objectForKey:@"sellerUser"]username];
             vc.messageSellerPressed = YES;
             vc.sellerItemTitle = [self.listingObject objectForKey:@"description"];
+            vc.userIsBuyer = YES;
+            
+            if (self.pureWTS == YES) {
+                vc.pureWTS = YES;
+            }
+            else{
+                vc.listing = self.WTBObject;
+            }
             [self.messageSellerButton setEnabled:YES];
             [self hideHUD];
             [self.navigationController pushViewController:vc animated:YES];
@@ -600,23 +717,43 @@
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
             convoObject[@"buyerUser"] = [PFUser currentUser];
             convoObject[@"sellerUser"] = [self.listingObject objectForKey:@"sellerUser"];
-            convoObject[@"itemId"] = self.WTBObject.objectId;
-            convoObject[@"wtbListing"] = self.WTBObject;
+            
+            if (self.pureWTS == YES) {
+                convoObject[@"pureWTS"] = @"YES";
+                convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
+            }
+            else{
+                convoObject[@"pureWTS"] = @"NO";
+                convoObject[@"wtbListing"] = self.WTBObject;
+                convoObject[@"itemId"] = self.WTBObject.objectId;
+                convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.WTBObject.objectId];
+            }
+            
             convoObject[@"wtsListing"] = self.listingObject;
-            convoObject[@"fromWTS"] = @"YES";
-            convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.WTBObject.objectId];
+            
+            if (self.source) {
+                convoObject[@"source"] = self.source; //where did the convo originate from - featured vs WTS
+            }
+            
             convoObject[@"totalMessages"] = @0;
             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
+                    NSLog(@"saved new convo");
                     //saved
                     MessageViewController *vc = [[MessageViewController alloc]init];
                     vc.convoId = [convoObject objectForKey:@"convoId"];
                     vc.convoObject = convoObject;
-                    vc.listing = self.WTBObject;
                     vc.otherUser = [self.listingObject objectForKey:@"sellerUser"];
                     vc.otherUserName = [[self.listingObject objectForKey:@"sellerUser"]username];
                     vc.messageSellerPressed = YES;
                     vc.sellerItemTitle = [self.listingObject objectForKey:@"description"];
+                    vc.userIsBuyer = YES;
+                    if (self.pureWTS == YES) {
+                        vc.pureWTS = YES;
+                    }
+                    else{
+                        vc.listing = self.WTBObject;
+                    }
                     [self hideHUD];
                     [self.messageSellerButton setEnabled:YES];
                     [self.navigationController pushViewController:vc animated:YES];
@@ -631,7 +768,6 @@
     }];
 }
 - (IBAction)trustedSellerPressed:(id)sender {
-    NSLog(@"pressed");
     UserProfileController *vc = [[UserProfileController alloc]init];
     vc.user = self.seller;
     [self.navigationController pushViewController:vc animated:YES];

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1004" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
@@ -15,17 +15,23 @@
                 <rect key="frame" x="0.0" y="0.0" width="70" height="70"/>
                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 <subviews>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="eqQ-Ge-cvJ" customClass="PFImageView"/>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="cNe-dz-y0M" customClass="PFImageView">
+                        <color key="backgroundColor" red="0.86195838869999997" green="0.86195838869999997" blue="0.86195838869999997" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="70" id="2Ho-p4-hNN"/>
+                            <constraint firstAttribute="height" constant="70" id="t4p-Ru-2Cs"/>
+                        </constraints>
+                    </imageView>
                 </subviews>
             </view>
             <constraints>
-                <constraint firstAttribute="trailing" secondItem="eqQ-Ge-cvJ" secondAttribute="trailing" id="1Lc-7Q-eFP"/>
-                <constraint firstItem="eqQ-Ge-cvJ" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="Nfu-22-7e5"/>
-                <constraint firstItem="eqQ-Ge-cvJ" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="knh-Ti-Gln"/>
-                <constraint firstAttribute="bottom" secondItem="eqQ-Ge-cvJ" secondAttribute="bottom" id="zJf-hQ-uZ1"/>
+                <constraint firstAttribute="trailing" secondItem="cNe-dz-y0M" secondAttribute="trailing" id="Lde-VD-JXg"/>
+                <constraint firstItem="cNe-dz-y0M" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="h5B-FB-bIS"/>
+                <constraint firstItem="cNe-dz-y0M" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="jYl-CM-hmo"/>
+                <constraint firstAttribute="bottom" secondItem="cNe-dz-y0M" secondAttribute="bottom" id="lKr-rQ-6Md"/>
             </constraints>
             <connections>
-                <outlet property="saleImageView" destination="eqQ-Ge-cvJ" id="u8k-QB-Tow"/>
+                <outlet property="itemView" destination="cNe-dz-y0M" id="lV2-fS-O6B"/>
             </connections>
         </collectionViewCell>
     </objects>

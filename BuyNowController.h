@@ -14,9 +14,10 @@
 @interface BuyNowController : UIViewController <UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (nonatomic, strong) NSArray *colorArray;
 @property (nonatomic, strong) NSMutableDictionary *contentOffsetDictionary;
 @property (nonatomic, strong) NSMutableArray *wtbArray;
+
+@property (nonatomic, strong) NSMutableArray *viewsArray;
 
 @property (nonatomic) BOOL pullFinished;
 @property (nonatomic) BOOL infinFinished;

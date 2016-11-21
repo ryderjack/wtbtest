@@ -14,6 +14,8 @@
     [super awakeFromNib];
     // Initialization code
     self.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.commentLabel.adjustsFontSizeToFitWidth = YES;
+    self.commentLabel.minimumScaleFactor=0.5;
 
 }
 

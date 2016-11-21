@@ -39,6 +39,14 @@
             self.priceField.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,[[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue]];
             self.price = [[self.confirmedOfferObject objectForKey:@"salePrice"] floatValue];
             self.totalLabel.text = [NSString stringWithFormat:@"%@ %@%.2f",self.currency ,self.currencySymbol,self.price];
+            
+            if ([[self.confirmedOfferObject objectForKey:@"pureWTS"] isEqualToString:@"YES"]) {
+                self.pureWTS = YES;
+            }
+            else{
+                self.pureWTS = NO;
+            }
+            
         }
         else{
             [self showError];
@@ -161,7 +169,9 @@
     self.webViewController.amountToPay = self.totalLabel.text;
     self.webViewController.infoMode = YES;
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
-    [self presentViewController:navigationController animated:YES completion:nil];
+    [self presentViewController:navigationController animated:YES completion:^{
+        [self.payButton setEnabled:YES];
+    }];
 }
 
 -(void)createOrder{
@@ -191,7 +201,11 @@
             
             [self.convo setObject:orderObject forKey:@"order"];
             [self.convo setObject:self.confirmedOfferObject forKey:@"offer"];
-            [self.convo setObject:[self.confirmedOfferObject objectForKey:@"wtbListing"] forKey:@"listing"];
+            if (self.pureWTS == YES) {
+            }
+            else{
+                [self.convo setObject:[self.confirmedOfferObject objectForKey:@"wtbListing"] forKey:@"listing"];
+            }
             [self.convo saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
                     NSLog(@"success! saving convo");
@@ -433,7 +447,7 @@
     [self createOrder];
     
     //send push to other user
-    NSString *pushString = [NSString stringWithFormat:@"%@ has said they've paid for %@, check and confirm now.",[[PFUser currentUser]username], [self.confirmedOfferObject objectForKey:@"title"]];
+    NSString *pushString = [NSString stringWithFormat:@"%@ has paid for %@, check and confirm now.",[[PFUser currentUser]username], [self.confirmedOfferObject objectForKey:@"title"]];
     NSDictionary *params = @{@"userId": self.otherUserId, @"message": pushString, @"sender": [PFUser currentUser].username};
     [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
         if (!error) {

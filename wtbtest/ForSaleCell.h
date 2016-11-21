@@ -10,6 +10,6 @@
 #import <ParseUI/ParseUI.h>
 
 @interface ForSaleCell : UICollectionViewCell
-@property (weak, nonatomic) IBOutlet PFImageView *saleImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *itemView;
 
 @end

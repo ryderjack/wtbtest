@@ -10,6 +10,7 @@
 #import "NavigationController.h"
 #import "Flurry.h"
 #import "WelcomeViewController.h"
+#import "UIImage+Resize.h"
 
 @interface CreateViewController ()
 
@@ -606,9 +607,24 @@
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
     //display crop picker
+    
+//    UIImage *newImage = [self resizeImage:chosenImage toWidth:375.0f andHeight:375.0f];
+
     [picker dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:chosenImage];
     }];
+}
+
+- (UIImage *)resizeImage:(UIImage *)image toWidth:(float)width andHeight:(float)height {
+    
+    CGSize newSize = CGSizeMake(width, height);
+    CGRect newRectangle = CGRectMake(0, 0, width, height);
+    UIGraphicsBeginImageContext(newSize);
+    [image drawInRect:newRectangle];
+    UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return resizedImage;
 }
 
 -(void)displayCropperWithImage:(UIImage *)image{
@@ -628,7 +644,10 @@
 
 - (void)squareCropperDidCropImage:(UIImage *)croppedImage inCropper:(BASSquareCropperViewController *)cropper{
     [cropper dismissViewControllerAnimated:YES completion:NULL];
-    [self finalImage:croppedImage];
+    
+    UIImage *newImage = [croppedImage resizedImage:CGSizeMake(750.00, 750.00) interpolationQuality:kCGInterpolationHigh];
+
+    [self finalImage:newImage];
 }
 
 - (void)squareCropperDidCancelCropInCropper:(BASSquareCropperViewController *)cropper{
@@ -997,6 +1016,7 @@
             //don't update location on listing if just editing
             [self.listing setObject:self.chooseLocation.text forKey:@"location"];
             [self.listing setObject:self.geopoint forKey:@"geopoint"];
+            [self.listing setObject:@0 forKey:@"views"];
         }
         
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
@@ -1249,7 +1269,7 @@
 }
 
 -(void)listingSetup{
-    self.navigationItem.title = @"Edit listing";
+    self.navigationItem.title = @"Edit";
     
     [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     

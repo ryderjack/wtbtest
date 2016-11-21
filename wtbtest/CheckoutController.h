@@ -58,4 +58,6 @@
 @property (nonatomic, strong) NSString *otherUserId;
 @property (nonatomic, strong) NSString *itemTitle;
 
+@property (nonatomic) BOOL pureWTS;
+
 @end

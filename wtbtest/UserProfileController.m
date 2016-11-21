@@ -15,6 +15,7 @@
 #import "NavigationController.h"
 #import "ProfileItemCell.h"
 #import "ReviewsVC.h"
+#import "ForSaleListing.h"
 
 @interface UserProfileController ()
 
@@ -25,10 +26,14 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.dealsLabel.text = @"Reviews";
+    self.dealsLabel.text = @"";
     self.numberLabel.text = @"";
+    [self.sellerSegmentControl setHidden:YES];
     [self.sellerLabel setHidden:YES];
     [self.checkImageView setHidden:YES];
+    self.forSalePressed = NO;
+    self.WTBPressed = NO;
+
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
                                     NSFontAttributeName, nil];
@@ -67,24 +72,54 @@
     self.collectionView.dataSource = self;
     self.collectionView.alwaysBounceVertical = YES;
     
-    self.lisitngsArray = [[NSArray alloc]init];
-    self.feedbackArray = [[NSMutableArray alloc]init];
+    self.WTBArray = [[NSArray alloc]init];
+    self.forSaleArray = [[NSMutableArray alloc]init];
     
     [self.nothingLabel setHidden:YES];
     
-    if ([[self.user objectForKey:@"trustedSeller"] isEqualToString:@"YES"]) {
-        //trusted seller so load WTSs
-        self.isSeller = YES;
-        [self.checkImageView setHidden:NO];
-        [self.sellerLabel setHidden:NO];
-        [self loadWTSListings];
-    }
-    else{
-        self.isSeller = NO;
-        [self.checkImageView setHidden:NO]; ///////////////////////////////////////////////////
-        [self.sellerLabel setHidden:NO];
-        [self loadWTBListings];
-    }
+//    NSLog(@"USER %@", self.user);
+    
+    
+    //weird behaviour - not getting latest data from MLab, cached????
+    
+    PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
+    [trustedQuery whereKey:@"user" equalTo:self.user];
+    [trustedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+        if (number == 1) {
+            self.isSeller = YES;
+            [self.checkImageView setHidden:NO];
+        }
+        else{
+            [self.checkImageView setHidden:YES];
+        }
+        
+        if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+            //show link to users' FB if not looking at own profile
+            UIBarButtonItem *fbButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"FBIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(fbPressed)];
+            UIBarButtonItem *extraButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(reportUser)];
+            if (self.isSeller == YES) {
+                [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:extraButton, nil]];
+            }
+            else{
+                [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:extraButton, fbButton, nil]];
+            }
+        }
+        
+        if (self.user == [PFUser currentUser] && self.isSeller == YES) {
+            //trusted seller so load WTSs
+            [self.sellerSegmentControl setHidden:NO];
+            [self loadWTBListings];
+            [self loadWTSListings];
+            
+            UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
+            self.navigationItem.rightBarButtonItem = addForSaleItem;
+        }
+        else{
+            [self.sellerSegmentControl setHidden:YES];
+            self.isSeller = NO;
+            [self loadWTBListings];
+        }
+    }];
 
     self.headerImgView.layer.cornerRadius = 40;
     self.headerImgView.layer.masksToBounds = YES;
@@ -92,18 +127,7 @@
     self.headerImgView.contentMode = UIViewContentModeScaleAspectFill;
     
     [self setAutomaticallyAdjustsScrollViewInsets:NO];
-    [self.segmentControl setSelectedSegmentIndex:0];
-    
-    if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        //show link to users' FB if not looking at own profile
-        UIBarButtonItem *fbButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"FBIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(fbPressed)];
-        UIBarButtonItem *extraButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(reportUser)];
-        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:extraButton, fbButton, nil]];
-    }
-    else{
-        UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
-        self.navigationItem.rightBarButtonItem = addForSaleItem;
-    }
+    [self.sellerSegmentControl setSelectedSegmentIndex:0];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -186,22 +210,15 @@
         self.currencySymbol = @"$";
     }
     
-    PFQuery *wtbNummber = [PFQuery queryWithClassName:@"wantobuys"];
-    [wtbNummber whereKey:@"postUser" equalTo:self.user];
-    [wtbNummber whereKey:@"status" notEqualTo:@"deleted"];
-    [wtbNummber countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-        if (!error) {
-            if (number == 1) {
-                [self.segmentControl setTitle:@"1 WTB" forSegmentAtIndex:0];
-            }
-            else if (number > 0){
-                [self.segmentControl setTitle:[NSString stringWithFormat:@"%d WTBs", number] forSegmentAtIndex:0];
-            }
-        }
-        else{
-            NSLog(@"count errror %@", error);
-        }
-    }];
+    if (self.forSalePressed == YES) {
+        [self.sellerSegmentControl setSelectedSegmentIndex:1];
+        [self loadWTSListings];
+    }
+    if (self.WTBPressed == YES) {
+        [self.sellerSegmentControl setSelectedSegmentIndex:0];
+        self.WTBPressed = NO;
+        [self loadWTBListings];
+    }
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{
@@ -218,19 +235,28 @@
     [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
     [wtbQuery orderByDescending:@"createdAt"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (!error) {
-            if (objects.count > 0) {
-                self.lisitngsArray = objects;
-                self.numberLabel.text = [NSString stringWithFormat:@"%lu wanted items", objects.count];
-                [self.collectionView reloadData];
+        if (objects) {
+            self.WTBArray = objects;
+            if (self.isSeller != YES) {
+                if (objects.count == 1) {
+                    self.numberLabel.text = @"1 wanted item";
+                }
+                else{
+                    self.numberLabel.text = [NSString stringWithFormat:@"%lu wanted items", objects.count];
+                }
             }
             else{
-                // no WTBs
-                [self.nothingLabel setHidden:NO];
+                if (objects.count == 1) {
+                    [self.sellerSegmentControl setTitle:@"1 WTB" forSegmentAtIndex:0];
+                }
+                else{
+                    [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu WTBs", objects.count] forSegmentAtIndex:0];
+                }
             }
+            [self.collectionView reloadData];
         }
         else{
-            NSLog(@"error %@", error);
+            NSLog(@"error getting WTBs %@", error);
         }
     }];
 }
@@ -244,65 +270,20 @@
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects.count > 0) {
-                self.lisitngsArray = objects;
-                self.numberLabel.text = [NSString stringWithFormat:@"%lu items for sale", objects.count];
-                [self.collectionView reloadData];
+                self.forSaleArray = objects;
+                [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu For-Sale", objects.count] forSegmentAtIndex:1];
+                
+                if (self.forSalePressed == YES) {
+                    [self.collectionView reloadData];
+                    self.forSalePressed = NO;
+                }
             }
             else{
-                // no WTBs
-                [self.nothingLabel setHidden:NO];
+                // no WTSs
             }
         }
         else{
-            NSLog(@"error %@", error);
-        }
-    }];
-}
-
--(void)loadFeedback{
-    //first query for sales feedback
-    [self.nothingLabel setHidden:YES];
-    PFQuery *salesQuery = [PFQuery queryWithClassName:@"feedback"];
-    [salesQuery whereKey:@"sellerUser" equalTo:self.user];
-    [salesQuery whereKey:@"gaveFeedback" notEqualTo:self.user];
-    [salesQuery includeKey:@"buyerUser"];
-    [salesQuery orderByDescending:@"createdAt"];
-    [salesQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (!error) {
-            [self.feedbackArray removeAllObjects];
-            [self.feedbackArray addObjectsFromArray:objects];
-            
-            //query for purchase feedback
-            PFQuery *purchaseQuery = [PFQuery queryWithClassName:@"feedback"];
-            [purchaseQuery whereKey:@"buyerUser" equalTo:self.user];
-            [purchaseQuery whereKey:@"gaveFeedback" notEqualTo:self.user];
-            [purchaseQuery includeKey:@"sellerUser"];
-            [purchaseQuery orderByDescending:@"createdAt"];
-            [purchaseQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                if (!error) {
-                    [self.feedbackArray addObjectsFromArray:objects];
-                    NSSortDescriptor *sortDescriptor;
-                    sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"createdAt"
-                                                                 ascending:NO];
-                    NSArray *sortDescriptors = [NSArray arrayWithObject:sortDescriptor];
-                    NSArray *sortedArray = [self.feedbackArray sortedArrayUsingDescriptors:sortDescriptors];
-                    
-                    [self.feedbackArray removeAllObjects];
-                    [self.feedbackArray addObjectsFromArray:sortedArray];
-                   
-                    if (self.feedbackArray.count == 0) {
-                        [self.nothingLabel setHidden:NO];
-                    }
-
-                    [self.collectionView reloadData];
-                }
-                else{
-                    NSLog(@"error %@", error);
-                }
-            }];
-        }
-        else{
-            NSLog(@"error %@", error);
+            NSLog(@"error getting WTSs %@", error);
         }
     }];
 }
@@ -318,17 +299,30 @@
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    return self.lisitngsArray.count;
+    if (self.sellerSegmentControl.selectedSegmentIndex == 0) {
+        return self.WTBArray.count;
+    }
+    else{
+        return self.forSaleArray.count;
+    }
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
 
     ProfileItemCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
-    cell.backgroundColor = [UIColor whiteColor];
     [cell.purchasedImageView setHidden:YES];
     cell.itemImageView.image = nil;
+    cell.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     
-    PFObject *listingObject = [self.lisitngsArray objectAtIndex:indexPath.row];
+    PFObject *listingObject;
+    
+    if (self.sellerSegmentControl.selectedSegmentIndex == 0) {
+        listingObject = [self.WTBArray objectAtIndex:indexPath.row];
+    }
+    else{
+        listingObject = [self.forSaleArray objectAtIndex:indexPath.row];
+    }
+    
     [cell.itemImageView setFile:[listingObject objectForKey:@"image1"]];
     [cell.itemImageView loadInBackground];
 
@@ -351,25 +345,40 @@
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
-        if ([PFUser currentUser]==self.user) {
-            //allow editing
-            [self showAlertViewWithPath:indexPath];
-        }
-        else{
+//        if ([PFUser currentUser]==self.user) {
+//            //allow editing
+//            [self showAlertViewWithPath:indexPath];
+//        }
+//        else{
             //goto listing if its live
-            PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
-            if ([[selected objectForKey:@"status"] isEqualToString:@"live"]) {
+            PFObject *selected;
+            
+            if (self.sellerSegmentControl.selectedSegmentIndex == 0) {
+                selected = [self.WTBArray objectAtIndex:indexPath.item];
+                self.WTBPressed = YES;
                 ListingController *vc = [[ListingController alloc]init];
                 vc.listingObject = selected;
                 [self.navigationController pushViewController:vc animated:YES];
             }
-        }
+            else{
+                selected = [self.forSaleArray objectAtIndex:indexPath.item];
+                self.forSalePressed = YES;
+                ForSaleListing *vc = [[ForSaleListing alloc]init];
+                vc.listingObject = selected;
+                NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+                [self presentViewController:nav animated:YES completion:nil];
+            }
+            
+//            if ([[selected objectForKey:@"status"] isEqualToString:@"live"]) {
+    
+//            }
+//        }
 }
 
 -(void)showAlertViewWithPath:(NSIndexPath *)indexPath{
     
-    PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
-    
+    PFObject *selected;
+
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -377,89 +386,177 @@
         }];
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"View listing" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        ListingController *vc = [[ListingController alloc]init];
-        vc.listingObject = selected;
-        [self.navigationController pushViewController:vc animated:YES];
-    }]];
-    
-    if ([[selected objectForKey:@"status"] isEqualToString:@"purchased"]) {
-//        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//            [selected setObject:@"live" forKey:@"status"];
-//            [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                if (succeeded) {
-//                    [self.collectionView reloadData];
-//                }
-//            }];
-//        }]];
-    }
-    else{
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as purchased" message:@"Are you sure you want to mark your WTB as purchased? Sellers will no longer be able to view your WTB and offer to sell you items" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                
-            }]];
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                [selected setObject:@"purchased" forKey:@"status"];
-                [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-                        [self.collectionView reloadData];
-                    }
-                }];
-            }]];
-            [self presentViewController:alertView animated:YES completion:nil];
+    if (self.sellerSegmentControl.selectedSegmentIndex == 0) {
+        //for WTBs
+        
+        selected = [self.WTBArray objectAtIndex:indexPath.item];
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"View listing" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            ListingController *vc = [[ListingController alloc]init];
+            vc.listingObject = selected;
+            [self.navigationController pushViewController:vc animated:YES];
         }]];
         
-        if ([[selected objectForKey:@"status"]isEqualToString:@"ended"]) {
-           
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Relist WTB" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Relist" message:@"Are you sure you want to relist your WTB?" preferredStyle:UIAlertControllerStyleAlert];
+        if ([[selected objectForKey:@"status"] isEqualToString:@"purchased"]) {
+            //        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            //            [selected setObject:@"live" forKey:@"status"];
+            //            [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            //                if (succeeded) {
+            //                    [self.collectionView reloadData];
+            //                }
+            //            }];
+            //        }]];
+        }
+        else{
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as purchased" message:@"Are you sure you want to mark your WTB as purchased? Sellers will no longer be able to view your WTB and offer to sell you items" preferredStyle:UIAlertControllerStyleAlert];
                 
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
                     
                 }]];
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                    [selected setObject:@"live" forKey:@"status"];
-                    
-                    //expiration in 2 weeks
-                    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                    dayComponent.day = 14;
-                    NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                    NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-                    [selected setObject:expirationDate forKey:@"expiration"];
-                    
+                    [selected setObject:@"purchased" forKey:@"status"];
                     [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                         if (succeeded) {
-                            [self.collectionView reloadData];
+                            [self.collectionView reloadItemsAtIndexPaths:@[indexPath]];
+                        }
+                    }];
+                }]];
+                [self presentViewController:alertView animated:YES completion:nil];
+            }]];
+            
+//            if ([[selected objectForKey:@"status"]isEqualToString:@"ended"]) {
+//                
+//                [actionSheet addAction:[UIAlertAction actionWithTitle:@"Relist WTB" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Relist" message:@"Are you sure you want to relist your WTB?" preferredStyle:UIAlertControllerStyleAlert];
+//                    
+//                    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+//                        
+//                    }]];
+//                    [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//                        [selected setObject:@"live" forKey:@"status"];
+//                        
+//                        //expiration in 2 weeks
+//                        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+//                        dayComponent.day = 14;
+//                        NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//                        NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+//                        [selected setObject:expirationDate forKey:@"expiration"];
+//                        
+//                        [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                            if (succeeded) {
+//                                [self.collectionView reloadData];
+//                            }
+//                        }];
+//                    }]];
+//                    [self presentViewController:alertView animated:YES completion:nil];
+//                }]];
+//            }
+        }
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your WTB?" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                
+            }]];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+                PFObject *selected = [self.WTBArray objectAtIndex:indexPath.item];
+                [selected setObject:@"deleted" forKey:@"status"];
+                [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        NSMutableArray *deletedArray = [NSMutableArray arrayWithArray:self.WTBArray];
+                        [deletedArray removeObjectAtIndex:indexPath.item];
+                        self.WTBArray = deletedArray;
+                        [self.collectionView reloadData];
+                        if (self.isSeller == YES) {
+                            if (self.WTBArray.count == 1) {
+                                [self.sellerSegmentControl setTitle:@"1 WTB" forSegmentAtIndex:0];
+                            }
+                            else{
+                                [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu WTBs", self.WTBArray.count] forSegmentAtIndex:0];
+                            }
+                        }
+                        else{
+                            if (self.WTBArray.count == 1) {
+                                self.numberLabel.text = @"1 wanted item";
+                            }
+                            else{
+                                self.numberLabel.text = [NSString stringWithFormat:@"%lu wanted items", self.WTBArray.count];
+                            }
+                        }
+                    }
+                }];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
+        }]];
+    }
+    else{
+        //for WTSs
+        selected = [self.forSaleArray objectAtIndex:indexPath.item];
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"View listing" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            ForSaleListing *vc = [[ForSaleListing alloc]init];
+            vc.listingObject = selected;
+            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+            [self presentViewController:nav animated:YES completion:nil];
+        }]];
+        
+        if ([[selected objectForKey:@"status"] isEqualToString:@"sold"]) {
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as sold" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [selected setObject:@"live" forKey:@"status"];
+                [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        [self.collectionView reloadItemsAtIndexPaths:@[indexPath]];
+                    }
+                }];
+            }]];
+        }
+        else{
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as sold" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as sold" message:@"Are you sure you want to mark your item as sold? It will no longer be recommended to interested buyers" preferredStyle:UIAlertControllerStyleAlert];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    
+                }]];
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [selected setObject:@"sold" forKey:@"status"];
+                    [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            [self.collectionView reloadItemsAtIndexPaths:@[indexPath]];
                         }
                     }];
                 }]];
                 [self presentViewController:alertView animated:YES completion:nil];
             }]];
         }
-    }
-    
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your WTB?" preferredStyle:UIAlertControllerStyleAlert];
         
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
             
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                
+            }]];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+                [selected setObject:@"deleted" forKey:@"status"];
+                [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        NSMutableArray *deletedArray = [NSMutableArray arrayWithArray:self.forSaleArray];
+                        [deletedArray removeObjectAtIndex:indexPath.item];
+                        self.forSaleArray = deletedArray;
+                        [self.collectionView reloadData];
+                        [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu For-Sale", self.forSaleArray.count] forSegmentAtIndex:1];
+                    }
+                }];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
         }]];
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-            PFObject *selected = [self.lisitngsArray objectAtIndex:indexPath.item];
-            [selected setObject:@"deleted" forKey:@"status"];
-            [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                if (succeeded) {
-                    [self.collectionView reloadData];
-                }
-            }];
-        }]];
-        
-        [self presentViewController:alertView animated:YES completion:nil];
-    }]];
-    
+    }
+
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
@@ -491,16 +588,53 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
--(void)addForSalePressed{
+-(void)SetupListing{
     CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+    vc.usernameToCheck = self.usernameToList;
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    self.forSalePressed = YES;
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+-(void)addForSalePressed{
+    //uncomment when adding items for other users
+//    UIAlertController *alertController = [UIAlertController
+//                                          alertControllerWithTitle:@"Post as User"
+//                                          message:@"Enter username"
+//                                          preferredStyle:UIAlertControllerStyleAlert];
+//    
+//    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+//     {
+//         textField.placeholder = @"username";
+//     }];
+//    
+//    UIAlertAction *okAction = [UIAlertAction
+//                               actionWithTitle:@"DONE"
+//                               style:UIAlertActionStyleDefault
+//                               handler:^(UIAlertAction *action)
+//                               {
+//                                   UITextField *usernameField = alertController.textFields.firstObject;
+//                                   self.usernameToList = usernameField.text;
+//                                   [self SetupListing];
+//                               }];
+//    
+//    [alertController addAction:okAction];
+//    
+//    [self presentViewController:alertController animated:YES completion:nil];
+    
+    CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+    vc.usernameToCheck = self.usernameToList;
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    self.forSalePressed = YES;
     [self presentViewController:nav animated:YES completion:nil];
 }
 - (IBAction)reviewsPressed:(id)sender {
-    NSLog(@"reviews pressed");
     ReviewsVC *vc = [[ReviewsVC alloc]init];
     vc.user = self.user;
     [self.navigationController pushViewController:vc animated:YES];
+}
+- (IBAction)sellerSegmentControlChanged:(id)sender {
+    [self.collectionView reloadData];
 }
 
 @end
