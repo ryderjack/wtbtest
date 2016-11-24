@@ -736,6 +736,9 @@
             }
             
             convoObject[@"totalMessages"] = @0;
+            convoObject[@"buyerUnseen"] = @0;
+            convoObject[@"sellerUnseen"] = @0;
+            
             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
                     NSLog(@"saved new convo");

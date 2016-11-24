@@ -516,7 +516,7 @@ numberOfRowsInSection:(NSInteger)section
         UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.frame.size.width, 70)];
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake((tableView.frame.size.width/2)-105, 26, 250, 18)];
         [label setFont:[UIFont fontWithName:@"AvenirNext-Medium" size:13]];
-        label.text = @"Tap to browse related items for sale";
+        label.text = @"Tap to browse featured items for sale";
         label.textAlignment = NSTextAlignmentCenter;
         label.textColor = [UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0];
         [view addSubview:label];

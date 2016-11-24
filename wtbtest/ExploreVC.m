@@ -997,6 +997,9 @@
                 [searchesList insertObject:self.searchString atIndex:0];
             }
         }
+        else{
+            [searchesList insertObject:self.searchString atIndex:0];
+        }
         
         self.resultsController.allResults = searchesList;
         [self.resultsController.tableView reloadData];

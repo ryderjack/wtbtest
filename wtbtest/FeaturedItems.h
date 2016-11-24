@@ -13,6 +13,6 @@
 @interface FeaturedItems : UIViewController <UICollectionViewDelegate, UICollectionViewDataSource>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
-@property (nonatomic, strong) NSArray *listings;
+@property (nonatomic, strong) NSMutableArray *listings;
 
 @end

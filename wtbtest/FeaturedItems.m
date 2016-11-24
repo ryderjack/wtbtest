@@ -59,19 +59,46 @@
     self.collectionView.dataSource = self;
     self.collectionView.alwaysBounceVertical = YES;
     
-    [self loadListings];
+    self.listings = [NSMutableArray array];
     
+    [self loadListings];
+
 }
 
 -(void)loadListings{
-    PFQuery *forSaleQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-    [forSaleQuery whereKey:@"status" equalTo:@"live"];
-    [forSaleQuery orderByAscending:@"views"];
-    forSaleQuery.limit = 30;
-    [forSaleQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+    PFQuery *featuredQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    [featuredQuery whereKey:@"status" equalTo:@"live"];
+    [featuredQuery whereKey:@"feature" equalTo:@"YES"];
+    [featuredQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            self.listings = objects;
-            [self.collectionView reloadData];
+            NSLog(@"found %lu featured items", objects.count);
+            
+            [self.listings removeAllObjects];
+            [self.listings addObjectsFromArray:objects];
+
+            PFQuery *forSaleQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+            [forSaleQuery whereKey:@"status" equalTo:@"live"];
+            [forSaleQuery orderByAscending:@"views"];
+            forSaleQuery.limit = 30-self.listings.count;
+            [forSaleQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                if (objects) {
+                    for (PFObject *listing in objects) {
+                        if (![self.listings containsObject:listing]) {
+                            NSLog(@"not already there so add");
+                            [self.listings addObject:listing];
+                        }
+                        else{
+                            NSLog(@"listing already featured");
+                        }
+                    }
+                    [self.collectionView reloadData];
+                }
+                else{
+                    NSLog(@"error getting for sale listings %@", error);
+                }
+            }];
+        
+        
         }
         else{
             NSLog(@"error getting for sale listings %@", error);

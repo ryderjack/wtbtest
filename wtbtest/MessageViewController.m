@@ -152,9 +152,6 @@
             }
         } 
     }
-    
-    NSLog(self.pureWTS ? @"Yes" : @"No");
-
 }
 
 -(void)loadMessages{
@@ -189,13 +186,8 @@
                 
                 for (PFObject *messageOb in objects) {
                     
-                    if (![self.messagesParseArray containsObject:messageOb]) {
-                        [self.messagesParseArray addObject:messageOb];
-                    }
-                    
                     // is status message set as seen so badge number decrements and then continue to add other messages to arrays
                     if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"] && ![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                        NSLog(@"status message %@", messageOb);
                         [messageOb setObject:@"seen" forKey:@"status"];
                         [messageOb saveInBackground];
                         
@@ -207,6 +199,13 @@
                         }
                         
                         continue;
+                    }
+                    else if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"] && [[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]){
+                        continue;
+                    }
+                    
+                    if (![self.messagesParseArray containsObject:messageOb]) {
+                        [self.messagesParseArray addObject:messageOb];
                     }
                     
                     __block JSQMessage *message = nil;
@@ -469,9 +468,20 @@
                 for (PFObject *messageOb in objects) {
                     
                     // if status message, set as seen & don't add to array so not in thread
-                    if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
+                    if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"] && ![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                         [messageOb setObject:@"seen" forKey:@"status"];
                         [messageOb saveInBackground];
+                        
+                        if (self.userIsBuyer == YES) {
+                            [self.convoObject setObject:@0 forKey:@"buyerUnseen"];
+                        }
+                        else{
+                            [self.convoObject setObject:@0 forKey:@"sellerUnseen"];
+                        }
+                        
+                        continue;
+                    }
+                    else if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"] && [[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]){
                         continue;
                     }
                     

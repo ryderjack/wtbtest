@@ -187,12 +187,14 @@
                             }
 //                        }
                         totalUnseen = totalUnseen + unseen;
+                        
+                        NSLog(@"total unseen %d", totalUnseen);
                     }
                 }
                 
-                if (self.unseenConvos.count != 0) {
+                if (totalUnseen != 0) {
                     
-                    if (self.unseenConvos.count > 0) {
+                    if (totalUnseen > 0) {
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
                         self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", totalUnseen];
                     }
@@ -459,14 +461,17 @@
     UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[3];
     int currentTabValue = [itemToBadge.badgeValue intValue];
     int newTabValue = currentTabValue - unseen;
+    
     if (newTabValue == 0) {
         self.navigationItem.title = @"Messages";
         [self.navigationController tabBarItem].badgeValue = nil;
     }
+    
     else if (newTabValue > 0){
         self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", newTabValue];
         [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
     }
+    
     else{
         NSLog(@"error calc'n %d", newTabValue);
     }

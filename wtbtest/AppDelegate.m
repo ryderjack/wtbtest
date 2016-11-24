@@ -194,28 +194,39 @@
                 int unseen = 0;
 
                 for (PFObject *convo in objects) {
+                    
                     PFObject *msgObject = [convo objectForKey:@"lastSent"];
                     
                     if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                        
                         [self.unseenMessages addObject:convo];
+
 //                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
 //                            unseen = 1;
 //                        }
 //                        else{
                             PFUser *buyer = [convo objectForKey:@"buyerUser"];
+                        
+                        NSLog(@"buyer %@", buyer);
+                        
+                        //me IIEf7cUvrO
+                        
                             if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
                                 //current user is buyer so other user is seller
                                 unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                                NSLog(@"unseen buyer %@", [convo objectForKey:@"buyerUnseen"]);
+
                             }
                             else{
                                 //other user is buyer, current is seller
                                 unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                                NSLog(@"unseen seller %d", unseen);
                             }
 //                        }
 
                         totalUnseen = totalUnseen + unseen;
                         
-//                        NSLog(@"delegate: running total unseen: %d", totalUnseen);
+                        NSLog(@"delegate: running total unseen: %d", totalUnseen);
                     }
                 }
                 
@@ -233,7 +244,7 @@
                     
 //                    NSLog(@"unseen messages %lu and unseentotal %d and selected convo %@", (unsigned long)self.unseenMessages.count, totalUnseen, self.inboxView.selectedConvo);
                     
-                    if (self.unseenMessages.count > 0) {
+                    if (totalUnseen > 0) {
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
                     }
                     else{

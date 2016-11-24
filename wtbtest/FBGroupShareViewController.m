@@ -72,7 +72,9 @@
             NSString *condition = [object objectForKey:@"condition"];
             NSString *size = [object objectForKey:@"sizeLabel"];
             
-            self.textView.text = [NSString stringWithFormat:@"WTB:\n%@\nCondition: %@\nSize: %@\nPosted via Bump http://apple.co/2aY3rBk", title, condition, size];
+            self.textView.text = [NSString stringWithFormat:@"WTB:\n%@\nCondition: %@\nSize: %@", title, condition, size];
+            
+            //\nPosted via Bump http://apple.co/2aY3rBk
         }
         else{
             NSLog(@"error %@", error);
