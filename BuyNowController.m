@@ -26,11 +26,13 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"Buy it now";
+    self.navigationItem.title = @"B U Y  N O W";
     
     self.tableView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     
     [self.tableView registerNib:[UINib nibWithNibName:@"RecommendCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
+    
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     self.contentOffsetDictionary = [NSMutableDictionary dictionary];
     
@@ -75,11 +77,16 @@
 }
 
 -(void)loadWTBs{
+    if (self.pullFinished == NO || self.infinFinished == NO) {
+        return;
+    }
+    self.pullFinished = NO;
+    NSLog(@"PULL LOADING");
+
     [self.topLabel setHidden:YES];
     [self.bottomLabel setHidden:YES];
     [self.tableView.infiniteScrollingView stopAnimating];
 
-    self.pullFinished = NO;
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self.pullQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
@@ -89,25 +96,28 @@
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             if (objects.count == 0) {
+                
+                // whole page should become for sale stuff.. and header should say no WTBs
+                
                 if (!self.topLabel && !self.bottomLabel) {
                     self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                     self.topLabel.textAlignment = NSTextAlignmentCenter;
-                    [self.topLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:20]];
+                    [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
                     self.topLabel.numberOfLines = 1;
                     self.topLabel.textColor = [UIColor lightGrayColor];
-                    self.topLabel.text = @"No WTBs!";
+                    self.topLabel.text = @"No WTBs";
                     [self.view addSubview:self.topLabel];
                     
                     self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+90, 250, 200)];
                     self.bottomLabel.textAlignment = NSTextAlignmentCenter;
-                    [self.bottomLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:17]];
+                    [self.bottomLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:17]];
                     self.bottomLabel.numberOfLines = 0;
                     self.bottomLabel.textColor = [UIColor lightGrayColor];
                     self.bottomLabel.text = @"Create WTBs by hitting the + icon so we can suggest relevant products to buy right now from sellers on Bump";
                     [self.view addSubview:self.bottomLabel];
                 }
                 else{
-                    self.topLabel.text = @"No WTBs!";
+                    self.topLabel.text = @"No WTBs";
                     self.bottomLabel.text = @"Create WTBs by hitting the + icon so we can suggest relevant products to buy right now from sellers on Bump";
                     
                     [self.topLabel setHidden:NO];
@@ -118,12 +128,13 @@
                 return;
             }
         
-            NSLog(@"got WTBs: %u", objects.count);
+            NSLog(@"got WTBs: %lu", objects.count);
             
             int count = (int)[objects count];
             __block int WTBCheck = 0;
             self.skipped = count;
-            [self.wtbArray removeAllObjects];
+            NSMutableArray *wtbHoldingArray = [NSMutableArray array];
+//            [self.wtbArray removeAllObjects];
             
             //get keywords for each WTB and find a WTS that has a good match
             for (PFObject *WTB in objects) {
@@ -162,15 +173,8 @@
                         NSArray *matches = [WTB objectForKey:@"buyNow"];
                         
                         if (matches.count > 0) {
-                            [self.wtbArray addObject:WTB];
-//                            [WTB saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                                if (succeeded) {
-//                                    NSLog(@"saved WTB!");
-//                                }
-//                                else{
-//                                    NSLog(@"error saving WTB %@", error);
-//                                }
-//                            }];
+//                            [self.wtbArray addObject:WTB];
+                            [wtbHoldingArray addObject:WTB];
                         }
 
                         if (count == WTBCheck) {
@@ -180,7 +184,7 @@
                             NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc]
                                                                 initWithKey: @"createdAt" ascending: NO];
                             
-                            NSArray *sortedArray = [self.wtbArray sortedArrayUsingDescriptors: [NSArray arrayWithObject:sortDescriptor]];
+                            NSArray *sortedArray = [wtbHoldingArray sortedArrayUsingDescriptors: [NSArray arrayWithObject:sortDescriptor]];
                             
                             [self.wtbArray removeAllObjects];
                             [self.wtbArray addObjectsFromArray:sortedArray];
@@ -190,7 +194,7 @@
                                 if (!self.topLabel && !self.bottomLabel) {
                                     self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                                     self.topLabel.textAlignment = NSTextAlignmentCenter;
-                                    [self.topLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:18]];
+                                    [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:18]];
                                     self.topLabel.numberOfLines = 1;
                                     self.topLabel.textColor = [UIColor lightGrayColor];
                                     self.topLabel.text = @"No recommended items";
@@ -198,7 +202,7 @@
                                     
                                     self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+60, 250, 200)];
                                     self.bottomLabel.textAlignment = NSTextAlignmentCenter;
-                                    [self.bottomLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:15]];
+                                    [self.bottomLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:15]];
                                     self.bottomLabel.numberOfLines = 0;
                                     self.bottomLabel.textColor = [UIColor lightGrayColor];
                                     self.bottomLabel.text = @"Check back soon for recommended products based on your WTBs - In the meantime tap above to browse featured items for sale";
@@ -235,10 +239,10 @@
 }
 
 -(void)infiniteloadWTBs{
-    if (self.pullFinished == NO) {
+    if (self.pullFinished == NO || self.infinFinished == NO) {
         return;
     }
-    
+    NSLog(@"INFINITE LOADING");
     self.infinFinished = NO;
     self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self.infiniteQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
@@ -255,7 +259,7 @@
                 self.infinFinished = YES;
                 return;
             }
-            NSLog(@"infinite: got %u WTBs", objects.count);
+//            NSLog(@"infinite: got %u WTBs", objects.count);
             
             int count = (int)[objects count];
             self.skipped = self.skipped + count;
@@ -285,7 +289,7 @@
                             NSArray* result = [set1 allObjects];
                             
                             //calc 70% of WTB keyword counts
-                            float sixty = WTBKeywords.count*0.7;
+                            float sixty = WTBKeywords.count*0.9;
 //                            NSLog(@" float %f", sixty);
                             int roundedFloat = roundf(sixty);
 //                            NSLog(@"rounded float %d", roundedFloat);
@@ -342,9 +346,8 @@
         cell = [[RecommendCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
     }
     
-    NSLog(@"array of wtbs %@", self.wtbArray);
-    
     PFObject *WTB = [self.wtbArray objectAtIndex:indexPath.row];
+
     self.currentIndexPath = indexPath;
     
     cell.wtbTitle.text = [WTB objectForKey:@"title"];
@@ -504,7 +507,7 @@ numberOfRowsInSection:(NSInteger)section
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -514,14 +517,14 @@ numberOfRowsInSection:(NSInteger)section
 -(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
     if (section == 0) {
         UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.frame.size.width, 70)];
+        [view setBackgroundColor:[UIColor colorWithWhite:1.0 alpha:0.9]];
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake((tableView.frame.size.width/2)-105, 26, 250, 18)];
-        [label setFont:[UIFont fontWithName:@"AvenirNext-Medium" size:13]];
+        [label setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
         label.text = @"Tap to browse featured items for sale";
         label.textAlignment = NSTextAlignmentCenter;
         label.textColor = [UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0];
         [view addSubview:label];
 //        label.center = view.center;
-        [view setBackgroundColor:[UIColor whiteColor]];
         
         UIImageView *imageView = [[UIImageView alloc]initWithFrame:CGRectMake((label.frame.origin.x-15), 26, 15, 15)];
         [imageView setImage:[UIImage imageNamed:@"cartBlue"]];

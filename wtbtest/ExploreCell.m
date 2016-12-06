@@ -18,6 +18,9 @@
     self.titleLabel.minimumScaleFactor=0.5;
     
     self.titleLabel.numberOfLines = 2;
+    
+    self.priceLabel.adjustsFontSizeToFitWidth = YES;
+    self.priceLabel.minimumScaleFactor=0.5;
 }
 
 @end

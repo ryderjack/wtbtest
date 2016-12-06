@@ -13,6 +13,8 @@
 
 @protocol FilterDelegate <NSObject>
 - (void)filtersReturned:(NSMutableArray *)filters;
+- (void)noChange;
+
 @end
 
 @interface FilterVC : UITableViewController

@@ -8,6 +8,7 @@
 
 #import "MessagesTutorial.h"
 #import <Parse/Parse.h>
+#import "CreateViewController.h"
 
 @interface MessagesTutorial ()
 
@@ -30,6 +31,11 @@
         self.explainLabel.text = @"We’re working with a small group of sellers to recommend relevant items based on your WTBs";
         self.heroImageView.image = [UIImage imageNamed:@"sellerProfile"];
     }
+    else if (self.introMode == YES){
+        self.titleLabel.text = @"How does it work";
+        self.explainLabel.text = @"Create listings for items you want to buy. Got something to sell? Find someone that wants to buy it and send them a message!";
+        self.heroImageView.image = [UIImage imageNamed:@"yeezy"];
+    }
     else{
         self.titleLabel.text = @"How to sell on Bump";
         self.explainLabel.text = @"On Bump, sellers send buyers an offer to buy their stuff. Tap the tag icon to send an offer, pictures & more!";
@@ -49,7 +55,18 @@
     }
     else if (self.progressNumber == 2) {
         //goto final page
-        [self setupPageThree];
+        if (self.introMode == YES){
+            PFUser *current = [PFUser currentUser];
+            [current setObject:@"YES" forKey:@"completedIntroTutorial"];
+            [current saveInBackground];
+            
+            CreateViewController *vc = [[CreateViewController alloc]init];
+            vc.introMode = YES;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else{
+            [self setupPageThree];
+        }
     }
     else if (self.progressNumber == 3) {
         //dismiss
@@ -86,6 +103,12 @@
         self.titleLabel.text = @"Suggested Items";
         self.explainLabel.text = @"Tap on the cart to view suggested items based on what you want to buy on Bump";
         self.heroImageView.image = [UIImage imageNamed:@"cartTab"];
+    }
+    else if (self.introMode == YES){
+        [self.progressButton setTitle:@"Create a WTB" forState:UIControlStateNormal];
+        self.titleLabel.text = @"Suggested Items";
+        self.explainLabel.text = @"Bump uses your wanted items to show you relevant products that can be purchased within the app";
+        self.heroImageView.image = [UIImage imageNamed:@"buyNowTut"];
     }
     else{
         self.titleLabel.text = @"Send an offer";
@@ -175,6 +198,12 @@
 }
 - (IBAction)cancelPressed:(id)sender {
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [self.navigationController.navigationBar setHidden:YES];
 }
 
 @end

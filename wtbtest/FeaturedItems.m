@@ -20,9 +20,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.title = @"Featured";
+    self.title = @"F E A T U R E D";
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -71,7 +71,7 @@
     [featuredQuery whereKey:@"feature" equalTo:@"YES"];
     [featuredQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            NSLog(@"found %lu featured items", objects.count);
+//            NSLog(@"found %lu featured items", objects.count);
             
             [self.listings removeAllObjects];
             [self.listings addObjectsFromArray:objects];
@@ -84,11 +84,11 @@
                 if (objects) {
                     for (PFObject *listing in objects) {
                         if (![self.listings containsObject:listing]) {
-                            NSLog(@"not already there so add");
+//                            NSLog(@"not already there so add");
                             [self.listings addObject:listing];
                         }
                         else{
-                            NSLog(@"listing already featured");
+//                            NSLog(@"listing already featured");
                         }
                     }
                     [self.collectionView reloadData];

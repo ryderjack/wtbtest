@@ -19,11 +19,11 @@
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    self.navigationItem.title = @"Settings";
+    self.navigationItem.title = @"S E T T I N G S";
     
     self.nameCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.emailCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -353,7 +353,7 @@
     UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
     
     header.textLabel.textColor = [UIColor grayColor];
-    header.textLabel.font = [UIFont fontWithName:@"AvenirNext-Regular" size:12];
+    header.textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
     CGRect headerFrame = header.frame;
     header.textLabel.frame = headerFrame;
     header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];

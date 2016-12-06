@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 
 @interface MessagesTutorial : UIViewController
+
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *heroImageView;
 @property (weak, nonatomic) IBOutlet UILabel *explainLabel;
@@ -18,5 +19,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *crossButton;
 @property (nonatomic) BOOL sellerMode;
 @property (nonatomic) BOOL fromMessageVC;
+@property (nonatomic) BOOL introMode;
 
 @end

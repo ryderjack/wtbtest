@@ -26,9 +26,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -36,7 +33,7 @@
     UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, -30, self.view.frame.size.width, 30)];
     [footerView setBackgroundColor:self.tableView.backgroundColor];
     UILabel *versionLabel = [[UILabel alloc]initWithFrame:CGRectMake(20, 0, 50, 20)];
-    [versionLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:12]];
+    [versionLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:12]];
     versionLabel.textColor = [UIColor lightGrayColor];
     PFInstallation *thisInstall = [PFInstallation currentInstallation];
     versionLabel.text = [NSString stringWithFormat:@"%@", [thisInstall objectForKey:@"appVersion"]];
@@ -50,6 +47,11 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
     self.navigationItem.title = [NSString stringWithFormat:@"%@", [PFUser currentUser].username];
     [Flurry logEvent:@"Profile_Tapped"];
     

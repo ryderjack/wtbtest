@@ -22,8 +22,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"For Sale";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    self.navigationItem.title = @"S E L L I N G";
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -99,10 +99,12 @@
     self.infoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -139,7 +141,18 @@
             [self.imageViewTwo loadInBackground];
             
             if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
+                self.soldLabel.text = @"Sold";
                 [self.soldLabel setHidden:NO];
+                
+                [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
+                [self.soldCheckImageVoew setHidden:NO];
+            }
+            else if([[self.listingObject objectForKey:@"feature"]isEqualToString:@"YES"]){
+                //check if featured
+                self.soldLabel.text = @"Featured";
+                [self.soldLabel setHidden:NO];
+                
+                [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"featuredCheck"]];
                 [self.soldCheckImageVoew setHidden:NO];
             }
             
@@ -455,13 +468,20 @@
                                               delay:0
                                             options:UIViewAnimationOptionCurveEaseIn
                                          animations:^{
-                                             self.soldLabel.alpha = 0.0;
-                                             self.soldCheckImageVoew.alpha = 0.0;
-
+                                             if([[self.listingObject objectForKey:@"feature"]isEqualToString:@"YES"]){
+                                                 self.soldLabel.text = @"Featured";
+                                                 [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"featuredCheck"]];
+                                             }
+                                             else{
+                                                 self.soldLabel.alpha = 0.0;
+                                                 self.soldCheckImageVoew.alpha = 0.0;
+                                             }
                                          }
                                          completion:^(BOOL finished) {
-                                             [self.soldLabel setHidden:YES];
-                                             [self.soldCheckImageVoew setHidden:YES];
+                                             if(![[self.listingObject objectForKey:@"feature"]isEqualToString:@"YES"]){
+                                                 [self.soldLabel setHidden:YES];
+                                                 [self.soldCheckImageVoew setHidden:YES];
+                                             }
                                          }];
                     }
                 }];
@@ -482,6 +502,9 @@
                             //unhide label
                             self.soldLabel.alpha = 0.0;
                             self.soldCheckImageVoew.alpha = 0.0;
+                            
+                            self.soldLabel.text = @"Sold";
+                            [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
                             
                             [self.soldLabel setHidden:NO];
                             [self.soldCheckImageVoew setHidden:NO];
@@ -671,6 +694,12 @@
     
     NSString *possID = @"";
     NSString *otherId = @"";
+    NSString *descr = [self.listingObject objectForKey:@"description"];
+    
+    if (descr.length > 25) {
+        descr = [descr substringToIndex:25];
+        descr = [NSString stringWithFormat:@"%@..", descr];
+    }
     
     if (self.pureWTS == YES) {
         //no WTB so use WTS to create convo ID
@@ -699,7 +728,7 @@
             vc.otherUser = [object objectForKey:@"sellerUser"];
             vc.otherUserName = [[object objectForKey:@"sellerUser"]username];
             vc.messageSellerPressed = YES;
-            vc.sellerItemTitle = [self.listingObject objectForKey:@"description"];
+            vc.sellerItemTitle = descr;
             vc.userIsBuyer = YES;
             
             if (self.pureWTS == YES) {
@@ -749,7 +778,7 @@
                     vc.otherUser = [self.listingObject objectForKey:@"sellerUser"];
                     vc.otherUserName = [[self.listingObject objectForKey:@"sellerUser"]username];
                     vc.messageSellerPressed = YES;
-                    vc.sellerItemTitle = [self.listingObject objectForKey:@"description"];
+                    vc.sellerItemTitle = descr;
                     vc.userIsBuyer = YES;
                     if (self.pureWTS == YES) {
                         vc.pureWTS = YES;
@@ -773,6 +802,7 @@
 - (IBAction)trustedSellerPressed:(id)sender {
     UserProfileController *vc = [[UserProfileController alloc]init];
     vc.user = self.seller;
+    vc.saleMode = YES;
     [self.navigationController pushViewController:vc animated:YES];
 }
 -(void)dismissVC{

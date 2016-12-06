@@ -16,6 +16,7 @@
 #import <ParseFacebookUtilsV4/PFFacebookUtils.h>
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import "AppConstant.h"
+#import "UserProfileController.h"
 
 @interface ExploreVC ()
 
@@ -29,14 +30,24 @@
     [super viewDidLoad];
     [self.noresultsLabel setHidden:YES];
     [self.noResultsImageView setHidden:YES];
+    [self.filterButton setHidden:YES];
+    [self.filterBGView setHidden:YES];
+    
+    self.filterButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+    self.filterButton.titleLabel.minimumScaleFactor=0.5;
     
     self.searchString = @"";
     self.searchEnabled = NO;
     
-    self.navigationItem.title = @"Bump";
+    self.navigationItem.title = @"W A N T E D";
     
-    UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"searchBarIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(searchPressed)];
+    UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"searchBarButton"] style:UIBarButtonItemStylePlain target:self action:@selector(searchPressed)];
     self.navigationItem.leftBarButtonItem = searchButton;
+    
+    UIBarButtonItem *filterBarButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"filterBarIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(filterPressed:)];
+    self.navigationItem.rightBarButtonItem = filterBarButton;
+    
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     //collection view/cell setup
     [self.collectionView registerClass:[ExploreCell class] forCellWithReuseIdentifier:@"Cell"];
@@ -59,7 +70,7 @@
         [flowLayout setItemSize:CGSizeMake((self.view.frame.size.width/2)-40, 300)];
     }
     else{
-        [flowLayout setItemSize:CGSizeMake(175, 300)]; //iPhone 6 specific
+        [flowLayout setItemSize:CGSizeMake(175, 254)]; //iPhone 6 specific
     }
     [flowLayout setMinimumInteritemSpacing:0];
     [flowLayout setMinimumLineSpacing:8.0];
@@ -88,7 +99,7 @@
     self.filtersTapped = NO;
     
     // set searchbar font
-    NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:13],
+    NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                       NSFontAttributeName, nil];
     [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:searchAttributes];
     
@@ -164,6 +175,21 @@
         }
     }
     self.uselessWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", nil];
+
+    NSString *appVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+    
+    if (![appVersion isEqualToString:@"1131"]) { ///////////////////////////////////////////////////////////////////////////////////////////////UPDATE
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:@"We've just made it even easier for you to find items you want - update now!" preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            
+        }]];
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
+                                                        @"itms-apps://itunes.apple.com/app/id1096047233"]];
+        }]];
+        [self presentViewController:alertView animated:YES completion:nil];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -197,14 +223,14 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-HeavyItalic" size:17],
-                                    NSFontAttributeName, [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0], NSForegroundColorAttributeName,  nil];
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+                                    NSFontAttributeName, [UIColor blackColor], NSForegroundColorAttributeName,  nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     if (![PFUser currentUser]) {
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
         NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
-        [self presentViewController:navController animated:YES completion:nil];
+        [self presentViewController:navController animated:NO completion:nil];
     }
     else{
         self.currency = [[PFUser currentUser]objectForKey:@"currency"];        
@@ -224,17 +250,22 @@
     }
     if (!self.pullQuery) {
         self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
+        [self queryParsePull];
     }
     
-    if (self.pullFinished == YES) {
-        if (self.listingTapped == NO) {
-            [self queryParsePull];
-        }
-    }
+//    if (self.pullFinished == YES) {
+//        if (self.listingTapped == NO) {
+//            [self queryParsePull];
+//        }
+//    }
     
     if (self.searchEnabled == YES) {
         [self.searchController.searchBar setHidden:NO];
     }
+    
+    [self.infiniteQuery cancel];
+    [self.collectionView.infiniteScrollingView stopAnimating];
+    self.infinFinished = YES;
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
@@ -251,7 +282,11 @@
     
     [self.collectionView.infiniteScrollingView stopAnimating];
     
-    if (self.searchEnabled == YES && self.filtersTapped == NO && self.listingTapped == NO) {
+    if (self.userPressed == YES) {
+        self.userPressed = NO;
+        NSLog(@"just searched for a user, do nothing");
+    }
+    else if (self.searchEnabled == YES && self.filtersTapped == NO && self.listingTapped == NO) {
         NSLog(@"about to call search pressed");
         self.searchShowing = NO;
         [self searchPressed];
@@ -266,14 +301,6 @@
     self.filtersTapped = NO;
     
     [Flurry logEvent:@"Explore_Tapped"];
-    
-//    //upon first open show 'How it works' VC modally
-//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"showHowWorks"])
-//    {
-//        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"showHowWorks"];
-//        ExplainViewController *vc = [[ExplainViewController alloc]init];
-//        [self presentViewController:vc animated:YES completion:nil];
-//    }
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -340,10 +367,25 @@
     else if([condition isEqualToString:@"Used"]){
         [cell.conditionView setImage:[UIImage imageNamed:@"UsedImg"]];
     }
+    NSString *sizeNoUK = [[listing objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
+    sizeNoUK = [sizeNoUK stringByReplacingOccurrencesOfString:@" " withString:@""];
     
-    if ([[listing objectForKey:@"sizeLabel"] isEqualToString:@"One size"]) {
-        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"sizeLabel"]];
-    }else{
+    if ([sizeNoUK isEqualToString:@"One size"]) {
+        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
+    }
+    else if ([sizeNoUK isEqualToString:@"S"]){
+        cell.sizeLabel.text = @"Small";
+    }
+    else if ([sizeNoUK isEqualToString:@"M"]){
+        cell.sizeLabel.text = @"Medium";
+    }
+    else if ([sizeNoUK isEqualToString:@"L"]){
+        cell.sizeLabel.text = @"Large";
+    }
+    else if ([[listing objectForKey:@"category"]isEqualToString:@"Clothing"]){
+        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
+    }
+    else{
         cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"sizeLabel"]];
     }
     
@@ -386,7 +428,6 @@
     __block NSMutableArray *wordsToSearch = [NSMutableArray array];
     
     if (self.searchEnabled == YES) {
-        
         NSArray *searchWords = [self.searchString componentsSeparatedByString:@" "];
         [wordsToSearch addObjectsFromArray:searchWords];
         
@@ -420,13 +461,14 @@
     }];
 }
 -(void)queryParsePull{
+    NSLog(@"pulling!");
     self.pullFinished = NO;
     self.pullQuery.limit = 12;
     [self setupPullQuery];
     __block NSMutableArray *wordsToSearch = [NSMutableArray array];
     
     if (self.searchEnabled == YES) {
-        
+        NSLog(@"search enabled!! in pull query");
         NSArray *searchWords = [self.searchString componentsSeparatedByString:@" "];
         [wordsToSearch addObjectsFromArray:searchWords];
         
@@ -464,6 +506,27 @@
             [self.collectionView reloadData];
             [self.collectionView.pullToRefreshView stopAnimating];
             self.pullFinished = YES;
+
+            if (self.shiftDown == YES) {
+                self.shiftDown = NO;
+                NSLog(@"shift down");
+                [self.collectionView setContentOffset:CGPointMake(0, -800) animated:NO];
+            }
+            else if (self.shiftDown == NO && self.searchEnabled == YES){
+                NSLog(@"set it to 108");
+                [self.collectionView setContentOffset:CGPointMake(0,-108) animated:NO];
+            }
+            else if (self.filterMove == YES && self.searchEnabled == YES) {
+                self.filterMove = NO;
+                NSLog(@"filter down");
+                [self.collectionView setContentOffset:CGPointMake(0,-108) animated:NO];
+            }
+//            else if(self.searchEnabled == NO){
+//                [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+//                                            atScrollPosition:UICollectionViewScrollPositionTop
+//                                                    animated:YES];
+ 
+//            }
         }
         else{
             NSLog(@"error on pull %@", error);
@@ -565,21 +628,48 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 
+-(void)noChange{
+    if (self.filtersArray > 0) {
+        self.filterButton.titleLabel.text = [NSString stringWithFormat:@"F I L T E R S  %lu",self.filtersArray.count];
+    }
+}
+
 -(void)filtersReturned:(NSMutableArray *)filters{
+    NSLog(@"return");
     self.filtersTapped = YES;
-    
+
     self.filtersArray = filters;
     if (self.filtersArray.count > 0) {
-        [self.filterButton setImage:[UIImage imageNamed:@"filterOn"] forState:UIControlStateNormal];
+//        [self.filterButton setImage:[UIImage imageNamed:@"filterOn"] forState:UIControlStateNormal];
+//        [self.filterButton.titleLabel setTextColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
+        NSLog(@"got some filters brah %lu", self.filtersArray.count);
+        self.filterButton.titleLabel.text = [NSString stringWithFormat:@"F I L T E R S  %lu",self.filtersArray.count];
+        self.navigationItem.rightBarButtonItem.tintColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
+        [self.filterButton setHidden:NO];
+        [self.filterBGView setHidden:NO];
+    }
+    else if (self.searchEnabled == YES){
+        [self.filterButton setHidden:NO];
+        [self.filterBGView setHidden:NO];
+        if (self.filtersArray.count > 0) {
+            self.filterButton.titleLabel.text = [NSString stringWithFormat:@"F I L T E R S  %lu",self.filtersArray.count];
+        }
     }
     else{
-        [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
+//        [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
+        self.navigationItem.rightBarButtonItem.tintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+        [self.filterButton setHidden:YES];
+        [self.filterBGView setHidden:YES];
     }
     self.lastInfinSkipped = 0;
     NSLog(@"filters array in explore %@", self.filtersArray);
-    //rest queries to remove constraints
+    //reset queries to remove constraints
     self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
+    self.filterMove = YES;
+    [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+                                                 atScrollPosition:UICollectionViewScrollPositionTop
+                                                         animated:NO];
     [self queryParsePull];
 }
 
@@ -865,6 +955,7 @@
     
     ListingController *vc = [[ListingController alloc]init];
     vc.listingObject = selected;
+
     if (self.searchEnabled == YES) {
         [self.searchController.searchBar setHidden:YES];
     }
@@ -873,9 +964,13 @@
 }
 
 -(void)searchPressed{
+
+    self.pullFinished = YES;
     // Create the search results view controller and use it for the UISearchController.
-    self.resultsController = [[searchResultsController alloc]init];
-    self.resultsController.delegate = self;
+    if (!self.resultsController) {
+        self.resultsController = [[searchResultsController alloc]init];
+        self.resultsController.delegate = self;
+    }
     
     // Create the search controller and make it perform the results updating.
     if (!self.searchController) {
@@ -883,16 +978,17 @@
         
         self.searchController = [[UISearchController alloc] initWithSearchResultsController:self.resultsController];
         self.searchController.delegate = self;
-        
+
         self.searchController.searchResultsUpdater = self.resultsController;
         self.searchController.hidesNavigationBarDuringPresentation = NO;
         self.searchController.dimsBackgroundDuringPresentation = NO;
         self.searchController.searchBar.searchBarStyle = UISearchBarStyleDefault;
         self.searchController.searchBar.autocapitalizationType = UITextAutocapitalizationTypeWords;
-        self.searchController.searchBar.delegate = self;
         self.searchController.searchBar.placeholder = @"Search for stuff you're selling";
         self.searchController.searchBar.barTintColor = [UIColor blackColor];
         self.searchController.searchBar.tintColor = [UIColor whiteColor];
+        self.searchController.searchBar.delegate = self;
+        self.searchController.searchBar.scopeButtonTitles = @[@"Wanted items", @"People"];
         
         //change cursor colour
         for ( UIView *v in [self.searchController.searchBar.subviews.firstObject subviews] ){
@@ -901,27 +997,33 @@
                 break;
             }
         }
-        
         [self.searchController.searchBar setTranslucent:YES];
-        
-        // reset filters
-        [self.filtersArray removeAllObjects];
-        [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
     }
     else{
-        NSLog(@"already got a search controller");
+        self.searchController.searchBar.selectedScopeButtonIndex = 0;
     }
     
-    NSLog(self.listingTapped ? @"yep listing tapped in pressed": @"nope listing tapped");
+    self.searchController.searchBar.placeholder = @"Search for stuff you're selling";
     
+    // reset filters
+    [self.filtersArray removeAllObjects];
+    self.filterButton.titleLabel.text = @"F I L T E R S";
+//    [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
+
     if (self.searchController.isActive == NO) {
         // Present the view controller.
-        [self presentViewController:self.searchController animated:YES completion:nil];
+        [self presentViewController:self.searchController animated:YES completion:^{
+            [self.filterButton setHidden:NO];
+            [self.filterBGView setHidden:NO];
+            [self.collectionView setContentOffset:CGPointMake(0,0) animated:NO];
+        }];
         self.resultsShowing = YES;
         self.searchShowing = YES;
     }
     
     self.searchEnabled = YES;
+    [self.filterButton setHidden:NO];
+    [self.filterBGView setHidden:NO];
 }
 
 -(void)ShouldShowSearch{
@@ -949,76 +1051,143 @@
         [self.searchController dismissViewControllerAnimated:NO completion:nil];
     }
 }
+
+-(void)userTapped:(PFUser *)user{
+    
+    UserProfileController *vc = [[UserProfileController alloc]init];
+    vc.user = user;
+    vc.fromSearch = YES;
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    self.userPressed = YES;
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
 -(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
     if (self.searchEnabled == YES) {
         self.searchString = searchBar.text;
-
-        //clear search array
-        [self.searchResults removeAllObjects];
-        [self.collectionView reloadData];
         
-        [self.noresultsLabel setHidden:YES];
-        [self.noResultsImageView setHidden:YES];
-        
-        NSMutableArray *history = [[NSMutableArray alloc]init];
-        
-        //save the search term and if there's 10 or more items in the search array delete the oldest and add the latest term
-        if (![self.searchString isEqualToString:@""]) {
+        if (self.searchController.searchBar.selectedScopeButtonIndex == 0){
+            //clear search array
+            [self.searchResults removeAllObjects];
+            [self.collectionView reloadData];
             
-            // if haven't searched before create empty array to avoid crashing
-            if ([[PFUser currentUser] objectForKey:@"searches"]) {
-                history = [[PFUser currentUser] objectForKey:@"searches"];
+            [self.noresultsLabel setHidden:YES];
+            [self.noResultsImageView setHidden:YES];
+            
+            NSMutableArray *history = [[NSMutableArray alloc]init];
+            
+            //save the search term and if there's 10 or more items in the search array delete the oldest and add the latest term
+            if (![self.searchString isEqualToString:@""]) {
+                
+                // if haven't searched before create empty array to avoid crashing
+                if ([[PFUser currentUser] objectForKey:@"searches"]) {
+                    history = [[PFUser currentUser] objectForKey:@"searches"];
+                }
+                else{
+                    history = [NSMutableArray arrayWithArray:@[]];
+                }
+                
+                if (history.count >= 15) {
+                    [history removeObjectAtIndex:0];
+                }
+                
+                if (![[history lastObject] isEqualToString:self.searchString]) {
+                    [history addObject:self.searchString];
+                }
+                
+                [[PFUser currentUser] setObject:history forKey:@"searches"];
+                [[PFUser currentUser] saveInBackground];
+            }
+            
+            //update results controller UI since only updated via query every time search button pressed
+            NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.resultsController.itemResults];
+            
+            //        if (![searchesList containsObject:self.searchString]) {
+            //            [searchesList insertObject:self.searchString atIndex:0];
+            //        }
+            
+            if (searchesList.count > 0) {
+                if (![searchesList[0] isEqualToString:self.searchString]) {
+                    [searchesList insertObject:self.searchString atIndex:0];
+                }
             }
             else{
-                history = [NSMutableArray arrayWithArray:@[]];
-            }
-            
-            if (history.count >= 15) {
-                [history removeObjectAtIndex:0];
-            }
-            
-            if (![[history lastObject] isEqualToString:self.searchString]) {
-                [history addObject:self.searchString];
-            }
-            
-            [[PFUser currentUser] setObject:history forKey:@"searches"];
-            [[PFUser currentUser] saveEventually];
-        }
-        
-        //update results controller UI since only updated via query every time search button pressed
-        NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.resultsController.allResults];
-        
-//        if (![searchesList containsObject:self.searchString]) {
-//            [searchesList insertObject:self.searchString atIndex:0];
-//        }
-        
-        if (searchesList.count > 0) {
-            if (![searchesList[0] isEqualToString:self.searchString]) {
                 [searchesList insertObject:self.searchString atIndex:0];
             }
+            
+            self.resultsController.itemResults = searchesList;
+            [self.resultsController.tableView reloadData];
+            self.searchString = [searchBar.text lowercaseString];
+            
+            //query
+            [self.searchController.searchResultsController.view setHidden:YES];
+            self.shiftDown = YES;
+            self.resultsShowing = NO;
+            [self queryParsePull];
         }
         else{
-            [searchesList insertObject:self.searchString atIndex:0];
+            //user entered
+            NSLog(@"entered username");
         }
+    }
+}
+
+-(void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
+    NSLog(@"search this string %@", self.searchController.searchBar.text);
+    if (self.searchController.searchBar.selectedScopeButtonIndex == 1){
         
-        self.resultsController.allResults = searchesList;
-        [self.resultsController.tableView reloadData];
-        self.searchString = [searchBar.text lowercaseString];
-        
-        //query
-        [self.searchController.searchResultsController.view setHidden:YES];
-        self.resultsShowing = NO;
-        [self queryParsePull];
+        PFQuery *userQueryForRand = [PFUser query];
+        [userQueryForRand whereKey:@"username" containsString:[self.searchController.searchBar.text lowercaseString]];
+        [userQueryForRand whereKey:@"completedReg" equalTo:@"YES"];
+        [userQueryForRand findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            if (objects) {
+                NSLog(@"users found %lu", objects.count);
+                if (objects.count == 0) {
+                    NSLog(@"oioi");
+                    if (!self.noUserLabel) {
+                        self.noUserLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
+                        self.noUserLabel.textAlignment = NSTextAlignmentCenter;
+                        self.noUserLabel.text = @"No users found";
+                        [self.noUserLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
+                        self.noUserLabel.numberOfLines = 1;
+                        self.noUserLabel.textColor = [UIColor lightGrayColor];
+                    }
+                    [[UIApplication sharedApplication].keyWindow addSubview:self.noUserLabel];
+                }
+                else{
+                    if (self.noUserLabel) {
+                        [self.noUserLabel removeFromSuperview];
+                    }
+                }
+                self.resultsController.userResults = objects;
+                self.resultsController.userSearch = YES;
+                [self.resultsController.tableView reloadData];
+            }
+            else{
+                NSLog(@"error getting users %@", error);
+            }
+        }];
     }
 }
 
 -(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
+    NSLog(@"cancel clicked");
+    [self.filterButton setHidden:YES];
+    [self.filterBGView setHidden:YES];
+    self.navigationItem.rightBarButtonItem.tintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+
+    if (self.noUserLabel) {
+        [self.noUserLabel removeFromSuperview];
+    }
+
+    self.resultsController.cancelClicked = YES;
+    
     self.searchEnabled = NO;
     self.searchShowing = NO;
     self.resultsShowing = NO;
     
     [self.searchResults removeAllObjects];
-    [self.collectionView setContentOffset:CGPointMake(0, -100) animated:NO];
+    [self.collectionView setContentOffset:CGPointMake(0, -108) animated:NO];
     [self.collectionView reloadData];
     
     if (self.results.count == 0) {
@@ -1032,7 +1201,8 @@
     
     // reset filters
     [self.filtersArray removeAllObjects];
-    [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
+    self.filterButton.titleLabel.text = @"F I L T E R S";
+//    [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
     
     // reset the skip count and the pull query
     int count = (int)[self.results count];
@@ -1041,17 +1211,47 @@
     self.pullQuery = nil;
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     
+    self.infiniteQuery = nil;
+    self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
+    
     [self queryParsePull];
 }
 
 -(void)favouriteTapped:(NSString *)favourite{
     if (self.searchEnabled == YES) {
+        NSLog(@"fave tapped");
         self.searchController.searchBar.text = favourite;
         [self.searchController.searchBar resignFirstResponder];
         self.searchString = [favourite lowercaseString];
         [self.pullQuery cancel];
         [self queryParsePull];
     }
+}
+
+-(void)searchBar:(UISearchBar *)searchBar selectedScopeButtonIndexDidChange:(NSInteger)selectedScope{
+    NSLog(@"changed");
+    if (self.noUserLabel) {
+        [self.noUserLabel removeFromSuperview];
+    }
+    self.searchController.searchBar.text = @"";
+    if (selectedScope == 1) {
+        //users selected
+        [self.searchController.searchBar becomeFirstResponder];
+        
+        self.searchController.searchBar.placeholder = @"Search for users";
+        [self.searchController.searchResultsController.view setHidden:NO];
+        NSLog(@"users selected");
+        self.resultsController.userSearch = YES;
+        self.resultsController.userResults = @[];
+    }
+    else{
+        NSLog(@"WTBs selected");
+        self.searchController.searchBar.placeholder = @"Search for stuff you're selling";
+        //WTBs selected
+        self.resultsController.userSearch = NO;
+    }
+    
+    [self.resultsController.tableView reloadData];
 }
 
 -(void)showError{

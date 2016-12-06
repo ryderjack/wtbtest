@@ -35,7 +35,7 @@
     self.WTBPressed = NO;
 
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -79,13 +79,18 @@
     
 //    NSLog(@"USER %@", self.user);
     
+    if (self.fromSearch == YES) {
+        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc]initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
+        self.navigationItem.leftBarButtonItem = cancelButton;
+    }
+    
     
     //weird behaviour - not getting latest data from MLab, cached????
     
     PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
     [trustedQuery whereKey:@"user" equalTo:self.user];
     [trustedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-        if (number == 1) {
+        if (number >= 1) {
             self.isSeller = YES;
             [self.checkImageView setHidden:NO];
         }
@@ -113,6 +118,9 @@
             
             UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
             self.navigationItem.rightBarButtonItem = addForSaleItem;
+        }
+        else if (self.saleMode == YES){
+            [self loadWTSListings];
         }
         else{
             [self.sellerSegmentControl setHidden:YES];
@@ -271,11 +279,20 @@
         if (!error) {
             if (objects.count > 0) {
                 self.forSaleArray = objects;
-                [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu For-Sale", objects.count] forSegmentAtIndex:1];
+                [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu Selling", objects.count] forSegmentAtIndex:1];
                 
                 if (self.forSalePressed == YES) {
                     [self.collectionView reloadData];
                     self.forSalePressed = NO;
+                }
+                else if (self.saleMode == YES){
+                    [self.collectionView reloadData];
+                    if (objects.count == 1) {
+                        self.numberLabel.text = @"1 item for sale";
+                    }
+                    else{
+                        self.numberLabel.text = [NSString stringWithFormat:@"%lu items for sale", objects.count];
+                    }
                 }
             }
             else{
@@ -299,11 +316,11 @@
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    if (self.sellerSegmentControl.selectedSegmentIndex == 0) {
-        return self.WTBArray.count;
+    if (self.sellerSegmentControl.selectedSegmentIndex == 1 || self.saleMode) {
+        return self.forSaleArray.count;
     }
     else{
-        return self.forSaleArray.count;
+        return self.WTBArray.count;
     }
 }
 
@@ -316,7 +333,10 @@
     
     PFObject *listingObject;
     
-    if (self.sellerSegmentControl.selectedSegmentIndex == 0) {
+    if (self.saleMode== YES) {
+        listingObject = [self.forSaleArray objectAtIndex:indexPath.row];
+    }
+    else if (self.sellerSegmentControl.selectedSegmentIndex == 0) {
         listingObject = [self.WTBArray objectAtIndex:indexPath.row];
     }
     else{
@@ -344,35 +364,32 @@
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+
+    PFObject *selected;
     
-//        if ([PFUser currentUser]==self.user) {
-//            //allow editing
-//            [self showAlertViewWithPath:indexPath];
-//        }
-//        else{
-            //goto listing if its live
-            PFObject *selected;
-            
-            if (self.sellerSegmentControl.selectedSegmentIndex == 0) {
-                selected = [self.WTBArray objectAtIndex:indexPath.item];
-                self.WTBPressed = YES;
-                ListingController *vc = [[ListingController alloc]init];
-                vc.listingObject = selected;
-                [self.navigationController pushViewController:vc animated:YES];
-            }
-            else{
-                selected = [self.forSaleArray objectAtIndex:indexPath.item];
-                self.forSalePressed = YES;
-                ForSaleListing *vc = [[ForSaleListing alloc]init];
-                vc.listingObject = selected;
-                NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-                [self presentViewController:nav animated:YES completion:nil];
-            }
-            
-//            if ([[selected objectForKey:@"status"] isEqualToString:@"live"]) {
-    
-//            }
-//        }
+    if (self.saleMode == YES) {
+        selected = [self.forSaleArray objectAtIndex:indexPath.item];
+        self.forSalePressed = YES;
+        ForSaleListing *vc = [[ForSaleListing alloc]init];
+        vc.listingObject = selected;
+        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+        [self presentViewController:nav animated:YES completion:nil];
+    }
+    else if (self.sellerSegmentControl.selectedSegmentIndex == 0) {
+        selected = [self.WTBArray objectAtIndex:indexPath.item];
+        self.WTBPressed = YES;
+        ListingController *vc = [[ListingController alloc]init];
+        vc.listingObject = selected;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else{
+        selected = [self.forSaleArray objectAtIndex:indexPath.item];
+        self.forSalePressed = YES;
+        ForSaleListing *vc = [[ForSaleListing alloc]init];
+        vc.listingObject = selected;
+        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+        [self presentViewController:nav animated:YES completion:nil];
+    }
 }
 
 -(void)showAlertViewWithPath:(NSIndexPath *)indexPath{
@@ -548,7 +565,7 @@
                         [deletedArray removeObjectAtIndex:indexPath.item];
                         self.forSaleArray = deletedArray;
                         [self.collectionView reloadData];
-                        [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu For-Sale", self.forSaleArray.count] forSegmentAtIndex:1];
+                        [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu Selling", self.forSaleArray.count] forSegmentAtIndex:1];
                     }
                 }];
             }]];
@@ -635,6 +652,10 @@
 }
 - (IBAction)sellerSegmentControlChanged:(id)sender {
     [self.collectionView reloadData];
+}
+
+-(void)dismissVC{
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end

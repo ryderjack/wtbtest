@@ -26,8 +26,8 @@
     self.starNumber = 0;
     self.warningLabel.text = @"";
     
-    self.navigationItem.title = @"Leave feedback";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    self.navigationItem.title = @"F E E D B A C K";
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     

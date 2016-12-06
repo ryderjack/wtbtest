@@ -21,8 +21,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"Create a WTB";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    self.navigationItem.title = @"C R E A T E";
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -38,6 +38,8 @@
     [self.secondCam setEnabled:NO];
     [self.thirdCam setEnabled:NO];
     [self.fourthCam setEnabled:NO];
+    
+    self.somethingChanged = NO;
     
     [self.firstDelete setHidden:YES];
     [self.secondDelete setHidden:YES];
@@ -78,11 +80,19 @@
     
     if (self.editFromListing == YES) {
         [self listingSetup];
-        self.resetButton.title = @"Delete";
-        self.resetButton.action = @selector(deleteListing);
+        
+        self.navigationItem.rightBarButtonItem = nil;
+        
+        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
+        self.navigationItem.leftBarButtonItem = cancelButton;
     }
     
-    self.navigationItem.rightBarButtonItem = self.resetButton;
+    if (self.introMode == YES) {
+        self.navigationItem.hidesBackButton = YES;
+    }
+    else{
+        self.navigationItem.rightBarButtonItem = self.resetButton;
+    }
     
     //add done button to number pad keyboard on pay field
     [self addDoneButton];
@@ -90,6 +100,10 @@
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
     self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
+    
+    if (![self.status isEqualToString:@"edit"]) {
+        [self useCurrentLoc];
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -125,13 +139,9 @@
         [self.navigationItem setRightBarButtonItems:nil animated:YES];
         [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     }
-    else{
+    else if(self.introMode != YES){
         self.navigationItem.rightBarButtonItem = self.resetButton;
         [Flurry logEvent:@"Create_Tapped"];
-    }
-    
-    if (![self.status isEqualToString:@"edit"]) {
-        [self useCurrentLoc];
     }
     
     if (self.shouldShowHUD == YES) {
@@ -157,7 +167,7 @@
         return 1;
     }
     else if (section == 2){
-        return 6;
+        return 5;
     }
     else if (section == 3){
         return 1;
@@ -194,10 +204,10 @@
         else if(indexPath.row == 3){
             return self.locCell;
         }
+//        else if(indexPath.row == 4){
+//            return self.deliveryCell;
+//        }
         else if(indexPath.row == 4){
-            return self.deliveryCell;
-        }
-        else if(indexPath.row == 5){
             return self.payCell;
         }
     }
@@ -222,24 +232,7 @@
         }
     }
     else if (indexPath.section ==2){
-        if(indexPath.row == 0){
-            return 44;
-        }
-        else if(indexPath.row == 1){
-            return 44;
-        }
-        else if(indexPath.row == 2){
-            return 44;
-        }
-        else if(indexPath.row == 3){
-            return 44;
-        }
-        else if(indexPath.row == 4){
-            return 44;
-        }
-        else if(indexPath.row == 5){
-            return 44;
-        }
+        return 44;
     }
     else if (indexPath.section ==3){
         return 105;
@@ -271,6 +264,8 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     
+    self.somethingChanged = YES;
+    
     [self removeKeyboard];
     
     if (indexPath.section ==2){
@@ -284,7 +279,6 @@
                 NSArray *selectedArray = [self.chooseCondition.text componentsSeparatedByString:@"."];
                 vc.holdingArray = [NSArray arrayWithArray:selectedArray];
             }
-            
             [self.navigationController pushViewController:vc animated:YES];
 
         }
@@ -368,19 +362,19 @@
                 [self.navigationController pushViewController:vc animated:YES];
             }
         }
-        else if(indexPath.row == 4){
-            SelectViewController *vc = [[SelectViewController alloc]init];
-            vc.delegate = self;
-            vc.setting = @"delivery";
-            self.selection = @"delivery";
-            
-            if (![self.chooseDelivery.text isEqualToString:@"select"]) {
-                NSArray *selectedArray = [self.chooseDelivery.text componentsSeparatedByString:@"."];
-                vc.holdingArray = [NSArray arrayWithArray:selectedArray];
-            }
-            
-            [self.navigationController pushViewController:vc animated:YES];
-        }
+//        else if(indexPath.row == 4){
+//            SelectViewController *vc = [[SelectViewController alloc]init];
+//            vc.delegate = self;
+//            vc.setting = @"delivery";
+//            self.selection = @"delivery";
+//            
+//            if (![self.chooseDelivery.text isEqualToString:@"select"]) {
+//                NSArray *selectedArray = [self.chooseDelivery.text componentsSeparatedByString:@"."];
+//                vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+//            }
+//            
+//            [self.navigationController pushViewController:vc animated:YES];
+//        }
     }
     else {
         [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
@@ -399,11 +393,21 @@
     UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
     
     header.textLabel.textColor = [UIColor grayColor];
-    header.textLabel.font = [UIFont fontWithName:@"AvenirNext-Regular" size:12];
+    header.textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
     CGRect headerFrame = header.frame;
     header.textLabel.frame = headerFrame;
     header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
 }
+
+//-(void)tableView:(UITableView *)tableView willDisplayFooterView:(UIView *)view forSection:(NSInteger)section{
+//    UITableViewHeaderFooterView *footer = (UITableViewHeaderFooterView *)view;
+//    
+//    footer.textLabel.textColor = [UIColor grayColor];
+//    footer.textLabel.font = [UIFont fontWithName:@"AvenirNext-Regular" size:12];
+//    CGRect footerFrame = footer.frame;
+//    footer.textLabel.frame = footerFrame;
+//    footer.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+//}
 
 - (UIView *) tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
 {
@@ -429,8 +433,12 @@
     }
 }
 -(NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section{
-    return @"";
-
+//    if (section == 0) {
+//        return @"Add extra details below";
+//    }
+//    else{
+        return @"";
+//    }
 }
 -(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
     if (section ==2 || section ==3 || section == 4) {
@@ -529,7 +537,15 @@
         
         return YES;
     }
-    
+    else if(textField == self.titleField){
+        if(range.length + range.location > textField.text.length)
+        {
+            return NO;
+        }
+        
+        NSUInteger newLength = [textField.text length] + [string length] - range.length;
+        return newLength <= 50;
+    }
     return YES;
 }
 -(void)alertSheet{
@@ -632,8 +648,8 @@
     squareCropperViewController.squareCropperDelegate = self;
     squareCropperViewController.backgroundColor = [UIColor whiteColor];
     squareCropperViewController.borderColor = [UIColor whiteColor];
-    squareCropperViewController.doneFont = [UIFont fontWithName:@"AvenirNext-Regular" size:18.0f];
-    squareCropperViewController.cancelFont = [UIFont fontWithName:@"AvenirNext-Regular" size:16.0f];
+    squareCropperViewController.doneFont = [UIFont fontWithName:@"PingFangSC-Regular" size:18.0f];
+    squareCropperViewController.cancelFont = [UIFont fontWithName:@"PingFangSC-Regular" size:16.0f];
     squareCropperViewController.excludedBackgroundColor = [UIColor blackColor];
     [self.navigationController presentViewController:squareCropperViewController animated:YES completion:nil];
 }
@@ -833,11 +849,17 @@
                     if ([self.sizesArray[0] isEqualToString:@"Any"]) {
                         self.chooseSize.text = @"Any";
                     }
+                    else if ([self.sizesArray[0] isEqualToString:@"XXL"] || [self.sizesArray[0] isEqualToString:@"XS"] || [self.sizesArray[0] isEqualToString:@"XXS"] || [self.sizesArray[0] isEqualToString:@"XL"] || [self.sizesArray[0] isEqualToString:@"S"] || [self.sizesArray[0] isEqualToString:@"M"] ||[self.sizesArray[0] isEqualToString:@"L"]){
+                        //its a clothing size
+                        self.chooseSize.text = [NSString stringWithFormat:@"%@",self.sizesArray[0]];
+                    }
                     else{
+                        //its a shoe size so show the country
                         self.chooseSize.text = [NSString stringWithFormat:@"UK %@",self.sizesArray[0]];
                     }
                 }
                 else{
+                    //not a string so probs a shoe size
                     self.chooseSize.text = [NSString stringWithFormat:@"UK %@",self.sizesArray[0]];
                 }
                 self.firstSize = [NSString stringWithFormat:@"%@",self.sizesArray[0]];
@@ -845,15 +867,35 @@
                 self.thirdSize = @"";
             }
             else if (self.sizesArray.count == 2){
-                self.chooseSize.text = [NSString stringWithFormat:@"UK %@/%@",self.sizesArray[0],self.sizesArray[1]];
+                if ([self.sizesArray[0] isKindOfClass:[NSString class]]) {
+                    if ([self.sizesArray[0] isEqualToString:@"XXL"] || [self.sizesArray[0] isEqualToString:@"XS"] || [self.sizesArray[0] isEqualToString:@"XXS"] || [self.sizesArray[0] isEqualToString:@"XL"] || [self.sizesArray[0] isEqualToString:@"S"] || [self.sizesArray[0] isEqualToString:@"M"] ||[self.sizesArray[0] isEqualToString:@"L"]){
+                        self.chooseSize.text = [NSString stringWithFormat:@"%@/%@",self.sizesArray[0],self.sizesArray[1]];
+                    }
+                    else{
+                        self.chooseSize.text = [NSString stringWithFormat:@"UK %@/%@",self.sizesArray[0],self.sizesArray[1]];
+                    }
+                }
+                else{
+                    self.chooseSize.text = [NSString stringWithFormat:@"UK %@/%@",self.sizesArray[0],self.sizesArray[1]];
+                }
                 
                 self.firstSize = [NSString stringWithFormat:@"%@",self.sizesArray[0]];
                 self.secondSize = [NSString stringWithFormat:@"%@",self.sizesArray[1]];
                 self.thirdSize = @"";
             }
             else if (self.sizesArray.count == 3){
-                self.chooseSize.text = [NSString stringWithFormat:@"UK %@/%@/%@",self.sizesArray[0],self.sizesArray[1],self.sizesArray[2]];
-                
+                if ([self.sizesArray[0] isKindOfClass:[NSString class]]) {
+                    if ([self.sizesArray[0] isEqualToString:@"XXL"] || [self.sizesArray[0] isEqualToString:@"XS"] || [self.sizesArray[0] isEqualToString:@"XXS"] || [self.sizesArray[0] isEqualToString:@"XL"] || [self.sizesArray[0] isEqualToString:@"S"] || [self.sizesArray[0] isEqualToString:@"M"] ||[self.sizesArray[0] isEqualToString:@"L"]){
+                        self.chooseSize.text = [NSString stringWithFormat:@"%@/%@/%@",self.sizesArray[0],self.sizesArray[1],self.sizesArray[2]];
+                    }
+                    else{
+                        self.chooseSize.text = [NSString stringWithFormat:@"UK %@/%@/%@",self.sizesArray[0],self.sizesArray[1],self.sizesArray[2]];
+                    }
+                }
+                else{
+                    self.chooseSize.text = [NSString stringWithFormat:@"UK %@/%@/%@",self.sizesArray[0],self.sizesArray[1],self.sizesArray[2]];
+                }
+            
                 self.firstSize = [NSString stringWithFormat:@"%@",self.sizesArray[0]];
                 self.secondSize = [NSString stringWithFormat:@"%@",self.sizesArray[1]];
                 self.thirdSize = [NSString stringWithFormat:@"%@",self.sizesArray[2]];
@@ -889,7 +931,7 @@
     [self.saveButton setEnabled:NO];
     [self removeKeyboard];
     
-    if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseDelivery.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
+    if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
         self.warningLabel.text = @"Fill out all the above fields";
         [self.saveButton setEnabled:YES];
     }
@@ -929,7 +971,7 @@
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
         
         //save keywords (minus useless words)
-        NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", nil];
+        NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", @"all",@"any", @"&",@"looking",@"size", @"buy", @"these", @"this", @"that", nil];
         NSString *title = [itemTitle lowercaseString];
         NSArray *strings = [title componentsSeparatedByString:@" "];
         NSMutableArray *mutableStrings = [NSMutableArray arrayWithArray:strings];
@@ -1216,6 +1258,10 @@
     self.camButtonTapped = 0;
     
     self.geopoint = nil;
+    
+    if (![self.status isEqualToString:@"edit"]) {
+        [self useCurrentLoc];
+    }
 }
 -(void)lastId:(ListingCompleteView *)controller didFinishEnteringItem:(NSString *)item{
     self.lastId = item;
@@ -1415,20 +1461,6 @@
     keyboardToolbar.items = @[flexBarButton, doneBarButton];
     self.payField.inputAccessoryView = keyboardToolbar;
 }
--(void)deleteListing{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your WTB?" preferredStyle:UIAlertControllerStyleAlert];
-    
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        
-    }]];
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-        [self.listing deleteInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            [self.navigationController popToRootViewControllerAnimated:YES];
-        }];
-    }]];
-    
-    [self presentViewController:alertView animated:YES completion:nil];
-}
 
 -(void)tagString:(NSString *)tag{
     //do nothing only for images shown in offer mode
@@ -1449,6 +1481,7 @@
     if (self.hudShowing == YES) {
         [self hidHUD];
     }
+    self.picker = nil;
 }
 
 -(void)showHUD{
@@ -1497,4 +1530,22 @@
     }];
 }
 
+-(void)dismissVC{
+    //only show warning if listing has been editing
+    if (self.somethingChanged == NO){
+        NSLog(@"nothing changed");
+        [self.navigationController popViewControllerAnimated:YES];
+    }
+    else{
+        NSLog(@"here");
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Leave this page?" message:@"Are you sure you want to leave? Your changes won't be saved!" preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Stay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }]];
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self.navigationController popViewControllerAnimated:YES];
+        }]];
+        [self presentViewController:alertView animated:YES completion:nil];
+    }
+}
 @end

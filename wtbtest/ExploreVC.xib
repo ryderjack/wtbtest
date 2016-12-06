@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1004" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
-        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="ExploreVC">
             <connections>
                 <outlet property="collectionView" destination="bab-Yf-eve" id="bNL-xA-4M6"/>
-                <outlet property="filterButton" destination="Nla-Xy-e7q" id="8FJ-c7-iYZ"/>
+                <outlet property="filterBGView" destination="rln-RO-uzd" id="mVG-7r-beg"/>
+                <outlet property="filterButton" destination="KaY-20-LO2" id="jvJ-P0-pyb"/>
                 <outlet property="noResultsImageView" destination="HCy-vN-vpg" id="yTi-3o-4Jg"/>
                 <outlet property="noresultsLabel" destination="gQD-c5-Rae" id="gsy-u2-nil"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
@@ -33,64 +33,53 @@
                         <outlet property="delegate" destination="-1" id="afX-n0-Yaf"/>
                     </connections>
                 </collectionView>
-                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Nla-Xy-e7q">
-                    <constraints>
-                        <constraint firstAttribute="width" secondItem="Nla-Xy-e7q" secondAttribute="height" multiplier="1:1" id="7sp-jh-abU"/>
-                    </constraints>
-                    <state key="normal" image="filterButton.png"/>
-                    <connections>
-                        <action selector="filterPressed:" destination="-1" eventType="touchUpInside" id="4Yy-74-lGL"/>
-                    </connections>
-                </button>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No results :(" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gQD-c5-Rae">
                     <constraints>
-                        <constraint firstAttribute="height" constant="70" id="3IS-gC-D1u"/>
-                        <constraint firstAttribute="height" constant="70" id="cD2-xB-eiz"/>
+                        <constraint firstAttribute="height" constant="70" id="kYG-DW-kdd"/>
                     </constraints>
-                    <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
+                    <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="17"/>
                     <color key="textColor" red="0.59215686270000001" green="0.59215686270000001" blue="0.59215686270000001" alpha="1" colorSpace="calibratedRGB"/>
                     <nil key="highlightedColor"/>
-                    <variation key="default">
-                        <mask key="constraints">
-                            <exclude reference="3IS-gC-D1u"/>
-                        </mask>
-                    </variation>
                 </label>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="arrowDown.png" translatesAutoresizingMaskIntoConstraints="NO" id="HCy-vN-vpg">
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="arrowDown.png" translatesAutoresizingMaskIntoConstraints="NO" id="HCy-vN-vpg"/>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="filterBG.png" translatesAutoresizingMaskIntoConstraints="NO" id="rln-RO-uzd">
                     <constraints>
-                        <constraint firstAttribute="width" secondItem="HCy-vN-vpg" secondAttribute="height" multiplier="1:1" id="6wj-9x-QYF"/>
+                        <constraint firstAttribute="width" constant="111" id="hcX-jt-Ifm"/>
+                        <constraint firstAttribute="height" constant="30" id="ulb-FN-MlD"/>
                     </constraints>
                 </imageView>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="KaY-20-LO2">
+                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="10"/>
+                    <state key="normal" title="F I L T E R S">
+                        <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="filterPressed:" destination="-1" eventType="touchUpInside" id="DQn-MP-qRN"/>
+                    </connections>
+                </button>
             </subviews>
             <color key="backgroundColor" red="0.96470588235294119" green="0.96862745098039216" blue="0.9882352941176471" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="centerX" secondItem="Nla-Xy-e7q" secondAttribute="centerX" id="2Za-IU-FKH"/>
-                <constraint firstAttribute="bottom" secondItem="bab-Yf-eve" secondAttribute="bottom" id="2bo-ya-r3X"/>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="F0e-zJ-5ZE"/>
-                <constraint firstItem="gQD-c5-Rae" firstAttribute="centerX" secondItem="Nla-Xy-e7q" secondAttribute="centerX" id="Qwy-oy-lXQ"/>
-                <constraint firstItem="gQD-c5-Rae" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="41" id="U1W-A3-Kq1"/>
-                <constraint firstItem="HCy-vN-vpg" firstAttribute="centerX" secondItem="Nla-Xy-e7q" secondAttribute="centerX" id="Yj4-dH-Veh"/>
-                <constraint firstItem="HCy-vN-vpg" firstAttribute="centerX" secondItem="gQD-c5-Rae" secondAttribute="centerX" id="brk-r6-0XK"/>
-                <constraint firstItem="gQD-c5-Rae" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="41" id="i19-jI-jTt"/>
-                <constraint firstAttribute="trailing" secondItem="bab-Yf-eve" secondAttribute="trailing" id="j1f-sG-koe"/>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="mUl-YC-3Cw"/>
-                <constraint firstItem="HCy-vN-vpg" firstAttribute="top" secondItem="gQD-c5-Rae" secondAttribute="bottom" constant="8" symbolic="YES" id="o6C-8W-Vf1"/>
-                <constraint firstItem="gQD-c5-Rae" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="tlq-T1-XKS"/>
-                <constraint firstItem="gQD-c5-Rae" firstAttribute="centerY" secondItem="bab-Yf-eve" secondAttribute="centerY" id="uKi-2s-IfV"/>
-                <constraint firstAttribute="bottom" secondItem="Nla-Xy-e7q" secondAttribute="bottom" constant="30" id="zeG-cE-FaR"/>
+                <constraint firstItem="rln-RO-uzd" firstAttribute="centerX" secondItem="HCy-vN-vpg" secondAttribute="centerX" id="0wv-GL-UbR"/>
+                <constraint firstAttribute="bottom" secondItem="bab-Yf-eve" secondAttribute="bottom" id="7pR-ab-9Mu"/>
+                <constraint firstItem="gQD-c5-Rae" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="283" id="EIG-FS-d7c"/>
+                <constraint firstItem="KaY-20-LO2" firstAttribute="top" secondItem="rln-RO-uzd" secondAttribute="top" id="Jwz-dS-KIN"/>
+                <constraint firstAttribute="bottom" secondItem="rln-RO-uzd" secondAttribute="bottom" constant="20" id="LPJ-Mj-n1w"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="LRW-fs-TmV"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="centerX" secondItem="gQD-c5-Rae" secondAttribute="centerX" id="WO7-sA-z4y"/>
+                <constraint firstItem="KaY-20-LO2" firstAttribute="bottom" secondItem="rln-RO-uzd" secondAttribute="bottom" id="XrS-aO-ipf"/>
+                <constraint firstItem="HCy-vN-vpg" firstAttribute="top" secondItem="gQD-c5-Rae" secondAttribute="bottom" constant="8" symbolic="YES" id="cU6-W7-KBo"/>
+                <constraint firstItem="KaY-20-LO2" firstAttribute="leading" secondItem="rln-RO-uzd" secondAttribute="leading" id="eeY-0l-JVP"/>
+                <constraint firstItem="KaY-20-LO2" firstAttribute="trailing" secondItem="rln-RO-uzd" secondAttribute="trailing" id="jGV-MS-0nm"/>
+                <constraint firstAttribute="trailing" secondItem="bab-Yf-eve" secondAttribute="trailing" id="uNL-Tj-5Ta"/>
+                <constraint firstItem="gQD-c5-Rae" firstAttribute="centerX" secondItem="HCy-vN-vpg" secondAttribute="centerX" id="xm0-Iy-5gD"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="yWJ-1q-q69"/>
             </constraints>
-            <variation key="default">
-                <mask key="constraints">
-                    <exclude reference="Qwy-oy-lXQ"/>
-                    <exclude reference="U1W-A3-Kq1"/>
-                    <exclude reference="tlq-T1-XKS"/>
-                </mask>
-            </variation>
             <point key="canvasLocation" x="498.5" y="355.5"/>
         </view>
     </objects>
     <resources>
         <image name="arrowDown.png" width="23" height="23"/>
-        <image name="filterButton.png" width="60" height="60"/>
+        <image name="filterBG.png" width="130" height="30"/>
     </resources>
 </document>

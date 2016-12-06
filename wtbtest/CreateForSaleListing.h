@@ -84,4 +84,5 @@
 
 @property (nonatomic, strong) NSString *usernameToCheck;
 @property (nonatomic, strong) PFUser *cabin;
+@property (nonatomic) BOOL somethingChanged;
 @end

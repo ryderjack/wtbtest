@@ -13,6 +13,7 @@
 #import "AppConstant.h"
 #import <TOWebViewController.h>
 #import "ExplainViewController.h"
+#import "MessagesTutorial.h"
 
 @interface RegisterViewController ()
 @end
@@ -338,7 +339,7 @@
                                  convoObject[@"totalMessages"] = @0;
                                  [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                                      if (succeeded) {
-                                         NSString *messageString = @"Welcome to Bump!\n\nWant to buy something?\nCreate listings for items you want then sit back and wait for sellers to send you offers to buy their stuff (Plus there's ZERO fees)! Bump also recommends related items to you - just tap the cart icon!\n\nSelling something?\nUse the search & filter tools to find people that want what you're selling and then send them an offer to buy your item!\n\nHow to sell?\nJust tap the tag icon in a chat and hit 'Send an offer'. Buyers can then tap the offer message to complete the purchase using PayPal without leaving Bump! Hassle free, fee free.\n\nGot any questions? Just message us here - we're available 24/7/365 #wehavenolife\n\nHappy Bumping!\nTeam Bump";
+                                         NSString *messageString = @"Welcome to Bump 🙌\n\nWant to buy something? 💎\nCreate listings for items you want then sit back and wait for sellers to send you offers to buy their stuff (Plus there's ZERO fees). Bump also recommends related items to you - just tap the cart icon!\n\nSelling something? 🤑\nUse the search & filter tools to find people that want what you're selling and then send them an offer to buy your item.\n\nHow to sell? 📲\nJust tap the tag icon in a chat and hit 'Send an offer'. Buyers can then tap the offer message to complete the purchase using PayPal without leaving Bump!\n\nGot any questions? Just message us here - we're available 24/7/365 #wehavenolife\n\nHappy Bumping!\nTeam Bump";
                                          
                                          //saved, create intro message
                                          PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
@@ -380,7 +381,7 @@
 //                                 [self.navigationController pushViewController:vc animated:YES];
                                  
                                  [self dismissHUD];
-                                 ExplainViewController *vc = [[ExplainViewController alloc]init];
+                                 MessagesTutorial *vc = [[MessagesTutorial alloc]init];
                                  vc.introMode = YES;
                                  [self.navigationController pushViewController:vc animated:YES];
                              }

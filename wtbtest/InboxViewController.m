@@ -21,10 +21,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"Messages";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    self.navigationItem.title = @"M E S S A G E S";
     
     [self.tableView registerNib:[UINib nibWithNibName:@"InboxCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
     self.convoObjects = [[NSMutableArray alloc]init];
@@ -41,6 +38,8 @@
     self.infinFinished = YES;
     self.justViewedMsg = NO;
     self.lastSkipped = 0;
+    
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -51,6 +50,10 @@
                                              selector:@selector(loadMessages)
                                                  name:UIApplicationWillEnterForegroundNotification
                                                object:[UIApplication sharedApplication]];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     self.selectedConvo = @"";
     [Flurry logEvent:@"Inbox_Tapped"];
@@ -88,7 +91,7 @@
     [self.pullQuery includeKey:@"wtsListing"];
     [self.pullQuery includeKey:@"lastSent"];
     [self.pullQuery orderByDescending:@"lastSentDate"];
-    self.pullQuery.limit = 10;
+    self.pullQuery.limit = 7;
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects) {
@@ -100,7 +103,7 @@
                         self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                         self.topLabel.textAlignment = NSTextAlignmentCenter;
                         self.topLabel.text = @"No messages";
-                        [self.topLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:20]];
+                        [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
                         self.topLabel.numberOfLines = 1;
                         self.topLabel.textColor = [UIColor lightGrayColor];
                         [self.view addSubview:self.topLabel];
@@ -108,7 +111,7 @@
                         self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+50, 250, 200)];
                         self.bottomLabel.textAlignment = NSTextAlignmentCenter;
                         self.bottomLabel.text = @"Create WTBs so sellers can message you or explore listings to message buyers now";
-                        [self.bottomLabel setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:17]];
+                        [self.bottomLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:17]];
                         self.bottomLabel.numberOfLines = 0;
                         self.bottomLabel.textColor = [UIColor lightGrayColor];
                         [self.view addSubview:self.bottomLabel];
@@ -188,7 +191,7 @@
 //                        }
                         totalUnseen = totalUnseen + unseen;
                         
-                        NSLog(@"total unseen %d", totalUnseen);
+//                        NSLog(@"total unseen %d", totalUnseen);
                     }
                 }
                 
@@ -196,11 +199,11 @@
                     
                     if (totalUnseen > 0) {
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
-                        self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", totalUnseen];
+                        self.navigationItem.title = [NSString stringWithFormat:@"M E S S A G E S (%d)", totalUnseen];
                     }
                     else{
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
-                        self.navigationItem.title = @"Messages";
+                        self.navigationItem.title = @"M E S S A G E S";
                     }
                 }
                 else{
@@ -228,7 +231,7 @@
     [self.infiniteQuery includeKey:@"wtsListing"];
     [self.infiniteQuery includeKey:@"lastSent"];
     [self.infiniteQuery orderByDescending:@"lastSentDate"];
-    self.infiniteQuery.limit = 10;
+    self.infiniteQuery.limit = 7;
     self.infiniteQuery.skip = self.lastSkipped;
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
@@ -406,7 +409,7 @@
         [self unboldFontForLabel:self.cell.timeLabel];
          self.cell.messageLabel.textColor = [UIColor lightGrayColor];
          self.cell.timeLabel.textColor = [UIColor darkGrayColor];
-        [self.cell.wtbTitleLabel setFont:[UIFont fontWithName:@"AvenirNext-UltraLight" size:14]];
+        [self.cell.wtbTitleLabel setFont:[UIFont fontWithName:@"PingFangSC-UltraLight" size:14]];
     }
     
     if ([[msgObject objectForKey:@"status"] isEqualToString:@"seen"] && [[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
@@ -463,12 +466,12 @@
     int newTabValue = currentTabValue - unseen;
     
     if (newTabValue == 0) {
-        self.navigationItem.title = @"Messages";
+        self.navigationItem.title = @"M E S S A G E S";
         [self.navigationController tabBarItem].badgeValue = nil;
     }
     
     else if (newTabValue > 0){
-        self.navigationItem.title = [NSString stringWithFormat:@"Messages (%d)", newTabValue];
+        self.navigationItem.title = [NSString stringWithFormat:@"M E S S A G E S (%d)", newTabValue];
         [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
     }
     
@@ -551,14 +554,14 @@
 
 -(void)boldFontForLabel:(UILabel *)label{
     UIFont *currentFont = label.font;
-    UIFont *boldFont = [UIFont fontWithName:@"AvenirNext-Regular-Bold" size:currentFont.pointSize];
+    UIFont *boldFont = [UIFont fontWithName:@"PingFangSC-Semibold" size:currentFont.pointSize];
     label.font = boldFont;
 }
 
 -(void)unboldFontForLabel:(UILabel *)label{
     UIFont *currentFont = label.font;
     UIFont *newFont;
-    newFont = [UIFont fontWithName:@"AvenirNext-Regular" size:currentFont.pointSize];
+    newFont = [UIFont fontWithName:@"PingFangSC-Regular" size:currentFont.pointSize];
     label.font = newFont;
 }
 

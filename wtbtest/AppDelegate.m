@@ -207,26 +207,24 @@
 //                        else{
                             PFUser *buyer = [convo objectForKey:@"buyerUser"];
                         
-                        NSLog(@"buyer %@", buyer);
-                        
                         //me IIEf7cUvrO
                         
                             if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
                                 //current user is buyer so other user is seller
                                 unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
-                                NSLog(@"unseen buyer %@", [convo objectForKey:@"buyerUnseen"]);
+                                //NSLog(@"unseen buyer %@", [convo objectForKey:@"buyerUnseen"]);
 
                             }
                             else{
                                 //other user is buyer, current is seller
                                 unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
-                                NSLog(@"unseen seller %d", unseen);
+                                //NSLog(@"unseen seller %d", unseen);
                             }
 //                        }
 
                         totalUnseen = totalUnseen + unseen;
                         
-                        NSLog(@"delegate: running total unseen: %d", totalUnseen);
+//                        NSLog(@"delegate: running total unseen: %d", totalUnseen);
                     }
                 }
                 

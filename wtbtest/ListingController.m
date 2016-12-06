@@ -15,6 +15,7 @@
 #import "FBGroupShareViewController.h"
 #import "UserProfileController.h"
 #import "Flurry.h"
+#import "NavigationController.h"
 
 @interface ListingController ()
 
@@ -25,7 +26,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"Wanted";
+    self.navigationItem.title = @"L I S T I N G";
     UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
     
     [self.checkImageView setHidden:YES];
@@ -95,8 +96,11 @@
             self.locationLabel.text = [self.listingObject objectForKey:@"location"];
             self.deliveryLabel.text = [self.listingObject objectForKey:@"delivery"];
             
+            NSString *sizeNoUK = [[self.listingObject objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
+            
             if (![self.listingObject objectForKey:@"sizeGender"]) {
-                self.sizeLabel.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"sizeLabel"]];
+
+                self.sizeLabel.text = [NSString stringWithFormat:@"%@",sizeNoUK];
             }
             else{
                 self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
@@ -267,9 +271,10 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -343,10 +348,10 @@
     }
     else if (section ==1){
         if (self.extraCellNeeded == YES) {
-            return 7;
+            return 6;
         }
         else{
-            return 6;
+            return 5;
         }
     }
     else if (section ==2){
@@ -378,10 +383,10 @@
         else if (indexPath.row == 3){
             return self.locationCell;
         }
+//        else if (indexPath.row == 4){
+//            return self.deliveryCell;
+//        }
         else if (indexPath.row == 4){
-            return self.deliveryCell;
-        }
-        else if (indexPath.row == 5){
             if (self.extraCellNeeded == YES) {
                 return self.extraCell;
             }
@@ -389,7 +394,7 @@
                 return self.adminCell;
             }
         }
-        else if (indexPath.row == 6){
+        else if (indexPath.row == 5){
             if (self.extraCellNeeded == YES) {
                 return self.adminCell;
             }
@@ -430,10 +435,10 @@
         else if (indexPath.row == 3){
             return 44;
         }
+//        else if (indexPath.row == 4){
+//            return 44;
+//        }
         else if (indexPath.row == 4){
-            return 44;
-        }
-        else if (indexPath.row == 5){
             if (self.extraCellNeeded == YES) {
                 return 104;
             }
@@ -441,7 +446,7 @@
                 return 44;
             }
         }
-        else if (indexPath.row == 6){
+        else if (indexPath.row == 5){
             if (self.extraCellNeeded == YES) {
                 return 44;;
             }
@@ -537,7 +542,7 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share to Facebook Group" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         FBGroupShareViewController *vc = [[FBGroupShareViewController alloc]init];
         vc.objectId = self.listingObject.objectId;
-        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:vc];
+        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:vc];
         [self presentViewController:navigationController animated:YES completion:nil];
     }]];
     
@@ -743,6 +748,23 @@
     }]];
     
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            }]];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+                [self.listingObject setObject:@"deleted" forKey:@"status"];
+                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        [self.navigationController popViewControllerAnimated:YES];
+                    }
+                }];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
+        }]];
         
         if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"purchased"]) {
 //                    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {

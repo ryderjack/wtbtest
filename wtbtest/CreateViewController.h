@@ -115,4 +115,6 @@
 @property (nonatomic) BOOL introMode;
 
 @property (nonatomic, strong) UIImagePickerController *picker;
+
+@property (nonatomic) BOOL somethingChanged;
 @end

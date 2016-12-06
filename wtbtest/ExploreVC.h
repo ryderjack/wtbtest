@@ -20,6 +20,7 @@
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
 @property (weak, nonatomic) IBOutlet UILabel *noresultsLabel;
+@property (strong, nonatomic) UILabel *noUserLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *noResultsImageView;
 
 //location
@@ -33,6 +34,7 @@
 @property (nonatomic) BOOL pullFinished;
 @property (nonatomic) BOOL infinFinished;
 @property (weak, nonatomic) IBOutlet UIButton *filterButton;
+@property (weak, nonatomic) IBOutlet UIImageView *filterBGView;
 
 @property (nonatomic, strong) NSMutableArray *filtersArray;
 
@@ -52,6 +54,9 @@
 @property (nonatomic) BOOL searchShowing;
 @property (nonatomic) BOOL resultsShowing;
 @property (nonatomic) BOOL listingTapped;
+@property (nonatomic) BOOL userPressed;
+@property (nonatomic) BOOL shiftDown;
+@property (nonatomic) BOOL filterMove;
 
 @property (nonatomic, strong) NSArray *uselessWords;
 @end

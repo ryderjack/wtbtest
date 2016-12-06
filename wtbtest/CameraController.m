@@ -18,6 +18,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    NSLog(@"height of cam %f", self.camView.frame.size.height);
+    
     _fastCamera = [FastttCamera new];
     self.fastCamera.delegate = self;
     
@@ -27,7 +29,7 @@
     
     if (self.offerMode == YES) {
         // add tag label as camera overlay
-        [self.fastCamera.view addSubview:self.tageLabel];
+//        [self.fastCamera.view addSubview:self.tageLabel];
         
         // set date
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];

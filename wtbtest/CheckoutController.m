@@ -16,8 +16,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.navigationItem.title = @"Purchase";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    self.navigationItem.title = @"P U R C H A S E";
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -250,7 +250,7 @@
         UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(20, 0, tableView.bounds.size.width, 20)];
         label.text = @"Avoid gifting payments to maximise protection";
         label.textColor = [UIColor lightGrayColor];
-        [label setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:11]];
+        [label setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:11]];
         [footerView addSubview:label];
     }
     return footerView;

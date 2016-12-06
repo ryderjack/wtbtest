@@ -18,8 +18,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"Selling";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    self.navigationItem.title = @"S E L L I N G";
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -88,7 +88,6 @@
     
     [[self navigationController] setNavigationBarHidden:NO animated:YES];
     
-
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
         self.currencySymbol = @"£";
@@ -170,6 +169,7 @@
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
+    self.somethingChanged = YES;
     
     [self removeKeyboard];
     
@@ -310,30 +310,34 @@
 
 -(void)dismissVC{
     //only show warning if listing is partially completed
-    if ([self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"] && [self.chooseCondition.text isEqualToString:@"select"] && [self.chooseCategroy.text isEqualToString:@"select"] && [self.chooseSize.text isEqualToString:@"select"] && [self.payField.text isEqualToString:@""] && [self.firstImageView.image isEqual:[UIImage imageNamed:@"addImage"]]){
-        NSLog(@"empty");
+    if (self.editMode == YES && self.somethingChanged == NO) {
         [self dismissViewControllerAnimated:YES completion:nil];
     }
     else{
-        UIAlertController *alertView;
-        if (self.editMode == YES) {
-            alertView = [UIAlertController alertControllerWithTitle:@"Leave this page?" message:@"Are you sure you want to leave? Your changes won't be saved!" preferredStyle:UIAlertControllerStyleAlert];
+        if ([self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"] && [self.chooseCondition.text isEqualToString:@"select"] && [self.chooseCategroy.text isEqualToString:@"select"] && [self.chooseSize.text isEqualToString:@"select"] && [self.payField.text isEqualToString:@""] && [self.firstImageView.image isEqual:[UIImage imageNamed:@"addImage"]]){
+            [self dismissViewControllerAnimated:YES completion:nil];
         }
         else{
-            alertView = [UIAlertController alertControllerWithTitle:@"Cancel listing?" message:@"Are you sure you want to cancel your for-sale listing?" preferredStyle:UIAlertControllerStyleAlert];
-        }
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Stay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        }]];
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            UIAlertController *alertView;
             if (self.editMode == YES) {
-                [self.navigationController popViewControllerAnimated:YES];
+                alertView = [UIAlertController alertControllerWithTitle:@"Leave this page?" message:@"Are you sure you want to leave? Your changes won't be saved!" preferredStyle:UIAlertControllerStyleAlert];
             }
             else{
-                [self dismissViewControllerAnimated:YES completion:nil];
+                alertView = [UIAlertController alertControllerWithTitle:@"Cancel listing?" message:@"Are you sure you want to cancel your for-sale listing?" preferredStyle:UIAlertControllerStyleAlert];
             }
-        }]];
-        [self presentViewController:alertView animated:YES completion:nil];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Stay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            }]];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                if (self.editMode == YES) {
+                    [self.navigationController popViewControllerAnimated:YES];
+                }
+                else{
+                    [self dismissViewControllerAnimated:YES completion:nil];
+                }
+            }]];
+            [self presentViewController:alertView animated:YES completion:nil];
+        }
     }
 }
 
@@ -548,8 +552,8 @@
     squareCropperViewController.squareCropperDelegate = self;
     squareCropperViewController.backgroundColor = [UIColor whiteColor];
     squareCropperViewController.borderColor = [UIColor whiteColor];
-    squareCropperViewController.doneFont = [UIFont fontWithName:@"AvenirNext-Regular" size:18.0f];
-    squareCropperViewController.cancelFont = [UIFont fontWithName:@"AvenirNext-Regular" size:16.0f];
+    squareCropperViewController.doneFont = [UIFont fontWithName:@"PingFangSC-Regular" size:18.0f];
+    squareCropperViewController.cancelFont = [UIFont fontWithName:@"PingFangSC-Regular" size:16.0f];
     squareCropperViewController.excludedBackgroundColor = [UIColor blackColor];
     [self.navigationController presentViewController:squareCropperViewController animated:YES completion:nil];
 }
@@ -802,7 +806,7 @@
     UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
     
     header.textLabel.textColor = [UIColor grayColor];
-    header.textLabel.font = [UIFont fontWithName:@"AvenirNext-Regular" size:12];
+    header.textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
     CGRect headerFrame = header.frame;
     header.textLabel.frame = headerFrame;
     header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
@@ -815,7 +819,7 @@
         return @"Add photos of the item you’re selling";
     }
     else if (section ==1){
-        return @"Tell us what you're selling so we can show buyers!";
+        return @"Tell us what you're selling so we can show buyers";
     }
     else {
         return @"";

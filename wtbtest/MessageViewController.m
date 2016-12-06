@@ -397,6 +397,10 @@
 {
     [super viewWillAppear:animated];
     
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
     //to prevent double tapping profile button
     self.profileBTapped = NO;
     
@@ -647,8 +651,8 @@
     
     if (self.messageSellerPressed == YES) {
         self.messageSellerPressed = NO;
-        //is the description most appropriate thing here???
-        self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"I'm interested in buying your '%@'", self.sellerItemTitle];
+
+        self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Is your '%@' still available?", self.sellerItemTitle];
         self.savedString = self.inputToolbar.contentView.textView.text;
         [self.inputToolbar toggleSendButtonEnabled];
     }
@@ -1208,8 +1212,8 @@
     squareCropperViewController.squareCropperDelegate = self;
     squareCropperViewController.backgroundColor = [UIColor whiteColor];
     squareCropperViewController.borderColor = [UIColor whiteColor];
-    squareCropperViewController.doneFont = [UIFont fontWithName:@"AvenirNext-Regular" size:18.0f];
-    squareCropperViewController.cancelFont = [UIFont fontWithName:@"AvenirNext-Regular" size:16.0f];
+    squareCropperViewController.doneFont = [UIFont fontWithName:@"PingFangSC-Regular" size:18.0f];
+    squareCropperViewController.cancelFont = [UIFont fontWithName:@"PingFangSC-Regular" size:16.0f];
     squareCropperViewController.excludedBackgroundColor = [UIColor blackColor];
     [self.navigationController presentViewController:squareCropperViewController animated:YES completion:nil];
 }
@@ -1813,7 +1817,7 @@
             [self.paidButton addTarget:self action:@selector(markTapped) forControlEvents:UIControlEventTouchUpInside];
             self.paidButton.backgroundColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
             [self.paidButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-            self.paidButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
+            self.paidButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
             [self.paidView addSubview:self.paidButton];
             [self.paidButton setCenter:CGPointMake(self.paidView.frame.size.width / 2, self.paidView.frame.size.height / 2)];
         }
@@ -1835,7 +1839,7 @@
             [self.successButton setTitle:text forState:UIControlStateNormal];
             self.successButton.backgroundColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
             [self.successButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-            self.successButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
+            self.successButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
             [self.successView addSubview:self.successButton];
             [self.successButton setCenter:CGPointMake(self.successView.frame.size.width / 2, self.successView.frame.size.height / 2)];
             
@@ -1871,11 +1875,12 @@
     else{
         if (!self.infoView) {
             self.infoView = [[UIView alloc]initWithFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, self.navigationController.navigationBar.frame.size.width, 30)];
-            [self.infoView setAlpha:1.0];
+            [self.infoView setAlpha:0.8];
             UIButton *infoButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, self.infoView.frame.size.width, self.infoView.frame.size.height)];
             [infoButton addTarget:self action:@selector(infoTapped) forControlEvents:UIControlEventTouchUpInside];
             infoButton.titleLabel.adjustsFontSizeToFitWidth = YES;
             infoButton.titleLabel.minimumScaleFactor=0.5;
+            [infoButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:13.0f]];
             
             UIButton *dismissButton = [[UIButton alloc]initWithFrame:CGRectMake(self.infoView.frame.size.width-40,(self.infoView.frame.size.height/2)-10, 20, 20)];
             [dismissButton setTitle:@"x" forState:UIControlStateNormal];
@@ -1884,14 +1889,14 @@
             
             if (self.userIsBuyer == YES) {
                 [infoButton setTitle:@"How to buy with ZERO Fees on Bump" forState:UIControlStateNormal];
+
             }
             else{
                 [infoButton setTitle:@"How to sell with ZERO Fees on Bump" forState:UIControlStateNormal];
             }
             
-            infoButton.backgroundColor = [UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0];
+            infoButton.backgroundColor = [UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:0.8];
             [infoButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-            infoButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
             [self.infoView addSubview:infoButton];
             [infoButton setCenter:CGPointMake(self.infoView.frame.size.width / 2, self.infoView.frame.size.height / 2)];
         }

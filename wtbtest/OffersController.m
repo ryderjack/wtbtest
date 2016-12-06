@@ -22,16 +22,16 @@
     [self.noResultsLabel setHidden:YES];
     
     if ([self.mode isEqualToString:@"purchased"]){
-        self.navigationItem.title = @"Purchased";
+        self.navigationItem.title = @"P U R C H A S E D";
     }
     else if ([self.mode isEqualToString:@"sold"]){
-        self.navigationItem.title = @"Sold";
+        self.navigationItem.title = @"S O L D";
     }
     else if ([self.mode isEqualToString:@"saved"]){
-        self.navigationItem.title = @"Saved for later";
+        self.navigationItem.title = @"S A V E D";
     }
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"AvenirNext-Regular" size:17],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     

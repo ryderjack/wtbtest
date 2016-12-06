@@ -26,7 +26,7 @@
     self.sizeScrollButton.backgroundColor = [UIColor clearColor];
     self.brandScrollView.backgroundColor = [UIColor clearColor];
     
-    self.sizeLabels = [NSArray arrayWithObjects:@"XXS", @"XS", @"S", @"M", @"L", @"XL", @"XXL", @"OS", nil];
+    self.sizeLabels = [NSArray arrayWithObjects:@"XXS", @"XS", @"S", @"M", @"L", @"XL", @"XXL", nil];
     
     self.shoesArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", nil];
     
@@ -209,6 +209,9 @@
 - (IBAction)dismissPressed:(id)sender {
     if (self.filtersArray.count == 0) {
         [self.delegate filtersReturned:self.filtersArray];
+    }
+    else{
+        [self.delegate noChange];
     }
     [self dismissViewControllerAnimated:YES completion:nil];
 }
@@ -833,7 +836,7 @@
     
     int x = 0;
     CGRect frame;
-    for (int i = 0; i <8; i++) {
+    for (int i = 0; i <7; i++) {
         
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
         
@@ -857,7 +860,7 @@
         [button addTarget:self action:@selector(sizeButtonClicked:) forControlEvents:UIControlEventTouchUpInside];
         [self.sizeScrollButton addSubview:button];
         
-        if (i == 7) {
+        if (i == 6) {
             x = CGRectGetMaxX(button.frame);
         }
         
@@ -920,7 +923,7 @@
     }
     self.sizeScrollButton.contentSize = CGSizeMake(x, self.sizeScrollButton.frame.size.height);
     
-    for (int k = 0; k<8; k++) {
+    for (int k = 0; k<7; k++) {
         if ([self.filtersArray containsObject:self.sizeLabels[k]]) {
             [self.filtersArray removeObject:self.sizeLabels[k]];
         }
@@ -950,7 +953,7 @@
         UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake((view.frame.size.width/2)-30, 70, 60, 20)];
         label.backgroundColor = [UIColor blackColor];
         [label setTextAlignment:NSTextAlignmentCenter];
-        [label setFont:[UIFont fontWithName:@"AvenirNext-Regular" size:12]];
+        [label setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:12]];
         label.textColor = [UIColor colorWithRed:0.608 green:0.608 blue:0.608 alpha:1];
         label.adjustsFontSizeToFitWidth = YES;
         label.minimumScaleFactor=0.5;

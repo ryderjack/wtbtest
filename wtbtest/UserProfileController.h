@@ -37,7 +37,10 @@
 
 @property (nonatomic) BOOL forSalePressed;
 @property (nonatomic) BOOL WTBPressed;
+@property (nonatomic) BOOL saleMode;
 
 @property (nonatomic, strong) NSString *usernameToList;
+
+@property (nonatomic) BOOL fromSearch;
 
 @end

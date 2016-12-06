@@ -405,7 +405,6 @@
                     }
                     
                     //select cell, got space left in the selection array
-                    NSLog(@"got space in the array, add a checkmark!");
                     UITableViewCell *currentCell = [tableView cellForRowAtIndexPath:indexPath];
                     currentCell.accessoryType = UITableViewCellAccessoryCheckmark;
                     
