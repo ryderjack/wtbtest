@@ -40,11 +40,9 @@
     self.sizeCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.applyCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.brandCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    
+    self.distanceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.sizeScrollButton.frame = CGRectMake(0, 0, self.view.frame.size.width, 67);
-
-    NSLog(@"the frame %@", NSStringFromCGRect(self.sizeScrollButton.frame));
 
     //sendarray containts the filters selected last time. Use to select previous search buttons & relevant sizing buttons
     self.filtersArray = [NSMutableArray array];
@@ -70,6 +68,9 @@
             }
             if ([self.filtersArray containsObject:@"BNWOT"]){
                 [self.BNWOTButton setSelected:YES];
+            }
+            if ([self.filtersArray containsObject:@"aroundMe"]) {
+                [self.distanceButton setSelected:YES];
             }
             
             if ([self.filtersArray containsObject:@"clothing"]){
@@ -140,7 +141,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 5;
+    return 6;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -153,15 +154,18 @@
             return 101;
         }
         else if (indexPath.row == 2){
-            return 122;
+            return 88;
         }
         else if (indexPath.row == 3){
+            return 122;
+        }
+        else if (indexPath.row == 4){
             return 89;
         }
 //        else if (indexPath.row == 4){ UNCOMMENT FOR BRANDS
 //            return 159;
 //        }
-        else if (indexPath.row == 4){
+        else if (indexPath.row == 5){
             return 182;
         }
 //        else if (indexPath.row == 5){
@@ -181,15 +185,18 @@
             return self.priceCell;
         }
         else if (indexPath.row == 2){
-            return self.conditionCell;
+            return self.distanceCell;
         }
         else if (indexPath.row == 3){
+            return self.conditionCell;
+        }
+        else if (indexPath.row == 4){
             return self.categoryCell;
         }
 //        else if (indexPath.row == 4){
 //            return self.brandCell;
 //        }
-        else if (indexPath.row == 4){
+        else if (indexPath.row == 5){
             return self.sizeCell;
         }
 //        else if (indexPath.row == 5){
@@ -260,6 +267,7 @@
     [self.lasttapped setSelected:NO];
     [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.56 green:0.56 blue:0.56 alpha:1.0]];
     [self.BNWOTButton setSelected:NO];
+    [self.distanceButton setSelected:NO];
     
     [self.filtersArray removeAllObjects];
     [self updateTitle];
@@ -1256,6 +1264,17 @@
             }
         }
     }
+}
+- (IBAction)aroundMeSelected:(id)sender {
+    if (self.distanceButton.selected == YES) {
+        [self.distanceButton setSelected:NO];
+        [self.filtersArray removeObject:@"aroundMe"];
+    }
+    else{
+        [self.distanceButton setSelected:YES];
+        [self.filtersArray addObject:@"aroundMe"];
+    }
+    [self updateTitle];
 }
 
 @end

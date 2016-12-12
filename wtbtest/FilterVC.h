@@ -32,6 +32,8 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *sizeCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *applyCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *brandCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *distanceCell;
+
 
 //price buttons
 @property (weak, nonatomic) IBOutlet UIButton *hightolowButton;
@@ -80,5 +82,8 @@
 @property (nonatomic, strong) brandObject *stoney;
 @property (nonatomic, strong) brandObject *supreme;
 @property (nonatomic, strong) brandObject *ralph;
+
+//distance buttons
+@property (weak, nonatomic) IBOutlet UIButton *distanceButton;
 
 @end

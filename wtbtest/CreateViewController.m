@@ -366,19 +366,6 @@
                 [self.navigationController pushViewController:vc animated:YES];
             }
         }
-//        else if(indexPath.row == 4){
-//            SelectViewController *vc = [[SelectViewController alloc]init];
-//            vc.delegate = self;
-//            vc.setting = @"delivery";
-//            self.selection = @"delivery";
-//            
-//            if (![self.chooseDelivery.text isEqualToString:@"select"]) {
-//                NSArray *selectedArray = [self.chooseDelivery.text componentsSeparatedByString:@"."];
-//                vc.holdingArray = [NSArray arrayWithArray:selectedArray];
-//            }
-//            
-//            [self.navigationController pushViewController:vc animated:YES];
-//        }
     }
     else {
         [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
@@ -403,22 +390,14 @@
     header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
 }
 
-//-(void)tableView:(UITableView *)tableView willDisplayFooterView:(UIView *)view forSection:(NSInteger)section{
-//    UITableViewHeaderFooterView *footer = (UITableViewHeaderFooterView *)view;
-//    
-//    footer.textLabel.textColor = [UIColor grayColor];
-//    footer.textLabel.font = [UIFont fontWithName:@"AvenirNext-Regular" size:12];
-//    CGRect footerFrame = footer.frame;
-//    footer.textLabel.frame = footerFrame;
-//    footer.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
-//}
+-(void)tableView:(UITableView *)tableView willDisplayFooterView:(UIView *)view forSection:(NSInteger)section{
+    UITableViewHeaderFooterView *footer = (UITableViewHeaderFooterView *)view;
 
-- (UIView *) tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
-{
-    UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-    
-    [footerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
-    return footerView;
+    footer.textLabel.textColor = [UIColor lightGrayColor];
+    footer.textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:10];
+    CGRect footerFrame = footer.frame;
+    footer.textLabel.frame = footerFrame;
+    footer.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
 }
 
 - (NSString*) tableView:(UITableView *) tableView titleForHeaderInSection:(NSInteger)section
@@ -437,15 +416,15 @@
     }
 }
 -(NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section{
-//    if (section == 0) {
-//        return @"Add extra details below";
-//    }
-//    else{
+    if (section == 2) {
+        return @"Pro Tip: an accurate Budget = interested sellers";
+    }
+    else{
         return @"";
-//    }
+    }
 }
 -(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
-    if (section ==2 || section ==3 || section == 4) {
+    if (section ==3 || section == 4) {
         return 0.0;
     }
     return 32.0f;
@@ -527,17 +506,38 @@
         if (stringsArray.count > 0)
         {
             NSString *dollarAmount = stringsArray[0];
-
-            if ([dollarAmount isEqualToString:@"£0"]) {
+            
+            if ([dollarAmount isEqualToString:[NSString stringWithFormat:@"%@0", self.currencySymbol]]) {
+                [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Pro Tip: a more accurate price 99leads to more sellers getting in touch!"];
                 return NO;
             }
-            if (dollarAmount.length > 6)
+
+            if (dollarAmount.length > 5)
                 return NO;
             // not allowed to enter all 9s
-            if ([dollarAmount isEqualToString:[NSString stringWithFormat:@"%@99999", self.currencySymbol]]) {
+            if ([dollarAmount isEqualToString:[NSString stringWithFormat:@"%@9999", self.currencySymbol]]) {
                 return NO;
             }
-        }
+            
+            
+            NSString *stringCheck = [textField.text stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%@", self.currencySymbol] withString:@""];
+            stringCheck = [NSString stringWithFormat:@"%@%@", stringCheck, string];
+            NSLog(@"string!!! %@", stringCheck);
+
+            if (stringCheck.length > 1) {
+                
+                NSString *stringCheck2 = [stringCheck stringByReplacingOccurrencesOfString:[stringCheck substringToIndex:1] withString:@""];
+                NSLog(@"string check %@", stringCheck2);
+                
+                //not allowed to enter all same number
+                if ([stringCheck2 isEqualToString:@""] && dollarAmount.length> 3) {
+                    NSLog(@"all same number so don't allow");
+                    [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Pro Tip: a more accurate price 99leads to more sellers getting in touch!"];
+                    return NO;
+                }
+            }
+            
+        } //add check for #1 to before save
         
         return YES;
     }
@@ -933,10 +933,16 @@
 }
 
 - (IBAction)wantobuyPressed:(id)sender {
+    self.warningLabel.text = @"";
     [self.saveButton setEnabled:NO];
     [self removeKeyboard];
     
-    if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
+    if ([self.payField.text isEqualToString:[NSString stringWithFormat:@"%@11", self.currencySymbol]]) {
+        [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Pro Tip: a more accurate price 99leads to more sellers getting in touch!"];
+        self.warningLabel.text = @"Enter a valid price";
+        [self.saveButton setEnabled:YES];
+    }
+    else if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
         self.warningLabel.text = @"Fill out all the above fields";
         [self.saveButton setEnabled:YES];
     }
@@ -1555,5 +1561,14 @@
         }]];
         [self presentViewController:alertView animated:YES completion:nil];
     }
+}
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 @end

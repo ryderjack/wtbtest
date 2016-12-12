@@ -699,6 +699,10 @@
             [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
         }
         
+        if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
+            [self.infiniteQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation];
+        }
+        
         if ([self.filtersArray containsObject:@"BNWT"]){
             [self.infiniteQuery whereKey:@"condition" containedIn:@[@"BNWT", @"Any"]];
         }
@@ -831,6 +835,10 @@
         }
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
             [self.pullQuery orderByAscending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
+        }
+        
+        if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
+            [self.pullQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation];
         }
         
         if ([self.filtersArray containsObject:@"BNWT"]){

@@ -24,6 +24,8 @@
                 <outlet property="categoryCell" destination="hZa-Zs-XNS" id="yJI-O0-j3T"/>
                 <outlet property="clothingButton" destination="q7z-KB-89k" id="WZE-Sf-hqY"/>
                 <outlet property="conditionCell" destination="7Yh-cu-X3X" id="gaQ-fz-LEz"/>
+                <outlet property="distanceButton" destination="Pjs-8h-uBW" id="BFF-DM-X1u"/>
+                <outlet property="distanceCell" destination="9oS-Kf-oLz" id="Jkg-4r-0Aq"/>
                 <outlet property="footButton" destination="lgz-FP-gZo" id="mDW-jt-Lce"/>
                 <outlet property="hightolowButton" destination="NZO-dd-lyQ" id="IBh-h4-H33"/>
                 <outlet property="lowtoHighButton" destination="62M-td-5wI" id="sMf-fE-QQG"/>
@@ -53,7 +55,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="59"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2Qb-lu-ryI" id="TR9-oe-3vo">
-                <frame key="frameInset" width="320" height="59"/>
+                <frame key="frameInset" width="320" height="58"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="guW-Wa-HWb">
@@ -108,7 +110,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="101"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="YYe-Gz-39n" id="j4Y-qm-yTQ">
-                <frame key="frameInset" width="320" height="101"/>
+                <frame key="frameInset" width="320" height="100"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Price" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="OyG-CC-n6v">
@@ -160,7 +162,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="122"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="7Yh-cu-X3X" id="MmQ-CM-yoB">
-                <frame key="frameInset" width="320" height="122"/>
+                <frame key="frameInset" width="320" height="121"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Condition" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5rO-a4-iFN">
@@ -216,7 +218,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="89"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="hZa-Zs-XNS" id="GDg-bb-hk6">
-                <frame key="frameInset" width="320" height="89"/>
+                <frame key="frameInset" width="320" height="88"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Category" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Nx6-Tr-q3x">
@@ -260,7 +262,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="182"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Tyx-NG-nBY" id="B73-8H-jGd">
-                <frame key="frameInset" width="320" height="182"/>
+                <frame key="frameInset" width="320" height="181"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Size UK" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Wm8-IG-EgI">
@@ -313,7 +315,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="159"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="h02-MB-3b5" id="g0A-NH-jxh">
-                <frame key="frameInset" width="320" height="158.5"/>
+                <frame key="frameInset" width="320" height="158"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Brand" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Kdg-y6-ewH">
@@ -339,12 +341,45 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="-65" y="802.5"/>
         </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="89" id="9oS-Kf-oLz">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="89"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="9oS-Kf-oLz" id="bJa-hT-1pp">
+                <frame key="frameInset" width="320" height="88"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Distance" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0Ve-8S-Fja">
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Pjs-8h-uBW">
+                        <state key="normal" image="aroundMeUnselected.png"/>
+                        <state key="selected" image="aroundMeSelected.png"/>
+                        <connections>
+                            <action selector="aroundMeSelected:" destination="-1" eventType="touchUpInside" id="VoE-s1-rRj"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="0Ve-8S-Fja" firstAttribute="top" secondItem="bJa-hT-1pp" secondAttribute="topMargin" constant="4" id="1Lu-Qc-jfD"/>
+                    <constraint firstItem="0Ve-8S-Fja" firstAttribute="centerX" secondItem="Pjs-8h-uBW" secondAttribute="centerX" id="Kwd-qh-0ls"/>
+                    <constraint firstItem="0Ve-8S-Fja" firstAttribute="leading" secondItem="bJa-hT-1pp" secondAttribute="leadingMargin" constant="92" id="Srq-eG-KzE"/>
+                    <constraint firstItem="0Ve-8S-Fja" firstAttribute="centerX" secondItem="bJa-hT-1pp" secondAttribute="centerX" id="hFY-vK-vXv"/>
+                    <constraint firstItem="Pjs-8h-uBW" firstAttribute="top" secondItem="0Ve-8S-Fja" secondAttribute="bottom" constant="21" id="o57-Dt-D7z"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+            <point key="canvasLocation" x="337" y="592"/>
+        </tableViewCell>
     </objects>
     <resources>
         <image name="NWTSelected.png" width="103" height="24"/>
         <image name="NWTUnselected.png" width="103" height="24"/>
         <image name="WOTagsSelected.png" width="103" height="24"/>
         <image name="WOTagsUnselected.png" width="103" height="24"/>
+        <image name="aroundMeSelected.png" width="286" height="24"/>
+        <image name="aroundMeUnselected.png" width="286" height="24"/>
         <image name="clothingSelected.png" width="139" height="24"/>
         <image name="clothingUnselected.png" width="139" height="24"/>
         <image name="footSelected.png" width="139" height="24"/>

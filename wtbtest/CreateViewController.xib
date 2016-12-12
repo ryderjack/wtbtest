@@ -494,8 +494,8 @@
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="tag.png" translatesAutoresizingMaskIntoConstraints="NO" id="482-ke-b5M">
                         <constraints>
-                            <constraint firstAttribute="width" constant="15" id="6JI-YC-28z"/>
-                            <constraint firstAttribute="width" secondItem="482-ke-b5M" secondAttribute="height" multiplier="1:1" id="QQW-GB-Sgi"/>
+                            <constraint firstAttribute="width" constant="15" id="M1f-Jc-xSP"/>
+                            <constraint firstAttribute="height" constant="15" id="uQE-fq-qbJ"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Budget:" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="EUL-Z8-IX3">
@@ -506,7 +506,7 @@
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="£100" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="NSX-Y1-BtO">
                         <color key="tintColor" red="0.96078431369999995" green="0.65098039220000004" blue="0.13725490200000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="97" id="V5r-et-j8A"/>
+                            <constraint firstAttribute="width" constant="97" id="05U-Cw-Tyh"/>
                         </constraints>
                         <color key="textColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
@@ -514,16 +514,15 @@
                     </textField>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="NSX-Y1-BtO" firstAttribute="trailing" secondItem="8cM-kE-aLN" secondAttribute="trailingMargin" id="FKO-vx-22z"/>
-                    <constraint firstItem="NSX-Y1-BtO" firstAttribute="leading" secondItem="EUL-Z8-IX3" secondAttribute="trailing" constant="-27" id="I2c-Bm-0ha"/>
-                    <constraint firstItem="EUL-Z8-IX3" firstAttribute="top" secondItem="8cM-kE-aLN" secondAttribute="topMargin" constant="2" id="KHX-LK-spy"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="NSX-Y1-BtO" secondAttribute="bottom" constant="-2.5" id="NVh-yH-0s1"/>
-                    <constraint firstItem="NSX-Y1-BtO" firstAttribute="top" secondItem="8cM-kE-aLN" secondAttribute="topMargin" id="QfH-Zv-cY8"/>
-                    <constraint firstItem="482-ke-b5M" firstAttribute="top" secondItem="8cM-kE-aLN" secondAttribute="topMargin" constant="6" id="RfT-og-oqg"/>
-                    <constraint firstItem="482-ke-b5M" firstAttribute="centerY" secondItem="8cM-kE-aLN" secondAttribute="centerY" id="aJt-Hg-86A"/>
-                    <constraint firstItem="482-ke-b5M" firstAttribute="leading" secondItem="8cM-kE-aLN" secondAttribute="leadingMargin" constant="10" id="czX-pj-y9f"/>
-                    <constraint firstItem="EUL-Z8-IX3" firstAttribute="leading" secondItem="482-ke-b5M" secondAttribute="trailing" constant="20" id="qSb-HH-nC8"/>
-                    <constraint firstItem="EUL-Z8-IX3" firstAttribute="centerY" secondItem="482-ke-b5M" secondAttribute="centerY" id="uDS-tz-9V6"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="EUL-Z8-IX3" secondAttribute="trailing" constant="70" id="2WV-NJ-H3k"/>
+                    <constraint firstItem="482-ke-b5M" firstAttribute="leading" secondItem="8cM-kE-aLN" secondAttribute="leadingMargin" constant="10" id="Q01-8E-J8m"/>
+                    <constraint firstItem="482-ke-b5M" firstAttribute="centerY" secondItem="EUL-Z8-IX3" secondAttribute="centerY" id="Qom-Ow-ghl"/>
+                    <constraint firstItem="EUL-Z8-IX3" firstAttribute="leading" secondItem="482-ke-b5M" secondAttribute="trailing" constant="20" id="QqX-ik-Yhp"/>
+                    <constraint firstItem="EUL-Z8-IX3" firstAttribute="top" secondItem="8cM-kE-aLN" secondAttribute="topMargin" constant="2" id="cLO-WD-W19"/>
+                    <constraint firstItem="EUL-Z8-IX3" firstAttribute="centerY" secondItem="NSX-Y1-BtO" secondAttribute="centerY" id="dwY-tb-pKw"/>
+                    <constraint firstItem="482-ke-b5M" firstAttribute="centerY" secondItem="8cM-kE-aLN" secondAttribute="centerY" id="e1b-VW-vcE"/>
+                    <constraint firstItem="482-ke-b5M" firstAttribute="top" secondItem="8cM-kE-aLN" secondAttribute="topMargin" constant="6" id="gZf-dx-kJ8"/>
+                    <constraint firstItem="NSX-Y1-BtO" firstAttribute="trailing" secondItem="8cM-kE-aLN" secondAttribute="trailingMargin" id="hwf-XT-BRT"/>
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-258" y="802"/>
