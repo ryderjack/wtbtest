@@ -49,11 +49,11 @@
     
     [self loadWTBs];
     
-    if (![[[PFUser currentUser]objectForKey:@"completedBuyNow"]isEqualToString:@"YES"]) {
-        MessagesTutorial *vc = [[MessagesTutorial alloc]init];
-        vc.sellerMode = YES;
-        [self presentViewController:vc animated:YES completion:nil];
-    }
+//    if (![[[PFUser currentUser]objectForKey:@"completedBuyNow"]isEqualToString:@"YES"]) {
+//        MessagesTutorial *vc = [[MessagesTutorial alloc]init];
+//        vc.sellerMode = YES;
+//        [self presentViewController:vc animated:YES completion:nil];
+//    }
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
@@ -242,7 +242,6 @@
     if (self.pullFinished == NO || self.infinFinished == NO) {
         return;
     }
-    NSLog(@"INFINITE LOADING");
     self.infinFinished = NO;
     self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self.infiniteQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];

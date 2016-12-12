@@ -84,6 +84,8 @@
 
 @property (nonatomic) BOOL pureWTS;
 
+@property (nonatomic) BOOL sentPush;
+
 @property (nonatomic) BOOL savedSomin;
 @property (nonatomic, strong) NSString *savedString;
 

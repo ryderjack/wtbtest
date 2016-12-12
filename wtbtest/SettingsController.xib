@@ -8,6 +8,11 @@
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
+    <customFonts key="customFonts">
+        <array key="PingFang.ttc">
+            <string>PingFangSC-Regular</string>
+        </array>
+    </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="SettingsController">
             <connections>
@@ -187,47 +192,30 @@
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="OrY-cm-bR4">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
-            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" ambiguous="YES" tableViewCell="OrY-cm-bR4" id="5Va-Ud-ami">
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="OrY-cm-bR4" id="5Va-Ud-ami">
                 <frame key="frameInset" width="320" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="depop username" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="oc8-Ku-0l4">
-                        <frame key="frameInset" width="1000" height="1000"/>
+                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="depop username" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="oc8-Ku-0l4">
                         <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
                         <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="16"/>
                         <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" returnKeyType="done"/>
                     </textField>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" image="link.png" translatesAutoresizingMaskIntoConstraints="NO" id="hZu-hx-G2c">
-                        <frame key="frameInset" width="1000" height="1000"/>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="link.png" translatesAutoresizingMaskIntoConstraints="NO" id="hZu-hx-G2c">
                         <constraints>
-                            <constraint firstAttribute="width" constant="15" id="G1S-qx-gl4"/>
+                            <constraint firstAttribute="width" constant="15" id="4Fg-ac-I9m"/>
                         </constraints>
                     </imageView>
-                    <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zBn-hu-JJ3">
-                        <frame key="frameInset" width="1000" height="1000"/>
-                        <constraints>
-                            <constraint firstAttribute="height" constant="20" id="ex3-XI-SQr"/>
-                            <constraint firstAttribute="width" constant="20" id="nzq-OR-zZB"/>
-                        </constraints>
-                        <state key="normal" image="infoB.png"/>
-                        <connections>
-                            <action selector="depopInfoPressed:" destination="-1" eventType="touchUpInside" id="8uR-aQ-ZDO"/>
-                        </connections>
-                    </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="hZu-hx-G2c" firstAttribute="centerY" secondItem="5Va-Ud-ami" secondAttribute="centerY" id="AeJ-WZ-AEx"/>
-                    <constraint firstItem="zBn-hu-JJ3" firstAttribute="trailing" secondItem="5Va-Ud-ami" secondAttribute="trailingMargin" id="B65-fM-kHT"/>
-                    <constraint firstItem="zBn-hu-JJ3" firstAttribute="leading" secondItem="oc8-Ku-0l4" secondAttribute="trailing" constant="20" id="Lef-Xx-Uq6"/>
-                    <constraint firstItem="hZu-hx-G2c" firstAttribute="centerY" secondItem="oc8-Ku-0l4" secondAttribute="centerY" id="OaE-z3-Dnr"/>
-                    <constraint firstItem="zBn-hu-JJ3" firstAttribute="top" secondItem="5Va-Ud-ami" secondAttribute="topMargin" constant="4" id="RGz-rI-EIG"/>
-                    <constraint firstItem="hZu-hx-G2c" firstAttribute="top" secondItem="5Va-Ud-ami" secondAttribute="topMargin" constant="6" id="SL8-JM-EVF"/>
-                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="centerX" secondItem="5Va-Ud-ami" secondAttribute="centerX" id="hLl-3Q-lhr"/>
-                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="leading" secondItem="hZu-hx-G2c" secondAttribute="trailing" constant="16" id="pHP-ks-hfJ"/>
-                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="top" secondItem="5Va-Ud-ami" secondAttribute="top" id="uhg-Pn-QaC"/>
-                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="centerY" secondItem="zBn-hu-JJ3" secondAttribute="centerY" id="wKT-Mz-VG8"/>
-                    <constraint firstItem="hZu-hx-G2c" firstAttribute="leading" secondItem="5Va-Ud-ami" secondAttribute="leadingMargin" constant="10" id="yxf-Ns-ouL"/>
+                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="trailing" secondItem="5Va-Ud-ami" secondAttribute="trailingMargin" id="0fB-fS-TVf"/>
+                    <constraint firstItem="hZu-hx-G2c" firstAttribute="top" secondItem="5Va-Ud-ami" secondAttribute="topMargin" constant="6" id="1rS-LE-u7P"/>
+                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="top" secondItem="5Va-Ud-ami" secondAttribute="top" id="3LW-rk-5hG"/>
+                    <constraint firstItem="hZu-hx-G2c" firstAttribute="leading" secondItem="5Va-Ud-ami" secondAttribute="leadingMargin" constant="10" id="89Z-MB-Usw"/>
+                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="leading" secondItem="hZu-hx-G2c" secondAttribute="trailing" constant="16" id="Uvn-rc-Wpt"/>
+                    <constraint firstAttribute="bottom" secondItem="oc8-Ku-0l4" secondAttribute="bottom" id="dXA-RV-mgY"/>
+                    <constraint firstItem="hZu-hx-G2c" firstAttribute="centerY" secondItem="oc8-Ku-0l4" secondAttribute="centerY" id="vfa-Df-VpP"/>
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-348" y="419"/>
@@ -242,7 +230,7 @@
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Change profile picture" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c3m-ss-zd7">
                         <frame key="frameInset" width="1000" height="1000"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
-                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="textColor" red="0.24313725489999999" green="0.59215686270000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ThM-kz-zvl" customClass="PFImageView">
@@ -288,7 +276,6 @@
     </objects>
     <resources>
         <image name="currencyIcon.png" width="17" height="17"/>
-        <image name="infoB.png" width="22" height="22"/>
         <image name="link.png" width="17" height="17"/>
     </resources>
 </document>

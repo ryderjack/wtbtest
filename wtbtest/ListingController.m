@@ -29,6 +29,8 @@
     self.navigationItem.title = @"L I S T I N G";
     UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
     
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+    
     [self.checkImageView setHidden:YES];
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
@@ -93,7 +95,8 @@
             self.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol ,price];
             
             self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
-            self.locationLabel.text = [self.listingObject objectForKey:@"location"];
+            NSString *loc = [self.listingObject objectForKey:@"location"];
+            self.locationLabel.text = [loc stringByReplacingOccurrencesOfString:@"(null)" withString:@""];
             self.deliveryLabel.text = [self.listingObject objectForKey:@"delivery"];
             
             NSString *sizeNoUK = [[self.listingObject objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
@@ -574,13 +577,14 @@
     [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //convo exists, goto that one
+            NSLog(@"convo exists! %@", object);
             
             MessageViewController *vc = [[MessageViewController alloc]init];
             vc.convoId = [object objectForKey:@"convoId"];
             vc.convoObject = object;
             vc.listing = self.listingObject;
             if (self.sellThisPressed == YES) {
-                vc.sellThisPressed = NO;
+                vc.sellThisPressed = NO; //setting to now because not auto sending offers anymore
             }
             vc.otherUser = [object objectForKey:@"buyerUser"];
             vc.otherUserName = [[object objectForKey:@"buyerUser"]username];
@@ -591,6 +595,8 @@
         }
         else{
             //create a new convo and goto it
+            NSLog(@"create a new convo");
+            
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
             convoObject[@"sellerUser"] = [PFUser currentUser];
             convoObject[@"buyerUser"] = [self.listingObject objectForKey:@"postUser"];

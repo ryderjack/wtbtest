@@ -364,7 +364,7 @@
         header.textLabel.text = @"    Account";
     }
     else if (section == 2){
-        header.textLabel.text = @"    Depop Matching";
+        header.textLabel.text = @"    Depop";
     }
 }
 
@@ -377,7 +377,7 @@
         return @"    Account";
     }
     else if (section == 2){
-        return @"    Depop Matching";
+        return @"    Depop";
     }
     return nil;
 }
@@ -399,15 +399,6 @@
 
 -(void)textFieldDidBeginEditing:(UITextField *)textField{
     self.navigationItem.hidesBackButton = YES;
-}
-- (IBAction)depopInfoPressed:(id)sender {
-    UIAlertController * alert=   [UIAlertController
-                                  alertControllerWithTitle:@"Depop matching"
-                                  message:@"Already selling loads of stuff on depop? Let us know your depop handle and our clever code will check out your account then let you know on Bump when someone wants what you're selling.\nSit back and relax 🐸☕️"
-                                  preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:nil];
-    [alert addAction:ok];
-    [self presentViewController:alert animated:YES completion:nil];
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{

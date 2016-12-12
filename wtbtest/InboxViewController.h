@@ -37,4 +37,11 @@
 
 @property (nonatomic) BOOL justViewedMsg;
 
+@property (nonatomic, strong) PFObject *lastConvo;
+@property (nonatomic, strong) NSDate *lastSentDate;
+@property (nonatomic, strong) NSIndexPath *lastConvoIndex;
+
+@property (nonatomic, strong) PFInstallation *currentInstallation;
+
+
 @end

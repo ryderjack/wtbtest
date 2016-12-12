@@ -68,7 +68,7 @@
         [self.offerButton setEnabled:YES];
     }
     else{
-        NSString *offerString = [NSString stringWithFormat:@"Selling: %@\nCondition: %@\nPrice: %@\n Meetup: %@", self.sellingTextfield.text, self.conditionField.text, self.priceField.text, self.meetupField.text];
+        NSString *offerString = [NSString stringWithFormat:@"Selling: %@\nCondition: %@\nPrice: %@\nMeetup: %@", self.sellingTextfield.text, self.conditionField.text, self.priceField.text, self.meetupField.text];
         [self dismissViewControllerAnimated:YES completion:^{
            [self.delegate sendOffer:offerString];
         }];

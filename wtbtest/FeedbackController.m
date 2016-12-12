@@ -219,7 +219,7 @@
                 [self.orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                     if (!error) {
                         //send push to other user
-                        NSString *pushString = [NSString stringWithFormat:@"%@ just left you feedback",[[PFUser currentUser]username]];
+                        NSString *pushString = [NSString stringWithFormat:@"%@ just left you feedback 💪",[[PFUser currentUser]username]];
                         NSDictionary *params = @{@"userId": self.user.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
                         [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                             if (!error) {
@@ -276,8 +276,62 @@
                                 [object saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                                     if (succeeded) {
                                         NSLog(@"saved user's deal data! %@", object);
-                                        [self hideHUD];
-                                        [self.navigationController popViewControllerAnimated:YES];
+                                        
+                                        if ([self.orderObject objectForKey:@"convo"]) {
+                                            PFObject *convo = [self.orderObject objectForKey:@"convo"];
+                                            [convo fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                                                if (object) {
+                                                    //create a status message & save as last sent
+                                                    NSString *messageString = [NSString stringWithFormat:@"%@ has left you feedback 💪", [PFUser currentUser].username];
+                                                    
+                                                    PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
+                                                    messageObject[@"message"] = messageString;
+                                                    messageObject[@"sender"] = [PFUser currentUser];
+                                                    messageObject[@"senderId"] = [PFUser currentUser].objectId;
+                                                    messageObject[@"senderName"] = [PFUser currentUser].username;
+                                                    messageObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                                                    messageObject[@"status"] = @"sent";
+                                                    messageObject[@"offer"] = @"NO";
+                                                    messageObject[@"mediaMessage"] = @"NO";
+                                                    messageObject[@"isStatusMsg"] = @"NO";
+                                                    
+                                                    [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                                        if (succeeded) {
+                                                            NSLog(@"saved message %@", messageObject);
+                                                            [convo setObject:messageObject forKey:@"lastSent"];
+                                                            [convo setObject:[NSDate date] forKey:@"lastSentDate"];
+                                                            [convo incrementKey:@"totalMessages"];
+
+                                                            if (self.purchased == YES) {
+                                                                [convo incrementKey:@"sellerUnseen"];
+                                                            }
+                                                            else{
+                                                                [convo incrementKey:@"buyerUnseen"];
+                                                            }
+                                                            [convo saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                                                if (succeeded) {
+                                                                    NSLog(@"saved convo with updated last sent date %@", convo);
+                                                                    [self hideHUD];
+                                                                    [self.navigationController popViewControllerAnimated:YES];
+                                                                }
+                                                                else{
+                                                                    NSLog(@"error saving convo %@", error);
+                                                                    [self hideHUD];
+                                                                }
+                                                            }];
+                                                        }
+                                                        else{
+                                                            NSLog(@"error saving msg %@", error);
+                                                            [self hideHUD];
+                                                        }
+                                                    }];
+                                                }
+                                                else{
+                                                    NSLog(@"error fetching convo %@", error);
+                                                    [self hideHUD];
+                                                }
+                                            }];
+                                        }
                                     }
                                     else{
                                         NSLog(@"error saving deals data %@", error);

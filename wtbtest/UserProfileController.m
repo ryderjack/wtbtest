@@ -33,11 +33,9 @@
     [self.checkImageView setHidden:YES];
     self.forSalePressed = NO;
     self.WTBPressed = NO;
-
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    self.dealsLabel.adjustsFontSizeToFitWidth = YES;
+    self.dealsLabel.minimumScaleFactor=0.5;
     
     // Register cell classes
     [self.collectionView registerClass:[ProfileItemCell class] forCellWithReuseIdentifier:@"Cell"];
@@ -142,6 +140,10 @@
     [super viewWillAppear:animated];
     
     self.navigationItem.title = [NSString stringWithFormat:@"%@", self.user.username];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     PFFile *img = [self.user objectForKey:@"picture"];
     if ( img != nil) {

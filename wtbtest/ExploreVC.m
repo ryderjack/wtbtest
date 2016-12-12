@@ -9,7 +9,6 @@
 #import "ExploreVC.h"
 #import "ExploreCell.h"
 #import <SVPullToRefresh/SVPullToRefresh.h>
-#import "ExplainViewController.h"
 #import "WelcomeViewController.h"
 #import "NavigationController.h"
 #import "Flurry.h"
@@ -17,6 +16,7 @@
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import "AppConstant.h"
 #import "UserProfileController.h"
+#import "ContainerViewController.h"
 
 @interface ExploreVC ()
 
@@ -127,7 +127,6 @@
                 for (NSDictionary *friend in friends) {
                     if (![currentList containsObject:[friend objectForKey:@"id"]]) {
                         //add to friend's list
-//                        NSLog(@"I have a friend named %@ with id %@", [friend objectForKey:@"name"], [friend objectForKey:@"id"]);
                         [[PFUser currentUser]addObject:[friend objectForKey:@"id"] forKey:@"friends"];
                         [[PFUser currentUser] saveInBackground];
                     }
@@ -178,18 +177,30 @@
 
     NSString *appVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
     
-    if (![appVersion isEqualToString:@"1131"]) { ///////////////////////////////////////////////////////////////////////////////////////////////UPDATE
-        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:@"We've just made it even easier for you to find items you want - update now!" preferredStyle:UIAlertControllerStyleAlert];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-            
-        }]];
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
-                                                        @"itms-apps://itunes.apple.com/app/id1096047233"]];
-        }]];
-        [self presentViewController:alertView animated:YES completion:nil];
-    }
+    PFQuery *versionQuery = [PFQuery queryWithClassName:@"versions"];
+    [versionQuery orderByDescending:@"createdAt"];
+    [versionQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            NSString *latest = [object objectForKey:@"number"];
+            if (![appVersion isEqualToString:latest]) {
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:@"Harder, better, faster, stronger" preferredStyle:UIAlertControllerStyleAlert];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    
+                }]];
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
+                                                                @"itms-apps://itunes.apple.com/app/id1096047233"]];
+                }]];
+                [self presentViewController:alertView animated:YES completion:nil];
+            }
+        }
+        else{
+            NSLog(@"error getting latest version %@", error);
+        }
+    }];
+    
+   // [PFUser logOut];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -248,7 +259,7 @@
     if (!self.infiniteQuery) {
         self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     }
-    if (!self.pullQuery) {
+    if (!self.pullQuery && [PFUser currentUser]) {
         self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
         [self queryParsePull];
     }
@@ -285,6 +296,7 @@
     if (self.userPressed == YES) {
         self.userPressed = NO;
         NSLog(@"just searched for a user, do nothing");
+        [self.searchController.searchBar becomeFirstResponder];
     }
     else if (self.searchEnabled == YES && self.filtersTapped == NO && self.listingTapped == NO) {
         NSLog(@"about to call search pressed");
@@ -667,9 +679,14 @@
     self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     self.filterMove = YES;
-    [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
-                                                 atScrollPosition:UICollectionViewScrollPositionTop
-                                                         animated:NO];
+    
+    //if array is empty from a 'no results' search then don't scroll to top to avoid crashing as there's 0 index paths to scroll to!
+    if (self.searchResults.count != 0 && self.results.count != 0) {
+        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+                                    atScrollPosition:UICollectionViewScrollPositionTop
+                                            animated:NO];
+    }
+
     [self queryParsePull];
 }
 
@@ -1065,7 +1082,8 @@
 -(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
     if (self.searchEnabled == YES) {
         self.searchString = searchBar.text;
-        
+        NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
+
         if (self.searchController.searchBar.selectedScopeButtonIndex == 0){
             //clear search array
             [self.searchResults removeAllObjects];
@@ -1077,21 +1095,23 @@
             NSMutableArray *history = [[NSMutableArray alloc]init];
             
             //save the search term and if there's 10 or more items in the search array delete the oldest and add the latest term
-            if (![self.searchString isEqualToString:@""]) {
+            if (![stringCheck isEqualToString:@""]) {
                 
                 // if haven't searched before create empty array to avoid crashing
                 if ([[PFUser currentUser] objectForKey:@"searches"]) {
                     history = [[PFUser currentUser] objectForKey:@"searches"];
+                    
+                    if (history.count >= 15) {
+                        [history removeObjectAtIndex:0];
+                    }
+                    
+                    if (![[history lastObject] isEqualToString:self.searchString]) {
+                        [history addObject:self.searchString];
+                    }
                 }
                 else{
-                    history = [NSMutableArray arrayWithArray:@[]];
-                }
-                
-                if (history.count >= 15) {
-                    [history removeObjectAtIndex:0];
-                }
-                
-                if (![[history lastObject] isEqualToString:self.searchString]) {
+ //                   history = [NSMutableArray arrayWithArray:@[]];
+                    NSLog(@"no history as new user so add first object");
                     [history addObject:self.searchString];
                 }
                 
@@ -1107,11 +1127,11 @@
             //        }
             
             if (searchesList.count > 0) {
-                if (![searchesList[0] isEqualToString:self.searchString]) {
+                if (![searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
                     [searchesList insertObject:self.searchString atIndex:0];
                 }
             }
-            else{
+            else if (![stringCheck isEqualToString:@""]){
                 [searchesList insertObject:self.searchString atIndex:0];
             }
             

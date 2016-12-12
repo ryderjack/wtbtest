@@ -117,4 +117,6 @@
 @property (nonatomic, strong) UIImagePickerController *picker;
 
 @property (nonatomic) BOOL somethingChanged;
+@property (nonatomic) BOOL shouldSave;
+
 @end

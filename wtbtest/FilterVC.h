@@ -51,6 +51,7 @@
 @property (weak, nonatomic) IBOutlet UIScrollView *brandScrollView;
 @property (weak, nonatomic) IBOutlet UIButton *menButton;
 @property (weak, nonatomic) IBOutlet UIButton *womenButton;
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
 
 @property (strong, nonatomic) UIButton *lasttapped;
 @property (strong, nonatomic) UIButton *lastBrandButtonTapped;
@@ -64,9 +65,6 @@
 @property (nonatomic, strong) NSArray *shoesArray;
 @property (nonatomic, strong) NSArray *brandImageArray;
 @property (nonatomic, strong) NSArray *brandNamesArray;
-
-//apply
-@property (weak, nonatomic) IBOutlet UIButton *applyButton;
 
 //brand Img Views
 @property (strong, nonatomic) UIImageView *adidasImageView;

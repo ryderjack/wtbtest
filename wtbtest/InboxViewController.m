@@ -38,12 +38,18 @@
     self.infinFinished = YES;
     self.justViewedMsg = NO;
     self.lastSkipped = 0;
+    self.lastSentDate = [[NSDate alloc]init];
+    self.lastConvoIndex = [[NSIndexPath alloc]init];
     
+    self.currentInstallation = [PFInstallation currentInstallation];
+
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    NSLog(self.justViewedMsg ? @"appear has just viewed message" : @"nah hasn't viewed msg in appear");
     
     //load when app comes into foreground
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -60,6 +66,36 @@
     
     if (self.justViewedMsg == NO) {
         [self loadMessages];
+    }
+    else{
+        [self updateUnseenCount];
+        self.justViewedMsg = NO;
+        [self.lastConvo fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                PFObject *lastMessage = [self.lastConvo objectForKey:@"lastSent"];
+                if (self.lastSentDate != lastMessage.createdAt && [[lastMessage objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+//                    NSLog(@"bring to the top!");
+                    //put last selected at front of array and reload table
+                    [self.convoObjects removeObject:self.lastConvo];
+                    [self.convoObjects insertObject:self.lastConvo atIndex:0];
+                    [self.tableView reloadData];
+                    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
+                    
+                    self.lastConvo = nil;
+                    self.lastSentDate = nil;
+                }
+                else{
+//                    NSLog(@"must not have sent a message after clicking but reload anyway");
+                    [self.tableView reloadRowsAtIndexPaths:@[self.lastConvoIndex] withRowAnimation:UITableViewRowAnimationFade];
+                }
+            }
+            else{
+                NSLog(@"error fetching");
+                [self.tableView reloadRowsAtIndexPaths:@[self.lastConvoIndex] withRowAnimation:UITableViewRowAnimationFade];
+                self.lastConvo = nil;
+                self.lastSentDate = nil;
+            }
+        }];
     }
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
@@ -80,7 +116,7 @@
 
 -(void)loadMessages{
     self.pullFinished = NO;
-    self.justViewedMsg = NO;
+//    self.justViewedMsg = NO;
     
     self.pullQuery = [PFQuery queryWithClassName:@"convos"];
     [self.pullQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
@@ -92,6 +128,7 @@
     [self.pullQuery includeKey:@"lastSent"];
     [self.pullQuery orderByDescending:@"lastSentDate"];
     self.pullQuery.limit = 7;
+    [self.pullQuery cancel];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects) {
@@ -145,7 +182,6 @@
             }
             else{
                 NSLog(@"error");
-                //update table view
             }
         }
         else{
@@ -166,29 +202,33 @@
                 //if no then retrieves the relevant unseen counter for the user
                 //use that on the tab
                 
+                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                self.navigationItem.title = @"M E S S A G E S";
+                
                 [self.unseenConvos removeAllObjects];
                 int totalUnseen = 0;
                 int unseen = 0;
+                
+                if (self.currentInstallation.badge != 0) {
+                    self.currentInstallation.badge = 0;
+                    [self.currentInstallation saveEventually];
+                }
                 
                 for (PFObject *convo in objects) {
                     PFObject *msgObject = [convo objectForKey:@"lastSent"];
                     
                     if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                         [self.unseenConvos addObject:convo];
-//                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
-//                            unseen = 1;
-//                        }
-//                        else{
-                            PFUser *buyer = [convo objectForKey:@"buyerUser"];
-                            if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
-                                //current user is buyer so other user is seller
-                                unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
-                            }
-                            else{
-                                //other user is buyer, current is seller
-                                unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
-                            }
-//                        }
+
+                        PFUser *buyer = [convo objectForKey:@"buyerUser"];
+                        if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+                            //current user is buyer so other user is seller
+                            unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                        }
+                        else{
+                            //other user is buyer, current is seller
+                            unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                        }
                         totalUnseen = totalUnseen + unseen;
                         
 //                        NSLog(@"total unseen %d", totalUnseen);
@@ -199,7 +239,7 @@
                     
                     if (totalUnseen > 0) {
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
-                        self.navigationItem.title = [NSString stringWithFormat:@"M E S S A G E S (%d)", totalUnseen];
+                        self.navigationItem.title = [NSString stringWithFormat:@"M E S S A G E S  %d", totalUnseen];
                     }
                     else{
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
@@ -208,11 +248,14 @@
                 }
                 else{
                     [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                    self.navigationItem.title = @"M E S S A G E S";
                 }
             }
             else{
                 //no convos
                 NSLog(@"error getting convos %@", error);
+                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                self.navigationItem.title = @"M E S S A G E S";
             }
     }];
 }
@@ -233,6 +276,7 @@
     [self.infiniteQuery orderByDescending:@"lastSentDate"];
     self.infiniteQuery.limit = 7;
     self.infiniteQuery.skip = self.lastSkipped;
+    [self.infiniteQuery cancel];
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
@@ -427,7 +471,6 @@
     else{
         [self.cell.seenImageView setHidden:YES];
     }
-    
     return self.cell;
 }
 
@@ -443,23 +486,18 @@
     int unseen = 0;
     
     PFUser *buyer = [convoObject objectForKey:@"buyerUser"];
-    
-//    if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
-//        unseen = 1;
-//    }
-//    else{
-        if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
-            //current user is buyer so other user is seller
-            unseen = [[convoObject objectForKey:@"buyerUnseen"] intValue];
-            NSLog(@"buyer");
-        }
-        else{
-            //other user is buyer, current is seller
-            unseen = [[convoObject objectForKey:@"sellerUnseen"] intValue];
-            NSLog(@"seller");
-        }
-        NSLog(@"unseen %d", unseen);
-//    }
+
+    if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+        //current user is buyer so other user is seller
+        unseen = [[convoObject objectForKey:@"buyerUnseen"] intValue];
+        NSLog(@"buyer");
+    }
+    else{
+        //other user is buyer, current is seller
+        unseen = [[convoObject objectForKey:@"sellerUnseen"] intValue];
+        NSLog(@"seller");
+    }
+    NSLog(@"unseen %d", unseen);
     
     UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[3];
     int currentTabValue = [itemToBadge.badgeValue intValue];
@@ -471,7 +509,7 @@
     }
     
     else if (newTabValue > 0){
-        self.navigationItem.title = [NSString stringWithFormat:@"M E S S A G E S (%d)", newTabValue];
+        self.navigationItem.title = [NSString stringWithFormat:@"M E S S A G E S  %d", newTabValue];
         [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
     }
     
@@ -493,7 +531,6 @@
         vc.listing = listing;
     }
     
-    
     if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
         //current user is buyer so other user is seller
         vc.otherUser = [convoObject objectForKey:@"sellerUser"];
@@ -506,6 +543,9 @@
     }
     vc.otherUserName = @"";
     self.justViewedMsg = YES;
+    self.lastConvo = convoObject;
+    self.lastSentDate = msgObject.createdAt;
+    self.lastConvoIndex = indexPath;
     [self.navigationController pushViewController:vc animated:YES];
 }
 

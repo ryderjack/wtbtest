@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11761" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
-        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -11,8 +14,8 @@
             <connections>
                 <outlet property="camView" destination="R2B-xG-3vZ" id="8yO-mc-V1Z"/>
                 <outlet property="flashButton" destination="eOf-7j-TyT" id="AVu-7d-NqZ"/>
-                <outlet property="switchButton" destination="x0J-KN-XUF" id="qzY-00-N8h"/>
-                <outlet property="tageLabel" destination="0Tw-It-8YV" id="yaH-yg-jyK"/>
+                <outlet property="switchButton" destination="cqQ-ho-GfP" id="PdD-d6-sUm"/>
+                <outlet property="tageLabel" destination="mpn-H3-crI" id="mGs-Fj-bzK"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -22,82 +25,102 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="R2B-xG-3vZ">
+                    <rect key="frame" x="0.0" y="66" width="375" height="375"/>
+                    <subviews>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="mpn-H3-crI">
+                            <rect key="frame" x="0.0" y="0.0" width="375" height="62"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="62" id="qUW-XL-7k0"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
+                            <color key="textColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                    </subviews>
                     <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="trailing" secondItem="mpn-H3-crI" secondAttribute="trailing" id="FKj-hO-rMr"/>
+                        <constraint firstItem="mpn-H3-crI" firstAttribute="leading" secondItem="R2B-xG-3vZ" secondAttribute="leading" id="i7T-Hv-eZC"/>
+                        <constraint firstItem="mpn-H3-crI" firstAttribute="top" secondItem="R2B-xG-3vZ" secondAttribute="top" id="zHZ-f7-FUB"/>
+                    </constraints>
                 </view>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eOf-7j-TyT">
+                    <rect key="frame" x="319" y="451" width="40" height="40"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="40" id="Kl0-6h-L15"/>
+                    </constraints>
+                    <state key="normal" image="flashOn.png"/>
+                    <state key="selected" image="FlashOff.png"/>
+                    <connections>
+                        <action selector="flashPressed:" destination="-1" eventType="touchUpInside" id="X1a-9A-yYs"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cqQ-ho-GfP">
+                    <rect key="frame" x="16" y="451" width="40" height="40"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="40" id="NG5-lJ-Gb8"/>
+                    </constraints>
+                    <state key="normal" image="switchIcon.png"/>
+                    <connections>
+                        <action selector="switchCameraPressed:" destination="-1" eventType="touchUpInside" id="Bsa-cD-TRj"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5fU-fX-gwK">
+                    <rect key="frame" x="143" y="509" width="90" height="90"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="90" id="uMx-Dz-d03"/>
+                        <constraint firstAttribute="height" constant="90" id="zel-uH-1fQ"/>
+                    </constraints>
+                    <state key="normal" image="cameraIcon.png"/>
+                    <connections>
+                        <action selector="takePhotoPressed:" destination="-1" eventType="touchUpInside" id="WJs-kR-nmo"/>
+                    </connections>
+                </button>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Camera" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="diP-4w-X3g">
+                    <rect key="frame" x="118" y="14" width="138" height="50"/>
+                    <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="17"/>
+                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7hA-2P-aPG">
+                    <rect key="frame" x="16" y="20" width="40" height="40"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="40" id="eDS-l8-4dH"/>
+                        <constraint firstAttribute="height" constant="40" id="yKk-W5-8iD"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="AvenirNext-Bold" family="Avenir Next" pointSize="16"/>
+                    <state key="normal" title="X">
+                        <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <connections>
+                        <action selector="dismissPressed:" destination="-1" eventType="touchUpInside" id="oKe-oK-r1Y"/>
+                    </connections>
+                </button>
             </subviews>
             <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
-                <constraint firstAttribute="trailing" secondItem="R2B-xG-3vZ" secondAttribute="trailing" id="I8H-0u-F8Z"/>
-                <constraint firstItem="R2B-xG-3vZ" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="KmL-xr-reC"/>
-                <constraint firstItem="R2B-xG-3vZ" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="146" id="icw-YG-Lx0"/>
-                <constraint firstAttribute="bottom" secondItem="R2B-xG-3vZ" secondAttribute="bottom" constant="146" id="m6J-jR-rzU"/>
+                <constraint firstItem="7hA-2P-aPG" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="16" id="5tM-qh-Qoc"/>
+                <constraint firstAttribute="trailing" secondItem="eOf-7j-TyT" secondAttribute="trailing" constant="16" id="BeB-3H-gvj"/>
+                <constraint firstItem="7hA-2P-aPG" firstAttribute="leading" secondItem="cqQ-ho-GfP" secondAttribute="leading" id="DnH-ZE-kc1"/>
+                <constraint firstItem="cqQ-ho-GfP" firstAttribute="firstBaseline" secondItem="eOf-7j-TyT" secondAttribute="firstBaseline" id="IA4-UM-vUL"/>
+                <constraint firstItem="R2B-xG-3vZ" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="OLq-Jb-brK"/>
+                <constraint firstItem="cqQ-ho-GfP" firstAttribute="baseline" secondItem="eOf-7j-TyT" secondAttribute="baseline" id="Poe-E1-sDV"/>
+                <constraint firstItem="R2B-xG-3vZ" firstAttribute="centerX" secondItem="5fU-fX-gwK" secondAttribute="centerX" id="Qdq-HU-Sy0"/>
+                <constraint firstItem="7hA-2P-aPG" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="20" id="Rv3-ak-r8u"/>
+                <constraint firstItem="cqQ-ho-GfP" firstAttribute="top" secondItem="R2B-xG-3vZ" secondAttribute="bottom" constant="10" id="Stu-u1-Dcc"/>
+                <constraint firstItem="7hA-2P-aPG" firstAttribute="trailing" secondItem="cqQ-ho-GfP" secondAttribute="trailing" id="U5I-1X-g08"/>
+                <constraint firstAttribute="bottom" secondItem="5fU-fX-gwK" secondAttribute="bottom" constant="68" id="XoG-Jh-Djk"/>
+                <constraint firstItem="5fU-fX-gwK" firstAttribute="top" secondItem="R2B-xG-3vZ" secondAttribute="bottom" constant="68" id="YWE-EE-D4G"/>
+                <constraint firstItem="diP-4w-X3g" firstAttribute="centerX" secondItem="R2B-xG-3vZ" secondAttribute="centerX" id="ayM-3S-eTR"/>
+                <constraint firstItem="R2B-xG-3vZ" firstAttribute="top" secondItem="7hA-2P-aPG" secondAttribute="bottom" constant="6" id="gb7-4i-aUD"/>
+                <constraint firstItem="R2B-xG-3vZ" firstAttribute="top" secondItem="diP-4w-X3g" secondAttribute="bottom" constant="2" id="r99-69-YFh"/>
+                <constraint firstAttribute="trailing" secondItem="R2B-xG-3vZ" secondAttribute="trailing" id="tTk-GZ-rO7"/>
+                <constraint firstItem="cqQ-ho-GfP" firstAttribute="top" secondItem="eOf-7j-TyT" secondAttribute="top" id="wp7-pp-W8b"/>
+                <constraint firstItem="diP-4w-X3g" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="14" id="z5v-LW-bCW"/>
+                <constraint firstItem="diP-4w-X3g" firstAttribute="leading" secondItem="7hA-2P-aPG" secondAttribute="trailing" constant="62" id="zvI-Ad-SUi"/>
             </constraints>
-            <point key="canvasLocation" x="362.5" y="341.5"/>
+            <point key="canvasLocation" x="-293.5" y="197.5"/>
         </view>
-        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eOf-7j-TyT">
-            <constraints>
-                <constraint firstAttribute="width" constant="20" id="0sW-AS-cbb"/>
-                <constraint firstAttribute="width" secondItem="eOf-7j-TyT" secondAttribute="height" multiplier="1:1" id="2vf-qB-1nf"/>
-            </constraints>
-            <state key="normal" image="flashOn.png"/>
-            <state key="selected" image="FlashOff.png"/>
-            <connections>
-                <action selector="flashPressed:" destination="-1" eventType="touchUpInside" id="X1a-9A-yYs"/>
-            </connections>
-            <point key="canvasLocation" x="665" y="432"/>
-        </button>
-        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="x0J-KN-XUF">
-            <constraints>
-                <constraint firstAttribute="width" constant="20" id="BNu-nS-dxi"/>
-                <constraint firstAttribute="height" constant="20" id="yJ6-ae-ip6"/>
-                <constraint firstAttribute="width" secondItem="x0J-KN-XUF" secondAttribute="height" multiplier="1:1" id="z7j-XL-dXS"/>
-            </constraints>
-            <state key="normal" image="switchIcon.png"/>
-            <connections>
-                <action selector="switchCameraPressed:" destination="-1" eventType="touchUpInside" id="72k-qS-h3h"/>
-            </connections>
-            <point key="canvasLocation" x="652" y="527"/>
-        </button>
-        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oJO-pp-7GF">
-            <constraints>
-                <constraint firstAttribute="width" secondItem="oJO-pp-7GF" secondAttribute="height" multiplier="1:1" id="8Xc-Ie-Haw"/>
-                <constraint firstAttribute="height" constant="90" id="DwF-9Z-cfW"/>
-                <constraint firstAttribute="width" constant="90" id="eMe-ac-61E"/>
-            </constraints>
-            <state key="normal" image="cameraIcon.png"/>
-            <connections>
-                <action selector="takePhotoPressed:" destination="-1" eventType="touchUpInside" id="UwE-aY-oY3"/>
-            </connections>
-            <point key="canvasLocation" x="659" y="629"/>
-        </button>
-        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="sEq-WB-dTW">
-            <constraints>
-                <constraint firstAttribute="height" constant="30" id="Tyr-Op-fOp"/>
-            </constraints>
-            <fontDescription key="fontDescription" name="AvenirNext-Bold" family="Avenir Next" pointSize="16"/>
-            <state key="normal" title="X">
-                <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-            </state>
-            <connections>
-                <action selector="dismissPressed:" destination="-1" eventType="touchUpInside" id="nar-3H-lhW"/>
-            </connections>
-            <point key="canvasLocation" x="659" y="52"/>
-        </button>
-        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0Tw-It-8YV">
-            <constraints>
-                <constraint firstAttribute="height" constant="69" id="ncJ-L2-29L"/>
-            </constraints>
-            <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
-            <color key="textColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-            <nil key="highlightedColor"/>
-            <point key="canvasLocation" x="793" y="177"/>
-        </label>
-        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Camera" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Rdh-fj-9qE">
-            <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="17"/>
-            <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-            <nil key="highlightedColor"/>
-            <point key="canvasLocation" x="702" y="280"/>
-        </label>
     </objects>
     <resources>
         <image name="FlashOff.png" width="17" height="20"/>

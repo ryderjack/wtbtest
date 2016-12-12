@@ -45,6 +45,7 @@
     [salesQuery includeKey:@"buyerUser"];
     [salesQuery includeKey:@"gaveFeedback"];
     [salesQuery orderByDescending:@"createdAt"];
+    [salesQuery includeKey:@"WTB"];
     [salesQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             [self.feedbackArray removeAllObjects];
@@ -55,7 +56,8 @@
             [purchaseQuery whereKey:@"buyerUser" equalTo:self.user];
             [purchaseQuery whereKey:@"gaveFeedback" notEqualTo:self.user];
             [purchaseQuery includeKey:@"gaveFeedback"];
-            [salesQuery includeKey:@"sellerUser"];
+            [purchaseQuery includeKey:@"sellerUser"];
+            [purchaseQuery includeKey:@"WTB"];
             [purchaseQuery orderByDescending:@"createdAt"];
             [purchaseQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                 if (!error) {

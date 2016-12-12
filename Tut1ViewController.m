@@ -18,10 +18,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.startButton setHidden:YES];
-    
-    self.mainLabel.adjustsFontSizeToFitWidth = YES;
-    self.mainLabel.minimumScaleFactor=0.5;
+    [self.createButton setHidden:YES];
+    [self.dimissButton setHidden:YES];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -30,46 +28,130 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    
-    [self.pageControl setCurrentPage:self.index];
+    self.cursorImageView.transform = CGAffineTransformIdentity;
+    [self.cursorImageView setAlpha:0.0f];
+    [self.screenImageView setAlpha:0.0f];
+    [self.sendOfferImageView setAlpha:0.0f];
     
     if (self.index == 0) {
-        self.mainTitle.text = @"Selling";
-        self.mainLabel.text = @"Listings show how much buyers are willing to pay and the condition of the item wanted";
-        self.imageView.image = [UIImage imageNamed:@"SellingImg1"];
-        
+        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1"];
+        self.titleLabel.text = @"Bump";
+        self.descriptionLabel.text = @"List items that you want and sellers get in touch";
+        [self.createButton setHidden:YES];
     }
     else if (self.index == 1){
-        self.mainTitle.text = @"Selling";
-        self.mainLabel.text = @"Hit the filter button to refine your search results when looking to sell your stuff";
-        self.imageView.image = [UIImage imageNamed:@"SellingImg2"];
+        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro2.1"];
+        self.titleLabel.text = @"Selling";
+        self.descriptionLabel.text = @"Tap a listing. Message the buyer. Hit the tag. Send them an offer. Sold.";
+        [self.createButton setHidden:YES];
         
+        if (self.messageExplain == YES) {
+            [self.dimissButton setAlpha:0.0];
+            [self.dimissButton setHidden:NO];
+            [UIView animateWithDuration:1.0
+                                  delay:1.0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.dimissButton setAlpha:1.0];
+                             }
+                             completion:nil];
+        }
+        [self setupSelling];
     }
     else if (self.index == 2){
-        self.mainTitle.text = @"Buying";
-        self.mainLabel.text = @"WTB posts are standardised so they’re easier for sellers to find and search through";
-        self.imageView.image = [UIImage imageNamed:@"BuyingImg1"];
+        self.heroImageView.image = [UIImage imageNamed:@"iPhone3"];
+        self.titleLabel.text = @"Buying";
+        self.descriptionLabel.text = @"Bump also recommends items that can be purchased straight away";
         
+        if (self.explainMode == YES) {
+            [self.dimissButton setAlpha:0.0];
+            [self.dimissButton setHidden:NO];
+            
+            [UIView animateWithDuration:1.0
+                                  delay:0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.dimissButton setAlpha:1.0];
+                             }
+                             completion:nil];
+        }
+        else{
+            [self.createButton setAlpha:0.0];
+            [self.createButton setHidden:NO];
+            
+            [UIView animateWithDuration:1.0
+                                  delay:0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.createButton setAlpha:1.0];
+                             }
+                             completion:nil];
+        }
     }
-    else if (self.index == 3){
-        self.mainTitle.text = @"Buying";
-        self.mainLabel.text = @"Sort your deal out quickly and we’ll take you to PayPal to complete the transaction";
-        self.imageView.image = [UIImage imageNamed:@"paypal"];
-        [self.startButton setHidden:NO];
-    }
-}
-- (IBAction)startPressed:(id)sender {
-//    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-    CreateViewController *vc = [[CreateViewController alloc]init];
-    vc.introMode = YES;
-    vc.delegate = self;
-    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
-    [self presentViewController:navController animated:YES completion:nil];
 }
 
 -(void)dismissCreateController:(CreateViewController *)controller{
-    NSLog(@"dismissing in tut");
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 
+-(void)setupSelling{
+    [UIView animateKeyframesWithDuration:5.5 delay:0.6 options:UIViewKeyframeAnimationOptionCalculationModeLinear | UIViewKeyframeAnimationOptionRepeat animations:^{
+        [self.cursorImageView setAlpha:0.0f];
+        [self.screenImageView setAlpha:0.0f];
+        [self.sendOfferImageView setAlpha:0.0f];
+        
+        //1.1 cursor appears
+        [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.025 animations:^{
+            self.cursorImageView.alpha = 1.0f;
+        }];
+        
+        //1.2 cursor moves up
+        [UIView addKeyframeWithRelativeStartTime:0.02 relativeDuration:0.1 animations:^{
+            self.cursorImageView.transform = CGAffineTransformMakeTranslation(0,-60);
+        }];
+        
+        //1.3 show message VC
+        [UIView addKeyframeWithRelativeStartTime:0.15 relativeDuration:0.1 animations:^{
+            [self.screenImageView setAlpha:1.0f];
+        }];
+        
+        //1.4 cursor moves down to tag
+        [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.3 animations:^{
+            self.cursorImageView.transform = CGAffineTransformMakeTranslation(-110, 18);
+        }];
+        
+        //1.5 show message VC
+        [UIView addKeyframeWithRelativeStartTime:0.7 relativeDuration:0.2 animations:^{
+            [self.cursorImageView setAlpha:0.0f];
+            [self.sendOfferImageView setAlpha:1.0];
+        }];
+        
+    } completion:^(BOOL finished) {
+        NSLog(@"Animation complete!");
+        [self.cursorImageView setAlpha:0.0f];
+        [self.screenImageView setAlpha:0.0f];
+        [self.sendOfferImageView setAlpha:0.0f];
+    }];
+}
+- (IBAction)createPressed:(id)sender {
+    
+    if (self.explainMode == YES) {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
+    else if (self.messageExplain == YES){
+        PFUser *current = [PFUser currentUser];
+        [current setObject:@"YES" forKey:@"completedMsgIntro3"];
+        [current saveInBackground];
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
+    else{
+        PFUser *current = [PFUser currentUser];
+        [current setObject:@"YES" forKey:@"completedIntroTutorial"];
+        [current saveInBackground];
+        
+        CreateViewController *vc = [[CreateViewController alloc]init];
+        vc.introMode = YES;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+}
 @end

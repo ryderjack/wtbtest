@@ -23,17 +23,20 @@
     [[self.pageController view] setFrame:[[self view] bounds]];
     
     Tut1ViewController *initialViewController = [self viewControllerAtIndex:0];
-    
     NSArray *viewControllers = [NSArray arrayWithObject:initialViewController];
     
+    self.view.backgroundColor = initialViewController.view.backgroundColor;
+
     [self.pageController setViewControllers:viewControllers direction:UIPageViewControllerNavigationDirectionForward animated:NO completion:nil];
     
     [self addChildViewController:self.pageController];
     [[self view] addSubview:[self.pageController view]];
     [self.pageController didMoveToParentViewController:self];
     
-    
-    
+    UIPageControl *pageControlAppearance = [UIPageControl appearanceWhenContainedInInstancesOfClasses:@[[UIPageViewController class]]];
+    pageControlAppearance.pageIndicatorTintColor = [UIColor colorWithRed:0.05 green:0.54 blue:1.00 alpha:1.0];
+    pageControlAppearance.currentPageIndicatorTintColor = [UIColor whiteColor];
+    pageControlAppearance.backgroundColor = initialViewController.view.backgroundColor;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -62,7 +65,7 @@
     
     index++;
     
-    if (index == 4) {
+    if (index == 3) {
         return nil;
     }
     
@@ -74,14 +77,16 @@
     
     Tut1ViewController *childViewController = [[Tut1ViewController alloc] initWithNibName:@"Tut1ViewController" bundle:nil];
     childViewController.index = index;
-    
+    if (self.explainMode == YES) {
+        childViewController.explainMode = YES;
+    }
     return childViewController;
     
 }
 
 - (NSInteger)presentationCountForPageViewController:(UIPageViewController *)pageViewController {
     // The number of items reflected in the page indicator.
-    return 4;
+    return 3;
 }
 
 - (NSInteger)presentationIndexForPageViewController:(UIPageViewController *)pageViewController {

@@ -31,6 +31,8 @@
     self.priceField.delegate = self;
     self.voucherField.delegate = self;
     
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+    
     [self.confirmedOfferObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
             self.currency = [self.confirmedOfferObject objectForKey:@"currency"];
@@ -52,17 +54,6 @@
             [self showError];
         }
     }];
-    
-//    self.deliverypriceLabel.text = [NSString stringWithFormat:@"£%.2f", [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue]];
-    
-    //setup values
-    
-//    self.delivery = [[self.confirmedOfferObject objectForKey:@"deliveryCost"] floatValue];
-//    self.fee = (self.price + self.delivery)*0.05;
-//    self.fee = 0;
-//    float total = (self.price + self.delivery ); //+ self.fee
-//    self.transactionfeeLabel.text = [NSString stringWithFormat:@"£%.2f", self.fee];
-//    self.totalLabel.text = [NSString stringWithFormat:@"£%.2f",(total + 15)];
     
     self.addressLabel.adjustsFontSizeToFitWidth = YES;
     self.addressLabel.minimumScaleFactor=0.5;
@@ -104,21 +95,11 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == 0){
+    
+    if (section == 0 || section == 1 || section == 2 || section == 3 || section == 4){
         return 1;
     }
-    else if (section == 1){
-        return 1; //should be 4 with fee cell & delivery cell & authenticity
-    }
-    else if (section == 2){
-        return 1;
-    }
-    else if (section ==3){
-        return 1;
-    }
-    else if (section == 4){
-        return 1;
-    }
+
     return 1;
 }
 - (IBAction)payPressed:(id)sender {
@@ -181,13 +162,14 @@
     [orderObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
     [orderObject setObject:[self.confirmedOfferObject objectForKey:@"sellerUser"] forKey:@"sellerUser"];
     [orderObject setObject:[self.confirmedOfferObject objectForKey:@"title"] forKey:@"title"];
-    [orderObject setObject:@"waiting" forKey:@"status"];
+    [orderObject setObject:@"paid" forKey:@"status"]; //skipping confirm step
     [orderObject setObject:[self.confirmedOfferObject objectForKey:@"salePrice"] forKey:@"salePrice"];
     [orderObject setObject:[self.confirmedOfferObject objectForKey:@"currency"] forKey:@"currency"];
-    [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"paid"];
+    [orderObject setObject:[NSNumber numberWithBool:YES] forKey:@"paid"]; //skipping confirm step
     [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"shipped"];
     [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"sellerFeedback"];
     [orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"buyerFeedback"];
+    [orderObject setObject:self.convo forKey:@"convo"];
     
     NSString *prefixToRemove = [NSString stringWithFormat:@"%@", self.currencySymbol];
     NSString *buyerTotal = [[NSString alloc]init];
@@ -206,27 +188,65 @@
             else{
                 [self.convo setObject:[self.confirmedOfferObject objectForKey:@"wtbListing"] forKey:@"listing"];
             }
-            [self.convo saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            
+            //create a status message & save as last sent
+            NSString *messageString = [NSString stringWithFormat:@"%@ paid 💰", [PFUser currentUser].username];
+            
+            PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
+            messageObject[@"message"] = messageString;
+            messageObject[@"sender"] = [PFUser currentUser];
+            messageObject[@"senderId"] = [PFUser currentUser].objectId;
+            messageObject[@"senderName"] = [PFUser currentUser].username;
+            messageObject[@"convoId"] = [self.convo objectForKey:@"convoId"];
+            messageObject[@"status"] = @"sent";
+            messageObject[@"offer"] = @"NO";
+            messageObject[@"mediaMessage"] = @"NO";
+            messageObject[@"isStatusMsg"] = @"NO";
+            
+            [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
-                    NSLog(@"success! saving convo");
-                    [self.confirmedOfferObject setObject:@"waiting" forKey:@"status"];
-                    [self.confirmedOfferObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    NSLog(@"saved status message!");
+                    
+                    [self.convo setObject:messageObject forKey:@"lastSent"];
+                    [self.convo setObject:[NSDate date] forKey:@"lastSentDate"];
+                    [self.convo incrementKey:@"sellerUnseen"];
+                    [self.convo incrementKey:@"totalMessages"];
+                    
+                    [self.convo saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                         if (succeeded) {
-                            NSLog(@"success! saving offer");
+                            NSLog(@"success! saving convo");
+                            
+                            //send push to seller user
+                            NSString *pushString = @"You just sold an item 🤑";
+                            NSDictionary *params = @{@"userId": self.otherUserId, @"message": pushString, @"sender": [PFUser currentUser].username};
+                            [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                                if (!error) {
+                                    NSLog(@"response sending sold push %@", response);
+                                }
+                                else{
+                                    NSLog(@"image push error %@", error);
+                                }
+                            }];
+                            
+                            [self.confirmedOfferObject setObject:@"purchased" forKey:@"status"];
+                            [self.confirmedOfferObject saveInBackground];
+                            
                             [self hideHUD];
                             [self.navigationController popViewControllerAnimated:YES];
                         }
                         else{
-                            NSLog(@"error saving offer status %@", error);
+                            NSLog(@"error saving convo obj %@", error);
                             [self hideHUD];
-                            [self.navigationController popViewControllerAnimated:YES];
+                            [self.payButton setEnabled:YES];
+                            [self showError];
                         }
                     }];
                 }
                 else{
-                    NSLog(@"error saving convo obj %@", error);
+                    NSLog(@"error saving message %@", error);
                     [self hideHUD];
-                    [self.navigationController popViewControllerAnimated:YES];
+                    [self.payButton setEnabled:YES];
+                    [self showError];
                 }
             }];
         }
@@ -235,7 +255,6 @@
             [self.payButton setEnabled:YES];
             NSLog(@"error saving %@", error);
             [self showError];
-            [self.navigationController popViewControllerAnimated:YES];
         }
     }];
 }

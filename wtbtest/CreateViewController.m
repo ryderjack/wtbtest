@@ -22,12 +22,11 @@
     [super viewDidLoad];
     
     self.navigationItem.title = @"C R E A T E";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     //hide first table view header
     self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
+    
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     if (self.introMode == NO) {
         [self.skipButton setHidden:YES];
@@ -40,6 +39,7 @@
     [self.fourthCam setEnabled:NO];
     
     self.somethingChanged = NO;
+    self.shouldSave = NO;
     
     [self.firstDelete setHidden:YES];
     [self.secondDelete setHidden:YES];
@@ -108,6 +108,10 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     [[self navigationController] setNavigationBarHidden:NO animated:YES];
     
@@ -461,7 +465,7 @@
 }
 
 -(void)textViewDidBeginEditing:(UITextView *)textView{
-    if ([textView.text isEqualToString:@"(optional)"]) {
+    if ([textView.text isEqualToString:@"Leave blank if none"]) {
         textView.text = @"";
         textView.textColor = [UIColor colorWithRed:74/255.0f green:74/255.0f blue:74/255.0f alpha:1.0f];
     }
@@ -479,7 +483,7 @@
 }
 -(void)textViewDidEndEditing:(UITextView *)textView{
     if ([textView.text isEqualToString:@""]) {
-        textView.text = @"(optional)";
+        textView.text = @"Leave blank if none";
         textView.textColor = [UIColor lightGrayColor];
     }
     else{
@@ -487,7 +491,7 @@
         NSArray *words = [textView.text componentsSeparatedByString:@" "];
         for (NSString *string in words) {
             if ([self.profanityList containsObject:string.lowercaseString]) {
-                textView.text = @"(optional)";
+                textView.text = @"Leave blank if none";
                 textView.textColor = [UIColor lightGrayColor];
             }
         }
@@ -560,7 +564,8 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         CameraController *vc = [[CameraController alloc]init];
         vc.delegate = self;
-        vc.offerMode = YES;
+        vc.offerMode = NO;
+        self.shouldSave = YES;
         [self presentViewController:vc animated:YES completion:nil];
     }]];
     
@@ -1146,7 +1151,7 @@
             PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
             [self.listing setObject:imageFile4 forKey:@"image4"];
         }
-        if ([self.extraField.text isEqualToString:@"(optional)"] || [extraInfo isEqualToString:@""]) {
+        if ([self.extraField.text isEqualToString:@"Leave blank if none"] || [extraInfo isEqualToString:@""]) {
             //don't save its placeholder
         }
         else{
@@ -1226,7 +1231,7 @@
     self.chooseSize.text = @"select";
     self.payField.text = @"";
     self.titleField.text = @"";
-    self.extraField.text = @"(optional)";
+    self.extraField.text = @"Leave blank if none";
     self.warningLabel.text = @"";
     self.firstSize = @"";
     self.secondSize = @"";
@@ -1268,8 +1273,11 @@
 }
 
 -(void)finalImage:(UIImage *)image{
-    //save image
-    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+    //save image if just been taken
+    if (self.shouldSave == YES) {
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+        self.shouldSave = NO;
+    }
     
     if (self.camButtonTapped == 1) {
         [self.firstImageView setHidden:NO];

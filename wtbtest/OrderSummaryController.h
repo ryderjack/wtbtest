@@ -11,7 +11,6 @@
 #import <ParseUI/ParseUI.h>
 #import "DetailImageController.h"
 
-
 @interface OrderSummaryController : UITableViewController
 
 //cells
@@ -90,4 +89,5 @@
 
 //messageMode
 @property (nonatomic) BOOL fromMessage;
+
 @end

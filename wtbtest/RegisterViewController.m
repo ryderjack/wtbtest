@@ -12,7 +12,6 @@
 #import "NavigationController.h"
 #import "AppConstant.h"
 #import <TOWebViewController.h>
-#import "ExplainViewController.h"
 #import "MessagesTutorial.h"
 
 @interface RegisterViewController ()
@@ -46,6 +45,10 @@
     [self.GBPButton setSelected:YES];
     
     self.profanityList = @[@"fuck", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"#", @"?", @"!", @"£", @"/", @"(", @")", @":", @",", @"'", @"$", @" ",@"<", @">", @"+", @"=", @"%", @"[", @"]", @"{", @"}", @"^", @"..fuckfuck"];
+    
+    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {
+        NSLog(@"tapped no to notifications");
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -131,7 +134,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
     if (section == 0){
-        return 7;
+        return 6;
     }
     else if (section == 1){
         return 1;
@@ -159,9 +162,6 @@
             return self.currencyCell;
         }
         else if(indexPath.row == 5){
-            return self.depopCell;
-        }
-        else if(indexPath.row == 6){
             return self.pictureCell;
         }
     }
@@ -176,10 +176,10 @@
         if (indexPath.row == 0) {
             return 58;
         }
-        else if(indexPath.row == 1 ||indexPath.row == 2 ||indexPath.row == 3 ||indexPath.row == 4 ||indexPath.row == 5){
+        else if(indexPath.row == 1 ||indexPath.row == 2 ||indexPath.row == 3 ||indexPath.row == 4){
             return 44;
         }
-        else if(indexPath.row == 6){
+        else if(indexPath.row == 5){
             return 147;
         }
     }
@@ -308,16 +308,16 @@
                         self.user[@"currency"] = self.selectedCurrency;
                         self.user[@"completedReg"] = @"YES";
                         
-                        if (![self.depopField.text isEqualToString:@""]) {
-                            //entered a depop account
-                            NSString *depopHandle = [self.depopField.text stringByReplacingOccurrencesOfString:@"@" withString:@""];
-                            [depopHandle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-                            self.user[@"depopHandle"] = depopHandle;
-                            PFObject *depopObj = [PFObject objectWithClassName:@"Depop"];
-                            depopObj[@"user"] = self.user;
-                            depopObj[@"handle"] = depopHandle;
-                            [depopObj saveInBackground];
-                        }
+//                        if (![self.depopField.text isEqualToString:@""]) {
+//                            //entered a depop account
+//                            NSString *depopHandle = [self.depopField.text stringByReplacingOccurrencesOfString:@"@" withString:@""];
+//                            [depopHandle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+//                            self.user[@"depopHandle"] = depopHandle;
+//                            PFObject *depopObj = [PFObject objectWithClassName:@"Depop"];
+//                            depopObj[@"user"] = self.user;
+//                            depopObj[@"handle"] = depopHandle;
+//                            [depopObj saveInBackground];
+//                        }
                         
                         [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
                          {
@@ -377,13 +377,13 @@
                                  }];
 
                                  //progress to tutorial
-//                                 ContainerViewController *vc = [[ContainerViewController alloc]init];
-//                                 [self.navigationController pushViewController:vc animated:YES];
-                                 
                                  [self dismissHUD];
-                                 MessagesTutorial *vc = [[MessagesTutorial alloc]init];
-                                 vc.introMode = YES;
+                                 ContainerViewController *vc = [[ContainerViewController alloc]init];
                                  [self.navigationController pushViewController:vc animated:YES];
+                                 
+                                 //MessagesTutorial *vc = [[MessagesTutorial alloc]init];
+                                 //vc.introMode = YES;
+                                 //[self.navigationController pushViewController:vc animated:YES];
                              }
                              else
                              {

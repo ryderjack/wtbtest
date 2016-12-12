@@ -94,6 +94,12 @@
     }
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
+                                    NSFontAttributeName, [UIColor blackColor], NSForegroundColorAttributeName,  nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+}
+
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.

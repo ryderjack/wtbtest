@@ -19,10 +19,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     self.navigationItem.title = @"O R D E R";
+    
+    self.itemTitleLabel.text = @"";
+    self.itemPrice.text = @"";
+    self.dateLabel.text = @"";
     
     [self.checkImageView setHidden:YES];
     
@@ -54,6 +55,8 @@
     
     self.userName.text = @"";
     self.dealsLabel.text = @"Loading";
+    
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     if (self.fromMessage == YES) {
         UIBarButtonItem *dismissButton = [[UIBarButtonItem alloc]initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
@@ -202,55 +205,6 @@
     // create detail vc for use with camera buttons
     self.detailController = [[DetailImageController alloc]init];
     self.detailController.listingPic = NO;
-
-//    if ([self.confirmedOffer objectForKey:@"image4"]){
-//        self.numberOfPics = 4;
-//        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
-//        [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
-//        [self.thirdImageView setFile:[self.confirmedOffer objectForKey:@"image3"]];
-//        [self.fourthImageView setFile:[self.confirmedOffer objectForKey:@"image4"]];
-//    }
-//    else if ([self.confirmedOffer objectForKey:@"image3"]){
-//        self.numberOfPics = 3;
-//        [self.fourthCam setEnabled:NO];
-//        
-//        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
-//        [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
-//        [self.thirdImageView setFile:[self.confirmedOffer objectForKey:@"image3"]];
-//    }
-//    
-//    else if ([self.confirmedOffer objectForKey:@"image2"]) {
-//        self.numberOfPics = 2;
-//        [self.thirdCam setEnabled:NO];
-//        [self.fourthCam setEnabled:NO];
-//        
-//        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image1"]];
-//        [self.secondImageView setFile:[self.confirmedOffer objectForKey:@"image2"]];
-//    }
-//    else{
-//        self.numberOfPics = 1;
-//        [self.secondCam setEnabled:NO];
-//        [self.thirdCam setEnabled:NO];
-//        [self.fourthCam setEnabled:NO];
-//        
-//        [self.firstImageView setFile:[self.confirmedOffer objectForKey:@"image"]];
-//    }
-    
-//    [self.secondImageView loadInBackground];
-//    [self.thirdImageView loadInBackground];
-//    [self.fourthImageView loadInBackground];
-    
-    //main cells
-    
-//    if ([[self.orderObject objectForKey:@"check"]isEqualToString:@"YES"]) {
-//        self.checkLabel.text = @"£15.00";
-//    }
-//    else{
-//        self.checkLabel.text = @"-";
-//    }
-    
-//    self.deliveryLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"delivery"]floatValue]];
-//    self.feeLabel.text = [NSString stringWithFormat: @"£%.2f",[[self.orderObject objectForKey:@"fee"]floatValue]];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -312,9 +266,6 @@
             }
         }
     }
-//    else if (indexPath.section ==1){
-//        return 104;
-//    }
     else if (indexPath.section ==1){
         return 124;
     }
@@ -342,11 +293,6 @@
             }
         }
     }
-//    else if (indexPath.section == 1){
-//        if (indexPath.row == 0) {
-//            return self.simpleImagesCell;
-//        }
-//    }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
             return self.shippingCell;
@@ -474,14 +420,64 @@
 - (IBAction)markAsShipped:(id)sender {
     if (self.shippedButton.selected == YES) {
        
-        [self.shippedButton setSelected:NO];
-        [self.orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"shipped"];
-        [self setUpTitle];
+//        [self.shippedButton setSelected:NO];
+//        [self.orderObject setObject:[NSNumber numberWithBool:NO] forKey:@"shipped"];
+//        [self setUpTitle];
     }
     else{
         [self.shippedButton setSelected:YES];
         [self.orderObject setObject:[NSNumber numberWithBool:YES] forKey:@"shipped"];
         [self setUpTitle];
+        
+        if ([self.orderObject objectForKey:@"convo"]) {
+            PFObject *convo = [self.orderObject objectForKey:@"convo"];
+            [convo fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    //create a status message & save as last sent
+                    NSString *messageString = [NSString stringWithFormat:@"%@ has shipped the item ✈️", [PFUser currentUser].username];
+                    
+                    PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
+                    messageObject[@"message"] = messageString;
+                    messageObject[@"sender"] = [PFUser currentUser];
+                    messageObject[@"senderId"] = [PFUser currentUser].objectId;
+                    messageObject[@"senderName"] = [PFUser currentUser].username;
+                    messageObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                    messageObject[@"status"] = @"sent";
+                    messageObject[@"offer"] = @"NO";
+                    messageObject[@"mediaMessage"] = @"NO";
+                    messageObject[@"isStatusMsg"] = @"NO";
+                    
+                    [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            NSLog(@"saved message");
+                            [convo setObject:messageObject forKey:@"lastSent"];
+                            [convo setObject:[NSDate date] forKey:@"lastSentDate"];
+                            [convo incrementKey:@"buyerUnseen"];
+                            [convo incrementKey:@"totalMessages"];
+                            [convo saveInBackground];
+                        }
+                        else{
+                            NSLog(@"error saving msg %@", error);
+                        }
+                    }];
+                }
+                else{
+                    NSLog(@"error fetching convo %@", error);
+                }
+            }];
+        }
+        
+        //send push to other user
+        NSString *pushString = [NSString stringWithFormat:@"%@ has shipped your item ✈️",[[PFUser currentUser]username]];
+        NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+        [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+            if (!error) {
+                NSLog(@"response sending shipping push %@", response);
+            }
+            else{
+                NSLog(@"image push error %@", error);
+            }
+        }];
     }
 }
 
@@ -491,6 +487,10 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
     [self setUpTitle];
 }
 - (IBAction)firstCamPressed:(id)sender {
@@ -512,20 +512,7 @@
         self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
         self.detailController.offerMode = YES;
     }
-//    else if (self.numberOfPics == 2){
-//        self.detailController.numberOfPics = 2;
-//        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
-//    }
-//    else if (self.numberOfPics == 3){
-//        self.detailController.numberOfPics = 3;
-//        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
-//    }
-//    else if (self.numberOfPics == 4){
-//        self.detailController.numberOfPics = 4;
-//        self.detailController.listing = [self.orderObject objectForKey:@"offerObject"];
-//    }
     self.detailController.tagText = [self.orderObject objectForKey:@"tagString"];
-    
     [self presentViewController:self.detailController animated:YES completion:nil];
 }
 
@@ -539,6 +526,7 @@
             
             [self.titleImageView setImage:[UIImage imageNamed:@"trackingfeedback"]];
             [self.shippedButton setSelected:YES];
+            [self.shippedButton setEnabled:NO];
             
             [self.otherFeedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
             [self.otherFeedbackButton setEnabled:NO];
@@ -551,6 +539,7 @@
             
             [self.titleImageView setImage:[UIImage imageNamed:@"trackingshipped"]];
             [self.shippedButton setSelected:YES];
+            [self.shippedButton setEnabled:NO];
         }
         else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == NO && [[self.orderObject objectForKey:@"buyerFeedback"]boolValue] == YES){
             
@@ -585,6 +574,7 @@
 
             [self.titleImageView setImage:[UIImage imageNamed:@"trackingfeedback"]];
             [self.shippedButton setSelected:YES];
+            [self.shippedButton setEnabled:NO];
             
             [self.feedbackButton setImage:[UIImage imageNamed:@"leftFbButton"] forState:UIControlStateNormal];
             [self.feedbackButton setEnabled:NO];
@@ -597,6 +587,8 @@
             
             [self.titleImageView setImage:[UIImage imageNamed:@"trackingshipped"]];
             [self.shippedButton setSelected:YES];
+            [self.shippedButton setEnabled:NO];
+
         }
         else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == NO && [[self.orderObject objectForKey:@"sellerFeedback"]boolValue] == YES){
             

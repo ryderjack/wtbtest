@@ -11,5 +11,6 @@
 @interface ContainerViewController : UIViewController <UIPageViewControllerDataSource>
 
 @property (strong, nonatomic) UIPageViewController *pageController;
+@property (nonatomic) BOOL explainMode;
 
 @end

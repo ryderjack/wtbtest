@@ -138,23 +138,29 @@
     }
     else{
         //if app badge not zero, reset to zero
+        NSLog(@"reset badge");
         self.installation.badge = 0;
         [self.installation saveEventually];
-        
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%ld", (long)self.installation.badge]];
     }
     
     self.unseenMessages = [[NSMutableArray alloc]init];
-        
-    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {  //commented out for simulator testing purposes
-       NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:YES];
-        [timer fire];
-        NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
-        [timer2 fire];
+    
+    if ([PFUser currentUser]) {
+        if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {
+            NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:YES];
+            [timer fire];
+            NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
+            [timer2 fire];
+        }
+        else{
+            [self checkMesages];
+            [self checkForTBMessages];
+        }
     }
     else{
-        [self checkMesages];
-        [self checkForTBMessages];
+        NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
+        [timer2 fire];
     }
     
     [iRate sharedInstance].previewMode = NO;
@@ -301,7 +307,17 @@
     if ( application.applicationState == UIApplicationStateInactive || application.applicationState == UIApplicationStateBackground  )
     {
         //opened from a push notification when the app in background
-        self.tabBarController.selectedIndex = 3;
+        NSDictionary *dic = [userInfo objectForKey:@"aps"];
+        NSString *strMsg = [dic objectForKey:@"alert"];
+        
+        NSLog(@"dic: %@    and strMsg: %@", dic, strMsg);
+        
+        if ([strMsg hasPrefix:@"Team Bump"]) {
+            self.tabBarController.selectedIndex = 4;
+        }
+        else{
+            self.tabBarController.selectedIndex = 3;
+        }
     }
 }
 

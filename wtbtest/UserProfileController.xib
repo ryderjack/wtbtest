@@ -5,6 +5,11 @@
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
+    <customFonts key="customFonts">
+        <array key="PingFang.ttc">
+            <string>PingFangSC-Regular</string>
+        </array>
+    </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="UserProfileController">
             <connections>
@@ -90,7 +95,7 @@
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
                 <constraint firstItem="TVo-mz-Z7Y" firstAttribute="leading" secondItem="otj-VB-jJE" secondAttribute="trailing" constant="21" id="0pU-zr-umJ"/>
-                <constraint firstItem="Y8Q-hC-ZQq" firstAttribute="trailing" secondItem="TVo-mz-Z7Y" secondAttribute="trailing" id="10K-xh-22T"/>
+                <constraint firstItem="Y8Q-hC-ZQq" firstAttribute="trailing" secondItem="TVo-mz-Z7Y" secondAttribute="trailing" constant="102" id="10K-xh-22T"/>
                 <constraint firstItem="otj-VB-jJE" firstAttribute="top" secondItem="TVo-mz-Z7Y" secondAttribute="top" constant="-5" id="45c-Pg-NRq"/>
                 <constraint firstItem="BD6-gL-jeP" firstAttribute="top" secondItem="otj-VB-jJE" secondAttribute="bottom" constant="52" id="5q0-wu-sU4"/>
                 <constraint firstItem="9PV-Ym-fL7" firstAttribute="top" secondItem="TVo-mz-Z7Y" secondAttribute="bottom" constant="-1" id="6gw-z1-X7e"/>

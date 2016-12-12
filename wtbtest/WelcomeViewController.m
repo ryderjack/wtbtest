@@ -65,7 +65,7 @@
             NSLog(@"User logged in through Facebook!");
             //check if completed reg/tutorial via NSUserDefaults/user object
             [self hidHUD];
-                        
+            
             if ([[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"] ) {
                 
                 //update installation object w/ current user

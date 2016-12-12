@@ -12,11 +12,11 @@
 #import "FBGroupShareViewController.h"
 #import "UserProfileController.h"
 #import "SettingsController.h"
-#import "ExplainViewController.h"
 #import "Flurry.h"
 #import <Crashlytics/Crashlytics.h>
 #import <TOWebViewController.h>
 #import "ChatWithBump.h"
+#import "ContainerViewController.h"
 
 @interface ProfileController ()
 
@@ -169,8 +169,10 @@
     else if (indexPath.section == 3){
         if (indexPath.row == 1) {
             //how it works pressed
-            ExplainViewController *vc = [[ExplainViewController alloc]init];
-            [self presentViewController:vc animated:YES completion:nil];
+            ContainerViewController *vc = [[ContainerViewController alloc]init];
+            vc.explainMode = YES;
+            [self presentViewController:vc animated:YES
+                             completion:nil];
         }
         else if (indexPath.row == 0) {
             //chat w/ Bump
