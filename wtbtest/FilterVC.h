@@ -47,6 +47,7 @@
 //category buttons
 @property (weak, nonatomic) IBOutlet UIButton *clothingButton;
 @property (weak, nonatomic) IBOutlet UIButton *footButton;
+@property (weak, nonatomic) IBOutlet UIButton *accessoryButton;
 
 //size
 @property (weak, nonatomic) IBOutlet UIScrollView *sizeScrollButton;
@@ -85,5 +86,8 @@
 
 //distance buttons
 @property (weak, nonatomic) IBOutlet UIButton *distanceButton;
+
+//applyButton
+@property (nonatomic, strong) UIButton *applyButton;
 
 @end

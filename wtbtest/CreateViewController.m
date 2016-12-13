@@ -104,6 +104,16 @@
     if (![self.status isEqualToString:@"edit"]) {
         [self useCurrentLoc];
     }
+    
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc]init];
+    [dateFormatter setDateFormat:@"dd/MM/YYYY"];
+    NSString *dateString=[dateFormatter stringFromDate:[NSDate date]];
+    NSString *midnight = [NSString stringWithFormat:@"%@ 12:00 AM", dateString];
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"dd/MM/yyyy hh:mm a"];
+    NSTimeZone *gmt = [NSTimeZone timeZoneWithAbbreviation:@"GMT"];
+    [formatter setTimeZone:gmt];
+    self.todayDate = [formatter dateFromString:midnight];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -339,9 +349,9 @@
                     self.selection = @"size";
                     [self.navigationController pushViewController:vc animated:YES];
                 }
-//                else if ([self.chooseCategroy.text isEqualToString:@"Accessories"]){
-//                    // can't select accessory sizing for now
-//                }
+                else if ([self.chooseCategroy.text isEqualToString:@"Accessories"]){
+                    // can't select accessory sizing for now
+                }
                 else{
                     SelectViewController *vc = [[SelectViewController alloc]init];
                     vc.delegate = self;
@@ -518,25 +528,6 @@
             if ([dollarAmount isEqualToString:[NSString stringWithFormat:@"%@9999", self.currencySymbol]]) {
                 return NO;
             }
-            
-            
-            NSString *stringCheck = [textField.text stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%@", self.currencySymbol] withString:@""];
-            stringCheck = [NSString stringWithFormat:@"%@%@", stringCheck, string];
-            NSLog(@"string!!! %@", stringCheck);
-
-            if (stringCheck.length > 1) {
-                
-                NSString *stringCheck2 = [stringCheck stringByReplacingOccurrencesOfString:[stringCheck substringToIndex:1] withString:@""];
-                NSLog(@"string check %@", stringCheck2);
-                
-                //not allowed to enter all same number
-                if ([stringCheck2 isEqualToString:@""] && dollarAmount.length> 3) {
-                    NSLog(@"all same number so don't allow");
-                    [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Pro Tip: a more accurate price 99leads to more sellers getting in touch!"];
-                    return NO;
-                }
-            }
-            
         } //add check for #1 to before save
         
         return YES;
@@ -838,8 +829,13 @@
         self.chooseCondition.text = selectionString;
     }
     else if ([self.selection isEqualToString:@"category"]){
+        if ([selectionString isEqualToString:@"Accessories"]) {
+            self.chooseSize.text = @"";
+        }
+        else{
+            self.chooseSize.text = @"select";
+        }
         self.chooseCategroy.text = selectionString;
-          self.chooseSize.text = @"select";
     }
     else if ([self.selection isEqualToString:@"size"]){
         if (genderString) {
@@ -940,6 +936,11 @@
     if ([self.payField.text isEqualToString:[NSString stringWithFormat:@"%@11", self.currencySymbol]]) {
         [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Pro Tip: a more accurate price 99leads to more sellers getting in touch!"];
         self.warningLabel.text = @"Enter a valid price";
+        [self.saveButton setEnabled:YES];
+    }
+    else if([self.chooseCategroy.text isEqualToString:@"Accessories"] && ( [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]])){
+        NSLog(@"accessories selected but haven't filled everything else in");
+        self.warningLabel.text = @"Fill out all the above fields";
         [self.saveButton setEnabled:YES];
     }
     else if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
@@ -1329,7 +1330,7 @@
 }
 
 -(void)listingSetup{
-    self.navigationItem.title = @"Edit";
+    self.navigationItem.title = @"E D I T";
     
     [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     

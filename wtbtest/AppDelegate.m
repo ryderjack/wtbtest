@@ -138,7 +138,6 @@
     }
     else{
         //if app badge not zero, reset to zero
-        NSLog(@"reset badge");
         self.installation.badge = 0;
         [self.installation saveEventually];
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%ld", (long)self.installation.badge]];

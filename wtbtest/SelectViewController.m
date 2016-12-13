@@ -48,7 +48,7 @@
     
 //    NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
     
-    self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear", nil];
+    self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear",@"Accessories", nil];
     
     if (self.sellListing == YES) {
         self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3 | US 3.5", @"UK 3.5 | US 4",@"UK 4 | US 4.5", @"UK 4.5 | US 5", @"UK 5 | US 5.5", @"UK 5.5 | US 6", @"UK 6 | US 6.5",@"UK 6.5 | US 7",@"UK 7 | US 7.5", @"UK 7.5 | US 8", @"UK 8 | US 8.5",@"UK 8.5 | US 9",@"UK 9 | US 9.5", @"UK 9.5 | US 10", @"UK 10 | US 10.5",@"UK 10.5 | US 11",@"UK 11 | US 11.5", @"UK 11.5 | US 12", @"UK 12 | US 12.5",@"UK 12.5 | US 13",@"UK 13 | US 13.5", @"UK 13.5 | US 14", @"UK 14 | US 14.5",@"Other", nil];
@@ -510,7 +510,6 @@
              
              NSString *numberString = [strings[0] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
              NSString *finalNumberString = [numberString stringByReplacingOccurrencesOfString:@" " withString:@""];
-             NSLog(@"number string %@", finalNumberString);
              
              //save that number as a string to the array
              [numbersArray addObject:finalNumberString];
@@ -550,7 +549,6 @@
 -(void)genderSelected:(NSString *)gender{
 
     //different segment tapped
-    
     self.genderSelected = gender;
     [self.tableView reloadData];
     

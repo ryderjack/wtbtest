@@ -44,7 +44,18 @@
     // current location button
     [self.button setImage:[UIImage imageNamed:@"currentButton"] forState:UIControlStateNormal];
     [self.button addTarget:self action:@selector(useCurrentLoc) forControlEvents:UIControlEventTouchUpInside];
+    
+    self.button.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.button];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.button.alpha = 1.0f;
+                     }
+                     completion:nil];
+    
     self.buttonShowing = YES;
 }
 

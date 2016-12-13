@@ -59,15 +59,15 @@
     
     if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
         //iphone5
-        [flowLayout setItemSize:CGSizeMake((self.view.frame.size.width/2)-40, 300)];
+        [flowLayout setItemSize:CGSizeMake(148, 215)];
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.height == 736){
         //iphone 6 plus
-        [flowLayout setItemSize:CGSizeMake((self.view.frame.size.width/2), 300)];
+        [flowLayout setItemSize:CGSizeMake(196, 285)];
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.height == 480){
         //iphone 4
-        [flowLayout setItemSize:CGSizeMake((self.view.frame.size.width/2)-40, 300)];
+        [flowLayout setItemSize:CGSizeMake(124, 180)];
     }
     else{
         [flowLayout setItemSize:CGSizeMake(175, 254)]; //iPhone 6 specific
@@ -200,7 +200,7 @@
         }
     }];
     
-   // [PFUser logOut];
+    //[PFUser logOut];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -208,7 +208,7 @@
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
-    [super didMoveToParentViewController:parent];    
+    [super didMoveToParentViewController:parent];
     //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
     [self.collectionView addPullToRefreshWithActionHandler:^{
         if (self.pullFinished == YES) {
@@ -719,6 +719,9 @@
         else if ([self.filtersArray containsObject:@"footwear"]){
             [self.infiniteQuery whereKey:@"category" equalTo:@"Footwear"];
         }
+        else if ([self.filtersArray containsObject:@"accessory"]){
+            [self.infiniteQuery whereKey:@"category" equalTo:@"Accessories"];
+        }
         
         if ([self.filtersArray containsObject:@"male"]){
             [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Mens"];
@@ -856,6 +859,9 @@
         }
         else if ([self.filtersArray containsObject:@"footwear"]){
             [self.pullQuery whereKey:@"category" equalTo:@"Footwear"];
+        }
+        else if ([self.filtersArray containsObject:@"accessory"]){
+            [self.pullQuery whereKey:@"category" equalTo:@"Accessories"];
         }
         
         if ([self.filtersArray containsObject:@"male"]){

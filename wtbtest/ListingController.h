@@ -66,6 +66,7 @@
 @property (nonatomic, strong) PFFile *fourthImage;
 @property (nonatomic) int numberOfPics;
 @property (nonatomic) BOOL extraCellNeeded;
+@property (nonatomic) BOOL sizeCellNeeded;
 
 @property (nonatomic, strong) PFUser *buyer;
 

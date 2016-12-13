@@ -89,6 +89,14 @@
                 [self.womenButton setEnabled:YES];
                 
             }
+            else if ([self.filtersArray containsObject:@"accessory"]){
+                [self.accessoryButton setSelected:YES];
+                self.clothingEnabled = NO;
+                [self setupFootwearSizes];
+                [self.menButton setEnabled:NO];
+                [self.womenButton setEnabled:NO];
+                
+            }
             else{
                 self.clothingEnabled = YES;
                 [self setupclothingsizes];
@@ -113,17 +121,28 @@
         [self.womenButton setEnabled:NO];
     }
     
-    UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width, 40)];
-    [footerView setBackgroundColor:[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0]];
+    if (!self.applyButton) {
+        self.applyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, self.tableView.frame.size.height-40, self.tableView.frame.size.width, 40)];
+        [self.applyButton setTitle:@"A P P L Y" forState:UIControlStateNormal];
+        [self.applyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+        [self.applyButton.titleLabel setTextAlignment: NSTextAlignmentCenter];
+        [self.applyButton setBackgroundColor:[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0]];
+        [self.applyButton addTarget:self action:@selector(applyButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+    }
+    self.applyButton.alpha = 0.0f;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.applyButton];
+
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.applyButton.alpha = 1.0f;
+                     }
+                     completion:nil];
     
-    UIButton *applyButton = [[UIButton alloc]initWithFrame:footerView.frame];
-    [applyButton setTitle:@"A P P L Y" forState:UIControlStateNormal];
-    [applyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
-    [applyButton.titleLabel setTextAlignment: NSTextAlignmentCenter];
-    [applyButton addTarget:self action:@selector(applyButtonPressed) forControlEvents:UIControlEventTouchUpInside];
-    [footerView addSubview:applyButton];
+
     
-    self.tableView.tableFooterView = footerView;
+//    self.tableView.tableFooterView = footerView;
     
 //    [self setupBrandButtons];
 //    self.adidasImageView  = [[UIImageView alloc]init];
@@ -160,13 +179,13 @@
             return 122;
         }
         else if (indexPath.row == 4){
-            return 89;
+            return 122;
         }
 //        else if (indexPath.row == 4){ UNCOMMENT FOR BRANDS
 //            return 159;
 //        }
         else if (indexPath.row == 5){
-            return 182;
+            return 230;
         }
 //        else if (indexPath.row == 5){
 //            return 100;
@@ -268,6 +287,7 @@
     [self.lasttapped setBackgroundColor:[UIColor colorWithRed:0.56 green:0.56 blue:0.56 alpha:1.0]];
     [self.BNWOTButton setSelected:NO];
     [self.distanceButton setSelected:NO];
+    [self.accessoryButton setSelected:NO];
     
     [self.filtersArray removeAllObjects];
     [self updateTitle];
@@ -358,6 +378,9 @@
         [self.filtersArray removeObject:@"male"];
         [self.filtersArray removeObject:@"female"];
         
+        [self.accessoryButton setSelected:NO];
+        [self.filtersArray removeObject:@"accessory"];
+        
         [self setupclothingsizes];
     }
     [self updateTitle];
@@ -375,7 +398,31 @@
         [self.menButton setEnabled:YES];
         [self.womenButton setEnabled:YES];
         
+        [self.accessoryButton setSelected:NO];
+        [self.filtersArray removeObject:@"accessory"];
+        
         [self setupFootwearSizes];
+    }
+    [self updateTitle];
+}
+- (IBAction)accessoryPressed:(id)sender {
+    if(self.accessoryButton.selected == YES){
+        [self.accessoryButton setSelected:NO];
+        [self.filtersArray removeObject:@"accessory"];
+    }
+    else{
+        [self.accessoryButton setSelected:YES];
+        [self.filtersArray addObject:@"accessory"];
+        
+        [self.clothingButton setSelected:NO];
+        [self.filtersArray removeObject:@"clothing"];
+        
+        [self.footButton setSelected:NO];
+        [self.filtersArray removeObject:@"footwear"];
+        
+        [self.menButton setEnabled:NO];
+        [self.womenButton setEnabled:NO];
+        
     }
     [self updateTitle];
 }
@@ -1275,6 +1322,11 @@
         [self.filtersArray addObject:@"aroundMe"];
     }
     [self updateTitle];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    [self.applyButton removeFromSuperview];
 }
 
 @end

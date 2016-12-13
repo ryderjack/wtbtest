@@ -97,16 +97,22 @@
             self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
             NSString *loc = [self.listingObject objectForKey:@"location"];
             self.locationLabel.text = [loc stringByReplacingOccurrencesOfString:@"(null)" withString:@""];
-            self.deliveryLabel.text = [self.listingObject objectForKey:@"delivery"];
             
-            NSString *sizeNoUK = [[self.listingObject objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
-            
-            if (![self.listingObject objectForKey:@"sizeGender"]) {
+            if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Accessories"]) {
+                self.sizeCellNeeded = NO;
 
-                self.sizeLabel.text = [NSString stringWithFormat:@"%@",sizeNoUK];
             }
             else{
-                self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
+                self.sizeCellNeeded = YES;
+                NSString *sizeNoUK = [[self.listingObject objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
+                
+                if (![self.listingObject objectForKey:@"sizeGender"]) {
+                    
+                    self.sizeLabel.text = [NSString stringWithFormat:@"%@",sizeNoUK];
+                }
+                else{
+                    self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
+                }
             }
             
             if (![self.listingObject objectForKey:@"extra"]) {
@@ -350,8 +356,17 @@
         return 1;
     }
     else if (section ==1){
-        if (self.extraCellNeeded == YES) {
+        if (self.extraCellNeeded == YES && self.sizeCellNeeded == YES) {
             return 6;
+        }
+        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == NO){
+            return 4;
+        }
+        else if (self.extraCellNeeded == YES && self.sizeCellNeeded == NO){
+            return 5;
+        }
+        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == YES){
+            return 5;
         }
         else{
             return 5;
@@ -377,33 +392,76 @@
         if (indexPath.row == 0) {
             return self.payCell;
         }
-        else if (indexPath.row == 1){
-            return self.sizeCell;
-        }
-        else if (indexPath.row == 2){
-            return self.conditionCell;
-        }
-        else if (indexPath.row == 3){
-            return self.locationCell;
-        }
-//        else if (indexPath.row == 4){
-//            return self.deliveryCell;
-//        }
-        else if (indexPath.row == 4){
-            if (self.extraCellNeeded == YES) {
+        if (self.extraCellNeeded == YES && self.sizeCellNeeded == YES) {
+            if (indexPath.row == 1){
+                return self.sizeCell;
+            }
+            else if (indexPath.row == 2){
+                return self.conditionCell;
+            }
+            else if (indexPath.row == 3){
+                return self.locationCell;
+            }
+            else if (indexPath.row == 4){
                 return self.extraCell;
             }
-            else{
-                return self.adminCell;
-            }
-        }
-        else if (indexPath.row == 5){
-            if (self.extraCellNeeded == YES) {
+            else if (indexPath.row == 5){
                 return self.adminCell;
             }
             else{
                 return nil;
             }
+        }
+        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == NO){
+            if (indexPath.row == 1){
+                return self.conditionCell;
+            }
+            else if (indexPath.row == 2){
+                return self.locationCell;
+            }
+            else if (indexPath.row == 3){
+                return self.adminCell;
+            }
+            else{
+                return nil;
+            }
+        }
+        else if (self.extraCellNeeded == YES && self.sizeCellNeeded == NO){
+            if (indexPath.row == 1){
+                return self.conditionCell;
+            }
+            else if (indexPath.row == 2){
+                return self.locationCell;
+            }
+            else if (indexPath.row == 3){
+                return self.extraCell;
+            }
+            else if (indexPath.row == 4){
+                return self.adminCell;
+            }
+            else{
+                return nil;
+            }
+        }
+        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == YES){
+            if (indexPath.row == 1){
+                return self.sizeCell;
+            }
+            else if (indexPath.row == 2){
+                return self.conditionCell;
+            }
+            else if (indexPath.row == 3){
+                return self.locationCell;
+            }
+            else if (indexPath.row == 4){
+                return self.adminCell;
+            }
+            else{
+                return nil;
+            }
+        }
+        else{
+            return nil;
         }
     }
     else if (indexPath.section == 2){
@@ -429,32 +487,30 @@
         if (indexPath.row == 0) {
             return 44;
         }
-        else if (indexPath.row == 1){
-            return 44;
-        }
-        else if (indexPath.row == 2){
-            return 44;
-        }
-        else if (indexPath.row == 3){
-            return 44;
-        }
-//        else if (indexPath.row == 4){
-//            return 44;
-//        }
-        else if (indexPath.row == 4){
-            if (self.extraCellNeeded == YES) {
+        if (self.extraCellNeeded == YES && self.sizeCellNeeded == YES) {
+            if (indexPath.row == 4){
                 return 104;
             }
             else{
                 return 44;
             }
         }
-        else if (indexPath.row == 5){
-            if (self.extraCellNeeded == YES) {
-                return 44;;
+        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == NO){
+            return 44;
+        }
+        else if (self.extraCellNeeded == YES && self.sizeCellNeeded == NO){
+            if (indexPath.row == 3){
+                return 104;
             }
             else{
+                return 44;
             }
+        }
+        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == YES){
+                return 44;
+        }
+        else{
+            return 44;
         }
     }
     else if (indexPath.section == 2){
