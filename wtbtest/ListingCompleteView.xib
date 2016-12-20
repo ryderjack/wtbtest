@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1212" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
+    <customFonts key="customFonts">
+        <array key="PingFang.ttc">
+            <string>PingFangSC-Regular</string>
+        </array>
+    </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="ListingCompleteView">
             <connections>
@@ -34,15 +42,17 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="295"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="lXn-R0-0Jq" id="NXo-13-TmT">
-                <frame key="frameInset" width="320" height="294"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="294"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="done.png" translatesAutoresizingMaskIntoConstraints="NO" id="g6e-Yn-QZs">
+                        <rect key="frame" x="85" y="117" width="150" height="150"/>
                         <constraints>
                             <constraint firstAttribute="width" secondItem="g6e-Yn-QZs" secondAttribute="height" multiplier="1:1" id="wdo-fZ-I6y"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Your listing is live! Sellers can now view your listing and make you an offer to purchase their item" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0av-wW-qQs">
+                        <rect key="frame" x="36" y="17" width="248" height="92"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="92" id="uD4-7e-rEa"/>
                         </constraints>
@@ -66,14 +76,15 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="51"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="yL0-av-7dX" id="FLW-w2-bye">
-                <frame key="frameInset" width="320" height="50"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="50"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TqI-68-WV7">
+                        <rect key="frame" x="54.5" y="5" width="212" height="40"/>
                         <constraints>
                             <constraint firstAttribute="width" secondItem="TqI-68-WV7" secondAttribute="height" multiplier="53:10" id="crI-LS-P7F"/>
                         </constraints>
-                        <state key="normal" image="share.png"/>
+                        <state key="normal" image="shareListing.png"/>
                         <connections>
                             <action selector="sharePressed:" destination="-1" eventType="touchUpInside" id="SLE-Dy-wFN"/>
                         </connections>
@@ -90,10 +101,11 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="51"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="dUB-rA-6fm" id="zXS-WT-uUJ">
-                <frame key="frameInset" width="320" height="50"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="50"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W2o-bk-i2Y">
+                        <rect key="frame" x="54" y="5" width="212" height="40"/>
                         <constraints>
                             <constraint firstAttribute="width" secondItem="W2o-bk-i2Y" secondAttribute="height" multiplier="53:10" id="1gH-YG-Uqa"/>
                         </constraints>
@@ -114,10 +126,11 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="51"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="IRK-fQ-Btb" id="hlu-xh-H2d">
-                <frame key="frameInset" width="320" height="50"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="50"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Nbk-DX-OFY">
+                        <rect key="frame" x="54" y="5" width="212" height="40"/>
                         <constraints>
                             <constraint firstAttribute="width" secondItem="Nbk-DX-OFY" secondAttribute="height" multiplier="53:10" id="ltv-ww-N0y"/>
                         </constraints>
@@ -138,10 +151,11 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="51"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="J4j-hT-XXs" id="yNY-6i-9gT">
-                <frame key="frameInset" width="320" height="50"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="50"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="BLB-dC-aH2">
+                        <rect key="frame" x="54" y="5" width="212" height="40"/>
                         <constraints>
                             <constraint firstAttribute="width" secondItem="BLB-dC-aH2" secondAttribute="height" multiplier="53:10" id="geW-pX-xA6"/>
                         </constraints>
@@ -164,6 +178,6 @@
         <image name="done.png" width="704" height="678"/>
         <image name="editListing.png" width="212" height="40"/>
         <image name="fb share.png" width="212" height="40"/>
-        <image name="share.png" width="212" height="40"/>
+        <image name="shareListing.png" width="212" height="40"/>
     </resources>
 </document>

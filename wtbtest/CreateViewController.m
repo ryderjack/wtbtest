@@ -1225,17 +1225,16 @@
                                             
                                             if( [[NSDate date] timeIntervalSinceDate:[object objectForKey:@"safeDate"]] > 0 ) {
                                                 NSLog(@"today is later than safe date so go ahead and send another push");
-                                                
                                                 //send push
                                                 NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.listing.objectId};
-                                                [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                                                    if (!error) {
-                                                        NSLog(@"push response %@", response);
-                                                    }
-                                                    else{
-                                                        NSLog(@"push error %@", error);
-                                                    }
-                                                }];
+//                                                [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//                                                    if (!error) {
+//                                                        NSLog(@"push response %@", response);
+//                                                    }
+//                                                    else{
+//                                                        NSLog(@"push error %@", error);
+//                                                    }
+//                                                }];
                                             }
                                             else{
                                                 NSLog(@"don't send push, still waiting for a 3 day safe gap");
@@ -1251,8 +1250,6 @@
                                             NSCalendar *theCalendar = [NSCalendar currentCalendar];
                                             NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
                                             
-                                            NSLog(@"nextDate: %@ ...", safeDate);
-                                            
                                             PFObject *bumpedObj = [PFObject objectWithClassName:@"Bumped"];
                                             [bumpedObj setObject:[friendUser objectForKey:@"facebookId"] forKey:@"facebookId"];
                                             [bumpedObj setObject:safeDate forKey:@"safeDate"];
@@ -1262,39 +1259,30 @@
                                                     
                                                     //send push to other user
                                                     NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.listing.objectId};
-                                                    [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                                                        if (!error) {
-                                                            NSLog(@"push response %@", response);
-                                                        }
-                                                        else{
-                                                            NSLog(@"push error %@", error);
-                                                        }
-                                                    }];
-                                                    
-                                                    if (self.introMode != YES){
-                                                        [self hidHUD];
-                                                        ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-                                                        vc.delegate = self;
-                                                        vc.lastObjectId = self.listing.objectId;
-                                                        [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
-                                                        [self.navigationController pushViewController:vc animated:YES];
-                                                    }
+//                                                    [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//                                                        if (!error) {
+//                                                            NSLog(@"push response %@", response);
+//                                                        }
+//                                                        else{
+//                                                            NSLog(@"push error %@", error);
+//                                                        }
+//                                                    }];
                                                 }
                                                 else{
                                                     NSLog(@"error saving bumped obj");
-                                                    
-                                                    if (self.introMode != YES){
-                                                        [self hidHUD];
-                                                        ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-                                                        vc.delegate = self;
-                                                        vc.lastObjectId = self.listing.objectId;
-                                                        [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
-                                                        [self.navigationController pushViewController:vc animated:YES];
-                                                    }
                                                 }
                                             }];
                                         }
                                     }];
+                                }
+                                
+                                if (self.introMode != YES){
+                                    [self hidHUD];
+                                    ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+                                    vc.delegate = self;
+                                    vc.lastObjectId = self.listing.objectId;
+                                    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
+                                    [self.navigationController pushViewController:vc animated:YES];
                                 }
                             }
                             else{
