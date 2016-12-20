@@ -19,9 +19,8 @@
     [super viewDidLoad];
     
     self.navigationItem.title = @"S E L L I N G";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+        self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     //button setup
     [self.firstCam setEnabled:YES];
@@ -87,6 +86,10 @@
     [super viewWillAppear:animated];
     
     [[self navigationController] setNavigationBarHidden:NO animated:YES];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
@@ -242,6 +245,9 @@
                     
                     self.selection = @"size";
                     [self.navigationController pushViewController:vc animated:YES];
+                }
+                else if ([self.chooseCategroy.text isEqualToString:@"Accessories"]){
+                    // can't select accessory sizing for now
                 }
                 else{
                     SelectViewController *vc = [[SelectViewController alloc]init];
@@ -752,8 +758,13 @@
         self.chooseCondition.text = selectionString;
     }
     else if ([self.selection isEqualToString:@"category"]){
+        if ([selectionString isEqualToString:@"Accessories"]) {
+            self.chooseSize.text = @"";
+        }
+        else{
+            self.chooseSize.text = @"select";
+        }
         self.chooseCategroy.text = selectionString;
-        self.chooseSize.text = @"select";
     }
     else if ([self.selection isEqualToString:@"size"]){
         if (genderString) {
@@ -961,7 +972,12 @@
     
     NSString *descriptionCheck = [self.descriptionField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
-    if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"]|| [descriptionCheck isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
+    if([self.chooseCategroy.text isEqualToString:@"Accessories"] && ( [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"]|| [self.payField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]])){
+        NSLog(@"accessories selected but haven't filled everything else in");
+        self.warningLabel.text = @"Fill out all the above fields";
+        [self.saveButton setEnabled:YES];
+    }
+    else if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"]|| [descriptionCheck isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
         self.warningLabel.text = @"Fill out all the above fields";
         [self.saveButton setEnabled:YES];
     }

@@ -7,7 +7,6 @@
 //
 
 #import "ExploreVC.h"
-#import "ExploreCell.h"
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "WelcomeViewController.h"
 #import "NavigationController.h"
@@ -75,6 +74,9 @@
     [flowLayout setMinimumInteritemSpacing:0];
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBump:) name:@"showBumpedVC" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDrop:) name:@"showDropDown" object:nil];
     
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.delegate = self;
@@ -201,6 +203,7 @@
     }];
     
     //[PFUser logOut];
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -277,14 +280,24 @@
     [self.infiniteQuery cancel];
     [self.collectionView.infiniteScrollingView stopAnimating];
     self.infinFinished = YES;
+    
+    if (self.listingTapped == YES) {
+        [self.collectionView reloadItemsAtIndexPaths:@[self.lastSelected]];
+        self.lastSelected = nil;
+    }
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
+    NSLog(@"diss called in explore");
     if (self.listingTapped == NO) {
         self.searchShowing = NO;
+        NSLog(@"setting showing to NO");
     }
-    
+    else if (self.listingTapped == YES && self.searchEnabled == YES){
+        self.resultsController.cancelClicked = YES;
+        [self.resultsController.view setHidden:YES];
+    }
     self.filtersTapped = NO;
 }
 
@@ -292,7 +305,7 @@
     [super viewDidAppear:animated];
     
     [self.collectionView.infiniteScrollingView stopAnimating];
-    
+
     if (self.userPressed == YES) {
         self.userPressed = NO;
         NSLog(@"just searched for a user, do nothing");
@@ -301,12 +314,15 @@
     else if (self.searchEnabled == YES && self.filtersTapped == NO && self.listingTapped == NO) {
         NSLog(@"about to call search pressed");
         self.searchShowing = NO;
+        self.searchController = nil;
         [self searchPressed];
     }
     else if (self.searchEnabled == YES && self.filtersTapped == NO && self.listingTapped == YES) {
         //if not active then show (could have changed tabs from looking at the listing)
         NSLog(@"checking if should show as been on a listing and could have switched tabs");
         [self ShouldShowSearch];
+        //self.searchController = nil;
+        //[self searchPressed];
     }
     
     self.listingTapped = NO;
@@ -316,11 +332,14 @@
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
-    ExploreCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     
+
+    self.cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
+    self.cell.delegate = self;
+
     PFObject *listing;
     
-    cell.imageView.image = nil;
+    self.cell.imageView.image = nil;
     
     if (self.searchEnabled == YES) {
         listing = [self.searchResults objectAtIndex:indexPath.row];
@@ -329,31 +348,54 @@
         listing = [self.results objectAtIndex:indexPath.row];
     }
     
-    //set placeholder spinner view
-    MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:cell.imageView animated:YES];
-    hud.square = YES;
-    hud.mode = MBProgressHUDModeCustomView;
-    hud.color = [UIColor whiteColor];
-    DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-    hud.customView = spinner;
-    [spinner startAnimating];
+    NSArray *bumpArray = [listing objectForKey:@"bumpArray"];
+    if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
+        //already bumped
+        [self.cell.bumpButton setSelected:YES];
+        
+        //set bg colour
+        [self.cell.transView setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+        self.cell.transView.alpha = 0.9;
+    }
+    else{
+        //haven't bumped
+        [self.cell.bumpButton setSelected:NO];
+        
+        //set bg colour
+        [self.cell.transView setBackgroundColor:[UIColor blackColor]];
+        self.cell.transView.alpha = 0.5;
+    }
     
-    [cell.imageView setFile:[listing objectForKey:@"image1"]];
-    [cell.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
+    if (bumpArray.count > 0) {
+        [self.cell.bumpButton setTitle:[NSString stringWithFormat:@"%lu", bumpArray.count] forState:UIControlStateNormal];
+    }
+    else{
+        [self.cell.bumpButton setTitle:@" " forState:UIControlStateNormal];
+    }
+    
+    //set placeholder spinner view
+//    MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:self.cell.imageView animated:YES];
+//    hud.square = YES;
+//    hud.mode = MBProgressHUDModeCustomView;
+//    hud.color = [UIColor whiteColor];
+//    DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+//    hud.customView = spinner;
+//    [spinner startAnimating];
+    
+    [self.cell.imageView setFile:[listing objectForKey:@"image1"]];
+    [self.cell.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
         
     } progressBlock:^(int percentDone) {
         if (percentDone == 100) {
             //remove spinner
-            [spinner stopAnimating];
-            [MBProgressHUD hideHUDForView:cell.imageView animated:NO];
-            spinner = nil;
-            hud = nil;
+//            [spinner stopAnimating];
+//            [MBProgressHUD hideHUDForView:self.cell.imageView animated:NO];
+//            spinner = nil;
+//            hud = nil;
         }
     }];
     
-    cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
-    
-    NSString *condition = [listing objectForKey:@"condition"];
+    self.cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
     
     int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
 
@@ -365,55 +407,43 @@
         price = EUR;
         [listing saveInBackground];
     }
-    cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
+    self.cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
     
-    if ([condition isEqualToString:@"BNWT"]) {
-        [cell.conditionView setImage:[UIImage imageNamed:@"BNWTImg"]];
-    }
-    else if([condition isEqualToString:@"BNWOT"]){
-        [cell.conditionView setImage:[UIImage imageNamed:@"BNWOTImg"]];
-    }
-    else if([condition isEqualToString:@"Any"]){
-        [cell.conditionView setImage:[UIImage imageNamed:@"AnyImg"]];
-    }
-    else if([condition isEqualToString:@"Used"]){
-        [cell.conditionView setImage:[UIImage imageNamed:@"UsedImg"]];
-    }
     NSString *sizeNoUK = [[listing objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
     sizeNoUK = [sizeNoUK stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     if ([sizeNoUK isEqualToString:@"One size"]) {
-        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
+        self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
     }
     else if ([sizeNoUK isEqualToString:@"S"]){
-        cell.sizeLabel.text = @"Small";
+        self.cell.sizeLabel.text = @"Small";
     }
     else if ([sizeNoUK isEqualToString:@"M"]){
-        cell.sizeLabel.text = @"Medium";
+        self.cell.sizeLabel.text = @"Medium";
     }
     else if ([sizeNoUK isEqualToString:@"L"]){
-        cell.sizeLabel.text = @"Large";
+        self.cell.sizeLabel.text = @"Large";
     }
     else if ([[listing objectForKey:@"category"]isEqualToString:@"Clothing"]){
-        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
+        self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
     }
     else{
-        cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"sizeLabel"]];
+        self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"sizeLabel"]];
     }
     
     PFGeoPoint *location = [listing objectForKey:@"geopoint"];
     if (self.currentLocation && location) {
         int distance = [location distanceInKilometersTo:self.currentLocation];
-        cell.distanceLabel.text = [NSString stringWithFormat:@"%dkm", distance];
+        self.cell.distanceLabel.text = [NSString stringWithFormat:@"%dkm", distance];
     }
     else{
         NSLog(@"no location data %@ %@", self.currentLocation, location);
-        cell.distanceLabel.text = @"";
+        self.cell.distanceLabel.text = @"";
     }
 
-    cell.backgroundColor = [UIColor whiteColor];
+    self.cell.backgroundColor = [UIColor whiteColor];
     
-    return cell;
+    return self.cell;
 }
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
@@ -433,32 +463,99 @@
     if (self.pullFinished == NO) {
         return;
     }
+    NSLog(@"infinity");
+    self.infiniteQuery = nil;
+    self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
+
     self.infinFinished = NO;
     self.infiniteQuery.limit = 12;
+    self.infiniteQuery.skip = self.lastInfinSkipped;
     [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
     [self setupInfinQuery];
     __block NSMutableArray *wordsToSearch = [NSMutableArray array];
     
     if (self.searchEnabled == YES) {
-        NSArray *searchWords = [self.searchString componentsSeparatedByString:@" "];
+        NSArray *searchWords = [[self.searchString lowercaseString] componentsSeparatedByString:@" "];
         [wordsToSearch addObjectsFromArray:searchWords];
         
         //remove useless words
         [wordsToSearch removeObjectsInArray:self.uselessWords];
         [self.infiniteQuery whereKey:@"keywords" containsAllObjectsInArray:wordsToSearch];
+        [self.infiniteQuery orderByDescending:@"createdAt"];
+    }
+    else{
+        if (self.cleverMode == YES) {
+            //worth checking for keywords
+            NSArray *keywords = [[PFUser currentUser]objectForKey:@"searches"];
+            if (keywords.count > 0) {
+                NSMutableArray *lowers = [NSMutableArray array];
+                for (NSString *word in keywords) {
+                    [lowers addObject:word.lowercaseString];
+                }
+                NSArray* reversedArray = [[lowers reverseObjectEnumerator] allObjects];
+                [self.infiniteQuery whereKey:@"keywords" containedIn:reversedArray];
+                [self.infiniteQuery orderByDescending:@"bumpCount,views"];
+            }
+            else{
+                //has no previous searches so show most recent
+                [self.infiniteQuery orderByDescending:@"createdAt,bumpCount"];
+            }
+        }
+        else{
+            //clever mode off
+            [self.infiniteQuery orderByDescending:@"createdAt,bumpCount"];
+        }
     }
     [self.infiniteQuery cancel];
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
+            NSLog(@"infin count %d", count);
             self.lastInfinSkipped = self.lastInfinSkipped + count;
             
             if (self.searchEnabled == YES) {
-                [self.searchResults addObjectsFromArray:objects];
+                NSLog(@"search on in infin with search results so far %lu", self.searchResults.count);
+                //p[self.searchResults addObjectsFromArray:objects];
+                for (PFObject *listing in objects) {
+                    if (![self.searchResults containsObject:listing]) {
+                        [self.searchResults addObject:listing];
+                    }
+                }
             }
             else{
                 //save in normal results array
-                [self.results addObjectsFromArray:objects];
+                if (count == 12 && self.cleverMode == YES) { //12 is limit at time of writing
+                    NSLog(@"clever mode is good!");
+
+                    //keep going with clever mode!
+                    [self.results addObjectsFromArray:objects];
+
+                }
+                else if(count < 12 && self.cleverMode == YES){
+                    NSLog(@"time to switch off");
+
+                    //add objects to array but switch off clever mode and reset the skip
+                    [self.results addObjectsFromArray:objects];
+                    
+                    self.cleverMode = NO;
+                    
+                    self.lastInfinSkipped = 0;
+                }
+                else if (self.cleverMode == NO){
+                    
+                    //add but check hasn't been added already
+                    NSLog(@"clever mode off");
+                    
+                    for (PFObject *listing in objects) {
+                        if (![self.results containsObject:listing]) {
+                            [self.results addObject:listing];
+                        }
+                    }
+                }
+                else{
+                    NSLog(@"doesn't fit!!");
+                }
+
             }
             
             [self.collectionView reloadData];
@@ -472,8 +569,8 @@
         }
     }];
 }
--(void)queryParsePull{
-    NSLog(@"pulling!");
+
+-(void)OGPullQuery{
     self.pullFinished = NO;
     self.pullQuery.limit = 12;
     [self setupPullQuery];
@@ -518,7 +615,7 @@
             [self.collectionView reloadData];
             [self.collectionView.pullToRefreshView stopAnimating];
             self.pullFinished = YES;
-
+            
             if (self.shiftDown == YES) {
                 self.shiftDown = NO;
                 NSLog(@"shift down");
@@ -537,8 +634,125 @@
 //                [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
 //                                            atScrollPosition:UICollectionViewScrollPositionTop
 //                                                    animated:YES];
- 
+
 //            }
+        }
+        else{
+            NSLog(@"error on pull %@", error);
+            self.pullFinished = YES;
+            if (error.code == 209) {
+                //invalid access token
+                [PFUser logOut];
+                WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+                NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+                [self presentViewController:navController animated:YES completion:nil];
+            }
+            else{
+                [self showError];
+            }
+        }
+    }];
+}
+-(void)queryParsePull{
+    NSLog(@"pulling!");
+    
+    //reset the query to remove the home screen constraints
+    self.pullQuery = nil;
+    self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
+    
+    self.pullFinished = NO;
+    self.pullQuery.limit = 12;
+    [self setupPullQuery];
+    __block NSMutableArray *wordsToSearch = [NSMutableArray array];
+    
+    if (self.searchEnabled == YES) {
+        NSLog(@"search enabled!! in pull query w/ search string %@", self.searchString);
+        NSArray *searchWords = [[self.searchString lowercaseString] componentsSeparatedByString:@" "];
+        [wordsToSearch addObjectsFromArray:searchWords];
+        
+        //remove useless words
+        [wordsToSearch removeObjectsInArray:self.uselessWords];
+        [self.pullQuery whereKey:@"keywords" containsAllObjectsInArray:wordsToSearch];
+        [self.pullQuery orderByDescending:@"createdAt"];
+    }
+    else{
+        NSLog(@"clever mode");
+        NSArray *keywords = [[PFUser currentUser]objectForKey:@"searches"];
+
+        if (keywords.count > 0) {
+            NSMutableArray *lowers = [NSMutableArray array];
+            for (NSString *word in keywords) {
+                [lowers addObject:word.lowercaseString];
+            }
+            NSArray* reversedArray = [[lowers reverseObjectEnumerator] allObjects];
+            [self.pullQuery whereKey:@"keywords" containedIn:reversedArray];
+            [self.pullQuery orderByDescending:@"bumpCount,views"];
+        }
+        else{
+            //has no previous searches so show most recent
+            [self.pullQuery orderByDescending:@"createdAt,bumpCount"];
+        }
+    }
+    
+    [self.pullQuery whereKey:@"status" equalTo:@"live"];
+    [self.pullQuery cancel];
+    [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            int count = (int)[objects count];
+            NSLog(@"count of objects %d", count);
+            self.lastInfinSkipped = count;
+            
+            if (count == 0) {
+                [self.noresultsLabel setHidden:NO];
+                [self.noResultsImageView setHidden:YES];
+            }
+            else{
+                [self.noresultsLabel setHidden:YES];
+                [self.noResultsImageView setHidden:YES];
+            }
+            
+            if (self.searchEnabled == YES) {
+                NSLog(@"pull search enabled");
+                [self.searchResults removeAllObjects];
+                [self.searchResults addObjectsFromArray:objects];
+            }
+            else{
+                if (count == 12) {
+                    self.cleverMode = YES;
+                }
+                else{
+                    self.cleverMode = NO;
+                    self.lastInfinSkipped = 0;
+                }
+                //save in normal results array
+                [self.results removeAllObjects];
+                [self.results addObjectsFromArray:objects];
+            }
+            
+            [self.collectionView reloadData];
+            [self.collectionView.pullToRefreshView stopAnimating];
+            self.pullFinished = YES;
+
+            if (self.shiftDown == YES) {
+                self.shiftDown = NO;
+                NSLog(@"shift down");
+                [self.collectionView setContentOffset:CGPointMake(0, -800) animated:NO];
+            }
+            else if (self.shiftDown == NO && self.searchEnabled == YES){
+                NSLog(@"set it to 108");
+                [self.collectionView setContentOffset:CGPointMake(0,-108) animated:NO];
+            }
+            else if (self.filterMove == YES && self.searchEnabled == YES) {
+                self.filterMove = NO;
+                NSLog(@"filter down");
+                [self.collectionView setContentOffset:CGPointMake(0,-108) animated:NO];
+            }
+            else if(self.filterMove == YES && self.searchEnabled == NO && self.filtersArray.count == 0){
+                [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+                                            atScrollPosition:UICollectionViewScrollPositionTop
+                                                    animated:YES];
+ 
+            }
         }
         else{
             NSLog(@"error on pull %@", error);
@@ -975,6 +1189,10 @@
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
+    if (!self.lastSelected) {
+        self.lastSelected = [[NSIndexPath alloc]init];
+    }
+    self.lastSelected = indexPath;
     PFObject *selected;
     
     if (self.searchEnabled == YES) {
@@ -989,6 +1207,7 @@
 
     if (self.searchEnabled == YES) {
         [self.searchController.searchBar setHidden:YES];
+        vc.searchOn = YES;
     }
     self.listingTapped = YES;
     [self.navigationController pushViewController:vc animated:YES];
@@ -1042,6 +1261,7 @@
 //    [self.filterButton setImage:[UIImage imageNamed:@"filterButton"] forState:UIControlStateNormal];
 
     if (self.searchController.isActive == NO) {
+        NSLog(@"not active so present!");
         // Present the view controller.
         [self presentViewController:self.searchController animated:YES completion:^{
             [self.filterButton setHidden:NO];
@@ -1059,17 +1279,49 @@
 
 -(void)ShouldShowSearch{
     if (self.searchController.isActive == NO) {
+        
+        self.searchController = nil;
+        
+        self.searchController = [[UISearchController alloc] initWithSearchResultsController:self.resultsController];
+        self.searchController.delegate = self;
+        
+        self.searchController.searchResultsUpdater = self.resultsController;
+        self.searchController.hidesNavigationBarDuringPresentation = NO;
+        self.searchController.dimsBackgroundDuringPresentation = NO;
+        self.searchController.searchBar.searchBarStyle = UISearchBarStyleDefault;
+        self.searchController.searchBar.autocapitalizationType = UITextAutocapitalizationTypeWords;
+        self.searchController.searchBar.placeholder = @"Search for stuff you're selling";
+        self.searchController.searchBar.barTintColor = [UIColor blackColor];
+        self.searchController.searchBar.tintColor = [UIColor whiteColor];
+        self.searchController.searchBar.delegate = self;
+        self.searchController.searchBar.scopeButtonTitles = @[@"Wanted items", @"People"];
+        
+        //change cursor colour
+        for ( UIView *v in [self.searchController.searchBar.subviews.firstObject subviews] ){
+            if ( YES == [v isKindOfClass:[UITextField class]] ){
+                [((UITextField*)v) setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
+                break;
+            }
+        }
+        [self.searchController.searchBar setTranslucent:YES];
+        
+        //should reset the controller here and then hide it
         [self presentViewController:self.searchController animated:YES completion:^{
-            [self.searchController.searchBar resignFirstResponder];
-            [self.searchController.searchResultsController.view setHidden:YES];
+            //[self.searchController.searchBar resignFirstResponder];
+            //[self.searchController.searchResultsController.view setHidden:YES];  //if user goes from listing to switch tab then back to listing and search controller then we show the text again to avoid fucking up formatting - area for improvement for sure
         }];
         self.searchShowing = YES;
+    }
+    else{
+        NSLog(@"already active");
+        
     }
 }
 
 -(void)updateSearchResultsForSearchController:(UISearchController *)searchController
 {
     //update list
+    NSLog(@"UPDATING");
     [self.searchController.searchResultsController.view setHidden:NO];
 }
 
@@ -1119,7 +1371,13 @@
                         [history removeObjectAtIndex:0];
                     }
                     
-                    if (![[history lastObject] isEqualToString:self.searchString]) {
+                    if (![[history lastObject] isEqualToString:self.searchString] && [history containsObject:self.searchString]) {
+                        NSLog(@"one");
+                        [history removeObject:self.searchString];
+                        [history addObject:self.searchString];
+                    }
+                    else if (![history containsObject:self.searchString]) {
+                        NSLog(@"two");
                         [history addObject:self.searchString];
                     }
                 }
@@ -1136,16 +1394,23 @@
             //update results controller UI since only updated via query every time search button pressed
             NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.resultsController.itemResults];
             
-            //        if (![searchesList containsObject:self.searchString]) {
-            //            [searchesList insertObject:self.searchString atIndex:0];
-            //        }
-            
             if (searchesList.count > 0) {
+                if ([searchesList containsObject:self.searchString] && ![searchesList[0] isEqualToString:self.searchString]) {
+                    NSLog(@"three");
+                    [searchesList removeObject:self.searchString];
+                }
+                
                 if (![searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
+                    NSLog(@"four");
                     [searchesList insertObject:self.searchString atIndex:0];
+                }
+                else if ([searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
+                    //do nothing as already last entry
+                    NSLog(@"five");
                 }
             }
             else if (![stringCheck isEqualToString:@""]){
+                NSLog(@"six");
                 [searchesList insertObject:self.searchString atIndex:0];
             }
             
@@ -1215,6 +1480,8 @@
     }
 
     self.resultsController.cancelClicked = YES;
+    self.resultsController.filterEnabled = NO;
+    [self.resultsController.tableView reloadData];
     
     self.searchEnabled = NO;
     self.searchShowing = NO;
@@ -1241,12 +1508,6 @@
     // reset the skip count and the pull query
     int count = (int)[self.results count];
     self.lastInfinSkipped = count;
-    
-    self.pullQuery = nil;
-    self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
-    
-    self.infiniteQuery = nil;
-    self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     
     [self queryParsePull];
 }
@@ -1296,5 +1557,161 @@
     UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
     [alert addAction:ok];
     [self presentViewController:alert animated:YES completion:nil];
+}
+
+-(void)cellTapped:(id)sender{
+    NSIndexPath *indexPath = [self.collectionView indexPathForCell:(ExploreCell*)sender];
+    
+    PFObject *listingObject;
+
+    if (self.searchEnabled == YES) {
+        listingObject = [self.searchResults objectAtIndex:indexPath.item];
+    }
+    else{
+        listingObject = [self.results objectAtIndex:indexPath.item];
+    }
+    NSLog(@"listing tapped %@", listingObject);
+    
+    ExploreCell *cell = sender;
+
+    NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[listingObject objectForKey:@"bumpArray"]];
+    if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
+        NSLog(@"already bumped it m8");
+        [cell.bumpButton setSelected:NO];
+        [cell.transView setBackgroundColor:[UIColor blackColor]];
+        cell.transView.alpha = 0.5;
+        [bumpArray removeObject:[PFUser currentUser].objectId];
+        [listingObject setObject:bumpArray forKey:@"bumpArray"];
+        [listingObject incrementKey:@"bumpCount" byAmount:@-1];
+    }
+    else{
+        NSLog(@"bumped");
+        [cell.bumpButton setSelected:YES];
+        [cell.transView setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+        cell.transView.alpha = 0.9;
+        [bumpArray addObject:[PFUser currentUser].objectId];
+        [listingObject addObject:[PFUser currentUser].objectId forKey:@"bumpArray"];
+        [listingObject incrementKey:@"bumpCount"];
+        NSString *pushText = [NSString stringWithFormat:@"%@ just bumped your listing 👊", [PFUser currentUser].username];
+        
+        if (![[[listingObject objectForKey:@"postUser"]objectId] isEqualToString:[[PFUser currentUser]objectId]]) {
+            NSDictionary *params = @{@"userId": [[listingObject objectForKey:@"postUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username};
+            //[PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+            //    if (!error) {
+            //        NSLog(@"push response %@", response);
+            //    }
+            //    else{
+            //        NSLog(@"push error %@", error);
+            //    }
+            //}];
+        }
+    }
+    [listingObject saveInBackground];
+    if (bumpArray.count > 0) {
+        [cell.bumpButton setTitle:[NSString stringWithFormat:@"%lu", bumpArray.count] forState:UIControlStateNormal];
+    }
+    else{
+        [cell.bumpButton setTitle:@" " forState:UIControlStateNormal];
+    }
+}
+
+- (void)handleBump:(NSNotification*)note {
+    NSString *listingID = [note object];
+    BumpVC *vc = [[BumpVC alloc]init];
+    vc.listingID = listingID;
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+- (void)handleDrop:(NSNotification*)note {
+    NSLog(@"should show drop in explore");
+    NSString *listingID = [note object];
+
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
+    self.dropDown = (notificatView *)[nib objectAtIndex:0];
+    self.dropDown.delegate = self;
+    self.dropDown.listingID = listingID;
+    
+    UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.dropDown addGestureRecognizer:swipeGesture];
+    
+    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+    
+    PFQuery *listingQ = [PFQuery queryWithClassName:@"wantobuys"];
+    [listingQ whereKey:@"objectId" equalTo:listingID];
+    [listingQ includeKey:@"postUser"];
+    [listingQ getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            PFObject *listing = object;
+            self.dropDown.listing = listing;
+            [self.dropDown.imageView setFile:[object objectForKey:@"image1"]];
+            [self.dropDown.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
+                if (image) {
+                    PFUser *postUser = [listing objectForKey:@"postUser"];
+                    self.dropDown.mainLabel.text = [NSString stringWithFormat:@"Your Facebook friend %@ just posted a listing - Tap to Bump it!", [postUser objectForKey:@"fullname"]];
+                    
+                    //animate down
+                    [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+                    
+                    [UIView animateWithDuration:1.0
+                                          delay:0.0
+                         usingSpringWithDamping:0.5
+                          initialSpringVelocity:0.5
+                                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                            //Animations
+                                            [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
+                                        }
+                                     completion:^(BOOL finished) {
+                                         //schedule auto dismiss
+                                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                             [self dismissDrop];
+                                         });
+                                     }];
+                }
+            }];
+        }
+        else{
+            NSLog(@"error finding listing");
+        }
+    }];
+}
+
+-(void)dismissDrop{
+    //animate up
+    NSLog(@"disimss");
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.dropDown removeFromSuperview];
+                     }];
+    
+}
+
+-(void)bumpTappedForListing:(NSString *)listing{
+    NSLog(@"listing here %@", listing);
+    //animate up
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.dropDown removeFromSuperview];
+                     }];
+
+    BumpVC *vc = [[BumpVC alloc]init];
+    vc.listingID = listing;
+    [self presentViewController:vc animated:YES completion:nil];
 }
 @end

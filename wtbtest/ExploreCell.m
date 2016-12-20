@@ -22,5 +22,8 @@
     self.priceLabel.adjustsFontSizeToFitWidth = YES;
     self.priceLabel.minimumScaleFactor=0.5;
 }
+- (IBAction)bumpButtonPressed:(id)sender {
+    [self.delegate cellTapped:self];
+}
 
 @end

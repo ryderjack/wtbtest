@@ -23,9 +23,6 @@
     [super viewDidLoad];
     
     self.navigationItem.title = @"S E L L I N G";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     [self.soldLabel setHidden:YES];
     [self.soldCheckImageVoew setHidden:YES];

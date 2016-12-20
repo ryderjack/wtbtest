@@ -257,10 +257,10 @@
             }
             else{
                 if (objects.count == 1) {
-                    [self.sellerSegmentControl setTitle:@"1 WTB" forSegmentAtIndex:0];
+                    [self.sellerSegmentControl setTitle:@"1 Wanted" forSegmentAtIndex:0];
                 }
                 else{
-                    [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu WTBs", objects.count] forSegmentAtIndex:0];
+                    [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu Wanted", objects.count] forSegmentAtIndex:0];
                 }
             }
             [self.collectionView reloadData];
@@ -491,10 +491,10 @@
                         [self.collectionView reloadData];
                         if (self.isSeller == YES) {
                             if (self.WTBArray.count == 1) {
-                                [self.sellerSegmentControl setTitle:@"1 WTB" forSegmentAtIndex:0];
+                                [self.sellerSegmentControl setTitle:@"1 Wanted" forSegmentAtIndex:0];
                             }
                             else{
-                                [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu WTBs", self.WTBArray.count] forSegmentAtIndex:0];
+                                [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu Wanted", self.WTBArray.count] forSegmentAtIndex:0];
                             }
                         }
                         else{
@@ -557,7 +557,6 @@
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                
             }]];
             [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
                 [selected setObject:@"deleted" forKey:@"status"];
@@ -621,12 +620,12 @@
 //                                          alertControllerWithTitle:@"Post as User"
 //                                          message:@"Enter username"
 //                                          preferredStyle:UIAlertControllerStyleAlert];
-//    
+//
 //    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
 //     {
 //         textField.placeholder = @"username";
 //     }];
-//    
+//
 //    UIAlertAction *okAction = [UIAlertAction
 //                               actionWithTitle:@"DONE"
 //                               style:UIAlertActionStyleDefault
@@ -636,9 +635,9 @@
 //                                   self.usernameToList = usernameField.text;
 //                                   [self SetupListing];
 //                               }];
-//    
+//
 //    [alertController addAction:okAction];
-//    
+    
 //    [self presentViewController:alertController animated:YES completion:nil];
     
     CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];

@@ -88,5 +88,11 @@
 @property (weak, nonatomic) IBOutlet UILabel *purchasedLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *purchasedCheckView;
 
+//upvote
+@property (weak, nonatomic) IBOutlet UIButton *upVoteButton;
+
+//search
+@property (nonatomic) BOOL searchOn;
+
 
 @end

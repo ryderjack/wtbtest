@@ -104,16 +104,6 @@
     if (![self.status isEqualToString:@"edit"]) {
         [self useCurrentLoc];
     }
-    
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc]init];
-    [dateFormatter setDateFormat:@"dd/MM/YYYY"];
-    NSString *dateString=[dateFormatter stringFromDate:[NSDate date]];
-    NSString *midnight = [NSString stringWithFormat:@"%@ 12:00 AM", dateString];
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    [formatter setDateFormat:@"dd/MM/yyyy hh:mm a"];
-    NSTimeZone *gmt = [NSTimeZone timeZoneWithAbbreviation:@"GMT"];
-    [formatter setTimeZone:gmt];
-    self.todayDate = [formatter dateFromString:midnight];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -161,6 +151,19 @@
     if (self.shouldShowHUD == YES) {
         [self showHUD];
     }
+    
+//    NSString *pushText = [NSString stringWithFormat:@"%@ wants to buy something - help their post get noticed with a Bump now 👊", [[PFUser currentUser]username]];
+    
+    //send push to other user
+//    NSDictionary *params = @{@"userId": @"55dCnHo16B", @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": @"unwHqWfjXD"};
+//    [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//        if (!error) {
+//            NSLog(@"push response %@", response);
+//        }
+//        else{
+//            NSLog(@"push error %@", error);
+//        }
+//    }];
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -929,12 +932,12 @@
 }
 
 - (IBAction)wantobuyPressed:(id)sender {
-    self.warningLabel.text = @"";
     [self.saveButton setEnabled:NO];
+    self.warningLabel.text = @"";
     [self removeKeyboard];
     
-    if ([self.payField.text isEqualToString:[NSString stringWithFormat:@"%@11", self.currencySymbol]]) {
-        [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Pro Tip: a more accurate price 99leads to more sellers getting in touch!"];
+    if ([self.payField.text isEqualToString:[NSString stringWithFormat:@"%@1", self.currencySymbol]] || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@0", self.currencySymbol]]) {
+        [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Pro Tip: a more accurate price leads to more sellers getting in touch"];
         self.warningLabel.text = @"Enter a valid price";
         [self.saveButton setEnabled:YES];
     }
@@ -983,7 +986,7 @@
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
         
         //save keywords (minus useless words)
-        NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", @"all",@"any", @"&",@"looking",@"size", @"buy", @"these", @"this", @"that", nil];
+        NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", @"all",@"any", @"&",@"looking",@"size", @"buy", @"these", @"this", @"that", @"-", nil];
         NSString *title = [itemTitle lowercaseString];
         NSArray *strings = [title componentsSeparatedByString:@" "];
         NSMutableArray *mutableStrings = [NSMutableArray arrayWithArray:strings];
@@ -1071,6 +1074,7 @@
             [self.listing setObject:self.chooseLocation.text forKey:@"location"];
             [self.listing setObject:self.geopoint forKey:@"geopoint"];
             [self.listing setObject:@0 forKey:@"views"];
+            [self.listing setObject:@0 forKey:@"bumpCount"];
         }
         
         [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
@@ -1167,18 +1171,17 @@
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
                 
+                NSLog(@"listing saved! %@", self.listing.objectId);
+                
                 //check if intro mode so can show posted HUD otherwise just hide it
                 if (self.introMode == YES) {
                     self.hud.labelText = @"Posted!";
                     [Flurry logEvent:@"WTB_INTRO_DONE"];
-                    double delayInSeconds = 1.0; // number of seconds to wait
+                    double delayInSeconds = 2.0; // number of seconds to wait
                     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
                     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
                         [self.navigationController dismissViewControllerAnimated:YES completion:nil];
                     });
-                }
-                else{
-                    [self hidHUD];
                 }
                 
                 //check if in edit mode as only increment post number if not in edit mode
@@ -1192,19 +1195,134 @@
                 
                 //check if editing from listing as need to pop VC rather than display a 'listing complete' VC
                 if (self.editFromListing == YES) {
+                    [self hidHUD];
                     [self.navigationController popToRootViewControllerAnimated:YES];
                 }
-                else if (self.introMode == YES){
+//                else if (self.introMode == YES){
                     //do nothing as intro screens will be dismissed automatically
-                }
+//                }
                 else{
-                    NSLog(@"listing saved! %@", self.listing.objectId);
+                    //if in edit mode this won't run, only for normal and intro modes
                     
-                    ListingCompleteView *vc = [[ListingCompleteView alloc]init];
-                    vc.delegate = self;
-                    vc.lastObjectId = self.listing.objectId;
-                    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
-                    [self.navigationController pushViewController:vc animated:YES];
+                    //get user friends
+                    PFQuery *friends = [PFUser query];
+                    [friends whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
+                    [friends findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                        if (objects) {
+                            if (objects.count > 0) {
+                                
+                                NSString *pushText = [NSString stringWithFormat:@"%@ wants to buy something - help their post get noticed with a Bump now 👊", [[PFUser currentUser]username]];
+                                
+                                for (PFObject *friendUser in objects) {
+                                    
+                                    PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
+                                    [bumpedQuery whereKey:@"facebookId" equalTo:[friendUser objectForKey:@"facebookId"]];
+                                    [bumpedQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                                        if (object) {
+                                            NSLog(@"user has a Bumped obj %@", object);
+                                            
+                                            //check if todays date is greater than safe date
+                                            
+                                            if( [[NSDate date] timeIntervalSinceDate:[object objectForKey:@"safeDate"]] > 0 ) {
+                                                NSLog(@"today is later than safe date so go ahead and send another push");
+                                                
+                                                //send push
+                                                NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.listing.objectId};
+                                                [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                                                    if (!error) {
+                                                        NSLog(@"push response %@", response);
+                                                    }
+                                                    else{
+                                                        NSLog(@"push error %@", error);
+                                                    }
+                                                }];
+                                            }
+                                            else{
+                                                NSLog(@"don't send push, still waiting for a 3 day safe gap");
+                                            }
+                                        }
+                                        else{
+                                            NSLog(@"no bump obj, need to create one");
+                                            
+                                            //create safe date which is 3 days from now
+                                            NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                                            dayComponent.day = 3;
+                                            
+                                            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                                            NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                                            
+                                            NSLog(@"nextDate: %@ ...", safeDate);
+                                            
+                                            PFObject *bumpedObj = [PFObject objectWithClassName:@"Bumped"];
+                                            [bumpedObj setObject:[friendUser objectForKey:@"facebookId"] forKey:@"facebookId"];
+                                            [bumpedObj setObject:safeDate forKey:@"safeDate"];
+                                            [bumpedObj saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                                if (succeeded) {
+                                                    NSLog(@"saved, now sending push");
+                                                    
+                                                    //send push to other user
+                                                    NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.listing.objectId};
+                                                    [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                                                        if (!error) {
+                                                            NSLog(@"push response %@", response);
+                                                        }
+                                                        else{
+                                                            NSLog(@"push error %@", error);
+                                                        }
+                                                    }];
+                                                    
+                                                    if (self.introMode != YES){
+                                                        [self hidHUD];
+                                                        ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+                                                        vc.delegate = self;
+                                                        vc.lastObjectId = self.listing.objectId;
+                                                        [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
+                                                        [self.navigationController pushViewController:vc animated:YES];
+                                                    }
+                                                }
+                                                else{
+                                                    NSLog(@"error saving bumped obj");
+                                                    
+                                                    if (self.introMode != YES){
+                                                        [self hidHUD];
+                                                        ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+                                                        vc.delegate = self;
+                                                        vc.lastObjectId = self.listing.objectId;
+                                                        [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
+                                                        [self.navigationController pushViewController:vc animated:YES];
+                                                    }
+                                                }
+                                            }];
+                                        }
+                                    }];
+                                }
+                            }
+                            else{
+                                NSLog(@"got no mates on Bump - loser!");
+                                
+                                if (self.introMode != YES){
+                                    [self hidHUD];
+                                    ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+                                    vc.delegate = self;
+                                    vc.lastObjectId = self.listing.objectId;
+                                    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
+                                    [self.navigationController pushViewController:vc animated:YES];
+                                }
+                            }
+                        }
+                        else{
+                            NSLog(@"error finding the users!");
+                            
+                            if (self.introMode != YES){
+                                [self hidHUD];
+                                ListingCompleteView *vc = [[ListingCompleteView alloc]init];
+                                vc.delegate = self;
+                                vc.lastObjectId = self.listing.objectId;
+                                [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:NO];
+                                [self.navigationController pushViewController:vc animated:YES];
+                            }
+                        }
+                    }];
                 }
             }
             else{

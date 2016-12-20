@@ -96,7 +96,7 @@
             
             self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
             NSString *loc = [self.listingObject objectForKey:@"location"];
-            self.locationLabel.text = [loc stringByReplacingOccurrencesOfString:@"(null)" withString:@""];
+            self.locationLabel.text = [loc stringByReplacingOccurrencesOfString:@"(null)," withString:@""];
             
             if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Accessories"]) {
                 self.sizeCellNeeded = NO;
@@ -148,6 +148,21 @@
                 self.navigationItem.rightBarButtonItem = infoButton;
                 [self.purchasedLabel setHidden:YES];
                 [self.purchasedCheckView setHidden:YES];
+            }
+            
+            NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listingObject objectForKey:@"bumpArray"]];
+            if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
+                NSLog(@"already bumped it m8");
+                [self.upVoteButton setSelected:YES];
+            }
+            else{
+                [self.upVoteButton setSelected:NO];
+            }
+            if (bumpArray.count > 0) {
+                [self.upVoteButton setTitle:[NSString stringWithFormat:@"%lu", bumpArray.count] forState:UIControlStateNormal];
+            }
+            else{
+                [self.upVoteButton setTitle:@"Tap to Bump!" forState:UIControlStateNormal];
             }
             
             [self setImageBorder];
@@ -284,6 +299,11 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
+    if (self.searchOn) {
+        if ([self.navigationController respondsToSelector:@selector(interactivePopGestureRecognizer)]) {
+            self.navigationController.interactivePopGestureRecognizer.enabled = NO;
+        }
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -515,7 +535,7 @@
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
-            return 80;
+            return 121;
         }
     }
     else if (indexPath.section ==3){
@@ -940,5 +960,43 @@
     UserProfileController *vc = [[UserProfileController alloc]init];
     vc.user = self.buyer;
     [self.navigationController pushViewController:vc animated:YES];
+}
+- (IBAction)upvotePressed:(id)sender {
+    
+    NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listingObject objectForKey:@"bumpArray"]];
+    if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
+        NSLog(@"already bumped it m8");
+        [self.upVoteButton setSelected:NO];
+        [bumpArray removeObject:[PFUser currentUser].objectId];
+        [self.listingObject setObject:bumpArray forKey:@"bumpArray"];
+        [self.listingObject incrementKey:@"bumpCount" byAmount:@-1];
+    }
+    else{
+        NSLog(@"bumped");
+        [self.upVoteButton setSelected:YES];
+        [bumpArray addObject:[PFUser currentUser].objectId];
+        [self.listingObject addObject:[PFUser currentUser].objectId forKey:@"bumpArray"];
+        [self.listingObject incrementKey:@"bumpCount"];
+        NSString *pushText = [NSString stringWithFormat:@"%@ just bumped your listing 👊", [PFUser currentUser].username];
+        
+        if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+            NSDictionary *params = @{@"userId": [[self.listingObject objectForKey:@"postUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username};
+            //[PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+            //    if (!error) {
+            //        NSLog(@"push response %@", response);
+            //    }
+            //    else{
+            //        NSLog(@"push error %@", error);
+            //    }
+            //}];
+        }
+    }
+    [self.listingObject saveInBackground];
+    if (bumpArray.count > 0) {
+        [self.upVoteButton setTitle:[NSString stringWithFormat:@"%lu", bumpArray.count] forState:UIControlStateNormal];
+    }
+    else{
+        [self.upVoteButton setTitle:@"Tap to Bump!" forState:UIControlStateNormal];
+    }
 }
 @end

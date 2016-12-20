@@ -206,26 +206,21 @@
                         
                         [self.unseenMessages addObject:convo];
 
-//                        if ([[msgObject objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]) {
-//                            unseen = 1;
-//                        }
-//                        else{
-                            PFUser *buyer = [convo objectForKey:@"buyerUser"];
-                        
+                        PFUser *buyer = [convo objectForKey:@"buyerUser"];
+                    
                         //me IIEf7cUvrO
-                        
-                            if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
-                                //current user is buyer so other user is seller
-                                unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
-                                //NSLog(@"unseen buyer %@", [convo objectForKey:@"buyerUnseen"]);
+                    
+                        if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+                            //current user is buyer so other user is seller
+                            unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                            //NSLog(@"unseen buyer %@", [convo objectForKey:@"buyerUnseen"]);
 
-                            }
-                            else{
-                                //other user is buyer, current is seller
-                                unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
-                                //NSLog(@"unseen seller %d", unseen);
-                            }
-//                        }
+                        }
+                        else{
+                            //other user is buyer, current is seller
+                            unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                            //NSLog(@"unseen seller %d", unseen);
+                        }
 
                         totalUnseen = totalUnseen + unseen;
                         
@@ -303,19 +298,38 @@
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     [self checkMesages];
     [self checkForTBMessages];
+    NSString *bumpedStatus = [userInfo objectForKey:@"bumpRequest"];
+    NSString *listing = [userInfo objectForKey:@"listingID"];
+    
     if ( application.applicationState == UIApplicationStateInactive || application.applicationState == UIApplicationStateBackground  )
     {
         //opened from a push notification when the app in background
         NSDictionary *dic = [userInfo objectForKey:@"aps"];
         NSString *strMsg = [dic objectForKey:@"alert"];
         
-        NSLog(@"dic: %@    and strMsg: %@", dic, strMsg);
+       // NSLog(@"dic: %@    and strMsg: %@", dic, strMsg);
+        
+        NSLog(@"userinfo: %@", userInfo);
         
         if ([strMsg hasPrefix:@"Team Bump"]) {
             self.tabBarController.selectedIndex = 4;
         }
+        else if([bumpedStatus isEqualToString:@"YES"]){
+            //open BumpedVC
+            NSLog(@"listing and bumped status %@ %@", bumpedStatus, listing);
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"showBumpedVC" object:listing];
+        }
         else{
             self.tabBarController.selectedIndex = 3;
+        }
+    }
+    else{
+        //app is active
+        
+        if([bumpedStatus isEqualToString:@"YES"]){
+            //open BumpedVC
+            NSLog(@"show drop down from delegate");
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"showDropDown" object:listing];
         }
     }
 }

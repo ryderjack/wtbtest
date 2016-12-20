@@ -48,12 +48,6 @@
     // so it's a case of displaying the objects for this key in cell for item
     
     [self loadWTBs];
-    
-//    if (![[[PFUser currentUser]objectForKey:@"completedBuyNow"]isEqualToString:@"YES"]) {
-//        MessagesTutorial *vc = [[MessagesTutorial alloc]init];
-//        vc.sellerMode = YES;
-//        [self presentViewController:vc animated:YES completion:nil];
-//    }
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
@@ -147,6 +141,7 @@
                 PFQuery *WTSQuery = [PFQuery queryWithClassName:@"forSaleItems"];
                 [WTSQuery whereKey:@"status" equalTo:@"live"];
                 [WTSQuery whereKey:@"keywords" containedIn:WTBKeywords];
+                [WTSQuery orderByDescending:@"createdAt"];
                 [WTSQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                     if (objects) {
                         WTBCheck++;
@@ -275,6 +270,7 @@
                 PFQuery *WTSQuery = [PFQuery queryWithClassName:@"forSaleItems"];
                 [WTSQuery whereKey:@"status" equalTo:@"live"];
                 [WTSQuery whereKey:@"keywords" containedIn:WTBKeywords];
+                [WTSQuery orderByDescending:@"createdAt"];
                 [WTSQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                     if (objects) {
                         WTBCheck++;

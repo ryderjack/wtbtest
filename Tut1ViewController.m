@@ -34,7 +34,7 @@
     [self.sendOfferImageView setAlpha:0.0f];
     
     if (self.index == 0) {
-        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1"];
+        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
         self.titleLabel.text = @"Bump";
         self.descriptionLabel.text = @"List items that you want and sellers get in touch";
         [self.createButton setHidden:YES];
@@ -62,6 +62,12 @@
         self.heroImageView.image = [UIImage imageNamed:@"iPhone3"];
         self.titleLabel.text = @"Buying";
         self.descriptionLabel.text = @"Bump also recommends items that can be purchased straight away";
+    }
+    else if (self.index == 3){
+        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
+        self.titleLabel.text = @"Bumping";
+        self.descriptionLabel.text = @"Bump listings to help get them noticed just by tapping the up arrow";
+         [self setupBumping];
         
         if (self.explainMode == YES) {
             [self.dimissButton setAlpha:0.0];
@@ -94,10 +100,40 @@
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 
+-(void)setupBumping{
+    [UIView animateKeyframesWithDuration:3.0 delay:0.6 options:UIViewKeyframeAnimationOptionCalculationModeLinear | UIViewKeyframeAnimationOptionRepeat animations:^{
+        [self.cursorImageView setAlpha:0.0f];
+        self.screenImageView.image = [UIImage imageNamed:@"iPhoneIntroBumped"];
+        [self.screenImageView setAlpha:0.0f];
+        
+        //1.1 cursor appears
+        [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.025 animations:^{
+            self.cursorImageView.alpha = 1.0f;
+        }];
+        
+        //1.2 cursor moves up
+        [UIView addKeyframeWithRelativeStartTime:0.02 relativeDuration:0.4 animations:^{
+            self.cursorImageView.transform = CGAffineTransformMakeTranslation(-110,-160);
+        }];
+        
+        //1.3 show bumped listing
+        [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.3 animations:^{
+            [self.cursorImageView setAlpha:0.0f];
+            [self.screenImageView setAlpha:1.0f];
+        }];
+        
+    } completion:^(BOOL finished) {
+        NSLog(@"Animation complete!");
+        [self.cursorImageView setAlpha:0.0f];
+        [self.screenImageView setAlpha:0.0f];
+    }];
+}
+
 -(void)setupSelling{
     [UIView animateKeyframesWithDuration:5.5 delay:0.6 options:UIViewKeyframeAnimationOptionCalculationModeLinear | UIViewKeyframeAnimationOptionRepeat animations:^{
         [self.cursorImageView setAlpha:0.0f];
         [self.screenImageView setAlpha:0.0f];
+        self.screenImageView.image = [UIImage imageNamed:@"iPhoneIntro2.2"];
         [self.sendOfferImageView setAlpha:0.0f];
         
         //1.1 cursor appears

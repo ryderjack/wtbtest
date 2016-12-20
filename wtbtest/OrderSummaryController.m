@@ -525,6 +525,8 @@
             // all status points done!
             
             [self.titleImageView setImage:[UIImage imageNamed:@"trackingfeedback"]];
+            
+            [self.shippedButton setImage:[UIImage imageNamed:@"alreadyShipped"] forState:UIControlStateNormal];
             [self.shippedButton setSelected:YES];
             [self.shippedButton setEnabled:NO];
             
@@ -539,6 +541,8 @@
             
             [self.titleImageView setImage:[UIImage imageNamed:@"trackingshipped"]];
             [self.shippedButton setSelected:YES];
+            [self.shippedButton setImage:[UIImage imageNamed:@"alreadyShipped"] forState:UIControlStateNormal];
+
             [self.shippedButton setEnabled:NO];
         }
         else if ([[self.orderObject objectForKey:@"paid"]boolValue] == YES && [[self.orderObject objectForKey:@"shipped"]boolValue] == NO && [[self.orderObject objectForKey:@"buyerFeedback"]boolValue] == YES){
@@ -573,6 +577,7 @@
             NSLog(@"done! for seller");
 
             [self.titleImageView setImage:[UIImage imageNamed:@"trackingfeedback"]];
+            [self.shippedButton setImage:[UIImage imageNamed:@"alreadyShipped"] forState:UIControlStateNormal];
             [self.shippedButton setSelected:YES];
             [self.shippedButton setEnabled:NO];
             
@@ -586,6 +591,7 @@
             NSLog(@"need to leave feedback");
             
             [self.titleImageView setImage:[UIImage imageNamed:@"trackingshipped"]];
+            [self.shippedButton setImage:[UIImage imageNamed:@"alreadyShipped"] forState:UIControlStateNormal];
             [self.shippedButton setSelected:YES];
             [self.shippedButton setEnabled:NO];
 

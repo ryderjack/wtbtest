@@ -14,8 +14,11 @@
 #import "searchResultsController.h"
 #import <MBProgressHUD.h>
 #import <DGActivityIndicatorView.h>
+#import "ExploreCell.h"
+#import "BumpVC.h"
+#import "notificatView.h"
 
-@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, UISearchControllerDelegate, UISearchResultsUpdating, UISearchBarDelegate, searchResultsDelegate>
+@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, UISearchControllerDelegate, UISearchResultsUpdating, UISearchBarDelegate, searchResultsDelegate, ExploreCellDelegate, dropDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
@@ -57,6 +60,16 @@
 @property (nonatomic) BOOL userPressed;
 @property (nonatomic) BOOL shiftDown;
 @property (nonatomic) BOOL filterMove;
+@property (nonatomic) BOOL cleverMode;
 
 @property (nonatomic, strong) NSArray *uselessWords;
+
+//cell
+@property (nonatomic, strong) ExploreCell *cell;
+
+//bump in app notification
+@property (nonatomic, strong) notificatView *dropDown;
+@property (nonatomic, strong) UIDynamicAnimator *animator;
+
+@property (nonatomic, strong) NSIndexPath *lastSelected;
 @end
