@@ -307,12 +307,23 @@
         NSDictionary *dic = [userInfo objectForKey:@"aps"];
         NSString *strMsg = [dic objectForKey:@"alert"];
         
+//        PFInstallation *currentInstallation = [PFInstallation currentInstallation];
+//        if (currentInstallation.badge != 0) {
+//            currentInstallation.badge = 0;
+//            [currentInstallation saveEventually];
+//        }
+        
        // NSLog(@"dic: %@    and strMsg: %@", dic, strMsg);
         
         NSLog(@"userinfo: %@", userInfo);
         
         if ([strMsg hasPrefix:@"Team Bump"]) {
             self.tabBarController.selectedIndex = 4;
+        }
+        else if([strMsg containsString:@"bumped your listing"]){
+            //open listing
+            self.tabBarController.selectedIndex = 0;
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"listingBumped" object:listing];
         }
         else if([bumpedStatus isEqualToString:@"YES"]){
             //open BumpedVC

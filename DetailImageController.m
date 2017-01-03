@@ -20,21 +20,23 @@
     tap.numberOfTapsRequired = 1;
     [self.view addGestureRecognizer:tap];
     
+    if (self.numberOfPics > 1) {
+        UISwipeGestureRecognizer *swipeLeft = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
+        UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
+        
+        // Setting the swipe direction.
+        [swipeLeft setDirection:UISwipeGestureRecognizerDirectionLeft];
+        [swipeRight setDirection:UISwipeGestureRecognizerDirectionRight];
+        
+        // Adding the swipe gesture on image view
+        [self.view addGestureRecognizer:swipeLeft];
+        [self.view addGestureRecognizer:swipeRight];
+    }
+    
     UISwipeGestureRecognizer *swipe = [[UISwipeGestureRecognizer alloc]initWithTarget:self action:@selector(dismissVC)];
     [self.view addGestureRecognizer:swipe];
     
     [self.pageControl setNumberOfPages:self.numberOfPics];
-    
-    UISwipeGestureRecognizer *swipeLeft = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
-    UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
-    
-    // Setting the swipe direction.
-    [swipeLeft setDirection:UISwipeGestureRecognizerDirectionLeft];
-    [swipeRight setDirection:UISwipeGestureRecognizerDirectionRight];
-    
-    // Adding the swipe gesture on image view
-    [self.view addGestureRecognizer:swipeLeft];
-    [self.view addGestureRecognizer:swipeRight];
     
     if (self.listingPic == YES) {
         // don't show tagged label

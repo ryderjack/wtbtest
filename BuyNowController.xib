@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1212" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
+    <customFonts key="customFonts">
+        <array key="PingFang.ttc">
+            <string>PingFangSC-Medium</string>
+        </array>
+    </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="BuyNowController">
             <connections>
+                <outlet property="anotherPromptButton" destination="oH6-sh-68o" id="WFv-ZC-gaj"/>
                 <outlet property="tableView" destination="N1g-JX-pVX" id="p8X-6u-Wwb"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
@@ -18,6 +27,7 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="N1g-JX-pVX">
+                    <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     <color key="sectionIndexBackgroundColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
                     <connections>
@@ -25,15 +35,30 @@
                         <outlet property="delegate" destination="-1" id="33Q-Ra-KfC"/>
                     </connections>
                 </tableView>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oH6-sh-68o">
+                    <rect key="frame" x="88" y="617" width="199" height="30"/>
+                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="8"/>
+                    <state key="normal" title="C R E A T E  A N O T H E R  L I S T I N G" backgroundImage="listingPromptBG.png">
+                        <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="anotherPromptPressed:" destination="-1" eventType="touchUpInside" id="ucF-we-OJD"/>
+                    </connections>
+                </button>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
-                <constraint firstItem="N1g-JX-pVX" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="PVr-U3-om2"/>
-                <constraint firstAttribute="trailing" secondItem="N1g-JX-pVX" secondAttribute="trailing" id="RMa-zA-mCC"/>
-                <constraint firstAttribute="bottom" secondItem="N1g-JX-pVX" secondAttribute="bottom" id="pK3-rA-QOG"/>
-                <constraint firstItem="N1g-JX-pVX" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="pMD-Gc-TT1"/>
+                <constraint firstAttribute="bottom" secondItem="N1g-JX-pVX" secondAttribute="bottom" id="5Lw-BT-6cg"/>
+                <constraint firstItem="N1g-JX-pVX" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="OsN-Gs-ehO"/>
+                <constraint firstAttribute="bottom" secondItem="oH6-sh-68o" secondAttribute="bottom" constant="20" id="P3b-G1-JUX"/>
+                <constraint firstAttribute="trailing" secondItem="N1g-JX-pVX" secondAttribute="trailing" id="T4h-y7-Dqu"/>
+                <constraint firstItem="oH6-sh-68o" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="W5p-pS-p6T"/>
+                <constraint firstItem="N1g-JX-pVX" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="sDM-bA-4cX"/>
             </constraints>
             <point key="canvasLocation" x="33.5" y="85.5"/>
         </view>
     </objects>
+    <resources>
+        <image name="listingPromptBG.png" width="199" height="30"/>
+    </resources>
 </document>

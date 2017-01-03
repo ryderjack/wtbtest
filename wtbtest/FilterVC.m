@@ -409,10 +409,18 @@
     if(self.accessoryButton.selected == YES){
         [self.accessoryButton setSelected:NO];
         [self.filtersArray removeObject:@"accessory"];
+        
+        [self setupclothingsizes];
     }
     else{
         [self.accessoryButton setSelected:YES];
         [self.filtersArray addObject:@"accessory"];
+        
+        [[self.sizeScrollButton subviews]
+         makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        
+        [[self.sizeScrollButton subviews]
+         makeObjectsPerformSelector:@selector(removeFromSuperview)];
         
         [self.clothingButton setSelected:NO];
         [self.filtersArray removeObject:@"clothing"];

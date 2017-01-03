@@ -1068,9 +1068,10 @@
         }
         
         NSString *descriptionKeywordsString = [self.descriptionField.text stringByReplacingOccurrencesOfString:@"#" withString:@""];
-        
-        [forSaleItem setObject:self.descriptionField.text forKey:@"description"];
-        [forSaleItem setObject:[self.descriptionField.text  lowercaseString]forKey:@"descriptionLower"];
+        NSString *description = [self.descriptionField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+        [forSaleItem setObject:description forKey:@"description"];
+        [forSaleItem setObject:[description  lowercaseString]forKey:@"descriptionLower"];
         [forSaleItem setObject:self.chooseCondition.text forKey:@"condition"];
         [forSaleItem setObject:self.chooseCategroy.text forKey:@"category"];
         [forSaleItem setObject:self.chooseSize.text forKey:@"sizeLabel"];

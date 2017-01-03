@@ -82,9 +82,9 @@
         self.navigationItem.leftBarButtonItem = cancelButton;
     }
     
-    
-    //weird behaviour - not getting latest data from MLab, cached????
-    
+//    UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
+//    self.navigationItem.rightBarButtonItem = addForSaleItem;
+
     PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
     [trustedQuery whereKey:@"user" equalTo:self.user];
     [trustedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {

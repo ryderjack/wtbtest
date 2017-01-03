@@ -8,7 +8,6 @@
 
 #import "ListingController.h"
 #import "DetailImageController.h"
-#import "ExplainViewController.h"
 #import "CreateViewController.h"
 #import "FeedbackController.h"
 #import "MessageViewController.h"
@@ -32,6 +31,8 @@
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     [self.checkImageView setHidden:YES];
+    [self.purchasedLabel setHidden:YES];
+    [self.purchasedCheckView setHidden:YES];
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
@@ -100,7 +101,6 @@
             
             if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Accessories"]) {
                 self.sizeCellNeeded = NO;
-
             }
             else{
                 self.sizeCellNeeded = YES;
@@ -159,7 +159,8 @@
                 [self.upVoteButton setSelected:NO];
             }
             if (bumpArray.count > 0) {
-                [self.upVoteButton setTitle:[NSString stringWithFormat:@"%lu", bumpArray.count] forState:UIControlStateNormal];
+                int count = (int)[bumpArray count];
+                [self.upVoteButton setTitle:[NSString stringWithFormat:@"%@",[self abbreviateNumber:count]] forState:UIControlStateNormal];
             }
             else{
                 [self.upVoteButton setTitle:@"Tap to Bump!" forState:UIControlStateNormal];
@@ -168,10 +169,7 @@
             [self setImageBorder];
             [self.buyer fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
-//                    dispatch_async(dispatch_get_main_queue(), ^{
-                        self.buyernameLabel.text = self.buyer.username;
-//                    });
-                    
+                    self.buyernameLabel.text = self.buyer.username;
                     PFFile *pic = [self.buyer objectForKey:@"picture"];
                     if (pic != nil) {
                         [self.buyerImgView setFile:pic];
@@ -614,8 +612,6 @@
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        [self dismissViewControllerAnimated:YES completion:^{
-        }];
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share to Facebook Group" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -796,10 +792,6 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 
--(void)showExtraInfo{
-    ExplainViewController *vc = [[ExplainViewController alloc]init];
-    [self presentViewController:vc animated:YES completion:nil];
-}
 - (IBAction)sellthisPressed:(id)sender {
     [self.sellthisbutton setEnabled:NO];
     
@@ -824,9 +816,6 @@
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        
-        [self dismissViewControllerAnimated:YES completion:^{
-        }];
     }]];
     
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
@@ -980,23 +969,73 @@
         NSString *pushText = [NSString stringWithFormat:@"%@ just bumped your listing 👊", [PFUser currentUser].username];
         
         if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-            NSDictionary *params = @{@"userId": [[self.listingObject objectForKey:@"postUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username};
-            //[PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-            //    if (!error) {
-            //        NSLog(@"push response %@", response);
-            //    }
-            //    else{
-            //        NSLog(@"push error %@", error);
-            //    }
-            //}];
+            NSDictionary *params = @{@"userId": [[self.listingObject objectForKey:@"postUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.listingObject.objectId};
+            
+            [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                if (!error) {
+                    NSLog(@"push response %@", response);
+                }
+                else{
+                    NSLog(@"push error %@", error);
+                }
+            }];
         }
     }
     [self.listingObject saveInBackground];
     if (bumpArray.count > 0) {
-        [self.upVoteButton setTitle:[NSString stringWithFormat:@"%lu", bumpArray.count] forState:UIControlStateNormal];
+        int count = (int)[bumpArray count];
+        [self.upVoteButton setTitle:[NSString stringWithFormat:@"%@",[self abbreviateNumber:count]] forState:UIControlStateNormal];
     }
     else{
         [self.upVoteButton setTitle:@"Tap to Bump!" forState:UIControlStateNormal];
     }
+}
+
+-(NSString *)abbreviateNumber:(int)num {
+    
+    NSString *abbrevNum;
+    float number = (float)num;
+    
+    //Prevent numbers smaller than 1000 to return NULL
+    if (num >= 1000) {
+        NSArray *abbrev = @[@"K", @"M", @"B"];
+        
+        for (int i = (int)abbrev.count - 1; i >= 0; i--) {
+            
+            // Convert array index to "1000", "1000000", etc
+            int size = pow(10,(i+1)*3);
+            
+            if(size <= number) {
+                // Removed the round and dec to make sure small numbers are included like: 1.1K instead of 1K
+                number = number/size;
+                NSString *numberString = [self floatToString:number];
+                
+                // Add the letter for the abbreviation
+                abbrevNum = [NSString stringWithFormat:@"%@%@", numberString, [abbrev objectAtIndex:i]];
+            }
+        }
+    } else {
+        
+        // Numbers like: 999 returns 999 instead of NULL
+        abbrevNum = [NSString stringWithFormat:@"%d", (int)number];
+    }
+    
+    return abbrevNum;
+}
+
+- (NSString *) floatToString:(float) val {
+    NSString *ret = [NSString stringWithFormat:@"%.1f", val];
+    unichar c = [ret characterAtIndex:[ret length] - 1];
+    
+    while (c == 48) { // 0
+        ret = [ret substringToIndex:[ret length] - 1];
+        c = [ret characterAtIndex:[ret length] - 1];
+        
+        //After finding the "." we know that everything left is the decimal number, so get a substring excluding the "."
+        if(c == 46) { // .
+            ret = [ret substringToIndex:[ret length] - 1];
+        }
+    }
+    return ret;
 }
 @end

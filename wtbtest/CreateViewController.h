@@ -17,6 +17,7 @@
 #import <TOWebViewController.h>
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
+#import "CreateSuccessView.h"
 
 @class CreateViewController;
 
@@ -25,7 +26,7 @@
 @end
 
 
-@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate, TOWebDelegate>
+@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate, TOWebDelegate, UICollectionViewDelegate, UICollectionViewDataSource, successDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
@@ -92,7 +93,6 @@
 @property (nonatomic, strong) NSString *secondSize;
 @property (nonatomic, strong) NSString *thirdSize;
 
-
 @property (nonatomic) BOOL editFromListing;
 @property (weak, nonatomic) IBOutlet UIButton *saveButton;
 @property (nonatomic, strong) UIBarButtonItem *resetButton;
@@ -111,6 +111,8 @@
 
 @property (nonatomic, strong) NSArray *profanityList;
 
+@property (nonatomic, strong) NSArray *keywordsToSave;
+
 @property (weak, nonatomic) IBOutlet UIButton *skipButton;
 @property (nonatomic) BOOL introMode;
 
@@ -120,5 +122,12 @@
 @property (nonatomic) BOOL shouldSave;
 
 @property (nonatomic, strong) NSDate *todayDate;
+
+@property (nonatomic, strong) CreateSuccessView *successView;
+@property (nonatomic, strong) NSMutableArray *buyNowArray;
+@property (nonatomic, strong) NSMutableArray *buyNowIDs;
+@property (nonatomic) BOOL setupYes;
+@property (nonatomic) BOOL completionShowing;
+@property (nonatomic, strong) UIView *bgView;
 
 @end

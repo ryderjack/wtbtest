@@ -33,4 +33,8 @@
 @property (nonatomic, strong) UILabel *topLabel;
 @property (nonatomic, strong) UILabel *bottomLabel;
 
+@property (nonatomic) BOOL viewedItem;
+@property (weak, nonatomic) IBOutlet UIButton *anotherPromptButton;
+
+
 @end

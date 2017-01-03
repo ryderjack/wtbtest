@@ -36,13 +36,13 @@
     if (self.index == 0) {
         self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
         self.titleLabel.text = @"Bump";
-        self.descriptionLabel.text = @"List items that you want and sellers get in touch";
+        self.descriptionLabel.text = @"List items you want & find buyers that want your stuff";
         [self.createButton setHidden:YES];
     }
     else if (self.index == 1){
         self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro2.1"];
         self.titleLabel.text = @"Selling";
-        self.descriptionLabel.text = @"Tap a listing. Message the buyer. Hit the tag. Send them an offer. Sold.";
+        self.descriptionLabel.text = @"1. Tap a listing\n2. Message the buyer\n3. Hit the tag & send them an offer";
         [self.createButton setHidden:YES];
         
         if (self.messageExplain == YES) {
@@ -101,7 +101,7 @@
 }
 
 -(void)setupBumping{
-    [UIView animateKeyframesWithDuration:3.0 delay:0.6 options:UIViewKeyframeAnimationOptionCalculationModeLinear | UIViewKeyframeAnimationOptionRepeat animations:^{
+    [UIView animateKeyframesWithDuration:3.0 delay:0.3 options:UIViewKeyframeAnimationOptionCalculationModeLinear | UIViewKeyframeAnimationOptionRepeat animations:^{
         [self.cursorImageView setAlpha:0.0f];
         self.screenImageView.image = [UIImage imageNamed:@"iPhoneIntroBumped"];
         [self.screenImageView setAlpha:0.0f];
@@ -130,7 +130,7 @@
 }
 
 -(void)setupSelling{
-    [UIView animateKeyframesWithDuration:5.5 delay:0.6 options:UIViewKeyframeAnimationOptionCalculationModeLinear | UIViewKeyframeAnimationOptionRepeat animations:^{
+    [UIView animateKeyframesWithDuration:5.5 delay:0.3 options:UIViewKeyframeAnimationOptionCalculationModeLinear | UIViewKeyframeAnimationOptionRepeat animations:^{
         [self.cursorImageView setAlpha:0.0f];
         [self.screenImageView setAlpha:0.0f];
         self.screenImageView.image = [UIImage imageNamed:@"iPhoneIntro2.2"];

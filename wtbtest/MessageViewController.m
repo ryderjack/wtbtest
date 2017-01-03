@@ -15,7 +15,6 @@
 #import "OrderSummaryController.h"
 #import "ListingController.h"
 #import "MessagesTutorial.h"
-#import <PulsingHaloLayer.h>
 #import "NavigationController.h"
 #import "UIImage+Resize.h"
 #import "Tut1ViewController.h"
@@ -32,19 +31,27 @@
 {
     [super viewDidLoad];
     
-    if ([self.otherUserName isEqualToString:@""]) {
-        [self.otherUser fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                self.title = self.otherUser.username;
-            }
-            else{
-                NSLog(@"getting user error %@", error);
-            }
-        }];
+    if (![self.otherUserName isEqualToString:@""]) {
+        self.title = self.otherUserName;
     }
-    else{
-       self.title = self.otherUserName;
-    }
+    
+    [self.otherUser fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            self.title = self.otherUser.username;
+            PFFile *imageFile = [self.otherUser objectForKey:@"picture"];
+            [imageFile getDataInBackgroundWithBlock:^(NSData *data, NSError *error) {
+                if (!error) {
+                    self.otherUserImage = [UIImage imageWithData:data];
+                    UIImage *image = [JSQMessagesAvatarImageFactory circularAvatarImage:self.otherUserImage withDiameter:35];
+                    UIImage *placeholder = [JSQMessagesAvatarImageFactory circularAvatarImage:[UIImage imageNamed:@"empty"] withDiameter:35];
+                    self.avaImage = [[JSQMessagesAvatarImage alloc]initWithAvatarImage:image highlightedImage:image placeholderImage:placeholder];
+                }
+            }];
+        }
+        else{
+            NSLog(@"getting user error %@", error);
+        }
+    }];
     
     self.savedString = @"";
     
@@ -75,16 +82,16 @@
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagIconG"] forState:UIControlStateHighlighted];
     
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"pulsingDone"] != YES) {
-        PulsingHaloLayer *halo = [PulsingHaloLayer layer];
-        halo.position = self.inputToolbar.contentView.leftBarButtonItem.center;
-        [self.inputToolbar.contentView.leftBarButtonItem.layer addSublayer:halo];
+        self.halo = [PulsingHaloLayer layer];
+        self.halo.position = self.inputToolbar.contentView.leftBarButtonItem.center;
+        [self.inputToolbar.contentView.leftBarButtonItem.layer addSublayer:self.halo];
         UIColor *color = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
-        halo.backgroundColor = color.CGColor;
-        [halo start];
+        self.halo.backgroundColor = color.CGColor;
+        [self.halo start];
     }
     
     //no avatar images
-    self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeZero;
+    self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeMake(35, 35);
     self.collectionView.collectionViewLayout.outgoingAvatarViewSize = CGSizeZero;
     
     //Register custom menu actions for cells.
@@ -150,7 +157,6 @@
             //check if paypal email has been entered
             if (![[[PFUser currentUser]objectForKey:@"paypalUpdated"]isEqualToString:@"YES"]) {
                 [self showPayPalAlert];
-                [[PFUser currentUser]saveInBackground];
             }
         } 
     }
@@ -682,6 +688,7 @@
     [alertView addAction:[UIAlertAction actionWithTitle:@"Yes, it's correct" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         //save as updated
         [[PFUser currentUser] setObject:@"YES" forKey:@"paypalUpdated"];
+        [[PFUser currentUser]saveInBackground];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -908,7 +915,11 @@
 
 - (void)didPressAccessoryButton:(UIButton *)sender
 {
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"pulsingDone"];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"pulsingDone"] != YES) {
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"pulsingDone"];
+        [self.halo removeFromSuperlayer];
+        self.halo = nil;
+    }
     [self.inputToolbar.contentView.textView resignFirstResponder];
     [self alertSheet];
 }
@@ -1343,7 +1354,14 @@
 
 - (id<JSQMessageAvatarImageDataSource>)collectionView:(JSQMessagesCollectionView *)collectionView avatarImageDataForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return nil;
+    JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+
+    if ([message.senderId isEqualToString:self.senderId]) {
+        return nil;
+    }
+    else{
+        return self.avaImage;
+    }
 }
 
 - (NSAttributedString *)collectionView:(JSQMessagesCollectionView *)collectionView attributedTextForCellTopLabelAtIndexPath:(NSIndexPath *)indexPath
@@ -1737,6 +1755,10 @@
 }
 
 -(void)showInfoBanner{
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"dismissedBanner"] == YES){
+        return;
+    }
+    
     if (self.infoBannerShowing == YES) {
 
     }
@@ -1785,14 +1807,15 @@
                          completion:^(BOOL finished) {
                              [self.infoView removeFromSuperview];
                              self.infoBannerShowing = NO;
+                             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"dismissedBanner"];
                          }];
     }
 }
 
 -(void)infoTapped{
-    MessagesTutorial *vc = [[MessagesTutorial alloc]init];
-    vc.sellerMode = NO;
-    vc.fromMessageVC = YES;
+    Tut1ViewController *vc = [[Tut1ViewController alloc]init];
+    vc.index = 1;
+    vc.messageExplain = YES;
     [self presentViewController:vc animated:YES completion:nil];
 }
 

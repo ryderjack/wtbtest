@@ -36,9 +36,12 @@
         //iphone5
         self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, (self.view.frame.size.height/2)+(self.view.frame.size.height/6), 204, 50)];
     }
+    else if([ [ UIScreen mainScreen ] bounds ].size.height == 736){
+        //iphone 6 plus
+        self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-80, (self.view.frame.size.height/2)+(self.view.frame.size.height/4), 204, 50)];
+    }
     else{
-        //everything else
-        self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-102, (self.view.frame.size.height/2)+(self.view.frame.size.height/4), 204, 50)];
+        self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-102, (self.view.frame.size.height/2)+(self.view.frame.size.height/4), 204, 50)]; //iPhone 6 specific
     }
     
     // current location button

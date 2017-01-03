@@ -20,6 +20,12 @@
     
     [self.plusOneImageView setHidden:YES];
     
+    PFInstallation *currentInstallation = [PFInstallation currentInstallation];
+    if (currentInstallation.badge != 0) {
+        currentInstallation.badge = 0;
+        [currentInstallation saveEventually];
+    }
+    
     if (self.listingID) {
         PFQuery *listingQ = [PFQuery queryWithClassName:@"wantobuys"];
         [listingQ whereKey:@"objectId" equalTo:self.listingID];
@@ -32,8 +38,7 @@
                 [self.listingImageView loadInBackground];
                 
                 PFUser *postUser = [self.listing objectForKey:@"postUser"];
-                self.mainLabel.text = [NSString stringWithFormat:@"%@ wants to buy ‘%@’ - help them get their post noticed with a Bump!", [postUser objectForKey:@"fullname" ], [self.listing objectForKey: @"title"]];
-                
+                self.mainLabel.text = [NSString stringWithFormat:@"%@ wants to buy ‘%@’ - help their listing get noticed with a Bump 👊", [postUser objectForKey:@"fullname" ], [self.listing objectForKey: @"title"]];
             }
             else{
                 NSLog(@"error finding listing");
@@ -66,10 +71,11 @@
     //send push
     NSString *pushText = [NSString stringWithFormat:@"%@ just bumped your listing 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
     if (![[[self.listing objectForKey:@"postUser"]objectId] isEqualToString:[[PFUser currentUser]objectId]]) {
-        NSDictionary *params = @{@"userId": [[self.listing objectForKey:@"postUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username};
-        [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        NSDictionary *params = @{@"userId": [[self.listing objectForKey:@"postUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.listing.objectId};
+        
+        [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
             if (!error) {
-                NSLog(@"push response %@", response);
+                NSLog(@"push response in bumpVC%@", response);
             }
             else{
                 NSLog(@"push error %@", error);

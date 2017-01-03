@@ -145,9 +145,9 @@
                         self.topLabel.textColor = [UIColor lightGrayColor];
                         [self.view addSubview:self.topLabel];
                         
-                        self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+50, 250, 200)];
+                        self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+80, 250, 200)];
                         self.bottomLabel.textAlignment = NSTextAlignmentCenter;
-                        self.bottomLabel.text = @"Create WTBs so sellers can message you or explore listings to message buyers now";
+                        self.bottomLabel.text = @"Create listings so sellers can message you or tap Home to explore listings to message buyers now";
                         [self.bottomLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:17]];
                         self.bottomLabel.numberOfLines = 0;
                         self.bottomLabel.textColor = [UIColor lightGrayColor];

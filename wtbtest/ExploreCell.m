@@ -21,6 +21,10 @@
     
     self.priceLabel.adjustsFontSizeToFitWidth = YES;
     self.priceLabel.minimumScaleFactor=0.5;
+    
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(bumpButtonPressed:)];
+    tap.numberOfTapsRequired = 1;
+    [self.transView addGestureRecognizer:tap];
 }
 - (IBAction)bumpButtonPressed:(id)sender {
     [self.delegate cellTapped:self];

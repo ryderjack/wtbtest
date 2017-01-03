@@ -277,7 +277,6 @@
     NSString *username = [self.usernameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     if ([name length] == 0 || [email length] == 0 || [username length] == 0 || [self.selectedCurrency isEqualToString:@""])  {
-        
         self.warningLabel.text = @"Enter all of the above!";
         [self.regButton setEnabled:YES];
     }
@@ -308,17 +307,6 @@
                         self.user[@"currency"] = self.selectedCurrency;
                         self.user[@"completedReg"] = @"YES";
                         
-//                        if (![self.depopField.text isEqualToString:@""]) {
-//                            //entered a depop account
-//                            NSString *depopHandle = [self.depopField.text stringByReplacingOccurrencesOfString:@"@" withString:@""];
-//                            [depopHandle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-//                            self.user[@"depopHandle"] = depopHandle;
-//                            PFObject *depopObj = [PFObject objectWithClassName:@"Depop"];
-//                            depopObj[@"user"] = self.user;
-//                            depopObj[@"handle"] = depopHandle;
-//                            [depopObj saveInBackground];
-//                        }
-                        
                         [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
                          {
                              if (succeeded)
@@ -339,7 +327,7 @@
                                  convoObject[@"totalMessages"] = @0;
                                  [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                                      if (succeeded) {
-                                         NSString *messageString = @"Welcome to Bump 🙌\n\nWant to buy something? 💎\nCreate listings for items you want then sit back and wait for sellers to send you offers to buy their stuff (Plus there's ZERO fees). Bump also recommends related items to you - just tap the cart icon!\n\nSelling something? 🤑\nUse the search & filter tools to find people that want what you're selling and then send them an offer to buy your item.\n\nHow to sell? 📲\nJust tap the tag icon in a chat and hit 'Send an offer'. Buyers can then tap the offer message to complete the purchase using PayPal without leaving Bump!\n\nGot any questions? Just message us here - we're available 24/7/365 #wehavenolife\n\nHappy Bumping!\nTeam Bump";
+                                         NSString *messageString = @"🙌 Welcome to Bump 🙌\n\n💎 Want to buy something?\nCreate listings for items you want then sit back and wait for sellers to send you offers to buy their stuff (Plus there's ZERO fees). Bump also recommends related items to you - just tap the cart icon!\n\n🤑Selling something?\nUse the search & filter tools to find people that want what you're selling and then send them an offer to buy your item.\n\n📲 How to sell?\nJust tap the tag icon in a chat and hit 'Send an offer'. Buyers can then tap the offer message to complete the purchase using PayPal without leaving Bump!\n\nGot any questions? Just message us here - we're available 24/7/365\n\nHappy Buying!\nTeam Bump";
                                          
                                          //saved, create intro message
                                          PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
@@ -376,14 +364,22 @@
                                      }
                                  }];
 
+                                 //save Bumped Obj
+                                 PFObject *bumpedObj = [PFObject objectWithClassName:@"Bumped"];
+                                 [bumpedObj setObject:[self.user objectForKey:@"facebookId"] forKey:@"facebookId"];
+                                 [bumpedObj setObject:self.user forKey:@"user"];
+                                 [bumpedObj setObject:[NSDate date] forKey:@"safeDate"];
+                                 [bumpedObj setObject:@0 forKey:@"timesBumped"];
+                                 [bumpedObj saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                     if (succeeded) {
+                                         NSLog(@"saved bumped obj");
+                                     }
+                                 }];
+                                 
                                  //progress to tutorial
                                  [self dismissHUD];
                                  ContainerViewController *vc = [[ContainerViewController alloc]init];
                                  [self.navigationController pushViewController:vc animated:YES];
-                                 
-                                 //MessagesTutorial *vc = [[MessagesTutorial alloc]init];
-                                 //vc.introMode = YES;
-                                 //[self.navigationController pushViewController:vc animated:YES];
                              }
                              else
                              {

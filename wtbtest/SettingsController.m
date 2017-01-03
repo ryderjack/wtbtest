@@ -62,7 +62,7 @@
         self.addLabel.text = @"Enter address";
     }
     
-    NSString *currency = [[PFUser currentUser]objectForKey:@"currency"];
+    NSString *currency = [self.currentUser objectForKey:@"currency"];
     if ([currency isEqualToString:@"GBP"]) {
         [self.GBPButton setSelected:YES];
     }
@@ -74,7 +74,7 @@
     }
     self.selectedCurrency = @"";
     
-    NSString *depopHan = [[PFUser currentUser]objectForKey:@"depopHandle"];
+    NSString *depopHan = [self.currentUser objectForKey:@"depopHandle"];
     
     if ([self.currentUser objectForKey:@"depopHandle"]) {
         self.depopField.placeholder = [NSString stringWithFormat:@"Depop: %@", depopHan];
@@ -87,7 +87,7 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
-    [self.testingView setFile:[[PFUser currentUser]objectForKey:@"picture"]];
+    [self.testingView setFile:[self.currentUser objectForKey:@"picture"]];
     [self.testingView loadInBackground];
 }
 
@@ -185,8 +185,8 @@
              [self.testingView setFile:filePicture];
              [self.testingView loadInBackground];
              
-             [PFUser currentUser][@"picture"] = filePicture;
-             [[PFUser currentUser]saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+             self.currentUser [@"picture"] = filePicture;
+             [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                  if (succeeded) {
                      NSLog(@"saved!");
                  }
@@ -283,7 +283,7 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     if (![self.selectedCurrency isEqualToString:@""]) {
-        [[PFUser currentUser] setObject:self.selectedCurrency forKey:@"currency"];
+        [self.currentUser  setObject:self.selectedCurrency forKey:@"currency"];
     }
     
     NSString *depopString = [self.depopField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
@@ -292,10 +292,10 @@
         //entered a depop account
         NSString *depopHandle = [self.depopField.text stringByReplacingOccurrencesOfString:@"@" withString:@""];
         depopHandle = [depopHandle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        [PFUser currentUser][@"depopHandle"] = depopHandle;
+        self.currentUser [@"depopHandle"] = depopHandle;
         
         PFQuery *depopQuery = [PFQuery queryWithClassName:@"Depop"];
-        [depopQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+        [depopQuery whereKey:@"user" equalTo:self.currentUser ];
         [depopQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
 //                NSLog(@"already entered their depop handle at some point, update it here");
@@ -305,7 +305,7 @@
             else{
 //                NSLog(@"no depop handle currently saved so create a new one");
                 PFObject *depopObj = [PFObject objectWithClassName:@"Depop"];
-                depopObj[@"user"] = [PFUser currentUser];
+                depopObj[@"user"] = self.currentUser ;
                 depopObj[@"handle"] = depopHandle;
                 NSLog(@"saving");
                 [depopObj saveInBackground];
@@ -315,7 +315,9 @@
     else{
         //entered blank depop handle
     }
-    [[PFUser currentUser]saveInBackground];
+    
+    [self.currentUser setObject:@"YES" forKey:@"paypalUpdated"];
+    [self.currentUser saveInBackground];
 }
 
 - (IBAction)GBPPressed:(id)sender {

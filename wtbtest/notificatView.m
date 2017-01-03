@@ -11,6 +11,8 @@
 @implementation notificatView
 
 - (void)drawRect:(CGRect)rect {
+    self.mainLabel.adjustsFontSizeToFitWidth = YES;
+    self.mainLabel.minimumScaleFactor=0.5;
 }
 - (IBAction)buttonTapped:(id)sender {
     [self.delegate bumpTappedForListing:self.listingID];

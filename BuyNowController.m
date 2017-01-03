@@ -39,15 +39,15 @@
     self.wtbArray = [NSMutableArray array];
     self.viewsArray = [NSMutableArray array];
     self.pullFinished = YES;
-    self.infinFinished = YES;
+    self.infinFinished = NO;
+    self.viewedItem = NO;
+    [self.anotherPromptButton setHidden:YES];
     
     // Option 1
     // Load user's latest 5 WTBs
     // for each WTB search for the WTS posts which have the most keywords in common (if none then don't show)
     // save pointers to those WTSs on the WTB object as Recommendation key
-    // so it's a case of displaying the objects for this key in cell for item
-    
-    [self loadWTBs];
+    // so it's a case of displaying the objects for this key in cell for item    
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
@@ -71,10 +71,12 @@
 }
 
 -(void)loadWTBs{
-    if (self.pullFinished == NO || self.infinFinished == NO) {
+    if (self.pullFinished == NO) {
         return;
     }
+    [self.anotherPromptButton setHidden:YES];
     self.pullFinished = NO;
+    self.viewedItem = NO;
     NSLog(@"PULL LOADING");
 
     [self.topLabel setHidden:YES];
@@ -84,7 +86,7 @@
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self.pullQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
-    self.pullQuery.limit = 10;
+    self.pullQuery.limit = 30;
     [self.pullQuery orderByDescending:@"createdAt"];
     [self.pullQuery cancel];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -92,14 +94,13 @@
             if (objects.count == 0) {
                 
                 // whole page should become for sale stuff.. and header should say no WTBs
-                
                 if (!self.topLabel && !self.bottomLabel) {
                     self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                     self.topLabel.textAlignment = NSTextAlignmentCenter;
                     [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
                     self.topLabel.numberOfLines = 1;
                     self.topLabel.textColor = [UIColor lightGrayColor];
-                    self.topLabel.text = @"No WTBs";
+                    self.topLabel.text = @"No listings";
                     [self.view addSubview:self.topLabel];
                     
                     self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+90, 250, 200)];
@@ -107,28 +108,32 @@
                     [self.bottomLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:17]];
                     self.bottomLabel.numberOfLines = 0;
                     self.bottomLabel.textColor = [UIColor lightGrayColor];
-                    self.bottomLabel.text = @"Create WTBs by hitting the + icon so we can suggest relevant products to buy right now from sellers on Bump";
+                    self.bottomLabel.text = @"Create listings by hitting the + button so we can suggest relevant products to buy right now from sellers on Bump";
                     [self.view addSubview:self.bottomLabel];
                 }
                 else{
-                    self.topLabel.text = @"No WTBs";
-                    self.bottomLabel.text = @"Create WTBs by hitting the + icon so we can suggest relevant products to buy right now from sellers on Bump";
+                    self.topLabel.text = @"No listings";
+                    self.bottomLabel.text = @"Create listings by hitting the + button so we can suggest relevant products to buy right now from sellers on Bump";
                     
                     [self.topLabel setHidden:NO];
                     [self.bottomLabel setHidden:NO];
                 }
                 [self.tableView.pullToRefreshView stopAnimating];
                 self.pullFinished = YES;
+                [self.anotherPromptButton setHidden:NO];
                 return;
             }
-        
+            [self.anotherPromptButton setHidden:YES];
+
             NSLog(@"got WTBs: %lu", objects.count);
             
             int count = (int)[objects count];
-            __block int WTBCheck = 0;
             self.skipped = count;
+            NSLog(@"skipped: %d", count);
+            
+            __block int WTBCheck = 0;
+
             NSMutableArray *wtbHoldingArray = [NSMutableArray array];
-//            [self.wtbArray removeAllObjects];
             
             //get keywords for each WTB and find a WTS that has a good match
             for (PFObject *WTB in objects) {
@@ -147,6 +152,7 @@
                         WTBCheck++;
 
                         for (PFObject *forSale in objects) {
+                            NSLog(@"got this for sale %@", forSale);
                             NSArray *WTSKeywords = [forSale objectForKey:@"keywords"];
                             NSMutableSet* set1 = [NSMutableSet setWithArray:WTBKeywords];
                             NSMutableSet* set2 = [NSMutableSet setWithArray:WTSKeywords];
@@ -154,18 +160,24 @@
                             
                             NSArray* result = [set1 allObjects];
                             
-                            //calc 70% of WTB keyword counts
-                            float sixty = WTBKeywords.count*0.7;
+                            NSLog(@"result array %@", result);
+                            
+                            //calc 90% of WTB keyword counts
+                            float sixty = WTBKeywords.count*0.8;
                             int roundedFloat = roundf(sixty);
                             
+                            NSLog(@"rounded %d", roundedFloat);
+                            
                             if (result.count >= roundedFloat && roundedFloat>0 && result.count >2) {
-                                //WTB has at least 2 matching keywords to this WTS and 70% keywords match
+                                NSLog(@"match");
+                                //WTB has at least 2 matching keywords to this WTS and 90% keywords match
                                 NSLog(@"WTB: %@     WTS: %@", [WTB objectForKey:@"title"], [forSale objectForKey:@"description"]);
                                 [WTB addObject:forSale forKey:@"buyNow"];
                             }
                         }
                         
                         NSArray *matches = [WTB objectForKey:@"buyNow"];
+                        NSLog(@"matches %@", matches);
                         
                         if (matches.count > 0) {
 //                            [self.wtbArray addObject:WTB];
@@ -174,7 +186,7 @@
 
                         if (count == WTBCheck) {
                             //done last one, now reload
-                            NSLog(@"time to reload");
+                            NSLog(@"time to reload with holding %@", wtbHoldingArray);
                             
                             NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc]
                                                                 initWithKey: @"createdAt" ascending: NO];
@@ -184,8 +196,11 @@
                             [self.wtbArray removeAllObjects];
                             [self.wtbArray addObjectsFromArray:sortedArray];
                             
+                            NSLog(@"got this many WTBs %lu", self.wtbArray.count);
+                            
                             //labels
                             if (self.wtbArray.count == 0) {
+                                [self.anotherPromptButton setHidden:NO];
                                 if (!self.topLabel && !self.bottomLabel) {
                                     self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                                     self.topLabel.textAlignment = NSTextAlignmentCenter;
@@ -195,17 +210,17 @@
                                     self.topLabel.text = @"No recommended items";
                                     [self.view addSubview:self.topLabel];
                                     
-                                    self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+60, 250, 200)];
+                                    self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+90, 250, 200)];
                                     self.bottomLabel.textAlignment = NSTextAlignmentCenter;
                                     [self.bottomLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:15]];
                                     self.bottomLabel.numberOfLines = 0;
                                     self.bottomLabel.textColor = [UIColor lightGrayColor];
-                                    self.bottomLabel.text = @"Check back soon for recommended products based on your WTBs - In the meantime tap above to browse featured items for sale";
+                                    self.bottomLabel.text = @"We're adding products daily so check back soon for recommended products based on your wanted items - Create another listing or check out the Featured items";
                                     [self.view addSubview:self.bottomLabel];
                                 }
                                 else{
                                     self.topLabel.text = @"No recommended items";
-                                    self.bottomLabel.text = @"Check back soon for recommended products based on your WTBs - In the meantime tap above to browse featured items for sale";
+                                    self.bottomLabel.text = @"We're adding products daily so check back soon for recommended products based on your wanted items - Create another listing or check out the Featured items";
 
                                     [self.topLabel setHidden:NO];
                                     [self.bottomLabel setHidden:NO];
@@ -241,7 +256,7 @@
     self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self.infiniteQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
     [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
-    self.infiniteQuery.limit = 10;
+    self.infiniteQuery.limit = 20;
     [self.infiniteQuery orderByDescending:@"createdAt"];
     self.infiniteQuery.skip = self.skipped;
     [self.infiniteQuery cancel];
@@ -249,6 +264,7 @@
         if (objects) {
             if (objects.count == 0) {
                 NSLog(@"got none");
+                [self.anotherPromptButton setHidden:NO];
                 [self.tableView.infiniteScrollingView stopAnimating];
                 self.infinFinished = YES;
                 return;
@@ -283,13 +299,16 @@
                             
                             NSArray* result = [set1 allObjects];
                             
+                            NSLog(@"infin result %@", result);
+                            
                             //calc 70% of WTB keyword counts
-                            float sixty = WTBKeywords.count*0.9;
+                            float sixty = WTBKeywords.count*0.8;
 //                            NSLog(@" float %f", sixty);
                             int roundedFloat = roundf(sixty);
 //                            NSLog(@"rounded float %d", roundedFloat);
 //                            NSLog(@"results count %lu", (unsigned long)result.count);
-                            
+                            NSLog(@"infin rounded %d", roundedFloat);
+
                             if (result.count >= roundedFloat && roundedFloat>0 && result.count >2) {
                                 //WTB has at least 2 matching keywords to this WTS and 70% keywords match
                                 NSLog(@"WTB: %@     WTS: %@", [WTB objectForKey:@"title"], [forSale objectForKey:@"description"]);
@@ -486,10 +505,12 @@ numberOfRowsInSection:(NSInteger)section
 
 -(void)collectionView:(AFCollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
-    
+    [Flurry logEvent:@"BuyNow_ForSaleItemSelected"];
     NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
     PFObject *WTS = collectionViewArray[indexPath.item];
     
+    self.viewedItem = YES;
+   
     ForSaleListing *vc = [[ForSaleListing alloc]init];
     vc.listingObject = WTS;
     vc.WTBObject = [WTS objectForKey:@"WTB"];
@@ -507,6 +528,18 @@ numberOfRowsInSection:(NSInteger)section
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     [Flurry logEvent:@"BuyNow_Tapped"];
+    
+    [self.infiniteQuery cancel];
+    [self.tableView.infiniteScrollingView stopAnimating];
+    self.infinFinished = YES;
+    
+    if (self.viewedItem == YES) {
+        self.viewedItem = NO;
+    }
+    else{
+        [self loadWTBs];
+    }
+
 }
 
 -(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
@@ -562,6 +595,10 @@ numberOfRowsInSection:(NSInteger)section
             NSLog(@"error saving views %@", error);
         }
     }];
+}
+
+- (IBAction)anotherPromptPressed:(id)sender {
+    self.tabBarController.selectedIndex = 2;
 }
 
 @end

@@ -14,6 +14,7 @@
 #import "GMImagePickerController.h"
 #import <TOWebViewController.h>
 #import "MakeOfferController.h"
+#import <PulsingHaloLayer.h>
 
 @interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate, GMImagePickerControllerDelegate,TOWebDelegate, MakeOfferDelegate>
 
@@ -88,5 +89,10 @@
 
 @property (nonatomic) BOOL savedSomin;
 @property (nonatomic, strong) NSString *savedString;
+
+@property (nonatomic, strong) UIImage *otherUserImage;
+@property (nonatomic, strong) JSQMessagesAvatarImage *avaImage;
+
+@property (nonatomic, strong) PulsingHaloLayer *halo;
 
 @end

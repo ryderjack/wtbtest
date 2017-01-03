@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1212" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
+    <customFonts key="customFonts">
+        <array key="PingFang.ttc">
+            <string>PingFangSC-Medium</string>
+            <string>PingFangSC-Regular</string>
+        </array>
+    </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="ExploreVC">
             <connections>
                 <outlet property="collectionView" destination="bab-Yf-eve" id="bNL-xA-4M6"/>
                 <outlet property="filterBGView" destination="rln-RO-uzd" id="mVG-7r-beg"/>
                 <outlet property="filterButton" destination="KaY-20-LO2" id="jvJ-P0-pyb"/>
-                <outlet property="noResultsImageView" destination="HCy-vN-vpg" id="yTi-3o-4Jg"/>
                 <outlet property="noresultsLabel" destination="gQD-c5-Rae" id="gsy-u2-nil"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
@@ -22,6 +30,7 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="none" translatesAutoresizingMaskIntoConstraints="NO" id="bab-Yf-eve">
+                    <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                     <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="pxD-iL-up1">
                         <size key="itemSize" width="50" height="50"/>
                         <size key="headerReferenceSize" width="0.0" height="0.0"/>
@@ -34,21 +43,22 @@
                     </connections>
                 </collectionView>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No results :(" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gQD-c5-Rae">
+                    <rect key="frame" x="139" y="283" width="97" height="70"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="70" id="kYG-DW-kdd"/>
+                        <constraint firstAttribute="height" constant="70" id="wQt-Yg-Wkj"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="17"/>
                     <color key="textColor" red="0.59215686270000001" green="0.59215686270000001" blue="0.59215686270000001" alpha="1" colorSpace="calibratedRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="arrowDown.png" translatesAutoresizingMaskIntoConstraints="NO" id="HCy-vN-vpg"/>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="filterBG.png" translatesAutoresizingMaskIntoConstraints="NO" id="rln-RO-uzd">
+                    <rect key="frame" x="132" y="617" width="111" height="30"/>
                     <constraints>
-                        <constraint firstAttribute="width" constant="111" id="hcX-jt-Ifm"/>
-                        <constraint firstAttribute="height" constant="30" id="ulb-FN-MlD"/>
+                        <constraint firstAttribute="width" constant="111" id="207-g4-EKQ"/>
                     </constraints>
                 </imageView>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="KaY-20-LO2">
+                    <rect key="frame" x="132" y="617" width="111" height="30"/>
                     <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="10"/>
                     <state key="normal" title="F I L T E R S">
                         <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -60,26 +70,23 @@
             </subviews>
             <color key="backgroundColor" red="0.96470588235294119" green="0.96862745098039216" blue="0.9882352941176471" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
-                <constraint firstItem="rln-RO-uzd" firstAttribute="centerX" secondItem="HCy-vN-vpg" secondAttribute="centerX" id="0wv-GL-UbR"/>
-                <constraint firstAttribute="bottom" secondItem="bab-Yf-eve" secondAttribute="bottom" id="7pR-ab-9Mu"/>
-                <constraint firstItem="gQD-c5-Rae" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="283" id="EIG-FS-d7c"/>
-                <constraint firstItem="KaY-20-LO2" firstAttribute="top" secondItem="rln-RO-uzd" secondAttribute="top" id="Jwz-dS-KIN"/>
-                <constraint firstAttribute="bottom" secondItem="rln-RO-uzd" secondAttribute="bottom" constant="20" id="LPJ-Mj-n1w"/>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="LRW-fs-TmV"/>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="centerX" secondItem="gQD-c5-Rae" secondAttribute="centerX" id="WO7-sA-z4y"/>
-                <constraint firstItem="KaY-20-LO2" firstAttribute="bottom" secondItem="rln-RO-uzd" secondAttribute="bottom" id="XrS-aO-ipf"/>
-                <constraint firstItem="HCy-vN-vpg" firstAttribute="top" secondItem="gQD-c5-Rae" secondAttribute="bottom" constant="8" symbolic="YES" id="cU6-W7-KBo"/>
-                <constraint firstItem="KaY-20-LO2" firstAttribute="leading" secondItem="rln-RO-uzd" secondAttribute="leading" id="eeY-0l-JVP"/>
-                <constraint firstItem="KaY-20-LO2" firstAttribute="trailing" secondItem="rln-RO-uzd" secondAttribute="trailing" id="jGV-MS-0nm"/>
-                <constraint firstAttribute="trailing" secondItem="bab-Yf-eve" secondAttribute="trailing" id="uNL-Tj-5Ta"/>
-                <constraint firstItem="gQD-c5-Rae" firstAttribute="centerX" secondItem="HCy-vN-vpg" secondAttribute="centerX" id="xm0-Iy-5gD"/>
-                <constraint firstItem="bab-Yf-eve" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="yWJ-1q-q69"/>
+                <constraint firstAttribute="bottom" secondItem="KaY-20-LO2" secondAttribute="bottom" constant="20" id="0iU-12-EZN"/>
+                <constraint firstAttribute="bottom" secondItem="bab-Yf-eve" secondAttribute="bottom" id="8E6-Vy-dMd"/>
+                <constraint firstItem="gQD-c5-Rae" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="283" id="Md2-Zo-iMf"/>
+                <constraint firstItem="KaY-20-LO2" firstAttribute="leading" secondItem="rln-RO-uzd" secondAttribute="leading" id="QPL-Ke-Pk5"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="aiQ-eb-3s1"/>
+                <constraint firstItem="rln-RO-uzd" firstAttribute="trailing" secondItem="KaY-20-LO2" secondAttribute="trailing" id="atS-ht-JCe"/>
+                <constraint firstItem="KaY-20-LO2" firstAttribute="bottom" secondItem="rln-RO-uzd" secondAttribute="bottom" id="jOm-rr-aR5"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="centerX" secondItem="KaY-20-LO2" secondAttribute="centerX" id="kCj-ej-z8E"/>
+                <constraint firstAttribute="trailing" secondItem="bab-Yf-eve" secondAttribute="trailing" id="o0M-AW-xXA"/>
+                <constraint firstItem="gQD-c5-Rae" firstAttribute="centerX" secondItem="rln-RO-uzd" secondAttribute="centerX" id="ppi-9h-aBo"/>
+                <constraint firstItem="KaY-20-LO2" firstAttribute="top" secondItem="rln-RO-uzd" secondAttribute="top" id="rxe-JQ-cam"/>
+                <constraint firstItem="bab-Yf-eve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="z7y-Ho-jyy"/>
             </constraints>
             <point key="canvasLocation" x="498.5" y="355.5"/>
         </view>
     </objects>
     <resources>
-        <image name="arrowDown.png" width="23" height="23"/>
         <image name="filterBG.png" width="130" height="30"/>
     </resources>
 </document>

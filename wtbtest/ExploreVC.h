@@ -11,17 +11,19 @@
 #import <CoreLocation/CoreLocation.h>
 #import "FilterVC.h"
 #import "ListingController.h"
-#import "searchResultsController.h"
 #import <MBProgressHUD.h>
 #import <DGActivityIndicatorView.h>
 #import "ExploreCell.h"
 #import "BumpVC.h"
 #import "notificatView.h"
+#import "TheMainSearchView.h"
+#import "searchedViewC.h"
 
-@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, UISearchControllerDelegate, UISearchResultsUpdating, UISearchBarDelegate, searchResultsDelegate, ExploreCellDelegate, dropDelegate>
+@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
+@property (nonatomic, strong) NSMutableArray *resultIDs;
 @property (weak, nonatomic) IBOutlet UILabel *noresultsLabel;
 @property (strong, nonatomic) UILabel *noUserLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *noResultsImageView;
@@ -41,25 +43,13 @@
 
 @property (nonatomic, strong) NSMutableArray *filtersArray;
 
-//search
-@property (strong, nonatomic) UISearchController *searchController;
-@property (nonatomic, strong) NSString *searchString;
-@property (nonatomic, strong) NSMutableArray *searchResults;
-@property (nonatomic) BOOL searchEnabled;
-@property (nonatomic, strong) searchResultsController *resultsController;
-
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
 
 @property (nonatomic, strong) DGActivityIndicatorView *spinner;
 
-@property (nonatomic) BOOL filtersTapped;
-@property (nonatomic) BOOL searchShowing;
-@property (nonatomic) BOOL resultsShowing;
+@property (nonatomic) BOOL filtersON;
 @property (nonatomic) BOOL listingTapped;
-@property (nonatomic) BOOL userPressed;
-@property (nonatomic) BOOL shiftDown;
-@property (nonatomic) BOOL filterMove;
 @property (nonatomic) BOOL cleverMode;
 
 @property (nonatomic, strong) NSArray *uselessWords;
@@ -67,9 +57,9 @@
 //cell
 @property (nonatomic, strong) ExploreCell *cell;
 
+@property (nonatomic, strong) NSArray *calcdKeywords;
+
 //bump in app notification
 @property (nonatomic, strong) notificatView *dropDown;
-@property (nonatomic, strong) UIDynamicAnimator *animator;
-
 @property (nonatomic, strong) NSIndexPath *lastSelected;
 @end
