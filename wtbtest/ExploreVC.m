@@ -303,10 +303,20 @@
         NSLog(@"got some filters brah %lu", self.filtersArray.count);
         [self.filterButton setTitle:[NSString stringWithFormat:@"F I L T E R S  %lu",self.filtersArray.count] forState:UIControlStateNormal];
     }
-//    UIView *bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
-//    bgView.backgroundColor = [UIColor blackColor];
-//    bgView.alpha = 0.6;
-//    [[UIApplication sharedApplication].keyWindow addSubview:bgView];
+    
+    UIImageView *bgView = [[UIImageView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    bgView.alpha = 0.6;
+
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone 5
+        [bgView setImage:[UIImage imageNamed:@"searchIntro"]];
+    }
+    else{
+        //iPhone 6 specific
+        [bgView setImage:[UIImage imageNamed:@"searchIntro"]];
+    }
+
+    [[UIApplication sharedApplication].keyWindow addSubview:bgView];
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -468,32 +478,29 @@
     self.infiniteQuery.skip = self.lastInfinSkipped;
     [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
 
-//    if (self.filtersON == NO) {
-//        if (self.cleverMode == YES) {
-//            //worth checking for keywords
-//            NSArray *keywords = [[PFUser currentUser]objectForKey:@"searches"];
-//            if (keywords.count > 0) {
-//                [self.infiniteQuery whereKey:@"keywords" containedIn:self.calcdKeywords];
-//                [self.infiniteQuery orderByDescending:@"bumpCount,views"];
-//            }
-//            else{
-//                //has no previous searches so show most recent
-//                [self.infiniteQuery orderByDescending:@"createdAt,bumpCount"];
-//            }
-//        }
-//        else{
-//            //clever mode off
-//            [self.infiniteQuery orderByDescending:@"createdAt,bumpCount"];
-//        }
-//    }
-//    else{
-//        [self.infiniteQuery orderByDescending:@"bumpCount,views"];
-//
-//    }
-    
-    [self.infiniteQuery orderByDescending:@"createdAt,bumpCount"];
+    if (self.filtersON == NO) {
+        if (self.cleverMode == YES) {
+            //worth checking for keywords
+            NSArray *keywords = [[PFUser currentUser]objectForKey:@"searches"];
+            if (keywords.count > 0) {
+                [self.infiniteQuery whereKey:@"keywords" containedIn:self.calcdKeywords];
+                [self.infiniteQuery orderByDescending:@"bumpCount,views"];
+            }
+            else{
+                //has no previous searches so show most recent
+                [self.infiniteQuery orderByDescending:@"createdAt,bumpCount"];
+            }
+        }
+        else{
+            //clever mode off
+            [self.infiniteQuery orderByDescending:@"createdAt,bumpCount"];
+        }
+    }
+    else{
+        [self.infiniteQuery orderByDescending:@"bumpCount,views"];
 
-    
+    }
+
     [self setupInfinQuery];
     [self.infiniteQuery cancel];
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -559,31 +566,28 @@
     self.pullFinished = NO;
     self.pullQuery.limit = 12;
     
-    [self.pullQuery orderByDescending:@"createdAt,bumpCount"];
-
-    
-//    if (self.filtersON == NO) {
-//        NSArray *keywords = [[PFUser currentUser]objectForKey:@"searches"];
-//        if (keywords.count > 0) {
-//            NSMutableArray *allSearchWords = [NSMutableArray array];
-//            //seaprate the searches into search words
-//            for (NSString *searchTerm in keywords) {
-//                NSArray *searchTermWords = [[searchTerm lowercaseString] componentsSeparatedByString:@" "];
-//                //then add all search words to an array in lower case
-//                [allSearchWords addObjectsFromArray:searchTermWords];
-//            }
-//            self.calcdKeywords = [[allSearchWords reverseObjectEnumerator] allObjects];
-//            [self.pullQuery whereKey:@"keywords" containedIn:self.calcdKeywords];
-//            [self.pullQuery orderByDescending:@"bumpCount,views"];
-//        }
-//        else{
-//            //has no previous searches so show most recent
-//            [self.pullQuery orderByDescending:@"createdAt,bumpCount"];
-//        }
-//    }
-//    else{
-//        [self.pullQuery orderByDescending:@"bumpCount,views"];
-//    }
+    if (self.filtersON == NO) {
+        NSArray *keywords = [[PFUser currentUser]objectForKey:@"searches"];
+        if (keywords.count > 0) {
+            NSMutableArray *allSearchWords = [NSMutableArray array];
+            //seaprate the searches into search words
+            for (NSString *searchTerm in keywords) {
+                NSArray *searchTermWords = [[searchTerm lowercaseString] componentsSeparatedByString:@" "];
+                //then add all search words to an array in lower case
+                [allSearchWords addObjectsFromArray:searchTermWords];
+            }
+            self.calcdKeywords = [[allSearchWords reverseObjectEnumerator] allObjects];
+            [self.pullQuery whereKey:@"keywords" containedIn:self.calcdKeywords];
+            [self.pullQuery orderByDescending:@"bumpCount,views"];
+        }
+        else{
+            //has no previous searches so show most recent
+            [self.pullQuery orderByDescending:@"createdAt,bumpCount"];
+        }
+    }
+    else{
+        [self.pullQuery orderByDescending:@"bumpCount,views"];
+    }
 
     [self setupPullQuery];
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
