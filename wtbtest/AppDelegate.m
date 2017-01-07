@@ -61,7 +61,6 @@
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
 
-    
     if ([PFUser currentUser]) {
         [Flurry setUserID:[NSString stringWithFormat:@"%@", [PFUser currentUser].objectId]];
         [self logUser];
@@ -140,7 +139,7 @@
         //if app badge not zero, reset to zero
         self.installation.badge = 0;
         [self.installation saveEventually];
-        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%ld", (long)self.installation.badge]];
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
     }
     
     self.unseenMessages = [[NSMutableArray alloc]init];
@@ -324,6 +323,10 @@
             //open listing
             self.tabBarController.selectedIndex = 0;
             [[NSNotificationCenter defaultCenter] postNotificationName:@"listingBumped" object:listing];
+        }
+        else if([strMsg containsString:@"Congrats on your first wanted listing"]){
+            //open buy now
+            self.tabBarController.selectedIndex = 1;
         }
         else if([bumpedStatus isEqualToString:@"YES"]){
             //open BumpedVC

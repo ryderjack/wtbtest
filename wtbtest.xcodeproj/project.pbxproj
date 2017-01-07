@@ -202,6 +202,12 @@
 		0447D0041CA02EBB00BE5638 /* feedbacknotshipped@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0447D0011CA02EBB00BE5638 /* feedbacknotshipped@2x.png */; };
 		0447D0051CA02EBB00BE5638 /* feedbacknotshipped.png in Resources */ = {isa = PBXBuildFile; fileRef = 0447D0021CA02EBB00BE5638 /* feedbacknotshipped.png */; };
 		0447D0061CA02EBB00BE5638 /* feedbacknotshipped@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0447D0031CA02EBB00BE5638 /* feedbacknotshipped@3x.png */; };
+		044E72421E210570005D55E5 /* visitSite@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E723F1E210570005D55E5 /* visitSite@2x.png */; };
+		044E72431E210570005D55E5 /* visitSite@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E72401E210570005D55E5 /* visitSite@3x.png */; };
+		044E72441E210570005D55E5 /* visitSite@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E72411E210570005D55E5 /* visitSite@1x.png */; };
+		044E72481E2106A4005D55E5 /* fulfillCheck@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E72451E2106A4005D55E5 /* fulfillCheck@2x.png */; };
+		044E72491E2106A4005D55E5 /* fulfillCheck@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E72461E2106A4005D55E5 /* fulfillCheck@3x.png */; };
+		044E724A1E2106A4005D55E5 /* fulfillCheck.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E72471E2106A4005D55E5 /* fulfillCheck.png */; };
 		044F823E1DA4EDA20092B1F8 /* msgTutorial.png in Resources */ = {isa = PBXBuildFile; fileRef = 044F823B1DA4EDA20092B1F8 /* msgTutorial.png */; };
 		044F823F1DA4EDA20092B1F8 /* msgTutorial@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044F823C1DA4EDA20092B1F8 /* msgTutorial@2x.png */; };
 		044F82401DA4EDA20092B1F8 /* msgTutorial@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044F823D1DA4EDA20092B1F8 /* msgTutorial@3x.png */; };
@@ -1074,6 +1080,12 @@
 		0447D0011CA02EBB00BE5638 /* feedbacknotshipped@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "feedbacknotshipped@2x.png"; sourceTree = "<group>"; };
 		0447D0021CA02EBB00BE5638 /* feedbacknotshipped.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = feedbacknotshipped.png; sourceTree = "<group>"; };
 		0447D0031CA02EBB00BE5638 /* feedbacknotshipped@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "feedbacknotshipped@3x.png"; sourceTree = "<group>"; };
+		044E723F1E210570005D55E5 /* visitSite@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "visitSite@2x.png"; sourceTree = "<group>"; };
+		044E72401E210570005D55E5 /* visitSite@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "visitSite@3x.png"; sourceTree = "<group>"; };
+		044E72411E210570005D55E5 /* visitSite@1x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "visitSite@1x.png"; sourceTree = "<group>"; };
+		044E72451E2106A4005D55E5 /* fulfillCheck@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fulfillCheck@2x.png"; sourceTree = "<group>"; };
+		044E72461E2106A4005D55E5 /* fulfillCheck@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fulfillCheck@3x.png"; sourceTree = "<group>"; };
+		044E72471E2106A4005D55E5 /* fulfillCheck.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = fulfillCheck.png; sourceTree = "<group>"; };
 		044F823B1DA4EDA20092B1F8 /* msgTutorial.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = msgTutorial.png; sourceTree = "<group>"; };
 		044F823C1DA4EDA20092B1F8 /* msgTutorial@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "msgTutorial@2x.png"; sourceTree = "<group>"; };
 		044F823D1DA4EDA20092B1F8 /* msgTutorial@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "msgTutorial@3x.png"; sourceTree = "<group>"; };
@@ -1891,6 +1903,12 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				044E72451E2106A4005D55E5 /* fulfillCheck@2x.png */,
+				044E72461E2106A4005D55E5 /* fulfillCheck@3x.png */,
+				044E72471E2106A4005D55E5 /* fulfillCheck.png */,
+				044E723F1E210570005D55E5 /* visitSite@2x.png */,
+				044E72401E210570005D55E5 /* visitSite@3x.png */,
+				044E72411E210570005D55E5 /* visitSite@1x.png */,
 				04F7EFAD1E1A848A00061745 /* listingPromptBG.png */,
 				04F7EFAE1E1A848A00061745 /* listingPromptBG@2x.png */,
 				04F7EFAF1E1A848A00061745 /* listingPromptBG@3x.png */,
@@ -3112,6 +3130,7 @@
 				04C0803B1C8469DE00B8682C /* plane.png in Resources */,
 				0487151D1D92841A00C51961 /* link.png in Resources */,
 				04F7EF911E15455D00061745 /* successEditButton.png in Resources */,
+				044E72421E210570005D55E5 /* visitSite@2x.png in Resources */,
 				04D9411A1DC8E0DB004ED987 /* comment@2x.png in Resources */,
 				04F7EFAC1E17019400061745 /* forsaleList@3x.png in Resources */,
 				0453D77E1DF75AF0004DC2ED /* priceHighUnselected@3x.png in Resources */,
@@ -3149,6 +3168,7 @@
 				04CD30A41D13FDE000E2850D /* BNWOTgrey@3x.png in Resources */,
 				0432C0341DF77404000CD9F5 /* NWTSelected.png in Resources */,
 				04BEE51D1DD5278D004CD8D1 /* sellerProfile@2x.png in Resources */,
+				044E724A1E2106A4005D55E5 /* fulfillCheck.png in Resources */,
 				0432C03F1DF84270000CD9F5 /* WOTagsSelected@3x.png in Resources */,
 				042B8FBC1D5C9DC5000D30CE /* stoney@3x.png in Resources */,
 				04BEE50C1DD394CB004CD8D1 /* soldIcon.png in Resources */,
@@ -3173,6 +3193,7 @@
 				04D9B9A01C89FCA2004AF0F2 /* chat.png in Resources */,
 				042B8FB51D5C9CEB000D30CE /* palace.png in Resources */,
 				042146EB1DC15FE900D00DCB /* buy_1@3x.png in Resources */,
+				044E72481E2106A4005D55E5 /* fulfillCheck@2x.png in Resources */,
 				04BEE50E1DD394CB004CD8D1 /* soldIcon@3x.png in Resources */,
 				04BEE5651DD76F22004CD8D1 /* offer_6.png in Resources */,
 				04CD30AA1D13FDE000E2850D /* BNWOTgrey@2x.png in Resources */,
@@ -3328,6 +3349,7 @@
 				046A35BA1CA186460066FF5B /* arrowDown@3x.png in Resources */,
 				04CD30DB1D159F1C00E2850D /* tagIcon.png in Resources */,
 				04C080601C8497AC00B8682C /* ExploreVC.xib in Resources */,
+				044E72441E210570005D55E5 /* visitSite@1x.png in Resources */,
 				0472B6891C7DC41200529B2E /* exit@1x.png in Resources */,
 				04CBFDBF1E088B1E00941C46 /* buyButton@3x.png in Resources */,
 				04DD88181E09DD9100C92C78 /* create another@3x.png in Resources */,
@@ -3597,6 +3619,7 @@
 				04D9B9DD1C8B82A9004AF0F2 /* sendOffer@2x.png in Resources */,
 				04D9B9D01C8B8219004AF0F2 /* cartIcon@2x.png in Resources */,
 				04C080331C8469DE00B8682C /* dots.png in Resources */,
+				044E72491E2106A4005D55E5 /* fulfillCheck@3x.png in Resources */,
 				041FF2421E01E9C200A5E7EE /* upvoteCircle@3x.png in Resources */,
 				04D941161DC8DEBF004ED987 /* CreateForSaleListing.xib in Resources */,
 				04DEAE6C1DDE642C00449DEC /* cartBlue.png in Resources */,
@@ -3631,6 +3654,7 @@
 				0475A6E91C7E4D910049AD61 /* startButton.png in Resources */,
 				04DEAE501DDBDAAA00449DEC /* newOffer@2x.png in Resources */,
 				040CDC441D48B49500F738D0 /* trackingfeedback.png in Resources */,
+				044E72431E210570005D55E5 /* visitSite@3x.png in Resources */,
 				04D9B9591C88E60E004AF0F2 /* ListingController.xib in Resources */,
 				0404512F1C8ED32B001D5F3B /* acceptBuyButton@1x.png in Resources */,
 				048D2B711DF7081000A35503 /* welcomeOneNew@3x.png in Resources */,

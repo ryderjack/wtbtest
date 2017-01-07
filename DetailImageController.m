@@ -31,12 +31,15 @@
         // Adding the swipe gesture on image view
         [self.view addGestureRecognizer:swipeLeft];
         [self.view addGestureRecognizer:swipeRight];
+        [self.pageControl setNumberOfPages:self.numberOfPics];
+    }
+    else{
+        [self.pageControl setNumberOfPages:0];
     }
     
     UISwipeGestureRecognizer *swipe = [[UISwipeGestureRecognizer alloc]initWithTarget:self action:@selector(dismissVC)];
+    [swipe setDirection:UISwipeGestureRecognizerDirectionDown];
     [self.view addGestureRecognizer:swipe];
-    
-    [self.pageControl setNumberOfPages:self.numberOfPics];
     
     if (self.listingPic == YES) {
         // don't show tagged label
@@ -81,6 +84,7 @@
 
         }
         else{
+            NSLog(@"here");
             [self.imageView setFile:[self.listing objectForKey:@"image1"]];
         }
     }
@@ -138,8 +142,8 @@
         MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:self.imageView animated:YES];
         hud.square = YES;
         hud.mode = MBProgressHUDModeCustomView;
-        hud.color = [UIColor blackColor];
-        DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor whiteColor] size:20.0f];
+        hud.color = [UIColor whiteColor];
+        DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
         hud.customView = spinner;
         [spinner startAnimating];
         

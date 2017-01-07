@@ -476,70 +476,6 @@
                 textField.text = @"";
             }
         }
-        
-        //get keywords
-        NSString *itemTitle = [self.titleField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", @"all",@"any", @"&",@"looking",@"size", @"buy", @"these", @"this", @"that", @"-", nil];
-        NSString *title = [itemTitle lowercaseString];
-        NSArray *strings = [title componentsSeparatedByString:@" "];
-        NSMutableArray *mutableStrings = [NSMutableArray arrayWithArray:strings];
-        [mutableStrings removeObjectsInArray:wasteWords];
-        
-        if ([mutableStrings containsObject:@"bogo"]) {
-            [mutableStrings addObject:@"box"];
-            [mutableStrings addObject:@"logo"];
-        }
-        
-        if ([mutableStrings containsObject:@"tee"]) {
-            [mutableStrings addObject:@"t"];
-        }
-        
-        if ([mutableStrings containsObject:@"camo"]) {
-            [mutableStrings addObject:@"camouflage"];
-        }
-        
-        if ([mutableStrings containsObject:@"hoodie"]) {
-            [mutableStrings addObject:@"hoody"];
-        }
-        
-        if ([mutableStrings containsObject:@"crew"]) {
-            [mutableStrings addObject:@"crewneck"];
-            [mutableStrings addObject:@"sweatshirt"];
-            [mutableStrings addObject:@"sweater"];
-            [mutableStrings addObject:@"sweat"];
-        }
-        
-//        PFQuery *salesQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-//        [salesQuery whereKey:@"status" equalTo:@"live"];
-//        [salesQuery whereKey:@"keywords" containedIn:mutableStrings];
-//        [salesQuery orderByDescending:@"createdAt"];
-//        [salesQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//            if (objects) {
-//                [self.buyNowArray addObjectsFromArray:objects];
-//                if (objects.count < 3) {
-//                    PFQuery *salesQuery2 = [PFQuery queryWithClassName:@"forSaleItems"];
-//                    [salesQuery2 whereKey:@"status" equalTo:@"live"];
-//                    [salesQuery2 orderByDescending:@"createdAt"];
-//                    [salesQuery2 findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//                        if (objects) {
-//                            [self.buyNowArray addObjectsFromArray:objects];
-////                            [self.successView.collectionView reloadData];
-//                        }
-//                        else{
-//                            NSLog(@"error in second query %@", error);
-//                        }
-//                    }];
-//                }
-//                else{
-////                    [self.successView.collectionView reloadData];
-//                }
-//                
-//            }
-//            else{
-//                NSLog(@"error %@", error);
-//            }
-//        }];
-        
     }
 }
 -(void)textViewDidEndEditing:(UITextView *)textView{
@@ -1055,7 +991,7 @@
         [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
         
         //save keywords (minus useless words)
-        NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", @"all",@"any", @"&",@"looking",@"size", @"buy", @"these", @"this", @"that", @"-", nil];
+        NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", @"all",@"any", @"&",@"looking",@"size", @"buy", @"these", @"this", @"that", @"-",@"(", @")",@"/", nil];
         NSString *title = [itemTitle lowercaseString];
         NSArray *strings = [title componentsSeparatedByString:@" "];
         NSMutableArray *mutableStrings = [NSMutableArray arrayWithArray:strings];
@@ -1251,9 +1187,53 @@
                 
                 //check if in edit mode as only increment post number if not in edit mode
                 if (![self.status isEqualToString:@"edit"]) {
-                    NSLog(@"not in edit mode so increment post number");
+                    NSLog(@"not in edit mode so increment post number of: %@", [[PFUser currentUser] objectForKey:@"postNumber"]);
+                    
+                    if (![[PFUser currentUser] objectForKey:@"postNumber"]) {
+                        NSLog(@"hasn't posted before so schedule a local push");
+                        
+                        //local notifications set up
+                        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                        dayComponent.day = 2;
+                        NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                        NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                        
+                        UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+                        [localNotification setAlertBody:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"];
+                        [localNotification setFireDate: dateToFire];
+                        [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+                        [localNotification setRepeatInterval: 0];
+                        [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+                    }
+                    
                     [[PFUser currentUser]incrementKey:@"postNumber"];
                     [[PFUser currentUser] saveInBackground];
+                    
+                    PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
+                    [myPosts whereKey:@"postUser" equalTo:[PFUser currentUser]];
+                    [myPosts orderByDescending:@"createdAt"];
+                    myPosts.limit = 10;
+                    [myPosts findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                        if (objects) {
+                            NSMutableArray *wantedWords = [NSMutableArray array];
+                            
+                            for (PFObject *listing in objects) {
+                                NSArray *keywords = [listing objectForKey:@"keywords"];
+                                
+                                for (NSString *word in keywords) {
+                                    if (![wantedWords containsObject:word]) {
+                                        [wantedWords addObject:word];
+                                    }
+                                }
+                            }
+                            NSLog(@"wanted words: %@", wantedWords);
+                            [[PFUser currentUser] setObject:wantedWords forKey:@"wantedWords"];
+                            [[PFUser currentUser] saveInBackground];
+                        }
+                        else{
+                            NSLog(@"nee posts pet");
+                        }
+                    }];
                 }
                 
                 //check if editing from listing as need to pop VC rather than display a 'listing complete' VC
@@ -1283,7 +1263,6 @@
                                 //create safe date which is 3 days from now
                                 NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
                                 dayComponent.day = 3;
-                                
                                 NSCalendar *theCalendar = [NSCalendar currentCalendar];
                                 NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
                                 

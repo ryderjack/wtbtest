@@ -350,11 +350,14 @@
                 }
                 [self.convoObject saveInBackground];
                 
-                if (self.fromForeGround == YES || self.checkoutTapped == YES) {
+                if (self.checkoutTapped == YES) {
+                    NSLog(@"loading from foreground");
                     //call attributedString method to update labels
                     NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
                     NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
                     NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
+                    
+                    NSLog(@"path to last item %ld", (long)lastItemIndex);
                     
                     [self collectionView:self.collectionView attributedTextForCellBottomLabelAtIndexPath:pathToLastItem];
                     [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
@@ -424,8 +427,8 @@
 }
 
 -(void)fromForeGroundRefresh{
-    self.fromForeGround = YES;
-    [self loadMessages];
+//    self.fromForeGround = YES;
+//    [self loadMessages];
 }
 
 - (void)handleNotification:(NSNotification*)note {
@@ -958,11 +961,6 @@
         }]];
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose pictures" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
-//            picker.delegate = self;
-//            picker.allowsEditing = NO;
-//            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-            
             GMImagePickerController *picker = [[GMImagePickerController alloc] init];
             picker.delegate = self;
             picker.displaySelectionInfoToolbar = YES;
@@ -1072,19 +1070,7 @@
                             NSLog(@"BEFORE (bytes):%lu",(unsigned long)[imgData length]);
                             
                             UIImage *newImage = [image resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
-                            
-//                            if ([imgData length] > 3500000) {
-//                                //show alert
-//                                [self showAlertWithTitle:@"Image too big!" andMsg:@"Try cropping your image or use a different one completely! 📸"];
-//                            }
-//                            else{
-//                                
-//                                NSData *imgData1 = UIImageJPEGRepresentation(newImage, 1.0);
-//                                NSLog(@"AFTER (bytes):%lu",(unsigned long)[imgData1 length]);
-                            
-                            
                                 [self finalImage:newImage];
-//                            }
                         }];
     }
 }
@@ -1219,7 +1205,6 @@
             if (![self.senderId isEqualToString:self.otherUser.objectId]) {
                 [self.convoObject incrementKey:@"convoImages"];
             }
-            
 //            NSLog(self.offerMode ? @"YES":@"NO");
             
             if (self.offerMode == YES) {
@@ -1393,7 +1378,13 @@
             NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
             NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
             NSInteger itemIndex = [self.messagesParseArray indexOfObject:self.sentMessagesParseArray[0]];
+            
+            NSLog(@"sent array that we're checking against %@",self.sentMessagesParseArray);
+            
             NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:(lastItemIndex -itemIndex)inSection:lastSectionIndex];
+            
+            
+            
             if (indexPath == pathToLastItem) {
                 NSString *statusString = [[self.sentMessagesParseArray objectAtIndex:0]objectForKey:@"status"];
                 
@@ -1415,10 +1406,12 @@
             }
             else{
                 //index path is not last
+                NSLog(@"index path is not last");
             }
         }
         else{
             //user hasn't send a message
+            NSLog(@"user hasn't send a message");
         }
     }
     return nil;
@@ -1604,22 +1597,9 @@
         [self presentViewController:vc animated:YES completion:nil];
     }
     else if (tappedMessage.isPurchased == YES){
-        //goto order summary
-//        OrderSummaryController *vc = [[OrderSummaryController alloc]init];
-//        if ([tappedMessage.senderId isEqualToString:[PFUser currentUser].objectId]) {
-//            vc.purchased = NO;
-//        }
-//        else{
-//            vc.purchased = YES;
-//        }
-//        vc.convoId = self.convoId;
-//        vc.orderDate = tappedMessage.offerObject.createdAt;
-//        vc.orderObject = [self.convoObject objectForKey:@"order"];
-//        [self.navigationController pushViewController:vc animated:YES];
-//    }
     }
     else{
-        if (tappedMessage.isOfferMessage == YES) { //doesnt work after offer with image just been sent but does that matter because seller shouldnt click thru to offer
+        if (tappedMessage.isOfferMessage == YES && ![tappedMessage.senderId isEqualToString:self.senderId]) { //doesnt work after offer with image just been sent but does that matter because seller shouldnt click thru to offer
             if ([[tappedMessage.offerObject objectForKey:@"status"]isEqualToString:@"open"]) {
                 self.checkoutTapped = YES;
                 CheckoutController *vc = [[CheckoutController alloc]init];
@@ -1945,30 +1925,6 @@
                     NSLog(@"image push error %@", error);
                 }
             }];
-            
-//            //create a status message & save as last sent
-//            NSString *messageString = @"Item shipped";
-//            
-//            PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
-//            messageObject[@"message"] = messageString;
-//            messageObject[@"sender"] = [PFUser currentUser];
-//            messageObject[@"senderId"] = [PFUser currentUser].objectId;
-//            messageObject[@"senderName"] = [PFUser currentUser].username;
-//            messageObject[@"convoId"] = self.convoId;
-//            messageObject[@"status"] = @"sent";
-//            messageObject[@"offer"] = @"NO";
-//            messageObject[@"mediaMessage"] = @"NO";
-//            messageObject[@"isStatusMsg"] = @"YES";
-//            
-//            [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                if (succeeded) {
-//                    NSLog(@"saved status message!");
-//                    
-//                    [self.convoObject setObject:messageObject forKey:@"lastSent"];
-//                    [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
-//                    [self.convoObject saveInBackground];
-//                }
-//            }];
         }
         else{
             NSLog(@"error updating order %@", error);

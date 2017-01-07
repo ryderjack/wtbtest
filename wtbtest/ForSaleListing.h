@@ -11,6 +11,7 @@
 #import <ParseUI/ParseUI.h>
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
+#import <TOWebViewController.h>
 
 @interface ForSaleListing : UITableViewController
 
@@ -66,6 +67,10 @@
 
 @property (nonatomic, strong) NSString *source;
 @property (nonatomic) BOOL pureWTS;
+@property (nonatomic) BOOL relatedProduct;
+@property (weak, nonatomic) IBOutlet PFImageView *trustedCheck;
+
+@property (nonatomic, strong) TOWebViewController *webViewController;
 
 
 @end

@@ -38,8 +38,11 @@
     
     self.wtbArray = [NSMutableArray array];
     self.viewsArray = [NSMutableArray array];
+    self.products = [NSMutableArray array];
+    
     self.pullFinished = YES;
     self.infinFinished = NO;
+    self.showRelated = YES;  //if YES show related, if NO don't show
     self.viewedItem = NO;
     [self.anotherPromptButton setHidden:YES];
     
@@ -47,7 +50,21 @@
     // Load user's latest 5 WTBs
     // for each WTB search for the WTS posts which have the most keywords in common (if none then don't show)
     // save pointers to those WTSs on the WTB object as Recommendation key
-    // so it's a case of displaying the objects for this key in cell for item    
+    // so it's a case of displaying the objects for this key in cell for item
+    
+    PFQuery *versionQuery = [PFQuery queryWithClassName:@"versions"];
+    [versionQuery orderByDescending:@"createdAt"];
+    [versionQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            NSString *shouldShowRelated = [object objectForKey:@"relatedShow"];
+            if ([shouldShowRelated isEqualToString:@"NO"]) {
+                self.showRelated = NO;
+            }
+        }
+        else{
+            NSLog(@"error getting latest version %@", error);
+        }
+    }];
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
@@ -86,13 +103,12 @@
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self.pullQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
-    self.pullQuery.limit = 30;
+    self.pullQuery.limit = 10;
     [self.pullQuery orderByDescending:@"createdAt"];
     [self.pullQuery cancel];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             if (objects.count == 0) {
-                
                 // whole page should become for sale stuff.. and header should say no WTBs
                 if (!self.topLabel && !self.bottomLabel) {
                     self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
@@ -152,7 +168,6 @@
                         WTBCheck++;
 
                         for (PFObject *forSale in objects) {
-                            NSLog(@"got this for sale %@", forSale);
                             NSArray *WTSKeywords = [forSale objectForKey:@"keywords"];
                             NSMutableSet* set1 = [NSMutableSet setWithArray:WTBKeywords];
                             NSMutableSet* set2 = [NSMutableSet setWithArray:WTSKeywords];
@@ -160,33 +175,32 @@
                             
                             NSArray* result = [set1 allObjects];
                             
-                            NSLog(@"result array %@", result);
+//                            NSLog(@"result array %@", result);
                             
                             //calc 90% of WTB keyword counts
                             float sixty = WTBKeywords.count*0.8;
                             int roundedFloat = roundf(sixty);
                             
-                            NSLog(@"rounded %d", roundedFloat);
+//                            NSLog(@"rounded %d", roundedFloat);
                             
                             if (result.count >= roundedFloat && roundedFloat>0 && result.count >2) {
-                                NSLog(@"match");
+//                                NSLog(@"match");
                                 //WTB has at least 2 matching keywords to this WTS and 90% keywords match
-                                NSLog(@"WTB: %@     WTS: %@", [WTB objectForKey:@"title"], [forSale objectForKey:@"description"]);
+//                                NSLog(@"WTB: %@     WTS: %@", [WTB objectForKey:@"title"], [forSale objectForKey:@"description"]);
                                 [WTB addObject:forSale forKey:@"buyNow"];
                             }
                         }
                         
                         NSArray *matches = [WTB objectForKey:@"buyNow"];
-                        NSLog(@"matches %@", matches);
+//                        NSLog(@"matches %@", matches);
                         
                         if (matches.count > 0) {
-//                            [self.wtbArray addObject:WTB];
                             [wtbHoldingArray addObject:WTB];
                         }
 
                         if (count == WTBCheck) {
                             //done last one, now reload
-                            NSLog(@"time to reload with holding %@", wtbHoldingArray);
+//                            NSLog(@"time to reload with holding %@", wtbHoldingArray);
                             
                             NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc]
                                                                 initWithKey: @"createdAt" ascending: NO];
@@ -229,6 +243,71 @@
                             else{
                                 [self.topLabel setHidden:YES];
                                 [self.bottomLabel setHidden:YES];
+                                
+                                if (self.showRelated == YES) {
+                                    //add R E L A T E D object for TV
+                                    PFQuery *productQuery = [PFQuery queryWithClassName:@"Products"];
+                                    if ([[PFUser currentUser]objectForKey:@"wantedWords"]) {
+                                        [productQuery whereKey:@"keywords" containedIn:[[PFUser currentUser]objectForKey:@"wantedWords"]];
+                                    }
+                                    [productQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+                                    productQuery.limit = 20;
+                                    [productQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                                        if (objects) {
+                                            //once got objects just reload the related cell
+                                            NSLog(@"got products");
+                                            [self.products removeAllObjects];
+                                            [self.products addObjectsFromArray:objects];
+                                            
+                                            [self.productIDs removeAllObjects];
+                                            for (PFObject *product in objects) {
+                                                [self.productIDs addObject:product.objectId];
+                                            }
+                                            
+                                            if (objects.count < 20) {
+                                                // add more
+                                                NSLog(@"we need more products");
+                                                PFQuery *moreQuery = [PFQuery queryWithClassName:@"Products"];
+                                                moreQuery.limit = 20-objects.count;
+                                                [moreQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                                                    if (objects) {
+                                                        NSArray *more = [NSArray arrayWithArray:objects];
+                                                        for (PFObject *product in more) {
+                                                            if (![self.productIDs containsObject:product.objectId]) {
+                                                                [self.products addObject:product];
+                                                                [self.productIDs addObject:product.objectId];
+                                                            }
+                                                        }
+                                                        
+                                                        NSLog(@"products array %lu", self.products.count);
+                                                        
+                                                        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:0];
+                                                        [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                                                    }
+                                                    else{
+                                                        //error getting more so just show the first lot loaded
+                                                        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:0];
+                                                        [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                                                    }
+                                                }];
+                                            }
+                                            else{
+                                                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:0];
+                                                [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                                            }
+                                        }
+                                        else{
+                                            NSLog(@"error getting related %@", error);
+                                            //remove related cell since its empty
+                                            [self.wtbArray removeObjectAtIndex:1];
+                                            [self.tableView reloadData];
+                                        }
+                                    }];
+                                    
+                                    PFObject *relatedObject = [PFObject objectWithClassName:@"wantobuys"];
+                                    [relatedObject setObject:@"related" forKey:@"field"];
+                                    [self.wtbArray insertObject:relatedObject atIndex:1];
+                                }
                             }
                             
                             [self.tableView reloadData];
@@ -256,7 +335,7 @@
     self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self.infiniteQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
     [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
-    self.infiniteQuery.limit = 20;
+    self.infiniteQuery.limit = 10;
     [self.infiniteQuery orderByDescending:@"createdAt"];
     self.infiniteQuery.skip = self.skipped;
     [self.infiniteQuery cancel];
@@ -264,11 +343,11 @@
         if (objects) {
             if (objects.count == 0) {
                 NSLog(@"got none");
-                [self.anotherPromptButton setHidden:NO];
                 [self.tableView.infiniteScrollingView stopAnimating];
                 self.infinFinished = YES;
                 return;
             }
+            [self.anotherPromptButton setHidden:NO];
 //            NSLog(@"infinite: got %u WTBs", objects.count);
             
             int count = (int)[objects count];
@@ -303,10 +382,7 @@
                             
                             //calc 70% of WTB keyword counts
                             float sixty = WTBKeywords.count*0.8;
-//                            NSLog(@" float %f", sixty);
                             int roundedFloat = roundf(sixty);
-//                            NSLog(@"rounded float %d", roundedFloat);
-//                            NSLog(@"results count %lu", (unsigned long)result.count);
                             NSLog(@"infin rounded %d", roundedFloat);
 
                             if (result.count >= roundedFloat && roundedFloat>0 && result.count >2) {
@@ -361,7 +437,17 @@
     }
     
     PFObject *WTB = [self.wtbArray objectAtIndex:indexPath.row];
-
+    
+    if ([WTB objectForKey:@"field"]) {
+        NSLog(@"it's the related cell");
+        cell.wtbTitle.text = @"R E L A T E D";
+        cell.timeLabel.text = @"";
+        [cell.wtbTitle setTextColor:[UIColor blackColor]];
+        [cell.wtbTitle setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+        return cell;
+    }
+    [cell.wtbTitle setTextColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
+    [cell.wtbTitle setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:14]];
     self.currentIndexPath = indexPath;
     
     cell.wtbTitle.text = [WTB objectForKey:@"title"];
@@ -414,9 +500,6 @@
         cell.timeLabel.text = [NSString stringWithFormat:@"%@", [dateFormatter stringFromDate:formattedDate]];
         dateFormatter = nil;
     }
-    
-    NSLog(@"at end of table view cell");
-    
     return cell;
 }
 
@@ -443,37 +526,59 @@ numberOfRowsInSection:(NSInteger)section
     NSInteger index = cell.collectionView.indexPath.row;
     CGFloat horizontalOffset = [self.contentOffsetDictionary[[@(index) stringValue]] floatValue];
     [cell.collectionView setContentOffset:CGPointMake(horizontalOffset, 0)];
-    
 }
 
 -(NSInteger)collectionView:(AFCollectionView *)collectionView
     numberOfItemsInSection:(NSInteger)section
 {
-    NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
-    
-    return collectionViewArray.count;
+    if (![self.wtbArray[collectionView.indexPath.row] objectForKey:@"field"]) {
+        NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
+        return collectionViewArray.count;
+    }
+    else{
+        //return number of recommended items
+        return self.products.count;
+    }
 }
 
 -(UICollectionViewCell *)collectionView:(AFCollectionView *)collectionView
                  cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     ForSaleCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
-    NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
-    
-    PFObject *WTS = collectionViewArray[indexPath.item];
-    if ([self.viewsArray containsObject:WTS.objectId]) {
+    cell.itemView.image = nil;
+
+    if (collectionView.indexPath.row == 1 && self.showRelated == YES) {
+        PFObject *product = self.products[indexPath.item];
+        
+        NSLog(@"product %@", product);
+        
+        PFFile *imgFile = [product objectForKey:@"thumbnail"];
+        [cell.itemView setFile:imgFile];
+        [cell.itemView loadInBackground];
+        
+        NSArray *shownTo = [product objectForKey:@"shownTo"];
+        if (![shownTo containsObject:[[PFUser currentUser]objectId]]) {
+            [product addObject:[[PFUser currentUser]objectId] forKey:@"shownTo"];
+            [product saveInBackground];
+        }
     }
     else{
-        [self.viewsArray addObject:WTS.objectId];
+        NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
+        
+        PFObject *WTS = collectionViewArray[indexPath.item];
+        if ([self.viewsArray containsObject:WTS.objectId]) {
+        }
+        else{
+            [self.viewsArray addObject:WTS.objectId];
+        }
+        
+        PFObject *WTB = [self.wtbArray objectAtIndex:self.currentIndexPath.row];
+        
+        //setup cell
+        [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
+        [cell.itemView loadInBackground];
+        [WTS setObject:WTB forKey:@"WTB"];
     }
-    
-    PFObject *WTB = [self.wtbArray objectAtIndex:self.currentIndexPath.row];
-    cell.itemView.image = nil;
-    
-    //setup cell
-    [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
-    [cell.itemView loadInBackground];
-    [WTS setObject:WTB forKey:@"WTB"];
     
     cell.itemView.layer.cornerRadius = 35;
     cell.itemView.layer.masksToBounds = YES;
@@ -506,16 +611,29 @@ numberOfRowsInSection:(NSInteger)section
 -(void)collectionView:(AFCollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
     [Flurry logEvent:@"BuyNow_ForSaleItemSelected"];
-    NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
-    PFObject *WTS = collectionViewArray[indexPath.item];
-    
     self.viewedItem = YES;
-   
     ForSaleListing *vc = [[ForSaleListing alloc]init];
-    vc.listingObject = WTS;
-    vc.WTBObject = [WTS objectForKey:@"WTB"];
-    vc.source = @"recommended";
-    vc.pureWTS = NO;
+    
+    if (collectionView.indexPath.row == 1) {
+        //related tapped
+        PFObject *product = self.products[indexPath.item];
+        
+        vc.listingObject = product;
+        vc.source = @"related";
+        vc.pureWTS = NO;
+        vc.relatedProduct = YES;
+    }
+    else{
+        //normal
+        NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
+        PFObject *WTS = collectionViewArray[indexPath.item];
+        
+        vc.listingObject = WTS;
+        vc.WTBObject = [WTS objectForKey:@"WTB"];
+        vc.source = @"recommended";
+        vc.pureWTS = NO;
+    }
+    
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
     [self presentViewController:nav animated:YES completion:nil];
 }

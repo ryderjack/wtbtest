@@ -18,6 +18,11 @@
 @property (nonatomic, strong) NSMutableArray *wtbArray;
 
 @property (nonatomic, strong) NSMutableArray *viewsArray;
+@property (nonatomic, strong) NSMutableArray *products;
+@property (nonatomic, strong) NSMutableArray *productIDs;
+
+@property (nonatomic) BOOL showRelated;
+
 
 @property (nonatomic) BOOL pullFinished;
 @property (nonatomic) BOOL infinFinished;

@@ -142,35 +142,36 @@
     
     if (self.userSearch == NO){
         
-        NSMutableArray *history = [[NSMutableArray alloc]init];
+        NSMutableArray *history = [NSMutableArray array];
         
         //save the search term and if there's 10 or more items in the search array delete the oldest and add the latest term
         if (![stringCheck isEqualToString:@""]) {
             
             // if haven't searched before create empty array to avoid crashing
             if ([[PFUser currentUser] objectForKey:@"searches"]) {
-                history = [[PFUser currentUser] objectForKey:@"searches"];
+                NSMutableArray *searchHistory = [NSMutableArray array];
+                [searchHistory addObjectsFromArray:[[PFUser currentUser] objectForKey:@"searches"]];
                 
-                if (history.count >= 15) {
-                    [history removeObjectAtIndex:0];
+                if (searchHistory.count >= 15) {
+                    [searchHistory removeObjectAtIndex:0];
                 }
                 
-                if (![[history lastObject] isEqualToString:self.searchString] && [history containsObject:self.searchString]) {
+                if (![[searchHistory lastObject] isEqualToString:self.searchString] && [history containsObject:self.searchString]) {
                     NSLog(@"one");
-                    [history removeObject:self.searchString];
-                    [history addObject:self.searchString];
+                    [searchHistory removeObject:self.searchString];
+                    [searchHistory addObject:self.searchString];
                 }
-                else if (![history containsObject:self.searchString]) {
+                else if (![searchHistory containsObject:self.searchString]) {
                     NSLog(@"two");
-                    [history addObject:self.searchString];
+                    [searchHistory addObject:self.searchString]; ///////causing the crash!!!!!!!
                 }
+                [[PFUser currentUser] setObject:searchHistory forKey:@"searches"];
             }
             else{
                 NSLog(@"no history as new user so add first object");
                 [history addObject:self.searchString];
+                [[PFUser currentUser] setObject:history forKey:@"searches"];
             }
-            
-            [[PFUser currentUser] setObject:history forKey:@"searches"];
             [[PFUser currentUser] saveInBackground];
         }
         
@@ -270,28 +271,32 @@
     self.searchString = term;
     NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
     
-    if ([[PFUser currentUser] objectForKey:@"searches"]) {
-        history = [[PFUser currentUser] objectForKey:@"searches"];
-        
-        if (history.count >= 15) {
-            [history removeObjectAtIndex:0];
+    if (![stringCheck isEqualToString:@""]) {
+       
+        if ([[PFUser currentUser] objectForKey:@"searches"]) {
+            NSMutableArray *searches = [NSMutableArray array];
+            [searches addObjectsFromArray:[[PFUser currentUser] objectForKey:@"searches"]];
+            
+            if (searches.count >= 15) {
+                [searches removeObjectAtIndex:0];
+            }
+            
+            if (![[searches lastObject] isEqualToString:self.searchString] && [history containsObject:self.searchString]) {
+                [searches removeObject:self.searchString];
+                [searches addObject:self.searchString];
+            }
+            else if (![searches containsObject:self.searchString]) {
+                [searches addObject:self.searchString];
+            }
+            [[PFUser currentUser] setObject:searches forKey:@"searches"];
         }
-        
-        if (![[history lastObject] isEqualToString:self.searchString] && [history containsObject:self.searchString]) {
-            [history removeObject:self.searchString];
+        else{
+            NSLog(@"no history as new user so add first object");
             [history addObject:self.searchString];
+            [[PFUser currentUser] setObject:history forKey:@"searches"];
         }
-        else if (![history containsObject:self.searchString]) {
-            [history addObject:self.searchString];
-        }
+        [[PFUser currentUser] saveInBackground];
     }
-    else{
-//        NSLog(@"no history as new user so add first object");
-        [history addObject:self.searchString];
-    }
-    
-    [[PFUser currentUser] setObject:history forKey:@"searches"];
-    [[PFUser currentUser] saveInBackground];
     
     //update results controller UI since only updated via query every time search button pressed
     NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.listingResults];

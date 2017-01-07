@@ -12,6 +12,7 @@
 #import "MessageViewController.h"
 #import "UserProfileController.h"
 #import "CreateForSaleListing.h"
+#import "Flurry.h"
 
 @interface ForSaleListing ()
 
@@ -24,11 +25,20 @@
     
     self.navigationItem.title = @"S E L L I N G";
     
+    self.soldLabel.adjustsFontSizeToFitWidth = YES;
+    self.soldLabel.minimumScaleFactor=0.5;
+    
     [self.soldLabel setHidden:YES];
     [self.soldCheckImageVoew setHidden:YES];
     
-    self.infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
-    self.navigationItem.rightBarButtonItem = self.infoButton;
+    if (self.relatedProduct != YES) {
+        self.infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
+        self.navigationItem.rightBarButtonItem = self.infoButton;
+    }
+    else{
+        [self.sellerImgView setHidden:YES];
+        [self.trustedCheck setHidden:YES];
+    }
     
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
     
@@ -107,143 +117,173 @@
     
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
-            if ([self.listingObject objectForKey:@"image4"]){
-                [self.pageIndicator setNumberOfPages:4];
-                self.numberOfPics = 4;
-                self.firstImage = [self.listingObject objectForKey:@"image1"];
-                self.secondImage = [self.listingObject objectForKey:@"image2"];
-                self.thirdImage = [self.listingObject objectForKey:@"image3"];
-                self.fourthImage = [self.listingObject objectForKey:@"image4"];
-            }
-            else if ([self.listingObject objectForKey:@"image3"]){
-                [self.pageIndicator setNumberOfPages:3];
-                self.numberOfPics = 3;
-                self.firstImage = [self.listingObject objectForKey:@"image1"];
-                self.secondImage = [self.listingObject objectForKey:@"image2"];
-                self.thirdImage = [self.listingObject objectForKey:@"image3"];
-            }
-            else if ([self.listingObject objectForKey:@"image2"]) {
-                [self.pageIndicator setNumberOfPages:2];
-                self.numberOfPics = 2;
-                self.firstImage = [self.listingObject objectForKey:@"image1"];
-                self.secondImage = [self.listingObject objectForKey:@"image2"];
-            }
-            else{
+            if (self.relatedProduct == YES) {
+                //setup image
+                
                 [self.pageIndicator setHidden:YES];
                 self.numberOfPics = 1;
-            }
-            
-            self.imageViewTwo.contentMode = UIViewContentModeScaleAspectFit;
-            [self.imageViewTwo setFile:[self.listingObject objectForKey:@"image1"]];
-            [self.imageViewTwo loadInBackground];
-            
-            if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
-                self.soldLabel.text = @"Sold";
-                [self.soldLabel setHidden:NO];
+                self.firstImage = [self.listingObject objectForKey:@"image1"];
                 
-                [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
-                [self.soldCheckImageVoew setHidden:NO];
-            }
-            else if([[self.listingObject objectForKey:@"feature"]isEqualToString:@"YES"]){
-                //check if featured
-                self.soldLabel.text = @"Featured";
-                [self.soldLabel setHidden:NO];
+                self.imageViewTwo.contentMode = UIViewContentModeScaleAspectFit;
+                [self.imageViewTwo setFile:[self.listingObject objectForKey:@"image1"]];
+                [self.imageViewTwo loadInBackground];
                 
-                [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"featuredCheck"]];
+                [self.messageSellerButton setImage:[UIImage imageNamed:@"visitSite"] forState:UIControlStateNormal];
+                [self.soldLabel setHidden:NO];
+                self.soldLabel.text = @"fulfilled by END.";
+                [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"fulfillCheck"]];
                 [self.soldCheckImageVoew setHidden:NO];
-            }
-            
-            self.descriptionLabel.text = [self.listingObject objectForKey:@"description"];
-            
-            float price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
-            
-            //since EUR has been recently added, do a check if the listing has a EUR price. If not, calc and save
-            if ([self.currency isEqualToString:@"EUR"] && price == 0) {
-                int pounds = [[self.listingObject objectForKey:@"salePriceGBP"]intValue];
-                int EUR = pounds*1.16;
-                self.listingObject[@"salePriceEUR"] = @(EUR);
-                price = EUR;
-                [self.listingObject saveInBackground];
-            }
-            
-            self.priceLabel.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
-            self.sizeLabel.text = [self.listingObject objectForKey:@"location"];
-            
-            if (![self.listingObject objectForKey:@"sizeGender"]) {
-                self.locationLabel.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"sizeLabel"]];
-            }
-            else{
-                self.locationLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
-            }
-            
-            [self calcPostedDate];
-            
-            //seller info
-            self.seller = [self.listingObject objectForKey:@"sellerUser"];
-            
-            if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-                [self.messageSellerButton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
-            }
-            else{
-                //not the same buyer
-                [self.messageSellerButton setEnabled:YES];
+                
+                self.priceLabel.text = [self.listingObject objectForKey:@"price"];
+                self.sizeLabel.text = @"Ships to UK";
+                self.locationLabel.text = @"Multiple";
+                self.descriptionLabel.text = [self.listingObject objectForKey:@"title"];
+                
+                [self calcPostedDate];
+                
                 [self.listingObject incrementKey:@"views"];
                 [self.listingObject saveInBackground];
+
             }
-            
-            [self setImageBorder];
-            [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                if (object) {
-                    self.sellerNameLabel.text = self.seller.username;
-                    
-                    PFFile *pic = [self.seller objectForKey:@"picture"];
-                    if (pic != nil) {
-                        [self.sellerImgView setFile:pic];
-                        [self.sellerImgView loadInBackground];
-                    }
-                    else{
-                        [self.sellerImgView setImage:[UIImage imageNamed:@"empty"]];
-                    }
-                    
-                    PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
-                    [dealsQuery whereKey:@"User" equalTo:self.seller];
-                    [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                        if (object) {
-                            int starNumber = [[object objectForKey:@"currentRating"] intValue];
-                            
-                            if (starNumber == 0) {
-                                [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
-                            }
-                            else if (starNumber == 1){
-                                [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
-                            }
-                            else if (starNumber == 2){
-                                [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
-                            }
-                            else if (starNumber == 3){
-                                [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
-                            }
-                            else if (starNumber == 4){
-                                [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
-                            }
-                            else if (starNumber == 5){
-                                [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
-                            }
-                            
-                            int purchased = [[object objectForKey:@"purchased"]intValue];
-                            int sold = [[object objectForKey:@"sold"] intValue];
-                            
-                            self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
-                        }
-                        else{
-                            NSLog(@"error getting deals data!");
-                        }
-                    }];
+            else{
+                if ([self.listingObject objectForKey:@"image4"]){
+                    [self.pageIndicator setNumberOfPages:4];
+                    self.numberOfPics = 4;
+                    self.firstImage = [self.listingObject objectForKey:@"image1"];
+                    self.secondImage = [self.listingObject objectForKey:@"image2"];
+                    self.thirdImage = [self.listingObject objectForKey:@"image3"];
+                    self.fourthImage = [self.listingObject objectForKey:@"image4"];
+                }
+                else if ([self.listingObject objectForKey:@"image3"]){
+                    [self.pageIndicator setNumberOfPages:3];
+                    self.numberOfPics = 3;
+                    self.firstImage = [self.listingObject objectForKey:@"image1"];
+                    self.secondImage = [self.listingObject objectForKey:@"image2"];
+                    self.thirdImage = [self.listingObject objectForKey:@"image3"];
+                }
+                else if ([self.listingObject objectForKey:@"image2"]) {
+                    [self.pageIndicator setNumberOfPages:2];
+                    self.numberOfPics = 2;
+                    self.firstImage = [self.listingObject objectForKey:@"image1"];
+                    self.secondImage = [self.listingObject objectForKey:@"image2"];
                 }
                 else{
-                    NSLog(@"seller error %@", error);
+                    [self.pageIndicator setHidden:YES];
+                    self.numberOfPics = 1;
                 }
-            }];
+                
+                self.imageViewTwo.contentMode = UIViewContentModeScaleAspectFit;
+                [self.imageViewTwo setFile:[self.listingObject objectForKey:@"image1"]];
+                [self.imageViewTwo loadInBackground];
+                
+                if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
+                    self.soldLabel.text = @"Sold";
+                    [self.soldLabel setHidden:NO];
+                    
+                    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
+                    [self.soldCheckImageVoew setHidden:NO];
+                }
+                else if([[self.listingObject objectForKey:@"feature"]isEqualToString:@"YES"]){
+                    //check if featured
+                    self.soldLabel.text = @"Featured";
+                    [self.soldLabel setHidden:NO];
+                    
+                    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"featuredCheck"]];
+                    [self.soldCheckImageVoew setHidden:NO];
+                }
+                
+                self.descriptionLabel.text = [self.listingObject objectForKey:@"description"];
+                
+                float price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
+                
+                //since EUR has been recently added, do a check if the listing has a EUR price. If not, calc and save
+                if ([self.currency isEqualToString:@"EUR"] && price == 0) {
+                    int pounds = [[self.listingObject objectForKey:@"salePriceGBP"]intValue];
+                    int EUR = pounds*1.16;
+                    self.listingObject[@"salePriceEUR"] = @(EUR);
+                    price = EUR;
+                    [self.listingObject saveInBackground];
+                }
+                
+                self.priceLabel.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+                self.sizeLabel.text = [self.listingObject objectForKey:@"location"];
+                
+                if (![self.listingObject objectForKey:@"sizeGender"]) {
+                    self.locationLabel.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"sizeLabel"]];
+                }
+                else{
+                    self.locationLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
+                }
+                
+                [self calcPostedDate];
+                
+                //seller info
+                self.seller = [self.listingObject objectForKey:@"sellerUser"];
+                
+                if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                    [self.messageSellerButton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
+                }
+                else{
+                    //not the same buyer
+                    [self.messageSellerButton setEnabled:YES];
+                    [self.listingObject incrementKey:@"views"];
+                    [self.listingObject saveInBackground];
+                }
+                
+                [self setImageBorder];
+                [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                    if (object) {
+                        self.sellerNameLabel.text = self.seller.username;
+                        
+                        PFFile *pic = [self.seller objectForKey:@"picture"];
+                        if (pic != nil) {
+                            [self.sellerImgView setFile:pic];
+                            [self.sellerImgView loadInBackground];
+                        }
+                        else{
+                            [self.sellerImgView setImage:[UIImage imageNamed:@"empty"]];
+                        }
+                        
+                        PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+                        [dealsQuery whereKey:@"User" equalTo:self.seller];
+                        [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                            if (object) {
+                                int starNumber = [[object objectForKey:@"currentRating"] intValue];
+                                
+                                if (starNumber == 0) {
+                                    [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
+                                }
+                                else if (starNumber == 1){
+                                    [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
+                                }
+                                else if (starNumber == 2){
+                                    [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
+                                }
+                                else if (starNumber == 3){
+                                    [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
+                                }
+                                else if (starNumber == 4){
+                                    [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
+                                }
+                                else if (starNumber == 5){
+                                    [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
+                                }
+                                
+                                int purchased = [[object objectForKey:@"purchased"]intValue];
+                                int sold = [[object objectForKey:@"sold"] intValue];
+                                
+                                self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
+                            }
+                            else{
+                                NSLog(@"error getting deals data!");
+                            }
+                        }];
+                    }
+                    else{
+                        NSLog(@"seller error %@", error);
+                    }
+                }];
+            }
         }
         else{
             NSLog(@"error fetching listing %@", error);
@@ -674,16 +714,31 @@
     });
 }
 - (IBAction)messageSellerPressed:(id)sender {
-    if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        [self.messageSellerButton setEnabled:NO];
-        [self setupMessages];
+    if (self.relatedProduct == YES) {
+        [Flurry logEvent:@"VISITING_END"];
+        //goto website
+        NSString *URLString = [self.listingObject objectForKey:@"link"];
+        self.webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+        self.webViewController.showUrlWhileLoading = YES;
+        self.webViewController.showPageTitles = YES;
+        self.webViewController.doneButtonTitle = @"";
+        self.webViewController.paypalMode = NO;
+        self.webViewController.infoMode = NO;
+        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
+        [self presentViewController:navigationController animated:YES completion:nil];
     }
     else{
-        NSLog(@"edit listing");
-        CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-        vc.editMode = YES;
-        vc.listing = self.listingObject;
-        [self.navigationController pushViewController:vc animated:YES];
+        if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+            [self.messageSellerButton setEnabled:NO];
+            [self setupMessages];
+        }
+        else{
+            NSLog(@"edit listing");
+            CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+            vc.editMode = YES;
+            vc.listing = self.listingObject;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
     }
 }
 -(void)setupMessages{

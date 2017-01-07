@@ -21,6 +21,7 @@
 
 @property (nonatomic, weak) id <FilterDelegate> delegate;
 
+@property (strong, nonatomic) NSMutableArray *chosenSizesArray;
 @property (strong, nonatomic) NSMutableArray *filtersArray;
 @property (strong, nonatomic) NSMutableArray *sendArray;
 

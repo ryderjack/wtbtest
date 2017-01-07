@@ -70,14 +70,18 @@
     else{
         [self updateUnseenCount];
         self.justViewedMsg = NO;
-        [self.lastConvo fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        NSLog(@"fetch");
+        [self.lastConvo fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
                 PFObject *lastMessage = [self.lastConvo objectForKey:@"lastSent"];
+                NSLog(@"message in appear %@", lastMessage.updatedAt);
+
+
                 if (self.lastSentDate != lastMessage.createdAt && [[lastMessage objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-//                    NSLog(@"bring to the top!");
+                    NSLog(@"bring to the top!");
                     //put last selected at front of array and reload table
                     [self.convoObjects removeObject:self.lastConvo];
-                    [self.convoObjects insertObject:self.lastConvo atIndex:0];
+                    [self.convoObjects insertObject:object atIndex:0];
                     [self.tableView reloadData];
                     [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
                     
@@ -85,8 +89,12 @@
                     self.lastSentDate = nil;
                 }
                 else{
-//                    NSLog(@"must not have sent a message after clicking but reload anyway");
-                    [self.tableView reloadRowsAtIndexPaths:@[self.lastConvoIndex] withRowAnimation:UITableViewRowAnimationFade];
+                    NSLog(@"must not have sent a message after clicking but reload anyway");
+//                    [self.tableView reloadRowsAtIndexPaths:@[self.lastConvoIndex] withRowAnimation:UITableViewRowAnimationFade];
+                    PFObject *convoObject = [self.convoObjects objectAtIndex:self.lastConvoIndex.row];
+                    PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
+                    [msgObject setObject:@"seen" forKey:@"status"];
+                    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:self.lastConvoIndex, nil] withRowAnimation:UITableViewRowAnimationNone];
                 }
             }
             else{
@@ -335,6 +343,7 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSLog(@"cell for item CALLED");
     self.cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
     if (!self.cell) {
         self.cell = [[InboxCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
@@ -409,6 +418,9 @@
     [self setWTBImageBorder];
 
     PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
+    
+    NSLog(@"message in cellforitem %@", msgObject.updatedAt);
+    
     NSString *text = [msgObject objectForKey:@"message"];
     
     if ([[msgObject objectForKey:@"mediaMessage"]isEqualToString:@"YES"]) {
@@ -439,6 +451,7 @@
     
     if ([[msgObject objectForKey:@"status"] isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
         //message has not been seen
+        NSLog(@"message aint been seen");
         [self boldFontForLabel:self.cell.usernameLabel];
         [self boldFontForLabel:self.cell.messageLabel];
         self.cell.messageLabel.textColor = [UIColor blackColor];
@@ -448,6 +461,7 @@
     }
     else{
         //message has been seen
+        NSLog(@"msg has been seen");
         [self unboldFontForLabel:self.cell.usernameLabel];
         [self unboldFontForLabel:self.cell.messageLabel];
         [self unboldFontForLabel:self.cell.timeLabel];

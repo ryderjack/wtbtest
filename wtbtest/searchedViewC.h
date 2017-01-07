@@ -53,6 +53,7 @@
 @property (nonatomic) int lastInfinSkipped;
 @property (nonatomic) BOOL pullFinished;
 @property (nonatomic) BOOL infinFinished;
+@property (nonatomic) BOOL viewedListing;
 
 @property (nonatomic, weak) id <searchedViewCDelegate> delegate;
 

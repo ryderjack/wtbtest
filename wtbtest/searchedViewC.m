@@ -78,11 +78,14 @@
     self.pullFinished = YES;
     self.infinFinished = YES;
     self.lastInfinSkipped = 0;
+    self.viewedListing = NO;
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    [self queryParsePull];
+    if (self.viewedListing != YES) {
+        [self queryParsePull];
+    }
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
@@ -309,6 +312,7 @@
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
+    self.viewedListing = YES;
     if (!self.lastSelected) {
         self.lastSelected = [[NSIndexPath alloc]init];
     }
