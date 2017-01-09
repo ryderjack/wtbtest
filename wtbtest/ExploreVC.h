@@ -18,8 +18,9 @@
 #import "notificatView.h"
 #import "TheMainSearchView.h"
 #import "searchedViewC.h"
+#import "customAlertViewClass.h"
 
-@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate>
+@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate, customAlertDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
@@ -51,6 +52,7 @@
 @property (nonatomic) BOOL filtersON;
 @property (nonatomic) BOOL listingTapped;
 @property (nonatomic) BOOL cleverMode;
+@property (nonatomic) BOOL ignoreShownTo;
 
 @property (nonatomic, strong) NSArray *uselessWords;
 
@@ -62,4 +64,10 @@
 //bump in app notification
 @property (nonatomic, strong) notificatView *dropDown;
 @property (nonatomic, strong) NSIndexPath *lastSelected;
+@property (nonatomic) BOOL justABump;
+
+
+//custom alert view
+@property (nonatomic, strong) customAlertViewClass *customAlert;
+@property (nonatomic, strong) UIView *searchBgView;
 @end

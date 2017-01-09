@@ -16,6 +16,7 @@
 #import "MessagesTutorial.h"
 #import "FeaturedItems.h"
 #import "Flurry.h"
+#import "ChatWithBump.h"
 
 @interface BuyNowController ()
 
@@ -33,6 +34,10 @@
     [self.tableView registerNib:[UINib nibWithNibName:@"RecommendCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+    
+     UIBarButtonItem *sellingButton = [[UIBarButtonItem alloc] initWithTitle:@"Sell" style:UIBarButtonItemStylePlain target:self action:@selector(showSellingAlert)];
+    [self.navigationItem setLeftBarButtonItem:sellingButton];
+
     
     self.contentOffsetDictionary = [NSMutableDictionary dictionary];
     
@@ -310,7 +315,10 @@
                                 }
                             }
                             
-                            [self.tableView reloadData];
+                            NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
+                            NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
+                            [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                            
                             [self.tableView.pullToRefreshView stopAnimating];
                             self.pullFinished = YES;
                         }
@@ -353,6 +361,7 @@
             int count = (int)[objects count];
             self.skipped = self.skipped + count;
             __block int WTBCheck = 0;
+            __block int infinMatches = 0;
             
             //get keywords for each WTB and find a WTS that has a good match
             for (PFObject *WTB in objects) {
@@ -369,7 +378,6 @@
                 [WTSQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                     if (objects) {
                         WTBCheck++;
-
                         for (PFObject *forSale in objects) {
                             NSArray *WTSKeywords = [forSale objectForKey:@"keywords"];
                             NSMutableSet* set1 = [NSMutableSet setWithArray:WTBKeywords];
@@ -378,35 +386,30 @@
                             
                             NSArray* result = [set1 allObjects];
                             
-                            NSLog(@"infin result %@", result);
-                            
                             //calc 70% of WTB keyword counts
                             float sixty = WTBKeywords.count*0.8;
                             int roundedFloat = roundf(sixty);
-                            NSLog(@"infin rounded %d", roundedFloat);
 
                             if (result.count >= roundedFloat && roundedFloat>0 && result.count >2) {
                                 //WTB has at least 2 matching keywords to this WTS and 70% keywords match
-                                NSLog(@"WTB: %@     WTS: %@", [WTB objectForKey:@"title"], [forSale objectForKey:@"description"]);
+//                                NSLog(@"WTB: %@     WTS: %@", [WTB objectForKey:@"title"], [forSale objectForKey:@"description"]);
                                 [WTB addObject:forSale forKey:@"buyNow"];
+                                infinMatches++;
                             }
                         }
                         
                         if ([WTB objectForKey:@"buyNow"]) {
-                            NSLog(@"for sale item(s) added for this WTB %@", [WTB objectForKey:@"title"]);
+//                            NSLog(@"for sale item(s) added for this WTB %@", [WTB objectForKey:@"title"]);
                             [self.wtbArray addObject:WTB];
-                            [WTB saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                                if (succeeded) {
-                                    NSLog(@"saved WTB!");
-                                }
-                                else{
-                                    NSLog(@"error saving WTB %@", error);
-                                }
-                            }];
+                            [WTB saveInBackground];
                         }
                         if (count == WTBCheck) {
                             //done last one, now reload
-                            NSLog(@"time to reload");
+                            if (infinMatches == 0) {
+                                NSLog(@"no matches found, run again to check if any other WTBs left to check");
+                                [self infiniteloadWTBs];
+                                return;
+                            }
                             [self.tableView reloadData];
                             [self.tableView.infiniteScrollingView stopAnimating];
                             self.infinFinished = YES;
@@ -549,8 +552,6 @@ numberOfRowsInSection:(NSInteger)section
 
     if (collectionView.indexPath.row == 1 && self.showRelated == YES) {
         PFObject *product = self.products[indexPath.item];
-        
-        NSLog(@"product %@", product);
         
         PFFile *imgFile = [product objectForKey:@"thumbnail"];
         [cell.itemView setFile:imgFile];
@@ -719,4 +720,131 @@ numberOfRowsInSection:(NSInteger)section
     self.tabBarController.selectedIndex = 2;
 }
 
+-(void)showSellingAlert{
+    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.searchBgView.alpha = 0.0;
+    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
+    self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
+    self.customAlert.delegate = self;
+    self.customAlert.titleLabel.text = @"Are you a big seller?";
+    self.customAlert.messageLabel.text = @"If you've got your own BigCartel with a reasonable amount of stock send us a message to get selling on Bump";
+    self.customAlert.numberOfButtons = 2;
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
+    }
+    else{
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
+    }
+    
+    self.customAlert.layer.cornerRadius = 10;
+    self.customAlert.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.customAlert];
+    
+    [UIView animateWithDuration:1.5
+                          delay:0.2
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake(0, 0, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake(0, 0, 300, 188)]; //iPhone 6/7 specific
+                            }
+                            self.customAlert.center = self.view.center;
+
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+
+-(void)donePressed{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.searchBgView = nil;
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                            }
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.customAlert setAlpha:0.0];
+                         self.customAlert = nil;
+                     }];
+}
+
+-(void)firstPressed{
+    [self donePressed];
+}
+-(void)secondPressed{
+    [self donePressed];
+    //goto Team Bump messages
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
+    NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+    [convoQuery whereKey:@"convoId" equalTo:convoId];
+    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            //convo exists, go there
+            ChatWithBump *vc = [[ChatWithBump alloc]init];
+            vc.convoId = [object objectForKey:@"convoId"];
+            vc.convoObject = object;
+            vc.otherUser = [PFUser currentUser];
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else{
+            //create a new one
+            PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
+            convoObject[@"otherUser"] = [PFUser currentUser];
+            convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+            convoObject[@"totalMessages"] = @0;
+            [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    //saved, goto VC
+                    ChatWithBump *vc = [[ChatWithBump alloc]init];
+                    vc.convoId = [convoObject objectForKey:@"convoId"];
+                    vc.convoObject = convoObject;
+                    vc.otherUser = [PFUser currentUser];
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
+                else{
+                    NSLog(@"error saving convo");
+                }
+            }];
+        }
+    }];
+}
 @end

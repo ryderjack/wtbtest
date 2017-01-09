@@ -75,6 +75,9 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBump:) name:@"showBumpedVC" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showListing:) name:@"listingBumped" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDrop:) name:@"showDropDown" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetHome) name:@"refreshHome" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(insertLatestListing:) name:@"justPostedListing" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBumpDrop:) name:@"showBumpedDropDown" object:nil];
     
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.delegate = self;
@@ -94,6 +97,7 @@
     self.lastInfinSkipped = 0;
     
     self.filtersON = NO;
+    self.ignoreShownTo = NO;
     
     [self.collectionView setScrollsToTop:YES];
     
@@ -193,7 +197,6 @@
     self.uselessWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", nil];
 
     NSString *appVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-    
     PFQuery *versionQuery = [PFQuery queryWithClassName:@"versions"];
     [versionQuery orderByDescending:@"createdAt"];
     [versionQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -216,6 +219,7 @@
             NSLog(@"error getting latest version %@", error);
         }
     }];
+    
 //    [PFUser logOut];
 }
 
@@ -303,20 +307,29 @@
         NSLog(@"got some filters brah %lu", self.filtersArray.count);
         [self.filterButton setTitle:[NSString stringWithFormat:@"F I L T E R S  %lu",self.filtersArray.count] forState:UIControlStateNormal];
     }
+    if ([PFUser currentUser]) {
+        if (![[[PFUser currentUser] objectForKey:@"searchIntro"] isEqualToString:@"YES"]) {
+            [self setUpIntroAlert];
+        }
+    }
     
-    UIImageView *bgView = [[UIImageView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
-    bgView.alpha = 0.6;
-
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-        //iphone 5
-        [bgView setImage:[UIImage imageNamed:@"searchIntro"]];
-    }
-    else{
-        //iPhone 6 specific
-        [bgView setImage:[UIImage imageNamed:@"searchIntro"]];
-    }
-
-    [[UIApplication sharedApplication].keyWindow addSubview:bgView];
+//    PFQuery *listings = [PFQuery queryWithClassName:@"wantobuys"];
+//    [listings whereKeyExists:@"shownTo"];
+//    listings.limit = 300;
+//    [listings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//        if (objects) {
+//            
+//            for (PFObject *listing in objects) {
+//                [listing removeObjectForKey:@"shownTo"];
+//                [listing saveInBackground];
+//                NSLog(@"saved");
+//            }
+//            
+//        }
+//        else{
+//            
+//        }
+//    }];
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -325,6 +338,13 @@
     self.cell.delegate = self;
 
     PFObject *listing = [self.results objectAtIndex:indexPath.row];
+    
+    //set the item as seen
+    NSArray *shownTo = [listing objectForKey:@"shownTo"];
+    if (![shownTo containsObject:[[PFUser currentUser]objectId]] && self.filtersON == NO) {
+        [listing addObject:[[PFUser currentUser]objectId] forKey:@"shownTo"];
+        [listing saveInBackground];
+    }
     
     self.cell.imageView.image = nil;
     
@@ -485,6 +505,9 @@
             if (keywords.count > 0) {
                 [self.infiniteQuery whereKey:@"keywords" containedIn:self.calcdKeywords];
                 [self.infiniteQuery orderByDescending:@"bumpCount,views"];
+                if (self.ignoreShownTo != YES) {
+                    [self.infiniteQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+                }
             }
             else{
                 //has no previous searches so show most recent
@@ -507,6 +530,14 @@
         if (objects) {
             int count = (int)[objects count];
             NSLog(@"infin count %d", count);
+            
+            if (count == 0 && self.ignoreShownTo != YES) {
+                self.ignoreShownTo = YES;
+                self.lastInfinSkipped = 0;
+                [self queryParseInfinite];
+                return;
+            }
+            
             self.lastInfinSkipped = self.lastInfinSkipped + count;
             
             if (self.filtersON == YES) {
@@ -518,16 +549,24 @@
                     NSLog(@"clever mode is good!");
                     
                     //keep going with clever mode!
-                    [self.results addObjectsFromArray:objects];
+                    for (PFObject *listing in objects) {
+                        if (![self.resultIDs containsObject:listing.objectId]) {
+                            [self.results addObject:listing];
+                            [self.resultIDs addObject:listing.objectId];
+                        }
+                    }
                 }
                 else if(count < 12 && self.cleverMode == YES){
                     NSLog(@"time to switch off");
                     
                     //add objects to array but switch off clever mode and reset the skip
-                    [self.results addObjectsFromArray:objects];
-                    
+                    for (PFObject *listing in objects) {
+                        if (![self.resultIDs containsObject:listing.objectId]) {
+                            [self.results addObject:listing];
+                            [self.resultIDs addObject:listing.objectId];
+                        }
+                    }
                     self.cleverMode = NO;
-                    
                     self.lastInfinSkipped = 0;
                 }
                 else if (self.cleverMode == NO){
@@ -578,6 +617,9 @@
             }
             self.calcdKeywords = [[allSearchWords reverseObjectEnumerator] allObjects];
             [self.pullQuery whereKey:@"keywords" containedIn:self.calcdKeywords];
+            if (self.ignoreShownTo == NO) {
+                [self.pullQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+            }
             [self.pullQuery orderByDescending:@"bumpCount,views"];
         }
         else{
@@ -599,6 +641,13 @@
             self.lastInfinSkipped = count;
             
             if (count == 0) {
+                if (self.ignoreShownTo == NO) {
+                    NSLog(@"START TO IGNORE WHAT IVE ALREADY SEEN");
+                    self.ignoreShownTo = YES;
+                    [self queryParsePull];
+                    return;
+                }
+                
                 [self.noresultsLabel setHidden:NO];
                 [self.noResultsImageView setHidden:YES];
             }
@@ -606,6 +655,8 @@
                 [self.noresultsLabel setHidden:YES];
                 [self.noResultsImageView setHidden:YES];
             }
+            
+            NSLog(@"continuing in pull!");
             
             if (count == 12) {
                 self.cleverMode = YES;
@@ -618,7 +669,13 @@
             [self.results removeAllObjects];
             [self.results addObjectsFromArray:objects];
             
-            [self.collectionView reloadData];
+//            [self.collectionView reloadData];
+            
+            //animate the data change
+            [self.collectionView performBatchUpdates:^{
+                [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+            } completion:nil];
+            
             [self.collectionView.pullToRefreshView stopAnimating];
             self.pullFinished = YES;
             
@@ -1179,7 +1236,7 @@
                 if (image) {
                     PFUser *postUser = [listing objectForKey:@"postUser"];
                     self.dropDown.mainLabel.text = [NSString stringWithFormat:@"Your Facebook friend %@ just posted a listing - Tap to Bump it 👊", [postUser objectForKey:@"fullname"]];
-                    
+                    self.justABump = NO;
                     //animate down
                     [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
                     
@@ -1208,7 +1265,6 @@
 
 -(void)dismissDrop{
     //animate up
-    NSLog(@"disimss");
     [UIView animateWithDuration:1.0
                           delay:0.0
          usingSpringWithDamping:0.1
@@ -1222,6 +1278,71 @@
                          [self.dropDown removeFromSuperview];
                      }];
     
+}
+
+-(void)handleBumpDrop:(NSNotification*)note {
+    [Flurry logEvent:@"FBJustBump_Dropped"];
+    NSArray *info = [note object];
+    
+    //prevent crashes with wrongly formatted pushes
+    if (info.count <2) {
+        return;
+    }
+    
+    NSString *listingID = info[0];
+    NSString *message = info[1];
+    
+    PFInstallation *currentInstallation = [PFInstallation currentInstallation];
+    if (currentInstallation.badge != 0) {
+        currentInstallation.badge = 0;
+        [currentInstallation saveEventually];
+    }
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
+    self.dropDown = (notificatView *)[nib objectAtIndex:0];
+    self.dropDown.delegate = self;
+    self.dropDown.listingID = listingID;
+    
+    UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.dropDown addGestureRecognizer:swipeGesture];
+    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+    
+    PFQuery *listingQ = [PFQuery queryWithClassName:@"wantobuys"];
+    [listingQ whereKey:@"objectId" equalTo:listingID];
+    [listingQ getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            PFObject *listing = object;
+            self.dropDown.listing = listing;
+            [self.dropDown.imageView setFile:[object objectForKey:@"image1"]];
+            [self.dropDown.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
+                if (image) {
+                    self.dropDown.mainLabel.text = message;
+                    self.justABump = YES;
+                    //animate down
+                    [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+                    
+                    [UIView animateWithDuration:1.0
+                                          delay:0.0
+                         usingSpringWithDamping:0.5
+                          initialSpringVelocity:0.5
+                                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                            //Animations
+                                            [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
+                                        }
+                                     completion:^(BOOL finished) {
+                                         //schedule auto dismiss
+                                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                             [self dismissDrop];
+                                         });
+                                     }];
+                }
+            }];
+        }
+        else{
+            NSLog(@"error finding listing");
+        }
+    }];
 }
 
 -(void)bumpTappedForListing:(NSString *)listing{
@@ -1239,14 +1360,139 @@
                          //Completion Block
                          [self.dropDown removeFromSuperview];
                      }];
-
-    BumpVC *vc = [[BumpVC alloc]init];
-    vc.listingID = listing;
-    [self presentViewController:vc animated:YES completion:nil];
+    
+    if (self.justABump == NO) {
+        BumpVC *vc = [[BumpVC alloc]init];
+        vc.listingID = listing;
+        [self presentViewController:vc animated:YES completion:nil];
+    }
+    else{
+        //goto that listing
+        NSLog(@"goto listing");
+        PFObject *listingObj = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listing];
+        ListingController *vc = [[ListingController alloc]init];
+        vc.listingObject = listingObj;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
 }
 
 -(void)cancellingMainSearch{
     [self.navigationController setNavigationBarHidden:NO animated:YES];
 }
 
+-(void)setUpIntroAlert{
+    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.searchBgView.alpha = 0.0;
+    
+    UIImageView *imgView = [[UIImageView alloc]initWithFrame:self.searchBgView.frame];
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone 5
+        [imgView setImage:[UIImage imageNamed:@"searchIntro1"]];
+    }
+    else{
+        //iPhone 6 specific
+        [imgView setImage:[UIImage imageNamed:@"searchIntro"]];
+    }
+    [self.searchBgView addSubview:imgView];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
+    self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
+    self.customAlert.delegate = self;
+    self.customAlert.titleLabel.text = @"Selling Something?";
+    self.customAlert.messageLabel.text = @"Hit the Search button to find wanted listings that match what you’re selling";
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
+    }
+    else{
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
+    }
+    
+    self.customAlert.layer.cornerRadius = 10;
+    self.customAlert.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.customAlert];
+    
+    [UIView animateWithDuration:1.5
+                          delay:1.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 100, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 100, 300, 188)]; //iPhone 6/7 specific
+                            }
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+
+-(void)donePressed{
+    [[PFUser currentUser]setObject:@"YES" forKey:@"searchIntro"];
+    [[PFUser currentUser] saveInBackground];
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.searchBgView = nil;
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                            }
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.customAlert setAlpha:0.0];
+                         self.customAlert = nil;
+                     }];
+}
+//custom alert delegates
+-(void)firstPressed{
+}
+-(void)secondPressed{
+}
+
+-(void)resetHome{
+    self.ignoreShownTo = NO;
+    [self queryParsePull];
+}
+
+-(void)insertLatestListing:(NSNotification*)note {
+    PFObject *listing = [note object];
+//    NSLog(@"insert %@", listing);
+    [self.results insertObject:listing atIndex:0];
+    [self.resultIDs addObject:listing.objectId];
+    [self.collectionView performBatchUpdates:^{
+        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+    } completion:nil];
+}
 @end

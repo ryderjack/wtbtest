@@ -211,6 +211,11 @@
 		044E72601E217EA8005D55E5 /* searchIntro@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E725D1E217EA7005D55E5 /* searchIntro@2x.png */; };
 		044E72611E217EA8005D55E5 /* searchIntro@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E725E1E217EA7005D55E5 /* searchIntro@3x.png */; };
 		044E72621E217EA8005D55E5 /* searchIntro.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E725F1E217EA7005D55E5 /* searchIntro.png */; };
+		044E72641E22466D005D55E5 /* customAlertView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 044E72631E22466D005D55E5 /* customAlertView.xib */; };
+		044E72671E2247E1005D55E5 /* customAlertViewClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 044E72661E2247E1005D55E5 /* customAlertViewClass.m */; };
+		044E72711E225766005D55E5 /* searchIntro1@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E726E1E225766005D55E5 /* searchIntro1@2x.png */; };
+		044E72721E225766005D55E5 /* searchIntro1@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E726F1E225766005D55E5 /* searchIntro1@3x.png */; };
+		044E72731E225766005D55E5 /* searchIntro1.png in Resources */ = {isa = PBXBuildFile; fileRef = 044E72701E225766005D55E5 /* searchIntro1.png */; };
 		044F823E1DA4EDA20092B1F8 /* msgTutorial.png in Resources */ = {isa = PBXBuildFile; fileRef = 044F823B1DA4EDA20092B1F8 /* msgTutorial.png */; };
 		044F823F1DA4EDA20092B1F8 /* msgTutorial@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044F823C1DA4EDA20092B1F8 /* msgTutorial@2x.png */; };
 		044F82401DA4EDA20092B1F8 /* msgTutorial@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 044F823D1DA4EDA20092B1F8 /* msgTutorial@3x.png */; };
@@ -1092,6 +1097,12 @@
 		044E725D1E217EA7005D55E5 /* searchIntro@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "searchIntro@2x.png"; sourceTree = "<group>"; };
 		044E725E1E217EA7005D55E5 /* searchIntro@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "searchIntro@3x.png"; sourceTree = "<group>"; };
 		044E725F1E217EA7005D55E5 /* searchIntro.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = searchIntro.png; sourceTree = "<group>"; };
+		044E72631E22466D005D55E5 /* customAlertView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = customAlertView.xib; sourceTree = "<group>"; };
+		044E72651E2247E1005D55E5 /* customAlertViewClass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = customAlertViewClass.h; sourceTree = "<group>"; };
+		044E72661E2247E1005D55E5 /* customAlertViewClass.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = customAlertViewClass.m; sourceTree = "<group>"; };
+		044E726E1E225766005D55E5 /* searchIntro1@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "searchIntro1@2x.png"; sourceTree = "<group>"; };
+		044E726F1E225766005D55E5 /* searchIntro1@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "searchIntro1@3x.png"; sourceTree = "<group>"; };
+		044E72701E225766005D55E5 /* searchIntro1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = searchIntro1.png; sourceTree = "<group>"; };
 		044F823B1DA4EDA20092B1F8 /* msgTutorial.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = msgTutorial.png; sourceTree = "<group>"; };
 		044F823C1DA4EDA20092B1F8 /* msgTutorial@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "msgTutorial@2x.png"; sourceTree = "<group>"; };
 		044F823D1DA4EDA20092B1F8 /* msgTutorial@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "msgTutorial@3x.png"; sourceTree = "<group>"; };
@@ -1909,6 +1920,9 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				044E726E1E225766005D55E5 /* searchIntro1@2x.png */,
+				044E726F1E225766005D55E5 /* searchIntro1@3x.png */,
+				044E72701E225766005D55E5 /* searchIntro1.png */,
 				044E725D1E217EA7005D55E5 /* searchIntro@2x.png */,
 				044E725E1E217EA7005D55E5 /* searchIntro@3x.png */,
 				044E725F1E217EA7005D55E5 /* searchIntro.png */,
@@ -2834,6 +2848,9 @@
 				04F7EF7D1E15411F00061745 /* CreateSuccessView.h */,
 				04F7EF7E1E15411F00061745 /* CreateSuccessView.m */,
 				04F7EF811E1541F300061745 /* SuccessView.xib */,
+				044E72631E22466D005D55E5 /* customAlertView.xib */,
+				044E72651E2247E1005D55E5 /* customAlertViewClass.h */,
+				044E72661E2247E1005D55E5 /* customAlertViewClass.m */,
 			);
 			name = "Create listing";
 			sourceTree = "<group>";
@@ -3211,6 +3228,7 @@
 				04A91DA41C87591C00035F55 /* usedorange@2x.png in Resources */,
 				04CD31431D24849400E2850D /* plusIcon.png in Resources */,
 				04DD88121E09DD4200C92C78 /* fb share@3x.png in Resources */,
+				044E72711E225766005D55E5 /* searchIntro1@2x.png in Resources */,
 				046ECBD51DCF99A500E77B3D /* buyNowIcon@2x.png in Resources */,
 				04CD308F1D10561300E2850D /* UsedImg@2x.png in Resources */,
 				04C081601C860B1400B8682C /* flashOn.png in Resources */,
@@ -3543,6 +3561,7 @@
 				044F82661DA7CB5F0092B1F8 /* messageIconNEW@3x.png in Resources */,
 				042146DF1DC15FE900D00DCB /* buy_5@3x.png in Resources */,
 				04A739A81D62451000E51CA7 /* 29@2x.png in Resources */,
+				044E72731E225766005D55E5 /* searchIntro1.png in Resources */,
 				04CBFDE21E088EA400941C46 /* problembutton@2x.png in Resources */,
 				04A91D8D1C87583200035F55 /* hightolowgrey@2x.png in Resources */,
 				04C081401C85EA9C00B8682C /* cameraIcon@2x.png in Resources */,
@@ -3885,10 +3904,12 @@
 				04CBFDE31E088EA400941C46 /* problembutton@3x.png in Resources */,
 				041FF2271E01BD3300A5E7EE /* bumpArrowWhite@3x.png in Resources */,
 				042146E41DC15FE900D00DCB /* buy_3@2x.png in Resources */,
+				044E72641E22466D005D55E5 /* customAlertView.xib in Resources */,
 				04CBFDB81E08894D00941C46 /* iPhoneIntroBumped@2x.png in Resources */,
 				040CDC431D48B49500F738D0 /* trackingfeedback@2x.png in Resources */,
 				04BEE5541DD76F22004CD8D1 /* offer_5.png in Resources */,
 				04CD30941D10561300E2850D /* AnyImg@3x.png in Resources */,
+				044E72721E225766005D55E5 /* searchIntro1@3x.png in Resources */,
 				0404511D1C8E1422001D5F3B /* OfferCell.xib in Resources */,
 				04A91D941C87583200035F55 /* lowtohighorange.png in Resources */,
 				04CBFDC91E088C2000941C46 /* editListing@1x.png in Resources */,
@@ -3996,6 +4017,7 @@
 				04CD31041D1FDEE000E2850D /* UserProfileController.m in Sources */,
 				046ECB7E1DCF96AD00E77B3D /* BuyNowController.m in Sources */,
 				04C081551C85F1A600B8682C /* FilterVC.m in Sources */,
+				044E72671E2247E1005D55E5 /* customAlertViewClass.m in Sources */,
 				04C081321C85C62700B8682C /* ConfirmController.m in Sources */,
 				04CD30E71D1C19B000E2850D /* InboxCell.m in Sources */,
 				046ECC231DCFA82200E77B3D /* RecommendCell.m in Sources */,

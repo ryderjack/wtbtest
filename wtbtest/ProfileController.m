@@ -213,7 +213,6 @@
                     }];
                 }
             }];
-//            [self showEmail];
         }
         else if (indexPath.row == 2) {
             //terms pressed

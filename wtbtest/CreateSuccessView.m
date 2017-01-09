@@ -41,8 +41,6 @@
 {
     self.collectionView.dataSource = dataSourceDelegate;
     self.collectionView.delegate = dataSourceDelegate;
-//    self.collectionView.indexPath = indexPath;
-//    [self.collectionView setContentOffset:self.collectionView.contentOffset animated:NO];
     [self.collectionView reloadData];
 }
 

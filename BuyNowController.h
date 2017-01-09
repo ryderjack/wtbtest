@@ -10,8 +10,9 @@
 #import <DGActivityIndicatorView.h>
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
+#import "customAlertViewClass.h"
 
-@interface BuyNowController : UIViewController <UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource>
+@interface BuyNowController : UIViewController <UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (nonatomic, strong) NSMutableDictionary *contentOffsetDictionary;
@@ -22,7 +23,6 @@
 @property (nonatomic, strong) NSMutableArray *productIDs;
 
 @property (nonatomic) BOOL showRelated;
-
 
 @property (nonatomic) BOOL pullFinished;
 @property (nonatomic) BOOL infinFinished;
@@ -41,5 +41,7 @@
 @property (nonatomic) BOOL viewedItem;
 @property (weak, nonatomic) IBOutlet UIButton *anotherPromptButton;
 
-
+//custom alert view
+@property (nonatomic, strong) customAlertViewClass *customAlert;
+@property (nonatomic, strong) UIView *searchBgView;
 @end

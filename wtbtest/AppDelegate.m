@@ -46,18 +46,15 @@
         //local host
 //        configuration.server = @"http://localhost:1337/parse";
         
-        //heroku
-//        configuration.server = @"http://wantobuy.herokuapp.com/parse";
-        
         //production
-        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
+//        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
         
         //preproduction
-//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE BACK BEFORE RELEASE
+        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
     }]];
 
-    [Flurry startSession:@"9Y63FGHCCGZQJDQTCTMP"];
-    [Fabric with:@[[Crashlytics class]]];
+//    [Flurry startSession:@"9Y63FGHCCGZQJDQTCTMP"]; ////////////////////CHANGE
+//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
 
@@ -93,7 +90,6 @@
     self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController,navController5,navController1,navController4, navController2, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
-//    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
     [self.tabBarController.tabBar setTintColor:[UIColor whiteColor]];
 
     [self.tabBarController.tabBar setBarTintColor:[UIColor blackColor]];
@@ -300,17 +296,12 @@
     NSString *bumpedStatus = [userInfo objectForKey:@"bumpRequest"];
     NSString *listing = [userInfo objectForKey:@"listingID"];
     
+    NSDictionary *dic = [userInfo objectForKey:@"aps"];
+    NSString *strMsg = [dic objectForKey:@"alert"];
+    
     if ( application.applicationState == UIApplicationStateInactive || application.applicationState == UIApplicationStateBackground  )
     {
         //opened from a push notification when the app in background
-        NSDictionary *dic = [userInfo objectForKey:@"aps"];
-        NSString *strMsg = [dic objectForKey:@"alert"];
-        
-//        PFInstallation *currentInstallation = [PFInstallation currentInstallation];
-//        if (currentInstallation.badge != 0) {
-//            currentInstallation.badge = 0;
-//            [currentInstallation saveEventually];
-//        }
         
        // NSLog(@"dic: %@    and strMsg: %@", dic, strMsg);
         
@@ -340,7 +331,12 @@
     else{
         //app is active
         
-        if([bumpedStatus isEqualToString:@"YES"]){
+        if([strMsg containsString:@"bumped your listing"]){
+            //show just Bumped drop down
+            NSLog(@"show drop down");
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"showBumpedDropDown" object:@[listing, strMsg]];
+        }
+        else if([bumpedStatus isEqualToString:@"YES"]){
             //open BumpedVC
             NSLog(@"show drop down from delegate");
             [[NSNotificationCenter defaultCenter] postNotificationName:@"showDropDown" object:listing];
@@ -368,6 +364,7 @@
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshHome" object:nil];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {

@@ -166,7 +166,10 @@
                         [self.bottomLabel setHidden:NO];
                     }
                     
-                    [self.tableView reloadData];
+                    NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
+                    NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
+                    [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                    
                     [self.tableView.pullToRefreshView stopAnimating];
                     self.pullFinished = YES;
                 }

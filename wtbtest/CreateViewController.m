@@ -1177,7 +1177,8 @@
             if (succeeded) {
                 
                 NSLog(@"listing saved! %@", self.listing.objectId);
-                
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"justPostedListing" object:self.listing];
+
                 [self findRelevantItems];
                 
                 //check if intro mode so can show posted HUD otherwise just hide it
@@ -1254,11 +1255,12 @@
                     PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
                     [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
                     [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
+                    [bumpedQuery whereKeyExists:@"user"];
                     [bumpedQuery includeKey:@"user"];
                     bumpedQuery.limit = 10;
                     [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                         if (objects) {
-                            NSLog(@"these objects can be pushed to %@", objects);
+//                            NSLog(@"these objects can be pushed to %@", objects);
                             if (objects.count > 0) {
                                 //create safe date which is 3 days from now
                                 NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
