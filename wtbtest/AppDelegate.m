@@ -177,6 +177,7 @@
 
 //call to check messages if installation badge value doesnt work for ppl who havent enabled push
 -(void)checkMesages{
+    NSLog(@"checking messages");
     PFQuery *convosQuery = [PFQuery queryWithClassName:@"convos"];
     [convosQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
     [convosQuery whereKey:@"totalMessages" notEqualTo:@0];
@@ -239,13 +240,18 @@
                     
                     if (totalUnseen > 0) {
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
+                        self.installation.badge = totalUnseen;
                     }
                     else{
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                        self.installation.badge = 0;
                     }
+                    [self.installation saveEventually];
                 }
                 else{
                     [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                    self.installation.badge = 0;
+                    [self.installation saveEventually];
                 }
             }
             else{
@@ -365,6 +371,8 @@
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshHome" object:nil];
+    [self checkMesages];
+    [self checkForTBMessages];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {

@@ -308,28 +308,11 @@
         [self.filterButton setTitle:[NSString stringWithFormat:@"F I L T E R S  %lu",self.filtersArray.count] forState:UIControlStateNormal];
     }
     if ([PFUser currentUser]) {
-        if (![[[PFUser currentUser] objectForKey:@"searchIntro"] isEqualToString:@"YES"]) {
+        
+        if (![[[PFUser currentUser] objectForKey:@"searchIntro"] isEqualToString:@"YES"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"viewMorePressed"] != YES) {
             [self setUpIntroAlert];
         }
     }
-    
-//    PFQuery *listings = [PFQuery queryWithClassName:@"wantobuys"];
-//    [listings whereKeyExists:@"shownTo"];
-//    listings.limit = 300;
-//    [listings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//        if (objects) {
-//            
-//            for (PFObject *listing in objects) {
-//                [listing removeObjectForKey:@"shownTo"];
-//                [listing saveInBackground];
-//                NSLog(@"saved");
-//            }
-//            
-//        }
-//        else{
-//            
-//        }
-//    }];
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -1188,7 +1171,6 @@
 }
 
 - (void)handleBump:(NSNotification*)note {
-    NSLog(@"handling a fb friend bump!");
     [Flurry logEvent:@"FBFriendBump_Tapped"];
     NSString *listingID = [note object];
     BumpVC *vc = [[BumpVC alloc]init];
@@ -1202,17 +1184,12 @@
     PFObject *listing = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listingID];
     ListingController *vc = [[ListingController alloc]init];
     vc.listingObject = listing;
-    [self.navigationController pushViewController:vc animated:YES];
+    NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+    [nav pushViewController:vc animated:YES];
 }
 - (void)handleDrop:(NSNotification*)note {
     [Flurry logEvent:@"FBFriendBump_Dropped"];
     NSString *listingID = [note object];
-    
-    PFInstallation *currentInstallation = [PFInstallation currentInstallation];
-    if (currentInstallation.badge != 0) {
-        currentInstallation.badge = 0;
-        [currentInstallation saveEventually];
-    }
 
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
     self.dropDown = (notificatView *)[nib objectAtIndex:0];
@@ -1292,12 +1269,6 @@
     NSString *listingID = info[0];
     NSString *message = info[1];
     
-    PFInstallation *currentInstallation = [PFInstallation currentInstallation];
-    if (currentInstallation.badge != 0) {
-        currentInstallation.badge = 0;
-        [currentInstallation saveEventually];
-    }
-    
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
     self.dropDown = (notificatView *)[nib objectAtIndex:0];
     self.dropDown.delegate = self;
@@ -1372,7 +1343,8 @@
         PFObject *listingObj = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listing];
         ListingController *vc = [[ListingController alloc]init];
         vc.listingObject = listingObj;
-        [self.navigationController pushViewController:vc animated:YES];
+        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+        [nav pushViewController:vc animated:YES];
     }
 }
 
@@ -1489,10 +1461,12 @@
 -(void)insertLatestListing:(NSNotification*)note {
     PFObject *listing = [note object];
 //    NSLog(@"insert %@", listing);
-    [self.results insertObject:listing atIndex:0];
-    [self.resultIDs addObject:listing.objectId];
-    [self.collectionView performBatchUpdates:^{
-        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
-    } completion:nil];
+    if (self.results.count > 0) {
+        [self.results insertObject:listing atIndex:0];
+        [self.resultIDs addObject:listing.objectId];
+        [self.collectionView performBatchUpdates:^{
+            [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+        } completion:nil];
+    }
 }
 @end

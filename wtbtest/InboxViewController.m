@@ -42,7 +42,8 @@
     self.lastConvoIndex = [[NSIndexPath alloc]init];
     
     self.currentInstallation = [PFInstallation currentInstallation];
-
+    NSLog(@"current %@", self.currentInstallation);
+    
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
 }
 
@@ -166,9 +167,7 @@
                         [self.bottomLabel setHidden:NO];
                     }
                     
-                    NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
-                    NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
-                    [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                    [self.tableView reloadData];
                     
                     [self.tableView.pullToRefreshView stopAnimating];
                     self.pullFinished = YES;
@@ -184,7 +183,10 @@
                     int count = (int)[objects count];
                     self.lastSkipped = count;
                     
-                    [self.tableView reloadData];
+                    NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
+                    NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
+                    [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                    
                     [self.tableView.pullToRefreshView stopAnimating];
                     self.pullFinished = YES;
                     
@@ -220,10 +222,10 @@
                 int totalUnseen = 0;
                 int unseen = 0;
                 
-                if (self.currentInstallation.badge != 0) {
-                    self.currentInstallation.badge = 0;
-                    [self.currentInstallation saveEventually];
-                }
+//                if (self.currentInstallation.badge != 0) {
+//                    self.currentInstallation.badge = 0;
+//                    [self.currentInstallation saveEventually];
+//                }
                 
                 for (PFObject *convo in objects) {
                     PFObject *msgObject = [convo objectForKey:@"lastSent"];
@@ -251,6 +253,10 @@
                     if (totalUnseen > 0) {
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
                         self.navigationItem.title = [NSString stringWithFormat:@"M E S S A G E S  %d", totalUnseen];
+                        
+                        self.currentInstallation.badge = totalUnseen;
+                        [self.currentInstallation saveEventually];
+                        
                     }
                     else{
                         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
@@ -260,6 +266,11 @@
                 else{
                     [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
                     self.navigationItem.title = @"M E S S A G E S";
+                    
+                    if (self.currentInstallation.badge != 0) {
+                        self.currentInstallation.badge = 0;
+                        [self.currentInstallation saveEventually];
+                    }
                 }
             }
             else{
@@ -523,17 +534,24 @@
     if (newTabValue == 0) {
         self.navigationItem.title = @"M E S S A G E S";
         [self.navigationController tabBarItem].badgeValue = nil;
+        
+        self.currentInstallation.badge = 0;
     }
     
     else if (newTabValue > 0){
         self.navigationItem.title = [NSString stringWithFormat:@"M E S S A G E S  %d", newTabValue];
         [self.navigationController tabBarItem].badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
+        
+        self.currentInstallation.badge = newTabValue;
     }
     
     else{
         NSLog(@"error calc'n %d", newTabValue);
+        self.currentInstallation.badge = 0;
     }
-    
+
+    [self.currentInstallation saveEventually];
+
     self.selectedConvo = convoObject.objectId;
     
     MessageViewController *vc = [[MessageViewController alloc]init];

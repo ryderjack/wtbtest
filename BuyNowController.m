@@ -661,6 +661,13 @@ numberOfRowsInSection:(NSInteger)section
 
 }
 
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"viewMorePressed"] == YES) {
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"viewMorePressed"];
+    }
+}
+
 -(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
     if (section == 0) {
         UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.frame.size.width, 70)];

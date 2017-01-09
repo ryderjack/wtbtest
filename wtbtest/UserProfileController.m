@@ -263,7 +263,9 @@
                     [self.sellerSegmentControl setTitle:[NSString stringWithFormat:@"%lu Wanted", objects.count] forSegmentAtIndex:0];
                 }
             }
-            [self.collectionView reloadData];
+            [self.collectionView performBatchUpdates:^{
+                [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+            } completion:nil];
         }
         else{
             NSLog(@"error getting WTBs %@", error);

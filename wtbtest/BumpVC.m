@@ -20,12 +20,6 @@
     
     [self.plusOneImageView setHidden:YES];
     
-    PFInstallation *currentInstallation = [PFInstallation currentInstallation];
-    if (currentInstallation.badge != 0) {
-        currentInstallation.badge = 0;
-        [currentInstallation saveEventually];
-    }
-    
     if (self.listingID) {
         PFQuery *listingQ = [PFQuery queryWithClassName:@"wantobuys"];
         [listingQ whereKey:@"objectId" equalTo:self.listingID];

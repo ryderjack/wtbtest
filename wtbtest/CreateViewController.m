@@ -1790,6 +1790,7 @@
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     if (indexPath.row == self.buyNowArray.count-1 && self.buyNowArray.count > 1) {
         if (self.introMode == YES) {
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"viewMorePressed"];
             [self.navigationController dismissViewControllerAnimated:YES completion:^{
                 AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
                 appDelegate.tabBarController.selectedIndex = 1;
