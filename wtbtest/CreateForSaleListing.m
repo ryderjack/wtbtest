@@ -1168,11 +1168,11 @@
             [forSaleItem setObject:imageFile4 forKey:@"image4"];
         }
         
-//        PFQuery *latestIndex = [PFQuery queryWithClassName:@"forSaleItems"];
-//        [latestIndex countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-//            if (number) {
-//                NSNumber *index = [NSNumber numberWithInt:number+1];
-//                [forSaleItem setObject:index forKey:@"index"];
+        PFQuery *latestIndex = [PFQuery queryWithClassName:@"forSaleItems"];
+        [latestIndex countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+            if (number) {
+                NSNumber *index = [NSNumber numberWithInt:number+1];
+                [forSaleItem setObject:index forKey:@"index"];
                 [forSaleItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                     if (succeeded) {
                         [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
@@ -1200,18 +1200,17 @@
                         [self hidHUD];
                         [self.saveButton setEnabled:YES];
                         NSLog(@"error saving %@", error);
-                        
                     }
                 }];
-//            }
-//            else{
-//                NSLog(@"error counting %@", error);
-//                [self hidHUD];
-//                self.warningLabel.text = @"Save Error";
-//                [self.saveButton setEnabled:YES];
-//                return;
-//            }
-//        }];
+            }
+            else{
+                NSLog(@"error counting %@", error);
+                [self hidHUD];
+                self.warningLabel.text = @"Save Error";
+                [self.saveButton setEnabled:YES];
+                return;
+            }
+        }];
     }
 }
 
