@@ -92,6 +92,82 @@
     }];
 }
 
+-(void)recommendFromServer{
+    if (self.pullFinished == NO) {
+        return;
+    }
+    [self.anotherPromptButton setHidden:YES];
+    self.pullFinished = NO;
+    self.viewedItem = NO;
+    NSLog(@"PULL LOADING");
+    
+    [self.topLabel setHidden:YES];
+    [self.bottomLabel setHidden:YES];
+    [self.tableView.infiniteScrollingView stopAnimating];
+    
+    self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
+    [self.pullQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
+    [self.pullQuery whereKey:@"status" equalTo:@"live"];
+    self.pullQuery.limit = 1;
+    [self.pullQuery orderByDescending:@"createdAt"];
+    [self.pullQuery cancel];
+    [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            if (objects.count == 0) {
+                // whole page should become for sale stuff.. and header should say no WTBs
+                if (!self.topLabel && !self.bottomLabel) {
+                    self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
+                    self.topLabel.textAlignment = NSTextAlignmentCenter;
+                    [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
+                    self.topLabel.numberOfLines = 1;
+                    self.topLabel.textColor = [UIColor lightGrayColor];
+                    self.topLabel.text = @"No listings";
+                    [self.view addSubview:self.topLabel];
+                    
+                    self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+90, 250, 200)];
+                    self.bottomLabel.textAlignment = NSTextAlignmentCenter;
+                    [self.bottomLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:17]];
+                    self.bottomLabel.numberOfLines = 0;
+                    self.bottomLabel.textColor = [UIColor lightGrayColor];
+                    self.bottomLabel.text = @"Create listings by hitting the + button so we can suggest relevant products to buy right now from sellers on Bump";
+                    [self.view addSubview:self.bottomLabel];
+                }
+                else{
+                    self.topLabel.text = @"No listings";
+                    self.bottomLabel.text = @"Create listings by hitting the + button so we can suggest relevant products to buy right now from sellers on Bump";
+                    
+                    [self.topLabel setHidden:NO];
+                    [self.bottomLabel setHidden:NO];
+                }
+                [self.tableView.pullToRefreshView stopAnimating];
+                self.pullFinished = YES;
+                [self.anotherPromptButton setHidden:NO];
+                [self.anotherPromptButton setTitle:@"C R E A T E  A  L I S T I N G" forState:UIControlStateNormal];
+                return;
+            }
+            [self.anotherPromptButton setHidden:YES];
+            
+            NSLog(@"got WTBs: %lu", objects.count);
+            
+            for (PFObject *WTB in objects) {
+                
+                //call server
+                NSDictionary *params = @{@"wantedKeywords": [WTB objectForKey:@"keywords"]};
+                
+                [PFCloud callFunctionInBackground:@"productSearch" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                    if (!error) {
+                        NSLog(@"search response %@", response);
+                    }
+                    else{
+                        NSLog(@"ebay error %@", error);
+                    }
+                }];
+                
+            }
+        }
+    }];
+}
+
 -(void)loadWTBs{
     if (self.pullFinished == NO) {
         return;
@@ -316,52 +392,6 @@
                             
                             [self.tableView.pullToRefreshView stopAnimating];
                             self.pullFinished = YES;
-                            
-                            if (self.wtbArray.count > 0) {
-//                                for (PFObject *WTB in self.wtbArray) {
-//                                    NSLog(@"WTB %@", WTB);
-                                    NSDictionary *params = @{@"itemTitle": [self.wtbArray[0] objectForKey:@"title"], @"price": @1000, @"limit": @2};
-                                    
-                                    [PFCloud callFunctionInBackground:@"eBayFetch" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                                        if (!error) {
-                                            
-                                            for (NSDictionary *itemDict in response) {
-                                                NSLog(@"item dict %@", itemDict);
-                                                
-                                                //format the for sale object that's from ebay
-                                                NSLog(@"got ebay url %@", [itemDict valueForKey:@"itemImageURL"]);
-
-                                                PFObject *ebayItem = [PFObject objectWithClassName:@"forSaleItems"];
-                                                NSLog(@"1");
-
-                                                ebayItem[@"imageURL"] = [itemDict valueForKey:@"itemImageURL"];
-                                                NSLog(@"2");
-
-                                                ebayItem[@"retailer"] = @"ebay";
-                                                NSLog(@"3");
-
-                                                
-                                                //then add to buyNow array of this WTB object at index 0
-                                                NSMutableArray *mut = [NSMutableArray arrayWithArray:[self.wtbArray[0]objectForKey:@"buyNow"]];
-                                                
-                                                NSLog(@"got MUT %@", mut);
-                                                
-                                                [mut insertObject:ebayItem atIndex:0];
-                                                
-                                                [self.wtbArray[0] setObject:mut forKey:@"buyNow"];
-                                                
-                                                NSLog(@"FOR SALE: %@", [self.wtbArray[0] objectForKey:@"buyNow"]);
-                                                
-                                                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-                                                [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-                                            }
-                                        }
-                                        else{
-                                            NSLog(@"ebay error %@", error);
-                                        }
-                                    }];
-//                                }
-                            }
                         }
                     }
                     else{
@@ -618,16 +648,11 @@ numberOfRowsInSection:(NSInteger)section
         }
         
         PFObject *WTB = [self.wtbArray objectAtIndex:self.currentIndexPath.row];
-        
-        if ([[WTS objectForKey:@"retailer"]isEqualToString:@"ebay"]) {
-            NSLog(@"got an ebay item");
-        }
-        else{
-            //setup cell
-            [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
-            [cell.itemView loadInBackground];
-            [WTS setObject:WTB forKey:@"WTB"];
-        }
+
+        //setup cell
+        [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
+        [cell.itemView loadInBackground];
+        [WTS setObject:WTB forKey:@"WTB"];
     }
     
     cell.itemView.layer.cornerRadius = 35;
@@ -718,7 +743,7 @@ numberOfRowsInSection:(NSInteger)section
         self.viewedItem = NO;
     }
     else{
-        [self loadWTBs];
+        [self recommendFromServer];
     }
 
 }
