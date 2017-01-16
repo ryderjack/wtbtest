@@ -13,6 +13,7 @@
 #import <FBSDKLoginKit/FBSDKLoginKit.h>
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
+#import <ParseUI/ParseUI.h>
 
 @interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate>
 NS_ASSUME_NONNULL_BEGIN
@@ -26,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *regCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *currencyCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *depopCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *friendsCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *nameField;
@@ -60,6 +62,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL pressedCam;
 
 @property (nonatomic, strong) UIImagePickerController *picker;
+
+@property (nonatomic, strong) UIButton *longRegButton;
+@property (nonatomic) BOOL regShowing;
+
+//friends
+@property (weak, nonatomic) IBOutlet UILabel *friendsLabel;
+@property (weak, nonatomic) IBOutlet PFImageView *friendOneImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *friendTwoImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *friendThreeImageView;
+@property (nonatomic) BOOL showFriendsCell;
 
 NS_ASSUME_NONNULL_END
 

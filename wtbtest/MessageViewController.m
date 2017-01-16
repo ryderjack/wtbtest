@@ -613,13 +613,19 @@
                 int badgeInt = [badgeString intValue];
                 int newCount = (int)[objects count];
                 int updatedBadge = badgeInt - newCount;
+                
+                PFInstallation *current = [PFInstallation currentInstallation];
+                
                 if (updatedBadge == 0) {
                     [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+                    current.badge = 0;
                 }
                 //only set updated badge if its a +ve no.
                 else if (updatedBadge > 0){
                     [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", updatedBadge]];
+                    current.badge = updatedBadge;
                 }
+                [current saveEventually];
                 
                 //reregister for notifications again
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleNotification:) name:@"NewMessage" object:nil];
@@ -961,13 +967,34 @@
         }]];
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose pictures" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            GMImagePickerController *picker = [[GMImagePickerController alloc] init];
-            picker.delegate = self;
-            picker.displaySelectionInfoToolbar = YES;
-            picker.displayAlbumsNumberOfAssets = YES;
-            picker.title = @"Choose pictures";
-            picker.mediaTypes = @[@(PHAssetMediaTypeImage)];
-            [self presentViewController:picker animated:YES completion:nil];
+            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+                switch (status) {
+                    case PHAuthorizationStatusAuthorized:{
+                        GMImagePickerController *picker = [[GMImagePickerController alloc] init];
+                        picker.delegate = self;
+                        picker.displaySelectionInfoToolbar = YES;
+                        picker.displayAlbumsNumberOfAssets = YES;
+                        picker.title = @"Choose pictures";
+                        picker.mediaTypes = @[@(PHAssetMediaTypeImage)];
+                        [self presentViewController:picker animated:YES completion:nil];
+                    }
+                        break;
+                    case PHAuthorizationStatusRestricted:{
+                        NSLog(@"restricted");
+                    }
+                        break;
+                    case PHAuthorizationStatusDenied:
+                    {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [self showCustomAlert];
+                        });
+                        NSLog(@"denied");
+                    }
+                        break;
+                    default:
+                        break;
+                }
+            }];
         }]];
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Goto my PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -1000,13 +1027,34 @@
         
         //pay with paypal at all times here? not just used as a backup when an order has been created?
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose pictures" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            GMImagePickerController *picker = [[GMImagePickerController alloc] init];
-            picker.delegate = self;
-            picker.displaySelectionInfoToolbar = YES;
-            picker.displayAlbumsNumberOfAssets = YES;
-            picker.title = @"Choose pictures";
-            picker.mediaTypes = @[@(PHAssetMediaTypeImage)];
-            [self presentViewController:picker animated:YES completion:nil];
+            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+                switch (status) {
+                    case PHAuthorizationStatusAuthorized:{
+                        GMImagePickerController *picker = [[GMImagePickerController alloc] init];
+                        picker.delegate = self;
+                        picker.displaySelectionInfoToolbar = YES;
+                        picker.displayAlbumsNumberOfAssets = YES;
+                        picker.title = @"Choose pictures";
+                        picker.mediaTypes = @[@(PHAssetMediaTypeImage)];
+                        [self presentViewController:picker animated:YES completion:nil];
+                    }
+                        break;
+                    case PHAuthorizationStatusRestricted:{
+                        NSLog(@"restricted");
+                        }
+                        break;
+                    case PHAuthorizationStatusDenied:
+                    {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [self showCustomAlert];
+                        });
+                        NSLog(@"denied");
+                    }
+                        break;
+                    default:
+                        break;
+                }
+            }];
         }]];
     }
     
@@ -1378,12 +1426,7 @@
             NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
             NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
             NSInteger itemIndex = [self.messagesParseArray indexOfObject:self.sentMessagesParseArray[0]];
-            
-            NSLog(@"sent array that we're checking against %@",self.sentMessagesParseArray);
-            
             NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:(lastItemIndex -itemIndex)inSection:lastSectionIndex];
-            
-            
             
             if (indexPath == pathToLastItem) {
                 NSString *statusString = [[self.sentMessagesParseArray objectAtIndex:0]objectForKey:@"status"];
@@ -2139,4 +2182,103 @@
     UIButton *button = [[UIButton alloc]init];
     [self didPressSendButton:button withMessageText:offerString senderId:self.senderId senderDisplayName:self.senderDisplayName date:[NSDate date]];
 }
+
+-(void)showCustomAlert{
+    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.searchBgView.alpha = 0.0;
+    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
+    self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
+    self.customAlert.delegate = self;
+    self.customAlert.titleLabel.text = @"Permssion Needed";
+    self.customAlert.messageLabel.text = @"Tap to goto Settings & enable Bump's Photos Permission";
+    self.customAlert.numberOfButtons = 2;
+    [self.customAlert.secondButton setTitle:@"S E T T I N G S" forState:UIControlStateNormal];
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
+    }
+    else{
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
+    }
+    
+    self.customAlert.layer.cornerRadius = 10;
+    self.customAlert.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.customAlert];
+    
+    [UIView animateWithDuration:1.5
+                          delay:0.2
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake(0, 0, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake(0, 0, 300, 188)]; //iPhone 6/7 specific
+                            }
+                            self.customAlert.center = self.view.center;
+                            
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+
+-(void)donePressed{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.searchBgView = nil;
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                            }
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.customAlert setAlpha:0.0];
+                         self.customAlert = nil;
+                     }];
+}
+
+-(void)firstPressed{
+    [self donePressed];
+}
+
+-(void)secondPressed{
+    //goto settings
+    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+    [self donePressed];
+}
 @end
+

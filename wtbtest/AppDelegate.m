@@ -11,7 +11,6 @@
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import "NavigationController.h"
 #import <ParseFacebookUtilsV4/PFFacebookUtils.h>
-#import "Flurry.h"
 #import <Fabric/Fabric.h>
 #import <Crashlytics/Crashlytics.h>
 #import "iRate.h"
@@ -36,30 +35,25 @@
     
     [Parse initializeWithConfiguration:[ParseClientConfiguration configurationWithBlock:^(id<ParseMutableClientConfiguration> configuration) {
 
-        // checks prior to distributing:
-            //1. server NOT PREPROD!
-            //2. tab number
-            //3. messaging/offering items to yourself
+        // checks prior to distributing, search for //CHANGE to see major dev changes
         
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
         //local host
-//        configuration.server = @"http://localhost:1337/parse";
+        configuration.server = @"http://localhost:1337/parse";
         
         //production
 //        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
         
         //preproduction
-        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
+//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
     }]];
 
-//    [Flurry startSession:@"9Y63FGHCCGZQJDQTCTMP"]; ////////////////////CHANGE
 //    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
 
     if ([PFUser currentUser]) {
-        [Flurry setUserID:[NSString stringWithFormat:@"%@", [PFUser currentUser].objectId]];
         [self logUser];
     }
     else{
@@ -177,7 +171,6 @@
 
 //call to check messages if installation badge value doesnt work for ppl who havent enabled push
 -(void)checkMesages{
-    NSLog(@"checking messages");
     PFQuery *convosQuery = [PFQuery queryWithClassName:@"convos"];
     [convosQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
     [convosQuery whereKey:@"totalMessages" notEqualTo:@0];
@@ -296,6 +289,14 @@
     [self.installation saveInBackground];
 }
 
+-(void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification{
+    [Answers logContentViewWithName:@"Opened First Reminder Push"
+                        contentType:@""
+                          contentId:@""
+                   customAttributes:@{}];
+    self.tabBarController.selectedIndex = 1;
+}
+
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     [self checkMesages];
     [self checkForTBMessages];
@@ -320,10 +321,6 @@
             //open listing
             self.tabBarController.selectedIndex = 0;
             [[NSNotificationCenter defaultCenter] postNotificationName:@"listingBumped" object:listing];
-        }
-        else if([strMsg containsString:@"Congrats on your first wanted listing"]){
-            //open buy now
-            self.tabBarController.selectedIndex = 1;
         }
         else if([bumpedStatus isEqualToString:@"YES"]){
             //open BumpedVC

@@ -12,7 +12,7 @@
 #import "MessageViewController.h"
 #import "UserProfileController.h"
 #import "CreateForSaleListing.h"
-#import "Flurry.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface ForSaleListing ()
 
@@ -715,7 +715,11 @@
 }
 - (IBAction)messageSellerPressed:(id)sender {
     if (self.relatedProduct == YES) {
-        [Flurry logEvent:@"VISITING_END"];
+        [Answers logContentViewWithName:@"Visit Store Pressed"
+                            contentType:@"END"
+                              contentId:@""
+                       customAttributes:@{}];
+        
         //goto website
         NSString *URLString = [self.listingObject objectForKey:@"link"];
         self.webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];

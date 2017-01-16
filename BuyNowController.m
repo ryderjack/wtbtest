@@ -15,7 +15,7 @@
 #import "NavigationController.h"
 #import "MessagesTutorial.h"
 #import "FeaturedItems.h"
-#import "Flurry.h"
+#import <Crashlytics/Crashlytics.h>
 #import "ChatWithBump.h"
 
 @interface BuyNowController ()
@@ -142,6 +142,7 @@
                 [self.tableView.pullToRefreshView stopAnimating];
                 self.pullFinished = YES;
                 [self.anotherPromptButton setHidden:NO];
+                [self.anotherPromptButton setTitle:@"C R E A T E  A  L I S T I N G" forState:UIControlStateNormal];
                 return;
             }
             [self.anotherPromptButton setHidden:YES];
@@ -150,7 +151,6 @@
             
             int count = (int)[objects count];
             self.skipped = count;
-            NSLog(@"skipped: %d", count);
             
             __block int WTBCheck = 0;
 
@@ -180,36 +180,28 @@
                             
                             NSArray* result = [set1 allObjects];
                             
-//                            NSLog(@"result array %@", result);
+                            NSLog(@"result %@", result);
                             
-                            //calc 90% of WTB keyword counts
+                            //calc 80% of WTB keyword match
                             float sixty = WTBKeywords.count*0.8;
                             int roundedFloat = roundf(sixty);
                             
-//                            NSLog(@"rounded %d", roundedFloat);
-                            
-                            if (result.count >= roundedFloat && roundedFloat>0 && result.count >2) {
-//                                NSLog(@"match");
-                                //WTB has at least 2 matching keywords to this WTS and 90% keywords match
-//                                NSLog(@"WTB: %@     WTS: %@", [WTB objectForKey:@"title"], [forSale objectForKey:@"description"]);
+                            if (result.count >= roundedFloat && roundedFloat>0 ) { //&& result.count >2 CHANGE
                                 [WTB addObject:forSale forKey:@"buyNow"];
                             }
                         }
                         
                         NSArray *matches = [WTB objectForKey:@"buyNow"];
-//                        NSLog(@"matches %@", matches);
                         
                         if (matches.count > 0) {
                             [wtbHoldingArray addObject:WTB];
                         }
 
                         if (count == WTBCheck) {
-                            //done last one, now reload
-//                            NSLog(@"time to reload with holding %@", wtbHoldingArray);
                             
+                            //done last one, now reload
                             NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc]
                                                                 initWithKey: @"createdAt" ascending: NO];
-                            
                             NSArray *sortedArray = [wtbHoldingArray sortedArrayUsingDescriptors: [NSArray arrayWithObject:sortDescriptor]];
                             
                             [self.wtbArray removeAllObjects];
@@ -220,6 +212,8 @@
                             //labels
                             if (self.wtbArray.count == 0) {
                                 [self.anotherPromptButton setHidden:NO];
+                                [self.anotherPromptButton setTitle:@"C R E A T E  A N O T H E R  L I S T I N G" forState:UIControlStateNormal];
+
                                 if (!self.topLabel && !self.bottomLabel) {
                                     self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                                     self.topLabel.textAlignment = NSTextAlignmentCenter;
@@ -250,7 +244,9 @@
                                 [self.bottomLabel setHidden:YES];
                                 
                                 if (self.showRelated == YES) {
-                                    //add R E L A T E D object for TV
+                                    //clear products first to avoid crash for tapping on items which were from previous session
+                                    [self.products removeAllObjects];
+                                    
                                     PFQuery *productQuery = [PFQuery queryWithClassName:@"Products"];
                                     if ([[PFUser currentUser]objectForKey:@"wantedWords"]) {
                                         [productQuery whereKey:@"keywords" containedIn:[[PFUser currentUser]objectForKey:@"wantedWords"]];
@@ -261,7 +257,6 @@
                                         if (objects) {
                                             //once got objects just reload the related cell
                                             NSLog(@"got products");
-                                            [self.products removeAllObjects];
                                             [self.products addObjectsFromArray:objects];
                                             
                                             [self.productIDs removeAllObjects];
@@ -321,6 +316,52 @@
                             
                             [self.tableView.pullToRefreshView stopAnimating];
                             self.pullFinished = YES;
+                            
+                            if (self.wtbArray.count > 0) {
+//                                for (PFObject *WTB in self.wtbArray) {
+//                                    NSLog(@"WTB %@", WTB);
+                                    NSDictionary *params = @{@"itemTitle": [self.wtbArray[0] objectForKey:@"title"], @"price": @1000, @"limit": @2};
+                                    
+                                    [PFCloud callFunctionInBackground:@"eBayFetch" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                                        if (!error) {
+                                            
+                                            for (NSDictionary *itemDict in response) {
+                                                NSLog(@"item dict %@", itemDict);
+                                                
+                                                //format the for sale object that's from ebay
+                                                NSLog(@"got ebay url %@", [itemDict valueForKey:@"itemImageURL"]);
+
+                                                PFObject *ebayItem = [PFObject objectWithClassName:@"forSaleItems"];
+                                                NSLog(@"1");
+
+                                                ebayItem[@"imageURL"] = [itemDict valueForKey:@"itemImageURL"];
+                                                NSLog(@"2");
+
+                                                ebayItem[@"retailer"] = @"ebay";
+                                                NSLog(@"3");
+
+                                                
+                                                //then add to buyNow array of this WTB object at index 0
+                                                NSMutableArray *mut = [NSMutableArray arrayWithArray:[self.wtbArray[0]objectForKey:@"buyNow"]];
+                                                
+                                                NSLog(@"got MUT %@", mut);
+                                                
+                                                [mut insertObject:ebayItem atIndex:0];
+                                                
+                                                [self.wtbArray[0] setObject:mut forKey:@"buyNow"];
+                                                
+                                                NSLog(@"FOR SALE: %@", [self.wtbArray[0] objectForKey:@"buyNow"]);
+                                                
+                                                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+                                                [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                                            }
+                                        }
+                                        else{
+                                            NSLog(@"ebay error %@", error);
+                                        }
+                                    }];
+//                                }
+                            }
                         }
                     }
                     else{
@@ -356,6 +397,8 @@
                 return;
             }
             [self.anotherPromptButton setHidden:NO];
+            [self.anotherPromptButton setTitle:@"C R E A T E  A N O T H E R  L I S T I N G" forState:UIControlStateNormal];
+
 //            NSLog(@"infinite: got %u WTBs", objects.count);
             
             int count = (int)[objects count];
@@ -442,7 +485,6 @@
     PFObject *WTB = [self.wtbArray objectAtIndex:indexPath.row];
     
     if ([WTB objectForKey:@"field"]) {
-        NSLog(@"it's the related cell");
         cell.wtbTitle.text = @"R E L A T E D";
         cell.timeLabel.text = @"";
         [cell.wtbTitle setTextColor:[UIColor blackColor]];
@@ -566,6 +608,8 @@ numberOfRowsInSection:(NSInteger)section
     else{
         NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
         
+        NSLog(@"collection view array %@", collectionViewArray);
+        
         PFObject *WTS = collectionViewArray[indexPath.item];
         if ([self.viewsArray containsObject:WTS.objectId]) {
         }
@@ -575,10 +619,15 @@ numberOfRowsInSection:(NSInteger)section
         
         PFObject *WTB = [self.wtbArray objectAtIndex:self.currentIndexPath.row];
         
-        //setup cell
-        [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
-        [cell.itemView loadInBackground];
-        [WTS setObject:WTB forKey:@"WTB"];
+        if ([[WTS objectForKey:@"retailer"]isEqualToString:@"ebay"]) {
+            NSLog(@"got an ebay item");
+        }
+        else{
+            //setup cell
+            [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
+            [cell.itemView loadInBackground];
+            [WTS setObject:WTB forKey:@"WTB"];
+        }
     }
     
     cell.itemView.layer.cornerRadius = 35;
@@ -611,11 +660,11 @@ numberOfRowsInSection:(NSInteger)section
 
 -(void)collectionView:(AFCollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
-    [Flurry logEvent:@"BuyNow_ForSaleItemSelected"];
+    
     self.viewedItem = YES;
     ForSaleListing *vc = [[ForSaleListing alloc]init];
     
-    if (collectionView.indexPath.row == 1) {
+    if (collectionView.indexPath.row == 1 && self.showRelated == YES) {
         //related tapped
         PFObject *product = self.products[indexPath.item];
         
@@ -623,11 +672,21 @@ numberOfRowsInSection:(NSInteger)section
         vc.source = @"related";
         vc.pureWTS = NO;
         vc.relatedProduct = YES;
+        
+        [Answers logContentViewWithName:@"For Sale Item Selected"
+                            contentType:@"Related"
+                              contentId:product.objectId
+                       customAttributes:@{}];
     }
     else{
         //normal
         NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
         PFObject *WTS = collectionViewArray[indexPath.item];
+        
+        [Answers logContentViewWithName:@"For Sale Item Selected"
+                            contentType:@"Recommended"
+                              contentId:WTS.objectId
+                       customAttributes:@{}];
         
         vc.listingObject = WTS;
         vc.WTBObject = [WTS objectForKey:@"WTB"];
@@ -646,7 +705,10 @@ numberOfRowsInSection:(NSInteger)section
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    [Flurry logEvent:@"BuyNow_Tapped"];
+    [Answers logContentViewWithName:@"Buy Now Tapped"
+                        contentType:@""
+                          contentId:@""
+                   customAttributes:@{}];
     
     [self.infiniteQuery cancel];
     [self.tableView.infiniteScrollingView stopAnimating];
@@ -704,7 +766,11 @@ numberOfRowsInSection:(NSInteger)section
 }
 
 -(void)pushFeatured{
-    [Flurry logEvent:@"Featured_Tapped"];
+    [Answers logContentViewWithName:@"Featured Tapped"
+                        contentType:@""
+                          contentId:@""
+                   customAttributes:@{}];
+    
     FeaturedItems *vc = [[FeaturedItems alloc]init];
     [self.navigationController pushViewController:vc animated:YES];
 }

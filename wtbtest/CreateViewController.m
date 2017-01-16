@@ -8,7 +8,7 @@
 
 #import "CreateViewController.h"
 #import "NavigationController.h"
-#import "Flurry.h"
+#import <Crashlytics/Crashlytics.h>
 #import "WelcomeViewController.h"
 #import "UIImage+Resize.h"
 #import "ForSaleCell.h"
@@ -81,7 +81,7 @@
     self.firstSize = @"";
     self.secondSize = @"";
     self.thirdSize = @"";
-    self.resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain target:self action:@selector(resetForm)];
+    self.resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain target:self action:@selector(resetFormAsk)];
     
     self.buyNowArray = [NSMutableArray array];
     self.buyNowIDs = [NSMutableArray array];
@@ -89,17 +89,19 @@
     if (self.editFromListing == YES) {
         [self listingSetup];
         
-        self.navigationItem.rightBarButtonItem = nil;
+        self.navigationItem.hidesBackButton = YES;
         
         UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
         self.navigationItem.leftBarButtonItem = cancelButton;
+        
+        UIBarButtonItem *updateButton = [[UIBarButtonItem alloc] initWithTitle:@"Update" style:UIBarButtonItemStylePlain target:self action:@selector(wantobuyPressed:)];
+        self.navigationItem.rightBarButtonItem = updateButton;
     }
-    
-    if (self.introMode == YES) {
+    else if (self.introMode == YES) {
         self.navigationItem.hidesBackButton = YES;
     }
     else{
-        self.navigationItem.rightBarButtonItem = self.resetButton;
+        self.shouldShowReset = YES;
     }
     
     //add done button to number pad keyboard on pay field
@@ -145,20 +147,29 @@
     }
     
     if ([self.status isEqualToString:@"new"]) {
-        [self resetForm];
+        self.shouldShowReset = YES;
+        [self resetAll];
     }
-    else if ([self.status isEqualToString:@"edit"] && [self.resetButton.title isEqualToString:@"Reset"]) {
-        [self.navigationItem setRightBarButtonItems:nil animated:YES];
+    else if ([self.status isEqualToString:@"edit"]) {
         [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     }
     else if(self.introMode != YES){
-        self.navigationItem.rightBarButtonItem = self.resetButton;
-        [Flurry logEvent:@"Create_Tapped"];
+        self.shouldShowReset = YES;
+        [Answers logContentViewWithName:@"Create Tapped"
+                            contentType:@""
+                              contentId:@""
+                       customAttributes:@{}];
     }
     
     if (self.shouldShowHUD == YES) {
         [self showHUD];
     }
+    
+    if (self.shouldShowReset == YES && self.somethingChanged == YES) {
+        NSLog(@"setting");
+        self.navigationItem.leftBarButtonItem = self.resetButton;
+    }
+    
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -456,6 +467,7 @@
 }
 
 -(void)textFieldDidBeginEditing:(UITextField *)textField{
+    self.somethingChanged = YES;
     if (textField == self.payField) {
         self.payField.text = [NSString stringWithFormat:@"%@", self.currencySymbol];
     }
@@ -465,6 +477,9 @@
     if ([textView.text isEqualToString:@"Leave blank if none"]) {
         textView.text = @"";
         textView.textColor = [UIColor colorWithRed:74/255.0f green:74/255.0f blue:74/255.0f alpha:1.0f];
+    }
+    else{
+        self.somethingChanged = YES;
     }
 }
 
@@ -552,6 +567,7 @@
     return YES;
 }
 -(void)alertSheet{
+    self.somethingChanged = YES;
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -614,7 +630,7 @@
     self.webViewController.doneButtonTitle = @"Choose";
     self.webViewController.paypalMode = NO;
     self.webViewController.infoMode = NO;
-    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 
@@ -937,6 +953,9 @@
 }
 
 - (IBAction)wantobuyPressed:(id)sender {
+    if (self.editFromListing == YES) {
+        [self.navigationItem.rightBarButtonItem setEnabled:NO];
+    }
     [self.saveButton setEnabled:NO];
     self.warningLabel.text = @"";
     [self removeKeyboard];
@@ -945,15 +964,24 @@
         [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Pro Tip: a more accurate price leads to more sellers getting in touch"];
         self.warningLabel.text = @"Enter a valid price";
         [self.saveButton setEnabled:YES];
+        if (self.editFromListing == YES) {
+            [self.navigationItem.rightBarButtonItem setEnabled:YES];
+        }
     }
     else if([self.chooseCategroy.text isEqualToString:@"Accessories"] && ( [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]])){
         NSLog(@"accessories selected but haven't filled everything else in");
         self.warningLabel.text = @"Fill out all the above fields";
         [self.saveButton setEnabled:YES];
+        if (self.editFromListing == YES) {
+            [self.navigationItem.rightBarButtonItem setEnabled:YES];
+        }
     }
     else if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
         self.warningLabel.text = @"Fill out all the above fields";
         [self.saveButton setEnabled:YES];
+        if (self.editFromListing == YES) {
+            [self.navigationItem.rightBarButtonItem setEnabled:YES];
+        }
     }
     else{
         [self showHUD];
@@ -1110,6 +1138,17 @@
         
         if (self.photostotal == 1) {
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            
+            if (data == nil) {
+                //prevent crash when creating a PFFile with nil data
+                self.warningLabel.text = @"Image Error, try adding images again";
+                [self.saveButton setEnabled:YES];
+                if (self.editFromListing == YES) {
+                    [self.navigationItem.rightBarButtonItem setEnabled:YES];
+                }
+                return;
+            }
+            
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
             [self.listing setObject:imageFile1 forKey:@"image1"];
             
@@ -1175,20 +1214,29 @@
         }
         [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
-                
+
                 NSLog(@"listing saved! %@", self.listing.objectId);
-                [[NSNotificationCenter defaultCenter] postNotificationName:@"justPostedListing" object:self.listing];
 
                 [self findRelevantItems];
                 
                 //check if intro mode so can show posted HUD otherwise just hide it
                 if (self.introMode == YES) {
-                    [Flurry logEvent:@"WTB_INTRO_DONE"];
+                    [Answers logContentViewWithName:@"Listing Complete"
+                                        contentType:@"Intro Mode"
+                                          contentId:self.listing.objectId
+                                   customAttributes:@{}];
+                }
+                else{
+                    [Answers logContentViewWithName:@"Listing Complete"
+                                        contentType:@"Normal"
+                                          contentId:self.listing.objectId
+                                   customAttributes:@{}];
                 }
                 
                 //check if in edit mode as only increment post number if not in edit mode
                 if (![self.status isEqualToString:@"edit"]) {
                     NSLog(@"not in edit mode so increment post number of: %@", [[PFUser currentUser] objectForKey:@"postNumber"]);
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"justPostedListing" object:self.listing];
                     
                     if (![[PFUser currentUser] objectForKey:@"postNumber"]) {
                         NSLog(@"hasn't posted before so schedule a local push");
@@ -1279,6 +1327,10 @@
                                     [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                                         if (!error) {
                                             NSLog(@"push response %@", response);
+                                            [Answers logContentViewWithName:@"Sent FB Friend Bump Push"
+                                                                contentType:@""
+                                                                  contentId:self.listing.objectId
+                                                           customAttributes:@{}];
                                         }
                                         else{
                                             NSLog(@"push error %@", error);
@@ -1316,8 +1368,22 @@
     self.status = item;
 }
 
--(void)resetForm{
-    NSLog(@"reset form with status %@", self.status);
+-(void)resetFormAsk{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Reset listing?" message:@"Are you sure you want to start your listing again?" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Reset" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self resetAll];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)resetAll{
+    //reset displaying reset button
+    self.navigationItem.leftBarButtonItem = nil;
+    self.somethingChanged = NO;
+    
     [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
     self.status = @"";
     self.chooseCategroy.text = @"select";
@@ -1363,6 +1429,7 @@
     if (![self.status isEqualToString:@"edit"]) {
         [self useCurrentLoc];
     }
+
 }
 -(void)lastId:(ListingCompleteView *)controller didFinishEnteringItem:(NSString *)item{
     self.lastId = item;
@@ -1694,7 +1761,6 @@
 }
 
 -(void)hideSuccess{
-    self.navigationItem.rightBarButtonItem = self.resetButton;
     [UIView animateWithDuration:1.0
                           delay:0.0
          usingSpringWithDamping:0.1
@@ -1820,7 +1886,7 @@
         [self.navigationController dismissViewControllerAnimated:YES completion:nil];
     }
     else{
-        [self resetForm];
+        [self resetAll];
         self.tabBarController.selectedIndex = 1;
     }
 }
@@ -1828,8 +1894,10 @@
 -(void)editPressed{
     self.status = @"edit";
     self.lastId = self.listing.objectId;
-    [self.navigationItem setRightBarButtonItems:nil animated:YES];
+    self.navigationItem.leftBarButtonItem = nil;
     [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
+    self.shouldShowReset = NO;
+    
     [self hideSuccess];
 }
 
@@ -1858,9 +1926,9 @@
 
 -(void)createPressed{
     self.status = @"new";
-    self.navigationItem.rightBarButtonItem = self.resetButton;
+    self.navigationItem.leftBarButtonItem = self.resetButton;
     [self.saveButton setImage:[UIImage imageNamed:@"buyButton"] forState:UIControlStateNormal];
-    [self resetForm];
+    [self resetAll];
     [self hideSuccess];
 }
 

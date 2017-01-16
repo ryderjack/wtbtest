@@ -9,7 +9,7 @@
 #import "searchedViewC.h"
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "NavigationController.h"
-#import "Flurry.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface searchedViewC ()
 
@@ -337,10 +337,14 @@
 }
 
 -(void)cellTapped:(id)sender{
-    [Flurry logEvent:@"WTBBumpedSearch"];
+    
     NSIndexPath *indexPath = [self.collectionView indexPathForCell:(ExploreCell*)sender];
     PFObject *listingObject = [self.results objectAtIndex:indexPath.item];
     ExploreCell *cell = sender;
+    [Answers logContentViewWithName:@"Bumped a listing"
+                        contentType:@"Search"
+                          contentId:listingObject.objectId
+                   customAttributes:@{}];
     
     NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[listingObject objectForKey:@"bumpArray"]];
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {

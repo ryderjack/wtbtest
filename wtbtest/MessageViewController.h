@@ -15,8 +15,10 @@
 #import <TOWebViewController.h>
 #import "MakeOfferController.h"
 #import <PulsingHaloLayer.h>
+#import "customAlertViewClass.h"
 
-@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate, GMImagePickerControllerDelegate,TOWebDelegate, MakeOfferDelegate>
+
+@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate, GMImagePickerControllerDelegate,TOWebDelegate, MakeOfferDelegate, customAlertDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -94,5 +96,9 @@
 @property (nonatomic, strong) JSQMessagesAvatarImage *avaImage;
 
 @property (nonatomic, strong) PulsingHaloLayer *halo;
+
+//custom alert view
+@property (nonatomic, strong) customAlertViewClass *customAlert;
+@property (nonatomic, strong) UIView *searchBgView;
 
 @end

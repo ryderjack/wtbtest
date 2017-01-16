@@ -616,41 +616,49 @@
 }
 
 -(void)resetForm{
-    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
-    self.chooseCategroy.text = @"select";
-    self.chooseCondition.text = @"select";
-    self.chooseLocation.text = @"select";
-    self.chooseSize.text = @"select";
-    self.payField.text = @"";
-    self.descriptionField.text = @"e.g. Supreme Union Jack Bogo #box #logo";
-    self.warningLabel.text = @"";
+    //ask if sure
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Reset listing?" message:@"Are you sure you want to start your listing again?" preferredStyle:UIAlertControllerStyleAlert];
     
-    self.firstImageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.secondImageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.thirdImageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.fourthImageView.contentMode = UIViewContentModeScaleAspectFit;
-    
-    [self.firstImageView setImage:[UIImage imageNamed:@"addImage"]];
-    [self.secondImageView setImage:[UIImage imageNamed:@"camHolder"]];
-    [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
-    [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
-    
-    [self.firstCam setEnabled:YES];
-    [self.secondCam setEnabled:NO];
-    [self.thirdCam setEnabled:NO];
-    [self.fourthCam setEnabled:NO];
-    
-    [self.firstDelete setHidden:YES];
-    [self.secondDelete setHidden:YES];
-    [self.thirdDelete setHidden:YES];
-    [self.fourthDelete setHidden:YES];
-    
-    [self.saveButton setImage:[UIImage imageNamed:@"buyButton"] forState:UIControlStateNormal];
-    
-    self.photostotal = 0;
-    self.camButtonTapped = 0;
-    
-    self.geopoint = nil;
+    [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Reset" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
+        self.chooseCategroy.text = @"select";
+        self.chooseCondition.text = @"select";
+        self.chooseLocation.text = @"select";
+        self.chooseSize.text = @"select";
+        self.payField.text = @"";
+        self.descriptionField.text = @"e.g. Supreme Union Jack Bogo #box #logo";
+        self.warningLabel.text = @"";
+        
+        self.firstImageView.contentMode = UIViewContentModeScaleAspectFit;
+        self.secondImageView.contentMode = UIViewContentModeScaleAspectFit;
+        self.thirdImageView.contentMode = UIViewContentModeScaleAspectFit;
+        self.fourthImageView.contentMode = UIViewContentModeScaleAspectFit;
+        
+        [self.firstImageView setImage:[UIImage imageNamed:@"addImage"]];
+        [self.secondImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        
+        [self.firstCam setEnabled:YES];
+        [self.secondCam setEnabled:NO];
+        [self.thirdCam setEnabled:NO];
+        [self.fourthCam setEnabled:NO];
+        
+        [self.firstDelete setHidden:YES];
+        [self.secondDelete setHidden:YES];
+        [self.thirdDelete setHidden:YES];
+        [self.fourthDelete setHidden:YES];
+        
+        [self.saveButton setImage:[UIImage imageNamed:@"buyButton"] forState:UIControlStateNormal];
+        
+        self.photostotal = 0;
+        self.camButtonTapped = 0;
+        
+        self.geopoint = nil;
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 
 -(void)finalImage:(UIImage *)image{
@@ -1160,36 +1168,50 @@
             [forSaleItem setObject:imageFile4 forKey:@"image4"];
         }
         
-        [forSaleItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            if (succeeded) {
-                [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
-                [[PFUser currentUser] saveInBackground];
-//                [self.cabin incrementKey:@"forSalePostNumber"];
-//                [self.cabin saveInBackground];
-                
-                [self.saveButton setEnabled:YES];
-                
-                self.hud.labelText = @"Saved!";
-
-                double delayInSeconds = 1.0; // number of seconds to wait
-                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-                dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-                    if (self.editMode == YES) {
-                        [self.navigationController popViewControllerAnimated:YES];
+//        PFQuery *latestIndex = [PFQuery queryWithClassName:@"forSaleItems"];
+//        [latestIndex countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+//            if (number) {
+//                NSNumber *index = [NSNumber numberWithInt:number+1];
+//                [forSaleItem setObject:index forKey:@"index"];
+                [forSaleItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
+                        [[PFUser currentUser] saveInBackground];
+                        //                [self.cabin incrementKey:@"forSalePostNumber"];
+                        //                [self.cabin saveInBackground];
+                        
+                        [self.saveButton setEnabled:YES];
+                        
+                        self.hud.labelText = @"Saved!";
+                        
+                        double delayInSeconds = 1.0; // number of seconds to wait
+                        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+                        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                            if (self.editMode == YES) {
+                                [self.navigationController popViewControllerAnimated:YES];
+                            }
+                            else{
+                                [self dismissViewControllerAnimated:YES completion:nil];
+                            }
+                        });
                     }
                     else{
-                        [self dismissViewControllerAnimated:YES completion:nil];
+                        //error saving listing
+                        [self hidHUD];
+                        [self.saveButton setEnabled:YES];
+                        NSLog(@"error saving %@", error);
+                        
                     }
-                });
-            }
-            else{
-                //error saving listing
-                [self hidHUD];
-                [self.saveButton setEnabled:YES];
-                NSLog(@"error saving %@", error);
-
-            }
-        }];
+                }];
+//            }
+//            else{
+//                NSLog(@"error counting %@", error);
+//                [self hidHUD];
+//                self.warningLabel.text = @"Save Error";
+//                [self.saveButton setEnabled:YES];
+//                return;
+//            }
+//        }];
     }
 }
 
@@ -1212,7 +1234,7 @@
 }
 
 -(void)listingSetup{
-    self.navigationItem.title = @"Edit";
+    self.navigationItem.title = @"E D I T";
     
     [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     

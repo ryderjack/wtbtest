@@ -66,7 +66,6 @@
 @property (nonatomic, strong) NSIndexPath *lastSelected;
 @property (nonatomic) BOOL justABump;
 
-
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;
 @property (nonatomic, strong) UIView *searchBgView;

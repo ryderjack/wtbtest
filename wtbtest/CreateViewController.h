@@ -120,6 +120,7 @@
 
 @property (nonatomic) BOOL somethingChanged;
 @property (nonatomic) BOOL shouldSave;
+@property (nonatomic) BOOL shouldShowReset;
 
 @property (nonatomic, strong) NSDate *todayDate;
 

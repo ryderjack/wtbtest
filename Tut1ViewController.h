@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 #import "CreateViewController.h"
+#import <Parse/Parse.h>
+#import <ParseUI/ParseUI.h>
 
 @interface Tut1ViewController : UIViewController <CreateViewControllerDelegate>
 
@@ -22,4 +24,24 @@
 @property (nonatomic) BOOL messageExplain;
 @property (weak, nonatomic) IBOutlet UIButton *dimissButton;
 @property (nonatomic) BOOL explainMode;
+
+//try bumping
+@property (weak, nonatomic) IBOutlet UIImageView *topLeftImageView;
+@property (weak, nonatomic) IBOutlet UIImageView *topRightImageView;
+@property (weak, nonatomic) IBOutlet UIImageView *bottomLeftImageView;
+@property (weak, nonatomic) IBOutlet UIImageView *bottomRightImageView;
+
+@property (weak, nonatomic) IBOutlet PFImageView *itemTopLeftImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *itemTopRightImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *itemBottomLeftImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *itemBottomRightImageView;
+
+@property (nonatomic, strong) NSMutableArray *listings;
+@property (nonatomic, strong) PFObject *firstListing;
+@property (nonatomic, strong) PFObject *secondListing;
+@property (nonatomic, strong) PFObject *thirdListing;
+@property (nonatomic, strong) PFObject *fourthListing;
+
+@property (nonatomic, strong) NSString *pushText;
+
 @end

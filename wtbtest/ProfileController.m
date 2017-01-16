@@ -12,7 +12,6 @@
 #import "FBGroupShareViewController.h"
 #import "UserProfileController.h"
 #import "SettingsController.h"
-#import "Flurry.h"
 #import <Crashlytics/Crashlytics.h>
 #import <TOWebViewController.h>
 #import "ChatWithBump.h"
@@ -53,7 +52,11 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     self.navigationItem.title = [NSString stringWithFormat:@"%@", [PFUser currentUser].username];
-    [Flurry logEvent:@"Profile_Tapped"];
+    
+    [Answers logContentViewWithName:@"Profile Tapped"
+                        contentType:@""
+                          contentId:@""
+                   customAttributes:@{}];
     
     if ([self.navigationController tabBarItem].badgeValue != nil) {
         NSLog(@"unseen TB msg");

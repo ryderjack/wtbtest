@@ -65,40 +65,59 @@
 
 }
 
+-(NSMutableArray *)getRandomsLessThan:(int)M {  /////////////////////CHANGE - DOES THIS GO ON FOREVER SOMETIMES?
+    NSMutableArray *listOfNumbers = [[NSMutableArray alloc] init];
+    for (int i=0 ; i<M ; ++i) {
+        [listOfNumbers addObject:[NSNumber numberWithInt:i]]; // ADD 1 TO GET NUMBERS BETWEEN 1 AND M RATHER THAN 0 and M-1
+    }
+    NSMutableArray *uniqueNumbers = [[NSMutableArray alloc] init];
+    int r;
+    while ([uniqueNumbers count] < 30) {
+        r = arc4random() % [listOfNumbers count];
+        if (![uniqueNumbers containsObject:[listOfNumbers objectAtIndex:r]]) {
+            [uniqueNumbers addObject:[listOfNumbers objectAtIndex:r]];
+        }
+    }
+    return uniqueNumbers;
+}
+
 -(void)loadListings{
+    //get random for sale items
     PFQuery *featuredQuery = [PFQuery queryWithClassName:@"forSaleItems"];
     [featuredQuery whereKey:@"status" equalTo:@"live"];
     [featuredQuery whereKey:@"feature" equalTo:@"YES"];
     [featuredQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-//            NSLog(@"found %lu featured items", objects.count);
-            
             [self.listings removeAllObjects];
             [self.listings addObjectsFromArray:objects];
 
             PFQuery *forSaleQuery = [PFQuery queryWithClassName:@"forSaleItems"];
             [forSaleQuery whereKey:@"status" equalTo:@"live"];
-            [forSaleQuery orderByAscending:@"views"];
-            forSaleQuery.limit = 30-self.listings.count;
-            [forSaleQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                if (objects) {
-                    for (PFObject *listing in objects) {
-                        if (![self.listings containsObject:listing]) {
-//                            NSLog(@"not already there so add");
-                            [self.listings addObject:listing];
+            [forSaleQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+                if (number) {
+                    NSArray *indexesToGet = [self getRandomsLessThan:number];
+                    PFQuery *forSaleQuery1 = [PFQuery queryWithClassName:@"forSaleItems"];
+                    [forSaleQuery1 whereKey:@"status" equalTo:@"live"];
+                    [forSaleQuery1 whereKey:@"index" containedIn:indexesToGet];
+                    forSaleQuery1.limit = 30-self.listings.count;
+                    [forSaleQuery1 findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                        if (objects) {
+                            for (PFObject *listing in objects) {
+                                if (![self.listings containsObject:listing]) {
+                                    [self.listings addObject:listing];
+                                }
+                            }
+                            [self.collectionView reloadData];
                         }
                         else{
-//                            NSLog(@"listing already featured");
+                            NSLog(@"error getting extra for sale listings %@", error);
                         }
-                    }
-                    [self.collectionView reloadData];
+                    }];
                 }
                 else{
-                    NSLog(@"error getting for sale listings %@", error);
+                    NSLog(@"error counting %@", error);
                 }
             }];
-        
-        
         }
         else{
             NSLog(@"error getting for sale listings %@", error);

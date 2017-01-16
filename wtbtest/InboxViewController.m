@@ -9,7 +9,7 @@
 #import "InboxViewController.h"
 #import "MessageViewController.h"
 #import <SVPullToRefresh/SVPullToRefresh.h>
-#import "Flurry.h"
+#import <Crashlytics/Crashlytics.h>
 #import <DGActivityIndicatorView.h>
 
 @interface InboxViewController ()
@@ -63,7 +63,11 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     self.selectedConvo = @"";
-    [Flurry logEvent:@"Inbox_Tapped"];
+    
+    [Answers logContentViewWithName:@"Inbox Tapped"
+                        contentType:@""
+                          contentId:@""
+                   customAttributes:@{}];
     
     if (self.justViewedMsg == NO) {
         [self loadMessages];
@@ -221,11 +225,6 @@
                 [self.unseenConvos removeAllObjects];
                 int totalUnseen = 0;
                 int unseen = 0;
-                
-//                if (self.currentInstallation.badge != 0) {
-//                    self.currentInstallation.badge = 0;
-//                    [self.currentInstallation saveEventually];
-//                }
                 
                 for (PFObject *convo in objects) {
                     PFObject *msgObject = [convo objectForKey:@"lastSent"];

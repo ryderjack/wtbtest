@@ -10,7 +10,7 @@
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "WelcomeViewController.h"
 #import "NavigationController.h"
-#import "Flurry.h"
+#import <Crashlytics/Crashlytics.h>
 #import <ParseFacebookUtilsV4/PFFacebookUtils.h>
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import "AppConstant.h"
@@ -206,7 +206,6 @@
                 UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:@"Harder, better, faster, stronger" preferredStyle:UIAlertControllerStyleAlert];
                 
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                    
                 }]];
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
@@ -219,6 +218,15 @@
             NSLog(@"error getting latest version %@", error);
         }
     }];
+    
+//    PFQuery *wantQuery = [PFQuery queryWithClassName:@"wantobuys"];
+//    [wantQuery whereKeyExists:@"shownTo"];
+//    [wantQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//        for (PFObject *listing in objects) {
+//            [listing removeObjectForKey:@"shownTo"];
+//            [listing saveInBackground];
+//        }
+//    }];
     
 //    [PFUser logOut];
 }
@@ -288,8 +296,11 @@
     self.infinFinished = YES;
     
     if (self.listingTapped == YES) {
-        [self.collectionView reloadItemsAtIndexPaths:@[self.lastSelected]];
-        //self.lastSelected = nil; was causing crash
+        //crash caused by reloading an item that wasn't there - probs due to refreshing from foreground so do a final check
+        if ([self.collectionView numberOfItemsInSection:0] >= self.lastSelected.row) {
+            [self.collectionView reloadItemsAtIndexPaths:@[self.lastSelected]];
+            //self.lastSelected = nil; was causing crash
+        }
     }
 }
 
@@ -299,9 +310,26 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+//    NSDictionary *params = @{@"itemTitle": @"yeezy", @"price": @1000, @"limit": @2};
+//    
+//    [PFCloud callFunctionInBackground:@"eBayFetch" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//        if (!error) {
+//            NSLog(@"ebay response %@", response);
+//            
+//            for (NSDictionary *itemDict in response) {
+//                NSLog(@"item dict %@", itemDict);
+//            }
+//        }
+//        else{
+//            NSLog(@"ebay error %@", error);
+//        }
+//    }];
     
     [self.collectionView.infiniteScrollingView stopAnimating];
-    [Flurry logEvent:@"Explore_Tapped"];
+    [Answers logContentViewWithName:@"Explore Tapped"
+                        contentType:@""
+                          contentId:@""
+                   customAttributes:@{}];
     
     if (self.filtersArray.count > 0) {
         NSLog(@"got some filters brah %lu", self.filtersArray.count);
@@ -313,6 +341,8 @@
             [self setUpIntroAlert];
         }
     }
+//    ContainerViewController *vc = [[ContainerViewController alloc]init];
+//    [self presentViewController:vc animated:YES completion:nil];
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -623,14 +653,17 @@
             NSLog(@"count of objects %d", count);
             self.lastInfinSkipped = count;
             
-            if (count == 0) {
-                if (self.ignoreShownTo == NO) {
-                    NSLog(@"START TO IGNORE WHAT IVE ALREADY SEEN");
-                    self.ignoreShownTo = YES;
-                    [self queryParsePull];
-                    return;
-                }
+            if (count < 12 && self.ignoreShownTo == NO) { ////////////////////////////////////////////dont think the order of these if clauses is correct. Zero first? since will never be called atm
+                [self.noresultsLabel setHidden:YES];
+                [self.noResultsImageView setHidden:YES];
                 
+                NSLog(@"START TO IGNORE WHAT IVE ALREADY SEEN");
+                self.ignoreShownTo = YES;
+                [self queryParsePull];
+                return;
+
+            }
+            else if (count == 0 && self.ignoreShownTo == YES){
                 [self.noresultsLabel setHidden:NO];
                 [self.noResultsImageView setHidden:YES];
             }
@@ -1120,10 +1153,15 @@
 }
 
 -(void)cellTapped:(id)sender{
-    [Flurry logEvent:@"WTBBumpedExplore"];
     NSIndexPath *indexPath = [self.collectionView indexPathForCell:(ExploreCell*)sender];
     
     PFObject *listingObject = [self.results objectAtIndex:indexPath.item];
+    
+    [Answers logContentViewWithName:@"Bumped a listing"
+                        contentType:@"Explore"
+                          contentId:listingObject.objectId
+                   customAttributes:@{}];
+    
     ExploreCell *cell = sender;
     NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[listingObject objectForKey:@"bumpArray"]];
 
@@ -1171,16 +1209,26 @@
 }
 
 - (void)handleBump:(NSNotification*)note {
-    [Flurry logEvent:@"FBFriendBump_Tapped"];
     NSString *listingID = [note object];
+    
+    [Answers logContentViewWithName:@"FB Friend Bump Drop Tapped"
+                        contentType:@""
+                          contentId:listingID
+                   customAttributes:@{}];
+    
     BumpVC *vc = [[BumpVC alloc]init];
     vc.listingID = listingID;
     [self presentViewController:vc animated:YES completion:nil];
 }
 
 - (void)showListing:(NSNotification*)note {
-    [Flurry logEvent:@"ListingFromBumpShown"];
     NSString *listingID = [note object];
+    
+    [Answers logContentViewWithName:@"Listing Pushed from Opening Bump Not"
+                        contentType:@""
+                          contentId:listingID
+                   customAttributes:@{}];
+    
     PFObject *listing = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listingID];
     ListingController *vc = [[ListingController alloc]init];
     vc.listingObject = listing;
@@ -1188,8 +1236,12 @@
     [nav pushViewController:vc animated:YES];
 }
 - (void)handleDrop:(NSNotification*)note {
-    [Flurry logEvent:@"FBFriendBump_Dropped"];
     NSString *listingID = [note object];
+    
+    [Answers logContentViewWithName:@"Show FB Friend Bump Drop"
+                        contentType:@""
+                          contentId:listingID
+                   customAttributes:@{}];
 
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
     self.dropDown = (notificatView *)[nib objectAtIndex:0];
@@ -1258,7 +1310,6 @@
 }
 
 -(void)handleBumpDrop:(NSNotification*)note {
-    [Flurry logEvent:@"FBJustBump_Dropped"];
     NSArray *info = [note object];
     
     //prevent crashes with wrongly formatted pushes
@@ -1268,6 +1319,11 @@
     
     NSString *listingID = info[0];
     NSString *message = info[1];
+    
+    [Answers logContentViewWithName:@"Received Bump Drop Shown"
+                        contentType:@""
+                          contentId:listingID
+                   customAttributes:@{}];
     
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
     self.dropDown = (notificatView *)[nib objectAtIndex:0];
@@ -1454,6 +1510,12 @@
 }
 
 -(void)resetHome{
+    if (self.results.count != 0) {
+        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+                                    atScrollPosition:UICollectionViewScrollPositionTop
+                                            animated:NO];
+    }
+    
     self.ignoreShownTo = NO;
     [self queryParsePull];
 }

@@ -13,7 +13,7 @@
 #import "MessageViewController.h"
 #import "FBGroupShareViewController.h"
 #import "UserProfileController.h"
-#import "Flurry.h"
+#import <Crashlytics/Crashlytics.h>
 #import "NavigationController.h"
 
 @interface ListingController ()
@@ -594,7 +594,7 @@
     }
 }
 - (IBAction)saveForLaterPressed:(id)sender {
-    [Flurry logEvent:@"Save_Tapped"];
+   
     [self.saveButton setEnabled:NO];
     [[PFUser currentUser] addObject:self.listingObject.objectId forKey:@"savedItems"];
     [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
@@ -951,6 +951,11 @@
     [self.navigationController pushViewController:vc animated:YES];
 }
 - (IBAction)upvotePressed:(id)sender {
+    
+    [Answers logContentViewWithName:@"Bumped a listing"
+                        contentType:@"Listing"
+                          contentId:self.listingObject.objectId
+                   customAttributes:@{}];
     
     NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listingObject objectForKey:@"bumpArray"]];
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {

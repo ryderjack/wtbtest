@@ -49,12 +49,88 @@
     if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {
         NSLog(@"tapped no to notifications");
     }
+    
+    self.longRegButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+    [self.longRegButton setTitle:@"R E G I S T E R" forState:UIControlStateNormal];
+    [self.longRegButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+//    [self.longRegButton.titleLabel setTextAlignment: NSTextAlignmentCenter];
+    [self.longRegButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+    [self.longRegButton addTarget:self action:@selector(regPressed:) forControlEvents:UIControlEventTouchUpInside];
+    self.longRegButton.alpha = 0.0f;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.longRegButton];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.longRegButton.alpha = 1.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.regShowing = YES;
+                         NSLog(@"showing");
+                     }];
+    
+    //get updated friends list
+    FBSDKGraphRequest *request = [[FBSDKGraphRequest alloc]
+                                  initWithGraphPath:@"me/friends"
+                                  parameters:@{@"fields": @"id, name"}
+                                  HTTPMethod:@"GET"];
+    [request startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection,
+                                          id result,
+                                          NSError *error) {
+        // Handle the result
+        if (!error) {
+            NSArray* friends = [result objectForKey:@"data"];
+            if (friends.count > 2) {
+                [self setImageBorder:self.friendOneImageView];
+                [self setImageBorder:self.friendTwoImageView];
+                [self setImageBorder:self.friendThreeImageView];
+                
+                self.friendsLabel.text = [NSString stringWithFormat:@"%lu friends on Bump", friends.count];
+                self.showFriendsCell = YES;
+                
+                int rowIndex = 0;//your row index where you want to add cell
+                int sectionIndex = 1;//your section index
+                NSIndexPath *iPath = [NSIndexPath indexPathForRow:rowIndex inSection:sectionIndex];
+                NSArray *array = [NSArray arrayWithObject:iPath];
+                [self.tableView insertRowsAtIndexPaths:array withRowAnimation:UITableViewRowAnimationFade];
+                
+                NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", [friends[0] objectForKey:@"id"]];
+                NSURL *picUrl = [NSURL URLWithString:userImageURL];
+                NSData *pic = [NSData dataWithContentsOfURL:picUrl];
+                [self.friendOneImageView setImage:[UIImage imageWithData:pic]];
+                
+                NSString *user2ImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", [friends[1] objectForKey:@"id"]];
+                NSURL *picUrl2 = [NSURL URLWithString:user2ImageURL];
+                NSData *pic2 = [NSData dataWithContentsOfURL:picUrl2];
+                [self.friendTwoImageView setImage:[UIImage imageWithData:pic2]];
+                
+                NSString *user3ImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", [friends[2] objectForKey:@"id"]];
+                NSURL *picUrl3 = [NSURL URLWithString:user3ImageURL];
+                NSData *pic3 = [NSData dataWithContentsOfURL:picUrl3];
+                [self.friendThreeImageView setImage:[UIImage imageWithData:pic3]];
+            }
+        }
+    }];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     if (self.pressedCam != YES) {
         [self requestFacebook:self.user];
+    }
+    if (self.regShowing == NO) {
+        self.longRegButton.alpha = 0.0f;
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.longRegButton.alpha = 1.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.regShowing = YES;
+                         }];
     }
 }
 
@@ -137,7 +213,12 @@
         return 6;
     }
     else if (section == 1){
-        return 1;
+        if (self.showFriendsCell == YES) {
+            return 2;
+        }
+        else{
+            return 1;
+        }
     }
     else{
       return 0;
@@ -166,7 +247,17 @@
         }
     }
     else if (indexPath.section ==1){
-        return self.regCell;
+        if (self.showFriendsCell == YES) {
+            if (indexPath.row == 0) {
+                return self.friendsCell;
+            }
+            else if(indexPath.row == 1){
+                return self.regCell;
+            }
+        }
+        else{
+            return self.regCell;
+        }
     }
     return nil;
 }
@@ -184,7 +275,17 @@
         }
     }
     else if (indexPath.section ==1){
-        return 140;
+        if (self.showFriendsCell == YES) {
+            if (indexPath.row == 0) {
+                return 80;
+            }
+            else if(indexPath.row == 1){
+                return 88;
+            }
+        }
+        else{
+            return 88;
+        }
     }
     return 44;
 }
@@ -234,6 +335,13 @@
     self.profileImageView.contentMode = UIViewContentModeScaleAspectFill;
 }
 
+-(void)setImageBorder:(UIImageView *)imageView{
+    imageView.layer.cornerRadius = imageView.frame.size.width / 2;
+    imageView.layer.masksToBounds = YES;
+    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    imageView.contentMode = UIViewContentModeScaleAspectFill;
+}
+
 -(void)textFieldDidEndEditing:(UITextField *)textField{
     if (textField == self.usernameField) {
         if ([self.profanityList containsObject:textField.text.lowercaseString]) {
@@ -277,7 +385,7 @@
     NSString *username = [self.usernameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     if ([name length] == 0 || [email length] == 0 || [username length] == 0 || [self.selectedCurrency isEqualToString:@""])  {
-        self.warningLabel.text = @"Enter all of the above!";
+        self.warningLabel.text = @"Fill in everything!";
         [self.regButton setEnabled:YES];
     }
     else{
@@ -480,7 +588,7 @@
     webViewController.paypalMode = NO;
     //hide toolbar banner
     webViewController.infoMode = NO;
-    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 - (IBAction)depopInfoPressed:(id)sender {
@@ -514,6 +622,20 @@
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
     self.pressedCam = YES;
     [picker dismissViewControllerAnimated:YES completion:NULL];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.longRegButton setAlpha:0.0];
+                     }
+                     completion:^(BOOL finished) {
+                         self.regShowing = NO;
+                     }];
 }
 
 @end

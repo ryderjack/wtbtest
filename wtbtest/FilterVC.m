@@ -122,7 +122,7 @@
     }
     
     if (!self.applyButton) {
-        self.applyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, self.tableView.frame.size.height-40, self.tableView.frame.size.width, 40)];
+        self.applyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-40, [UIApplication sharedApplication].keyWindow.frame.size.width, 40)];
         [self.applyButton setTitle:@"A P P L Y" forState:UIControlStateNormal];
         [self.applyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
         [self.applyButton.titleLabel setTextAlignment: NSTextAlignmentCenter];

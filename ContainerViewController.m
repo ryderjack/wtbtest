@@ -62,11 +62,17 @@
     
     NSUInteger index = [(Tut1ViewController *)viewController index];
     
-    
     index++;
     
-    if (index == 4) {
-        return nil;
+    if (self.explainMode == YES) {
+        if (index == 4) {
+            return nil;
+        }
+    }
+    else{
+        if (index == 5) {
+            return nil;
+        }
     }
     
     return [self viewControllerAtIndex:index];
@@ -86,7 +92,12 @@
 
 - (NSInteger)presentationCountForPageViewController:(UIPageViewController *)pageViewController {
     // The number of items reflected in the page indicator.
-    return 4;
+    if (self.explainMode == YES) {
+        return 4;
+    }
+    else{
+        return 5;
+    }
 }
 
 - (NSInteger)presentationIndexForPageViewController:(UIPageViewController *)pageViewController {

@@ -9,7 +9,7 @@
 #import "FBGroupShareViewController.h"
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import "groupWVController.h"
-#import "Flurry.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface FBGroupShareViewController ()
 
@@ -112,7 +112,10 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     
-    [Flurry logEvent:@"Group_Tapped"];
+    [Answers logContentViewWithName:@"Group Tapped"
+                        contentType:@""
+                          contentId:@""
+                   customAttributes:@{}];
 
     
     NSString *groupId = [[NSString alloc]init];

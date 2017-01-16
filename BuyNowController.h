@@ -44,4 +44,5 @@
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;
 @property (nonatomic, strong) UIView *searchBgView;
+@property (nonatomic, strong) PFObject *ebayItem;
 @end

@@ -20,6 +20,105 @@
     [super viewDidLoad];
     [self.createButton setHidden:YES];
     [self.dimissButton setHidden:YES];
+    
+    [self.topLeftImageView setHidden:YES];
+    [self.topRightImageView setHidden:YES];
+    [self.bottomLeftImageView setHidden:YES];
+    [self.bottomRightImageView setHidden:YES];
+    
+    [self.itemTopLeftImageView setHidden:YES];
+    [self.itemTopRightImageView setHidden:YES];
+    [self.itemBottomLeftImageView setHidden:YES];
+    [self.itemBottomRightImageView setHidden:YES];
+    
+    if (self.explainMode != YES) {
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(bump1Pressed)];
+        tap.numberOfTapsRequired = 1;
+        
+        UITapGestureRecognizer *tap1 = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(bump2Pressed)];
+        tap1.numberOfTapsRequired = 1;
+        
+        UITapGestureRecognizer *tap2 = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(bump3Pressed)];
+        tap2.numberOfTapsRequired = 1;
+        
+        UITapGestureRecognizer *tap3 = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(bump4Pressed)];
+        tap3.numberOfTapsRequired = 1;
+        
+        [self.topLeftImageView addGestureRecognizer:tap];
+        [self.topRightImageView addGestureRecognizer:tap1];
+        [self.bottomLeftImageView addGestureRecognizer:tap2];
+        [self.bottomRightImageView addGestureRecognizer:tap3];
+        
+        self.pushText = [NSString stringWithFormat:@"%@ just bumped your listing 👊", [PFUser currentUser].username];
+        self.listings = [NSMutableArray array];
+        PFQuery *latestQuery = [PFQuery queryWithClassName:@"wantobuys"];
+        [latestQuery whereKey:@"status" equalTo:@"live"];
+        [latestQuery orderByDescending:@"createdAt"];
+        latestQuery.limit = 4;
+        [latestQuery includeKey:@"postUser"];
+        [latestQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            if (objects) {
+                [self.listings addObjectsFromArray:objects];
+                if (objects.count == 4) {
+                    self.firstListing = objects[0];
+                    self.secondListing = objects[1];
+                    self.thirdListing = objects[2];
+                    self.fourthListing = objects[3];
+                    
+                    [self.itemTopLeftImageView setFile:[self.firstListing objectForKey:@"image1"]];
+                    [self.itemTopLeftImageView loadInBackground];
+                    
+                    [self.itemTopRightImageView setFile:[self.secondListing objectForKey:@"image1"]];
+                    [self.itemTopRightImageView loadInBackground];
+                    
+                    [self.itemBottomLeftImageView setFile:[self.thirdListing objectForKey:@"image1"]];
+                    [self.itemBottomLeftImageView loadInBackground];
+                    
+                    [self.itemBottomRightImageView setFile:[self.fourthListing objectForKey:@"image1"]];
+                    [self.itemBottomRightImageView loadInBackground];
+                    
+                }
+                else if (objects.count == 3){
+                    self.firstListing = objects[0];
+                    self.secondListing = objects[1];
+                    self.thirdListing = objects[2];
+                    
+                    [self.itemTopLeftImageView setFile:[self.firstListing objectForKey:@"image1"]];
+                    [self.itemTopLeftImageView loadInBackground];
+                    
+                    [self.itemTopRightImageView setFile:[self.secondListing objectForKey:@"image1"]];
+                    [self.itemTopRightImageView loadInBackground];
+                    
+                    [self.itemBottomLeftImageView setFile:[self.thirdListing objectForKey:@"image1"]];
+                    [self.itemBottomLeftImageView loadInBackground];
+                }
+                else if (objects.count == 2){
+                    self.firstListing = objects[0];
+                    self.secondListing = objects[1];
+                    
+                    [self.itemBottomLeftImageView setFile:[self.firstListing objectForKey:@"image1"]];
+                    [self.itemBottomLeftImageView loadInBackground];
+                    
+                    [self.itemBottomRightImageView setFile:[self.secondListing objectForKey:@"image1"]];
+                    [self.itemBottomRightImageView loadInBackground];
+                }
+                else if (objects.count == 1){
+                    self.firstListing = objects[0];
+                    
+                    [self.itemBottomLeftImageView setFile:[self.firstListing objectForKey:@"image1"]];
+                    [self.itemBottomLeftImageView loadInBackground];
+                }
+                else{
+                    NSLog(@"got none");
+                }
+            }
+            else{
+                NSLog(@"error getting listings %@", error);
+                
+                // have a backup plan if get no listings
+            }
+        }];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -34,12 +133,19 @@
     [self.sendOfferImageView setAlpha:0.0f];
     
     if (self.index == 0) {
+        [self.topLeftImageView setHidden:YES];
+        [self.topRightImageView setHidden:YES];
+        [self.bottomLeftImageView setHidden:YES];
+        [self.bottomRightImageView setHidden:YES];
+        
+        [self.heroImageView setHidden:NO];
         self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
         self.titleLabel.text = @"Bump";
         self.descriptionLabel.text = @"List items you want & find buyers that want your stuff";
         [self.createButton setHidden:YES];
     }
     else if (self.index == 1){
+        [self.heroImageView setHidden:NO];
         self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro2.1"];
         self.titleLabel.text = @"Selling";
         self.descriptionLabel.text = @"1. Tap a listing\n2. Message the buyer\n3. Hit the tag & send them an offer";
@@ -59,15 +165,27 @@
         [self setupSelling];
     }
     else if (self.index == 2){
+        [self.topLeftImageView setHidden:YES];
+        [self.topRightImageView setHidden:YES];
+        [self.bottomLeftImageView setHidden:YES];
+        [self.bottomRightImageView setHidden:YES];
+        
+        [self.heroImageView setHidden:NO];
         self.heroImageView.image = [UIImage imageNamed:@"iPhone3"];
         self.titleLabel.text = @"Buying";
         self.descriptionLabel.text = @"Bump also recommends items that can be purchased straight away";
     }
     else if (self.index == 3){
+        [self.topLeftImageView setHidden:YES];
+        [self.topRightImageView setHidden:YES];
+        [self.bottomLeftImageView setHidden:YES];
+        [self.bottomRightImageView setHidden:YES];
+        
+        [self.heroImageView setHidden:NO];
         self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
         self.titleLabel.text = @"Bumping";
         self.descriptionLabel.text = @"Bump listings to help get them noticed just by tapping the up arrow";
-         [self setupBumping];
+        [self setupBumping];
         
         if (self.explainMode == YES) {
             [self.dimissButton setAlpha:0.0];
@@ -81,18 +199,49 @@
                              }
                              completion:nil];
         }
-        else{
-            [self.createButton setAlpha:0.0];
-            [self.createButton setHidden:NO];
+    }
+    else if (self.index == 4){
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+            //iPhone 5
+            [self.topLeftImageView setHidden:YES];
+            [self.topRightImageView setHidden:YES];
             
+            [self.itemTopLeftImageView setHidden:YES];
+            [self.itemTopRightImageView setHidden:YES];
+        }
+        else{
+            [self.topLeftImageView setHidden:NO];
+            [self.topRightImageView setHidden:NO];
+            
+            [self.itemTopLeftImageView setHidden:NO];
+            [self.itemTopRightImageView setHidden:NO];
+        }
+        
+        [self.bottomLeftImageView setHidden:NO];
+        [self.bottomRightImageView setHidden:NO];
+
+        [self.itemBottomLeftImageView setHidden:NO];
+        [self.itemBottomRightImageView setHidden:NO];
+        
+        [self.heroImageView setHidden:YES];
+        self.titleLabel.text = @"Get Bumping";
+        self.descriptionLabel.text = @"Tap the up arrow on the above listings to Bump them!";
+        
+        [self.createButton setAlpha:0.0];
+        [self.createButton setHidden:NO];
+        
+        //animate in after a delay if they haven't bumped a listing
+        double delayInSeconds = 5.0; // number of seconds to wait
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
             [UIView animateWithDuration:1.0
-                                  delay:0
+                                  delay:0.0
                                 options:UIViewAnimationOptionCurveEaseIn
                              animations:^{
                                  [self.createButton setAlpha:1.0];
                              }
                              completion:nil];
-        }
+        });
     }
 }
 
@@ -189,5 +338,118 @@
         vc.introMode = YES;
         [self.navigationController pushViewController:vc animated:YES];
     }
+}
+
+-(void)bump1Pressed{
+    [UIView animateWithDuration:0.6
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.topLeftImageView setImage:[UIImage imageNamed:@"tryBgBumped"]];
+                         [self.createButton setAlpha:1.0];
+                     }
+                     completion:^(BOOL finished) {
+                        
+                         //in case user no longer exists
+                         if (![[self.firstListing objectForKey:@"postUser"]objectId]) {
+                             return;
+                         }
+                         
+                        //send push
+                         NSDictionary *params = @{@"userId": [[self.firstListing objectForKey:@"postUser"]objectId], @"message": self.pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.firstListing.objectId};
+                         
+                         [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                             if (!error) {
+                                 NSLog(@"push response %@", response);
+                             }
+                             else{
+                                 NSLog(@"push error %@", error);
+                             }
+                         }];
+                     }];
+}
+-(void)bump2Pressed{
+    [UIView animateWithDuration:0.6
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.topRightImageView setImage:[UIImage imageNamed:@"tryBgBumped"]];
+                         [self.createButton setAlpha:1.0];
+                     }
+                     completion:^(BOOL finished) {
+                         [self.createButton setAlpha:1.0];
+                         
+                         //in case user no longer exists
+                         if (![[self.secondListing objectForKey:@"postUser"]objectId]) {
+                             return;
+                         }
+                         
+                         //send push
+                         NSDictionary *params = @{@"userId": [[self.secondListing objectForKey:@"postUser"]objectId], @"message": self.pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.secondListing.objectId};
+                         
+                         [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                             if (!error) {
+                                 NSLog(@"push response %@", response);
+                             }
+                             else{
+                                 NSLog(@"push error %@", error);
+                             }
+                         }];
+                     }];
+}
+-(void)bump3Pressed{
+    [UIView animateWithDuration:0.6
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.bottomLeftImageView setImage:[UIImage imageNamed:@"tryBgBumped"]];
+                         [self.createButton setAlpha:1.0];
+                     }
+                     completion:^(BOOL finished) {
+                         
+                         //in case user no longer exists
+                         if (![[self.thirdListing objectForKey:@"postUser"]objectId]) {
+                             return;
+                         }
+                         //send push
+                         NSDictionary *params = @{@"userId": [[self.thirdListing objectForKey:@"postUser"]objectId], @"message": self.pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.thirdListing.objectId};
+                         
+                         [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                             if (!error) {
+                                 NSLog(@"push response %@", response);
+                             }
+                             else{
+                                 NSLog(@"push error %@", error);
+                             }
+                         }];
+                     }];
+}
+-(void)bump4Pressed{
+    [UIView animateWithDuration:0.6
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.bottomRightImageView setImage:[UIImage imageNamed:@"tryBgBumped"]];
+                         [self.createButton setAlpha:1.0];
+                     }
+                     completion:^(BOOL finished) {
+                         
+                         //in case user no longer exists
+                         if (![[self.fourthListing objectForKey:@"postUser"]objectId]) {
+                             return;
+                         }
+                         
+                         //send push
+                         NSDictionary *params = @{@"userId": [[self.fourthListing objectForKey:@"postUser"]objectId], @"message": self.pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.fourthListing.objectId};
+                         
+                         [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                             if (!error) {
+                                 NSLog(@"push response %@", response);
+                             }
+                             else{
+                                 NSLog(@"push error %@", error);
+                             }
+                         }];
+                     }];
 }
 @end

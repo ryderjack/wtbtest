@@ -16,6 +16,7 @@
 #import "ProfileItemCell.h"
 #import "ReviewsVC.h"
 #import "ForSaleListing.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface UserProfileController ()
 
@@ -82,8 +83,8 @@
         self.navigationItem.leftBarButtonItem = cancelButton;
     }
     
-//    UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
-//    self.navigationItem.rightBarButtonItem = addForSaleItem;
+    UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
+    self.navigationItem.rightBarButtonItem = addForSaleItem; //CHANGE
 
     PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
     [trustedQuery whereKey:@"user" equalTo:self.user];
@@ -99,7 +100,7 @@
         if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
             //show link to users' FB if not looking at own profile
             UIBarButtonItem *fbButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"FBIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(fbPressed)];
-            UIBarButtonItem *extraButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(reportUser)];
+            UIBarButtonItem *extraButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
             if (self.isSeller == YES) {
                 [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:extraButton, nil]];
             }
@@ -134,25 +135,39 @@
     
     [self setAutomaticallyAdjustsScrollViewInsets:NO];
     [self.sellerSegmentControl setSelectedSegmentIndex:0];
+    
+    [Answers logContentViewWithName:@"UserProfile Tapped"
+                        contentType:@""
+                          contentId:@""
+                   customAttributes:@{}];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
-    self.navigationItem.title = [NSString stringWithFormat:@"%@", self.user.username];
-    
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    PFFile *img = [self.user objectForKey:@"picture"];
-    if ( img != nil) {
-        [self.headerImgView setFile:[self.user objectForKey:@"picture"]];
-        [self.headerImgView loadInBackground];
-    }
-    else{
-        [self.headerImgView setImage:[UIImage imageNamed:@"empty"]];
-    }
+    [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            self.navigationItem.title = [NSString stringWithFormat:@"%@", self.user.username];
+            
+            PFFile *img = [self.user objectForKey:@"picture"];
+            if ( img != nil) {
+                [self.headerImgView setFile:[self.user objectForKey:@"picture"]];
+                [self.headerImgView loadInBackground];
+            }
+            else{
+                [self.headerImgView setImage:[UIImage imageNamed:@"empty"]];
+            }
+        }
+        else{
+            NSLog(@"couldn't fetch user");
+            [self.headerImgView setImage:[UIImage imageNamed:@"empty"]];
+            [self showError];
+        }
+    }];
 
     PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
     [dealsQuery whereKey:@"User" equalTo:self.user];
@@ -243,7 +258,7 @@
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [wtbQuery whereKey:@"postUser" equalTo:self.user];
     [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
-    [wtbQuery orderByDescending:@"createdAt"];
+    [wtbQuery orderByDescending:@"updatedAt"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             self.WTBArray = objects;
@@ -278,7 +293,7 @@
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"forSaleItems"];
     [wtbQuery whereKey:@"sellerUser" equalTo:self.user];
     [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
-    [wtbQuery orderByDescending:@"createdAt"];
+    [wtbQuery orderByDescending:@"updatedAt"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects.count > 0) {
@@ -659,6 +674,27 @@
 
 -(void)dismissVC{
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)showError{
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Error Fetching User"
+                                  message:@"Make sure you're connected to the internet!"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+-(void)showAlertView{
+    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report User" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
+        [self reportUser];
+    }]];
+    [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
 @end
