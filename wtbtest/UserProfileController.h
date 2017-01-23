@@ -9,6 +9,9 @@
 #import <UIKit/UIKit.h>
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
+#import <MBProgressHUD.h>
+#import <DGActivityIndicatorView.h>
+#import <SpinKit/RTSpinKitView.h>
 
 @interface UserProfileController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
 
@@ -42,5 +45,11 @@
 @property (nonatomic, strong) NSString *usernameToList;
 
 @property (nonatomic) BOOL fromSearch;
+
+//spinner
+@property (nonatomic, strong) RTSpinKitView *spinner;
+@property (nonatomic, strong) MBProgressHUD *hud;
+@property (nonatomic, strong) DGActivityIndicatorView *imageSpinner;
+@property (nonatomic, strong) MBProgressHUD *imageHud;
 
 @end

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1212" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1217" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -58,24 +58,11 @@
                         <constraint firstAttribute="width" constant="185" id="mmL-sC-FwD"/>
                     </constraints>
                 </imageView>
-                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nD1-X5-R5W">
-                    <rect key="frame" x="0.0" y="590" width="375" height="33"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="33" id="bcE-KW-vQ2"/>
-                    </constraints>
-                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
-                    <state key="normal" title="Create a listing">
-                        <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                    </state>
-                    <connections>
-                        <action selector="createPressed:" destination="-1" eventType="touchUpInside" id="eue-lq-oND"/>
-                    </connections>
-                </button>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="0vb-01-q90">
-                    <rect key="frame" x="0.0" y="590" width="375" height="33"/>
+                    <rect key="frame" x="0.0" y="613.5" width="375" height="33"/>
                     <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
-                    <state key="normal" title="Dismiss">
-                        <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <state key="normal" title="D I S M I S S">
+                        <color key="titleColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </state>
                     <connections>
                         <action selector="createPressed:" destination="-1" eventType="touchUpInside" id="MGt-98-gPl"/>
@@ -158,11 +145,24 @@
                     <rect key="frame" x="199.5" y="309" width="116" height="116"/>
                     <color key="backgroundColor" red="0.90588235289999997" green="0.90588235289999997" blue="0.90588235289999997" alpha="1" colorSpace="calibratedRGB"/>
                 </imageView>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nD1-X5-R5W">
+                    <rect key="frame" x="0.0" y="614" width="375" height="33"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="33" id="bcE-KW-vQ2"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="14"/>
+                    <state key="normal" title="C R E A T E  A  L I S T I N G">
+                        <color key="titleColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <connections>
+                        <action selector="createPressed:" destination="-1" eventType="touchUpInside" id="eue-lq-oND"/>
+                    </connections>
+                </button>
             </subviews>
             <color key="backgroundColor" red="0.30196078431372547" green="0.63921568627450975" blue="0.9882352941176471" alpha="1" colorSpace="calibratedRGB"/>
             <constraints>
                 <constraint firstItem="zij-rD-QcO" firstAttribute="trailing" secondItem="lRq-4c-dRa" secondAttribute="trailing" id="0CY-kc-PKI"/>
-                <constraint firstItem="nD1-X5-R5W" firstAttribute="top" secondItem="f2N-7h-uu8" secondAttribute="bottom" constant="69" id="0Qz-7I-a3J"/>
+                <constraint firstItem="nD1-X5-R5W" firstAttribute="top" secondItem="f2N-7h-uu8" secondAttribute="bottom" constant="93" id="0Qz-7I-a3J"/>
                 <constraint firstItem="iwT-8Z-PPR" firstAttribute="top" secondItem="lRq-4c-dRa" secondAttribute="top" id="2Uq-NB-loY"/>
                 <constraint firstItem="J8R-Pe-2yV" firstAttribute="top" secondItem="nux-8c-4T5" secondAttribute="bottom" constant="-137" id="2zo-Vh-XSg"/>
                 <constraint firstItem="f2N-7h-uu8" firstAttribute="top" secondItem="nux-8c-4T5" secondAttribute="bottom" constant="26" id="3X1-jX-ZcT"/>
@@ -183,7 +183,7 @@
                 <constraint firstItem="HKL-Tx-DXA" firstAttribute="top" secondItem="Kft-jp-84J" secondAttribute="top" id="I6i-KQ-Sae"/>
                 <constraint firstAttribute="bottom" secondItem="cev-Ru-HTY" secondAttribute="bottom" constant="71" id="IVp-bl-08Z"/>
                 <constraint firstItem="HmW-se-reG" firstAttribute="top" secondItem="zij-rD-QcO" secondAttribute="top" id="KCT-mW-KK3"/>
-                <constraint firstAttribute="bottom" secondItem="nD1-X5-R5W" secondAttribute="bottom" constant="44" id="LQ6-iW-diF"/>
+                <constraint firstAttribute="bottom" secondItem="nD1-X5-R5W" secondAttribute="bottom" constant="20" id="LQ6-iW-diF"/>
                 <constraint firstItem="A2x-MY-JLb" firstAttribute="bottom" secondItem="Cdh-CQ-H8R" secondAttribute="bottom" id="Msp-Lr-xLi"/>
                 <constraint firstItem="A2x-MY-JLb" firstAttribute="top" secondItem="Cdh-CQ-H8R" secondAttribute="top" id="O91-8X-z4M"/>
                 <constraint firstItem="iwT-8Z-PPR" firstAttribute="leading" secondItem="VST-I4-o7N" secondAttribute="trailing" constant="23" id="PMx-ok-CqN"/>

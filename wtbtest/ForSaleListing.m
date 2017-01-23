@@ -13,6 +13,7 @@
 #import "UserProfileController.h"
 #import "CreateForSaleListing.h"
 #import <Crashlytics/Crashlytics.h>
+#import "NavigationController.h"
 
 @interface ForSaleListing ()
 
@@ -208,7 +209,10 @@
                 self.priceLabel.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
                 self.sizeLabel.text = [self.listingObject objectForKey:@"location"];
                 
-                if (![self.listingObject objectForKey:@"sizeGender"]) {
+                if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Accessories"]) {
+                    self.locationLabel.text = @"-";
+                }
+                else if (![self.listingObject objectForKey:@"sizeGender"]) {
                     self.locationLabel.text = [NSString stringWithFormat:@"%@", [self.listingObject objectForKey:@"sizeLabel"]];
                 }
                 else{
@@ -714,12 +718,7 @@
     });
 }
 - (IBAction)messageSellerPressed:(id)sender {
-    if (self.relatedProduct == YES) {
-        [Answers logContentViewWithName:@"Visit Store Pressed"
-                            contentType:@"END"
-                              contentId:@""
-                       customAttributes:@{}];
-        
+    if (self.relatedProduct == YES) { //redundant now?
         //goto website
         NSString *URLString = [self.listingObject objectForKey:@"link"];
         self.webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
@@ -728,7 +727,7 @@
         self.webViewController.doneButtonTitle = @"";
         self.webViewController.paypalMode = NO;
         self.webViewController.infoMode = NO;
-        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
+        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
         [self presentViewController:navigationController animated:YES completion:nil];
     }
     else{

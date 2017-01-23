@@ -10,6 +10,7 @@
 #import "UserProfileController.h"
 #import "NavigationController.h"
 #import "resultCell.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface TheMainSearchView ()
 
@@ -40,6 +41,8 @@
     
     self.listingResults = [[[[PFUser currentUser]objectForKey:@"searches"] reverseObjectEnumerator] allObjects];
     self.userResults = [NSArray array];
+    
+    [self addDoneButton];
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -210,6 +213,11 @@
 -(void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
     if (self.userSearch == YES){
         
+        [Answers logCustomEventWithName:@"Search"
+                       customAttributes:@{
+                                          @"type":@"User search"
+                                          }];
+        
         PFQuery *userQueryForRand = [PFUser query];
         [userQueryForRand whereKey:@"username" containsString:[self.searchBar.text lowercaseString]];
         [userQueryForRand whereKey:@"completedReg" equalTo:@"YES"];
@@ -249,9 +257,14 @@
 }
 
 -(void)gotoListings{
+    [Answers logCustomEventWithName:@"Search"
+                   customAttributes:@{
+                                      @"type":@"Listing search"
+                                      }];
+    
     [self.searchBar resignFirstResponder];
     
-    NSLog(@"search string %@", self.searchString);
+//    NSLog(@"search string %@", self.searchString);
     
     searchedViewC *vc = [[searchedViewC alloc]init];
     vc.searchString = self.searchString;
@@ -319,5 +332,22 @@
     
     self.listingResults = searchesList;
     [self.tableView reloadData];
+}
+
+- (void)addDoneButton {
+    UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
+    [keyboardToolbar sizeToFit];
+    UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                      target:nil action:nil];
+    UIBarButtonItem *doneBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                      target:self action:@selector(hideKeyb)];
+    keyboardToolbar.items = @[flexBarButton, doneBarButton];
+    self.searchBar.inputAccessoryView = keyboardToolbar;
+}
+
+-(void)hideKeyb{
+    [self.searchBar resignFirstResponder];
 }
 @end

@@ -17,6 +17,7 @@
 #import "FeaturedItems.h"
 #import <Crashlytics/Crashlytics.h>
 #import "ChatWithBump.h"
+#import "DetailImageController.h"
 
 @interface BuyNowController ()
 
@@ -44,11 +45,16 @@
     self.wtbArray = [NSMutableArray array];
     self.viewsArray = [NSMutableArray array];
     self.products = [NSMutableArray array];
+    self.results = [NSMutableArray array];
+    self.seenEbayItems = [NSMutableArray array];
+    self.searchWords = [NSArray array];
     
     self.pullFinished = YES;
     self.infinFinished = NO;
-    self.showRelated = YES;  //if YES show related, if NO don't show
+    self.showRelated = YES;  //if YES show related, if NO don't show CHANGE
+    self.ebayEnabled = YES;
     self.viewedItem = NO;
+    self.fromInfinEbay = NO;
     [self.anotherPromptButton setHidden:YES];
     
     // Option 1
@@ -65,11 +71,17 @@
             if ([shouldShowRelated isEqualToString:@"NO"]) {
                 self.showRelated = NO;
             }
+            NSString *shouldShowEbay = [object objectForKey:@"ebayEnabled"];
+            if ([shouldShowEbay isEqualToString:@"NO"]) {
+                self.ebayEnabled = NO;
+            }
         }
         else{
             NSLog(@"error getting latest version %@", error);
         }
     }];
+    
+    [self setUpItemView];
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
@@ -77,7 +89,8 @@
     //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
     [self.tableView addPullToRefreshWithActionHandler:^{
         if (self.pullFinished == YES) {
-            [self loadWTBs];
+//            [self loadWTBs];
+            [self recommendFromServer];
         }
     }];
     
@@ -87,9 +100,257 @@
     
     [self.tableView addInfiniteScrollingWithActionHandler:^{
         if (self.infinFinished == YES) {
-            [self infiniteloadWTBs];
+//            [self infiniteloadWTBs];
+            [self infiniteFromServer];
         }
     }];
+}
+
+-(void)getEbayProducts:(NSArray *)objectsToCheck{
+    if (self.ebayEnabled == NO) {
+        return;
+    }
+    [self.seenEbayItems removeAllObjects];
+    __block int indexNo = 0;
+    __block int checker = 0;
+
+//    NSLog(@"objects to check count %lu", (unsigned long)objectsToCheck.count);
+    
+    for (NSDictionary *wtbDict in objectsToCheck) {
+        indexNo++;
+        if (self.showRelated == YES && indexNo==1 && self.fromInfinEbay == NO) {
+            //related items, move on
+            continue;
+        }
+        else{
+            PFObject *WTB = [wtbDict valueForKey:@"WTB"];
+            
+            NSDictionary *params = @{@"itemTitle": [WTB objectForKey:@"title"], @"price": @1000, @"limit": @5}; //price is ignored atm in cloud code
+            
+            [PFCloud callFunctionInBackground:@"eBayFetch" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                if (!error) {
+                    NSLog(@"ebay response %@", response);
+                    checker++;
+                    
+                    for (NSDictionary *itemDict in response) {
+                        //check if item has been surfaced before in this session
+                        if ([self.seenEbayItems containsObject:[itemDict valueForKey:@"itemURL"]]) {
+                            NSLog(@"this item has an error image, can't show that so do next one");
+                        }
+                        else{
+                            //insert eBay item to first postiion in match array
+                            NSMutableArray *matches = [wtbDict valueForKey:@"matches"];
+                            [matches insertObject:itemDict atIndex:0];
+                            [wtbDict setValue:matches forKey:@"matches"];
+                            [self.seenEbayItems addObject:[itemDict valueForKey:@"itemURL"]];
+                            break;
+                        }
+                    }
+                    
+                    NSLog(@"CHECKER: %d   objectstocheck: %lu", checker, objectsToCheck.count);
+                    
+                    //objects to check will always be +1 more than checker as it includes the related row in the CV (if showrelated==YES of course!)
+                    if (objectsToCheck.count == checker+1 && self.showRelated == YES && self.fromInfinEbay == NO) {
+                        NSLog(@"1");
+                        NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
+                        NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
+                        [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                    }
+                    else if (objectsToCheck.count == checker && self.showRelated == NO && self.fromInfinEbay == NO){
+                        NSLog(@"2");
+                        NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
+                        NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
+                        [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                    }
+                    else if (objectsToCheck.count == checker && self.fromInfinEbay == YES){
+                        NSLog(@"3");
+                        NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
+                        NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
+                        [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                    }
+                    else{
+                        //must have more WTBs to search eBay for
+                        NSLog(@"must have WTBs to fetch from ebay");
+                    }
+                }
+                else{
+                    NSLog(@"ebay error %@", error);
+                }
+            }];
+        }
+    }
+}
+
+-(void)getRelatedProducts{
+    if (self.showRelated == YES && self.results.count > 0) {
+        
+        //use holding array to avoid crash for tapping on items which were from previous session
+        NSMutableArray *holdingArray = [NSMutableArray array];
+        
+        PFQuery *productQuery = [PFQuery queryWithClassName:@"Products"];
+        if ([[PFUser currentUser]objectForKey:@"wantedWords"]) {
+            [productQuery whereKey:@"keywords" containedIn:[[PFUser currentUser]objectForKey:@"wantedWords"]];
+        }
+        
+        //get related key words
+        self.searchWords = [[PFUser currentUser]objectForKey:@"searches"];
+        NSArray *wantedw = [NSArray array];
+        
+        if ([[PFUser currentUser]objectForKey:@"wantedWords"]) {
+            wantedw = [[PFUser currentUser]objectForKey:@"wantedWords"];
+            self.wantedWords = wantedw;
+        }
+        if (self.searchWords.count > 0 || wantedw.count > 0) {
+            NSMutableArray *allSearchWords = [NSMutableArray array];
+            //seaprate the searches into search words
+            for (NSString *searchTerm in self.searchWords) {
+                NSArray *searchTermWords = [[searchTerm lowercaseString] componentsSeparatedByString:@" "];
+                //then add all search words to an array in lower case
+                [allSearchWords addObjectsFromArray:searchTermWords];
+            }
+            if ([[PFUser currentUser]objectForKey:@"wantedWords"]) {
+                [allSearchWords addObjectsFromArray:[[PFUser currentUser]objectForKey:@"wantedWords"]];
+            }
+            self.calcdKeywords = [[allSearchWords reverseObjectEnumerator] allObjects];
+            
+            [productQuery whereKey:@"keywords" containedIn:self.calcdKeywords]; //is the order of these words correct?
+        }
+
+        [productQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+        productQuery.limit = 20;
+        [productQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            if (objects) {
+                int count = (int)objects.count;
+                self.productSkipped = count;
+                
+                [holdingArray addObjectsFromArray:objects];
+    
+                [self.productIDs removeAllObjects];
+    
+                for (PFObject *product in objects) {
+                    [self.productIDs addObject:product.objectId];
+                }
+                
+                if (objects.count < 20) {
+                    // add more
+                    NSLog(@"we need more products");
+                    PFQuery *moreQuery = [PFQuery queryWithClassName:@"Products"];
+                    moreQuery.limit = 20-objects.count;
+//                    [moreQuery whereKey:@"objectId" notContainedIn:self.productIDs];
+                    [moreQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                        if (objects) {
+                            int count = (int)objects.count;
+                            self.moreProductSkipped = count;
+                            
+                            NSArray *more = [NSArray arrayWithArray:objects];
+                            for (PFObject *product in more) {
+                                if (![self.productIDs containsObject:product.objectId]) {
+                                    [holdingArray addObject:product];
+                                    [self.productIDs addObject:product.objectId];
+                                }
+                            }
+                            [self.products removeAllObjects];
+                            [self.products addObjectsFromArray:holdingArray];
+//                            NSLog(@"products array %lu", self.products.count);
+                            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                        }
+                        else{
+                            [self.products addObjectsFromArray:holdingArray];
+                            //error getting more so just show the first lot loaded
+                            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                        }
+                    }];
+                }
+                else{
+                    [self.products removeAllObjects];
+                    [self.products addObjectsFromArray:holdingArray];
+                    
+                    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+                    [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                }
+            }
+            else{
+                [self.products removeAllObjects];
+                [self.productIDs removeAllObjects];
+                NSLog(@"error getting related %@", error);
+                [self.results removeObjectAtIndex:0];
+                [self.tableView reloadData];
+            }
+        }];
+    }
+}
+
+-(void)getMoreRelated{
+    if (self.showRelated == YES && self.results.count > 0) {
+        
+        //use holding array to avoid crash for tapping on items which were from previous session
+        NSMutableArray *holdingArray = [NSMutableArray array];
+        
+        PFQuery *productQuery2 = [PFQuery queryWithClassName:@"Products"];
+        if (self.calcdKeywords.count > 0) {
+            [productQuery2 whereKey:@"keywords" containedIn:self.calcdKeywords];
+        }
+        [productQuery2 whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+        productQuery2.limit = 20;
+        productQuery2.skip = self.productSkipped;
+//        [productQuery2 whereKey:@"objectId" notContainedIn:self.productIDs];
+        [productQuery2 findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            if (objects) {
+                int count = (int)objects.count;
+                self.productSkipped = self.productSkipped + count;
+                
+                for (PFObject *product in objects) {
+                    if (![self.productIDs containsObject:product.objectId]) {
+                        [holdingArray addObject:product];
+                        [self.productIDs addObject:product.objectId];
+                    }
+                }
+                
+                if (objects.count < 20) {
+                    // add more
+                    NSLog(@"we need more 'view more' products");
+                    PFQuery *moreQuery = [PFQuery queryWithClassName:@"Products"];
+                    moreQuery.limit = 20-objects.count;
+//                    [moreQuery whereKey:@"objectId" notContainedIn:self.productIDs];
+                    moreQuery.skip = self.moreProductSkipped;
+                    [moreQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                        if (objects) {
+                            int count = (int)objects.count;
+                            self.moreProductSkipped = self.moreProductSkipped + count;
+                            
+                            NSArray *more = [NSArray arrayWithArray:objects];
+                            for (PFObject *product in more) {
+                                if (![self.productIDs containsObject:product.objectId]) {
+                                    [holdingArray addObject:product];
+                                    [self.productIDs addObject:product.objectId];
+                                }
+                            }
+                            [self.products addObjectsFromArray:holdingArray];
+                            
+                            NSLog(@"MORE products array %lu", self.products.count);
+                            
+                            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                        }
+                        else{
+                            [self.products addObjectsFromArray:holdingArray];
+                            //error getting more so just show the first lot loaded
+                            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                        }
+                    }];
+                }
+                else{
+
+                }
+            }
+            else{
+                NSLog(@"error getting more related %@", error);
+            }
+        }];
+    }
 }
 
 -(void)recommendFromServer{
@@ -147,22 +408,158 @@
             }
             [self.anotherPromptButton setHidden:YES];
             
-            NSLog(@"got WTBs: %lu", objects.count);
+//            NSLog(@"got WTBs: %lu", objects.count);
+            int count = (int)[objects count];
+            self.skipped = count;
+            
+            __block int productCount = 0;
+            NSMutableArray *holdingArray = [NSMutableArray array];
             
             for (PFObject *WTB in objects) {
                 
-                //call server
-                NSDictionary *params = @{@"wantedKeywords": [WTB objectForKey:@"keywords"]};
+                NSArray *wantWords = [WTB objectForKey:@"keywords"];
+                int wantNum = (int)wantWords.count;
+
+                //call server & pass the number bcoz of array counting bug with cloud code
+                NSDictionary *params = @{@"wantedKeywords":wantWords, @"wantNumber":[NSNumber numberWithInt:wantNum]};
                 
                 [PFCloud callFunctionInBackground:@"productSearch" withParameters:params block:^(NSDictionary *response, NSError *error) {
                     if (!error) {
-                        NSLog(@"search response %@", response);
+                        productCount++;
+                        
+                        NSDictionary *wtbDict = response;
+//                        NSLog(@"PRODUCT SEARCH RESP %@", wtbDict);
+                        
+                        //if matches array key is empty don't recommend anything
+                        if ([[wtbDict valueForKey:@"matches"]count]==0){
+                            //do nothing as have no matches from our sellers network
+//                            NSLog(@"no matches from seller network so don't add this dictionary to array");
+                        }
+                        else{
+                            [wtbDict setValue:WTB forKey:@"WTB"];
+                            [holdingArray addObject:wtbDict];
+                            NSLog(@"ADDING IN PULL results count in pull %lu", self.results.count);
+                        }
+                        
+                        if (productCount == objects.count) {
+                            NSLog(@"finished checking all products");
+                            NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc]
+                                                                initWithKey: @"createdAt" ascending: NO];
+                            NSArray *sortedArray = [holdingArray sortedArrayUsingDescriptors: [NSArray arrayWithObject:sortDescriptor]];
+                            
+                            [self.results removeAllObjects];
+                            [self.results addObjectsFromArray:sortedArray];
+                            
+                            if (self.results.count > 0) {
+                                NSLog(@"ADDING DIC");
+                                NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:@"YES",@"related", nil];
+                                [self.results insertObject:dict atIndex:0];
+                            }
+                            
+                            NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
+                            NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
+                            [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                            
+                            [self.tableView.pullToRefreshView stopAnimating];
+                            self.pullFinished = YES;
+                            
+                            [self getRelatedProducts];
+                            self.fromInfinEbay = NO;
+                            if (self.ebayEnabled != NO) {
+                                [self getEbayProducts:self.results];
+                            }
+                        }
                     }
                     else{
                         NSLog(@"ebay error %@", error);
                     }
                 }];
+            }
+        }
+    }];
+}
+
+-(void)infiniteFromServer{
+    if (self.pullFinished == NO || self.infinFinished == NO) {
+        return;
+    }
+    self.infinFinished = NO;
+    self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
+    [self.infiniteQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
+    [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
+    self.infiniteQuery.limit = 1;
+    [self.infiniteQuery orderByDescending:@"createdAt"];
+    self.infiniteQuery.skip = self.skipped;
+    [self.infiniteQuery cancel];
+    [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            if (objects.count == 0) {
+//                NSLog(@"got none");
+                [self.tableView.infiniteScrollingView stopAnimating];
+                self.infinFinished = YES;
+                return;
+            }
+            [self.anotherPromptButton setHidden:NO];
+            [self.anotherPromptButton setTitle:@"C R E A T E  A N O T H E R  L I S T I N G" forState:UIControlStateNormal];
+            
+            int count = (int)[objects count];
+            
+//            NSLog(@"GOT %d more WTBs to display", count);
+            
+            self.skipped = self.skipped + count;
+            __block int productCount = 0;
+            
+            NSMutableArray *holding = [NSMutableArray array];
+            
+            for (PFObject *WTB in objects) {
                 
+                NSArray *wantWords = [WTB objectForKey:@"keywords"];
+                int wantNum = (int)wantWords.count;
+                
+                //call server
+                NSDictionary *params = @{@"wantedKeywords":wantWords, @"wantNumber":[NSNumber numberWithInt:wantNum]};
+                
+                [PFCloud callFunctionInBackground:@"productSearch" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                    if (!error) {
+                        productCount++;
+                        
+                        NSDictionary *wtbDict = response;
+//                        NSLog(@"(INFIN) wtb: %@   matches: %@", [wtbDict valueForKey:@"WTB"], [wtbDict valueForKey:@"matches"]);
+                        
+                        //if matches array key is empty don't recommend anything
+                        if ([[wtbDict valueForKey:@"matches"]count]==0){
+                            //do nothing as have no matches from our sellers network
+                            NSLog(@"no matches from seller network so don't add this dictionary to array");
+                        }
+                        else{
+                            [wtbDict setValue:WTB forKey:@"WTB"];
+                            [holding addObject:wtbDict];
+                            NSLog(@"INFIN ADD");
+                        }
+                        
+                        if (productCount == objects.count) {
+                            NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc]
+                                                                initWithKey: @"createdAt" ascending: NO];
+                            NSArray *sortedArray = [holding sortedArrayUsingDescriptors: [NSArray arrayWithObject:sortDescriptor]];
+                            [self.results addObjectsFromArray:sortedArray];
+                            
+                            [self.tableView.infiniteScrollingView stopAnimating];
+                            self.infinFinished = YES;
+                            
+                            NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
+                            NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
+                            [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                            
+                            if (self.ebayEnabled != NO) {
+                                self.fromInfinEbay = YES;
+                                [self getEbayProducts:sortedArray];
+                            }
+                        }
+                    }
+                    else{
+                        NSLog(@"ebay error %@", error);
+                    }
+                }];
             }
         }
     }];
@@ -512,9 +909,12 @@
         cell = [[RecommendCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
     }
     
-    PFObject *WTB = [self.wtbArray objectAtIndex:indexPath.row];
+//    PFObject *WTB = [self.wtbArray objectAtIndex:indexPath.row];
+
+    NSDictionary *wtbDict = [self.results objectAtIndex:indexPath.row];
+    PFObject *WTB = [wtbDict valueForKey:@"WTB"];
     
-    if ([WTB objectForKey:@"field"]) {
+    if ([wtbDict valueForKey:@"related"]) {
         cell.wtbTitle.text = @"R E L A T E D";
         cell.timeLabel.text = @"";
         [cell.wtbTitle setTextColor:[UIColor blackColor]];
@@ -591,7 +991,8 @@
 -(NSInteger)tableView:(UITableView *)tableView
 numberOfRowsInSection:(NSInteger)section
 {
-    return self.wtbArray.count;
+    NSLog(@"got this many results %lu", self.results.count);
+    return self.results.count;
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(RecommendCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
@@ -606,13 +1007,24 @@ numberOfRowsInSection:(NSInteger)section
 -(NSInteger)collectionView:(AFCollectionView *)collectionView
     numberOfItemsInSection:(NSInteger)section
 {
-    if (![self.wtbArray[collectionView.indexPath.row] objectForKey:@"field"]) {
-        NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
-        return collectionViewArray.count;
-    }
-    else{
+    NSDictionary *wtbDict = [self.results objectAtIndex:collectionView.indexPath.row];
+
+    if ([wtbDict valueForKey:@"related"]) {
         //return number of recommended items
         return self.products.count;
+    }
+//    else if ([wtbDict valueForKey:@"ebay"]){
+//        NSArray *matchesArray = [wtbDict valueForKey:@"matches"];
+//        NSArray *ebayArray = [wtbDict valueForKey:@"ebay"];
+//        
+//        NSLog(@"EBAY COUNT: %@  MATCHES COUNT: %@", ebayArray, matchesArray);
+//        
+//        return matchesArray.count+ebayArray.count;
+//    }
+    else{
+        NSArray *collectionViewArray = [wtbDict valueForKey:@"matches"];
+        NSLog(@"count of CV Array %lu for this WTB: %@", collectionViewArray.count, [wtbDict valueForKey:@"WTB"]);
+        return collectionViewArray.count;
     }
 }
 
@@ -621,38 +1033,64 @@ numberOfRowsInSection:(NSInteger)section
 {
     ForSaleCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.itemView.image = nil;
-
-    if (collectionView.indexPath.row == 1 && self.showRelated == YES) {
-        PFObject *product = self.products[indexPath.item];
-        
-        PFFile *imgFile = [product objectForKey:@"thumbnail"];
-        [cell.itemView setFile:imgFile];
-        [cell.itemView loadInBackground];
-        
-        NSArray *shownTo = [product objectForKey:@"shownTo"];
-        if (![shownTo containsObject:[[PFUser currentUser]objectId]]) {
-            [product addObject:[[PFUser currentUser]objectId] forKey:@"shownTo"];
-            [product saveInBackground];
+    NSDictionary *wtbDict = [self.results objectAtIndex:collectionView.indexPath.row];
+    
+    if ([wtbDict valueForKey:@"related"] && self.showRelated == YES) {
+//        NSLog(@"should show a product in this collection view!");
+        if (indexPath.row == self.products.count-1 && self.products.count > 1) {
+            [cell.itemView setImage:[UIImage imageNamed:@"viewMore"]];
+        }
+        else{
+            PFObject *product = self.products[indexPath.item];
+            
+            PFFile *imgFile = [product objectForKey:@"thumbnail"];
+            [cell.itemView setFile:imgFile];
+            [cell.itemView loadInBackground];
+            
+            NSArray *shownTo = [product objectForKey:@"shownTo"];
+            if (![shownTo containsObject:[[PFUser currentUser]objectId]]) {
+                [product addObject:[[PFUser currentUser]objectId] forKey:@"shownTo"];
+                [product saveInBackground];
+            }
         }
     }
     else{
-        NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
+//        NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
+        
+        NSArray *collectionViewArray = [wtbDict valueForKey:@"matches"];
         
         NSLog(@"collection view array %@", collectionViewArray);
         
-        PFObject *WTS = collectionViewArray[indexPath.item];
-        if ([self.viewsArray containsObject:WTS.objectId]) {
+        if ([collectionViewArray[indexPath.item]isKindOfClass:[NSDictionary class]]) {
+            NSLog(@"its an ebay item");
+            NSDictionary *ebayItem = collectionViewArray[indexPath.item];
+            NSURL *imageFileUrl = [[NSURL alloc] initWithString:[ebayItem valueForKey:@"itemImageURL"]];
+            NSData *imageData = [NSData dataWithContentsOfURL:imageFileUrl];
+            cell.itemView.image = [UIImage imageWithData:imageData];
         }
         else{
-            [self.viewsArray addObject:WTS.objectId];
+            PFObject *WTS = collectionViewArray[indexPath.item];
+            [WTS fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    NSLog(@"in fetch");
+                    PFObject *WTB = [wtbDict valueForKey:@"WTB"];
+                    
+                    //setup cell
+                    [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
+                    [cell.itemView loadInBackground];
+                    [WTS setObject:WTB forKey:@"WTB"];
+                }
+                else{
+                    NSLog(@"error fetching %@", error);
+                }
+            }];
+            
+            if ([self.viewsArray containsObject:WTS.objectId]) {
+            }
+            else{
+                [self.viewsArray addObject:WTS.objectId];
+            }
         }
-        
-        PFObject *WTB = [self.wtbArray objectAtIndex:self.currentIndexPath.row];
-
-        //setup cell
-        [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
-        [cell.itemView loadInBackground];
-        [WTS setObject:WTB forKey:@"WTB"];
     }
     
     cell.itemView.layer.cornerRadius = 35;
@@ -685,42 +1123,73 @@ numberOfRowsInSection:(NSInteger)section
 
 -(void)collectionView:(AFCollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
-    
-    self.viewedItem = YES;
-    ForSaleListing *vc = [[ForSaleListing alloc]init];
-    
-    if (collectionView.indexPath.row == 1 && self.showRelated == YES) {
-        //related tapped
-        PFObject *product = self.products[indexPath.item];
-        
-        vc.listingObject = product;
-        vc.source = @"related";
-        vc.pureWTS = NO;
-        vc.relatedProduct = YES;
-        
-        [Answers logContentViewWithName:@"For Sale Item Selected"
-                            contentType:@"Related"
-                              contentId:product.objectId
-                       customAttributes:@{}];
+    if (collectionView.indexPath.row == 0 && self.showRelated == YES) {
+        if (indexPath.row == self.products.count-1 && self.products.count > 1) {
+            //view more pressed
+            [Answers logCustomEventWithName:@"View more tapped in Buy Now Related"
+                           customAttributes:@{}];
+            
+            //load more related products
+            [self getMoreRelated];
+        }
+        else{
+            //related tapped
+            PFObject *product = self.products[indexPath.item];
+            self.listingToView = product;
+            if (self.itemView.alpha == 0.0f) {
+                NSLog(@"about to show END item");
+                self.itemShowing = YES;
+                [self clearItemView];
+                [self itemViewListingSetup];
+                [self showItemView];
+            }
+            else{
+                NSLog(@"already showing end item!");
+            }
+
+            [Answers logCustomEventWithName:@"Tapped item for sale"
+                           customAttributes:@{
+                                              @"itemType":@"related"
+                                              }];
+        }
     }
     else{
         //normal
-        NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
-        PFObject *WTS = collectionViewArray[indexPath.item];
+        NSDictionary *wtbDict = [self.results objectAtIndex:collectionView.indexPath.row];
+        NSArray *collectionViewArray = [wtbDict valueForKey:@"matches"];
         
-        [Answers logContentViewWithName:@"For Sale Item Selected"
-                            contentType:@"Recommended"
-                              contentId:WTS.objectId
-                       customAttributes:@{}];
-        
-        vc.listingObject = WTS;
-        vc.WTBObject = [WTS objectForKey:@"WTB"];
-        vc.source = @"recommended";
-        vc.pureWTS = NO;
+        if ([collectionViewArray[indexPath.item]isKindOfClass:[NSDictionary class]]) {
+            NSLog(@"tapped an ebay item!");
+            self.ebayToView = collectionViewArray[indexPath.item];
+            if (self.itemShowing != YES || self.itemView.alpha == 0.0f) {
+                self.itemShowing = YES;
+                [self clearItemView];
+                [self ebayListingSetup];
+                [self showItemView];
+            }
+            
+            [Answers logCustomEventWithName:@"Tapped item for sale"
+                           customAttributes:@{
+                                              @"itemType":@"eBay"
+                                              }];
+        }
+        else{
+            PFObject *WTS = collectionViewArray[indexPath.item];
+            
+            [Answers logCustomEventWithName:@"Tapped item for sale"
+                           customAttributes:@{
+                                              @"itemType":@"sellersNetwork"
+                                              }];
+            self.viewedItem = YES;
+            ForSaleListing *vc = [[ForSaleListing alloc]init];
+            vc.listingObject = WTS;
+            vc.WTBObject = [WTS objectForKey:@"WTB"];
+            vc.source = @"recommended";
+            vc.pureWTS = NO;
+            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+            [self presentViewController:nav animated:YES completion:nil];
+        }
     }
-    
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-    [self presentViewController:nav animated:YES completion:nil];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -730,10 +1199,10 @@ numberOfRowsInSection:(NSInteger)section
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    [Answers logContentViewWithName:@"Buy Now Tapped"
-                        contentType:@""
-                          contentId:@""
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Buy Now"
+                                      }];
     
     [self.infiniteQuery cancel];
     [self.tableView.infiniteScrollingView stopAnimating];
@@ -791,10 +1260,10 @@ numberOfRowsInSection:(NSInteger)section
 }
 
 -(void)pushFeatured{
-    [Answers logContentViewWithName:@"Featured Tapped"
-                        contentType:@""
-                          contentId:@""
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Featured"
+                                      }];
     
     FeaturedItems *vc = [[FeaturedItems alloc]init];
     [self.navigationController pushViewController:vc animated:YES];
@@ -815,10 +1284,19 @@ numberOfRowsInSection:(NSInteger)section
 }
 
 - (IBAction)anotherPromptPressed:(id)sender {
+    [Answers logCustomEventWithName:@"Create another listing"
+                   customAttributes:@{
+                                      @"From":@"Buy Now"
+                                      }];
     self.tabBarController.selectedIndex = 2;
 }
 
 -(void)showSellingAlert{
+    if (self.alertShowing == YES) {
+        return;
+    }
+    
+    self.alertShowing = YES;
     self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
     self.searchBgView.alpha = 0.0;
     [self.searchBgView setBackgroundColor:[UIColor blackColor]];
@@ -900,6 +1378,7 @@ numberOfRowsInSection:(NSInteger)section
                         }
                      completion:^(BOOL finished) {
                          //Completion Block
+                         self.alertShowing = NO;
                          [self.customAlert setAlpha:0.0];
                          self.customAlert = nil;
                      }];
@@ -944,5 +1423,257 @@ numberOfRowsInSection:(NSInteger)section
             }];
         }
     }];
+}
+
+-(void)setUpItemView{
+    self.itemView = nil;
+    self.viewerBg = nil;
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"viewItemView" owner:self options:nil];
+    self.itemView = (viewItemClass *)[nib objectAtIndex:0];
+    self.itemView.delegate = self;
+    self.itemView.alpha = 0.0;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.itemView]; //seems to be a bug when using self.view.frame so use application window instead
+//    [self.navigationController.view addSubview:self.itemView];
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.itemView setFrame:CGRectMake(([UIApplication sharedApplication].keyWindow.frame.size.width/2)-135, -235, 270, 235)];
+    }
+    else{
+        [self.itemView setFrame:CGRectMake(([UIApplication sharedApplication].keyWindow.frame.size.width/2)-148, -234, 295, 234)]; //iPhone 6/7 specific
+    }
+    
+    self.itemView.layer.cornerRadius = 10;
+    self.itemView.layer.masksToBounds = YES;
+    
+    self.viewerBg = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.viewerBg.backgroundColor = [UIColor blackColor];
+    self.viewerBg.alpha = 0.0;
+    
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideItem)];
+    tap.numberOfTapsRequired = 1;
+    [self.viewerBg addGestureRecognizer:tap];
+    [[UIApplication sharedApplication].keyWindow insertSubview:self.viewerBg belowSubview:self.itemView];
+    
+//    [self.navigationController.view insertSubview:self.viewerBg belowSubview:self.itemView];
+    
+    NSLog(@"view's frame %@ and %f", NSStringFromCGRect(self.itemView.frame),self.itemView.frame.size.height);
+}
+
+-(void)showItemView{
+    [self.navigationItem setRightBarButtonItems:nil animated:YES];
+    self.viewerBg.alpha = 0.6;
+    [self.itemView setAlpha:1.0];
+    [UIView animateWithDuration:1.5
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.itemView setFrame:CGRectMake(0, 0, 270, 235)];
+                            }
+                            else{
+                                [self.itemView setFrame:CGRectMake(0, 0, 295, 234)];
+                            }
+                            self.itemView.center = self.view.center;
+                        }
+                     completion:^(BOOL finished) {
+                         self.itemShowing = YES;
+                     }];
+}
+
+-(void)visitPressed{
+    [self hideItem];
+    NSString *URLString = @"";
+    
+    if (self.ebayTapped == YES) {
+        //goto eBay
+        URLString = [self.ebayToView valueForKey:@"itemURL"];
+        [Answers logCustomEventWithName:@"Visit Store Pressed"
+                       customAttributes:@{
+                                          @"retailer":@"eBay"
+                                          }];
+    }
+    else{
+        //goto END.
+        URLString = [self.listingToView objectForKey:@"link"];
+        [Answers logCustomEventWithName:@"Visit Store Pressed"
+                       customAttributes:@{
+                                          @"retailer":@"END"
+                                          }];
+    }
+    TOWebViewController *web = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+    web.showUrlWhileLoading = YES;
+    web.showPageTitles = YES;
+    web.doneButtonTitle = @"";
+    web.paypalMode = NO;
+    web.infoMode = NO;
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:web];
+    [self presentViewController:navigationController animated:YES completion:nil];
+}
+
+-(void)hideItem{
+    [UIView animateWithDuration:0.7
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.itemView setFrame:CGRectMake((self.view.frame.size.width/2)-135,1000, 270, 235)];
+                            }
+                            else{
+                                [self.itemView setFrame:CGRectMake((self.view.frame.size.width/2)-148,1000, 295, 234)]; //iPhone 6/7 specific
+                            }
+                            [self.viewerBg setAlpha:0.0];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.itemShowing = NO;
+                         [self.itemView setAlpha:0.0];
+                         [self.viewerBg setAlpha:0.0];
+                         
+                         if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                             //iphone5
+                             [self.itemView setFrame:CGRectMake((self.view.frame.size.width/2)-135, -235, 270, 235)];
+                         }
+                         else{
+                             [self.itemView setFrame:CGRectMake((self.view.frame.size.width/2)-148, -234, 295, 234)]; //iPhone 6/7 specific
+                         }
+                     }];
+}
+
+-(void)ebayListingSetup{
+    self.ebayTapped = YES;
+    [self.itemView.visitButton setTitle:@"V I S I T  E B A Y" forState:UIControlStateNormal];
+    NSURL *imageFileUrl = [[NSURL alloc] initWithString:[self.ebayToView valueForKey:@"itemImageURL"]];
+    NSData *imageData = [NSData dataWithContentsOfURL:imageFileUrl];
+    self.itemView.itemImageView.image = [UIImage imageWithData:imageData];
+    
+    NSString *currency = [self.ebayToView valueForKey:@"itemCurrency"];
+    NSString *symbol = @"";
+    if ([currency isEqualToString:@"GBP"]) {
+        symbol = @"£";
+    }
+    else if ([currency isEqualToString:@"USD"]){
+        symbol = @"$";
+    }
+    else if([currency isEqualToString:@"EUR"]){
+        symbol = @"€";
+    }
+    else{
+        symbol = currency;
+    }
+    self.itemView.priceLabel.text = [NSString stringWithFormat:@"%@%@",symbol,[self.ebayToView valueForKey:@"itemPrice"]];
+    self.itemView.locationLabel.text = @"-";
+    self.itemView.sizeLabel.text = @"-";
+    self.itemView.timeLabel.text = @"-";
+    self.itemView.descriptionLabel.text = [[self.ebayToView valueForKey:@"itemTitle"] capitalizedString];
+}
+
+-(void)itemViewListingSetup{
+    self.ebayTapped = NO;
+    [self.itemView.visitButton setTitle:@"V I S I T  E N D." forState:UIControlStateNormal];
+    [self.listingToView fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (!error) {
+            //setup image
+            [self.itemView.itemImageView setFile:[self.listingToView objectForKey:@"image1"]];
+            [self.itemView.itemImageView loadInBackground];
+            
+            self.itemView.priceLabel.text = [self.listingToView objectForKey:@"price"];
+            self.itemView.locationLabel.text = @"Ships to UK";
+            self.itemView.sizeLabel.text = @"Multiple";
+            self.itemView.descriptionLabel.text = [NSString stringWithFormat:@"%@ - fulfilled by END.", [self.listingToView objectForKey:@"title"]];
+            
+            [self calcPostedDate];
+            
+            [self.listingToView incrementKey:@"views"];
+            [self.listingToView saveInBackground];
+            
+        }
+        else{
+            NSLog(@"error fetching listing %@", error);
+        }
+    }];
+}
+-(void) calcPostedDate{
+    NSDate *createdDate = self.listingToView.createdAt;
+    NSDate *now = [NSDate date];
+    NSTimeInterval distanceBetweenDates = [now timeIntervalSinceDate:createdDate];
+    double secondsInAnHour = 3600;
+    float minsBetweenDates = (distanceBetweenDates / secondsInAnHour)*60;
+    if (minsBetweenDates > 0 && minsBetweenDates < 1) {
+        //seconds
+        self.itemView.timeLabel.text = [NSString stringWithFormat:@"%.fs ago", (minsBetweenDates*60)];
+    }
+    else if (minsBetweenDates == 1){
+        //1 min
+        self.itemView.timeLabel.text = @"1m ago";
+    }
+    else if (minsBetweenDates > 1 && minsBetweenDates <60){
+        //mins
+        self.itemView.timeLabel.text = [NSString stringWithFormat:@"%.fm ago", minsBetweenDates];
+    }
+    else if (minsBetweenDates == 60){
+        //1 hour
+        self.itemView.timeLabel.text = @"1h ago";
+    }
+    else if (minsBetweenDates > 60 && minsBetweenDates <1440){
+        //hours
+        self.itemView.timeLabel.text = [NSString stringWithFormat:@"%.fh ago", (minsBetweenDates/60)];
+    }
+    else if (minsBetweenDates > 1440 && minsBetweenDates < 2880){
+        //1 day
+        self.itemView.timeLabel.text = [NSString stringWithFormat:@"%.fd ago", (minsBetweenDates/1440)];
+    }
+    else if (minsBetweenDates > 2880 && minsBetweenDates < 10080){
+        //days
+        self.itemView.timeLabel.text = [NSString stringWithFormat:@"%.fd ago", (minsBetweenDates/1440)];
+    }
+    else if (minsBetweenDates > 10080){
+        //weeks
+        self.itemView.timeLabel.text = [NSString stringWithFormat:@"%.fw ago", (minsBetweenDates/10080)];
+    }
+    else{
+        //fail safe :D
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setLocale:[NSLocale currentLocale]];
+        [dateFormatter setDateFormat:@"MMM YY"];
+        
+        NSDate *formattedDate = [NSDate date];
+        self.itemView.timeLabel.text = [NSString stringWithFormat:@"%@", [dateFormatter stringFromDate:formattedDate]];
+        dateFormatter = nil;
+    }
+}
+
+-(void)imagePressed{
+    if (self.ebayTapped != YES) {
+        //END. so show image
+        [self presentDetailImage];
+    }
+    else{
+        //eBay so can't show bigger image
+    }
+}
+
+-(void)presentDetailImage{
+    DetailImageController *vc = [[DetailImageController alloc]init];
+    vc.listingPic = YES;
+    vc.numberOfPics = 1;
+    vc.listing = self.listingToView;
+    [self hideItem];
+    [self presentViewController:vc animated:YES completion:nil];
+}
+-(void)clearItemView{
+    self.itemView.itemImageView.image = nil;
+    self.itemView.priceLabel.text = @"";
+    self.itemView.locationLabel.text = @"";
+    self.itemView.sizeLabel.text = @"";
+    self.itemView.timeLabel.text = @"";
+    self.itemView.descriptionLabel.text = @"";
 }
 @end

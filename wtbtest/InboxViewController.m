@@ -50,7 +50,7 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
-    NSLog(self.justViewedMsg ? @"appear has just viewed message" : @"nah hasn't viewed msg in appear");
+//    NSLog(self.justViewedMsg ? @"appear has just viewed message" : @"nah hasn't viewed msg in appear");
     
     //load when app comes into foreground
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -64,10 +64,10 @@
     
     self.selectedConvo = @"";
     
-    [Answers logContentViewWithName:@"Inbox Tapped"
-                        contentType:@""
-                          contentId:@""
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Inbox"
+                                      }];
     
     if (self.justViewedMsg == NO) {
         [self loadMessages];
@@ -402,6 +402,7 @@
     self.cell.timeLabel.text = [NSString stringWithFormat:@"%@", [self.dateFormat stringFromDate:convoDate]];
     [self setProfImageBorder];
 
+    //messaged from a for sale listing
     if ([[convoObject objectForKey:@"pureWTS"]isEqualToString:@"YES"]) {
         //no WTB associated with this convo
         PFObject *saleListing = [convoObject objectForKey:@"wtsListing"];
@@ -410,6 +411,15 @@
         self.cell.wtbTitleLabel.text = @"";
         self.cell.wtbPriceLabel.text = @"";
     }
+    
+    //messaged from a user's profile
+    else if ([[convoObject objectForKey:@"profileConvo"]isEqualToString:@"YES"]) {
+        //no WTB or WTS associated with this convo
+        self.cell.wtbTitleLabel.text = @"";
+        self.cell.wtbPriceLabel.text = @"";
+    }
+    
+    //conventional message from a WTB listing
     else{
         PFObject *wtbListing = [convoObject objectForKey:@"wtbListing"];
         [self.cell.wtbImageView setFile:[wtbListing objectForKey:@"image1"]];
@@ -559,6 +569,10 @@
     
     if ([[convoObject objectForKey:@"pureWTS"]isEqualToString:@"YES"]) {
         vc.pureWTS = YES;
+    }
+    else if ([[convoObject objectForKey:@"profileConvo"]isEqualToString:@"YES"]){
+        vc.pureWTS = YES;
+        vc.profileConvo = YES;
     }
     else{
         PFObject *listing = [convoObject objectForKey:@"wtbListing"];

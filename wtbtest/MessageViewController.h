@@ -86,6 +86,7 @@
 @property (nonatomic, strong) TOWebViewController *webViewController;
 
 @property (nonatomic) BOOL pureWTS;
+@property (nonatomic) BOOL profileConvo;
 
 @property (nonatomic) BOOL sentPush;
 

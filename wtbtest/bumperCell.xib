@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1212" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <customFonts key="customFonts">
+        <array key="PingFang.ttc">
+            <string>PingFangSC-Regular</string>
+        </array>
+    </customFonts>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="Cell" rowHeight="72" id="KGk-i7-Jjw" customClass="bumperCell">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="72"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="72"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="m54-B3-MSL" customClass="PFImageView">
+                        <rect key="frame" x="8" y="10" width="50" height="50"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="50" id="qgt-fA-mmr"/>
+                        </constraints>
+                    </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="evv-mq-Lsn">
+                        <rect key="frame" x="73" y="18" width="234" height="35"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="16"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="m54-B3-MSL" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="topMargin" constant="2" id="88n-Ca-3Wa"/>
+                    <constraint firstItem="m54-B3-MSL" firstAttribute="centerY" secondItem="evv-mq-Lsn" secondAttribute="centerY" id="IP6-uG-58r"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="evv-mq-Lsn" secondAttribute="trailing" constant="5" id="RwL-G0-NnX"/>
+                    <constraint firstItem="m54-B3-MSL" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leadingMargin" id="Z0Q-UU-cWg"/>
+                    <constraint firstItem="evv-mq-Lsn" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="topMargin" constant="10" id="kLU-3V-H9Z"/>
+                    <constraint firstItem="evv-mq-Lsn" firstAttribute="leading" secondItem="m54-B3-MSL" secondAttribute="trailing" constant="15" id="kQA-wr-oFZ"/>
+                    <constraint firstItem="m54-B3-MSL" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" constant="-1" id="p6R-0M-GfF"/>
+                </constraints>
+            </tableViewCellContentView>
+            <connections>
+                <outlet property="userImageView" destination="m54-B3-MSL" id="nuy-Yb-KbC"/>
+                <outlet property="usernameLabel" destination="evv-mq-Lsn" id="qnp-fG-Ko4"/>
+            </connections>
+            <point key="canvasLocation" x="34" y="68"/>
+        </tableViewCell>
+    </objects>
+</document>

@@ -17,6 +17,7 @@
 #import "ReviewsVC.h"
 #import "ForSaleListing.h"
 #import <Crashlytics/Crashlytics.h>
+#import "MessageViewController.h"
 
 @interface UserProfileController ()
 
@@ -83,8 +84,9 @@
         self.navigationItem.leftBarButtonItem = cancelButton;
     }
     
-    UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
-    self.navigationItem.rightBarButtonItem = addForSaleItem; //CHANGE
+    //for testing purposes
+//    UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
+//    self.navigationItem.rightBarButtonItem = addForSaleItem;
 
     PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
     [trustedQuery whereKey:@"user" equalTo:self.user];
@@ -136,10 +138,12 @@
     [self setAutomaticallyAdjustsScrollViewInsets:NO];
     [self.sellerSegmentControl setSelectedSegmentIndex:0];
     
-    [Answers logContentViewWithName:@"UserProfile Tapped"
-                        contentType:@""
-                          contentId:@""
-                   customAttributes:@{}];
+    self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"User Profile"
+                                      }];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -258,7 +262,7 @@
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [wtbQuery whereKey:@"postUser" equalTo:self.user];
     [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
-    [wtbQuery orderByDescending:@"updatedAt"];
+    [wtbQuery orderByDescending:@"createdAt"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             self.WTBArray = objects;
@@ -293,7 +297,7 @@
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"forSaleItems"];
     [wtbQuery whereKey:@"sellerUser" equalTo:self.user];
     [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
-    [wtbQuery orderByDescending:@"updatedAt"];
+    [wtbQuery orderByDescending:@"createdAt"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects.count > 0) {
@@ -694,7 +698,89 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report User" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
         [self reportUser];
     }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Message User" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+        [self setupMessages];
+    }]];
     [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+-(void)setupMessages{
+    [self showHUD];
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
+    
+    //possible convoIDs
+    NSString *possID = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId, self.user.objectId];
+    NSString *otherId = [NSString stringWithFormat:@"%@%@",self.user.objectId,[PFUser currentUser].objectId];
+    
+    NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
+    
+    [convoQuery whereKey:@"convoId" containedIn:idArray];
+    [convoQuery includeKey:@"buyerUser"];
+    [convoQuery includeKey:@"sellerUser"];
+    
+    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            //convo exists, goto that one but pretype a message like "I'm interested in your Supreme bogo" etc.
+            MessageViewController *vc = [[MessageViewController alloc]init];
+            vc.convoId = [object objectForKey:@"convoId"];
+            vc.convoObject = object;
+            vc.otherUser = [object objectForKey:@"sellerUser"];
+            vc.otherUserName = [[object objectForKey:@"sellerUser"]username];
+            vc.userIsBuyer = NO;
+            vc.pureWTS = YES;
+
+            [self hideHUD];
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else{
+            //create a new convo and goto it
+            PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
+            convoObject[@"sellerUser"] = [PFUser currentUser];
+            convoObject[@"buyerUser"] = self.user;
+            convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId, self.user.objectId];
+            convoObject[@"profileConvo"] = @"YES";
+            convoObject[@"totalMessages"] = @0;
+            convoObject[@"buyerUnseen"] = @0;
+            convoObject[@"sellerUnseen"] = @0;
+            
+            [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    NSLog(@"saved new convo");
+                    //saved
+                    MessageViewController *vc = [[MessageViewController alloc]init];
+                    vc.convoId = [convoObject objectForKey:@"convoId"];
+                    vc.convoObject = convoObject;
+                    vc.otherUser = self.user;
+                    vc.otherUserName = self.user.username;
+                    vc.userIsBuyer = NO;
+                    vc.pureWTS = YES;
+
+                    [self hideHUD];
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
+                else{
+                    NSLog(@"error saving convo in profile");
+                }
+            }];
+        }
+    }];
+}
+
+-(void)showHUD{
+    if (!self.hud) {
+        self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    }
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+}
+
+-(void)hideHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
+    });
 }
 
 @end

@@ -16,6 +16,7 @@
 #import <TOWebViewController.h>
 #import "ChatWithBump.h"
 #import "ContainerViewController.h"
+#import "NavigationController.h"
 
 @interface ProfileController ()
 
@@ -53,10 +54,10 @@
     
     self.navigationItem.title = [NSString stringWithFormat:@"%@", [PFUser currentUser].username];
     
-    [Answers logContentViewWithName:@"Profile Tapped"
-                        contentType:@""
-                          contentId:@""
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Profile"
+                                      }];
     
     if ([self.navigationController tabBarItem].badgeValue != nil) {
         NSLog(@"unseen TB msg");
@@ -228,7 +229,7 @@
             webViewController.paypalMode = NO;
             //hide toolbar banner
             webViewController.infoMode = NO;
-            UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
+            NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:webViewController];
             [self presentViewController:navigationController animated:YES completion:nil];
         }
     }

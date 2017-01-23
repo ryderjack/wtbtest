@@ -15,7 +15,7 @@
 #import <Crashlytics/Crashlytics.h>
 #import "iRate.h"
 #import <HNKGooglePlacesAutocomplete/HNKGooglePlacesAutocomplete.h>
-
+#import "BumpVC.h"
 @interface AppDelegate ()
 
 @end
@@ -40,13 +40,13 @@
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
         //local host
-        configuration.server = @"http://localhost:1337/parse";
+//        configuration.server = @"http://localhost:1337/parse";
         
         //production
 //        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
         
         //preproduction
-//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
+        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
     }]];
 
 //    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
@@ -161,6 +161,39 @@
     }else{
         NSLog(@"app did not recieve notification");
     }
+    
+    //Handle fresh opened from a notification
+    NSDictionary *userInfo = [launchOptions valueForKey:@"UIApplicationLaunchOptionsRemoteNotificationKey"];
+    
+    NSString *bumpedStatus = [userInfo objectForKey:@"bumpRequest"];
+    NSString *listing = [userInfo objectForKey:@"listingID"];
+    
+    NSDictionary *dic = [userInfo objectForKey:@"aps"];
+    NSString *strMsg = [dic objectForKey:@"alert"];
+    
+    if([strMsg containsString:@"bumped your listing"]){
+        //open listing
+        [Answers logCustomEventWithName:@"Opened listing after receiving Bump Push"
+                       customAttributes:@{}];
+        
+        PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listing];
+        ListingController *vc = [[ListingController alloc]init];
+        vc.listingObject = listingObject;
+        
+        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+        [nav pushViewController:vc animated:YES];
+
+    }
+    else if([bumpedStatus isEqualToString:@"YES"]){
+        //open BumpedVC
+        [Answers logCustomEventWithName:@"Opened BumpVC after receiving FB Friend Push"
+                       customAttributes:@{}];
+        
+        BumpVC *vc = [[BumpVC alloc]init];
+        vc.listingID = listing;
+        [self.window.rootViewController presentViewController:vc animated:YES completion:nil];
+    }
+    
     return YES;
 }
 
@@ -290,10 +323,9 @@
 }
 
 -(void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification{
-    [Answers logContentViewWithName:@"Opened First Reminder Push"
-                        contentType:@""
-                          contentId:@""
+    [Answers logCustomEventWithName:@"Opened First Reminder Push"
                    customAttributes:@{}];
+    
     self.tabBarController.selectedIndex = 1;
 }
 

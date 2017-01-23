@@ -9,6 +9,7 @@
 #import "Tut1ViewController.h"
 #import "CreateViewController.h"
 #import "NavigationController.h"
+#import <QuartzCore/QuartzCore.h>
 
 @interface Tut1ViewController ()
 
@@ -18,7 +19,14 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.createButton setHidden:YES];
+    if (self.clickMode != YES) {
+        [self.createButton setHidden:YES];
+    }
+    else{
+        [self.createButton setHidden:NO];
+        [self.createButton setAlpha:0.0];
+        [self.createButton setTitle:@"N E X T" forState:UIControlStateNormal];
+    }
     [self.dimissButton setHidden:YES];
     
     [self.topLeftImageView setHidden:YES];
@@ -142,7 +150,17 @@
         self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
         self.titleLabel.text = @"Bump";
         self.descriptionLabel.text = @"List items you want & find buyers that want your stuff";
-        [self.createButton setHidden:YES];
+        if (self.clickMode != YES) {
+            [self.createButton setHidden:YES];
+        }else{
+            [UIView animateWithDuration:1.0
+                                  delay:0.0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.createButton setAlpha:1.0];
+                             }
+                             completion:nil];
+        }
     }
     else if (self.index == 1){
         [self.heroImageView setHidden:NO];
@@ -330,13 +348,23 @@
         [self dismissViewControllerAnimated:YES completion:nil];
     }
     else{
-        PFUser *current = [PFUser currentUser];
-        [current setObject:@"YES" forKey:@"completedIntroTutorial"];
-        [current saveInBackground];
-        
-        CreateViewController *vc = [[CreateViewController alloc]init];
-        vc.introMode = YES;
-        [self.navigationController pushViewController:vc animated:YES];
+        if (self.index == 4) {
+            PFUser *current = [PFUser currentUser];
+            [current setObject:@"YES" forKey:@"completedIntroTutorial"];
+            [current saveInBackground];
+            
+            CreateViewController *vc = [[CreateViewController alloc]init];
+            vc.introMode = YES;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else{
+            //setup next page
+            self.index++;
+            [self.createButton setAlpha:0.0];
+            //stop all animations
+            [self removeTutAnimations];
+            [self progressTutorial];
+        }
     }
 }
 
@@ -451,5 +479,129 @@
                              }
                          }];
                      }];
+}
+
+-(void)progressTutorial{
+    if (self.index == 1){
+        [self.heroImageView setHidden:NO];
+        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro2.1"];
+        [UIView animateWithDuration:3.5
+                              delay:0.0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.titleLabel.text = @"Selling";
+                             self.descriptionLabel.text = @"1. Tap a listing\n2. Message the buyer\n3. Hit the tag & send them an offer";
+                         }
+                         completion:nil];
+        [self setupSelling];
+        [self fadeInProgressButton];
+    }
+    else if (self.index == 2){
+        [self.topLeftImageView setHidden:YES];
+        [self.topRightImageView setHidden:YES];
+        [self.bottomLeftImageView setHidden:YES];
+        [self.bottomRightImageView setHidden:YES];
+        
+        [self.heroImageView setHidden:NO];
+        self.heroImageView.image = [UIImage imageNamed:@"iPhone3"];
+        
+        [UIView animateWithDuration:0.5
+                              delay:0.0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.titleLabel.text = @"Buying";
+                             self.descriptionLabel.text = @"Bump also recommends items that can be purchased straight away";
+                         }
+                         completion:nil];
+        
+        double delayInSeconds = 1.0; // number of seconds to wait
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            [UIView animateWithDuration:0.5
+                                  delay:0.0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.createButton setAlpha:1.0];
+                             }
+                             completion:nil];
+        });
+    }
+    else if (self.index == 3){
+        [self.topLeftImageView setHidden:YES];
+        [self.topRightImageView setHidden:YES];
+        [self.bottomLeftImageView setHidden:YES];
+        [self.bottomRightImageView setHidden:YES];
+        
+        [self.heroImageView setHidden:NO];
+        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
+        self.titleLabel.text = @"Bumping";
+        self.descriptionLabel.text = @"Bump listings to help get them noticed just by tapping the up arrow";
+        [self setupBumping];
+        [self fadeInProgressButton];
+    }
+    else if (self.index == 4){
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+            //iPhone 5
+            [self.topLeftImageView setHidden:YES];
+            [self.topRightImageView setHidden:YES];
+            
+            [self.itemTopLeftImageView setHidden:YES];
+            [self.itemTopRightImageView setHidden:YES];
+        }
+        else{
+            [self.topLeftImageView setHidden:NO];
+            [self.topRightImageView setHidden:NO];
+            
+            [self.itemTopLeftImageView setHidden:NO];
+            [self.itemTopRightImageView setHidden:NO];
+        }
+        
+        [self.bottomLeftImageView setHidden:NO];
+        [self.bottomRightImageView setHidden:NO];
+        
+        [self.itemBottomLeftImageView setHidden:NO];
+        [self.itemBottomRightImageView setHidden:NO];
+        
+        [self.heroImageView setHidden:YES];
+        self.titleLabel.text = @"Your turn!";
+        self.descriptionLabel.text = @"Tap the up arrow on the above listings to give 'em a bbbbump";
+        [self.createButton setTitle:@"C R E A T E  A  L I S T I N G" forState:UIControlStateNormal];
+
+        [self.createButton setAlpha:0.0];
+        [self.createButton setHidden:NO];
+        
+        double delayInSeconds = 6.0; // number of seconds to wait
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            [UIView animateWithDuration:1.0
+                                  delay:0.0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.createButton setAlpha:1.0];
+                             }
+                             completion:nil];
+        });
+    }
+}
+
+-(void)fadeInProgressButton{
+    //animate in after a delay if they haven't bumped a listing
+    double delayInSeconds = 2.0; // number of seconds to wait
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        [UIView animateWithDuration:0.5
+                              delay:0.0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.createButton setAlpha:1.0];
+                         }
+                         completion:nil];
+    });
+}
+
+-(void)removeTutAnimations{
+    [self.sendOfferImageView.layer removeAllAnimations];
+    [self.cursorImageView.layer removeAllAnimations];
+    [self.screenImageView.layer removeAllAnimations];
 }
 @end

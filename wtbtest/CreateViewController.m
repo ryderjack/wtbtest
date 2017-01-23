@@ -155,10 +155,10 @@
     }
     else if(self.introMode != YES){
         self.shouldShowReset = YES;
-        [Answers logContentViewWithName:@"Create Tapped"
-                            contentType:@""
-                              contentId:@""
-                       customAttributes:@{}];
+        [Answers logCustomEventWithName:@"Viewed page"
+                       customAttributes:@{
+                                          @"pageName":@"Create Listing"
+                                          }];
     }
     
     if (self.shouldShowHUD == YES) {
@@ -1221,16 +1221,16 @@
                 
                 //check if intro mode so can show posted HUD otherwise just hide it
                 if (self.introMode == YES) {
-                    [Answers logContentViewWithName:@"Listing Complete"
-                                        contentType:@"Intro Mode"
-                                          contentId:self.listing.objectId
-                                   customAttributes:@{}];
+                    [Answers logCustomEventWithName:@"Listing Complete"
+                                   customAttributes:@{
+                                                      @"mode":@"Intro"
+                                                      }];
                 }
                 else{
-                    [Answers logContentViewWithName:@"Listing Complete"
-                                        contentType:@"Normal"
-                                          contentId:self.listing.objectId
-                                   customAttributes:@{}];
+                    [Answers logCustomEventWithName:@"Listing Complete"
+                                   customAttributes:@{
+                                                      @"mode":@"Normal"
+                                                      }];
                 }
                 
                 //check if in edit mode as only increment post number if not in edit mode
@@ -1275,7 +1275,6 @@
                                     }
                                 }
                             }
-                            NSLog(@"wanted words: %@", wantedWords);
                             [[PFUser currentUser] setObject:wantedWords forKey:@"wantedWords"];
                             [[PFUser currentUser] saveInBackground];
                         }
@@ -1302,13 +1301,13 @@
                     
                     PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
                     [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
-                    [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
+                    [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]]; //CHANGE
                     [bumpedQuery whereKeyExists:@"user"];
                     [bumpedQuery includeKey:@"user"];
                     bumpedQuery.limit = 10;
                     [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                         if (objects) {
-//                            NSLog(@"these objects can be pushed to %@", objects);
+                            NSLog(@"these objects can be pushed to %@", objects);
                             if (objects.count > 0) {
                                 //create safe date which is 3 days from now
                                 NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
@@ -1317,19 +1316,27 @@
                                 NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
                                 
                                 for (PFObject *bumpObj in objects) {
+                                    
+                                    NSLog(@"BUMPOBJ %@", bumpObj);
+                                    
                                     [bumpObj setObject:safeDate forKey:@"safeDate"];
                                     [bumpObj incrementKey:@"timesBumped"];
                                     [bumpObj saveInBackground];
                                     
                                     PFUser *friendUser = [bumpObj objectForKey:@"user"];
+                                    
+                                    NSLog(@"friend user %@", friendUser);
+
+                                    
                                     NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.listing.objectId};
+                                    
+                                    NSLog(@"PARAMS %@", params);
+
                                     
                                     [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                                         if (!error) {
                                             NSLog(@"push response %@", response);
-                                            [Answers logContentViewWithName:@"Sent FB Friend Bump Push"
-                                                                contentType:@""
-                                                                  contentId:self.listing.objectId
+                                            [Answers logCustomEventWithName:@"Sent FB Friend a Bump Push"
                                                            customAttributes:@{}];
                                         }
                                         else{
@@ -1737,7 +1744,7 @@
 }
 
 -(void)showSuccess{
-    [self.navigationItem setRightBarButtonItems:nil animated:YES];
+    [self.navigationItem setLeftBarButtonItem:nil animated:YES];
     self.bgView.alpha = 0.8;
     [self.successView setAlpha:1.0];
     [UIView animateWithDuration:1.5
@@ -1855,6 +1862,10 @@
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     if (indexPath.row == self.buyNowArray.count-1 && self.buyNowArray.count > 1) {
+        
+        [Answers logCustomEventWithName:@"Tapped 'view more' after creating listing"
+                       customAttributes:@{}];
+        
         if (self.introMode == YES) {
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"viewMorePressed"];
             [self.navigationController dismissViewControllerAnimated:YES completion:^{
@@ -1868,6 +1879,9 @@
         }
     }
     else{
+        [Answers logCustomEventWithName:@"Tapped for sale listing after creating listing"
+                       customAttributes:@{}];
+        
         PFObject *WTS = [self.buyNowArray objectAtIndex:indexPath.item];
         ForSaleListing *vc = [[ForSaleListing alloc]init];
         vc.listingObject = WTS;

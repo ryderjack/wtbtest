@@ -112,10 +112,10 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     
-    [Answers logContentViewWithName:@"Group Tapped"
-                        contentType:@""
-                          contentId:@""
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Group Share"
+                                      }];
 
     
     NSString *groupId = [[NSString alloc]init];

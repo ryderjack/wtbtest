@@ -7,6 +7,7 @@
 //
 
 #import "BumpVC.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface BumpVC ()
 
@@ -39,6 +40,11 @@
             }
         }];
     }
+    
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Bump Friend's listing"
+                                      }];
 }
 
 - (void)didReceiveMemoryWarning {

@@ -16,6 +16,7 @@
 #import "AppConstant.h"
 #import "UserProfileController.h"
 #import "ContainerViewController.h"
+#import "Tut1ViewController.h"
 
 @interface ExploreVC ()
 
@@ -211,22 +212,13 @@
                     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
                                                                 @"itms-apps://itunes.apple.com/app/id1096047233"]];
                 }]];
-                [self presentViewController:alertView animated:YES completion:nil];
+//                [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
             }
         }
         else{
             NSLog(@"error getting latest version %@", error);
         }
     }];
-    
-//    PFQuery *wantQuery = [PFQuery queryWithClassName:@"wantobuys"];
-//    [wantQuery whereKeyExists:@"shownTo"];
-//    [wantQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//        for (PFObject *listing in objects) {
-//            [listing removeObjectForKey:@"shownTo"];
-//            [listing saveInBackground];
-//        }
-//    }];
     
 //    [PFUser logOut];
 }
@@ -296,7 +288,12 @@
     self.infinFinished = YES;
     
     if (self.listingTapped == YES) {
-        //crash caused by reloading an item that wasn't there - probs due to refreshing from foreground so do a final check
+        
+        //since listing tapped was always YES before then it is constantly reloading self.lastselected on every VWA even when lasttapped doesn't exist
+        //must be happening when searching or filtering as they run out of items in the CV
+        //so it tries to reload an item which isn't there
+        
+        self.listingTapped = NO; //set to NO so this ^ won't be happening (shouldn't)...
         if ([self.collectionView numberOfItemsInSection:0] >= self.lastSelected.row) {
             [self.collectionView reloadItemsAtIndexPaths:@[self.lastSelected]];
             //self.lastSelected = nil; was causing crash
@@ -310,26 +307,16 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-//    NSDictionary *params = @{@"itemTitle": @"yeezy", @"price": @1000, @"limit": @2};
-//    
-//    [PFCloud callFunctionInBackground:@"eBayFetch" withParameters:params block:^(NSDictionary *response, NSError *error) {
-//        if (!error) {
-//            NSLog(@"ebay response %@", response);
-//            
-//            for (NSDictionary *itemDict in response) {
-//                NSLog(@"item dict %@", itemDict);
-//            }
-//        }
-//        else{
-//            NSLog(@"ebay error %@", error);
-//        }
-//    }];
     
+//    Tut1ViewController *vc = [[Tut1ViewController alloc]init];
+//    vc.clickMode = YES;
+//    [self presentViewController:vc animated:YES completion:nil];
+
     [self.collectionView.infiniteScrollingView stopAnimating];
-    [Answers logContentViewWithName:@"Explore Tapped"
-                        contentType:@""
-                          contentId:@""
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Explore"
+                                      }];
     
     if (self.filtersArray.count > 0) {
         NSLog(@"got some filters brah %lu", self.filtersArray.count);
@@ -341,8 +328,6 @@
             [self setUpIntroAlert];
         }
     }
-//    ContainerViewController *vc = [[ContainerViewController alloc]init];
-//    [self presentViewController:vc animated:YES completion:nil];
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -514,8 +499,7 @@
     if (self.filtersON == NO) {
         if (self.cleverMode == YES) {
             //worth checking for keywords
-            NSArray *keywords = [[PFUser currentUser]objectForKey:@"searches"];
-            if (keywords.count > 0) {
+            if (self.calcdKeywords.count > 0) {
                 [self.infiniteQuery whereKey:@"keywords" containedIn:self.calcdKeywords];
                 [self.infiniteQuery orderByDescending:@"bumpCount,views"];
                 if (self.ignoreShownTo != YES) {
@@ -619,14 +603,22 @@
     self.pullQuery.limit = 12;
     
     if (self.filtersON == NO) {
-        NSArray *keywords = [[PFUser currentUser]objectForKey:@"searches"];
-        if (keywords.count > 0) {
+        self.searchWords = [[PFUser currentUser]objectForKey:@"searches"];
+        NSArray *wantedw = [NSArray array];
+        if ([[PFUser currentUser]objectForKey:@"wantedWords"]) {
+            wantedw = [[PFUser currentUser]objectForKey:@"wantedWords"];
+            self.wantedWords = wantedw;
+        }
+        if (self.searchWords.count > 0 || wantedw.count > 0) {
             NSMutableArray *allSearchWords = [NSMutableArray array];
             //seaprate the searches into search words
-            for (NSString *searchTerm in keywords) {
+            for (NSString *searchTerm in self.searchWords) {
                 NSArray *searchTermWords = [[searchTerm lowercaseString] componentsSeparatedByString:@" "];
                 //then add all search words to an array in lower case
                 [allSearchWords addObjectsFromArray:searchTermWords];
+            }
+            if ([[PFUser currentUser]objectForKey:@"wantedWords"]) {
+                [allSearchWords addObjectsFromArray:[[PFUser currentUser]objectForKey:@"wantedWords"]];
             }
             self.calcdKeywords = [[allSearchWords reverseObjectEnumerator] allObjects];
             [self.pullQuery whereKey:@"keywords" containedIn:self.calcdKeywords];
@@ -1157,10 +1149,10 @@
     
     PFObject *listingObject = [self.results objectAtIndex:indexPath.item];
     
-    [Answers logContentViewWithName:@"Bumped a listing"
-                        contentType:@"Explore"
-                          contentId:listingObject.objectId
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Bumped a listing"
+                   customAttributes:@{
+                                      @"where":@"Home"
+                                      }];
     
     ExploreCell *cell = sender;
     NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[listingObject objectForKey:@"bumpArray"]];
@@ -1196,6 +1188,12 @@
                 }
             }];
         }
+        else{
+            [Answers logCustomEventWithName:@"Bumped own listing"
+                           customAttributes:@{
+                                              @"where":@"Home"
+                                              }];
+        }
     }
     [listingObject saveInBackground];
     
@@ -1211,9 +1209,7 @@
 - (void)handleBump:(NSNotification*)note {
     NSString *listingID = [note object];
     
-    [Answers logContentViewWithName:@"FB Friend Bump Drop Tapped"
-                        contentType:@""
-                          contentId:listingID
+    [Answers logCustomEventWithName:@"Opened BumpVC after receiving FB Friend Push"
                    customAttributes:@{}];
     
     BumpVC *vc = [[BumpVC alloc]init];
@@ -1224,9 +1220,7 @@
 - (void)showListing:(NSNotification*)note {
     NSString *listingID = [note object];
     
-    [Answers logContentViewWithName:@"Listing Pushed from Opening Bump Not"
-                        contentType:@""
-                          contentId:listingID
+    [Answers logCustomEventWithName:@"Opened listing after receiving Bump Push"
                    customAttributes:@{}];
     
     PFObject *listing = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listingID];
@@ -1238,10 +1232,10 @@
 - (void)handleDrop:(NSNotification*)note {
     NSString *listingID = [note object];
     
-    [Answers logContentViewWithName:@"Show FB Friend Bump Drop"
-                        contentType:@""
-                          contentId:listingID
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Received in app push"
+                   customAttributes:@{
+                                      @"type":@"FB Friend just posted"
+                                      }];
 
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
     self.dropDown = (notificatView *)[nib objectAtIndex:0];
@@ -1320,10 +1314,10 @@
     NSString *listingID = info[0];
     NSString *message = info[1];
     
-    [Answers logContentViewWithName:@"Received Bump Drop Shown"
-                        contentType:@""
-                          contentId:listingID
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Received in app push"
+                   customAttributes:@{
+                                      @"type":@"Received a Bump"
+                                      }];
     
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
     self.dropDown = (notificatView *)[nib objectAtIndex:0];
@@ -1373,7 +1367,12 @@
 }
 
 -(void)bumpTappedForListing:(NSString *)listing{
-    NSLog(@"listing here %@", listing);
+
+    [Answers logCustomEventWithName:@"Tapped in app Push"
+                   customAttributes:@{
+                                      @"type":@"Bump"
+                                      }];
+    
     //animate up
     [UIView animateWithDuration:1.0
                           delay:0.0

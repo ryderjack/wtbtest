@@ -90,6 +90,7 @@
 
 //upvote
 @property (weak, nonatomic) IBOutlet UIButton *upVoteButton;
+@property (weak, nonatomic) IBOutlet UIButton *viewBumpsButton;
 
 //search
 @property (nonatomic) BOOL searchOn;

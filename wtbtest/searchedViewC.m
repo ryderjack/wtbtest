@@ -341,10 +341,11 @@
     NSIndexPath *indexPath = [self.collectionView indexPathForCell:(ExploreCell*)sender];
     PFObject *listingObject = [self.results objectAtIndex:indexPath.item];
     ExploreCell *cell = sender;
-    [Answers logContentViewWithName:@"Bumped a listing"
-                        contentType:@"Search"
-                          contentId:listingObject.objectId
-                   customAttributes:@{}];
+    
+    [Answers logCustomEventWithName:@"Bumped a listing"
+                   customAttributes:@{
+                                      @"where":@"Search"
+                                      }];
     
     NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[listingObject objectForKey:@"bumpArray"]];
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
@@ -377,6 +378,12 @@
                     NSLog(@"push error %@", error);
                 }
             }];
+        }
+        else{
+            [Answers logCustomEventWithName:@"Bumped own listing"
+                           customAttributes:@{
+                                              @"where":@"Search"
+                                              }];
         }
     }
     [listingObject saveInBackground];

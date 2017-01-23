@@ -11,8 +11,9 @@
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
 #import "customAlertViewClass.h"
+#import "viewItemClass.h"
 
-@interface BuyNowController : UIViewController <UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate>
+@interface BuyNowController : UIViewController <UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate,viewItemDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (nonatomic, strong) NSMutableDictionary *contentOffsetDictionary;
@@ -21,6 +22,13 @@
 @property (nonatomic, strong) NSMutableArray *viewsArray;
 @property (nonatomic, strong) NSMutableArray *products;
 @property (nonatomic, strong) NSMutableArray *productIDs;
+
+@property (nonatomic, strong) NSArray *searchWords;
+@property (nonatomic, strong) NSArray *calcdKeywords;
+@property (nonatomic, strong) NSArray *wantedWords;
+
+@property (nonatomic) int productSkipped;
+@property (nonatomic) int moreProductSkipped;
 
 @property (nonatomic) BOOL showRelated;
 
@@ -44,5 +52,22 @@
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;
 @property (nonatomic, strong) UIView *searchBgView;
-@property (nonatomic, strong) PFObject *ebayItem;
+@property (nonatomic, strong) NSMutableArray *results;
+@property (nonatomic) BOOL alertShowing;
+
+
+//ebay
+@property (nonatomic) BOOL fromInfinEbay;
+@property (nonatomic) BOOL ebayEnabled;
+@property (nonatomic, strong) NSMutableArray *seenEbayItems;
+
+//item viewer
+@property (nonatomic, strong) viewItemClass *itemView;
+@property (nonatomic, strong) PFObject *listingToView;
+@property (nonatomic, strong) NSDictionary *ebayToView;
+@property (nonatomic) BOOL ebayTapped;
+@property (nonatomic, strong) UIView *viewerBg;
+@property (nonatomic) BOOL itemShowing;
+
+
 @end

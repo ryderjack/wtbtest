@@ -65,6 +65,8 @@
 @property (nonatomic, strong) notificatView *dropDown;
 @property (nonatomic, strong) NSIndexPath *lastSelected;
 @property (nonatomic) BOOL justABump;
+@property (nonatomic) NSArray *wantedWords;
+@property (nonatomic) NSArray *searchWords;
 
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;

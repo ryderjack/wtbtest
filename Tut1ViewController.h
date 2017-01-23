@@ -24,6 +24,8 @@
 @property (nonatomic) BOOL messageExplain;
 @property (weak, nonatomic) IBOutlet UIButton *dimissButton;
 @property (nonatomic) BOOL explainMode;
+@property (nonatomic) BOOL clickMode;
+
 
 //try bumping
 @property (weak, nonatomic) IBOutlet UIImageView *topLeftImageView;

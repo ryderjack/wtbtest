@@ -15,6 +15,7 @@
 #import "UserProfileController.h"
 #import <Crashlytics/Crashlytics.h>
 #import "NavigationController.h"
+#import "whoBumpedTableView.h"
 
 @interface ListingController ()
 
@@ -159,11 +160,13 @@
                 [self.upVoteButton setSelected:NO];
             }
             if (bumpArray.count > 0) {
+                [self.viewBumpsButton setHidden:NO];
                 int count = (int)[bumpArray count];
                 [self.upVoteButton setTitle:[NSString stringWithFormat:@"%@",[self abbreviateNumber:count]] forState:UIControlStateNormal];
             }
             else{
                 [self.upVoteButton setTitle:@"Tap to Bump!" forState:UIControlStateNormal];
+                [self.viewBumpsButton setHidden:YES];
             }
             
             [self setImageBorder];
@@ -639,6 +642,7 @@
 }
 
 -(void)setupMessages{
+    
     PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     NSString *possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"postUser"]objectId], self.listingObject.objectId];
     NSString *otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"postUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
@@ -952,10 +956,10 @@
 }
 - (IBAction)upvotePressed:(id)sender {
     
-    [Answers logContentViewWithName:@"Bumped a listing"
-                        contentType:@"Listing"
-                          contentId:self.listingObject.objectId
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Bumped a listing"
+                   customAttributes:@{
+                                      @"where":@"Listing"
+                                      }];
     
     NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listingObject objectForKey:@"bumpArray"]];
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
@@ -985,13 +989,21 @@
                 }
             }];
         }
+        else{
+            [Answers logCustomEventWithName:@"Bumped own listing"
+                           customAttributes:@{
+                                              @"where":@"Listing"
+                                              }];
+        }
     }
     [self.listingObject saveInBackground];
     if (bumpArray.count > 0) {
+        [self.viewBumpsButton setHidden:NO];
         int count = (int)[bumpArray count];
         [self.upVoteButton setTitle:[NSString stringWithFormat:@"%@",[self abbreviateNumber:count]] forState:UIControlStateNormal];
     }
     else{
+        [self.viewBumpsButton setHidden:YES];
         [self.upVoteButton setTitle:@"Tap to Bump!" forState:UIControlStateNormal];
     }
 }
@@ -1042,5 +1054,23 @@
         }
     }
     return ret;
+}
+- (IBAction)viewbumpsPressed:(id)sender {
+    if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        [Answers logCustomEventWithName:@"View Bumps"
+                       customAttributes:@{
+                                          @"own listing":@"NO"
+                                          }];
+    }
+    else{
+        [Answers logCustomEventWithName:@"View Bumps"
+                       customAttributes:@{
+                                          @"own listing":@"YES"
+                                          }];
+    }
+
+    whoBumpedTableView *vc = [[whoBumpedTableView alloc]init];
+    vc.bumpArray = [self.listingObject objectForKey:@"bumpArray"];
+    [self.navigationController pushViewController:vc animated:YES];
 }
 @end

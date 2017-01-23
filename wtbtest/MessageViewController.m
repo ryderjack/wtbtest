@@ -944,7 +944,8 @@
     
     PFObject *order = [self.convoObject objectForKey:@"order"];
     
-    if (self.userIsBuyer == NO) {
+    //if convo created from a profile then let both users see max. alertsheet options
+    if (self.userIsBuyer == NO || self.profileConvo == YES) {
         
         if (order == nil) {
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -953,9 +954,6 @@
                 vc.currencySymbol = self.currencySymbol;
                 vc.delegate = self;
                 [self.navigationController presentViewController:vc animated:YES completion:nil];
-//                self.offerMode = YES;
-//                self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Selling: \nCondition: \nPrice: %@\nMeetup: ", self.currencySymbol];
-//                [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.cancelButton, nil]];
             }]];
         }
         

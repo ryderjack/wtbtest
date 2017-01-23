@@ -13,6 +13,7 @@
 #import "AppConstant.h"
 #import <TOWebViewController.h>
 #import "MessagesTutorial.h"
+#import "Tut1ViewController.h"
 
 @interface RegisterViewController ()
 @end
@@ -486,7 +487,8 @@
                                  
                                  //progress to tutorial
                                  [self dismissHUD];
-                                 ContainerViewController *vc = [[ContainerViewController alloc]init];
+                                 Tut1ViewController *vc = [[Tut1ViewController alloc]init];
+                                 vc.clickMode = YES;
                                  [self.navigationController pushViewController:vc animated:YES];
                              }
                              else
