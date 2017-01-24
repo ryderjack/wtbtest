@@ -18,6 +18,7 @@
 #import "NavigationController.h"
 #import "UIImage+Resize.h"
 #import "Tut1ViewController.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface MessageViewController ()
 
@@ -949,6 +950,9 @@
         
         if (order == nil) {
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send an offer" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [Answers logCustomEventWithName:@"Send an offer tapped"
+                               customAttributes:@{}];
+                
                 MakeOfferController *vc = [[MakeOfferController alloc]init];
                 vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
                 vc.currencySymbol = self.currencySymbol;
@@ -958,6 +962,11 @@
         }
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Take a picture tapped"
+                           customAttributes:@{
+                                              @"where":@"MessageVC"
+                                              }];
+            
             CameraController *vc = [[CameraController alloc]init];
             vc.delegate = self;
             vc.offerMode = YES;
@@ -965,6 +974,11 @@
         }]];
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose pictures" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Choose pictures tapped"
+                           customAttributes:@{
+                                              @"where":@"MessageVC"
+                                              }];
+            
             [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
                 switch (status) {
                     case PHAuthorizationStatusAuthorized:{
@@ -1212,17 +1226,19 @@
     [self.messages addObject:photoMessage];
     [self finishSendingMessageAnimated:YES];
     
-    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(image, 0.5)];
-
-    [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
-     {
-         if (error) {
-             NSLog(@"error %@", error);
-         }
-         else{
-             NSLog(@"saved image");
-         }
-     }];
+    NSData* data = UIImageJPEGRepresentation(image, 0.7);
+    
+    if (data == nil) {
+        //prevent crash when creating a PFFile with nil data
+        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                       customAttributes:@{
+                                          @"pageName":@"MessageVC"
+                                          }];
+        [self showAlertWithTitle:@"Image Error" andMsg:@"Something went wrong getting your image, please try again!"];
+        return;
+    }
+    
+    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:data];
     
     PFObject *picObject = [PFObject objectWithClassName:@"messageImages"];
     [picObject setObject:filePicture forKey:@"Image"];

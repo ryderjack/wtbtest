@@ -177,11 +177,13 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-//    self.introMode = YES;
-//    [self setUpSuccess];
-//    [self showSuccess];
     if (self.setupYes != YES) {
         [self setUpSuccess];
+    }
+    
+    if (self.introMode == YES) {
+        //show prompt for enabling push
+        [self showPushAlert];
     }
 }
 
@@ -577,6 +579,10 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Take a picture tapped"
+                       customAttributes:@{
+                                          @"where":@"CreateVC"
+                                          }];
         CameraController *vc = [[CameraController alloc]init];
         vc.delegate = self;
         vc.offerMode = NO;
@@ -585,6 +591,10 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Choose pictures tapped"
+                       customAttributes:@{
+                                          @"where":@"CreateVC"
+                                          }];
         if (!self.picker) {
             self.picker = [[UIImagePickerController alloc] init];
             self.picker.delegate = self;
@@ -595,9 +605,10 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Search Google" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        
-        // search insta
-        
+        [Answers logCustomEventWithName:@"Add image from Google"
+                       customAttributes:@{
+                                          @"where":@"CreateVC"
+                                          }];
         if ([self.titleField.text isEqualToString:@""]) {
             [self popUpAlert];
         }
@@ -1140,6 +1151,11 @@
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
             
             if (data == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"CreateVC"
+                                                  }];
+                
                 //prevent crash when creating a PFFile with nil data
                 self.warningLabel.text = @"Image Error, try adding images again";
                 [self.saveButton setEnabled:YES];
@@ -1875,7 +1891,7 @@
         }
         else{
             self.tabBarController.selectedIndex = 1;
-            [self donePressed];
+            [self successDonePressed];
         }
     }
     else{
@@ -1893,7 +1909,7 @@
     }
 }
 
--(void)donePressed{
+-(void)successDonePressed{
     [self hideSuccess];
 
     if (self.introMode == YES) {
@@ -1993,6 +2009,115 @@
             NSLog(@"error %@", error);
         }
     }];
+}
+
+-(void)showPushAlert{
+    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.searchBgView.alpha = 0.0;
+    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
+    self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
+    self.customAlert.delegate = self;
+    self.customAlert.titleLabel.text = @"Enable Push";
+    self.customAlert.messageLabel.text = @"Tap to be notified when sellers/potential buyers send you a message on Bump";
+    self.customAlert.numberOfButtons = 2;
+    [self.customAlert.secondButton setTitle:@"E N A B L E" forState:UIControlStateNormal];
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
+    }
+    else{
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
+    }
+    
+    self.customAlert.layer.cornerRadius = 10;
+    self.customAlert.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.customAlert];
+    
+    [UIView animateWithDuration:1.5
+                          delay:0.2
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake(0, 0, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake(0, 0, 300, 188)]; //iPhone 6/7 specific
+                            }
+                            self.customAlert.center = self.view.center;
+                            
+                        }
+                     completion:nil];
+}
+
+-(void)donePressed{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.searchBgView = nil;
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                            }
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.customAlert setAlpha:0.0];
+                         self.customAlert = nil;
+                     }];
+}
+
+-(void)firstPressed{
+    [Answers logCustomEventWithName:@"Denied Push Permissions"
+                   customAttributes:@{}];
+    [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"declinedPushPermissions"];
+    [self donePressed];
+}
+
+-(void)secondPressed{
+    //present push dialog
+    [Answers logCustomEventWithName:@"Accepted Push Permissions"
+                   customAttributes:@{}];
+    [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForPushPermission"];
+    UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
+                                                    UIUserNotificationTypeBadge |
+                                                    UIUserNotificationTypeSound);
+    UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:userNotificationTypes
+                                                                             categories:nil];
+    [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+    [[UIApplication sharedApplication] registerForRemoteNotifications];
+    
+    [self donePressed];
 }
 
 @end

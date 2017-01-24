@@ -564,7 +564,7 @@
         
         [self.heroImageView setHidden:YES];
         self.titleLabel.text = @"Your turn!";
-        self.descriptionLabel.text = @"Tap the up arrow on the above listings to give 'em a bbbbump";
+        self.descriptionLabel.text = @"Tap the up arrow on the above listings to give them a bump";
         [self.createButton setTitle:@"C R E A T E  A  L I S T I N G" forState:UIControlStateNormal];
 
         [self.createButton setAlpha:0.0];

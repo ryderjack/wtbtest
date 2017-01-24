@@ -129,13 +129,12 @@
             
             [PFCloud callFunctionInBackground:@"eBayFetch" withParameters:params block:^(NSDictionary *response, NSError *error) {
                 if (!error) {
-                    NSLog(@"ebay response %@", response);
+//                    NSLog(@"ebay response %@", response);
                     checker++;
                     
                     for (NSDictionary *itemDict in response) {
                         //check if item has been surfaced before in this session
                         if ([self.seenEbayItems containsObject:[itemDict valueForKey:@"itemURL"]]) {
-                            NSLog(@"this item has an error image, can't show that so do next one");
                         }
                         else{
                             //insert eBay item to first postiion in match array
@@ -147,30 +146,24 @@
                         }
                     }
                     
-                    NSLog(@"CHECKER: %d   objectstocheck: %lu", checker, objectsToCheck.count);
-                    
                     //objects to check will always be +1 more than checker as it includes the related row in the CV (if showrelated==YES of course!)
                     if (objectsToCheck.count == checker+1 && self.showRelated == YES && self.fromInfinEbay == NO) {
-                        NSLog(@"1");
                         NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
                         NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
                         [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
                     }
                     else if (objectsToCheck.count == checker && self.showRelated == NO && self.fromInfinEbay == NO){
-                        NSLog(@"2");
                         NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
                         NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
                         [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
                     }
                     else if (objectsToCheck.count == checker && self.fromInfinEbay == YES){
-                        NSLog(@"3");
                         NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
                         NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
                         [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
                     }
                     else{
                         //must have more WTBs to search eBay for
-                        NSLog(@"must have WTBs to fetch from ebay");
                     }
                 }
                 else{
@@ -184,6 +177,11 @@
 -(void)getRelatedProducts{
     if (self.showRelated == YES && self.results.count > 0) {
         
+        if (self.products.count > 0) {
+            //to avoid content offset being remembered & allow CV to scroll to start
+            self.reloadingRelated = YES;
+        }
+
         //use holding array to avoid crash for tapping on items which were from previous session
         NSMutableArray *holdingArray = [NSMutableArray array];
         
@@ -236,10 +234,20 @@
                     NSLog(@"we need more products");
                     PFQuery *moreQuery = [PFQuery queryWithClassName:@"Products"];
                     moreQuery.limit = 20-objects.count;
-//                    [moreQuery whereKey:@"objectId" notContainedIn:self.productIDs];
+                    if (self.ignoreRelatedShown != YES) {
+                        [moreQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+                    }
                     [moreQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                         if (objects) {
                             int count = (int)objects.count;
+                            
+                            if (count == 0 && self.ignoreRelatedShown != YES) {
+                                //try it again ignoring what user has/hasn't seen
+                                self.ignoreRelatedShown = YES;
+                                [self getRelatedProducts];
+                                return;
+                            }
+                            
                             self.moreProductSkipped = count;
                             
                             NSArray *more = [NSArray arrayWithArray:objects];
@@ -313,11 +321,23 @@
                     NSLog(@"we need more 'view more' products");
                     PFQuery *moreQuery = [PFQuery queryWithClassName:@"Products"];
                     moreQuery.limit = 20-objects.count;
-//                    [moreQuery whereKey:@"objectId" notContainedIn:self.productIDs];
+                    
+                    if (self.ignoreRelatedShown != YES) {
+                        [moreQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+                    }
+                    
                     moreQuery.skip = self.moreProductSkipped;
                     [moreQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                         if (objects) {
                             int count = (int)objects.count;
+                            
+                            if (count == 0 && self.ignoreRelatedShown != YES) {
+                                //try it again ignoring what user has/hasn't seen
+                                self.ignoreRelatedShown = YES;
+                                [self getMoreRelated];
+                                return;
+                            }
+                            
                             self.moreProductSkipped = self.moreProductSkipped + count;
                             
                             NSArray *more = [NSArray arrayWithArray:objects];
@@ -998,6 +1018,17 @@ numberOfRowsInSection:(NSInteger)section
 -(void)tableView:(UITableView *)tableView willDisplayCell:(RecommendCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [cell setCollectionViewDataSourceDelegate:self indexPath:indexPath];
+    NSLog(@"SETTING OFFSET");
+    
+    if([indexPath row] == ((NSIndexPath*)[[tableView indexPathsForVisibleRows] lastObject]).row){
+        //end of loading so reset BOOL
+        self.reloadingRelated = NO;
+    }
+    
+    if (self.reloadingRelated == YES && indexPath.row == 0) {
+        [cell.collectionView setContentOffset:CGPointMake(0, 0)];
+        return;
+    }
     
     NSInteger index = cell.collectionView.indexPath.row;
     CGFloat horizontalOffset = [self.contentOffsetDictionary[[@(index) stringValue]] floatValue];
@@ -1013,17 +1044,9 @@ numberOfRowsInSection:(NSInteger)section
         //return number of recommended items
         return self.products.count;
     }
-//    else if ([wtbDict valueForKey:@"ebay"]){
-//        NSArray *matchesArray = [wtbDict valueForKey:@"matches"];
-//        NSArray *ebayArray = [wtbDict valueForKey:@"ebay"];
-//        
-//        NSLog(@"EBAY COUNT: %@  MATCHES COUNT: %@", ebayArray, matchesArray);
-//        
-//        return matchesArray.count+ebayArray.count;
-//    }
     else{
         NSArray *collectionViewArray = [wtbDict valueForKey:@"matches"];
-        NSLog(@"count of CV Array %lu for this WTB: %@", collectionViewArray.count, [wtbDict valueForKey:@"WTB"]);
+//        NSLog(@"count of CV Array %lu for this WTB: %@", collectionViewArray.count, [wtbDict valueForKey:@"WTB"]);
         return collectionViewArray.count;
     }
 }
@@ -1059,7 +1082,7 @@ numberOfRowsInSection:(NSInteger)section
         
         NSArray *collectionViewArray = [wtbDict valueForKey:@"matches"];
         
-        NSLog(@"collection view array %@", collectionViewArray);
+//        NSLog(@"collection view array %@", collectionViewArray);
         
         if ([collectionViewArray[indexPath.item]isKindOfClass:[NSDictionary class]]) {
             NSLog(@"its an ebay item");
@@ -1462,6 +1485,7 @@ numberOfRowsInSection:(NSInteger)section
 }
 
 -(void)showItemView{
+    self.viewedItem = YES;
     [self.navigationItem setRightBarButtonItems:nil animated:YES];
     self.viewerBg.alpha = 0.6;
     [self.itemView setAlpha:1.0];

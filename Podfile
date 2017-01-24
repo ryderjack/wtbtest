@@ -20,4 +20,4 @@ pod 'iRate', '~> 1.11'
 pod 'GMImagePicker', '~> 0.0.2'
 pod 'PulsingHalo'
 pod 'HNKGooglePlacesAutocomplete', '~> 1.1'
-
+pod 'ChimpKit'

@@ -89,15 +89,22 @@
     self.resultIDs = [[NSMutableArray alloc]init];
     
     //location stuff
-    [self startLocationManager];
-    self.locationAllowed = [CLLocationManager locationServicesEnabled];
+    if ([[NSUserDefaults standardUserDefaults]boolForKey:@"askedForLocationPermission"] || [[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"]) {
+        
+        //for users that have already seen the location diaglog before this update - use the completedReg BOOL to check
+        if ([[NSUserDefaults standardUserDefaults]boolForKey:@"askedForLocationPermission"]==NO) {
+            [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForLocationPermission"];
+        }
+        self.locationAllowed = [CLLocationManager locationServicesEnabled];
+        [self startLocationManager];
+    }
     
     //refresh setup
     self.pullFinished = YES;
     self.infinFinished = YES;
     self.lastInfinSkipped = 0;
     
-    self.filtersON = NO;
+    self.filtersON = NO; 
     self.ignoreShownTo = NO;
     
     [self.collectionView setScrollsToTop:YES];
@@ -223,6 +230,7 @@
 //    [PFUser logOut];
 }
 
+
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
 }
@@ -307,10 +315,6 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    
-//    Tut1ViewController *vc = [[Tut1ViewController alloc]init];
-//    vc.clickMode = YES;
-//    [self presentViewController:vc animated:YES completion:nil];
 
     [self.collectionView.infiniteScrollingView stopAnimating];
     [Answers logCustomEventWithName:@"Viewed page"
@@ -325,6 +329,10 @@
     if ([PFUser currentUser]) {
         
         if (![[[PFUser currentUser] objectForKey:@"searchIntro"] isEqualToString:@"YES"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"viewMorePressed"] != YES) {
+            
+            //trigger location for first sign in
+            [self parseLocation];
+            
             [self setUpIntroAlert];
         }
     }

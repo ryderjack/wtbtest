@@ -24,13 +24,6 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.navigationController.navigationBarHidden = YES;
-    [self.tutorialTestButton setHidden:YES];
-    
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone &&
-        [[[UIDevice currentDevice] model] hasPrefix:@"iPad"]) {
-        // This app is an iPhone app running on an iPad
-        [self.descriptionLabel setHidden:YES];
-    }
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
 }
@@ -66,7 +59,7 @@
             //check if completed reg/tutorial via NSUserDefaults/user object
             [self hidHUD];
             
-            if ([[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"] ) { 
+            if ([[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"] ) { //CHANGE
                 
                 //update installation object w/ current user
                 PFInstallation *installation = [PFInstallation currentInstallation];
@@ -85,11 +78,6 @@
             }
         }
     }];
-}
-- (IBAction)tutorialPressed:(id)sender {
-    ContainerViewController *vc = [[ContainerViewController alloc]init];
-    [self presentViewController:vc animated:YES
-                     completion:nil];
 }
 
 -(void)hidHUD{

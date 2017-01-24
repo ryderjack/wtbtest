@@ -14,8 +14,11 @@
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
 #import <ParseUI/ParseUI.h>
+#import <ChimpKit.h>
+#import <CoreLocation/CoreLocation.h>
 
-@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate>
+
+@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ChimpKitRequestDelegate,CLLocationManagerDelegate>
 NS_ASSUME_NONNULL_BEGIN
 
 //cells
@@ -72,6 +75,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet PFImageView *friendTwoImageView;
 @property (weak, nonatomic) IBOutlet PFImageView *friendThreeImageView;
 @property (nonatomic) BOOL showFriendsCell;
+
+//location
+@property (nonatomic, strong) CLLocationManager *locationManager;
 
 NS_ASSUME_NONNULL_END
 

@@ -14,6 +14,7 @@
 #import <TOWebViewController.h>
 #import "MessagesTutorial.h"
 #import "Tut1ViewController.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface RegisterViewController ()
 @end
@@ -47,14 +48,9 @@
     
     self.profanityList = @[@"fuck", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"#", @"?", @"!", @"£", @"/", @"(", @")", @":", @",", @"'", @"$", @" ",@"<", @">", @"+", @"=", @"%", @"[", @"]", @"{", @"}", @"^", @"..fuckfuck"];
     
-    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {
-        NSLog(@"tapped no to notifications");
-    }
-    
     self.longRegButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
     [self.longRegButton setTitle:@"R E G I S T E R" forState:UIControlStateNormal];
     [self.longRegButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
-//    [self.longRegButton.titleLabel setTextAlignment: NSTextAlignmentCenter];
     [self.longRegButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
     [self.longRegButton addTarget:self action:@selector(regPressed:) forControlEvents:UIControlEventTouchUpInside];
     self.longRegButton.alpha = 0.0f;
@@ -115,6 +111,10 @@
     }];
 }
 
+-(void)viewDidAppear:(BOOL)animated{
+    [self startLocationManager];
+}
+
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     if (self.pressedCam != YES) {
@@ -138,7 +138,7 @@
 - (void)requestFacebook:(PFUser *)user{
     
     NSMutableDictionary* parameters = [NSMutableDictionary dictionary];
-    [parameters setValue:@"id,name,email,gender,picture,first_name" forKey:@"fields"];
+    [parameters setValue:@"id,name,email,gender,picture,first_name,last_name" forKey:@"fields"];
     
     [[[FBSDKGraphRequest alloc] initWithGraphPath:@"me" parameters:parameters]
      startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection,
@@ -163,6 +163,12 @@
     }
     if ([userData objectForKey:@"name"]) {
         self.nameField.text = [userData objectForKey:@"name"];
+    }
+    if ([userData objectForKey:@"first_name"]) {
+        user[@"firstName"] = [userData objectForKey:@"first_name"];
+    }
+    if ([userData objectForKey:@"last_name"]) {
+        user[@"lastName"] = [userData objectForKey:@"last_name"];
     }
     if ([userData objectForKey:@"id"]) {
         user[PF_USER_FACEBOOKID] = userData[@"id"];
@@ -420,6 +426,36 @@
                          {
                              if (succeeded)
                              {
+                                 //opt in for the welcome email
+                                 NSDictionary *params = @{@"id": @"a9803761de",@"double_optin":@NO,@"email": @{@"email":email}, @"merge_vars": @{@"FNAME": [self.user objectForKey:@"firstName"], @"LName":[self.user objectForKey:@"lastName"]}};
+                                 
+                                 [[ChimpKit sharedKit] callApiMethod:@"lists/subscribe" withParams:params andCompletionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
+                                     //        NSLog(@"HTTP Status Code: %d", response.statusCode);
+                                     NSLog(@"Response String: %@", response);
+                                     //
+                                     if (error) {
+                                         //Handle connection error
+                                         NSLog(@"Chimp Error, %@", error);
+                                         dispatch_async(dispatch_get_main_queue(), ^{
+                                             //Update UI here
+                                         });
+                                     } else {
+                                         NSError *parseError = nil;
+                                         id response = [NSJSONSerialization JSONObjectWithData:data
+                                                                                       options:0
+                                                                                         error:&parseError];
+                                         if ([response isKindOfClass:[NSDictionary class]]) {
+                                             id email = [response objectForKey:@"email"];
+                                             if ([email isKindOfClass:[NSString class]]) {
+                                                 //Successfully subscribed email address
+                                                 NSLog(@"success with the chimp!");
+                                                 dispatch_async(dispatch_get_main_queue(), ^{
+                                                     //Update UI here
+                                                 });
+                                             }
+                                         }
+                                     }
+                                 }];
                                  NSLog(@"saved new user! %@", [PFUser currentUser]);
                                  [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"showHowWorks"];
                                  
@@ -615,6 +651,18 @@
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     self.profileImageView.image = info[UIImagePickerControllerOriginalImage];
     NSData* data = UIImageJPEGRepresentation(self.profileImageView.image, 0.5f);
+    
+    if (data == nil) {
+        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                       customAttributes:@{
+                                          @"pageName":@"Reg"
+                                          }];
+        
+        //prevent crash when creating a PFFile with nil data
+        self.warningLabel.text = @"Image Error, try adding your image again";
+        return;
+    }
+    
     PFFile *imageFile = [PFFile fileWithName:@"Image.jpg" data:data];
     self.user[PF_USER_PICTURE] = imageFile;
     self.pressedCam = YES;
@@ -638,6 +686,21 @@
                      completion:^(BOOL finished) {
                          self.regShowing = NO;
                      }];
+}
+
+- (void) startLocationManager {
+    
+    if (!_locationManager) {
+        _locationManager = [[CLLocationManager alloc] init];
+        _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
+        _locationManager.distanceFilter = 5;
+        _locationManager.delegate = self;
+        if ([self.locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
+            [self.locationManager requestWhenInUseAuthorization];
+        }
+        [_locationManager startUpdatingLocation];
+    }
+    [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForLocationPermission"];
 }
 
 @end

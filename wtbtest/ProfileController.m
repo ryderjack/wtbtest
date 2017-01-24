@@ -142,12 +142,6 @@
             vc.user = [PFUser currentUser];
             [self.navigationController pushViewController:vc animated:YES];
         }
-//        else if (indexPath.row == 1){
-//            //saved for later pressed
-//            OffersController *vc = [[OffersController alloc]init];
-//            vc.mode = @"saved";
-//            [self.navigationController pushViewController:vc animated:YES];
-//        }
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {

@@ -16,6 +16,8 @@
 #import "iRate.h"
 #import <HNKGooglePlacesAutocomplete/HNKGooglePlacesAutocomplete.h>
 #import "BumpVC.h"
+#import <ChimpKit.h>
+
 @interface AppDelegate ()
 
 @end
@@ -52,6 +54,7 @@
 //    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
+    [[ChimpKit sharedKit] setApiKey:@"5cbba863ff961ff8c60266185defc785-us14"];
 
     if ([PFUser currentUser]) {
         [self logUser];
@@ -113,13 +116,16 @@
     self.window.rootViewController = self.tabBarController;
     [self.window makeKeyAndVisible];
     
-    UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
-                                                    UIUserNotificationTypeBadge |
-                                                    UIUserNotificationTypeSound);
-    UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:userNotificationTypes
-                                                                             categories:nil];
-    [application registerUserNotificationSettings:settings];
-    [application registerForRemoteNotifications];
+    //to prevent app asking immediately for push permissions
+    if ([[NSUserDefaults standardUserDefaults]boolForKey:@"askedForPushPermission"] || [[UIApplication sharedApplication] isRegisteredForRemoteNotifications]) {
+        UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
+                                                        UIUserNotificationTypeBadge |
+                                                        UIUserNotificationTypeSound);
+        UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:userNotificationTypes
+                                                                                 categories:nil];
+        [application registerUserNotificationSettings:settings];
+        [application registerForRemoteNotifications];
+    }
     
     self.installation = [PFInstallation currentInstallation];
     if (self.installation.badge == 0) {
@@ -292,6 +298,7 @@
 }
 
 -(void)checkForTBMessages{
+    NSLog(@"checking TB messages");
     PFQuery *convosQuery = [PFQuery queryWithClassName:@"teamConvos"];
     [convosQuery whereKey:@"convoId" equalTo: [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId]];
     [convosQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -347,6 +354,7 @@
         NSLog(@"userinfo: %@", userInfo);
         
         if ([strMsg hasPrefix:@"Team Bump"]) {
+            [self checkForTBMessages];
             self.tabBarController.selectedIndex = 4;
         }
         else if([strMsg containsString:@"bumped your listing"]){

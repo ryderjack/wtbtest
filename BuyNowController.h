@@ -32,8 +32,12 @@
 
 @property (nonatomic) BOOL showRelated;
 
+@property (nonatomic) BOOL reloadingRelated;
+
+
 @property (nonatomic) BOOL pullFinished;
 @property (nonatomic) BOOL infinFinished;
+@property (nonatomic) BOOL ignoreRelatedShown;
 @property (nonatomic) int skipped;
 
 @property (nonatomic, strong) DGActivityIndicatorView *spinner;

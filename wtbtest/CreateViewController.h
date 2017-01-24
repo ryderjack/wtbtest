@@ -18,6 +18,7 @@
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
 #import "CreateSuccessView.h"
+#import "customAlertViewClass.h"
 
 @class CreateViewController;
 
@@ -26,7 +27,7 @@
 @end
 
 
-@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate, TOWebDelegate, UICollectionViewDelegate, UICollectionViewDataSource, successDelegate>
+@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate, TOWebDelegate, UICollectionViewDelegate, UICollectionViewDataSource, successDelegate, customAlertDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
@@ -130,5 +131,9 @@
 @property (nonatomic) BOOL setupYes;
 @property (nonatomic) BOOL completionShowing;
 @property (nonatomic, strong) UIView *bgView;
+
+//custom alert view
+@property (nonatomic, strong) customAlertViewClass *customAlert;
+@property (nonatomic, strong) UIView *searchBgView;
 
 @end

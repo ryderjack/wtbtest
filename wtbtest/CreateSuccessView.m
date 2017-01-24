@@ -45,7 +45,7 @@
 }
 
 - (IBAction)doneButtonPressed:(id)sender {
-    [self.delegate donePressed];
+    [self.delegate successDonePressed];
 }
 - (IBAction)sharePressed:(id)sender {
     [self.delegate sharePressed];
