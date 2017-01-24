@@ -637,35 +637,35 @@
 
 -(void)addForSalePressed{
     //uncomment when adding items for other users
-//    UIAlertController *alertController = [UIAlertController
-//                                          alertControllerWithTitle:@"Post as User"
-//                                          message:@"Enter username"
-//                                          preferredStyle:UIAlertControllerStyleAlert];
-//
-//    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
-//     {
-//         textField.placeholder = @"username";
-//     }];
-//
-//    UIAlertAction *okAction = [UIAlertAction
-//                               actionWithTitle:@"DONE"
-//                               style:UIAlertActionStyleDefault
-//                               handler:^(UIAlertAction *action)
-//                               {
-//                                   UITextField *usernameField = alertController.textFields.firstObject;
-//                                   self.usernameToList = usernameField.text;
-//                                   [self SetupListing];
-//                               }];
-//
-//    [alertController addAction:okAction];
+    UIAlertController *alertController = [UIAlertController
+                                          alertControllerWithTitle:@"Post as User"
+                                          message:@"Enter username"
+                                          preferredStyle:UIAlertControllerStyleAlert];
+
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+     {
+         textField.placeholder = @"username";
+     }];
+
+    UIAlertAction *okAction = [UIAlertAction
+                               actionWithTitle:@"DONE"
+                               style:UIAlertActionStyleDefault
+                               handler:^(UIAlertAction *action)
+                               {
+                                   UITextField *usernameField = alertController.textFields.firstObject;
+                                   self.usernameToList = usernameField.text;
+                                   [self SetupListing];
+                               }];
+
+    [alertController addAction:okAction];
     
-//    [self presentViewController:alertController animated:YES completion:nil];
+    [self presentViewController:alertController animated:YES completion:nil];
     
-    CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-    vc.usernameToCheck = self.usernameToList;
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-    self.forSalePressed = YES;
-    [self presentViewController:nav animated:YES completion:nil];
+//    CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+//    vc.usernameToCheck = self.usernameToList;
+//    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+//    self.forSalePressed = YES;
+//    [self presentViewController:nav animated:YES completion:nil];
 }
 - (IBAction)reviewsPressed:(id)sender {
     ReviewsVC *vc = [[ReviewsVC alloc]init];

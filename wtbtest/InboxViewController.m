@@ -127,15 +127,6 @@
     self.infinFinished = YES;
 }
 
--(void)viewDidAppear:(BOOL)animated{
-    [super viewDidAppear:animated];
-    
-    if ([[NSUserDefaults standardUserDefaults]boolForKey:@"declinedPushPermissions"]) {
-        
-    }
-
-}
-
 -(void)loadMessages{
     self.pullFinished = NO;
 //    self.justViewedMsg = NO;

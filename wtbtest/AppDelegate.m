@@ -45,10 +45,10 @@
 //        configuration.server = @"http://localhost:1337/parse";
         
         //production
-//        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
+        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
         
         //preproduction
-        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
+//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
     }]];
 
 //    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
