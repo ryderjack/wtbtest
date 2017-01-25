@@ -11,14 +11,13 @@
 #import <Parse/Parse.h>
 #import "CameraController.h"
 #import <BASSquareCropperViewController.h>
-#import "GMImagePickerController.h"
 #import <TOWebViewController.h>
 #import "MakeOfferController.h"
 #import <PulsingHaloLayer.h>
 #import "customAlertViewClass.h"
+#import <QBImagePickerController/QBImagePickerController.h>
 
-
-@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate, GMImagePickerControllerDelegate,TOWebDelegate, MakeOfferDelegate, customAlertDelegate>
+@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,TOWebDelegate, MakeOfferDelegate, customAlertDelegate,QBImagePickerControllerDelegate, UITextViewDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -101,5 +100,8 @@
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;
 @property (nonatomic, strong) UIView *searchBgView;
+@property (nonatomic) BOOL offerReminderMode;
+@property (nonatomic) BOOL promptedBefore;
+
 
 @end

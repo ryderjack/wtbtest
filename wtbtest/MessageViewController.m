@@ -78,9 +78,13 @@
     
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
     self.inputToolbar.contentView.textView.pasteDelegate = self;
-    self.inputToolbar.contentView.textView.placeHolder = @"Tap the tag for more actions";
+    self.inputToolbar.contentView.textView.placeHolder = @"<< Tap the tag for more actions";
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagFill"] forState:UIControlStateNormal];
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagIconG"] forState:UIControlStateHighlighted];
+    self.inputToolbar.contentView.backgroundColor = [UIColor whiteColor];
+    [self.inputToolbar.contentView.textView.layer setBorderWidth:0.0];
+    self.inputToolbar.contentView.textView.delegate = self;
+    [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
     
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"pulsingDone"] != YES) {
         self.halo = [PulsingHaloLayer layer];
@@ -129,7 +133,7 @@
     
     self.purchasedBubbleImageData = [bubbleFactoryOutline incomingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
     
-    self.offerBubbleImageData = [self.bubbleFactory outgoingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
+    self.offerBubbleImageData = [self.bubbleFactory outgoingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
     
      self.masker = [[JSQMessagesMediaViewBubbleImageMasker alloc]initWithBubbleImageFactory:self.bubbleFactory];
     
@@ -658,6 +662,7 @@
 
         self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Is your '%@' still available?", self.sellerItemTitle];
         self.savedString = self.inputToolbar.contentView.textView.text;
+        [self.inputToolbar.contentView.rightBarButtonItem setHidden:NO];
         [self.inputToolbar toggleSendButtonEnabled];
     }
     
@@ -711,6 +716,21 @@
          senderDisplayName:(NSString *)senderDisplayName
                       date:(NSDate *)date
 {
+    //add in way to check if already been through the pop up once? so can send email address if need to???? //CHANGE
+    
+    if (self.promptedBefore != YES) {
+        NSArray *checkingforemailarray = [text componentsSeparatedByString:@" "];
+        for (NSString *string in checkingforemailarray) {
+            if ([self NSStringIsValidEmail:string]) {
+                //present 'Send Offer' reminder alert
+                self.promptedBefore = YES;
+                self.offerReminderMode = YES;
+                [self showCustomAlert];
+                return;
+            }
+        }
+    }
+    
     NSString *messageString = text;
     self.sentPush = NO;
     if (self.offerMode == YES) {
@@ -916,10 +936,14 @@
 
 -(void)textViewDidChange:(UITextView *)textView{
     if (textView == self.inputToolbar.contentView.textView) {
-        if (![textView.text containsString:@"\nSelling:"] && ![textView.text containsString:@"\nCondition:"] && ![textView.text containsString:@"\nPrice:"] && ![textView.text containsString:@"\nMeetup:"]) {
-            self.offerMode = NO;
-        }
         [self.inputToolbar toggleSendButtonEnabled];
+        NSString *blankString = [textView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if ([blankString isEqualToString:@""]) {
+            [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
+        }
+        else{
+            [self.inputToolbar.contentView.rightBarButtonItem setHidden:NO];
+        }
     }
 }
 
@@ -982,13 +1006,15 @@
             [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
                 switch (status) {
                     case PHAuthorizationStatusAuthorized:{
-                        GMImagePickerController *picker = [[GMImagePickerController alloc] init];
-                        picker.delegate = self;
-                        picker.displaySelectionInfoToolbar = YES;
-                        picker.displayAlbumsNumberOfAssets = YES;
-                        picker.title = @"Choose pictures";
-                        picker.mediaTypes = @[@(PHAssetMediaTypeImage)];
-                        [self presentViewController:picker animated:YES completion:nil];
+                        
+                        QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                        imagePickerController.delegate = self;
+                        imagePickerController.allowsMultipleSelection = YES;
+                        imagePickerController.maximumNumberOfSelection = 4;
+                        imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                        imagePickerController.numberOfColumnsInPortrait = 2;
+                        imagePickerController.showsNumberOfSelectedAssets = YES;
+                        [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
                     }
                         break;
                     case PHAuthorizationStatusRestricted:{
@@ -1042,13 +1068,14 @@
             [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
                 switch (status) {
                     case PHAuthorizationStatusAuthorized:{
-                        GMImagePickerController *picker = [[GMImagePickerController alloc] init];
-                        picker.delegate = self;
-                        picker.displaySelectionInfoToolbar = YES;
-                        picker.displayAlbumsNumberOfAssets = YES;
-                        picker.title = @"Choose pictures";
-                        picker.mediaTypes = @[@(PHAssetMediaTypeImage)];
-                        [self presentViewController:picker animated:YES completion:nil];
+                        QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                        imagePickerController.delegate = self;
+                        imagePickerController.allowsMultipleSelection = YES;
+                        imagePickerController.maximumNumberOfSelection = 4;
+                        imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                        imagePickerController.numberOfColumnsInPortrait = 2;
+                        imagePickerController.showsNumberOfSelectedAssets = YES;
+                        [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
                     }
                         break;
                     case PHAuthorizationStatusRestricted:{
@@ -1071,6 +1098,35 @@
     }
     
     [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+- (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingAssets:(NSArray *)assets {
+    PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+    requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
+    requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+    
+    PHImageManager *manager = [PHImageManager defaultManager];
+    
+    for (PHAsset *asset in assets) {
+        [manager requestImageForAsset:asset
+                           targetSize:PHImageManagerMaximumSize
+                          contentMode:PHImageContentModeDefault
+                              options:requestOptions
+                        resultHandler:^void(UIImage *image, NSDictionary *info) {
+                            
+                            NSData *imgData = UIImageJPEGRepresentation(image, 1.0);
+                            NSLog(@"BEFORE (bytes):%lu",(unsigned long)[imgData length]);
+                            
+                            UIImage *newImage = [image resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
+                            [self finalImage:newImage];
+                        }];
+    }
+    
+    [self dismissViewControllerAnimated:YES completion:NULL];
+}
+
+- (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController {
+    [self dismissViewControllerAnimated:YES completion:NULL];
 }
 
 -(void)showDepop{
@@ -1101,51 +1157,12 @@
     }];
 }
 
-- (BOOL)assetsPickerController:(GMImagePickerController *)picker shouldSelectAsset:(PHAsset *)asset{
-    if (picker.selectedAssets.count == 4) {
-        return NO;
-    }
-    return YES;
-}
-
-- (void)assetsPickerController:(GMImagePickerController *)picker didFinishPickingAssets:(NSArray *)assetArray
-{
-    [picker.presentingViewController dismissViewControllerAnimated:YES completion:nil];
-//    NSLog(@"GMImagePicker: User ended picking assets. Number of selected items is: %lu", (unsigned long)assetArray.count);
-    
-    PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
-    requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
-    requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
-    
-    PHImageManager *manager = [PHImageManager defaultManager];
-    
-    for (PHAsset *asset in assetArray) {
-        [manager requestImageForAsset:asset
-                           targetSize:PHImageManagerMaximumSize
-                          contentMode:PHImageContentModeDefault
-                              options:requestOptions
-                        resultHandler:^void(UIImage *image, NSDictionary *info) {
-                            
-                            NSData *imgData = UIImageJPEGRepresentation(image, 1.0);
-                            NSLog(@"BEFORE (bytes):%lu",(unsigned long)[imgData length]);
-                            
-                            UIImage *newImage = [image resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
-                                [self finalImage:newImage];
-                        }];
-    }
-}
-
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
     //display crop picker
     [picker dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:chosenImage];
     }];
-}
-
--(void)assetsPickerControllerDidCancel:(GMImagePickerController *)picker
-{
-    //cancel
 }
 
 -(void)displayCropperWithImage:(UIImage *)image{
@@ -1463,12 +1480,12 @@
             }
             else{
                 //index path is not last
-                NSLog(@"index path is not last");
+//                NSLog(@"index path is not last");
             }
         }
         else{
             //user hasn't send a message
-            NSLog(@"user hasn't send a message");
+//            NSLog(@"user hasn't send a message");
         }
     }
     return nil;
@@ -2192,12 +2209,19 @@
 }
 
 -(void)sendOffer:(NSString *)offerString{
+    if (self.offerReminderMode == YES) {
+        self.inputToolbar.contentView.textView.text = @"";
+        [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
+    }
     self.offerMode = YES;
     UIButton *button = [[UIButton alloc]init];
     [self didPressSendButton:button withMessageText:offerString senderId:self.senderId senderDisplayName:self.senderDisplayName date:[NSDate date]];
 }
 
 -(void)showCustomAlert{
+    //make sure keyboard dismissed
+    [self.inputToolbar.contentView.textView resignFirstResponder];
+    
     self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
     self.searchBgView.alpha = 0.0;
     [self.searchBgView setBackgroundColor:[UIColor blackColor]];
@@ -2214,10 +2238,20 @@
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
     self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.customAlert.delegate = self;
-    self.customAlert.titleLabel.text = @"Permssion Needed";
-    self.customAlert.messageLabel.text = @"Tap to goto Settings & enable Bump's Photos Permission";
-    self.customAlert.numberOfButtons = 2;
-    [self.customAlert.secondButton setTitle:@"S E T T I N G S" forState:UIControlStateNormal];
+    if (self.offerReminderMode == YES) {
+        self.customAlert.titleLabel.text = @"Sell on Bump";
+        self.customAlert.messageLabel.text = @"Build your reputation, stay protected & get paid with PayPal. Just tap the tag icon and hit 'Send an offer'!";
+        self.customAlert.numberOfButtons = 1;
+        [self.customAlert.doneButton setTitle:@"S E N D  O F F E R" forState:UIControlStateNormal];
+        [self.customAlert.doneButton setBackgroundColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
+        [self.customAlert.doneButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    }
+    else{
+        self.customAlert.titleLabel.text = @"Permssion Needed";
+        self.customAlert.messageLabel.text = @"Tap to goto Settings & enable Bump's Photos Permission";
+        self.customAlert.numberOfButtons = 2;
+        [self.customAlert.secondButton setTitle:@"S E T T I N G S" forState:UIControlStateNormal];
+    }
     
     if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
         //iphone5
@@ -2254,6 +2288,17 @@
 }
 
 -(void)donePressed{
+    if (self.offerReminderMode == YES) {
+        
+        [Answers logCustomEventWithName:@"Send an offer tapped from prompt"
+                       customAttributes:@{}];
+        
+        MakeOfferController *vc = [[MakeOfferController alloc]init];
+        vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
+        vc.currencySymbol = self.currencySymbol;
+        vc.delegate = self;
+        [self.navigationController presentViewController:vc animated:YES completion:nil];
+    }
     [UIView animateWithDuration:0.3
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -2291,8 +2336,19 @@
 
 -(void)secondPressed{
     //goto settings
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
     [self donePressed];
+    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
 }
+
+-(BOOL) NSStringIsValidEmail:(NSString *)checkString
+{
+    BOOL stricterFilter = NO;
+    NSString *stricterFilterString = @"^[A-Z0-9a-z\\._%+-]+@([A-Za-z0-9-]+\\.)+[A-Za-z]{2,4}$";
+    NSString *laxString = @"^.+@([A-Za-z0-9-]+\\.)+[A-Za-z]{2}[A-Za-z]*$";
+    NSString *emailRegex = stricterFilter ? stricterFilterString : laxString;
+    NSPredicate *emailTest = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", emailRegex];
+    return [emailTest evaluateWithObject:checkString];
+}
+
 @end
 

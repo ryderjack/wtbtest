@@ -227,7 +227,7 @@
         }
     }];
     
-//    [PFUser logOut];
+//    [PFUser logOut]; //CHANGE
 }
 
 
@@ -342,7 +342,10 @@
     
     self.cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     self.cell.delegate = self;
-
+    
+    self.cell.layer.cornerRadius = 4;
+    self.cell.layer.masksToBounds = YES;
+    
     PFObject *listing = [self.results objectAtIndex:indexPath.row];
     
     //set the item as seen

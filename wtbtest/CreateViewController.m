@@ -56,6 +56,18 @@
     self.thirdImageView.contentMode = UIViewContentModeScaleAspectFit;
     self.fourthImageView.contentMode = UIViewContentModeScaleAspectFit;
     
+    self.firstImageView.layer.cornerRadius = 2;
+    self.firstImageView.layer.masksToBounds = YES;
+    
+    self.secondImageView.layer.cornerRadius = 2;
+    self.secondImageView.layer.masksToBounds = YES;
+    
+    self.thirdImageView.layer.cornerRadius = 2;
+    self.thirdImageView.layer.masksToBounds = YES;
+    
+    self.fourthImageView.layer.cornerRadius = 2;
+    self.fourthImageView.layer.masksToBounds = YES;
+    
     [self.firstImageView setImage:[UIImage imageNamed:@"addImage"]];
     [self.secondImageView setImage:[UIImage imageNamed:@"camHolder"]];
     [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
@@ -1862,7 +1874,7 @@
     }
     else{
         PFObject *WTS = [self.buyNowArray objectAtIndex:indexPath.item];
-        NSLog(@"WTS: %@ at index: %ld", WTS, (long)indexPath.row);
+//        NSLog(@"WTS: %@ at index: %ld", WTS, (long)indexPath.row);
         //setup cell
         [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
         [cell.itemView loadInBackground];
@@ -1976,23 +1988,30 @@
         if (objects) {
             [self.buyNowArray addObjectsFromArray:objects];
             
+            NSLog(@"yo count %lu", objects.count);
+            
             for (PFObject *forSale in objects) {
                 [self.buyNowIDs addObject:forSale.objectId];
             }
+            
+            NSLog(@"count first time %lu", objects.count);
             
             if (objects.count < 10) {
                 PFQuery *salesQuery2 = [PFQuery queryWithClassName:@"forSaleItems"];
                 [salesQuery2 whereKey:@"status" equalTo:@"live"];
                 [salesQuery2 orderByDescending:@"createdAt"];
-                salesQuery2.limit = 10-self.buyNowArray.count;
+                [salesQuery whereKey:@"objectId" notContainedIn:self.buyNowIDs];
+                salesQuery2.limit = 10-self.buyNowArray.count; //CHANGE
                 [salesQuery2 findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                     if (objects) {
+                        NSLog(@"objects second time %lu", objects.count);
                         for (PFObject *forSale in objects) {
                             if (![self.buyNowIDs containsObject:forSale.objectId]) {
                                 [self.buyNowArray addObject:forSale];
                                 [self.buyNowIDs addObject:forSale.objectId];
                             }
                         }
+                        NSLog(@"count second time %lu", self.buyNowArray.count);
                         [self.successView.collectionView reloadData];
                     }
                     else{

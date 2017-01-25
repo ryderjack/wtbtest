@@ -66,6 +66,11 @@
     if (self.segmentControl.selectedSegmentIndex == 0) {
         self.userSearch = NO;
         self.searchBar.placeholder = @"Search for stuff you're selling";
+       
+        if (self.noUserLabel) {
+            [self.noUserLabel removeFromSuperview];
+            self.noUserLabel = nil;
+        }
     }
     else{
         self.userSearch = YES;
@@ -136,6 +141,8 @@
 -(void)cancelPressed{
     [self.searchBar resignFirstResponder];
     [self.delegate cancellingMainSearch];
+    [self.noUserLabel removeFromSuperview];
+    self.noUserLabel = nil;
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 

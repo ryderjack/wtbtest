@@ -34,7 +34,6 @@
 
 @property (nonatomic) BOOL reloadingRelated;
 
-
 @property (nonatomic) BOOL pullFinished;
 @property (nonatomic) BOOL infinFinished;
 @property (nonatomic) BOOL ignoreRelatedShown;
@@ -59,7 +58,6 @@
 @property (nonatomic, strong) NSMutableArray *results;
 @property (nonatomic) BOOL alertShowing;
 
-
 //ebay
 @property (nonatomic) BOOL fromInfinEbay;
 @property (nonatomic) BOOL ebayEnabled;
@@ -72,6 +70,8 @@
 @property (nonatomic) BOOL ebayTapped;
 @property (nonatomic, strong) UIView *viewerBg;
 @property (nonatomic) BOOL itemShowing;
+
+@property (nonatomic) int pullSkipped;
 
 
 @end
