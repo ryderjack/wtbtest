@@ -1134,15 +1134,17 @@
         //has added their depop handle
         NSString *handle = [[PFUser currentUser]objectForKey:@"depopHandle"];
         NSString *URLString = [NSString stringWithFormat:@"http://depop.com/%@",handle];
-        self.webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+        self.webViewController = nil;
+        self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
         self.webViewController.title = [NSString stringWithFormat:@"%@", handle];
         self.webViewController.showUrlWhileLoading = NO;
         self.webViewController.showPageTitles = NO;
         self.webViewController.delegate = self;
-        self.webViewController.doneButtonTitle = @"Choose";
+        self.webViewController.depopMode = YES;
+        self.webViewController.doneButtonTitle = @"";
         self.webViewController.paypalMode = NO;
         self.webViewController.infoMode = NO;
-        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
+        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
         [self presentViewController:navigationController animated:YES completion:nil];
     }
     else{
@@ -1151,7 +1153,20 @@
     }
 }
 
--(void)didPressDone:(UIImage *)screenshot{
+
+-(void)paidPressed{
+    //do nothing
+}
+
+-(void)cancelWebPressed{
+    [self.webViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)cameraPressed{
+    //do nothing
+}
+
+-(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
     [self.webViewController dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:screenshot];
     }];
@@ -1192,28 +1207,29 @@
 
 -(void)payPaypal{
     NSString *URLString = @"https://www.paypal.com/myaccount/transfer/buy";
-    TOWebViewController *webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
-    webViewController.title = @"PayPal";
-    webViewController.showUrlWhileLoading = YES;
-    webViewController.showPageTitles = NO;
-    webViewController.doneButtonTitle = @"Paid";
-    webViewController.paypalMode = YES;
+    self.webViewController = nil;
+    self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
+    self.webViewController.title = @"PayPal";
+    self.webViewController.showUrlWhileLoading = YES;
+    self.webViewController.showPageTitles = NO;
+    self.webViewController.doneButtonTitle = @"Paid";
+    self.webViewController.paypalMode = YES;
     if ([self.convoObject objectForKey:@"order"]) {
         //got an order object so get email and amount info
-        webViewController.infoMode = YES;
+        self.webViewController.infoMode = YES;
         if ([self.otherUser objectForKey:@"email"]) {
-            webViewController.emailToPay = [self.otherUser objectForKey:@"email"];
-            webViewController.amountToPay = @"";
+            self.webViewController.emailToPay = [self.otherUser objectForKey:@"email"];
+            self.webViewController.amountToPay = @"";
         }
         else{
-            webViewController.infoMode = NO;
+            self.webViewController.infoMode = NO;
         }
     }
     else{
         //hide toolbar banner
-        webViewController.infoMode = NO;
+        self.webViewController.infoMode = NO;
     }
-    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 
@@ -1227,7 +1243,7 @@
     webViewController.paypalMode = NO;
     webViewController.infoMode = NO;
     self.checkPayPalTapped = YES;
-    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 

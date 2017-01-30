@@ -7,11 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "CreateViewController.h"
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
+#import "simpleCreateVC.h"
 
-@interface Tut1ViewController : UIViewController <CreateViewControllerDelegate>
+@interface Tut1ViewController : UIViewController <simpleCreateVCDelegate>
 
 @property (assign, nonatomic) NSInteger index;
 @property (weak, nonatomic) IBOutlet UIImageView *heroImageView;
@@ -45,5 +45,7 @@
 @property (nonatomic, strong) PFObject *fourthListing;
 
 @property (nonatomic, strong) NSString *pushText;
+
+@property (nonatomic) int bumpCount;
 
 @end

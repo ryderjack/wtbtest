@@ -13,6 +13,7 @@
 #import "ProfileController.h"
 #import "InboxViewController.h"
 #import "BuyNowController.h"
+#import "simpleCreateVC.h"
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate, UITabBarControllerDelegate>
 
@@ -20,6 +21,7 @@
 @property (strong, nonatomic) UITabBarController *tabBarController;
 @property (strong, nonatomic) WelcomeViewController *welcomeView;
 @property (strong, nonatomic) CreateViewController *createView;
+@property (strong, nonatomic) simpleCreateVC *simpleCreateView;
 @property (strong, nonatomic) ExploreVC *exploreView;
 @property (strong, nonatomic) ProfileController *profileView;
 @property (strong, nonatomic) InboxViewController *inboxView;

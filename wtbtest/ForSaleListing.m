@@ -47,9 +47,7 @@
     
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     
-    self.mainCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.infoCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.buttonCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.image2Cell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
@@ -83,13 +81,8 @@
     [self.imageViewTwo addGestureRecognizer:tap];
     [self.imageViewTwo setUserInteractionEnabled:YES];
     
-//    [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
-    
     //hide first table view header
     self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
-    
-    self.sellerNameLabel.adjustsFontSizeToFitWidth = YES;
-    self.sellerNameLabel.minimumScaleFactor=0.5;
     
     self.locationLabel.adjustsFontSizeToFitWidth = YES;
     self.locationLabel.minimumScaleFactor=0.5;
@@ -97,24 +90,32 @@
     self.descriptionLabel.adjustsFontSizeToFitWidth = YES;
     self.descriptionLabel.minimumScaleFactor=0.5;
     
-    self.sellerNameLabel.text = @"";
-    self.pastDealsLabel.text = @"Loading";
-    
-    self.mainCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.descriptionCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.buttonCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.sellerCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.spaceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.infoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+    
+    self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 + self.tabBarController.tabBar.frame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+    [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+    [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+    [self.longButton addTarget:self action:@selector(BarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.longButton.alpha = 0.0f;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
+    
+    [self showBarButton];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+    if (self.buttonShowing == NO) {
+        [self showBarButton];
+    }
     
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
@@ -129,7 +130,6 @@
                 [self.imageViewTwo setFile:[self.listingObject objectForKey:@"image1"]];
                 [self.imageViewTwo loadInBackground];
                 
-                [self.messageSellerButton setImage:[UIImage imageNamed:@"visitSite"] forState:UIControlStateNormal];
                 [self.soldLabel setHidden:NO];
                 self.soldLabel.text = @"fulfilled by END.";
                 [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"fulfillCheck"]];
@@ -225,11 +225,13 @@
                 self.seller = [self.listingObject objectForKey:@"sellerUser"];
                 
                 if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-                    [self.messageSellerButton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
+                    [self.longButton setTitle:@"E D I T" forState:UIControlStateNormal];
+                    [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+                    [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
                 }
                 else{
                     //not the same buyer
-                    [self.messageSellerButton setEnabled:YES];
+                    [self.longButton setTitle:@"M E S S A G E  S E L L E R" forState:UIControlStateNormal];
                     [self.listingObject incrementKey:@"views"];
                     [self.listingObject saveInBackground];
                 }
@@ -237,7 +239,6 @@
                 [self setImageBorder];
                 [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                     if (object) {
-                        self.sellerNameLabel.text = self.seller.username;
                         
                         PFFile *pic = [self.seller objectForKey:@"picture"];
                         if (pic != nil) {
@@ -247,41 +248,6 @@
                         else{
                             [self.sellerImgView setImage:[UIImage imageNamed:@"empty"]];
                         }
-                        
-                        PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
-                        [dealsQuery whereKey:@"User" equalTo:self.seller];
-                        [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                            if (object) {
-                                int starNumber = [[object objectForKey:@"currentRating"] intValue];
-                                
-                                if (starNumber == 0) {
-                                    [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
-                                }
-                                else if (starNumber == 1){
-                                    [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
-                                }
-                                else if (starNumber == 2){
-                                    [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
-                                }
-                                else if (starNumber == 3){
-                                    [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
-                                }
-                                else if (starNumber == 4){
-                                    [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
-                                }
-                                else if (starNumber == 5){
-                                    [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
-                                }
-                                
-                                int purchased = [[object objectForKey:@"purchased"]intValue];
-                                int sold = [[object objectForKey:@"sold"] intValue];
-                                
-                                self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
-                            }
-                            else{
-                                NSLog(@"error getting deals data!");
-                            }
-                        }];
                     }
                     else{
                         NSLog(@"seller error %@", error);
@@ -295,6 +261,11 @@
     }];
 }
 
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    [self hideBarButton];
+}
+
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
@@ -303,7 +274,7 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 2;
+    return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -311,11 +282,11 @@
         return 1;
     }
     else if (section ==1){
-        return 3;
+        return 2;
     }
-//    else if (section ==2){
-//        return 1;
-//    }
+    else if (section ==2){
+        return 1;
+    }
     return 1;
 }
 
@@ -333,43 +304,14 @@
         else if (indexPath.row == 1){
             return self.descriptionCell;
         }
-        else if (indexPath.row == 2){
-            return self.buttonCell;
+    }
+    else if (indexPath.section == 2){
+        if (indexPath.row == 0) {
+            return self.spaceCell;
         }
     }
-//    else if (indexPath.section == 2){
-//        if (indexPath.row == 0) {
-//            return self.sellerCell;
-//        }
-//    }
     return nil;
 }
-
-//- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-//    
-//    if (indexPath.section == 0){
-//        if (indexPath.row == 0) {
-//            return 320;
-//        }
-//    }
-//    else if (indexPath.section == 1){
-//        if (indexPath.row == 0) {
-//            return 83;
-//        }
-//        else if (indexPath.row == 1){
-//            return 105;
-//        }
-//        else if (indexPath.row == 2){
-//            return 75;
-//        }
-//    }
-//    else if (indexPath.section == 2){
-//        if (indexPath.row == 0) {
-//            return 158;
-//        }
-//    }
-//    return 44;
-//}
 
 -(CGFloat)tableView:(UITableView *)tableView estimatedHeightForRowAtIndexPath:(NSIndexPath *)indexPath{
     if (indexPath.section == 0){
@@ -384,15 +326,12 @@
         else if (indexPath.row == 1){
             return 105;
         }
-        else if (indexPath.row == 2){
-            return 75;
+    }
+    else if (indexPath.section == 2){
+        if (indexPath.row == 0) {
+            return 100;
         }
     }
-//    else if (indexPath.section == 2){
-//        if (indexPath.row == 0) {
-//            return 158;
-//        }
-//    }
     return 44;
 }
 
@@ -434,7 +373,6 @@
 - (UIView *) tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-//    [headerView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     return headerView;
 }
 
@@ -489,15 +427,18 @@
 }
 
 -(void)showAlertView{
+    [self hideBarButton];
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
     }]];
     
     if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
         
         if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"sold"]) {
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as sold" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [self showBarButton];
                 [self.listingObject setObject:@"live" forKey:@"status"];
                 [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                     if (succeeded) {
@@ -534,9 +475,11 @@
                 UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as sold" message:@"Are you sure you want to mark your item as sold? It will no longer be recommended to interested buyers" preferredStyle:UIAlertControllerStyleAlert];
                 
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    [self showBarButton];
                     
                 }]];
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [self showBarButton];
                     [self.listingObject setObject:@"sold" forKey:@"status"];
                     [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                         if (succeeded) {
@@ -570,6 +513,7 @@
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
             }]];
             [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
                 [self.listingObject setObject:@"deleted" forKey:@"status"];
@@ -589,9 +533,11 @@
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this post has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
             }]];
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
                 PFObject *reportObject = [PFObject objectWithClassName:@"Reported"];
                 reportObject[@"reportedUser"] = self.seller;
                 reportObject[@"reporter"] = [PFUser currentUser];
@@ -717,31 +663,19 @@
         [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
     });
 }
-- (IBAction)messageSellerPressed:(id)sender {
-    if (self.relatedProduct == YES) { //redundant now?
-        //goto website
-        NSString *URLString = [self.listingObject objectForKey:@"link"];
-        self.webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
-        self.webViewController.showUrlWhileLoading = YES;
-        self.webViewController.showPageTitles = YES;
-        self.webViewController.doneButtonTitle = @"";
-        self.webViewController.paypalMode = NO;
-        self.webViewController.infoMode = NO;
-        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
-        [self presentViewController:navigationController animated:YES completion:nil];
+
+-(void)BarButtonPressed{
+    [self.longButton setEnabled:NO];
+    if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        [self setupMessages];
     }
     else{
-        if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-            [self.messageSellerButton setEnabled:NO];
-            [self setupMessages];
-        }
-        else{
-            NSLog(@"edit listing");
-            CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-            vc.editMode = YES;
-            vc.listing = self.listingObject;
-            [self.navigationController pushViewController:vc animated:YES];
-        }
+        NSLog(@"edit listing");
+        CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+        vc.editMode = YES;
+        vc.listing = self.listingObject;
+        [self.longButton setEnabled:YES];
+        [self.navigationController pushViewController:vc animated:YES];
     }
 }
 -(void)setupMessages{
@@ -792,8 +726,8 @@
             else{
                 vc.listing = self.WTBObject;
             }
-            [self.messageSellerButton setEnabled:YES];
             [self hideHUD];
+            [self.longButton setEnabled:YES];
             [self.navigationController pushViewController:vc animated:YES];
         }
         else{
@@ -842,13 +776,13 @@
                         vc.listing = self.WTBObject;
                     }
                     [self hideHUD];
-                    [self.messageSellerButton setEnabled:YES];
+                    [self.longButton setEnabled:YES];
                     [self.navigationController pushViewController:vc animated:YES];
                 }
                 else{
                     NSLog(@"error saving convo");
+                    [self.longButton setEnabled:YES];
                     [self hideHUD];
-                    [self.messageSellerButton setEnabled:YES];
                 }
             }];
         }
@@ -863,5 +797,28 @@
 -(void)dismissVC{
     [self dismissViewControllerAnimated:YES completion:nil];
 }
+-(void)hideBarButton{
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.longButton setAlpha:0.0];
+                     }
+                     completion:^(BOOL finished) {
+                         self.buttonShowing = NO;
+                     }];
+}
 
+-(void)showBarButton{
+    self.longButton.alpha = 0.0f;
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.longButton.alpha = 1.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.buttonShowing = YES;
+                     }];
+}
 @end

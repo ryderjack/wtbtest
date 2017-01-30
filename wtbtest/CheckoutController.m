@@ -7,6 +7,7 @@
 //
 
 #import "CheckoutController.h"
+#import "NavigationController.h"
 
 @interface CheckoutController ()
 
@@ -139,17 +140,18 @@
 
 -(void)showPaypal{
     NSString *URLString = @"https://www.paypal.com/myaccount/transfer/buy";
-    self.webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+    self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
     self.webViewController.title = @"PayPal";
     self.webViewController.showUrlWhileLoading = YES;
     self.webViewController.showPageTitles = NO;
     self.webViewController.delegate = self;
+    self.webViewController.payMode = YES;
     self.webViewController.doneButtonTitle = @"Paid";
     self.webViewController.paypalMode = YES;
     self.webViewController.emailToPay = self.sellerEmail;
     self.webViewController.amountToPay = self.totalLabel.text;
     self.webViewController.infoMode = YES;
-    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self.webViewController];
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:^{
         [self.payButton setEnabled:YES];
     }];
@@ -461,7 +463,7 @@
     [self.priceField resignFirstResponder];
 }
 
--(void)didPressDone:(UIImage *)screenshot{
+-(void)paidPressed{
     [self.webViewController dismissViewControllerAnimated:YES completion:nil];
     [self createOrder];
     
@@ -493,6 +495,18 @@
             NSLog(@"no other offers outstanding");
         }
     }];
+}
+
+-(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
+    //do nothing
+}
+
+-(void)cameraPressed{
+    //do nothing
+}
+
+-(void)cancelWebPressed{
+    [self.webViewController dismissViewControllerAnimated:YES completion:nil];
 }
 
 -(void)showHUD{

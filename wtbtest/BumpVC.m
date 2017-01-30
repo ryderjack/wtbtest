@@ -21,6 +21,9 @@
     
     [self.plusOneImageView setHidden:YES];
     
+    self.listingImageView.layer.cornerRadius = 4;
+    self.listingImageView.layer.masksToBounds = YES;
+    
     if (self.listingID) {
         PFQuery *listingQ = [PFQuery queryWithClassName:@"wantobuys"];
         [listingQ whereKey:@"objectId" equalTo:self.listingID];

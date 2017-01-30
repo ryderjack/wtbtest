@@ -25,8 +25,8 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *sizeCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *locationCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *descriptionCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *buttonCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *payCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
 
 //camera buttons
 @property (weak, nonatomic) IBOutlet UIButton *firstCam;
@@ -49,10 +49,6 @@
 //text fields
 @property (weak, nonatomic) IBOutlet UITextView *descriptionField;
 @property (weak, nonatomic) IBOutlet UITextField *payField;
-
-//button cell
-@property (weak, nonatomic) IBOutlet UILabel *warningLabel;
-@property (weak, nonatomic) IBOutlet UIButton *saveButton;
 
 //choices
 @property (weak, nonatomic) IBOutlet UILabel *chooseCondition;
@@ -85,4 +81,8 @@
 @property (nonatomic, strong) NSString *usernameToCheck;
 @property (nonatomic, strong) PFUser *cabin;
 @property (nonatomic) BOOL somethingChanged;
+
+//big button
+@property (nonatomic, strong) UIButton *longButton;
+@property (nonatomic) BOOL buttonShowing;
 @end

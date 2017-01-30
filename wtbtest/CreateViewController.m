@@ -32,9 +32,7 @@
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
-    if (self.introMode == NO) {
-        [self.skipButton setHidden:YES];
-    }
+    self.tapNumber = 0;
         
     //button setup
     [self.firstCam setEnabled:YES];
@@ -44,7 +42,6 @@
     
     self.somethingChanged = NO;
     self.shouldSave = NO;
-    self.completionShowing = NO;
     
     [self.firstDelete setHidden:YES];
     [self.secondDelete setHidden:YES];
@@ -56,16 +53,16 @@
     self.thirdImageView.contentMode = UIViewContentModeScaleAspectFit;
     self.fourthImageView.contentMode = UIViewContentModeScaleAspectFit;
     
-    self.firstImageView.layer.cornerRadius = 2;
+    self.firstImageView.layer.cornerRadius = 4;
     self.firstImageView.layer.masksToBounds = YES;
     
-    self.secondImageView.layer.cornerRadius = 2;
+    self.secondImageView.layer.cornerRadius = 4;
     self.secondImageView.layer.masksToBounds = YES;
     
-    self.thirdImageView.layer.cornerRadius = 2;
+    self.thirdImageView.layer.cornerRadius = 4;
     self.thirdImageView.layer.masksToBounds = YES;
     
-    self.fourthImageView.layer.cornerRadius = 2;
+    self.fourthImageView.layer.cornerRadius = 4;
     self.fourthImageView.layer.masksToBounds = YES;
     
     [self.firstImageView setImage:[UIImage imageNamed:@"addImage"]];
@@ -82,9 +79,8 @@
     
     self.titleCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.picCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.buttonCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.infoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.payCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.spaceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -95,10 +91,9 @@
     self.thirdSize = @"";
     self.resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain target:self action:@selector(resetFormAsk)];
     
-    self.buyNowArray = [NSMutableArray array];
-    self.buyNowIDs = [NSMutableArray array];
-    
-    if (self.editFromListing == YES) {
+    //add details is when user taps to add more info after posting
+    if (self.editFromListing == YES || self.addDetails == YES) {
+        [self resetAll];
         [self listingSetup];
         
         self.navigationItem.hidesBackButton = YES;
@@ -109,12 +104,6 @@
         UIBarButtonItem *updateButton = [[UIBarButtonItem alloc] initWithTitle:@"Update" style:UIBarButtonItemStylePlain target:self action:@selector(wantobuyPressed:)];
         self.navigationItem.rightBarButtonItem = updateButton;
     }
-    else if (self.introMode == YES) {
-        self.navigationItem.hidesBackButton = YES;
-    }
-    else{
-        self.shouldShowReset = YES;
-    }
     
     //add done button to number pad keyboard on pay field
     [self addDoneButton];
@@ -123,8 +112,25 @@
     
     self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
     
-    if (![self.status isEqualToString:@"edit"]) {
-        [self useCurrentLoc];
+    if (self.introMode != YES) {
+        self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+        [self.longButton setTitle:@"U P D A T E" forState:UIControlStateNormal];
+        [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+        [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+        [self.longButton addTarget:self action:@selector(wantobuyPressed:) forControlEvents:UIControlEventTouchUpInside];
+        self.longButton.alpha = 0.0f;
+        [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.longButton.alpha = 1.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.buttonShowing = YES;
+                             NSLog(@"showing in load");
+                         }];
     }
 }
 
@@ -136,6 +142,39 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     [[self navigationController] setNavigationBarHidden:NO animated:YES];
+    
+    if (self.introMode == YES && self.buttonShowing == NO && !self.longButton) { //TEST THIS //CHANGE
+        self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+        [self.longButton setTitle:@"U P D A T E" forState:UIControlStateNormal];
+        [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+        [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+        [self.longButton addTarget:self action:@selector(wantobuyPressed:) forControlEvents:UIControlEventTouchUpInside];
+        self.longButton.alpha = 0.0f;
+        [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.longButton.alpha = 1.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.buttonShowing = YES;
+                         }];
+    }
+    
+    else if (self.buttonShowing == NO) {
+        self.longButton.alpha = 0.0f;
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.longButton.alpha = 1.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.buttonShowing = YES;
+                         }];
+    }
     
     if (![PFUser currentUser]) {
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
@@ -158,51 +197,24 @@
         }
     }
     
-    if ([self.status isEqualToString:@"new"]) {
-        self.shouldShowReset = YES;
-        [self resetAll];
-    }
-    else if ([self.status isEqualToString:@"edit"]) {
-        [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
-    }
-    else if(self.introMode != YES){
-        self.shouldShowReset = YES;
-        [Answers logCustomEventWithName:@"Viewed page"
-                       customAttributes:@{
-                                          @"pageName":@"Create Listing"
-                                          }];
-    }
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Edit Listing"
+                                      }];
     
     if (self.shouldShowHUD == YES) {
         [self showHUD];
     }
-    
-    if (self.shouldShowReset == YES && self.somethingChanged == YES) {
-        NSLog(@"setting");
-        self.navigationItem.leftBarButtonItem = self.resetButton;
-    }
-    
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
 }
 
--(void)viewDidAppear:(BOOL)animated{
-    [super viewDidAppear:animated];
-    if (self.setupYes != YES) {
-        [self setUpSuccess];
-    }
-    
-    if (self.introMode == YES) {
-        //show prompt for enabling push
-        [self showPushAlert];
-    }
-}
 
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 5;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -217,9 +229,6 @@
         return 5;
     }
     else if (section == 3){
-        return 1;
-    }
-    else if (section == 4){
         return 1;
     }
     else{
@@ -251,19 +260,17 @@
         else if(indexPath.row == 3){
             return self.locCell;
         }
-//        else if(indexPath.row == 4){
-//            return self.deliveryCell;
-//        }
         else if(indexPath.row == 4){
             return self.payCell;
         }
     }
+    //add extra cell to ensure 'UPDATE' button doesn't cover footer of last section
     else if (indexPath.section ==3){
-        return self.infoCell;
+        if(indexPath.row == 0){
+            return self.spaceCell;
+        }
     }
-    else if (indexPath.section ==4){
-        return self.buttonCell;
-    }
+
     return nil;
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -282,10 +289,7 @@
         return 44;
     }
     else if (indexPath.section ==3){
-        return 105;
-    }
-    else if (indexPath.section ==4){
-        return 138;
+        return 60;
     }
     return 44;
 }
@@ -322,7 +326,7 @@
             vc.setting = @"condition";
             self.selection = @"condition";
             
-            if (![self.chooseCondition.text isEqualToString:@"select"]) {
+            if (![self.chooseCondition.text isEqualToString:@"Optional"]) {
                 NSArray *selectedArray = [self.chooseCondition.text componentsSeparatedByString:@"."];
                 vc.holdingArray = [NSArray arrayWithArray:selectedArray];
             }
@@ -335,7 +339,7 @@
             vc.setting = @"category";
             self.selection = @"category";
             
-            if (![self.chooseCategroy.text isEqualToString:@"select"]) {
+            if (![self.chooseCategroy.text isEqualToString:@"Optional"]) {
                 NSArray *selectedArray = [self.chooseCategroy.text componentsSeparatedByString:@"."];
                 vc.holdingArray = [NSArray arrayWithArray:selectedArray];
             }
@@ -343,10 +347,9 @@
             [self.navigationController pushViewController:vc animated:YES];
         }
         else if(indexPath.row == 2){
-            if ([self.chooseCategroy.text isEqualToString:@"select"]) {
+            if ([self.chooseCategroy.text isEqualToString:@"Optional"]) {
                 [self sizePopUp];
                 [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
-                
             }
             else{
                 if ([self.chooseCategroy.text isEqualToString:@"Footwear"]) {
@@ -355,7 +358,7 @@
                     vc.setting = @"sizefoot";
                     
                     // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"select"]) {
+                    if (![self.chooseSize.text isEqualToString:@"Optional"]) {
                         NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
                         NSLog(@"selected already %@", selectedArray);
                         vc.holdingArray = [NSArray arrayWithArray:selectedArray];
@@ -374,7 +377,7 @@
                     vc.setting = @"sizeclothing";
                     
                     // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"select"]) {
+                    if (![self.chooseSize.text isEqualToString:@"Optional"]) {
                         NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
                         vc.holdingArray = [NSArray arrayWithArray:selectedArray];
                     }
@@ -391,7 +394,7 @@
                     vc.setting = @"sizeclothing";
                     
                     // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"select"]) {
+                    if (![self.chooseSize.text isEqualToString:@"Optional"]) {
                         NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
                         vc.holdingArray = [NSArray arrayWithArray:selectedArray];
                     }
@@ -402,12 +405,10 @@
             }
         }
         else if(indexPath.row == 3){
-            if (self.editFromListing != YES) {
-                LocationView *vc = [[LocationView alloc]init];
-                vc.delegate = self;
-                self.selection = @"location";
-                [self.navigationController pushViewController:vc animated:YES];
-            }
+            LocationView *vc = [[LocationView alloc]init];
+            vc.delegate = self;
+            self.selection = @"location";
+            [self.navigationController pushViewController:vc animated:YES];
         }
     }
     else {
@@ -467,7 +468,7 @@
     }
 }
 -(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
-    if (section ==3 || section == 4) {
+    if (section == 3) {
         return 0.0;
     }
     return 32.0f;
@@ -504,6 +505,11 @@
             if ([self.profanityList containsObject:string.lowercaseString]) {
                 textField.text = @"";
             }
+        }
+    }
+    else if (textField == self.payField){
+        if ([textField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
+            textField.text = @"Optional";
         }
     }
 }
@@ -585,15 +591,12 @@
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        
-        [self dismissViewControllerAnimated:YES completion:^{
-        }];
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [Answers logCustomEventWithName:@"Take a picture tapped"
                        customAttributes:@{
-                                          @"where":@"CreateVC"
+                                          @"where":@"edit"
                                           }];
         CameraController *vc = [[CameraController alloc]init];
         vc.delegate = self;
@@ -605,7 +608,7 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [Answers logCustomEventWithName:@"Choose pictures tapped"
                        customAttributes:@{
-                                          @"where":@"CreateVC"
+                                          @"where":@"edit"
                                           }];
         if (!self.picker) {
             self.picker = [[UIImagePickerController alloc] init];
@@ -619,7 +622,7 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Search Google" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [Answers logCustomEventWithName:@"Add image from Google"
                        customAttributes:@{
-                                          @"where":@"CreateVC"
+                                          @"where":@"edit"
                                           }];
         if ([self.titleField.text isEqualToString:@""]) {
             [self popUpAlert];
@@ -645,19 +648,33 @@
 -(void)showGoogle{
     NSString *searchString = [self.titleField.text stringByReplacingOccurrencesOfString:@" " withString:@"+"];
     NSString *URLString = [NSString stringWithFormat:@"https://www.google.co.uk/search?tbm=isch&q=%@&tbs=iar:s#imgrc=_",searchString];
-    self.webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
+    self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
     self.webViewController.title = [NSString stringWithFormat:@"%@", self.titleField.text];
     self.webViewController.showUrlWhileLoading = NO;
     self.webViewController.showPageTitles = NO;
     self.webViewController.delegate = self;
-    self.webViewController.doneButtonTitle = @"Choose";
+    self.webViewController.editMode = YES;
+    self.webViewController.doneButtonTitle = @"";
     self.webViewController.paypalMode = NO;
     self.webViewController.infoMode = NO;
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 
--(void)didPressDone:(UIImage *)screenshot{
+-(void)paidPressed{
+    //do nothing
+}
+
+-(void)cameraPressed{
+    //do nothing
+}
+
+-(void)cancelWebPressed{
+    [self.webViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
+    self.tapNumber = taps;
     [self.webViewController dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:screenshot];
     }];
@@ -666,9 +683,6 @@
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
     //display crop picker
-    
-//    UIImage *newImage = [self resizeImage:chosenImage toWidth:375.0f andHeight:375.0f];
-
     [picker dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:chosenImage];
     }];
@@ -694,6 +708,7 @@
     squareCropperViewController.doneFont = [UIFont fontWithName:@"PingFangSC-Regular" size:18.0f];
     squareCropperViewController.cancelFont = [UIFont fontWithName:@"PingFangSC-Regular" size:16.0f];
     squareCropperViewController.excludedBackgroundColor = [UIColor blackColor];
+    squareCropperViewController.tapNumber = self.tapNumber;
     [self.navigationController presentViewController:squareCropperViewController animated:YES completion:nil];
 }
 
@@ -704,9 +719,7 @@
 - (void)squareCropperDidCropImage:(UIImage *)croppedImage inCropper:(BASSquareCropperViewController *)cropper{
     [cropper dismissViewControllerAnimated:YES completion:NULL];
     
-    UIImage *newImage = [croppedImage resizedImage:CGSizeMake(750.00, 750.00) interpolationQuality:kCGInterpolationHigh];
-
-    [self finalImage:newImage];
+    [self finalImage:croppedImage];
 }
 
 - (void)squareCropperDidCancelCropInCropper:(BASSquareCropperViewController *)cropper{
@@ -866,6 +879,11 @@
 #pragma delegate callbacks
 
 -(void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)selectionString withgender:(NSString *)genderString andsizes:(NSArray *)array{
+    
+    if ([selectionString isEqualToString:@""]) {
+        selectionString = @"Optional";
+    }
+    
     if ([self.selection isEqualToString:@"condition"]) {
         if ([selectionString isEqualToString:@"Brand New With Tags"]) {
             selectionString = @"BNWT";
@@ -880,7 +898,7 @@
             self.chooseSize.text = @"";
         }
         else{
-            self.chooseSize.text = @"select";
+            self.chooseSize.text = @"Optional";
         }
         self.chooseCategroy.text = selectionString;
     }
@@ -971,7 +989,7 @@
         }
         else{
             NSLog(@"error with location");
-            self.chooseLocation.text = @"select";
+            self.chooseLocation.text = @"Optional";
         }
 }
 
@@ -979,428 +997,447 @@
     if (self.editFromListing == YES) {
         [self.navigationItem.rightBarButtonItem setEnabled:NO];
     }
-    [self.saveButton setEnabled:NO];
+    [self.longButton setEnabled:NO];
     self.warningLabel.text = @"";
     [self removeKeyboard];
     
-    if ([self.payField.text isEqualToString:[NSString stringWithFormat:@"%@1", self.currencySymbol]] || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@0", self.currencySymbol]]) {
-        [self showAlertWithTitle:@"Enter a valid price" andMsg:@"Pro Tip: a more accurate price leads to more sellers getting in touch"];
-        self.warningLabel.text = @"Enter a valid price";
-        [self.saveButton setEnabled:YES];
-        if (self.editFromListing == YES) {
-            [self.navigationItem.rightBarButtonItem setEnabled:YES];
-        }
+    if (self.somethingChanged == NO) {
+        [self dismissViewControllerAnimated:YES completion:nil];
+        return;
     }
-    else if([self.chooseCategroy.text isEqualToString:@"Accessories"] && ( [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]])){
-        NSLog(@"accessories selected but haven't filled everything else in");
-        self.warningLabel.text = @"Fill out all the above fields";
-        [self.saveButton setEnabled:YES];
-        if (self.editFromListing == YES) {
-            [self.navigationItem.rightBarButtonItem setEnabled:YES];
-        }
-    }
-    else if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.titleField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
-        self.warningLabel.text = @"Fill out all the above fields";
-        [self.saveButton setEnabled:YES];
+    
+    NSString *stringChecker = [self.titleField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
+    if ([self.payField.text isEqualToString:[NSString stringWithFormat:@"%@1", self.currencySymbol]] || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@0", self.currencySymbol]] || [stringChecker isEqualToString:@""] || self.photostotal == 0) {
+        [self showAlertWithTitle:@"Essentials" andMsg:@"Make sure you have a title, image and if you enter a price ensure it's accurate!"];
+        [self.longButton setEnabled:YES];
         if (self.editFromListing == YES) {
             [self.navigationItem.rightBarButtonItem setEnabled:YES];
         }
     }
     else{
         [self showHUD];
-        
-        NSString *prefixToRemove = [NSString stringWithFormat:@"%@", self.currencySymbol];
-        NSString *priceString = [[NSString alloc]init];
-        priceString = [self.payField.text substringFromIndex:[prefixToRemove length]];
-        
-        int price = [priceString intValue];
-        
-        NSString *itemTitle = [self.titleField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        NSString *extraInfo = [self.extraField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
-        
-        if ([self.status isEqualToString:@"edit"]) {
-            PFQuery *query = [PFQuery queryWithClassName:@"wantobuys"];
-            [query whereKey:@"objectId" equalTo:self.lastId];
-            [query getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                if (object) {
-                    self.listing = object;
-                }
-                else{
-                    NSLog(@"error %@", error);
-                    [self hidHUD];
-                    return;
-                }
-            }];
-        }
-        else{
-            self.listing =[PFObject objectWithClassName:@"wantobuys"];
-        }
-        
-        [self.listing setObject:itemTitle forKey:@"title"];
-        [self.listing setObject:[itemTitle lowercaseString]forKey:@"titleLower"];
-        [self.listing setObject:self.chooseCondition.text forKey:@"condition"];
-        [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
-        
-        //save keywords (minus useless words)
-        NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", @"all",@"any", @"&",@"looking",@"size", @"buy", @"these", @"this", @"that", @"-",@"(", @")",@"/", nil];
-        NSString *title = [itemTitle lowercaseString];
-        NSArray *strings = [title componentsSeparatedByString:@" "];
-        NSMutableArray *mutableStrings = [NSMutableArray arrayWithArray:strings];
-        [mutableStrings removeObjectsInArray:wasteWords];
-        
-        if ([mutableStrings containsObject:@"bogo"]) {
-            [mutableStrings addObject:@"box"];
-            [mutableStrings addObject:@"logo"];
-        }
-        
-        if ([mutableStrings containsObject:@"tee"]) {
-            [mutableStrings addObject:@"t"];
-        }
-        
-        if ([mutableStrings containsObject:@"camo"]) {
-            [mutableStrings addObject:@"camouflage"];
-        }
-        
-        if ([mutableStrings containsObject:@"hoodie"]) {
-            [mutableStrings addObject:@"hoody"];
-        }
-        
-        if ([mutableStrings containsObject:@"crew"]) {
-            [mutableStrings addObject:@"crewneck"];
-            [mutableStrings addObject:@"sweatshirt"];
-            [mutableStrings addObject:@"sweater"];
-            [mutableStrings addObject:@"sweat"];
-        }
-        
-        [self.listing setObject:mutableStrings forKey:@"keywords"];
-        
-        if (![self.firstSize isEqualToString:@""]) {
-            [self.listing setObject:self.firstSize forKey:@"firstSize"];
-            NSString *newKey = [self.firstSize stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
-            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", newKey]];
-        }
-
-        
-        if (![self.secondSize isEqualToString:@""]) {
-            [self.listing setObject:self.secondSize forKey:@"secondSize"];
-            NSString *newKey = [self.secondSize stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
-            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", newKey]];
-        }
-
-        
-        if (![self.thirdSize isEqualToString:@""]) {
-            [self.listing setObject:self.thirdSize forKey:@"thirdSize"];
-            NSString *newKey = [self.thirdSize stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
-            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", newKey]];
-        }
-
-        if ([self.chooseSize.text isEqualToString:@"Any"]) {
-            //set YES to all sizes for search purposes
-            
-            NSArray *allSizes = [NSArray array];
-            
-            if ([self.chooseCategroy.text isEqualToString:@"Clothing"]) {
-                //clothing sizes
-                allSizes = @[@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"OS"];
-            }
-            else{
-                //footwear sizes
-                allSizes = @[@"size1", @"size1dot5", @"size2", @"size2dot5", @"size3", @"size3dot5",@"size4", @"size4dot5", @"size5", @"size5dot5", @"size6",@"size6dot5",@"size7", @"size7dot5", @"size8",@"size8dot5",@"size9", @"size9dot5", @"size10",@"size10dot5",@"size11", @"size11dot5", @"size12",@"size12dot5",@"size13", @"size13dot5", @"size14"];
-            }
-            for (NSString *stringKey in allSizes) {
-                [self.listing setObject:@"YES" forKey:stringKey];
-            }
-        }
-        [self.listing setObject:self.chooseSize.text forKey:@"sizeLabel"];
-        [self.listing setObject:@"live" forKey:@"status"];
-        
-        //expiration in 2 weeks
-        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-        dayComponent.minute = 1;
-        NSCalendar *theCalendar = [NSCalendar currentCalendar];
-        NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-        [self.listing setObject:expirationDate forKey:@"expiration"];
-        
-        if (![self.genderSize isEqualToString:@""]) {
-            [self.listing setObject:self.genderSize forKey:@"sizeGender"];
-        }
-        
-        if (self.editFromListing != YES) {
-            //don't update location on listing if just editing
-            [self.listing setObject:self.chooseLocation.text forKey:@"location"];
-            [self.listing setObject:self.geopoint forKey:@"geopoint"];
-            [self.listing setObject:@0 forKey:@"views"];
-            [self.listing setObject:@0 forKey:@"bumpCount"];
-        }
-        
-        [self.listing setObject:self.chooseDelivery.text forKey:@"delivery"];
-        [self.listing setObject:self.currency forKey:@"currency"];
-        
-        if ([self.currency isEqualToString:@"GBP"]) {
-            self.listing[@"listingPriceGBP"] = @(price);
-            int USD = price*1.32;
-            self.listing[@"listingPriceUSD"] = @(USD);
-            int EUR = price*1.16;
-            self.listing[@"listingPriceEUR"] = @(EUR);
-        }
-        else if ([self.currency isEqualToString:@"USD"]) {
-            self.listing[@"listingPriceUSD"] = @(price);
-            int GBP = price*0.76;
-            self.listing[@"listingPriceGBP"] = @(GBP);
-            int EUR = price*0.89;
-            self.listing[@"listingPriceEUR"] = @(EUR);
-        }
-        else if ([self.currency isEqualToString:@"EUR"]) {
-            self.listing[@"listingPriceEUR"] = @(price);
-            int GBP = price*0.86;
-            self.listing[@"listingPriceGBP"] = @(GBP);
-            int USD = price*1.12;
-            self.listing[@"listingPriceUSD"] = @(USD);
-        }
-        [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
-        
-        if (self.photostotal == 1) {
-            NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
-            
-            if (data == nil) {
-                [Answers logCustomEventWithName:@"PFFile Nil Data"
-                               customAttributes:@{
-                                                  @"pageName":@"CreateVC"
-                                                  }];
+        [self.listing fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                self.listing = object;
                 
-                //prevent crash when creating a PFFile with nil data
-                self.warningLabel.text = @"Image Error, try adding images again";
-                [self.saveButton setEnabled:YES];
-                if (self.editFromListing == YES) {
-                    [self.navigationItem.rightBarButtonItem setEnabled:YES];
-                }
-                return;
-            }
-            
-            PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
-            [self.listing setObject:imageFile1 forKey:@"image1"];
-            
-            if (self.editFromListing == YES) {
-                [self.listing removeObjectForKey:@"image2"];
-                [self.listing removeObjectForKey:@"image3"];
-                [self.listing removeObjectForKey:@"image4"];
-            }
-        }
-        else if (self.photostotal == 2){
-            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
-            PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
-            [self.listing setObject:imageFile1 forKey:@"image1"];
-            
-            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
-            PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
-            [self.listing setObject:imageFile2 forKey:@"image2"];
-            
-            if (self.editFromListing == YES) {
-                [self.listing removeObjectForKey:@"image3"];
-                [self.listing removeObjectForKey:@"image4"];
-            }
-        }
-        else if (self.photostotal == 3){
-            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
-            PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
-            [self.listing setObject:imageFile1 forKey:@"image1"];
-            
-            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
-            PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
-            [self.listing setObject:imageFile2 forKey:@"image2"];
-            
-            NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
-            PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
-            [self.listing setObject:imageFile3 forKey:@"image3"];
-            
-            if (self.editFromListing == YES) {
-                [self.listing removeObjectForKey:@"image4"];
-            }
-        }
-        else if (self.photostotal == 4){
-            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
-            PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
-            [self.listing setObject:imageFile1 forKey:@"image1"];
-            
-            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
-            PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
-            [self.listing setObject:imageFile2 forKey:@"image2"];
-            
-            NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
-            PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
-            [self.listing setObject:imageFile3 forKey:@"image3"];
-            
-            NSData* data4 = UIImageJPEGRepresentation(self.fourthImageView.image, 0.7f);
-            PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
-            [self.listing setObject:imageFile4 forKey:@"image4"];
-        }
-        if ([self.extraField.text isEqualToString:@"Leave blank if none"] || [extraInfo isEqualToString:@""]) {
-            //don't save its placeholder
-        }
-        else{
-            [self.listing setObject:self.extraField.text forKey:@"extra"];
-        }
-        [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            if (succeeded) {
-
-                NSLog(@"listing saved! %@", self.listing.objectId);
-
-                [self findRelevantItems];
+                //save boiler plate stuff first
+                [self.listing setObject:@"live" forKey:@"status"];
                 
-                //check if intro mode so can show posted HUD otherwise just hide it
-                if (self.introMode == YES) {
-                    [Answers logCustomEventWithName:@"Listing Complete"
-                                   customAttributes:@{
-                                                      @"mode":@"Intro"
-                                                      }];
-                }
-                else{
-                    [Answers logCustomEventWithName:@"Listing Complete"
-                                   customAttributes:@{
-                                                      @"mode":@"Normal"
-                                                      }];
+                //expiration in 2 weeks
+                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                dayComponent.minute = 1;
+                NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                [self.listing setObject:expirationDate forKey:@"expiration"];
+                [self.listing setObject:self.currency forKey:@"currency"];
+                [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
+                
+                NSString *itemTitle = [self.titleField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                
+                [self.listing setObject:itemTitle forKey:@"title"];
+                [self.listing setObject:[itemTitle lowercaseString]forKey:@"titleLower"];
+                
+                //save keywords (minus useless words)
+                NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", @"all",@"any", @"&",@"looking",@"size", @"buy", @"these", @"this", @"that", @"-",@"(", @")",@"/", nil];
+                NSString *title = [itemTitle lowercaseString];
+                NSArray *strings = [title componentsSeparatedByString:@" "];
+                NSMutableArray *mutableStrings = [NSMutableArray arrayWithArray:strings];
+                [mutableStrings removeObjectsInArray:wasteWords];
+                
+                if ([mutableStrings containsObject:@"bogo"]) {
+                    [mutableStrings addObject:@"box"];
+                    [mutableStrings addObject:@"logo"];
                 }
                 
-                //check if in edit mode as only increment post number if not in edit mode
-                if (![self.status isEqualToString:@"edit"]) {
-                    NSLog(@"not in edit mode so increment post number of: %@", [[PFUser currentUser] objectForKey:@"postNumber"]);
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"justPostedListing" object:self.listing];
+                if ([mutableStrings containsObject:@"tee"]) {
+                    [mutableStrings addObject:@"t"];
+                }
+                
+                if ([mutableStrings containsObject:@"camo"]) {
+                    [mutableStrings addObject:@"camouflage"];
+                }
+                
+                if ([mutableStrings containsObject:@"hoodie"]) {
+                    [mutableStrings addObject:@"hoody"];
+                }
+                
+                if ([mutableStrings containsObject:@"crew"]) {
+                    [mutableStrings addObject:@"crewneck"];
+                    [mutableStrings addObject:@"sweatshirt"];
+                    [mutableStrings addObject:@"sweater"];
+                    [mutableStrings addObject:@"sweat"];
+                }
+                
+                [self.listing setObject:mutableStrings forKey:@"keywords"];
+                
+                //if got price
+                if (![self.payField.text isEqualToString:@"Optional"]) {
+                    NSString *prefixToRemove = [NSString stringWithFormat:@"%@", self.currencySymbol];
+                    NSString *priceString = [[NSString alloc]init];
+                    priceString = [self.payField.text substringFromIndex:[prefixToRemove length]];
+                    int price = [priceString intValue];
                     
-                    if (![[PFUser currentUser] objectForKey:@"postNumber"]) {
-                        NSLog(@"hasn't posted before so schedule a local push");
+                    if ([self.currency isEqualToString:@"GBP"]) {
+                        self.listing[@"listingPriceGBP"] = @(price);
+                        int USD = price*1.32;
+                        self.listing[@"listingPriceUSD"] = @(USD);
+                        int EUR = price*1.16;
+                        self.listing[@"listingPriceEUR"] = @(EUR);
+                    }
+                    else if ([self.currency isEqualToString:@"USD"]) {
+                        self.listing[@"listingPriceUSD"] = @(price);
+                        int GBP = price*0.76;
+                        self.listing[@"listingPriceGBP"] = @(GBP);
+                        int EUR = price*0.89;
+                        self.listing[@"listingPriceEUR"] = @(EUR);
+                    }
+                    else if ([self.currency isEqualToString:@"EUR"]) {
+                        self.listing[@"listingPriceEUR"] = @(price);
+                        int GBP = price*0.86;
+                        self.listing[@"listingPriceGBP"] = @(GBP);
+                        int USD = price*1.12;
+                        self.listing[@"listingPriceUSD"] = @(USD);
+                    }
+                }
+                
+                //if got condition
+                if (![self.chooseCondition.text isEqualToString:@"Optional"]) {
+                    [self.listing setObject:self.chooseCondition.text forKey:@"condition"];
+                }
+                
+                //if got category
+                if (![self.chooseCategroy.text isEqualToString:@"Optional"]) {
+                    [self.listing setObject:self.chooseCategroy.text forKey:@"category"];
+                }
+                
+                //if got size(s)
+                if (![self.chooseSize.text isEqualToString:@"Optional"]) {
+                    [self.listing setObject:self.chooseSize.text forKey:@"sizeLabel"];
+                    
+                    if (![self.genderSize isEqualToString:@""]) {
+                        [self.listing setObject:self.genderSize forKey:@"sizeGender"];
+                    }
+
+                    if ([self.chooseSize.text isEqualToString:@"Any"]) {
+                        //set YES to all sizes for search purposes
                         
-                        //local notifications set up
-                        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                        dayComponent.day = 2;
-                        NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                        NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                        NSArray *allSizes = [NSArray array];
                         
-                        UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-                        [localNotification setAlertBody:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"];
-                        [localNotification setFireDate: dateToFire];
-                        [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
-                        [localNotification setRepeatInterval: 0];
-                        [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+                        if ([self.chooseCategroy.text isEqualToString:@"Clothing"]) {
+                            //clothing sizes
+                            allSizes = @[@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"OS"];
+                        }
+                        else{
+                            //footwear sizes
+                            allSizes = @[@"size1", @"size1dot5", @"size2", @"size2dot5", @"size3", @"size3dot5",@"size4", @"size4dot5", @"size5", @"size5dot5", @"size6",@"size6dot5",@"size7", @"size7dot5", @"size8",@"size8dot5",@"size9", @"size9dot5", @"size10",@"size10dot5",@"size11", @"size11dot5", @"size12",@"size12dot5",@"size13", @"size13dot5", @"size14"];
+                        }
+                        for (NSString *stringKey in allSizes) {
+                            [self.listing setObject:@"YES" forKey:stringKey];
+                        }
+                    }
+                }
+                
+                //sizing explained
+                //listing sets YES to all sizes it is registered to, making filtering & search easier - just check if that Key == YES
+                if (![self.firstSize isEqualToString:@""]) {
+                    [self.listing setObject:self.firstSize forKey:@"firstSize"];
+                    NSString *newKey = [self.firstSize stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+                    [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", newKey]];
+                }
+                if (![self.secondSize isEqualToString:@""]) {
+                    [self.listing setObject:self.secondSize forKey:@"secondSize"];
+                    NSString *newKey = [self.secondSize stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+                    [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", newKey]];
+                }
+                if (![self.thirdSize isEqualToString:@""]) {
+                    [self.listing setObject:self.thirdSize forKey:@"thirdSize"];
+                    NSString *newKey = [self.thirdSize stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+                    [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", newKey]];
+                }
+                
+                //if got location
+                if (self.geopoint) {
+                    [self.listing setObject:self.geopoint forKey:@"geopoint"];
+                }
+                if (![self.chooseLocation.text isEqualToString:@"Optional"]) {
+                    NSLog(@"Adding LOC");
+                    [self.listing setObject:self.chooseLocation.text forKey:@"location"];
+                }
+                
+                //save photos
+                if (self.photostotal == 1) {
+                    NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+                    
+                    if (data == nil) {
+                        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                                       customAttributes:@{
+                                                          @"pageName":@"CreateVC",
+                                                          @"imageView":@"first",
+                                                          @"photosTotal":@1
+                                                          }];
+                        
+                        //prevent crash when creating a PFFile with nil data
+                        [self hidHUD];
+                        [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                        [self.longButton setEnabled:YES];
+                        if (self.editFromListing == YES) {
+                            [self.navigationItem.rightBarButtonItem setEnabled:YES];
+                        }
+                        return;
                     }
                     
-                    [[PFUser currentUser]incrementKey:@"postNumber"];
-                    [[PFUser currentUser] saveInBackground];
+                    PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
+                    [self.listing setObject:imageFile1 forKey:@"image1"];
                     
-                    PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
-                    [myPosts whereKey:@"postUser" equalTo:[PFUser currentUser]];
-                    [myPosts orderByDescending:@"createdAt"];
-                    myPosts.limit = 10;
-                    [myPosts findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                        if (objects) {
-                            NSMutableArray *wantedWords = [NSMutableArray array];
-                            
-                            for (PFObject *listing in objects) {
-                                NSArray *keywords = [listing objectForKey:@"keywords"];
-                                
-                                for (NSString *word in keywords) {
-                                    if (![wantedWords containsObject:word]) {
-                                        [wantedWords addObject:word];
-                                    }
-                                }
-                            }
-                            [[PFUser currentUser] setObject:wantedWords forKey:@"wantedWords"];
-                            [[PFUser currentUser] saveInBackground];
+                    if (self.editFromListing == YES) {
+                        [self.listing removeObjectForKey:@"image2"];
+                        [self.listing removeObjectForKey:@"image3"];
+                        [self.listing removeObjectForKey:@"image4"];
+                    }
+                }
+                else if (self.photostotal == 2){
+                    NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+                    
+                    if (data1 == nil) {
+                        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                                       customAttributes:@{
+                                                          @"pageName":@"CreateVC",
+                                                          @"imageView":@"first",
+                                                          @"photosTotal":@2
+                                                          }];
+                        
+                        //prevent crash when creating a PFFile with nil data
+                        [self hidHUD];
+                        [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                        [self.longButton setEnabled:YES];
+                        if (self.editFromListing == YES) {
+                            [self.navigationItem.rightBarButtonItem setEnabled:YES];
                         }
-                        else{
-                            NSLog(@"nee posts pet");
+                        return;
+                    }
+                    PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
+                    [self.listing setObject:imageFile1 forKey:@"image1"];
+                    
+                    NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+                    
+                    if (data2 == nil) {
+                        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                                       customAttributes:@{
+                                                          @"pageName":@"CreateVC",
+                                                          @"imageView":@"second",
+                                                          @"photosTotal":@2
+                                                          }];
+                        
+                        //prevent crash when creating a PFFile with nil data
+                        [self hidHUD];
+                        [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                        [self.longButton setEnabled:YES];
+                        [self.navigationItem.rightBarButtonItem setEnabled:YES];
+                        return;
+                    }
+                    PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
+                    [self.listing setObject:imageFile2 forKey:@"image2"];
+                    
+                    if (self.editFromListing == YES) {
+                        [self.listing removeObjectForKey:@"image3"];
+                        [self.listing removeObjectForKey:@"image4"];
+                    }
+                }
+                else if (self.photostotal == 3){
+                    NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+                    
+                    if (data1 == nil) {
+                        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                                       customAttributes:@{
+                                                          @"pageName":@"edit",
+                                                          @"imageView":@"first",
+                                                          @"photosTotal":@3
+                                                          }];
+                        
+                        //prevent crash when creating a PFFile with nil data
+                        [self hidHUD];
+                        [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                        [self.longButton setEnabled:YES];
+                        if (self.editFromListing == YES) {
+                            [self.navigationItem.rightBarButtonItem setEnabled:YES];
                         }
-                    }];
+                        return;
+                    }
+                    PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
+                    [self.listing setObject:imageFile1 forKey:@"image1"];
+                    
+                    NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+                    
+                    if (data2 == nil) {
+                        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                                       customAttributes:@{
+                                                          @"pageName":@"edit",
+                                                          @"imageView":@"second",
+                                                          @"photosTotal":@3
+                                                          }];
+                        
+                        //prevent crash when creating a PFFile with nil data
+                        [self hidHUD];
+                        [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                        [self.longButton setEnabled:YES];
+                        [self.navigationItem.rightBarButtonItem setEnabled:YES];
+                        return;
+                    }
+                    PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
+                    [self.listing setObject:imageFile2 forKey:@"image2"];
+                    
+                    if (self.editFromListing == YES) {
+                        [self.listing removeObjectForKey:@"image3"];
+                        [self.listing removeObjectForKey:@"image4"];
+                    }
+                    
+                    NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
+                    if (data3 == nil) {
+                        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                                       customAttributes:@{
+                                                          @"pageName":@"edit",
+                                                          @"imageView":@"third",
+                                                          @"photosTotal":@3
+                                                          }];
+                        
+                        //prevent crash when creating a PFFile with nil data
+                        [self hidHUD];
+                        [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                        [self.longButton setEnabled:YES];
+                        [self.navigationItem.rightBarButtonItem setEnabled:YES];
+                        return;
+                    }
+                    PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
+                    [self.listing setObject:imageFile3 forKey:@"image3"];
+                    
+                    if (self.editFromListing == YES) {
+                        [self.listing removeObjectForKey:@"image4"];
+                    }
+                }
+                else if (self.photostotal == 4){
+                    NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+                    
+                    if (data1 == nil) {
+                        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                                       customAttributes:@{
+                                                          @"pageName":@"edit",
+                                                          @"imageView":@"first",
+                                                          @"photosTotal":@3
+                                                          }];
+                        
+                        //prevent crash when creating a PFFile with nil data
+                        [self hidHUD];
+                        [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                        [self.longButton setEnabled:YES];
+                        if (self.editFromListing == YES) {
+                            [self.navigationItem.rightBarButtonItem setEnabled:YES];
+                        }
+                        return;
+                    }
+                    PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
+                    [self.listing setObject:imageFile1 forKey:@"image1"];
+                    
+                    NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+                    
+                    if (data2 == nil) {
+                        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                                       customAttributes:@{
+                                                          @"pageName":@"edit",
+                                                          @"imageView":@"second",
+                                                          @"photosTotal":@3
+                                                          }];
+                        
+                        //prevent crash when creating a PFFile with nil data
+                        [self hidHUD];
+                        [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                        [self.longButton setEnabled:YES];
+                        [self.navigationItem.rightBarButtonItem setEnabled:YES];
+                        return;
+                    }
+                    PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
+                    [self.listing setObject:imageFile2 forKey:@"image2"];
+                    
+                    
+                    NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
+                    if (data3 == nil) {
+                        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                                       customAttributes:@{
+                                                          @"pageName":@"edit",
+                                                          @"imageView":@"third",
+                                                          @"photosTotal":@4
+                                                          }];
+                        
+                        //prevent crash when creating a PFFile with nil data
+                        [self hidHUD];
+                        [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                        [self.longButton setEnabled:YES];
+                        [self.navigationItem.rightBarButtonItem setEnabled:YES];
+                        return;
+                    }
+                    PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
+                    [self.listing setObject:imageFile3 forKey:@"image3"];
+                    
+                    NSData* data4 = UIImageJPEGRepresentation(self.fourthImageView.image, 0.7f);
+                    if (data4 == nil) {
+                        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                                       customAttributes:@{
+                                                          @"pageName":@"edit",
+                                                          @"imageView":@"fourth",
+                                                          @"photosTotal":@4
+                                                          }];
+                        
+                        //prevent crash when creating a PFFile with nil data
+                        [self hidHUD];
+                        [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                        [self.longButton setEnabled:YES];
+                        [self.navigationItem.rightBarButtonItem setEnabled:YES];
+                        return;
+                    }
+                    PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
+                    [self.listing setObject:imageFile4 forKey:@"image4"];
                 }
                 
-                //check if editing from listing as need to pop VC rather than display a 'listing complete' VC
-                if (self.editFromListing == YES) {
-                    [self hidHUD];
-                    [self.navigationController popToRootViewControllerAnimated:YES];
-                }
-                else if ([self.status isEqualToString:@"edit"]){
-                    //don't resend the pushes to friends when editing a listing
-                    [self hidHUD];
-                    [self.saveButton setEnabled:YES];
-                    [self showSuccess];
-                }
-                else{
-                    //only for normal and intro modes
-                    NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just posted a listing - Tap to Bump it 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
-                    
-                    PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
-                    [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
-                    [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]]; //CHANGE
-                    [bumpedQuery whereKeyExists:@"user"];
-                    [bumpedQuery includeKey:@"user"];
-                    bumpedQuery.limit = 10;
-                    [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                        if (objects) {
-                            NSLog(@"these objects can be pushed to %@", objects);
-                            if (objects.count > 0) {
-                                //create safe date which is 3 days from now
-                                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                                dayComponent.day = 3;
-                                NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                                NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-                                
-                                for (PFObject *bumpObj in objects) {
-                                    
-                                    NSLog(@"BUMPOBJ %@", bumpObj);
-                                    
-                                    [bumpObj setObject:safeDate forKey:@"safeDate"];
-                                    [bumpObj incrementKey:@"timesBumped"];
-                                    [bumpObj saveInBackground];
-                                    
-                                    PFUser *friendUser = [bumpObj objectForKey:@"user"];
-                                    
-                                    NSLog(@"friend user %@", friendUser);
-
-                                    
-                                    NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.listing.objectId};
-                                    
-                                    NSLog(@"PARAMS %@", params);
-
-                                    
-                                    [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                                        if (!error) {
-                                            NSLog(@"push response %@", response);
-                                            [Answers logCustomEventWithName:@"Sent FB Friend a Bump Push"
-                                                           customAttributes:@{}];
-                                        }
-                                        else{
-                                            NSLog(@"push error %@", error);
-                                        }
-                                    }];
-                                }
-                            }
+                [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        
+                        NSLog(@"listing updated! %@", self.listing.objectId);
+                        
+                        //check if editing from listing as need to pop VC rather than display a 'listing complete' VC
+                        if (self.editFromListing == YES) {
+                            [Answers logCustomEventWithName:@"Listing Updated"
+                                           customAttributes:@{
+                                                              @"mode":@"Edit from listing"
+                                                              }];
+                            [self hidHUD];
+                            [self dismissViewControllerAnimated:YES completion:nil];
                         }
-                        else{
-                            NSLog(@"error finding relevant bumped obj's %@", error);
+                        else if (self.addDetails == YES){
+                            [Answers logCustomEventWithName:@"Listing Updated"
+                                           customAttributes:@{
+                                                              @"mode":@"Add details"
+                                                              }];
+                            [self hidHUD];
+                            [self dismissViewControllerAnimated:YES completion:nil];
                         }
-                    }];
-                    [self hidHUD];
-                    [self.saveButton setEnabled:YES];
-                    [self showSuccess];
-                }
+                    }
+                    else{
+                        //error saving listing
+                        [self hidHUD];
+                        [self.longButton setEnabled:YES];
+                        [self showAlertWithTitle:@"Error Updating" andMsg:@"Please check your connection and try again!"];
+                        NSLog(@"error saving %@", error);
+                    }
+                }];
             }
             else{
-                //error saving listing
+                NSLog(@"error %@", error);
                 [self hidHUD];
-                [self.saveButton setEnabled:YES];
-                NSLog(@"error saving %@", error);
-                
-                if (self.introMode == YES) {
-                    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-                    [self.delegate dismissCreateController:self];
-                }
+                [self showAlertWithTitle:@"Error Updating" andMsg:@"Please check your connection and try again!"];
+                return;
             }
         }];
     }
-}
-
--(void)listingEdit:(ListingCompleteView *)controller didFinishEnteringItem:(NSString *)item{
-    NSLog(@"updating status to %@", item);
-    self.status = item;
 }
 
 -(void)resetFormAsk{
@@ -1421,14 +1458,14 @@
     
     [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
     self.status = @"";
-    self.chooseCategroy.text = @"select";
-    self.chooseCondition.text = @"select";
-    self.chooseDelivery.text = @"select";
-    self.chooseLocation.text = @"select";
-    self.chooseSize.text = @"select";
-    self.payField.text = @"";
+    self.chooseCategroy.text = @"Optional";
+    self.chooseCondition.text = @"Optional";
+    self.chooseLocation.text = @"Optional";
+    self.chooseSize.text = @"Optional";
+    self.payField.text = @"Optional";
+    
     self.titleField.text = @"";
-    self.extraField.text = @"Leave blank if none";
+
     self.warningLabel.text = @"";
     self.firstSize = @"";
     self.secondSize = @"";
@@ -1454,32 +1491,28 @@
     [self.thirdDelete setHidden:YES];
     [self.fourthDelete setHidden:YES];
     
-    [self.saveButton setImage:[UIImage imageNamed:@"buyButton"] forState:UIControlStateNormal];
-    
     self.photostotal = 0;
     self.camButtonTapped = 0;
     
     self.geopoint = nil;
     
-    if (![self.status isEqualToString:@"edit"]) {
+    if (![self.listing objectForKey:@"geopoint"]) {
         [self useCurrentLoc];
     }
-
-}
--(void)lastId:(ListingCompleteView *)controller didFinishEnteringItem:(NSString *)item{
-    self.lastId = item;
 }
 
 -(void)finalImage:(UIImage *)image{
-    //save image if just been taken
+    //save image if just been taken    
+    UIImage *newImage = [image resizedImage:CGSizeMake(750.00, 750.00) interpolationQuality:kCGInterpolationHigh];
+
     if (self.shouldSave == YES) {
-        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+        UIImageWriteToSavedPhotosAlbum(newImage, nil, nil, nil);
         self.shouldSave = NO;
     }
     
     if (self.camButtonTapped == 1) {
         [self.firstImageView setHidden:NO];
-        [self.firstImageView setImage:image];
+        [self.firstImageView setImage:newImage];
         
         [self.firstDelete setHidden:NO];
         [self.secondCam setEnabled:YES];
@@ -1491,7 +1524,7 @@
     }
     else if (self.camButtonTapped ==2){
         [self.secondImageView setHidden:NO];
-        [self.secondImageView setImage:image];
+        [self.secondImageView setImage:newImage];
         
         [self.secondDelete setHidden:NO];
         [self.thirdCam setEnabled:YES];
@@ -1502,7 +1535,7 @@
     }
     else if (self.camButtonTapped ==3){
         [self.thirdImageView setHidden:NO];
-        [self.thirdImageView setImage:image];
+        [self.thirdImageView setImage:newImage];
         
         [self.thirdDelete setHidden:NO];
         [self.fourthCam setEnabled:YES];
@@ -1512,7 +1545,7 @@
     }
     else if (self.camButtonTapped ==4){
         [self.fourthImageView setHidden:NO];
-        [self.fourthImageView setImage:image];
+        [self.fourthImageView setImage:newImage];
         
         [self.fourthDelete setHidden:NO];
         [self.fourthCam setEnabled:NO];
@@ -1522,8 +1555,6 @@
 
 -(void)listingSetup{
     self.navigationItem.title = @"E D I T";
-    
-    [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     
     self.titleField.text = [self.listing objectForKey:@"title"];
     
@@ -1535,16 +1566,41 @@
     else{
         symbol = @"$";
     }
-    self.payField.text = [NSString stringWithFormat:@"%@%@",symbol,[self.listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", [self.listing objectForKey:@"currency"]]]];
-    self.chooseCondition.text = [self.listing objectForKey:@"condition"];
     
-    //location is not updatable when editing listing
-    self.chooseLocation.text = [self.listing objectForKey:@"location"];
-    self.locCell.accessoryType = UITableViewCellAccessoryNone;
-    self.locCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    if (![self.listing objectForKey:[NSString stringWithFormat:@"listingPrice%@",[self.listing objectForKey:@"currency"]]]) {
+        self.payField.text = @"Optional";
+    }
+    else{
+        self.payField.text = [NSString stringWithFormat:@"%@%@",symbol,[self.listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", [self.listing objectForKey:@"currency"]]]];
+    }
     
-    self.chooseDelivery.text = [self.listing objectForKey:@"delivery"];
-    self.chooseCategroy.text = [self.listing objectForKey:@"category"];
+    if (![self.listing objectForKey:@"condition"]) {
+        self.chooseCondition.text = @"Optional";
+    }
+    else{
+        self.chooseCondition.text = [self.listing objectForKey:@"condition"];
+    }
+    
+    if (![self.listing objectForKey:@"sizeLabel"]) {
+        self.chooseSize.text = @"Optional";
+    }
+    else{
+        self.chooseSize.text = [self.listing objectForKey:@"sizeLabel"];
+    }
+    
+    if (![self.listing objectForKey:@"category"]) {
+        self.chooseCategroy.text = @"Optional";
+    }
+    else{
+        self.chooseCategroy.text = [self.listing objectForKey:@"category"];
+    }
+    
+    if (![self.listing objectForKey:@"location"]) {
+        self.chooseLocation.text = @"Optional";
+    }
+    else{
+        self.chooseLocation.text = [self.listing objectForKey:@"location"];
+    }
     
     //if gendersize required (if category is footwear) set variable
     if ([self.listing objectForKey:@"sizeGender"]) {
@@ -1552,7 +1608,6 @@
     }
     
     //sizing
-    self.chooseSize.text = [self.listing objectForKey:@"sizeLabel"];
     if ([self.listing objectForKey:@"firstSize"]) {
         self.firstSize = [NSString stringWithFormat:@"%@",[self.listing objectForKey:@"firstSize"]];
         NSLog(@"setting 1st %@",[self.listing objectForKey:@"firstSize"]);
@@ -1598,11 +1653,6 @@
         
         //set key to NO or delete key?
         [self.listing removeObjectForKey:finalKey];
-    }
-    
-    //extra info
-    if ([self.listing objectForKey:@"extra"]) {
-        self.extraField.text = [self.listing objectForKey:@"extra"];
     }
     
     //images
@@ -1689,12 +1739,15 @@
     }
     self.picker = nil;
     
-//    if (self.completionShowing == YES) {
-//        self.completionShowing = NO;
-//        [self.successView removeFromSuperview];
-//        [self.bgView setHidden:YES];
-//        [self resetForm];
-//    }
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.longButton setAlpha:0.0];
+                     }
+                     completion:^(BOOL finished) {
+                         self.buttonShowing = NO;
+                     }];
 }
 
 -(void)showHUD{
@@ -1706,11 +1759,9 @@
     self.hudShowing = YES;
     self.shouldShowHUD = YES;
 }
-- (IBAction)skipPressed:(id)sender {
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-}
 
 -(void)useCurrentLoc{
+    self.somethingChanged = YES;
     [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
         if (!error) {
             double latitude = geoPoint.latitude;
@@ -1729,7 +1780,7 @@
                     }
                     else{
                         NSLog(@"error with location");
-                        self.chooseLocation.text = @"select";
+                        self.chooseLocation.text = @"Optional";
                     }
                 }
                 else{
@@ -1747,16 +1798,15 @@
     //only show warning if listing has been editing
     if (self.somethingChanged == NO){
         NSLog(@"nothing changed");
-        [self.navigationController popViewControllerAnimated:YES];
+        [self dismissViewControllerAnimated:YES completion:nil];
     }
     else{
-        NSLog(@"here");
         UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Leave this page?" message:@"Are you sure you want to leave? Your changes won't be saved!" preferredStyle:UIAlertControllerStyleAlert];
         
         [alertView addAction:[UIAlertAction actionWithTitle:@"Stay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         }]];
         [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [self.navigationController popViewControllerAnimated:YES];
+            [self dismissViewControllerAnimated:YES completion:nil];
         }]];
         [self presentViewController:alertView animated:YES completion:nil];
     }
@@ -1769,374 +1819,6 @@
     [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
-}
-
--(void)showSuccess{
-    [self.navigationItem setLeftBarButtonItem:nil animated:YES];
-    self.bgView.alpha = 0.8;
-    [self.successView setAlpha:1.0];
-    [UIView animateWithDuration:1.5
-                          delay:0.0
-         usingSpringWithDamping:0.5
-          initialSpringVelocity:0.5
-                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                            //Animations
-                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-                                //iphone5
-                                [self.successView setFrame:CGRectMake(0, 0, 300, 410)];
-                            }
-                            else{
-                                [self.successView setFrame:CGRectMake(0, 0, 340, 410)];
-                            }
-                            self.successView.center = self.view.center;
-                        }
-                     completion:^(BOOL finished) {
-                         
-                     }];
-}
-
--(void)hideSuccess{
-    [UIView animateWithDuration:1.0
-                          delay:0.0
-         usingSpringWithDamping:0.1
-          initialSpringVelocity:0.5
-                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                            //Animations
-                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-                                //iphone5
-                                [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150,1000, 300, 410)];
-                            }
-                            else{
-                                [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170,1000, 340, 410)]; //iPhone 6/7 specific
-                            }
-                        }
-                     completion:^(BOOL finished) {
-                         //Completion Block
-                         self.completionShowing = NO;
-                         [self.successView setAlpha:0.0];
-                         [self.bgView setAlpha:0.0];
-                         
-                         if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-                             //iphone5
-                             [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -410, 300, 410)];
-                         }
-                         else{
-                             [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170, -410, 340, 410)]; //iPhone 6/7 specific
-                         }
-                     }];
-}
--(void)setUpSuccess{
-    self.successView = nil;
-    self.bgView = nil;
-    
-    self.completionShowing = YES;
-    self.setupYes = YES;
-    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"SuccessView" owner:self options:nil];
-    self.successView = (CreateSuccessView *)[nib objectAtIndex:0];
-    self.successView.delegate = self;
-    self.successView.alpha = 0.0;
-    [self.successView setCollectionViewDataSourceDelegate:self indexPath:nil];
-    [self.navigationController.view addSubview:self.successView];
-    
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-        //iphone5
-        [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -410, 300, 410)];
-    }
-    else{
-        [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170, -410, 340, 410)]; //iPhone 6/7 specific
-    }
-    
-    self.successView.layer.cornerRadius = 10;
-    self.successView.layer.masksToBounds = YES;
-    
-    self.bgView = [[UIView alloc]initWithFrame:self.view.frame];
-    self.bgView.backgroundColor = [UIColor blackColor];
-    self.bgView.alpha = 0.0;
-    [self.navigationController.view insertSubview:self.bgView belowSubview:self.successView];
-    
-    NSLog(@"view's frame %f and %f", self.view.frame.size.width,self.view.frame.size.height);
-}
-
--(NSInteger)collectionView:(UICollectionView *)collectionView
-    numberOfItemsInSection:(NSInteger)section
-{
-    return self.buyNowArray.count;
-}
-
--(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView
-                 cellForItemAtIndexPath:(NSIndexPath *)indexPath
-{
-    ForSaleCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
-    cell.itemView.image = nil;
-    
-    if (indexPath.row == self.buyNowArray.count-1 && self.buyNowArray.count > 1) {
-        [cell.itemView setImage:[UIImage imageNamed:@"viewMore"]];
-    }
-    else{
-        PFObject *WTS = [self.buyNowArray objectAtIndex:indexPath.item];
-//        NSLog(@"WTS: %@ at index: %ld", WTS, (long)indexPath.row);
-        //setup cell
-        [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
-        [cell.itemView loadInBackground];
-    }
-    
-    cell.itemView.layer.cornerRadius = 35;
-    cell.itemView.layer.masksToBounds = YES;
-    cell.itemView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-    cell.itemView.contentMode = UIViewContentModeScaleAspectFill;
-    
-    return cell;
-}
-
--(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
-    if (indexPath.row == self.buyNowArray.count-1 && self.buyNowArray.count > 1) {
-        
-        [Answers logCustomEventWithName:@"Tapped 'view more' after creating listing"
-                       customAttributes:@{}];
-        
-        if (self.introMode == YES) {
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"viewMorePressed"];
-            [self.navigationController dismissViewControllerAnimated:YES completion:^{
-                AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-                appDelegate.tabBarController.selectedIndex = 1;
-            }];
-        }
-        else{
-            self.tabBarController.selectedIndex = 1;
-            [self successDonePressed];
-        }
-    }
-    else{
-        [Answers logCustomEventWithName:@"Tapped for sale listing after creating listing"
-                       customAttributes:@{}];
-        
-        PFObject *WTS = [self.buyNowArray objectAtIndex:indexPath.item];
-        ForSaleListing *vc = [[ForSaleListing alloc]init];
-        vc.listingObject = WTS;
-        vc.WTBObject = self.listing;
-        vc.source = @"create";
-        vc.pureWTS = NO;
-        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-        [self presentViewController:nav animated:YES completion:nil];
-    }
-}
-
--(void)successDonePressed{
-    [self hideSuccess];
-
-    if (self.introMode == YES) {
-        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-    }
-    else{
-        [self resetAll];
-        self.tabBarController.selectedIndex = 1;
-    }
-}
-
--(void)editPressed{
-    self.status = @"edit";
-    self.lastId = self.listing.objectId;
-    self.navigationItem.leftBarButtonItem = nil;
-    [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
-    self.shouldShowReset = NO;
-    
-    [self hideSuccess];
-}
-
--(void)sharePressed{
-    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }]];
-    
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share to Facebook Group" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        FBGroupShareViewController *vc = [[FBGroupShareViewController alloc]init];
-        vc.objectId = self.listing.objectId;
-        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:vc];
-        [self presentViewController:navigationController animated:YES completion:nil];
-    }]];
-    
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        NSMutableArray *items = [NSMutableArray new];
-        [items addObject:[NSString stringWithFormat:@"Check out my wanted listing: %@ for %@%@\nPosted on Bump http://apple.co/2aY3rBk", [self.listing objectForKey:@"title"],self.currency,[self.listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]]];
-        UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
-        [self presentViewController:activityController animated:YES completion:nil];
-    }]];
-    
-    [self presentViewController:actionSheet animated:YES completion:nil];
-}
-
--(void)createPressed{
-    self.status = @"new";
-    self.navigationItem.leftBarButtonItem = self.resetButton;
-    [self.saveButton setImage:[UIImage imageNamed:@"buyButton"] forState:UIControlStateNormal];
-    [self resetAll];
-    [self hideSuccess];
-}
-
--(void)findRelevantItems{
-    [self.buyNowArray removeAllObjects];
-    
-    NSArray *WTBKeywords = [self.listing objectForKey:@"keywords"];
-    
-    PFQuery *salesQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-    [salesQuery whereKey:@"status" equalTo:@"live"];
-    [salesQuery whereKey:@"keywords" containedIn:WTBKeywords];
-//    [salesQuery orderByDescending:@"createdAt"];
-    salesQuery.limit = 10;
-    [salesQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            [self.buyNowArray addObjectsFromArray:objects];
-            
-            NSLog(@"yo count %lu", objects.count);
-            
-            for (PFObject *forSale in objects) {
-                [self.buyNowIDs addObject:forSale.objectId];
-            }
-            
-            NSLog(@"count first time %lu", objects.count);
-            
-            if (objects.count < 10) {
-                PFQuery *salesQuery2 = [PFQuery queryWithClassName:@"forSaleItems"];
-                [salesQuery2 whereKey:@"status" equalTo:@"live"];
-                [salesQuery2 orderByDescending:@"createdAt"];
-                [salesQuery whereKey:@"objectId" notContainedIn:self.buyNowIDs];
-                salesQuery2.limit = 10-self.buyNowArray.count; //CHANGE
-                [salesQuery2 findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                    if (objects) {
-                        NSLog(@"objects second time %lu", objects.count);
-                        for (PFObject *forSale in objects) {
-                            if (![self.buyNowIDs containsObject:forSale.objectId]) {
-                                [self.buyNowArray addObject:forSale];
-                                [self.buyNowIDs addObject:forSale.objectId];
-                            }
-                        }
-                        NSLog(@"count second time %lu", self.buyNowArray.count);
-                        [self.successView.collectionView reloadData];
-                    }
-                    else{
-                        NSLog(@"error in second query %@", error);
-                    }
-                }];
-            }
-            else{
-                [self.successView.collectionView reloadData];
-            }
-            
-        }
-        else{
-            NSLog(@"error %@", error);
-        }
-    }];
-}
-
--(void)showPushAlert{
-    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
-    self.searchBgView.alpha = 0.0;
-    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
-    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
-    
-    [UIView animateWithDuration:0.3
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         self.searchBgView.alpha = 0.6f;
-                     }
-                     completion:nil];
-    
-    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
-    self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
-    self.customAlert.delegate = self;
-    self.customAlert.titleLabel.text = @"Enable Push";
-    self.customAlert.messageLabel.text = @"Tap to be notified when sellers/potential buyers send you a message on Bump";
-    self.customAlert.numberOfButtons = 2;
-    [self.customAlert.secondButton setTitle:@"E N A B L E" forState:UIControlStateNormal];
-    
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-        //iphone5
-        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
-    }
-    else{
-        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
-    }
-    
-    self.customAlert.layer.cornerRadius = 10;
-    self.customAlert.layer.masksToBounds = YES;
-    
-    [[UIApplication sharedApplication].keyWindow addSubview:self.customAlert];
-    
-    [UIView animateWithDuration:1.5
-                          delay:0.2
-         usingSpringWithDamping:0.5
-          initialSpringVelocity:0.5
-                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                            //Animations
-                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-                                //iphone5
-                                [self.customAlert setFrame:CGRectMake(0, 0, 250, 157)];
-                            }
-                            else{
-                                [self.customAlert setFrame:CGRectMake(0, 0, 300, 188)]; //iPhone 6/7 specific
-                            }
-                            self.customAlert.center = self.view.center;
-                            
-                        }
-                     completion:nil];
-}
-
--(void)donePressed{
-    [UIView animateWithDuration:0.3
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         self.searchBgView.alpha = 0.0f;
-                     }
-                     completion:^(BOOL finished) {
-                         self.searchBgView = nil;
-                     }];
-    
-    [UIView animateWithDuration:1.0
-                          delay:0.0
-         usingSpringWithDamping:0.1
-          initialSpringVelocity:0.5
-                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                            //Animations
-                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-                                //iphone5
-                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
-                            }
-                            else{
-                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
-                            }
-                        }
-                     completion:^(BOOL finished) {
-                         //Completion Block
-                         [self.customAlert setAlpha:0.0];
-                         self.customAlert = nil;
-                     }];
-}
-
--(void)firstPressed{
-    [Answers logCustomEventWithName:@"Denied Push Permissions"
-                   customAttributes:@{}];
-    [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"declinedPushPermissions"];
-    [self donePressed];
-}
-
--(void)secondPressed{
-    //present push dialog
-    [Answers logCustomEventWithName:@"Accepted Push Permissions"
-                   customAttributes:@{}];
-    [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForPushPermission"];
-    UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
-                                                    UIUserNotificationTypeBadge |
-                                                    UIUserNotificationTypeSound);
-    UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:userNotificationTypes
-                                                                             categories:nil];
-    [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
-    [[UIApplication sharedApplication] registerForRemoteNotifications];
-    
-    [self donePressed];
 }
 
 @end

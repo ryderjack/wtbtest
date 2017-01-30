@@ -15,6 +15,7 @@
         <array key="PingFang.ttc">
             <string>PingFangSC-Medium</string>
             <string>PingFangSC-Regular</string>
+            <string>PingFangSC-Semibold</string>
         </array>
     </customFonts>
     <objects>
@@ -76,7 +77,7 @@
                     </constraints>
                 </imageView>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="cursorIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="J8R-Pe-2yV">
-                    <rect key="frame" x="218.5" y="323" width="35" height="35"/>
+                    <rect key="frame" x="218.5" y="250" width="35" height="35"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="35" id="WSj-jl-GjQ"/>
                         <constraint firstAttribute="height" constant="35" id="cE2-4K-uEs"/>
@@ -164,7 +165,7 @@
                 <constraint firstItem="zij-rD-QcO" firstAttribute="trailing" secondItem="lRq-4c-dRa" secondAttribute="trailing" id="0CY-kc-PKI"/>
                 <constraint firstItem="nD1-X5-R5W" firstAttribute="top" secondItem="f2N-7h-uu8" secondAttribute="bottom" constant="93" id="0Qz-7I-a3J"/>
                 <constraint firstItem="iwT-8Z-PPR" firstAttribute="top" secondItem="lRq-4c-dRa" secondAttribute="top" id="2Uq-NB-loY"/>
-                <constraint firstItem="J8R-Pe-2yV" firstAttribute="top" secondItem="nux-8c-4T5" secondAttribute="bottom" constant="-137" id="2zo-Vh-XSg"/>
+                <constraint firstItem="J8R-Pe-2yV" firstAttribute="top" secondItem="nux-8c-4T5" secondAttribute="bottom" constant="-210" id="2zo-Vh-XSg"/>
                 <constraint firstItem="f2N-7h-uu8" firstAttribute="top" secondItem="nux-8c-4T5" secondAttribute="bottom" constant="26" id="3X1-jX-ZcT"/>
                 <constraint firstItem="u0J-hL-RgV" firstAttribute="top" secondItem="A2x-MY-JLb" secondAttribute="top" id="45Y-pc-1BJ"/>
                 <constraint firstItem="HmW-se-reG" firstAttribute="trailing" secondItem="iwT-8Z-PPR" secondAttribute="trailing" id="4Vv-ER-hXn"/>

@@ -14,7 +14,7 @@
 #import <ParseUI/ParseUI.h>
 #import "CameraController.h"
 #import <BASSquareCropperViewController.h>
-#import <TOWebViewController.h>
+#import "TOJRWebView.h"
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
 #import "CreateSuccessView.h"
@@ -27,7 +27,7 @@
 @end
 
 
-@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, ListingCompleteDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate, TOWebDelegate, UICollectionViewDelegate, UICollectionViewDataSource, successDelegate, customAlertDelegate>
+@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
@@ -36,10 +36,8 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *catCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *sizeCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *locCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *deliveryCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *payCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *infoCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *buttonCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
 
 //delegate
 @property (nonatomic, weak) id <CreateViewControllerDelegate> delegate;
@@ -50,8 +48,6 @@
 @property (weak, nonatomic) IBOutlet UILabel *chooseSize;
 @property (weak, nonatomic) IBOutlet UILabel *chooseLocation;
 @property (weak, nonatomic) IBOutlet UILabel *chooseDelivery;
-
-@property (strong, nonatomic) PFGeoPoint *geopoint;
 
 //text fields
 @property (weak, nonatomic) IBOutlet UITextField *titleField;
@@ -95,11 +91,10 @@
 @property (nonatomic, strong) NSString *thirdSize;
 
 @property (nonatomic) BOOL editFromListing;
-@property (weak, nonatomic) IBOutlet UIButton *saveButton;
 @property (nonatomic, strong) UIBarButtonItem *resetButton;
 
 @property (nonatomic, strong) NSArray *sizesArray;
-@property (nonatomic, strong) TOWebViewController *webViewController;
+@property (nonatomic, strong) TOJRWebView *webViewController;
 
 @property (nonatomic, strong) RTSpinKitView *spinner;
 @property (nonatomic, strong) MBProgressHUD *hud;
@@ -107,33 +102,24 @@
 @property (nonatomic) BOOL hudShowing;
 @property (nonatomic) BOOL shouldShowHUD;
 
+//listing
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
-
 @property (nonatomic, strong) NSArray *profanityList;
-
 @property (nonatomic, strong) NSArray *keywordsToSave;
-
-@property (weak, nonatomic) IBOutlet UIButton *skipButton;
-@property (nonatomic) BOOL introMode;
-
 @property (nonatomic, strong) UIImagePickerController *picker;
-
 @property (nonatomic) BOOL somethingChanged;
 @property (nonatomic) BOOL shouldSave;
-@property (nonatomic) BOOL shouldShowReset;
-
 @property (nonatomic, strong) NSDate *todayDate;
+@property (strong, nonatomic) PFGeoPoint *geopoint;
+@property (nonatomic) int tapNumber;
 
-@property (nonatomic, strong) CreateSuccessView *successView;
-@property (nonatomic, strong) NSMutableArray *buyNowArray;
-@property (nonatomic, strong) NSMutableArray *buyNowIDs;
-@property (nonatomic) BOOL setupYes;
-@property (nonatomic) BOOL completionShowing;
-@property (nonatomic, strong) UIView *bgView;
+//add details
+@property (nonatomic) BOOL addDetails;
+@property (nonatomic) BOOL introMode;
 
-//custom alert view
-@property (nonatomic, strong) customAlertViewClass *customAlert;
-@property (nonatomic, strong) UIView *searchBgView;
+//update button
+@property (nonatomic, strong) UIButton *longButton;
+@property (nonatomic) BOOL buttonShowing;
 
 @end

@@ -15,6 +15,8 @@
 - (void)createPressed;
 - (void)sharePressed;
 - (void)successDonePressed;
+- (void)addMorePressed;
+
 @end
 
 @interface CreateSuccessView : UIView

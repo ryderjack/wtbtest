@@ -315,6 +315,11 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    
+    //CHANGE
+//    Tut1ViewController *vc = [[Tut1ViewController alloc]init];
+//    vc.clickMode = YES;
+//    [self presentViewController:vc animated:YES completion:nil];
 
     [self.collectionView.infiniteScrollingView stopAnimating];
     [Answers logCustomEventWithName:@"Viewed page"
@@ -388,44 +393,51 @@
     
     self.cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
     
-    int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
-
-    //since EUR has been recently added, do a check if the listing has a EUR price. If not, calc and save
-    if ([self.currency isEqualToString:@"EUR"] && price == 0) {
-        int pounds = [[listing objectForKey:@"listingPriceGBP"]intValue];
-        int EUR = pounds*1.16;
-        listing[@"listingPriceEUR"] = @(EUR);
-        price = EUR;
-        [listing saveInBackground];
-    }
-    self.cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
-    
-    NSString *sizeNoUK = [[listing objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
-    sizeNoUK = [sizeNoUK stringByReplacingOccurrencesOfString:@" " withString:@""];
-    
-    if ([sizeNoUK isEqualToString:@"One size"]) {
-        self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
-    }
-    else if ([sizeNoUK isEqualToString:@"S"]){
-        self.cell.sizeLabel.text = @"Small";
-    }
-    else if ([sizeNoUK isEqualToString:@"M"]){
-        self.cell.sizeLabel.text = @"Medium";
-    }
-    else if ([sizeNoUK isEqualToString:@"L"]){
-        self.cell.sizeLabel.text = @"Large";
-    }
-    else if ([[listing objectForKey:@"category"]isEqualToString:@"Clothing"]){
-        self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
+    if ([listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]) {
+        int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+        self.cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
     }
     else{
-        self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"sizeLabel"]];
+        self.cell.priceLabel.text = @"";
+    }
+
+    if ([listing objectForKey:@"sizeLabel"]) {
+        NSString *sizeNoUK = [[listing objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
+        sizeNoUK = [sizeNoUK stringByReplacingOccurrencesOfString:@" " withString:@""];
+        
+        if ([sizeNoUK isEqualToString:@"One size"]) {
+            self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
+        }
+        else if ([sizeNoUK isEqualToString:@"S"]){
+            self.cell.sizeLabel.text = @"Small";
+        }
+        else if ([sizeNoUK isEqualToString:@"M"]){
+            self.cell.sizeLabel.text = @"Medium";
+        }
+        else if ([sizeNoUK isEqualToString:@"L"]){
+            self.cell.sizeLabel.text = @"Large";
+        }
+        else if ([[listing objectForKey:@"category"]isEqualToString:@"Clothing"]){
+            self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
+        }
+        else{
+            self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"sizeLabel"]];
+        }
+    }
+    else{
+        self.cell.sizeLabel.text = @"";
     }
     
     PFGeoPoint *location = [listing objectForKey:@"geopoint"];
     if (self.currentLocation && location) {
         int distance = [location distanceInKilometersTo:self.currentLocation];
-        self.cell.distanceLabel.text = [NSString stringWithFormat:@"%dkm", distance];
+        if (![listing objectForKey:@"sizeLabel"]) {
+            self.cell.sizeLabel.text = [NSString stringWithFormat:@"%dkm", distance];
+            self.cell.distanceLabel.text = @"";
+        }
+        else{
+            self.cell.distanceLabel.text = [NSString stringWithFormat:@"%dkm", distance];
+        }
     }
     else{
         NSLog(@"no location data %@ %@", self.currentLocation, location);
@@ -794,6 +806,11 @@
     }];
 }
 - (IBAction)filterPressed:(id)sender {
+    [Answers logCustomEventWithName:@"Filters pressed"
+                   customAttributes:@{
+                                      @"page":@"Explore"
+                                      }];
+    
     FilterVC *vc = [[FilterVC alloc]init];
     vc.delegate = self;
     if (self.filtersArray.count > 0) {

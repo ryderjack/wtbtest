@@ -35,13 +35,12 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *adminCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *buyerinfoCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *buttonCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
 
 //main cell
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
 @property (weak, nonatomic) IBOutlet UIPageControl *picIndicator;
-@property (weak, nonatomic) IBOutlet UIButton *messageButton;
 
-@property (weak, nonatomic) IBOutlet UIButton *sellthisbutton;
 @property (weak, nonatomic) IBOutlet PFImageView *picView;
 @property (weak, nonatomic) IBOutlet UILabel *priceLabel;
 @property (weak, nonatomic) IBOutlet UILabel *sizeLabel;
@@ -65,13 +64,8 @@
 @property (nonatomic, strong) PFFile *thirdImage;
 @property (nonatomic, strong) PFFile *fourthImage;
 @property (nonatomic) int numberOfPics;
-@property (nonatomic) BOOL extraCellNeeded;
-@property (nonatomic) BOOL sizeCellNeeded;
 
 @property (nonatomic, strong) PFUser *buyer;
-
-@property (nonatomic) BOOL sellThisPressed;
-
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
 
@@ -94,6 +88,18 @@
 
 //search
 @property (nonatomic) BOOL searchOn;
+
+//modes
+@property (nonatomic, strong) NSMutableArray *cellArray;
+@property (nonatomic) BOOL editPressed;
+
+//profileButton
+@property (nonatomic, strong) UIBarButtonItem *profileButton;
+
+//big button
+@property (nonatomic, strong) UIButton *longButton;
+@property (nonatomic) BOOL buttonShowing;
+
 
 
 @end

@@ -7,6 +7,7 @@
 //
 
 #import "SettingsController.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface SettingsController ()
 
@@ -89,6 +90,11 @@
     
     [self.testingView setFile:[self.currentUser objectForKey:@"picture"]];
     [self.testingView loadInBackground];
+    
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Settings",
+                                      }];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -175,27 +181,19 @@
     self.profileImage = info[UIImagePickerControllerOriginalImage];
     self.testingView.image = nil;
     
-    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(self.profileImage, 0.6)];
-    [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
-     {
-         if (error) {
-             NSLog(@"error %@", error);
-         }
-         else{
-             [self.testingView setFile:filePicture];
-             [self.testingView loadInBackground];
-             
-             self.currentUser [@"picture"] = filePicture;
-             [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                 if (succeeded) {
-                     NSLog(@"saved!");
-                 }
-                 else{
-                     NSLog(@"error saving %@", error);
-                 }
-             }];
-         }
-     }];
+    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(self.profileImage, 0.7)];
+    [self.testingView setFile:filePicture];
+    [self.testingView loadInBackground];
+    
+    self.currentUser [@"picture"] = filePicture;
+    [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            NSLog(@"saved!");
+        }
+        else{
+            NSLog(@"error saving %@", error);
+        }
+    }];
     [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -289,6 +287,8 @@
     NSString *depopString = [self.depopField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     if (![depopString isEqualToString:@""]) {
+        [Answers logCustomEventWithName:@"Entered Depop handle"
+                       customAttributes:@{}];
         //entered a depop account
         NSString *depopHandle = [self.depopField.text stringByReplacingOccurrencesOfString:@"@" withString:@""];
         depopHandle = [depopHandle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];

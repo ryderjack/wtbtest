@@ -12,8 +12,9 @@
 #import <ParseUI/ParseUI.h>
 #import "customAlertViewClass.h"
 #import "viewItemClass.h"
+#import "TOJRWebView.h"
 
-@interface BuyNowController : UIViewController <UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate,viewItemDelegate>
+@interface BuyNowController : UIViewController <UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate,viewItemDelegate,JRWebViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (nonatomic, strong) NSMutableDictionary *contentOffsetDictionary;
@@ -72,6 +73,9 @@
 @property (nonatomic) BOOL itemShowing;
 
 @property (nonatomic) int pullSkipped;
+
+//web view
+@property (nonatomic, strong) TOJRWebView *web;
 
 
 @end

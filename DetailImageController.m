@@ -84,7 +84,6 @@
 
         }
         else{
-            NSLog(@"here");
             [self.imageView setFile:[self.listing objectForKey:@"image1"]];
         }
     }

@@ -7,6 +7,7 @@
 //
 
 #import "MakeOfferController.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface MakeOfferController ()
 
@@ -68,6 +69,9 @@
         [self.offerButton setEnabled:YES];
     }
     else{
+        [Answers logCustomEventWithName:@"Sent an offer"
+                       customAttributes:@{}];
+        
         NSString *offerString = [NSString stringWithFormat:@"Selling: %@\nCondition: %@\nPrice: %@\nMeetup: %@", self.sellingTextfield.text, self.conditionField.text, self.priceField.text, self.meetupField.text];
         [self dismissViewControllerAnimated:YES completion:^{
            [self.delegate sendOffer:offerString];

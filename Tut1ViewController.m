@@ -7,9 +7,9 @@
 //
 
 #import "Tut1ViewController.h"
-#import "CreateViewController.h"
 #import "NavigationController.h"
 #import <QuartzCore/QuartzCore.h>
+#import <Crashlytics/Crashlytics.h>
 
 @interface Tut1ViewController ()
 
@@ -19,6 +19,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [UIView setAnimationsEnabled:YES];
+    
     if (self.clickMode != YES) {
         [self.createButton setHidden:YES];
     }
@@ -29,6 +31,9 @@
     }
     [self.dimissButton setHidden:YES];
     
+    //to restart animations upon coming into foreground
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartAnimations) name:@"refreshHome" object:nil];
+    
     [self.topLeftImageView setHidden:YES];
     [self.topRightImageView setHidden:YES];
     [self.bottomLeftImageView setHidden:YES];
@@ -38,6 +43,8 @@
     [self.itemTopRightImageView setHidden:YES];
     [self.itemBottomLeftImageView setHidden:YES];
     [self.itemBottomRightImageView setHidden:YES];
+    
+    self.bumpCount = 0;
     
     if (self.explainMode != YES) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(bump1Pressed)];
@@ -123,7 +130,7 @@
             else{
                 NSLog(@"error getting listings %@", error);
                 
-                // have a backup plan if get no listings
+                // have a backup plan if get no listings?
             }
         }];
     }
@@ -263,7 +270,7 @@
     }
 }
 
--(void)dismissCreateController:(CreateViewController *)controller{
+-(void)dismissSimpleCreateVC:(simpleCreateVC *)controller{
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 
@@ -280,7 +287,7 @@
         
         //1.2 cursor moves up
         [UIView addKeyframeWithRelativeStartTime:0.02 relativeDuration:0.4 animations:^{
-            self.cursorImageView.transform = CGAffineTransformMakeTranslation(-110,-160);
+            self.cursorImageView.transform = CGAffineTransformMakeTranslation(-110,-100);
         }];
         
         //1.3 show bumped listing
@@ -308,9 +315,9 @@
             self.cursorImageView.alpha = 1.0f;
         }];
         
-        //1.2 cursor moves up
+        //1.2 cursor moves down
         [UIView addKeyframeWithRelativeStartTime:0.02 relativeDuration:0.1 animations:^{
-            self.cursorImageView.transform = CGAffineTransformMakeTranslation(0,-60);
+            self.cursorImageView.transform = CGAffineTransformMakeTranslation(0,90);
         }];
         
         //1.3 show message VC
@@ -320,7 +327,7 @@
         
         //1.4 cursor moves down to tag
         [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.3 animations:^{
-            self.cursorImageView.transform = CGAffineTransformMakeTranslation(-110, 18);
+            self.cursorImageView.transform = CGAffineTransformMakeTranslation(-110, 90);
         }];
         
         //1.5 show message VC
@@ -353,7 +360,12 @@
             [current setObject:@"YES" forKey:@"completedIntroTutorial"];
             [current saveInBackground];
             
-            CreateViewController *vc = [[CreateViewController alloc]init];
+            [Answers logCustomEventWithName:@"Tutorial finished"
+                           customAttributes:@{
+                                              @"bumpCount":[NSNumber numberWithInt:self.bumpCount]
+                                              }];
+            
+            simpleCreateVC *vc = [[simpleCreateVC alloc]init];
             vc.introMode = YES;
             [self.navigationController pushViewController:vc animated:YES];
         }
@@ -369,6 +381,7 @@
 }
 
 -(void)bump1Pressed{
+    self.bumpCount++;
     [UIView animateWithDuration:0.6
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -397,6 +410,7 @@
                      }];
 }
 -(void)bump2Pressed{
+    self.bumpCount++;
     [UIView animateWithDuration:0.6
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -426,6 +440,7 @@
                      }];
 }
 -(void)bump3Pressed{
+    self.bumpCount++;
     [UIView animateWithDuration:0.6
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -453,6 +468,7 @@
                      }];
 }
 -(void)bump4Pressed{
+    self.bumpCount++;
     [UIView animateWithDuration:0.6
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -603,5 +619,17 @@
     [self.sendOfferImageView.layer removeAllAnimations];
     [self.cursorImageView.layer removeAllAnimations];
     [self.screenImageView.layer removeAllAnimations];
+}
+
+-(void)restartAnimations{
+    [self removeTutAnimations];
+    if (self.index == 1) {
+        self.cursorImageView.transform = CGAffineTransformMakeTranslation(0,0);
+        [self setupSelling];
+    }
+    else if (self.index == 3){
+        self.cursorImageView.transform = CGAffineTransformMakeTranslation(-110, 90);
+        [self setupBumping];
+    }
 }
 @end

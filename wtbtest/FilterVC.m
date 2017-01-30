@@ -8,6 +8,7 @@
 
 #import "FilterVC.h"
 #import "brandObject.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface FilterVC ()
 
@@ -122,7 +123,7 @@
     }
     
     if (!self.applyButton) {
-        self.applyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-40, [UIApplication sharedApplication].keyWindow.frame.size.width, 40)];
+        self.applyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
         [self.applyButton setTitle:@"A P P L Y" forState:UIControlStateNormal];
         [self.applyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
         [self.applyButton.titleLabel setTextAlignment: NSTextAlignmentCenter];
@@ -298,6 +299,10 @@
         [self.filtersArray removeObject:@"hightolow"];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"hightolow"
+                                          }];
         [self.hightolowButton setSelected:YES];
         [self.filtersArray addObject:@"hightolow"];
         [self.lowtoHighButton setSelected:NO];
@@ -311,6 +316,10 @@
         [self.filtersArray removeObject:@"lowtohigh"];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"lowtohigh"
+                                          }];
         [self.lowtoHighButton setSelected:YES];
         [self.filtersArray addObject:@"lowtohigh"];
         [self.hightolowButton setSelected:NO];
@@ -324,6 +333,10 @@
         [self.filtersArray removeObject:@"BNWT"];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"BNWT"
+                                          }];
         [self.BNWTconditionButton setSelected:YES];
         [self.filtersArray addObject:@"BNWT"];
         [self.usedButton setSelected:NO];
@@ -339,6 +352,10 @@
         [self.filtersArray removeObject:@"used"];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"used"
+                                          }];
         [self.usedButton setSelected:YES];
         [self.filtersArray addObject:@"used"];
         [self.BNWTconditionButton setSelected:NO];
@@ -354,6 +371,10 @@
         [self.filtersArray removeObject:@"BNWOT"];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"BNWOT"
+                                          }];
         [self.BNWOTButton setSelected:YES];
         [self.filtersArray addObject:@"BNWOT"];
         [self.BNWTconditionButton setSelected:NO];
@@ -369,6 +390,10 @@
         [self.filtersArray removeObject:@"clothing"];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"clothing"
+                                          }];
         [self.clothingButton setSelected:YES];
         [self.filtersArray addObject:@"clothing"];
         [self.footButton setSelected:NO];
@@ -391,6 +416,10 @@
         [self.filtersArray removeObject:@"footwear"];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"footwear"
+                                          }];
         [self.footButton setSelected:YES];
         [self.filtersArray addObject:@"footwear"];
         [self.clothingButton setSelected:NO];
@@ -413,6 +442,10 @@
         [self setupclothingsizes];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"accessories"
+                                          }];
         [self.accessoryButton setSelected:YES];
         [self.filtersArray addObject:@"accessory"];
         
@@ -436,7 +469,8 @@
 }
 
 -(void)applyButtonPressed{
-    NSLog(@"apply pressed %@", self.filtersArray);
+    [Answers logCustomEventWithName:@"Filters applied"
+                   customAttributes:@{}];
     NSOrderedSet *orderedSet = [NSOrderedSet orderedSetWithArray:self.filtersArray];
     NSArray *arrayWithoutDuplicates = [orderedSet array];
     NSMutableArray *noduplicates = [NSMutableArray arrayWithArray:arrayWithoutDuplicates];
@@ -446,6 +480,10 @@
 }
 
 -(void)sizeButtonClicked:(id) sender{
+    [Answers logCustomEventWithName:@"Filters enabled"
+                   customAttributes:@{
+                                      @"filter":@"size chosen"
+                                      }];
     if ([sender isMemberOfClass:[UIButton class]])
     {
         UIButton *btn = (UIButton *)sender;
@@ -907,6 +945,10 @@
         [self.filtersArray removeObject:@"male"];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"men"
+                                          }];
         [self.menButton setSelected:YES];
         [self.filtersArray addObject:@"male"];
         [self.womenButton setSelected:NO];
@@ -920,6 +962,11 @@
         [self.filtersArray removeObject:@"female"];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"women"
+                                          }];
+        
         [self.womenButton setSelected:YES];
         [self.filtersArray addObject:@"female"];
         [self.menButton setSelected:NO];
@@ -929,6 +976,10 @@
 }
 
 -(void)setupclothingsizes{
+    [Answers logCustomEventWithName:@"Filters enabled"
+                   customAttributes:@{
+                                      @"filter":@"setupclothing"
+                                      }];
     [[self.sizeScrollButton subviews]
      makeObjectsPerformSelector:@selector(removeFromSuperview)];
     self.clothingEnabled = YES;
@@ -981,6 +1032,10 @@
 }
 
 -(void)setupFootwearSizes{
+    [Answers logCustomEventWithName:@"Filters enabled"
+                   customAttributes:@{
+                                      @"filter":@"setupfootwear"
+                                      }];
     [[self.sizeScrollButton subviews]
      makeObjectsPerformSelector:@selector(removeFromSuperview)];
     self.clothingEnabled = NO;
@@ -1326,6 +1381,10 @@
         [self.filtersArray removeObject:@"aroundMe"];
     }
     else{
+        [Answers logCustomEventWithName:@"Filters enabled"
+                       customAttributes:@{
+                                          @"filter":@"aroundme"
+                                          }];
         [self.distanceButton setSelected:YES];
         [self.filtersArray addObject:@"aroundMe"];
     }

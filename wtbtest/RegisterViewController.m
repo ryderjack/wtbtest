@@ -361,10 +361,18 @@
 }
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-
+    
     if (textField == self.usernameField) {
         
+        if ([self.profanityList containsObject:string]) {
+            return  NO;
+        }
+        
         if ([string isEqualToString:@" "]) {
+            return NO;
+        }
+        
+        if (![string canBeConvertedToEncoding:NSASCIIStringEncoding]){
             return NO;
         }
         
@@ -373,7 +381,7 @@
             return NO;
         }
         NSUInteger newLength = [textField.text length] + [string length] - range.length;
-        return newLength <= 10;
+        return newLength <= 20;
     }
     return string;
 }
@@ -384,6 +392,9 @@
     
     if ([self.profanityList containsObject:self.usernameField.text.lowercaseString]) {
         self.usernameField.text = @"";
+        self.warningLabel.text = @"Choose a username";
+        [self.regButton setEnabled:YES];
+        return;
     }
     
     //check values entered
@@ -392,7 +403,7 @@
     NSString *username = [self.usernameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     if ([name length] == 0 || [email length] == 0 || [username length] == 0 || [self.selectedCurrency isEqualToString:@""])  {
-        self.warningLabel.text = @"Fill in everything!";
+        self.warningLabel.text = @"Complete all the fields";
         [self.regButton setEnabled:YES];
     }
     else{
@@ -407,6 +418,10 @@
             self.hud.mode = MBProgressHUDModeCustomView;
             self.hud.customView = self.spinner;
             [self.spinner startAnimating];
+            [Answers logCustomEventWithName:@"Selected currency"
+                           customAttributes:@{
+                                              @"currency":self.selectedCurrency,
+                                              }];
             
             //check username entered is unique
             PFQuery *usernameQuery = [PFQuery queryWithClassName:@"_User"];
@@ -436,6 +451,10 @@
                                      if (error) {
                                          //Handle connection error
                                          NSLog(@"Chimp Error, %@", error);
+                                         [Answers logCustomEventWithName:@"welcome email error"
+                                                        customAttributes:@{
+                                                                           @"error":error
+                                                                           }];
                                          dispatch_async(dispatch_get_main_queue(), ^{
                                              //Update UI here
                                          });
@@ -449,6 +468,10 @@
                                              if ([email isKindOfClass:[NSString class]]) {
                                                  //Successfully subscribed email address
                                                  NSLog(@"success with the chimp!");
+                                                 
+                                                 [Answers logCustomEventWithName:@"Sent welcome email"
+                                                                customAttributes:@{}];
+                                                 
                                                  dispatch_async(dispatch_get_main_queue(), ^{
                                                      //Update UI here
                                                  });

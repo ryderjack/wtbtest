@@ -56,5 +56,8 @@
 - (IBAction)createPressed:(id)sender {
     [self.delegate createPressed];
 }
+- (IBAction)addMorePressed:(id)sender {
+    [self.delegate addMorePressed];
+}
 
 @end

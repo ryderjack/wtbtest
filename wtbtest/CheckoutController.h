@@ -9,11 +9,11 @@
 #import <UIKit/UIKit.h>
 #import <Parse/Parse.h>
 #import "ShippingController.h"
-#import <TOWebViewController.h>
+#import "TOJRWebView.h"
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
 
-@interface CheckoutController : UITableViewController <UITextFieldDelegate, ShippingControllerDelegate, TOWebDelegate>
+@interface CheckoutController : UITableViewController <UITextFieldDelegate, ShippingControllerDelegate, JRWebViewDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *shippingAddressCell;
@@ -44,7 +44,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *payButton;
 
 //web view
-@property (nonatomic, strong) TOWebViewController *webViewController;
+@property (nonatomic, strong) TOJRWebView *webViewController;
 @property (nonatomic, strong) PFObject *convo;
 @property (nonatomic, strong) NSString *sellerEmail;
 

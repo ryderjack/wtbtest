@@ -79,14 +79,9 @@
     
 //    NSLog(@"USER %@", self.user);
     
-    if (self.fromSearch == YES) {
-        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc]initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
-        self.navigationItem.leftBarButtonItem = cancelButton;
-    }
-    
-    //for testing purposes
-//    UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
-//    self.navigationItem.rightBarButtonItem = addForSaleItem;
+    //for testing purposes //CHANGE
+    UIBarButtonItem *addForSaleItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addForSalePressed)];
+    self.navigationItem.rightBarButtonItem = addForSaleItem;
 
     PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
     [trustedQuery whereKey:@"user" equalTo:self.user];
@@ -121,6 +116,15 @@
             self.navigationItem.rightBarButtonItem = addForSaleItem;
         }
         else if (self.saleMode == YES){
+            [self loadWTSListings];
+        }
+        else if (self.isSeller == YES) {
+            //trusted seller so load both
+            [self.sellerSegmentControl setHidden:NO];
+            if (self.fromSearch == YES) {
+                [self.sellerSegmentControl setSelectedSegmentIndex:1];
+            }
+            [self loadWTBListings];
             [self loadWTSListings];
         }
         else{
@@ -608,7 +612,7 @@
     webViewController.doneButtonTitle = @"";
     webViewController.paypalMode = NO;
     webViewController.infoMode = NO;
-    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:webViewController];
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 
@@ -637,35 +641,35 @@
 
 -(void)addForSalePressed{
     //uncomment when adding items for other users
-    UIAlertController *alertController = [UIAlertController
-                                          alertControllerWithTitle:@"Post as User"
-                                          message:@"Enter username"
-                                          preferredStyle:UIAlertControllerStyleAlert];
-
-    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
-     {
-         textField.placeholder = @"username";
-     }];
-
-    UIAlertAction *okAction = [UIAlertAction
-                               actionWithTitle:@"DONE"
-                               style:UIAlertActionStyleDefault
-                               handler:^(UIAlertAction *action)
-                               {
-                                   UITextField *usernameField = alertController.textFields.firstObject;
-                                   self.usernameToList = usernameField.text;
-                                   [self SetupListing];
-                               }];
-
-    [alertController addAction:okAction];
+//    UIAlertController *alertController = [UIAlertController
+//                                          alertControllerWithTitle:@"Post as User"
+//                                          message:@"Enter username"
+//                                          preferredStyle:UIAlertControllerStyleAlert];
+//
+//    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+//     {
+//         textField.placeholder = @"username";
+//     }];
+//
+//    UIAlertAction *okAction = [UIAlertAction
+//                               actionWithTitle:@"DONE"
+//                               style:UIAlertActionStyleDefault
+//                               handler:^(UIAlertAction *action)
+//                               {
+//                                   UITextField *usernameField = alertController.textFields.firstObject;
+//                                   self.usernameToList = usernameField.text;
+//                                   [self SetupListing];
+//                               }];
+//
+//    [alertController addAction:okAction];
+//
+//    [self presentViewController:alertController animated:YES completion:nil];
     
-    [self presentViewController:alertController animated:YES completion:nil];
-    
-//    CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-//    vc.usernameToCheck = self.usernameToList;
-//    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-//    self.forSalePressed = YES;
-//    [self presentViewController:nav animated:YES completion:nil];
+    CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+    vc.usernameToCheck = self.usernameToList;
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    self.forSalePressed = YES;
+    [self presentViewController:nav animated:YES completion:nil];
 }
 - (IBAction)reviewsPressed:(id)sender {
     ReviewsVC *vc = [[ReviewsVC alloc]init];

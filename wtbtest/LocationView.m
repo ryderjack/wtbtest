@@ -109,7 +109,7 @@
                                                                            NSLog(@"ERROR: %@", error);
                                                                        } else {
                                                                            for (HNKGooglePlacesAutocompletePlace *place in places) {
-                                                                               NSLog(@"%@", place.name);
+                                                                               //NSLog(@"%@", place.name);
                                                                                [searchResults addObject:place];
                                                                                 self.searchResults = searchResults;
                                                                            }
@@ -159,7 +159,7 @@
                                                [self showError];
                                                self.tableView.userInteractionEnabled = YES;
                                            } else {
-                                               NSLog(@"PLACEMARK: %@", placemark);
+                                               //NSLog(@"PLACEMARK: %@", placemark);
                                                CLLocationCoordinate2D selectedItem = [[placemark location]coordinate];
                                                
                                                [self.delegate addLocation:self didFinishEnteringItem:selectionString longi:selectedItem.longitude lati:selectedItem.latitude];

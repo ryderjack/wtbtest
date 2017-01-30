@@ -117,7 +117,7 @@
         PFUser *user = [self.userResults objectAtIndex:indexPath.row];
         UserProfileController *vc = [[UserProfileController alloc]init];
         vc.user = user;
-        vc.fromSearch = NO;
+        vc.fromSearch = YES;
         [self.navigationController pushViewController:vc animated:YES];
     }
     else{

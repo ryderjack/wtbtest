@@ -27,6 +27,7 @@
     [super viewDidLoad];
     
     self.navigationItem.title = @"L I S T I N G";
+    
     UIBarButtonItem *infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
@@ -48,6 +49,19 @@
     
     self.buyernameLabel.text = @"";
     self.pastDealsLabel.text = @"Loading";
+    
+    //how to work out cells to display
+    //create array of cells and add to it when want to display
+    
+    self.cellArray = [NSMutableArray array];
+    
+    self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 + self.tabBarController.tabBar.frame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+    [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+    [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+    [self.longButton addTarget:self action:@selector(BarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.longButton.alpha = 0.0f;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
+    [self showBarButton];
     
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
@@ -80,62 +94,67 @@
             self.picView.contentMode = UIViewContentModeScaleAspectFit;
             [self.picView setFile:[self.listingObject objectForKey:@"image1"]];
             [self.picView loadInBackground];
+//            self.picView.layer.cornerRadius = 4;     //doesn't work due to content mode..
+//            self.picView.layer.masksToBounds = YES;
             
             self.titleLabel.text = [self.listingObject objectForKey:@"title"];
             
-            int price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
-            
-            //since EUR has been recently added, do a check if the listing has a EUR price. If not, calc and save
-            if ([self.currency isEqualToString:@"EUR"] && price == 0) {
-                int pounds = [[self.listingObject objectForKey:@"listingPriceGBP"]intValue];
-                int EUR = pounds*1.16;
-                self.listingObject[@"listingPriceEUR"] = @(EUR);
-                price = EUR;
-                [self.listingObject saveInBackground];
-            }
-            
-            self.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol ,price];
-            
-            self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
-            NSString *loc = [self.listingObject objectForKey:@"location"];
-            self.locationLabel.text = [loc stringByReplacingOccurrencesOfString:@"(null)," withString:@""];
-            
-            if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Accessories"]) {
-                self.sizeCellNeeded = NO;
+            if ([[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue]) {
+                int price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+                self.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol ,price];
             }
             else{
-                self.sizeCellNeeded = YES;
-                NSString *sizeNoUK = [[self.listingObject objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
-                
-                if (![self.listingObject objectForKey:@"sizeGender"]) {
-                    
-                    self.sizeLabel.text = [NSString stringWithFormat:@"%@",sizeNoUK];
+                self.priceLabel.text = @"Negotiable";
+            }
+            
+            [self.cellArray addObject:self.payCell];
+            
+            if ([self.listingObject objectForKey:@"condition"]) {
+                self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
+                [self.cellArray addObject:self.conditionCell];
+            }
+            
+            if ([self.listingObject objectForKey:@"location"]) {
+                NSString *loc = [self.listingObject objectForKey:@"location"];
+                self.locationLabel.text = [loc stringByReplacingOccurrencesOfString:@"(null)," withString:@""];
+                [self.cellArray addObject:self.locationCell];
+            }
+            
+            if ([self.listingObject objectForKey:@"category"]) {
+                if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Accessories"]) {
+                    //do nothing
                 }
                 else{
-                    self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
+                    if ([self.listingObject objectForKey:@"sizeLabel"]) {
+                        NSString *sizeNoUK = [[self.listingObject objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
+                        
+                        if (![self.listingObject objectForKey:@"sizeGender"]) {
+                            self.sizeLabel.text = [NSString stringWithFormat:@"%@",sizeNoUK];
+                        }
+                        else{
+                            self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
+                        }
+                        [self.cellArray addObject:self.sizeCell];
+                    }
                 }
-            }
-            
-            if (![self.listingObject objectForKey:@"extra"]) {
-                self.extraCellNeeded = NO;
-                self.extraLabel.text = @"";
-            }
-            else{
-                self.extraCellNeeded = YES;
-                self.extraLabel.text = [self.listingObject objectForKey:@"extra"];
             }
             
             [self calcPostedDate];
             
-            self.idLabel.text = [NSString stringWithFormat:@"ID: %@",self.listingObject.objectId];
+            self.idLabel.text = [NSString stringWithFormat:@"ID %@",self.listingObject.objectId];
+            [self.cellArray addObject:self.adminCell];
+
             
             //buyer info
             self.buyer = [self.listingObject objectForKey:@"postUser"];
             
             if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-                [self.sellthisbutton setImage:[UIImage imageNamed:@"editListing"] forState:UIControlStateNormal];
+                [self.longButton setTitle:@"E D I T" forState:UIControlStateNormal];
+                [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+                [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
             }
             else{
+                [self.longButton setTitle:@"M E S S A G E  B U Y E R" forState:UIControlStateNormal];
                 //not the same buyer
                 [self.listingObject incrementKey:@"views"];
                 [self.listingObject saveInBackground];
@@ -146,14 +165,12 @@
                 [self.purchasedCheckView setHidden:NO];
             }
             else{
-                self.navigationItem.rightBarButtonItem = infoButton;
                 [self.purchasedLabel setHidden:YES];
                 [self.purchasedCheckView setHidden:YES];
             }
             
             NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listingObject objectForKey:@"bumpArray"]];
             if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
-                NSLog(@"already bumped it m8");
                 [self.upVoteButton setSelected:YES];
             }
             else{
@@ -174,64 +191,38 @@
                 if (object) {
                     self.buyernameLabel.text = self.buyer.username;
                     PFFile *pic = [self.buyer objectForKey:@"picture"];
+                    
+                    UIButton *btn =  [UIButton buttonWithType:UIButtonTypeCustom];
+                    btn.frame = CGRectMake(0,0,36,36);
+                    [btn addTarget:self action:@selector(buyerPressed) forControlEvents:UIControlEventTouchUpInside];
+                    PFImageView *buttonView = [[PFImageView alloc]initWithFrame:btn.frame];
+//                    [buttonView.layer setBorderColor: [[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0] CGColor]];
+//                    [buttonView.layer setBorderWidth: 1.0];
+                    
                     if (pic != nil) {
-                        [self.buyerImgView setFile:pic];
-                        [self.buyerImgView loadInBackground];
+                        [buttonView setFile:pic];
+                        [buttonView loadInBackground];
                     }
                     else{
-                        [self.buyerImgView setImage:[UIImage imageNamed:@"empty"]];
+                        [buttonView setImage:[UIImage imageNamed:@"empty"]];
                     }
+
+                    [self setImageBorder:buttonView];
+                    [btn addSubview:buttonView];
+                    self.profileButton = [[UIBarButtonItem alloc] initWithCustomView:btn];
                     
-                    if ([[self.buyer objectForKey:@"trustedSeller"] isEqualToString:@"YES"]) {
-                        [self.checkImageView setHidden:NO];
+                    if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"purchased"]) {
+                        self.navigationItem.rightBarButtonItem = self.profileButton;
                     }
                     else{
-                        [self.checkImageView setHidden:YES];
+                        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.profileButton,infoButton, nil]];
                     }
-                    
-                    PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
-                    [dealsQuery whereKey:@"User" equalTo:self.buyer];
-                    [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                        if (object) {
-                            int starNumber = [[object objectForKey:@"currentRating"] intValue];
-                            
-                            if (starNumber == 0) {
-                                [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
-                            }
-                            else if (starNumber == 1){
-                                [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
-                            }
-                            else if (starNumber == 2){
-                                [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
-                            }
-                            else if (starNumber == 3){
-                                [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
-                            }
-                            else if (starNumber == 4){
-                                [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
-                            }
-                            else if (starNumber == 5){
-                                [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
-                            }
-                            
-                            int purchased = [[object objectForKey:@"purchased"]intValue];
-                            int sold = [[object objectForKey:@"sold"] intValue];
-                            
-                            self.pastDealsLabel.text = [NSString stringWithFormat:@"Purchased: %d\nSold: %d", purchased, sold];
-                        }
-                        else{
-                            NSLog(@"error getting deals data!");
-                        }
-                    }];
                 }
                 else{
                     NSLog(@"buyer error %@", error);
+                    self.navigationItem.rightBarButtonItem = infoButton;
                 }
             }];
-            
-            if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-                [self.messageButton setEnabled:NO];
-            }
         }
         else{
             NSLog(@"error fetching listing %@", error);
@@ -282,17 +273,9 @@
     self.buyerinfoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.buttonCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.conditionCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.spaceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
-    
-    //check if item has been saved previously
-//    NSArray *savedItemsArray = [[PFUser currentUser] objectForKey:@"savedItems"];
-//    for (NSString *wtb in savedItemsArray) {
-//        if ([wtb isEqualToString:self.listingObject.objectId]) {
-//            [self.saveButton setEnabled:NO];
-//            break;
-//        }
-//    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -301,10 +284,24 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     if (self.searchOn) {
-        if ([self.navigationController respondsToSelector:@selector(interactivePopGestureRecognizer)]) {
+        if ([self.navigationController respondsToSelector:@selector(interactivePopGestureRecognizer)]) { //CHANGE get rid??
             self.navigationController.interactivePopGestureRecognizer.enabled = NO;
         }
     }
+    
+    if (self.buttonShowing == NO) {
+        [self showBarButton];
+    }
+    
+    if (self.editPressed == YES) {
+        [self listingRefresh];
+        self.editPressed = NO;
+    }
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    [self hideBarButton];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -377,21 +374,7 @@
         return 1;
     }
     else if (section ==1){
-        if (self.extraCellNeeded == YES && self.sizeCellNeeded == YES) {
-            return 6;
-        }
-        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == NO){
-            return 4;
-        }
-        else if (self.extraCellNeeded == YES && self.sizeCellNeeded == NO){
-            return 5;
-        }
-        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == YES){
-            return 5;
-        }
-        else{
-            return 5;
-        }
+        return self.cellArray.count;
     }
     else if (section ==2){
         return 1;
@@ -411,74 +394,28 @@
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
-            return self.payCell;
-        }
-        if (self.extraCellNeeded == YES && self.sizeCellNeeded == YES) {
-            if (indexPath.row == 1){
-                return self.sizeCell;
-            }
-            else if (indexPath.row == 2){
-                return self.conditionCell;
-            }
-            else if (indexPath.row == 3){
-                return self.locationCell;
-            }
-            else if (indexPath.row == 4){
-                return self.extraCell;
-            }
-            else if (indexPath.row == 5){
-                return self.adminCell;
-            }
-            else{
-                return nil;
+            if (self.cellArray.count >= 1) {
+                return self.cellArray[0];
             }
         }
-        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == NO){
-            if (indexPath.row == 1){
-                return self.conditionCell;
-            }
-            else if (indexPath.row == 2){
-                return self.locationCell;
-            }
-            else if (indexPath.row == 3){
-                return self.adminCell;
-            }
-            else{
-                return nil;
+        else if (indexPath.row == 1) {
+            if (self.cellArray.count >= 2) {
+                return self.cellArray[1];
             }
         }
-        else if (self.extraCellNeeded == YES && self.sizeCellNeeded == NO){
-            if (indexPath.row == 1){
-                return self.conditionCell;
-            }
-            else if (indexPath.row == 2){
-                return self.locationCell;
-            }
-            else if (indexPath.row == 3){
-                return self.extraCell;
-            }
-            else if (indexPath.row == 4){
-                return self.adminCell;
-            }
-            else{
-                return nil;
+        else if (indexPath.row == 2) {
+            if (self.cellArray.count >= 3) {
+                return self.cellArray[2];
             }
         }
-        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == YES){
-            if (indexPath.row == 1){
-                return self.sizeCell;
+        else if (indexPath.row == 3) {
+            if (self.cellArray.count >= 4) {
+                return self.cellArray[3];
             }
-            else if (indexPath.row == 2){
-                return self.conditionCell;
-            }
-            else if (indexPath.row == 3){
-                return self.locationCell;
-            }
-            else if (indexPath.row == 4){
-                return self.adminCell;
-            }
-            else{
-                return nil;
+        }
+        else if (indexPath.row == 4) {
+            if (self.cellArray.count >= 5) {
+                return self.cellArray[4];
             }
         }
         else{
@@ -491,8 +428,8 @@
         }
     }
     else if (indexPath.section ==3){
-        if (indexPath.row == 0){
-            return self.buyerinfoCell;
+        if(indexPath.row == 0){
+            return self.spaceCell;
         }
     }
     return nil;
@@ -501,38 +438,11 @@
     
     if (indexPath.section == 0){
         if (indexPath.row == 0) {
-            return 314;
+            return 246;
         }
     }
     else if (indexPath.section == 1){
-        if (indexPath.row == 0) {
-            return 44;
-        }
-        if (self.extraCellNeeded == YES && self.sizeCellNeeded == YES) {
-            if (indexPath.row == 4){
-                return 104;
-            }
-            else{
-                return 44;
-            }
-        }
-        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == NO){
-            return 44;
-        }
-        else if (self.extraCellNeeded == YES && self.sizeCellNeeded == NO){
-            if (indexPath.row == 3){
-                return 104;
-            }
-            else{
-                return 44;
-            }
-        }
-        else if (self.extraCellNeeded == NO && self.sizeCellNeeded == YES){
-                return 44;
-        }
-        else{
-            return 44;
-        }
+        return 44;
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
@@ -540,9 +450,7 @@
         }
     }
     else if (indexPath.section ==3){
-        if (indexPath.row == 0){
-            return 158;
-        }
+        return 60;
     }
     return 44;
 }
@@ -555,7 +463,7 @@
     float minsBetweenDates = (distanceBetweenDates / secondsInAnHour)*60;
     if (minsBetweenDates > 0 && minsBetweenDates < 1) {
         //seconds
-        self.postedLabel.text = [NSString stringWithFormat:@"Posted: %.fs ago", (minsBetweenDates*60)];
+        self.postedLabel.text = [NSString stringWithFormat:@"Posted %.fs ago", (minsBetweenDates*60)];
     }
     else if (minsBetweenDates == 1){
         //1 min
@@ -563,7 +471,7 @@
     }
     else if (minsBetweenDates > 1 && minsBetweenDates <60){
         //mins
-        self.postedLabel.text = [NSString stringWithFormat:@"Posted: %.fm ago", minsBetweenDates];
+        self.postedLabel.text = [NSString stringWithFormat:@"Posted %.fm ago", minsBetweenDates];
     }
     else if (minsBetweenDates == 60){
         //1 hour
@@ -571,19 +479,19 @@
     }
     else if (minsBetweenDates > 60 && minsBetweenDates <1440){
         //hours
-        self.postedLabel.text = [NSString stringWithFormat:@"Posted: %.fh ago", (minsBetweenDates/60)];
+        self.postedLabel.text = [NSString stringWithFormat:@"Posted %.fh ago", (minsBetweenDates/60)];
     }
     else if (minsBetweenDates > 1440 && minsBetweenDates < 2880){
         //1 day
-        self.postedLabel.text = [NSString stringWithFormat:@"Posted: %.fd ago", (minsBetweenDates/1440)];
+        self.postedLabel.text = [NSString stringWithFormat:@"Posted %.fd ago", (minsBetweenDates/1440)];
     }
     else if (minsBetweenDates > 2880 && minsBetweenDates < 10080){
         //days
-        self.postedLabel.text = [NSString stringWithFormat:@"Posted: %.fd ago", (minsBetweenDates/1440)];
+        self.postedLabel.text = [NSString stringWithFormat:@"Posted %.fd ago", (minsBetweenDates/1440)];
     }
     else if (minsBetweenDates > 10080){
         //weeks
-        self.postedLabel.text = [NSString stringWithFormat:@"Posted: %.fw ago", (minsBetweenDates/10080)];
+        self.postedLabel.text = [NSString stringWithFormat:@"Posted %.fw ago", (minsBetweenDates/10080)];
     }
     else{
         //fail safe :D
@@ -612,9 +520,11 @@
 }
 
 - (IBAction)sharePressed:(id)sender {
+    [self hideBarButton];
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share to Facebook Group" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -633,10 +543,22 @@
     
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
-- (IBAction)messageBuyerPressed:(id)sender {
-    if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        self.sellThisPressed = NO;
-        [self.messageButton setEnabled:NO];
+
+-(void)BarButtonPressed{
+    [self.longButton setEnabled:NO];
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        self.editPressed = YES;
+        CreateViewController *vc = [[CreateViewController alloc]init];
+        vc.status = @"edit";
+        vc.listing = self.listingObject;
+        vc.editFromListing = YES;
+        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+        [self presentViewController:nav animated:YES completion:^{
+            [self.longButton setEnabled:YES];
+        }];
+    }
+    else{
+        [self showHUD];
         [self setupMessages];
     }
 }
@@ -653,19 +575,13 @@
     [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //convo exists, goto that one
-            NSLog(@"convo exists! %@", object);
-            
             MessageViewController *vc = [[MessageViewController alloc]init];
             vc.convoId = [object objectForKey:@"convoId"];
             vc.convoObject = object;
             vc.listing = self.listingObject;
-            if (self.sellThisPressed == YES) {
-                vc.sellThisPressed = NO; //setting to now because not auto sending offers anymore
-            }
             vc.otherUser = [object objectForKey:@"buyerUser"];
             vc.otherUserName = [[object objectForKey:@"buyerUser"]username];
-            [self.sellthisbutton setEnabled:YES];
-            [self.messageButton setEnabled:YES];
+            [self.longButton setEnabled:YES];
             [self hideHUD];
             [self.navigationController pushViewController:vc animated:YES];
         }
@@ -689,22 +605,17 @@
                     vc.convoId = [convoObject objectForKey:@"convoId"];
                     vc.convoObject = convoObject;
                     vc.listing = self.listingObject;
-                    if (self.sellThisPressed == YES) {
-                        vc.sellThisPressed = NO;
-                    }
                     vc.userIsBuyer = NO;
                     vc.otherUser = [self.listingObject objectForKey:@"postUser"];
                     vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
                     [self hideHUD];
-                    [self.sellthisbutton setEnabled:YES];
-                    [self.messageButton setEnabled:YES];
+                    [self.longButton setEnabled:YES];
                     [self.navigationController pushViewController:vc animated:YES];
                 }
                 else{
                     NSLog(@"error saving convo");
                     [self hideHUD];
-                    [self.messageButton setEnabled:YES];
-                    [self.sellthisbutton setEnabled:YES];
+                    [self.longButton setEnabled:YES];
                 }
             }];
         }
@@ -796,30 +707,12 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 
-- (IBAction)sellthisPressed:(id)sender {
-    [self.sellthisbutton setEnabled:NO];
-    
-    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        CreateViewController *vc = [[CreateViewController alloc]init];
-        vc.status = @"edit";
-        vc.lastId = self.listingObject.objectId;
-        vc.editFromListing = YES;
-        vc.listing = self.listingObject;
-        [self.sellthisbutton setEnabled:YES];
-        [self.navigationController pushViewController:vc animated:YES];
-    }
-    else{
-        self.sellThisPressed = YES;
-        [self showHUD];
-        [self setupMessages];
-    }
-}
-
 -(void)showAlertView{
-
+    [self hideBarButton];
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
     }]];
     
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
@@ -828,6 +721,7 @@
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
             }]];
             [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
                 [self.listingObject setObject:@"deleted" forKey:@"status"];
@@ -857,9 +751,11 @@
                 UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as purchased" message:@"Are you sure you want to mark your WTB as purchased? Sellers will no longer be able to view your WTB and offer to sell you items" preferredStyle:UIAlertControllerStyleAlert];
                 
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    [self showBarButton];
                     
                 }]];
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [self showBarButton];
                     [self.listingObject setObject:@"purchased" forKey:@"status"];
                     [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                         if (succeeded) {
@@ -892,9 +788,11 @@
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this post has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately." preferredStyle:UIAlertControllerStyleAlert];
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
             }]];
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
                 PFObject *reportObject = [PFObject objectWithClassName:@"Reported"];
                 reportObject[@"reportedUser"] = self.buyer;
                 reportObject[@"reporter"] = [PFUser currentUser];
@@ -906,7 +804,6 @@
             
         }]];
     }
-    
     
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
@@ -949,7 +846,8 @@
         [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
     });
 }
-- (IBAction)buyerPressed:(id)sender {
+
+-(void)buyerPressed{
     UserProfileController *vc = [[UserProfileController alloc]init];
     vc.user = self.buyer;
     [self.navigationController pushViewController:vc animated:YES];
@@ -1072,5 +970,124 @@
     whoBumpedTableView *vc = [[whoBumpedTableView alloc]init];
     vc.bumpArray = [self.listingObject objectForKey:@"bumpArray"];
     [self.navigationController pushViewController:vc animated:YES];
+}
+
+-(void)setImageBorder:(UIImageView *)imageView{
+    imageView.layer.cornerRadius = imageView.frame.size.width / 2;
+    imageView.layer.masksToBounds = YES;
+    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    imageView.contentMode = UIViewContentModeScaleAspectFill;
+}
+
+-(void)listingRefresh{
+    [self.cellArray removeAllObjects];
+    NSLog(@"REFRESHING");
+    [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (!error) {
+            if ([self.listingObject objectForKey:@"image4"]){
+                [self.picIndicator setNumberOfPages:4];
+                [self.picIndicator setHidden:NO];
+                self.numberOfPics = 4;
+                self.firstImage = [self.listingObject objectForKey:@"image1"];
+                self.secondImage = [self.listingObject objectForKey:@"image2"];
+                self.thirdImage = [self.listingObject objectForKey:@"image3"];
+                self.fourthImage = [self.listingObject objectForKey:@"image4"];
+            }
+            else if ([self.listingObject objectForKey:@"image3"]){
+                [self.picIndicator setNumberOfPages:3];
+                self.numberOfPics = 3;
+                [self.picIndicator setHidden:NO];
+                self.firstImage = [self.listingObject objectForKey:@"image1"];
+                self.secondImage = [self.listingObject objectForKey:@"image2"];
+                self.thirdImage = [self.listingObject objectForKey:@"image3"];
+            }
+            else if ([self.listingObject objectForKey:@"image2"]) {
+                [self.picIndicator setNumberOfPages:2];
+                self.numberOfPics = 2;
+                [self.picIndicator setHidden:NO];
+                self.firstImage = [self.listingObject objectForKey:@"image1"];
+                self.secondImage = [self.listingObject objectForKey:@"image2"];
+            }
+            else{
+                [self.picIndicator setHidden:YES];
+                self.numberOfPics = 1;
+            }
+            
+            self.picView.contentMode = UIViewContentModeScaleAspectFit;
+            [self.picView setFile:[self.listingObject objectForKey:@"image1"]];
+            [self.picView loadInBackground];
+            
+            self.titleLabel.text = [self.listingObject objectForKey:@"title"];
+            
+            if ([[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue]) {
+                int price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+                self.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol ,price];
+            }
+            else{
+                self.priceLabel.text = @"Negotiable";
+            }
+            
+            [self.cellArray addObject:self.payCell];
+            
+            if ([self.listingObject objectForKey:@"condition"]) {
+                self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
+                [self.cellArray addObject:self.conditionCell];
+            }
+            
+            if ([self.listingObject objectForKey:@"geopoint"]) {
+                NSString *loc = [self.listingObject objectForKey:@"location"];
+                self.locationLabel.text = [loc stringByReplacingOccurrencesOfString:@"(null)," withString:@""];
+                [self.cellArray addObject:self.locationCell];
+            }
+            
+            if ([self.listingObject objectForKey:@"category"]) {
+                if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Accessories"]) {
+                    //do nothing
+                }
+                else{
+                    if ([self.listingObject objectForKey:@"sizeLabel"]) {
+                        NSString *sizeNoUK = [[self.listingObject objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
+                        
+                        if (![self.listingObject objectForKey:@"sizeGender"]) {
+                            self.sizeLabel.text = [NSString stringWithFormat:@"%@",sizeNoUK];
+                        }
+                        else{
+                            self.sizeLabel.text = [NSString stringWithFormat:@"%@, %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
+                        }
+                        [self.cellArray addObject:self.sizeCell];
+                    }
+                }
+            }
+            
+            self.idLabel.text = [NSString stringWithFormat:@"ID %@",self.listingObject.objectId];
+            [self.cellArray addObject:self.adminCell];
+        }
+        [self.tableView reloadData];
+    }];
+}
+
+-(void)hideBarButton{
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.longButton setAlpha:0.0];
+                     }
+                     completion:^(BOOL finished) {
+                         self.buttonShowing = NO;
+                     }];
+}
+
+-(void)showBarButton{
+    self.longButton.alpha = 0.0f;
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.longButton.alpha = 1.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.buttonShowing = YES;
+                     }];
 }
 @end

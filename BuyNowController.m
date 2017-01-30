@@ -1054,6 +1054,9 @@ numberOfRowsInSection:(NSInteger)section
         return;
     }
     
+    [Answers logCustomEventWithName:@"Sell prompt pressed in buyNow"
+                   customAttributes:@{}];
+    
     self.alertShowing = YES;
     self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
     self.searchBgView.alpha = 0.0;
@@ -1146,6 +1149,9 @@ numberOfRowsInSection:(NSInteger)section
     [self donePressed];
 }
 -(void)secondPressed{
+    [Answers logCustomEventWithName:@"Message Team Bump pressed from buyNow Sell prompt"
+                   customAttributes:@{}];
+    
     [self donePressed];
     //goto Team Bump messages
     PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
@@ -1264,14 +1270,31 @@ numberOfRowsInSection:(NSInteger)section
                                           @"retailer":@"END"
                                           }];
     }
-    TOWebViewController *web = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
-    web.showUrlWhileLoading = YES;
-    web.showPageTitles = YES;
-    web.doneButtonTitle = @"";
-    web.paypalMode = NO;
-    web.infoMode = NO;
-    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:web];
+    self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
+    self.web.showUrlWhileLoading = YES;
+    self.web.showPageTitles = YES;
+    self.web.doneButtonTitle = @"";
+    self.web.paypalMode = NO;
+    self.web.infoMode = NO;
+    self.web.delegate = self;
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
     [self presentViewController:navigationController animated:YES completion:nil];
+}
+
+-(void)paidPressed{
+    //do nothing
+}
+
+-(void)cancelWebPressed{
+    [self.web dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)cameraPressed{
+    //do nothing
+}
+
+-(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
+    //do nothing
 }
 
 -(void)hideItem{

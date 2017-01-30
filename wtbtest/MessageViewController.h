@@ -11,13 +11,13 @@
 #import <Parse/Parse.h>
 #import "CameraController.h"
 #import <BASSquareCropperViewController.h>
-#import <TOWebViewController.h>
+#import "TOJRWebView.h"
 #import "MakeOfferController.h"
 #import <PulsingHaloLayer.h>
 #import "customAlertViewClass.h"
 #import <QBImagePickerController/QBImagePickerController.h>
 
-@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,TOWebDelegate, MakeOfferDelegate, customAlertDelegate,QBImagePickerControllerDelegate, UITextViewDelegate>
+@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,JRWebViewDelegate, MakeOfferDelegate, customAlertDelegate,QBImagePickerControllerDelegate, UITextViewDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -82,8 +82,6 @@
 
 @property (nonatomic) BOOL receivedNew;
 
-@property (nonatomic, strong) TOWebViewController *webViewController;
-
 @property (nonatomic) BOOL pureWTS;
 @property (nonatomic) BOOL profileConvo;
 
@@ -103,5 +101,7 @@
 @property (nonatomic) BOOL offerReminderMode;
 @property (nonatomic) BOOL promptedBefore;
 
+//web
+@property (nonatomic, strong) TOJRWebView *webViewController;
 
 @end

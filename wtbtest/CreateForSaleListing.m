@@ -8,6 +8,7 @@
 
 #import "CreateForSaleListing.h"
 #import "UIImage+Resize.h"
+#import <Crashlytics/Crashlytics.h>
 
 @interface CreateForSaleListing ()
 
@@ -43,21 +44,30 @@
     [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
     [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
     
-    [self useCurrentLoc];
+    self.firstImageView.layer.cornerRadius = 4;
+    self.firstImageView.layer.masksToBounds = YES;
+    
+    self.secondImageView.layer.cornerRadius = 4;
+    self.secondImageView.layer.masksToBounds = YES;
+    
+    self.thirdImageView.layer.cornerRadius = 4;
+    self.thirdImageView.layer.masksToBounds = YES;
+    
+    self.fourthImageView.layer.cornerRadius = 4;
+    self.fourthImageView.layer.masksToBounds = YES;
     
     self.payField.placeholder = @"";
-    self.warningLabel.text = @"";
     self.genderSize = @"";
     self.photostotal = 0;
     self.descriptionField.delegate = self;
     self.payField.delegate = self;
     
-    [self addDoneButton];
+    [self saleaddDoneButton];
     
     self.descriptionCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.buttonCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.payCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.imageCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.spaceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -68,9 +78,47 @@
     
     self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
     
+    self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+    
     if (self.editMode == YES) {
-        [self listingSetup];
+        [self saleListingSetup];
+        [self.longButton setTitle:@"U P D A T E" forState:UIControlStateNormal];
+        
+        [Answers logCustomEventWithName:@"Viewed page"
+                       customAttributes:@{
+                                          @"pageName":@"Create For Sale Listing",
+                                          @"mode":@"Edit"
+                                          }];
     }
+    else{
+        //don't reset a previous location when editing
+        [self saleuseCurrentLoc];
+        [self.longButton setTitle:@"C R E A T E" forState:UIControlStateNormal];
+        
+        [Answers logCustomEventWithName:@"Viewed page"
+                       customAttributes:@{
+                                          @"pageName":@"Create For Sale Listing",
+                                          @"mode":@"New listing"
+                                          }];
+    }
+    
+    
+    [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+    [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+    [self.longButton addTarget:self action:@selector(savePressed) forControlEvents:UIControlEventTouchUpInside];
+    self.longButton.alpha = 0.0f;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.longButton.alpha = 1.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.buttonShowing = YES;
+                         NSLog(@"showing in load");
+                     }];
     
 //    PFQuery *userQueryForRand = [PFUser query];
 //    [userQueryForRand whereKey:@"username" containedIn:@[self.usernameToCheck]];
@@ -90,6 +138,19 @@
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+    if (self.buttonShowing == NO) {
+        self.longButton.alpha = 0.0f;
+        [UIView animateWithDuration:0.2
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.longButton.alpha = 1.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.buttonShowing = YES;
+                         }];
+    }
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
@@ -164,7 +225,7 @@
         return self.descriptionCell;
     }
     else if (indexPath.section ==3){
-        return self.buttonCell;
+        return self.spaceCell;
     }
     return nil;
 }
@@ -291,7 +352,7 @@
         return 104;
     }
     else if (indexPath.section ==3){
-        return 98;
+        return 60;
     }
     return 44;
 }
@@ -431,7 +492,6 @@
         if ([priceString isEqualToString:[NSString stringWithFormat:@"%@0.00", self.currencySymbol]] || [priceString isEqualToString:@""] || [priceString isEqualToString:[NSString stringWithFormat:@"%@.00", self.currencySymbol]] || [priceString isEqualToString:@"  "]) {
             //invalid price number
             NSLog(@"invalid price number");
-            self.warningLabel.text = @"Enter a valid price!";
             self.payField.text = @"";
         }
         else{
@@ -629,7 +689,6 @@
         self.chooseSize.text = @"select";
         self.payField.text = @"";
         self.descriptionField.text = @"e.g. Supreme Union Jack Bogo #box #logo";
-        self.warningLabel.text = @"";
         
         self.firstImageView.contentMode = UIViewContentModeScaleAspectFit;
         self.secondImageView.contentMode = UIViewContentModeScaleAspectFit;
@@ -650,8 +709,6 @@
         [self.secondDelete setHidden:YES];
         [self.thirdDelete setHidden:YES];
         [self.fourthDelete setHidden:YES];
-        
-        [self.saveButton setImage:[UIImage imageNamed:@"buyButton"] forState:UIControlStateNormal];
         
         self.photostotal = 0;
         self.camButtonTapped = 0;
@@ -705,7 +762,7 @@
     self.photostotal ++;
 }
 
-- (void)addDoneButton {
+- (void)saleaddDoneButton {
     UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
     [keyboardToolbar sizeToFit];
     UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
@@ -718,7 +775,7 @@
     self.payField.inputAccessoryView = keyboardToolbar;
 }
 
--(void)useCurrentLoc{
+-(void)saleuseCurrentLoc{
     [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
         if (!error) {
             double latitude = geoPoint.latitude;
@@ -975,19 +1032,19 @@
     [self.fourthCam setEnabled:YES];
     [self.fourthDelete setHidden:YES];
 }
-- (IBAction)listItemPressed:(id)sender {
-    [self.saveButton setEnabled:NO];
+- (void)savePressed{
+    [self.longButton setEnabled:NO];
     
     NSString *descriptionCheck = [self.descriptionField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     if([self.chooseCategroy.text isEqualToString:@"Accessories"] && ( [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"]|| [self.payField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]])){
         NSLog(@"accessories selected but haven't filled everything else in");
-        self.warningLabel.text = @"Fill out all the above fields";
-        [self.saveButton setEnabled:YES];
+        [self showAlertWithTitle:@"Empty Fields" andMsg:@"Make sure you add all your item info!"];
+        [self.longButton setEnabled:YES];
     }
     else if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"]|| [descriptionCheck isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
-        self.warningLabel.text = @"Fill out all the above fields";
-        [self.saveButton setEnabled:YES];
+        [self showAlertWithTitle:@"Empty Fields" andMsg:@"Make sure you add all your item info!"];
+        [self.longButton setEnabled:YES];
     }
     else{
         [self showHUD];
@@ -1036,8 +1093,8 @@
         if ([priceString isEqualToString:[NSString stringWithFormat:@"%@0.00", self.currencySymbol]] || [priceString isEqualToString:@""] || [priceString isEqualToString:[NSString stringWithFormat:@"%@.00", self.currencySymbol]] || [priceString isEqualToString:@"  "]) {
             //invalid price number
             NSLog(@"invalid price number");
-            self.warningLabel.text = @"Enter a valid price!";
-            [self.saveButton setEnabled:YES];
+            [self showAlertWithTitle:@"Enter Valid Price" andMsg:@"Make sure to use a sensible price!"];
+            [self.longButton setEnabled:YES];
             return;
         }
         
@@ -1175,12 +1232,16 @@
                 [forSaleItem setObject:index forKey:@"index"];
                 [forSaleItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                     if (succeeded) {
+                        
+                        [Answers logCustomEventWithName:@"Created for sale listing"
+                                       customAttributes:@{}];
+                        
                         [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
                         [[PFUser currentUser] saveInBackground];
                         //                [self.cabin incrementKey:@"forSalePostNumber"];
                         //                [self.cabin saveInBackground];
                         
-                        [self.saveButton setEnabled:YES];
+                        [self.longButton setEnabled:YES];
                         
                         self.hud.labelText = @"Saved!";
                         
@@ -1198,7 +1259,7 @@
                     else{
                         //error saving listing
                         [self hidHUD];
-                        [self.saveButton setEnabled:YES];
+                        [self.longButton setEnabled:YES];
                         NSLog(@"error saving %@", error);
                     }
                 }];
@@ -1206,8 +1267,8 @@
             else{
                 NSLog(@"error counting %@", error);
                 [self hidHUD];
-                self.warningLabel.text = @"Save Error";
-                [self.saveButton setEnabled:YES];
+                [self showAlertWithTitle:@"Save Error" andMsg:@"Check your connection and try again!"];
+                [self.longButton setEnabled:YES];
                 return;
             }
         }];
@@ -1230,12 +1291,21 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [self hidHUD];
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.longButton setAlpha:0.0];
+                     }
+                     completion:^(BOOL finished) {
+                         self.buttonShowing = NO;
+                     }];
 }
 
--(void)listingSetup{
+-(void)saleListingSetup{
     self.navigationItem.title = @"E D I T";
     
-    [self.saveButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
+    [self.longButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     
     self.descriptionField.text = [self.listing objectForKey:@"description"];
     
@@ -1316,6 +1386,16 @@
         [self.fourthCam setEnabled:NO];
         self.photostotal = 4;
     }
+}
+
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 
 @end

@@ -69,6 +69,7 @@
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.welcomeView = [[WelcomeViewController alloc] init];
     self.createView = [[CreateViewController alloc]init];
+    self.simpleCreateView = [[simpleCreateVC alloc]init];
     self.exploreView = [[ExploreVC alloc]init];
     self.profileView = [[ProfileController alloc]init];
     self.inboxView = [[InboxViewController alloc]init];
@@ -78,13 +79,14 @@
     
     NavigationController *navController = [[NavigationController alloc] initWithRootViewController:self.exploreView];
     NavigationController *navController1 = [[NavigationController alloc] initWithRootViewController:self.createView];
+    NavigationController *navController6 = [[NavigationController alloc] initWithRootViewController:self.simpleCreateView];
     NavigationController *navController2 = [[NavigationController alloc] initWithRootViewController:self.profileView];
 //    NavigationController *navController3 = [[NavigationController alloc] initWithRootViewController:self.welcomeView];
     NavigationController *navController4 = [[NavigationController alloc] initWithRootViewController:self.inboxView];
     NavigationController *navController5 = [[NavigationController alloc] initWithRootViewController:self.buyView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController,navController5,navController1,navController4, navController2, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController,navController5,navController6,navController4, navController2, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
     [self.tabBarController.tabBar setTintColor:[UIColor whiteColor]];
@@ -421,10 +423,10 @@
 }
 
 //prevent user going back on create VC by tapping tab bar
-- (BOOL)tabBarController:(UITabBarController *)theTabBarController shouldSelectViewController:(UIViewController *)viewController
-{    
-    return (theTabBarController.selectedViewController != viewController);
-}
+//- (BOOL)tabBarController:(UITabBarController *)theTabBarController shouldSelectViewController:(UIViewController *)viewController
+//{
+//    return (theTabBarController.selectedViewController != viewController);
+//}
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
     // handler code here

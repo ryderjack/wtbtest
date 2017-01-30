@@ -61,7 +61,6 @@
             [current saveInBackground];
             
             CreateViewController *vc = [[CreateViewController alloc]init];
-            vc.introMode = YES;
             [self.navigationController pushViewController:vc animated:YES];
         }
         else{
