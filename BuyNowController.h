@@ -77,5 +77,8 @@
 //web view
 @property (nonatomic, strong) TOJRWebView *web;
 
+//tap
+@property (nonatomic, strong) UITapGestureRecognizer *tap;
+
 
 @end

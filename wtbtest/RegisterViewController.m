@@ -11,10 +11,11 @@
 #import "ContainerViewController.h"
 #import "NavigationController.h"
 #import "AppConstant.h"
-#import <TOWebViewController.h>
 #import "MessagesTutorial.h"
 #import "Tut1ViewController.h"
 #import <Crashlytics/Crashlytics.h>
+#import "UIImage+Resize.h"
+
 
 @interface RegisterViewController ()
 @end
@@ -180,7 +181,7 @@
         NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", userData[@"id"]];
         NSURL *picUrl = [NSURL URLWithString:userImageURL];
         NSData *pic = [NSData dataWithContentsOfURL:picUrl];
-        [self.profileImageView setImage:[UIImage imageWithData:pic]];
+        [self.profilePicture setImage:[UIImage imageWithData:pic]];
         [self setImageBorder];
         
         // setup feedback
@@ -336,10 +337,10 @@
 }
 
 -(void)setImageBorder{
-    self.profileImageView.layer.cornerRadius = self.profileImageView.frame.size.width / 2;
-    self.profileImageView.layer.masksToBounds = YES;
-    self.profileImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-    self.profileImageView.contentMode = UIViewContentModeScaleAspectFill;
+    self.profilePicture.layer.cornerRadius = self.profilePicture.frame.size.width / 2;
+    self.profilePicture.layer.masksToBounds = YES;
+    self.profilePicture.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    self.profilePicture.contentMode = UIViewContentModeScaleAspectFill;
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{
@@ -413,10 +414,7 @@
             [self.regButton setEnabled:YES];
         }
         else{
-            self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
-            self.hud.square = YES;
-            self.hud.mode = MBProgressHUDModeCustomView;
-            self.hud.customView = self.spinner;
+            [self showHUD];
             [self.spinner startAnimating];
             [Answers logCustomEventWithName:@"Selected currency"
                            customAttributes:@{
@@ -545,7 +543,7 @@
                                  }];
                                  
                                  //progress to tutorial
-                                 [self dismissHUD];
+                                 [self hideHUD];
                                  Tut1ViewController *vc = [[Tut1ViewController alloc]init];
                                  vc.clickMode = YES;
                                  [self.navigationController pushViewController:vc animated:YES];
@@ -553,7 +551,7 @@
                              else
                              {
                                  [self.regButton setEnabled:YES];
-                                 [self dismissHUD];
+                                 [self hideHUD];
                                  NSLog(@"error %@", error);
                                  UIAlertController * alert=   [UIAlertController
                                                                alertControllerWithTitle:@"Error"
@@ -567,7 +565,7 @@
                     }
                     else{
                         NSLog(@"username taken");
-                        [self dismissHUD];
+                        [self hideHUD];
                         [self.regButton setEnabled:YES];
                         self.warningLabel.text = @"Username taken";
                         self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
@@ -604,11 +602,6 @@
     return [emailTest evaluateWithObject:checkString];
 }
 
--(void)dismissHUD{
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [MBProgressHUD hideHUDForView:self.view animated:YES];
-    });
-}
 - (IBAction)GBPPressed:(id)sender {
     if (self.GBPButton.selected == YES) {
     }
@@ -641,26 +634,35 @@
 }
 - (IBAction)termsPressed:(id)sender {
     NSString *URLString = @"http://www.sobump.com/terms.html";
-    TOWebViewController *webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
-    webViewController.title = @"Terms & Conditions";
-    webViewController.showUrlWhileLoading = YES;
-    webViewController.showPageTitles = NO;
-    webViewController.doneButtonTitle = @"";
-    webViewController.paypalMode = NO;
+    self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
+    self.webViewController.title = @"Terms & Conditions";
+    self.webViewController.showUrlWhileLoading = YES;
+    self.webViewController.showPageTitles = NO;
+    self.webViewController.doneButtonTitle = @"";
+    self.webViewController.paypalMode = NO;
+    self.webViewController.delegate = self;
     //hide toolbar banner
-    webViewController.infoMode = NO;
-    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:webViewController];
+    self.webViewController.infoMode = NO;
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
-- (IBAction)depopInfoPressed:(id)sender {
-    UIAlertController * alert=   [UIAlertController
-                                  alertControllerWithTitle:@"Depop matching"
-                                  message:@"Already selling loads of stuff on depop? Let us know your depop handle and our clever code will check out your account then let you know on Bump when someone wants what you're selling.\nSit back and relax 🐸☕️"
-                                  preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:nil];
-    [alert addAction:ok];
-    [self presentViewController:alert animated:YES completion:nil];
+
+-(void)paidPressed{
+    //do nothing
 }
+
+-(void)cancelWebPressed{
+    [self.webViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)cameraPressed{
+    //do nothing
+}
+
+-(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
+    //do nothing
+}
+
 - (IBAction)pressedChoose:(id)sender {
     if (!self.picker) {
         self.picker = [[UIImagePickerController alloc] init];
@@ -672,23 +674,28 @@
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
-    self.profileImageView.image = info[UIImagePickerControllerOriginalImage];
-    NSData* data = UIImageJPEGRepresentation(self.profileImageView.image, 0.5f);
     
-    if (data == nil) {
-        [Answers logCustomEventWithName:@"PFFile Nil Data"
-                       customAttributes:@{
-                                          @"pageName":@"Reg"
-                                          }];
-        
-        //prevent crash when creating a PFFile with nil data
-        self.warningLabel.text = @"Image Error, try adding your image again";
-        return;
-    }
-    
-    PFFile *imageFile = [PFFile fileWithName:@"Image.jpg" data:data];
-    self.user[PF_USER_PICTURE] = imageFile;
     self.pressedCam = YES;
+    UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
+    self.profilePicture.image = nil;
+    [self showHUD];
+    UIImage *imageToSave = [chosenImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
+    
+    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(imageToSave, 0.7)];
+    
+    [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            [self.profilePicture setFile:filePicture];
+            [self.profilePicture loadInBackground];
+            [self hideHUD];
+
+            self.user[PF_USER_PICTURE] = filePicture;
+        }
+        else{
+            NSLog(@"error saving file %@", error);
+            [self hideHUD];
+        }
+    }];
     [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -724,6 +731,23 @@
         [_locationManager startUpdatingLocation];
     }
     [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForLocationPermission"];
+}
+
+-(void)showHUD{
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    if (!self.spinner) {
+        self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    }
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+}
+
+-(void)hideHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
+    });
 }
 
 @end

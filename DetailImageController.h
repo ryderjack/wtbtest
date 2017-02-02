@@ -11,23 +11,24 @@
 #import <ParseUI/ParseUI.h>
 #import <MBProgressHUD.h>
 #import <DGActivityIndicatorView.h>
+#import <iCarousel.h>
 
-@interface DetailImageController : UIViewController <UIScrollViewDelegate>
+@class DetailImageController;
 
+@protocol DetailImageDelegate <NSObject>
+- (void)dismissedDetailImageView;
+@end
 
-@property (weak, nonatomic) IBOutlet PFImageView *imageView;
+@interface DetailImageController : UIViewController <UIScrollViewDelegate, iCarouselDelegate, iCarouselDataSource>
+
 @property (weak, nonatomic) IBOutlet UIPageControl *pageControl;
 @property (assign, nonatomic) NSInteger index;
 
-@property (nonatomic, strong) PFFile *firstImage;
-@property (nonatomic, strong) PFFile *secondImage;
-@property (nonatomic, strong) PFFile *thirdImage;
-@property (nonatomic, strong) PFFile *fourthImage;
 @property (nonatomic, strong) PFObject *listing;
 @property (nonatomic) int numberOfPics;
 @property (weak, nonatomic) IBOutlet UILabel *tagLabel;
+// if its a listing pic then we dont show the tag label
 
-// if its a listing pic then we dont show the tag label ^
 @property (nonatomic) BOOL listingPic;
 @property (nonatomic) BOOL messagesPicMode;
 @property (nonatomic, strong) UIImage *messagePicture;
@@ -38,8 +39,16 @@
 
 //spinner
 @property (nonatomic, strong) MBProgressHUD *hud;
+@property (nonatomic, strong) DGActivityIndicatorView *spinner;
 
 //scroll view
 @property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+
+//carousel
+@property (weak, nonatomic) IBOutlet iCarousel *carousel;
+@property (nonatomic) int chosenIndex;
+
+@property (nonatomic, weak) id <DetailImageDelegate> delegate;
+
 
 @end

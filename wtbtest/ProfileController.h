@@ -8,8 +8,9 @@
 
 #import <UIKit/UIKit.h>
 #import <MessageUI/MessageUI.h>
+#import "TOJRWebView.h"
 
-@interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate>
+@interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate, JRWebViewDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *receivedOffers;
@@ -23,5 +24,8 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *savedLaterCell;
 @property (weak, nonatomic) IBOutlet UIImageView *unreadView;
 @property (strong, nonatomic) IBOutlet UITableViewCell *termsCell;
+
+//web
+@property (nonatomic, strong) TOJRWebView *webView;
 
 @end

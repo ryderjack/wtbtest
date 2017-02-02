@@ -59,7 +59,7 @@
             //check if completed reg/tutorial via NSUserDefaults/user object
             [self hidHUD];
             
-            if ([[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"] ) { //CHANGE
+            if ([[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"] ) { //CHECK
                 
                 //update installation object w/ current user
                 PFInstallation *installation = [PFInstallation currentInstallation];

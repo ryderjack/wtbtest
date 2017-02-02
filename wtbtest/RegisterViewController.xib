@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1212" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1217" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -36,7 +36,7 @@
                 <outlet property="nameCell" destination="7Gu-dy-uzr" id="AlK-L0-J60"/>
                 <outlet property="nameField" destination="VED-Fr-fFt" id="36w-Fq-oKy"/>
                 <outlet property="pictureCell" destination="X40-2w-7JG" id="3w7-Xb-uLn"/>
-                <outlet property="profileImageView" destination="TNt-d3-tiV" id="drw-XP-His"/>
+                <outlet property="profilePicture" destination="TNt-d3-tiV" id="BoP-iQ-b47"/>
                 <outlet property="regCell" destination="m1m-sl-Qpn" id="kyt-ly-wvn"/>
                 <outlet property="titleCell" destination="Cj6-OJ-qkh" id="l2n-Ab-mgz"/>
                 <outlet property="usernameCell" destination="dKZ-Ec-gNl" id="Qho-n7-k0k"/>
@@ -194,7 +194,7 @@
                         <color key="textColor" red="0.22546875476837158" green="0.22546195983886719" blue="0.22546583414077759" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="TNt-d3-tiV">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="TNt-d3-tiV" customClass="PFImageView">
                         <rect key="frame" x="120" y="45" width="80" height="80"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="80" id="Qwt-vF-Sxh"/>

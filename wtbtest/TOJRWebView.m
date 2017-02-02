@@ -23,7 +23,7 @@
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
     self.applicationLeftBarButtonItems = @[cancelButton];
     
-    if (self.createMode == YES) {
+    if (self.createMode == YES || self.editMode == YES) {
         self.tapCount = 0;
         UITapGestureRecognizer *targetGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
         targetGesture.numberOfTapsRequired = 1;
@@ -131,7 +131,8 @@
 
 
 -(void)screenshotHit{
-    if (self.tapCount == 0) {
+    if (self.tapCount == 0 && self.createMode == YES) {
+        NSLog(@"zero");
         return;
     }
     
@@ -239,7 +240,6 @@
 }
 -(void)handleTap:(id)sender{
     self.tapCount++;
-    [self.longButton setEnabled:YES];
 }
 
 //show one tap warning

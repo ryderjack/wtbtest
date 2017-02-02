@@ -116,7 +116,9 @@
                                       NSFontAttributeName, nil];
     [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:searchAttributes];
     
-    if ([FBSDKAccessToken currentAccessToken] == nil) {
+    
+    if (![FBSDKAccessToken currentAccessToken]) {
+        NSLog(@"invalid token in VDL");
         //invalid access token
         [PFUser logOut];
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
@@ -166,13 +168,33 @@
     if (currentUser) {
         if (![[currentUser objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
             [PFUser logOut];
+            WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+            NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+            [self presentViewController:navController animated:NO completion:nil];
         }
         
         if (![currentUser objectForKey:PF_USER_FULLNAME] || ![currentUser objectForKey:PF_USER_EMAIL] || ![currentUser objectForKey:@"currency"] || ![currentUser objectForKey:PF_USER_FACEBOOKID] || ![currentUser objectForKey: PF_USER_GENDER] || ![currentUser objectForKey:@"picture"] || currentUser.username.length > 10) {
             //been an error on sign up as user doesn't have all info saved
             currentUser[@"completedReg"] = @"NO";
+            [currentUser saveInBackground];
             [PFUser logOut];
+            WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+            NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+            [self presentViewController:navController animated:NO completion:nil];
         }
+        
+        //check if user is banned
+        PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+        [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+        [bannedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+            if (number > 1) {
+                //user is banned - log them out
+                [PFUser logOut];
+                WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+                NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+                [self presentViewController:navController animated:NO completion:nil];
+            }
+        }];
         
         if (![currentUser objectForKey:@"wantedWords"]) {
             PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
@@ -211,7 +233,7 @@
         if (object) {
             NSString *latest = [object objectForKey:@"number"];
             if (![appVersion isEqualToString:latest]) {
-                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:@"Harder, better, faster, stronger" preferredStyle:UIAlertControllerStyleAlert];
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:nil preferredStyle:UIAlertControllerStyleAlert];
                 
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
                 }]];
@@ -219,7 +241,7 @@
                     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
                                                                 @"itms-apps://itunes.apple.com/app/id1096047233"]];
                 }]];
-//                [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
+                [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
             }
         }
         else{
@@ -315,11 +337,6 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    
-    //CHANGE
-//    Tut1ViewController *vc = [[Tut1ViewController alloc]init];
-//    vc.clickMode = YES;
-//    [self presentViewController:vc animated:YES completion:nil];
 
     [self.collectionView.infiniteScrollingView stopAnimating];
     [Answers logCustomEventWithName:@"Viewed page"
@@ -333,7 +350,7 @@
     }
     if ([PFUser currentUser]) {
         
-        if (![[[PFUser currentUser] objectForKey:@"searchIntro"] isEqualToString:@"YES"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"viewMorePressed"] != YES) {
+        if (![[[PFUser currentUser] objectForKey:@"searchIntro"] isEqualToString:@"YES"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"viewMorePressed"] != YES && [[[PFUser currentUser] objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
             
             //trigger location for first sign in
             [self parseLocation];
@@ -768,7 +785,7 @@
             
             CLLocation *currentLocation = _locationManager.location;
             if (currentLocation) {
-                //got location
+                //get location
                 [self parseLocation];
             }
         }
@@ -799,6 +816,23 @@
     [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
         if (geoPoint) {
             self.currentLocation = geoPoint;
+            double latitude = geoPoint.latitude;
+            double longitude = geoPoint.longitude;
+            
+            CLLocation *loc = [[CLLocation alloc]initWithLatitude:latitude longitude:longitude];
+            CLGeocoder *geocoder = [[CLGeocoder alloc]init];
+            [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
+                if (placemarks) {
+                    CLPlacemark *placemark = [placemarks lastObject];
+                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.ISOcountryCode];
+                    [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
+                    [[PFUser currentUser]saveInBackground];
+                }
+                else{
+                    NSLog(@"error %@", error);
+                }
+            }];
+
         }
         else{
             NSLog(@"no geopoint %@", error);
@@ -1558,4 +1592,13 @@
         } completion:nil];
     }
 }
+
+-(void)doubleTapScroll{
+    if (self.results.count != 0) {
+        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+                                    atScrollPosition:UICollectionViewScrollPositionTop
+                                            animated:YES];
+    }
+}
+
 @end

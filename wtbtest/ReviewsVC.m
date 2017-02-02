@@ -18,7 +18,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"Reviews";
+    self.navigationItem.title = @"R E V I E W S";
     
     self.tableView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     [self.tableView registerNib:[UINib nibWithNibName:@"ReviewCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
@@ -163,6 +163,15 @@
     }
     
     return cell;
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    [self.navigationController.navigationBar setHidden:NO];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
 }
 
 -(void)setImageBorder:(UIImageView *)imageView withNumber:(int)number{

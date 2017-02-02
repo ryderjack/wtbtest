@@ -72,10 +72,19 @@
     [query getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             NSString *title = [object objectForKey:@"title"];
-            NSString *condition = [object objectForKey:@"condition"];
-            NSString *size = [object objectForKey:@"sizeLabel"];
             
-            self.textView.text = [NSString stringWithFormat:@"WTB:\n%@\nCondition: %@\nSize: %@", title, condition, size];
+            if ([object objectForKey:@"condition"] && [object objectForKey:@"sizeLabel"]) {
+                NSString *condition = [object objectForKey:@"condition"];
+                NSString *size = [object objectForKey:@"sizeLabel"];
+                self.textView.text = [NSString stringWithFormat:@"WTB:\n%@\nCondition: %@\nSize: %@", title, condition, size];
+            }
+            else if (![object objectForKey:@"condition"] && [object objectForKey:@"sizeLabel"]) {
+                NSString *size = [object objectForKey:@"sizeLabel"];
+                self.textView.text = [NSString stringWithFormat:@"WTB:\n%@\nSize: %@", title, size];
+            }
+            else if (![object objectForKey:@"condition"] && ![object objectForKey:@"sizeLabel"]) {
+                self.textView.text = [NSString stringWithFormat:@"WTB:\n%@", title];
+            }            
             
             //\nPosted via Bump http://apple.co/2aY3rBk
         }

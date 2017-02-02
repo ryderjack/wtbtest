@@ -45,13 +45,13 @@
 //        configuration.server = @"http://localhost:1337/parse";
         
         //production
-//        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
+        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
         
         //preproduction
-        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
+//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
     }]];
 
-//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
     [[ChimpKit sharedKit] setApiKey:@"5cbba863ff961ff8c60266185defc785-us14"];
@@ -434,6 +434,24 @@
     NSLog(@"url recieved: %@", url);
     
     return YES;
+}
+
+- (void)tabBarController:(UITabBarController *)tabBarController
+ didSelectViewController:(UIViewController *)viewController
+{
+    static UIViewController *previousController = nil;
+    if (previousController == viewController) {
+        // the same tab was tapped a second time
+        
+        if ([viewController isKindOfClass:[NavigationController class]]) {
+            NavigationController *vc = (NavigationController *)viewController;
+            if ([vc.visibleViewController isKindOfClass:[ExploreVC class]]){
+                [self.exploreView doubleTapScroll];
+            }
+        }
+        
+    }
+    previousController = viewController;
 }
 
 @end

@@ -23,6 +23,8 @@
                 <outlet property="buyerImgView" destination="wfg-yD-IRF" id="Mja-Co-PFX"/>
                 <outlet property="buyerinfoCell" destination="vll-s6-WMk" id="yv2-BA-kzN"/>
                 <outlet property="buyernameLabel" destination="c20-QR-DwN" id="GJ8-NB-fD4"/>
+                <outlet property="carouselMainCell" destination="9Eg-5k-lG2" id="EWl-Qr-sO4"/>
+                <outlet property="carouselView" destination="1Cj-Ef-cXB" id="KCj-E1-Bab"/>
                 <outlet property="checkImageView" destination="pVD-OL-oRX" id="moE-e3-tev"/>
                 <outlet property="conditionCell" destination="2MB-Pt-CPs" id="3hb-BD-v2M"/>
                 <outlet property="conditionLabel" destination="sff-ya-Qgc" id="42H-IQ-llM"/>
@@ -32,17 +34,17 @@
                 <outlet property="mainCell" destination="7oO-Et-nt3" id="Qg7-gu-Giq"/>
                 <outlet property="pastDealsLabel" destination="x8B-MK-Pxw" id="omj-jc-YMt"/>
                 <outlet property="payCell" destination="HFS-yr-zNd" id="fZN-iD-NMX"/>
-                <outlet property="picIndicator" destination="q6d-Yh-gwu" id="mtO-UV-RP4"/>
+                <outlet property="picIndicator" destination="EZF-N4-P8l" id="4o3-GC-7gn"/>
                 <outlet property="picView" destination="dx5-PB-QpB" id="Xnq-o0-Obb"/>
                 <outlet property="postedLabel" destination="y6Q-G3-2lx" id="NdP-Fa-hnG"/>
                 <outlet property="priceLabel" destination="5sx-RB-gTv" id="Zyo-wl-fat"/>
-                <outlet property="purchasedCheckView" destination="TuT-Ri-jcY" id="qDp-CO-RIm"/>
-                <outlet property="purchasedLabel" destination="8Uo-Hm-zoR" id="fd6-ft-Hdk"/>
+                <outlet property="purchasedCheckView" destination="Q6t-03-GEX" id="Der-Sg-i3o"/>
+                <outlet property="purchasedLabel" destination="Olc-lY-AYt" id="zX8-ee-Xj3"/>
                 <outlet property="sizeCell" destination="heo-GX-JcV" id="Py8-ii-ZMK"/>
                 <outlet property="sizeLabel" destination="HKy-Pd-Eab" id="Paf-Wj-R3E"/>
                 <outlet property="spaceCell" destination="hZq-I9-dbn" id="DP0-dF-68S"/>
                 <outlet property="starImageView" destination="nDm-QT-8vg" id="V6L-9r-KVb"/>
-                <outlet property="titleLabel" destination="ftd-WT-Z4U" id="Wz3-me-6dP"/>
+                <outlet property="titleLabel" destination="yXs-mA-ruQ" id="ww8-wz-6qy"/>
                 <outlet property="upVoteButton" destination="ln7-Ug-WZr" id="SBM-iv-YD4"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
                 <outlet property="viewBumpsButton" destination="xw7-Fs-wVq" id="Mo4-IE-Ztp"/>
@@ -62,7 +64,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="246"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="7oO-Et-nt3" id="5Tf-ze-Vs9">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="246"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="245"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="dx5-PB-QpB" customClass="PFImageView">
@@ -167,7 +169,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="heo-GX-JcV" id="TRe-CM-LFS">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="expand.png" translatesAutoresizingMaskIntoConstraints="NO" id="XUR-3S-hPL">
@@ -495,6 +497,69 @@
             </tableViewCellContentView>
             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
             <point key="canvasLocation" x="-180" y="1705"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="246" id="9Eg-5k-lG2">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="246"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="9Eg-5k-lG2" id="6Y3-hw-Yg4">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="245"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yXs-mA-ruQ">
+                        <rect key="frame" x="8" y="0.0" width="304" height="50"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="50" id="1Ko-IH-Nbb"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="16"/>
+                        <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <pageControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" numberOfPages="3" translatesAutoresizingMaskIntoConstraints="NO" id="EZF-N4-P8l">
+                        <rect key="frame" x="141" y="209" width="39" height="37"/>
+                        <color key="pageIndicatorTintColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="currentPageIndicatorTintColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                    </pageControl>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="purchasedCheck.png" translatesAutoresizingMaskIntoConstraints="NO" id="Q6t-03-GEX">
+                        <rect key="frame" x="8" y="226" width="15" height="15"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="15" id="1fk-kv-NPd"/>
+                            <constraint firstAttribute="width" constant="15" id="mOY-tq-xM1"/>
+                        </constraints>
+                    </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Purchased" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Olc-lY-AYt">
+                        <rect key="frame" x="31" y="224" width="94" height="19"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="94" id="tp2-JI-WbU"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.056806344699999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="1Cj-Ef-cXB" customClass="iCarousel">
+                        <rect key="frame" x="80" y="58" width="160" height="160"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="160" id="aXk-bO-YRw"/>
+                            <constraint firstAttribute="height" constant="160" id="riA-Jm-3bH"/>
+                        </constraints>
+                    </view>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="Olc-lY-AYt" firstAttribute="top" secondItem="1Cj-Ef-cXB" secondAttribute="bottom" constant="6" id="3CS-Wt-MaR"/>
+                    <constraint firstItem="yXs-mA-ruQ" firstAttribute="trailing" secondItem="6Y3-hw-Yg4" secondAttribute="trailingMargin" id="4tM-Py-O6o"/>
+                    <constraint firstItem="Q6t-03-GEX" firstAttribute="centerY" secondItem="Olc-lY-AYt" secondAttribute="centerY" id="5J0-DK-8UV"/>
+                    <constraint firstItem="1Cj-Ef-cXB" firstAttribute="leading" secondItem="6Y3-hw-Yg4" secondAttribute="leadingMargin" constant="72" id="E98-Uo-sFm"/>
+                    <constraint firstItem="yXs-mA-ruQ" firstAttribute="top" secondItem="6Y3-hw-Yg4" secondAttribute="top" id="GhC-t5-SJf"/>
+                    <constraint firstItem="1Cj-Ef-cXB" firstAttribute="centerX" secondItem="EZF-N4-P8l" secondAttribute="centerX" id="HVk-LH-ebQ"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="EZF-N4-P8l" secondAttribute="bottom" constant="-9" id="M6b-ge-gSM"/>
+                    <constraint firstItem="Olc-lY-AYt" firstAttribute="leading" secondItem="Q6t-03-GEX" secondAttribute="trailing" constant="8" symbolic="YES" id="NGW-lV-oEE"/>
+                    <constraint firstItem="1Cj-Ef-cXB" firstAttribute="centerX" secondItem="yXs-mA-ruQ" secondAttribute="centerX" id="Nvd-6R-qo3"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="Olc-lY-AYt" secondAttribute="bottom" constant="-5.5" id="Zf3-5p-ink"/>
+                    <constraint firstItem="Q6t-03-GEX" firstAttribute="leading" secondItem="yXs-mA-ruQ" secondAttribute="leading" id="bw3-gH-gCa"/>
+                    <constraint firstItem="yXs-mA-ruQ" firstAttribute="leading" secondItem="6Y3-hw-Yg4" secondAttribute="leadingMargin" id="f66-gU-upj"/>
+                    <constraint firstItem="1Cj-Ef-cXB" firstAttribute="top" secondItem="yXs-mA-ruQ" secondAttribute="bottom" constant="8" symbolic="YES" id="tZk-3t-CPe"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-644" y="155"/>
         </tableViewCell>
     </objects>
     <resources>

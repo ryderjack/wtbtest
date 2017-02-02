@@ -12,6 +12,8 @@
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
 #import <DGActivityIndicatorView.h>
+#import <iCarousel.h>
+#import "DetailImageController.h"
 
 @class ListingController;
 
@@ -19,7 +21,7 @@
 - (void)addItemViewController:(ListingController *)controller listing:(PFObject *)object;
 @end
 
-@interface ListingController : UITableViewController
+@interface ListingController : UITableViewController <iCarouselDataSource, iCarouselDelegate, DetailImageDelegate>
 
 @property (nonatomic, weak) id <ListingControllerDelegate> delegate;
 @property (nonatomic, strong) PFObject *listingObject;
@@ -36,6 +38,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *buyerinfoCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *buttonCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *carouselMainCell;
 
 //main cell
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
@@ -99,6 +102,10 @@
 //big button
 @property (nonatomic, strong) UIButton *longButton;
 @property (nonatomic) BOOL buttonShowing;
+
+//carousel Cell
+@property (weak, nonatomic) IBOutlet iCarousel *carouselView;
+
 
 
 

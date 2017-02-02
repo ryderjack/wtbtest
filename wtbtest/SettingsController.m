@@ -8,6 +8,7 @@
 
 #import "SettingsController.h"
 #import <Crashlytics/Crashlytics.h>
+#import "UIImage+Resize.h"
 
 @interface SettingsController ()
 
@@ -180,18 +181,29 @@
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     self.profileImage = info[UIImagePickerControllerOriginalImage];
     self.testingView.image = nil;
-    
-    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(self.profileImage, 0.7)];
-    [self.testingView setFile:filePicture];
-    [self.testingView loadInBackground];
-    
-    self.currentUser [@"picture"] = filePicture;
-    [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+    [self showHUD];
+    UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
+    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(imageToSave, 0.7)];
+    [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
-            NSLog(@"saved!");
+            [self.testingView setFile:filePicture];
+            [self.testingView loadInBackground];
+            
+            self.currentUser [@"picture"] = filePicture;
+            [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    NSLog(@"saved!");
+                    [self hideHUD];
+                }
+                else{
+                    NSLog(@"error saving %@", error);
+                    [self hideHUD];
+                }
+            }];
         }
         else{
-            NSLog(@"error saving %@", error);
+            NSLog(@"error saving file %@", error);
+            [self hideHUD];
         }
     }];
     [picker dismissViewControllerAnimated:YES completion:nil];
@@ -318,6 +330,7 @@
     
     [self.currentUser setObject:@"YES" forKey:@"paypalUpdated"];
     [self.currentUser saveInBackground];
+    [self hideHUD];
 }
 
 - (IBAction)GBPPressed:(id)sender {
@@ -412,5 +425,22 @@
 
 -(void)addItemViewController:(ShippingController *)controller didFinishEnteringAddress:(NSString *)address{
     self.addLabel.text = address;
+}
+
+-(void)showHUD{
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    if (!self.spinner) {
+        self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    }
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+}
+
+-(void)hideHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
+    });
 }
 @end

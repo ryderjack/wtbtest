@@ -12,37 +12,32 @@
 #import <MBProgressHUD.h>
 #import <DGActivityIndicatorView.h>
 #import <SpinKit/RTSpinKitView.h>
+#import "BLKDelegateSplitter.h"
+#import "TOJRWebView.h"
+#import "BLKFlexibleHeightBar.h"
+#import "HMSegmentedControl.h"
 
-@interface UserProfileController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
+
+@interface UserProfileController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, JRWebViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSArray *WTBArray;
 @property (nonatomic, strong) NSArray *forSaleArray;
 
 @property (nonatomic, strong) NSMutableArray *feedbackArray;
-@property (weak, nonatomic) IBOutlet PFImageView *headerImgView;
-@property (weak, nonatomic) IBOutlet UILabel *dealsLabel;
-@property (weak, nonatomic) IBOutlet UIImageView *starImgView;
 @property (nonatomic, strong) PFUser *user;
-@property (weak, nonatomic) IBOutlet UILabel *nothingLabel;
-@property (weak, nonatomic) IBOutlet PFImageView *checkImageView;
 
 //currency
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
 
-//other labels
-@property (weak, nonatomic) IBOutlet UILabel *sellerLabel;
-@property (weak, nonatomic) IBOutlet UILabel *numberLabel;
-
+//user
+@property (nonatomic, strong) NSString *usernameToList;
 @property (nonatomic) BOOL isSeller;
-@property (weak, nonatomic) IBOutlet UISegmentedControl *sellerSegmentControl;
-
 @property (nonatomic) BOOL forSalePressed;
 @property (nonatomic) BOOL WTBPressed;
 @property (nonatomic) BOOL saleMode;
 
-@property (nonatomic, strong) NSString *usernameToList;
 
 @property (nonatomic) BOOL fromSearch;
 
@@ -51,5 +46,29 @@
 @property (nonatomic, strong) MBProgressHUD *hud;
 @property (nonatomic, strong) DGActivityIndicatorView *imageSpinner;
 @property (nonatomic, strong) MBProgressHUD *imageHud;
+
+//multi delegates
+@property (nonatomic, strong) BLKDelegateSplitter *splitter;
+
+//headerview setup
+@property (nonatomic, strong) PFImageView *smallImageView;
+@property (nonatomic, strong) PFImageView *userImageView;
+@property (nonatomic, strong) UILabel *usernameLabel;
+@property (nonatomic, strong) UILabel *middleUsernameLabel;
+@property (nonatomic, strong) UILabel *nameAndLoc;
+@property (nonatomic, strong) UILabel *smallNameAndLoc;
+@property (nonatomic, strong) PFImageView *starImageView;
+@property (nonatomic, strong) NSString *reviewsString;
+@property (nonatomic, strong) UIButton *dotsButton;
+@property (nonatomic, strong) UIButton *FBButton;
+@property (nonatomic, strong) BLKFlexibleHeightBar *myBar;
+@property (nonatomic, strong) UIButton *reviewsButton;
+
+//web view
+@property (nonatomic, strong) TOJRWebView *webView;
+
+//custom segment control
+@property (nonatomic, strong) HMSegmentedControl *segmentedControl;
+@property (nonatomic) int numberOfSegments;
 
 @end

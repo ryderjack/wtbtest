@@ -71,4 +71,6 @@
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;
 @property (nonatomic, strong) UIView *searchBgView;
+
+-(void)doubleTapScroll;
 @end

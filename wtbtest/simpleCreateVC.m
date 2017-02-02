@@ -718,7 +718,7 @@
             
             PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
             [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
-            [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]]; //CHANGE
+            [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
             [bumpedQuery whereKeyExists:@"user"];
             [bumpedQuery includeKey:@"user"];
             bumpedQuery.limit = 10;
@@ -830,7 +830,7 @@
                 [salesQuery2 whereKey:@"status" equalTo:@"live"];
                 [salesQuery2 orderByDescending:@"createdAt"];
                 [salesQuery whereKey:@"objectId" notContainedIn:self.buyNowIDs];
-                salesQuery2.limit = 10-self.buyNowArray.count; //CHANGE
+                salesQuery2.limit = 10-self.buyNowArray.count;
                 [salesQuery2 findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                     if (objects) {
                         NSLog(@"objects second time %lu", objects.count);

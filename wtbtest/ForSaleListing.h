@@ -11,9 +11,9 @@
 #import <ParseUI/ParseUI.h>
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
-#import <TOWebViewController.h>
+#import <iCarousel.h>
 
-@interface ForSaleListing : UITableViewController
+@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
 @property (nonatomic, strong) PFObject *WTBObject;
@@ -25,6 +25,7 @@
 @property (weak, nonatomic) IBOutlet UIPageControl *pageIndicator;
 @property (strong, nonatomic) IBOutlet UITableViewCell *image2Cell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *carouselCell;
 
 //labels
 @property (weak, nonatomic) IBOutlet UILabel *priceLabel;
@@ -62,12 +63,13 @@
 @property (nonatomic) BOOL relatedProduct;
 @property (weak, nonatomic) IBOutlet PFImageView *trustedCheck;
 
-//web
-@property (nonatomic, strong) TOWebViewController *webViewController;
-
 //big button
 @property (nonatomic, strong) UIButton *longButton;
 @property (nonatomic) BOOL buttonShowing;
+
+//carousel
+@property (weak, nonatomic) IBOutlet iCarousel *carouselView;
+@property (nonatomic, strong) NSMutableArray *imageArray;
 
 
 @end

@@ -83,6 +83,9 @@
         }
     }];
     
+    self.tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideItem)];
+    self.tap.numberOfTapsRequired = 1;
+    
     [self setUpItemView];
 }
 
@@ -148,19 +151,16 @@
                     
                     //objects to check will always be +1 more than checker as it includes the related row in the CV (if showrelated==YES of course!)
                     if (objectsToCheck.count == checker+1 && self.showRelated == YES && self.fromInfinEbay == NO) {
-                        NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
-                        NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
-                        [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                        [self.tableView reloadData];
+
                     }
                     else if (objectsToCheck.count == checker && self.showRelated == NO && self.fromInfinEbay == NO){
-                        NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
-                        NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
-                        [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                        [self.tableView reloadData];
+
                     }
                     else if (objectsToCheck.count == checker && self.fromInfinEbay == YES){
-                        NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
-                        NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
-                        [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                        [self.tableView reloadData];
+
                     }
                     else{
                         //must have more WTBs to search eBay for
@@ -168,9 +168,8 @@
                 }
                 else{
                     NSLog(@"ebay error %@", error);
-                    NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
-                    NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
-                    [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                    [self.tableView reloadData];
+
                 }
             }];
         }
@@ -264,13 +263,13 @@
                             [self.products addObjectsFromArray:holdingArray];
 //                            NSLog(@"products array %lu", self.products.count);
                             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
                         }
                         else{
                             [self.products addObjectsFromArray:holdingArray];
                             //error getting more so just show the first lot loaded
                             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
                         }
                     }];
                 }
@@ -279,7 +278,7 @@
                     [self.products addObjectsFromArray:holdingArray];
                     
                     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-                    [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                    [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
                 }
             }
             else{
@@ -355,13 +354,13 @@
                             NSLog(@"MORE products array %lu", self.products.count);
                             
                             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
                         }
                         else{
                             [self.products addObjectsFromArray:holdingArray];
                             //error getting more so just show the first lot loaded
                             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
                         }
                     }];
                 }
@@ -392,7 +391,7 @@
     self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self.pullQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
-    self.pullQuery.limit = 10; //CHANGE
+    self.pullQuery.limit = 10;
     self.pullQuery.skip = self.pullSkipped;
     [self.pullQuery orderByDescending:@"createdAt"];
     [self.pullQuery cancel];
@@ -524,9 +523,7 @@
                                 return;
                             }
                             
-                            NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
-                            NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
-                            [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                            [self.tableView reloadData];
                             
                             [self.tableView.pullToRefreshView stopAnimating];
                             self.pullFinished = YES;
@@ -560,7 +557,7 @@
     self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [self.infiniteQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
     [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
-    self.infiniteQuery.limit = 10; //CHANGE
+    self.infiniteQuery.limit = 10;
     [self.infiniteQuery orderByDescending:@"createdAt"];
     self.infiniteQuery.skip = self.skipped;
     [self.infiniteQuery cancel];
@@ -622,7 +619,7 @@
                                 
                                 if (self.skipped <= postNumber) {
                                     NSLog(@"infinite again!");
-                                    self.skipped = self.skipped + 10; //this should match the infinite limit number //CHANGE
+                                    self.skipped = self.skipped + 10; //this should match the infinite limit number //CHECK
                                     self.infinFinished = YES;
                                     [self infiniteFromServer];
                                     return;
@@ -635,9 +632,7 @@
                             [self.tableView.infiniteScrollingView stopAnimating];
                             self.infinFinished = YES;
                             
-                            NSRange range = NSMakeRange(0, [self numberOfSectionsInTableView:self.tableView]);
-                            NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
-                            [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
+                            [self.tableView reloadData];
                             
                             if (self.ebayEnabled != NO) {
                                 self.fromInfinEbay = YES;
@@ -952,7 +947,7 @@ numberOfRowsInSection:(NSInteger)section
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    
+        
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
@@ -1215,9 +1210,6 @@ numberOfRowsInSection:(NSInteger)section
     self.viewerBg.backgroundColor = [UIColor blackColor];
     self.viewerBg.alpha = 0.0;
     
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideItem)];
-    tap.numberOfTapsRequired = 1;
-    [self.viewerBg addGestureRecognizer:tap];
     [[UIApplication sharedApplication].keyWindow insertSubview:self.viewerBg belowSubview:self.itemView];
     
 //    [self.navigationController.view insertSubview:self.viewerBg belowSubview:self.itemView];
@@ -1230,7 +1222,7 @@ numberOfRowsInSection:(NSInteger)section
     [self.navigationItem setRightBarButtonItems:nil animated:YES];
     self.viewerBg.alpha = 0.6;
     [self.itemView setAlpha:1.0];
-    [UIView animateWithDuration:1.5
+    [UIView animateWithDuration:1.0
                           delay:0.0
          usingSpringWithDamping:0.5
           initialSpringVelocity:0.5
@@ -1247,6 +1239,7 @@ numberOfRowsInSection:(NSInteger)section
                         }
                      completion:^(BOOL finished) {
                          self.itemShowing = YES;
+                         [self.viewerBg addGestureRecognizer:self.tap];
                      }];
 }
 
@@ -1318,6 +1311,7 @@ numberOfRowsInSection:(NSInteger)section
                          self.itemShowing = NO;
                          [self.itemView setAlpha:0.0];
                          [self.viewerBg setAlpha:0.0];
+                         [self.viewerBg removeGestureRecognizer:self.tap];
                          
                          if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
                              //iphone5

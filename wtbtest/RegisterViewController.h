@@ -16,9 +16,9 @@
 #import <ParseUI/ParseUI.h>
 #import <ChimpKit.h>
 #import <CoreLocation/CoreLocation.h>
+#import "TOJRWebView.h"
 
-
-@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ChimpKitRequestDelegate,CLLocationManagerDelegate>
+@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ChimpKitRequestDelegate,CLLocationManagerDelegate, JRWebViewDelegate>
 NS_ASSUME_NONNULL_BEGIN
 
 //cells
@@ -38,7 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UITextField *usernameField;
 
 //picture cell
-@property (weak, nonatomic) IBOutlet UIImageView *profileImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *profilePicture;
 
 //user
 @property (strong, nonatomic) PFUser *user;
@@ -79,6 +79,8 @@ NS_ASSUME_NONNULL_BEGIN
 //location
 @property (nonatomic, strong) CLLocationManager *locationManager;
 
+//web
+@property (nonatomic, strong) TOJRWebView *webViewController;
 NS_ASSUME_NONNULL_END
 
 @end

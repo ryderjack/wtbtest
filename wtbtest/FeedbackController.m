@@ -332,13 +332,16 @@
                                                 }
                                             }];
                                         }
+                                        else{
+                                            NSLog(@"no convo on this order obj");
+                                            [self hideHUD];
+                                        }
                                     }
                                     else{
                                         NSLog(@"error saving deals data %@", error);
                                         [self hideHUD];
                                     }
                                 }];
-                                
                             }
                         }];
                     }

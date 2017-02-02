@@ -51,6 +51,7 @@
         }
         else{
             NSLog(@"getting user error %@", error);
+            [self showUserAlertWithTitle:@"User not found!" andMsg:nil];
         }
     }];
     
@@ -391,6 +392,8 @@
 {
     [super viewWillAppear:animated];
     
+    [self.navigationController.navigationBar setHidden:NO];
+    
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
@@ -693,6 +696,16 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
+-(void)showUserAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self.navigationController popViewControllerAnimated:YES];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
 -(void)showPayPalAlert{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"PayPal" message:[NSString stringWithFormat:@"Is this your PayPal email address? %@ Make sure your PayPal email address is correct to ensure seemless payment.", [[PFUser currentUser] objectForKey:@"paypal"]] preferredStyle:UIAlertControllerStyleAlert];
     
@@ -716,7 +729,6 @@
          senderDisplayName:(NSString *)senderDisplayName
                       date:(NSDate *)date
 {
-    //add in way to check if already been through the pop up once? so can send email address if need to???? //CHANGE
     
     if (self.promptedBefore != YES) {
         NSArray *checkingforemailarray = [text componentsSeparatedByString:@" "];
@@ -1101,6 +1113,8 @@
 }
 
 - (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingAssets:(NSArray *)assets {
+    [self dismissViewControllerAnimated:YES completion:NULL];
+
     PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
     requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
     requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
@@ -1121,8 +1135,6 @@
                             [self finalImage:newImage];
                         }];
     }
-    
-    [self dismissViewControllerAnimated:YES completion:NULL];
 }
 
 - (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController {
@@ -1152,7 +1164,6 @@
         [self showAlertWithTitle:@"No Depop Username added" andMsg:@"Add your Depop Username in Settings on Bump and you'll be able to add images of items you've already listed on there without leaving your conversation #zerofees"];
     }
 }
-
 
 -(void)paidPressed{
     //do nothing
@@ -1214,6 +1225,7 @@
     self.webViewController.showPageTitles = NO;
     self.webViewController.doneButtonTitle = @"Paid";
     self.webViewController.paypalMode = YES;
+    self.webViewController.delegate = self;
     if ([self.convoObject objectForKey:@"order"]) {
         //got an order object so get email and amount info
         self.webViewController.infoMode = YES;
@@ -1235,15 +1247,17 @@
 
 -(void)showMyPaypal{
     NSString *URLString = @"https://www.paypal.com/myaccount/";
-    TOWebViewController *webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
-    webViewController.title = @"My PayPal";
-    webViewController.showUrlWhileLoading = YES;
-    webViewController.showPageTitles = NO;
-    webViewController.doneButtonTitle = @"";
-    webViewController.paypalMode = NO;
-    webViewController.infoMode = NO;
+    self.webViewController = nil;
+    self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
+    self.webViewController.title = @"My PayPal";
+    self.webViewController.showUrlWhileLoading = YES;
+    self.webViewController.showPageTitles = NO;
+    self.webViewController.doneButtonTitle = @"";
+    self.webViewController.paypalMode = NO;
+    self.webViewController.infoMode = NO;
     self.checkPayPalTapped = YES;
-    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:webViewController];
+    self.webViewController.delegate = self;
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 

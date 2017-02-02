@@ -129,7 +129,6 @@
                          }
                          completion:^(BOOL finished) {
                              self.buttonShowing = YES;
-                             NSLog(@"showing in load");
                          }];
     }
 }
@@ -143,7 +142,7 @@
     
     [[self navigationController] setNavigationBarHidden:NO animated:YES];
     
-    if (self.introMode == YES && self.buttonShowing == NO && !self.longButton) { //TEST THIS //CHANGE
+    if (self.introMode == YES && self.buttonShowing == NO && !self.longButton) {
         self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
         [self.longButton setTitle:@"U P D A T E" forState:UIControlStateNormal];
         [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
@@ -686,18 +685,6 @@
     [picker dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:chosenImage];
     }];
-}
-
-- (UIImage *)resizeImage:(UIImage *)image toWidth:(float)width andHeight:(float)height {
-    
-    CGSize newSize = CGSizeMake(width, height);
-    CGRect newRectangle = CGRectMake(0, 0, width, height);
-    UIGraphicsBeginImageContext(newSize);
-    [image drawInRect:newRectangle];
-    UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    return resizedImage;
 }
 
 -(void)displayCropperWithImage:(UIImage *)image{
@@ -1772,7 +1759,7 @@
             [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
                 if (placemarks) {
                     CLPlacemark *placemark = [placemarks lastObject];
-                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.administrativeArea];
+                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.ISOcountryCode];
                     
                     if (geoPoint) {
                         self.geopoint = geoPoint;

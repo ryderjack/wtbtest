@@ -117,7 +117,6 @@
                      }
                      completion:^(BOOL finished) {
                          self.buttonShowing = YES;
-                         NSLog(@"showing in load");
                      }];
     
 //    PFQuery *userQueryForRand = [PFUser query];
@@ -1304,8 +1303,6 @@
 
 -(void)saleListingSetup{
     self.navigationItem.title = @"E D I T";
-    
-    [self.longButton setImage:[UIImage imageNamed:@"updateButton"] forState:UIControlStateNormal];
     
     self.descriptionField.text = [self.listing objectForKey:@"description"];
     

@@ -7,7 +7,6 @@
 //
 
 #import "ListingController.h"
-#import "DetailImageController.h"
 #import "CreateViewController.h"
 #import "FeedbackController.h"
 #import "MessageViewController.h"
@@ -63,6 +62,16 @@
     [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
     [self showBarButton];
     
+    //carousel setup
+    self.carouselView.type = iCarouselTypeLinear;
+    self.carouselView.delegate = self;
+    self.carouselView.dataSource = self;
+    self.carouselView.pagingEnabled = YES;
+    self.carouselView.bounceDistance = 0.3;
+    
+    //self.carouselView.layer.cornerRadius = 4;
+    //self.carouselView.layer.masksToBounds = YES; //enable this to restrict the entire carousel to the view specified in the nib
+    
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
             if ([self.listingObject objectForKey:@"image4"]){
@@ -91,9 +100,11 @@
                 self.numberOfPics = 1;
             }
             
-            self.picView.contentMode = UIViewContentModeScaleAspectFit;
-            [self.picView setFile:[self.listingObject objectForKey:@"image1"]];
-            [self.picView loadInBackground];
+            [self.carouselView reloadData];
+            
+//            self.picView.contentMode = UIViewContentModeScaleAspectFit;
+//            [self.picView setFile:[self.listingObject objectForKey:@"image1"]];
+//            [self.picView loadInBackground];
 //            self.picView.layer.cornerRadius = 4;     //doesn't work due to content mode..
 //            self.picView.layer.masksToBounds = YES;
             
@@ -220,7 +231,7 @@
                 }
                 else{
                     NSLog(@"buyer error %@", error);
-                    self.navigationItem.rightBarButtonItem = infoButton;
+                    [self showAlertWithTitle:@"Buyer not found!" andMsg:nil];
                 }
             }];
         }
@@ -228,23 +239,6 @@
             NSLog(@"error fetching listing %@", error);
         }
     }];
-    
-    UISwipeGestureRecognizer *swipeLeft = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
-    UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
-    
-    // Setting the swipe direction.
-    [swipeLeft setDirection:UISwipeGestureRecognizerDirectionLeft];
-    [swipeRight setDirection:UISwipeGestureRecognizerDirectionRight];
-    
-    // Adding the swipe gesture on image view
-    [self.picView addGestureRecognizer:swipeLeft];
-    [self.picView addGestureRecognizer:swipeRight];
-    
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(presentDetailImage)];
-    tap.numberOfTapsRequired = 1;
-    [self.picView addGestureRecognizer:tap];
-
-    [self.picView setUserInteractionEnabled:YES];
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -263,7 +257,7 @@
     self.extraLabel.adjustsFontSizeToFitWidth = YES;
     self.extraLabel.minimumScaleFactor=0.5;
     
-    self.mainCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.carouselMainCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.payCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.sizeCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.deliveryCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -279,15 +273,12 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
+    
+    [self.navigationController.navigationBar setHidden:NO];
+
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
-    
-    if (self.searchOn) {
-        if ([self.navigationController respondsToSelector:@selector(interactivePopGestureRecognizer)]) { //CHANGE get rid??
-            self.navigationController.interactivePopGestureRecognizer.enabled = NO;
-        }
-    }
     
     if (self.buttonShowing == NO) {
         [self showBarButton];
@@ -389,7 +380,7 @@
 {
     if (indexPath.section == 0){
         if (indexPath.row == 0) {
-            return self.mainCell;
+            return self.carouselMainCell;
         }
     }
     else if (indexPath.section == 1){
@@ -683,30 +674,6 @@
     }
 }
 
--(void)presentDetailImage{
-    DetailImageController *vc = [[DetailImageController alloc]init];
-    vc.listingPic = YES;
-    
-    if (self.numberOfPics == 1) {
-        vc.numberOfPics = 1;
-        vc.listing = self.listingObject;
-    }
-    else if (self.numberOfPics == 2){
-        vc.numberOfPics = 2;
-        vc.firstImage = self.firstImage;
-        vc.listing = self.listingObject;
-    }
-    else if (self.numberOfPics == 3){
-        vc.numberOfPics = 3;
-        vc.listing = self.listingObject;
-    }
-    else if (self.numberOfPics == 4){
-        vc.numberOfPics = 4;
-        vc.listing = self.listingObject;
-    }
-    [self presentViewController:vc animated:YES completion:nil];
-}
-
 -(void)showAlertView{
     [self hideBarButton];
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
@@ -809,9 +776,7 @@
 }
 
 -(void)showHUD{
-    if (!self.hud) {
-     self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
-    }
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
     self.hud.square = YES;
     self.hud.mode = MBProgressHUDModeCustomView;
     self.hud.customView = self.spinner;
@@ -1013,9 +978,11 @@
                 self.numberOfPics = 1;
             }
             
-            self.picView.contentMode = UIViewContentModeScaleAspectFit;
-            [self.picView setFile:[self.listingObject objectForKey:@"image1"]];
-            [self.picView loadInBackground];
+            [self.carouselView reloadData];
+            
+//            self.picView.contentMode = UIViewContentModeScaleAspectFit;
+//            [self.picView setFile:[self.listingObject objectForKey:@"image1"]];
+//            [self.picView loadInBackground];
             
             self.titleLabel.text = [self.listingObject objectForKey:@"title"];
             
@@ -1090,4 +1057,103 @@
                          self.buttonShowing = YES;
                      }];
 }
+
+#pragma mark - carousel delegates
+
+- (NSInteger)numberOfItemsInCarousel:(__unused iCarousel *)carousel
+{
+    return self.numberOfPics;
+}
+
+- (UIView *)carousel:(__unused iCarousel *)carousel viewForItemAtIndex:(NSInteger)index reusingView:(UIView *)view
+{
+    
+    //create new view if no view is available for recycling
+    if (view == nil)
+    {
+        view = [[PFImageView alloc] initWithFrame:CGRectMake(0, 0, self.carouselView.frame.size.width,self.carouselView.frame.size.height)];
+        view.contentMode = UIViewContentModeScaleAspectFit;
+    }
+    if (index == 0) {
+        [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image1"]];
+    }
+    else if (index == 1){
+        [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image2"]];
+    }
+    else if (index == 2){
+        [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image3"]];
+    }
+    else if (index == 3){
+        [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image4"]];
+    }
+    [((PFImageView *)view) loadInBackground];
+    
+    return view;
+}
+
+- (void)carouselDidEndScrollingAnimation:(iCarousel *)carousel{
+    self.picIndicator.currentPage = self.carouselView.currentItemIndex;
+}
+
+- (NSInteger)numberOfPlaceholdersInCarousel:(__unused iCarousel *)carousel
+{
+    //note: placeholder views are only displayed on some carousels if wrapping is disabled
+    return 2;
+}
+
+- (UIView *)carousel:(__unused iCarousel *)carousel placeholderViewAtIndex:(NSInteger)index reusingView:(UIView *)view
+{
+    if (view == nil)
+    {
+        view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.carouselView.frame.size.width,self.carouselView.frame.size.height)];
+        view.contentMode = UIViewContentModeCenter;
+        view.backgroundColor = [UIColor whiteColor];
+    }
+    return view;
+}
+
+- (void)carousel:(iCarousel *)carousel didSelectItemAtIndex:(NSInteger)index{
+    
+    DetailImageController *vc = [[DetailImageController alloc]init];
+    vc.listingPic = YES;
+    vc.chosenIndex = (int)index;
+    vc.delegate = self;
+    
+    if (self.numberOfPics == 1) {
+        vc.numberOfPics = 1;
+        vc.listing = self.listingObject;
+    }
+    else if (self.numberOfPics == 2){
+        vc.numberOfPics = 2;
+        vc.listing = self.listingObject;
+    }
+    else if (self.numberOfPics == 3){
+        vc.numberOfPics = 3;
+        vc.listing = self.listingObject;
+    }
+    else if (self.numberOfPics == 4){
+        vc.numberOfPics = 4;
+        vc.listing = self.listingObject;
+    }
+    [self hideBarButton];
+    [self.navigationController presentViewController:vc animated:YES completion:nil];
+    
+}
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self.navigationController popViewControllerAnimated:YES];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)dismissedDetailImageView{
+    NSLog(self.buttonShowing ? @"YES":@"NO");
+    [self showBarButton];
+}
+
+
 @end

@@ -10,6 +10,8 @@
 #import <Parse/Parse.h>
 #import "ShippingController.h"
 #import <ParseUI/ParseUI.h>
+#import <SpinKit/RTSpinKitView.h>
+#import <MBProgressHUD.h>
 
 @interface SettingsController : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate>
 NS_ASSUME_NONNULL_BEGIN
@@ -41,7 +43,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UITextField *depopField;
 @property (weak, nonatomic) IBOutlet PFImageView *testingView;
 
-@property (nonatomic) UIImage *profileImage;
+@property (nonatomic, strong) UIImage *profileImage;
 @property (nonatomic, strong) UIImagePickerController *picker;
+
+//spinner
+@property (nonatomic, strong) RTSpinKitView *spinner;
+@property (nonatomic, strong) MBProgressHUD *hud;
+
 NS_ASSUME_NONNULL_END
 @end

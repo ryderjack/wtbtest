@@ -65,7 +65,7 @@
 
 }
 
--(NSMutableArray *)getRandomsLessThan:(int)M {  /////////////////////CHANGE - DOES THIS GO ON FOREVER SOMETIMES?
+-(NSMutableArray *)getRandomsLessThan:(int)M {  /////////////////////CHANGE - ennsure number of for sale listings is bigger than 30
     NSMutableArray *listOfNumbers = [[NSMutableArray alloc] init];
     for (int i=0 ; i<M ; ++i) {
         [listOfNumbers addObject:[NSNumber numberWithInt:i]]; // ADD 1 TO GET NUMBERS BETWEEN 1 AND M RATHER THAN 0 and M-1
@@ -82,6 +82,7 @@
 }
 
 -(void)loadListings{
+    [self showHUD];
     //get random for sale items
     PFQuery *featuredQuery = [PFQuery queryWithClassName:@"forSaleItems"];
     [featuredQuery whereKey:@"status" equalTo:@"live"];
@@ -107,19 +108,23 @@
                                     [self.listings addObject:listing];
                                 }
                             }
+                            [self hideHUD];
                             [self.collectionView reloadData];
                         }
                         else{
+                            [self hideHUD];
                             NSLog(@"error getting extra for sale listings %@", error);
                         }
                     }];
                 }
                 else{
+                    [self hideHUD];
                     NSLog(@"error counting %@", error);
                 }
             }];
         }
         else{
+            [self hideHUD];
             NSLog(@"error getting for sale listings %@", error);
         }
     }];
@@ -163,6 +168,27 @@
     vc.pureWTS = YES;
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
     [self presentViewController:nav animated:YES completion:nil];
+}
+
+-(void)showHUD{
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    if (!self.spinner) {
+        self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    }
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+}
+
+-(void)hideHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
+    });
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [self hideHUD];
 }
 
 @end

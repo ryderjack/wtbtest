@@ -13,7 +13,6 @@
 #import "UserProfileController.h"
 #import "SettingsController.h"
 #import <Crashlytics/Crashlytics.h>
-#import <TOWebViewController.h>
 #import "ChatWithBump.h"
 #import "ContainerViewController.h"
 #import "NavigationController.h"
@@ -47,6 +46,8 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    [self.navigationController.navigationBar setHidden:NO];
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
                                     NSFontAttributeName, nil];
@@ -215,18 +216,35 @@
         else if (indexPath.row == 2) {
             //terms pressed
             NSString *URLString = @"http://www.sobump.com/terms.html";
-            TOWebViewController *webViewController = [[TOWebViewController alloc] initWithURL:[NSURL URLWithString:URLString]];
-            webViewController.title = @"Terms & Conditions";
-            webViewController.showUrlWhileLoading = YES;
-            webViewController.showPageTitles = NO;
-            webViewController.doneButtonTitle = @"";
-            webViewController.paypalMode = NO;
+            self.webView = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
+            self.webView.title = @"Terms & Conditions";
+            self.webView.showUrlWhileLoading = YES;
+            self.webView.showPageTitles = NO;
+            self.webView.doneButtonTitle = @"";
+            self.webView.paypalMode = NO;
             //hide toolbar banner
-            webViewController.infoMode = NO;
-            NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:webViewController];
+            self.webView.infoMode = NO;
+            self.webView.delegate = self;
+            NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];
             [self presentViewController:navigationController animated:YES completion:nil];
         }
     }
+}
+
+-(void)paidPressed{
+    //do nothing
+}
+
+-(void)cancelWebPressed{
+    [self.webView dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)cameraPressed{
+    //do nothing
+}
+
+-(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
+    //do nothing
 }
 
 - (void)showEmail{

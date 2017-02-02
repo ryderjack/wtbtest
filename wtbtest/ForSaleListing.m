@@ -31,7 +31,7 @@
     
     [self.soldLabel setHidden:YES];
     [self.soldCheckImageVoew setHidden:YES];
-    
+        
     if (self.relatedProduct != YES) {
         self.infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
         self.navigationItem.rightBarButtonItem = self.infoButton;
@@ -49,6 +49,7 @@
     
     self.infoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.image2Cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.carouselCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
@@ -64,22 +65,6 @@
     self.sizeLabel.minimumScaleFactor=0.5;
     
     [self.descriptionLabel sizeToFit];
-    
-    UISwipeGestureRecognizer *swipeLeft = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
-    UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
-    
-    // Setting the swipe direction.
-    [swipeLeft setDirection:UISwipeGestureRecognizerDirectionLeft];
-    [swipeRight setDirection:UISwipeGestureRecognizerDirectionRight];
-    
-    // Adding the swipe gesture on image view
-    [self.imageViewTwo addGestureRecognizer:swipeLeft];
-    [self.imageViewTwo addGestureRecognizer:swipeRight];
-    
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(presentDetailImage)];
-    tap.numberOfTapsRequired = 1;
-    [self.imageViewTwo addGestureRecognizer:tap];
-    [self.imageViewTwo setUserInteractionEnabled:YES];
     
     //hide first table view header
     self.tableView.contentInset = UIEdgeInsetsMake(-1.0f, 0.0f, 0.0f, 0.0);
@@ -106,9 +91,98 @@
     [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
     
     [self showBarButton];
+    
+    //carousel setup
+    self.carouselView.type = iCarouselTypeLinear;
+    self.carouselView.delegate = self;
+    self.carouselView.dataSource = self;
+    self.carouselView.pagingEnabled = YES;
+    self.carouselView.bounceDistance = 0.3;
+}
+
+#pragma mark - carousel delegates
+
+- (NSInteger)numberOfItemsInCarousel:(__unused iCarousel *)carousel
+{
+    return self.numberOfPics;
+}
+
+- (UIView *)carousel:(__unused iCarousel *)carousel viewForItemAtIndex:(NSInteger)index reusingView:(UIView *)view
+{
+    
+    //create new view if no view is available for recycling
+    if (view == nil)
+    {
+        view = [[PFImageView alloc] initWithFrame:CGRectMake(0, 0, self.carouselView.frame.size.width,self.carouselView.frame.size.height)];
+        view.contentMode = UIViewContentModeScaleAspectFit;
+    }
+    if (index == 0) {
+        [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image1"]];
+    }
+    else if (index == 1){
+        [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image2"]];
+    }
+    else if (index == 2){
+        [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image3"]];
+    }
+    else if (index == 3){
+        [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image4"]];
+    }
+    [((PFImageView *)view) loadInBackground];
+
+    return view;
+}
+
+- (void)carouselDidEndScrollingAnimation:(iCarousel *)carousel{
+    self.pageIndicator.currentPage = self.carouselView.currentItemIndex;
+}
+
+- (NSInteger)numberOfPlaceholdersInCarousel:(__unused iCarousel *)carousel
+{
+    //note: placeholder views are only displayed on some carousels if wrapping is disabled
+    return 2;
+}
+
+- (UIView *)carousel:(__unused iCarousel *)carousel placeholderViewAtIndex:(NSInteger)index reusingView:(UIView *)view
+{
+    if (view == nil)
+    {
+        view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.carouselView.frame.size.width,self.carouselView.frame.size.height)];
+        view.contentMode = UIViewContentModeCenter;
+        view.backgroundColor = [UIColor whiteColor];
+    }
+    return view;
+}
+
+- (void)carousel:(iCarousel *)carousel didSelectItemAtIndex:(NSInteger)index{
+    
+    DetailImageController *vc = [[DetailImageController alloc]init];
+    vc.listingPic = YES;
+    vc.chosenIndex = (int)index;
+    
+    if (self.numberOfPics == 1) {
+        vc.numberOfPics = 1;
+        vc.listing = self.listingObject;
+    }
+    else if (self.numberOfPics == 2){
+        vc.numberOfPics = 2;
+        vc.listing = self.listingObject;
+    }
+    else if (self.numberOfPics == 3){
+        vc.numberOfPics = 3;
+        vc.listing = self.listingObject;
+    }
+    else if (self.numberOfPics == 4){
+        vc.numberOfPics = 4;
+        vc.listing = self.listingObject;
+    }
+    [self presentViewController:vc animated:YES completion:nil];
+    
 }
 
 -(void)viewWillAppear:(BOOL)animated{
+    [self.navigationController.navigationBar setHidden:NO];
+
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
@@ -154,6 +228,7 @@
                     self.secondImage = [self.listingObject objectForKey:@"image2"];
                     self.thirdImage = [self.listingObject objectForKey:@"image3"];
                     self.fourthImage = [self.listingObject objectForKey:@"image4"];
+
                 }
                 else if ([self.listingObject objectForKey:@"image3"]){
                     [self.pageIndicator setNumberOfPages:3];
@@ -161,17 +236,21 @@
                     self.firstImage = [self.listingObject objectForKey:@"image1"];
                     self.secondImage = [self.listingObject objectForKey:@"image2"];
                     self.thirdImage = [self.listingObject objectForKey:@"image3"];
+                    
                 }
                 else if ([self.listingObject objectForKey:@"image2"]) {
                     [self.pageIndicator setNumberOfPages:2];
                     self.numberOfPics = 2;
                     self.firstImage = [self.listingObject objectForKey:@"image1"];
                     self.secondImage = [self.listingObject objectForKey:@"image2"];
+                    
                 }
                 else{
                     [self.pageIndicator setHidden:YES];
                     self.numberOfPics = 1;
+                    
                 }
+                [self.carouselView reloadData];
                 
                 self.imageViewTwo.contentMode = UIViewContentModeScaleAspectFit;
                 [self.imageViewTwo setFile:[self.listingObject objectForKey:@"image1"]];
@@ -251,6 +330,7 @@
                     }
                     else{
                         NSLog(@"seller error %@", error);
+                        [self showAlertWithTitle:@"Seller not found!" andMsg:nil];
                     }
                 }];
             }
@@ -263,6 +343,7 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
+    NSLog(@"DISAPPEAR CALLED IN FOR SALE");
     [self hideBarButton];
 }
 
@@ -294,7 +375,7 @@
 {
     if (indexPath.section == 0){
         if (indexPath.row == 0) {
-            return self.image2Cell;
+            return self.carouselCell;
         }
     }
     else if (indexPath.section == 1){
@@ -559,97 +640,6 @@
     self.sellerImgView.contentMode = UIViewContentModeScaleAspectFill;
 }
 
-- (void)handleSwipe:(UISwipeGestureRecognizer *)swipe {
-    NSLog(@"number of pics %d", self.numberOfPics);
-    
-    if (self.numberOfPics > 1) {
-        self.imageViewTwo.image = nil;
-    }
-    
-    if (swipe.direction == UISwipeGestureRecognizerDirectionLeft) {
-        NSLog(@"Left Swipe");
-            if (self.pageIndicator.currentPage != 4) {
-                if (self.pageIndicator.currentPage == 0 && self.numberOfPics >1) {
-                    [self.imageViewTwo setFile:self.secondImage];
-                    [self.pageIndicator setCurrentPage:1];
-                }
-                else if (self.pageIndicator.currentPage == 1 && self.numberOfPics >2){
-                    [self.imageViewTwo setFile:self.thirdImage];
-                    [self.pageIndicator setCurrentPage:2];
-                }
-                else if (self.pageIndicator.currentPage == 2 && self.numberOfPics >3){
-                    [self.imageViewTwo setFile:self.fourthImage];
-                    [self.pageIndicator setCurrentPage:3];
-                }
-            }
-    }
-    
-    if (swipe.direction == UISwipeGestureRecognizerDirectionRight) {
-        NSLog(@"Right Swipe");
-        if (self.pageIndicator.currentPage != 0) {
-            if (self.pageIndicator.currentPage == 1) {
-                [UIView animateWithDuration:0.5f animations:^{
-                    [self.imageViewTwo setFile:self.firstImage];
-                }];
-                [self.pageIndicator setCurrentPage:0];
-            }
-            else if (self.pageIndicator.currentPage == 2){
-                [self.imageViewTwo setFile:self.secondImage];
-                [self.pageIndicator setCurrentPage:1];
-            }
-            else if (self.pageIndicator.currentPage == 3){
-                [self.imageViewTwo setFile:self.thirdImage];
-                [self.pageIndicator setCurrentPage:2];
-            }
-        }
-    }
-    if (self.numberOfPics > self.pageIndicator.currentPage) {
-        //set placeholder spinner view
-        MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:self.imageViewTwo animated:YES];
-        hud.square = YES;
-        hud.mode = MBProgressHUDModeCustomView;
-        hud.color = [UIColor whiteColor];
-        DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-        hud.customView = spinner;
-        [spinner startAnimating];
-        
-        [self.imageViewTwo loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
-        } progressBlock:^(int percentDone) {
-            if (percentDone == 100) {
-                //remove spinner
-                [spinner stopAnimating];
-                [MBProgressHUD hideHUDForView:self.imageViewTwo animated:NO];
-                spinner = nil;
-                hud = nil;
-            }
-        }];
-    }
-}
-
--(void)presentDetailImage{
-    DetailImageController *vc = [[DetailImageController alloc]init];
-    vc.listingPic = YES;
-    
-    if (self.numberOfPics == 1) {
-        vc.numberOfPics = 1;
-        vc.listing = self.listingObject;
-    }
-    else if (self.numberOfPics == 2){
-        vc.numberOfPics = 2;
-        vc.firstImage = self.firstImage;
-        vc.listing = self.listingObject;
-    }
-    else if (self.numberOfPics == 3){
-        vc.numberOfPics = 3;
-        vc.listing = self.listingObject;
-    }
-    else if (self.numberOfPics == 4){
-        vc.numberOfPics = 4;
-        vc.listing = self.listingObject;
-    }
-    [self presentViewController:vc animated:YES completion:nil];
-}
-
 -(void)showHUD{
     self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
     self.hud.square = YES;
@@ -820,5 +810,15 @@
                      completion:^(BOOL finished) {
                          self.buttonShowing = YES;
                      }];
+}
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 @end

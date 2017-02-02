@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.1.24</string>
+	<string>1.2.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -33,7 +33,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1150</string>
+	<string>1152</string>
 	<key>Fabric</key>
 	<dict>
 		<key>APIKey</key>
@@ -64,7 +64,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Bump uses your location to find buyers and sellers around you</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Send images to potential buyers and Bump automatically saves listing images so they're easily shared!</string>
+	<string>Bump needs access to change your profile pictures and so you can send photos to buyers/sellers!</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
