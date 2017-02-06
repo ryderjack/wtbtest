@@ -365,7 +365,7 @@
         self.cell = [[InboxCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
     }
     
-    self.cell.wtbImageView.image = nil;
+    self.cell.wtbImageView.image = nil;    
     self.cell.userPicView.image = nil;
     
     PFObject *convoObject = [self.convoObjects objectAtIndex:indexPath.row];

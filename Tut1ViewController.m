@@ -408,6 +408,12 @@
                                  NSLog(@"push error %@", error);
                              }
                          }];
+                         
+                         PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+                         [bumpObj setObject:self.firstListing.objectId forKey:@"listingId"];
+                         [bumpObj setObject:self.firstListing forKey:@"listing"];
+                         [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+                         [bumpObj saveInBackground];
                      }];
 }
 -(void)bump2Pressed{
@@ -438,6 +444,12 @@
                                  NSLog(@"push error %@", error);
                              }
                          }];
+                         
+                         PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+                         [bumpObj setObject:self.secondListing.objectId forKey:@"listingId"];
+                         [bumpObj setObject:self.secondListing forKey:@"listing"];
+                         [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+                         [bumpObj saveInBackground];
                      }];
 }
 -(void)bump3Pressed{
@@ -466,6 +478,12 @@
                                  NSLog(@"push error %@", error);
                              }
                          }];
+                         
+                         PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+                         [bumpObj setObject:self.thirdListing.objectId forKey:@"listingId"];
+                         [bumpObj setObject:self.thirdListing forKey:@"listing"];
+                         [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+                         [bumpObj saveInBackground];
                      }];
 }
 -(void)bump4Pressed{
@@ -495,6 +513,12 @@
                                  NSLog(@"push error %@", error);
                              }
                          }];
+                         
+                         PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+                         [bumpObj setObject:self.fourthListing.objectId forKey:@"listingId"];
+                         [bumpObj setObject:self.fourthListing forKey:@"listing"];
+                         [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+                         [bumpObj saveInBackground];
                      }];
 }
 

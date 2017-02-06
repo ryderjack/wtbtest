@@ -778,6 +778,17 @@
         [bumpArray removeObject:[PFUser currentUser].objectId];
         [self.listingObject setObject:bumpArray forKey:@"bumpArray"];
         [self.listingObject incrementKey:@"bumpCount" byAmount:@-1];
+        
+        //update bumpObj
+        PFQuery *bumpObj = [PFQuery queryWithClassName:@"BumpedListings"];
+        [bumpObj whereKey:@"listingId" equalTo:self.listingObject.objectId];
+        [bumpObj whereKey:@"bumpUser" equalTo:[PFUser currentUser]];
+        [bumpObj getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                [object setObject:@"deleted" forKey:@"status"];
+                [object saveInBackground];
+            }
+        }];
     }
     else{
         NSLog(@"bumped");
@@ -805,6 +816,11 @@
                                               @"where":@"Listing"
                                               }];
         }
+        PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+        [bumpObj setObject:self.listingObject.objectId forKey:@"listingId"];
+        [bumpObj setObject:self.listingObject forKey:@"listing"];
+        [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+        [bumpObj saveInBackground];
     }
     [self.listingObject saveInBackground];
     if (bumpArray.count > 0) {

@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 #import <Parse/Parse.h>
 #import "searchedViewC.h"
+#import "HMSegmentedControl.h"
 
 @class TheMainSearchView;
 @protocol TheMainSearchViewDelegate <NSObject>
@@ -18,7 +19,6 @@
 @interface TheMainSearchView : UIViewController <UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate, searchedViewCDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (weak, nonatomic) IBOutlet UISegmentedControl *segmentControl;
 
 @property (nonatomic, strong) NSArray *userResults;
 @property (nonatomic, strong) NSArray *listingResults;
@@ -36,6 +36,10 @@
 @property (nonatomic, weak) id <TheMainSearchViewDelegate> delegate;
 
 @property (nonatomic, strong) PFGeoPoint *geoPoint;
+
+//custom segment control
+@property (nonatomic, strong) HMSegmentedControl *segmentedControl;
+@property (weak, nonatomic) IBOutlet UIView *placeholderView;
 
 
 @end

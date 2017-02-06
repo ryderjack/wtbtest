@@ -161,31 +161,31 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 6;
+    return 5;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     
     if (indexPath.section == 0){
-        if (indexPath.row == 0) {
-            return 59;
-        }
-        else if (indexPath.row == 1){
+//        if (indexPath.row == 0) {
+//            return 59;
+//        }
+        if (indexPath.row == 0){
             return 101;
         }
-        else if (indexPath.row == 2){
+        else if (indexPath.row == 1){
             return 88;
         }
-        else if (indexPath.row == 3){
+        else if (indexPath.row == 2){
             return 122;
         }
-        else if (indexPath.row == 4){
+        else if (indexPath.row == 3){
             return 122;
         }
 //        else if (indexPath.row == 4){ UNCOMMENT FOR BRANDS
 //            return 159;
 //        }
-        else if (indexPath.row == 5){
+        else if (indexPath.row == 4){
             return 230;
         }
 //        else if (indexPath.row == 5){
@@ -201,22 +201,22 @@
         if (indexPath.row == 0) {
             return self.titleCell;
         }
+//        else if (indexPath.row == 1){
+//            return self.priceCell;
+//        }
         else if (indexPath.row == 1){
-            return self.priceCell;
-        }
-        else if (indexPath.row == 2){
             return self.distanceCell;
         }
-        else if (indexPath.row == 3){
+        else if (indexPath.row == 2){
             return self.conditionCell;
         }
-        else if (indexPath.row == 4){
+        else if (indexPath.row == 3){
             return self.categoryCell;
         }
 //        else if (indexPath.row == 4){
 //            return self.brandCell;
 //        }
-        else if (indexPath.row == 5){
+        else if (indexPath.row == 4){
             return self.sizeCell;
         }
 //        else if (indexPath.row == 5){

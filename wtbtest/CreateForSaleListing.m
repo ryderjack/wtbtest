@@ -1235,6 +1235,7 @@
         }
         
         PFQuery *latestIndex = [PFQuery queryWithClassName:@"forSaleItems"];
+        [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];
         [latestIndex countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
             if (number) {
                 NSNumber *index = [NSNumber numberWithInt:number+1];

@@ -252,13 +252,13 @@
     
     self.cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
     
-    if ([listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]) {
-        int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
-        self.cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
-    }
-    else{
+//    if ([listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]) {
+//        int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+//        self.cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
+//    }
+//    else{
         self.cell.priceLabel.text = @"";
-    }
+//    }
     
     if ([listing objectForKey:@"sizeLabel"]) {
         NSString *sizeNoUK = [[listing objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
@@ -363,6 +363,17 @@
         [bumpArray removeObject:[PFUser currentUser].objectId];
         [listingObject setObject:bumpArray forKey:@"bumpArray"];
         [listingObject incrementKey:@"bumpCount" byAmount:@-1];
+        
+        //update bumpObj
+        PFQuery *bumpObj = [PFQuery queryWithClassName:@"BumpedListings"];
+        [bumpObj whereKey:@"listingId" equalTo:listingObject.objectId];
+        [bumpObj whereKey:@"bumpUser" equalTo:[PFUser currentUser]];
+        [bumpObj getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                [object setObject:@"deleted" forKey:@"status"];
+                [object saveInBackground];
+            }
+        }];
     }
     else{
         NSLog(@"bumped");
@@ -392,6 +403,11 @@
                                               @"where":@"Search"
                                               }];
         }
+        PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+        [bumpObj setObject:listingObject.objectId forKey:@"listingId"];
+        [bumpObj setObject:listingObject forKey:@"listing"];
+        [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+        [bumpObj saveInBackground];
     }
     [listingObject saveInBackground];
     if (bumpArray.count > 0) {

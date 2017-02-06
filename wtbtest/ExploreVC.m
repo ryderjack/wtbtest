@@ -184,6 +184,13 @@
         else{
             //user has signed up fine
             
+            //check if have lowercase fullname
+            if (![currentUser objectForKey:@"fullnameLower"]) {
+                //for search purposes so can search by name!
+                currentUser[@"fullnameLower"] = [[[PFUser currentUser]objectForKey:@"fullname"]lowercaseString];
+                [currentUser saveInBackground];
+            }
+            
             //check if they have wanted words
             if (![currentUser objectForKey:@"wantedWords"]) {
                 PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
@@ -420,13 +427,13 @@
     
     self.cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
     
-    if ([listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]) {
-        int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
-        self.cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
-    }
-    else{
+//    if ([listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]) {
+//        int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+//        self.cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
+//    }
+//    else{
         self.cell.priceLabel.text = @"";
-    }
+//    }
 
     if ([listing objectForKey:@"sizeLabel"]) {
         NSString *sizeNoUK = [[listing objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
@@ -1241,6 +1248,17 @@
         [bumpArray removeObject:[PFUser currentUser].objectId];
         [listingObject setObject:bumpArray forKey:@"bumpArray"];
         [listingObject incrementKey:@"bumpCount" byAmount:@-1];
+        
+        //update bumpObj
+        PFQuery *bumpObj = [PFQuery queryWithClassName:@"BumpedListings"];
+        [bumpObj whereKey:@"listingId" equalTo:listingObject.objectId];
+        [bumpObj whereKey:@"bumpUser" equalTo:[PFUser currentUser]];
+        [bumpObj getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                [object setObject:@"deleted" forKey:@"status"];
+                [object saveInBackground];
+            }
+        }];
     }
     else{
         NSLog(@"bumped");
@@ -1270,6 +1288,12 @@
                                               @"where":@"Home"
                                               }];
         }
+        
+        PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+        [bumpObj setObject:listingObject.objectId forKey:@"listingId"];
+        [bumpObj setObject:listingObject forKey:@"listing"];
+        [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+        [bumpObj saveInBackground];
     }
     [listingObject saveInBackground];
     

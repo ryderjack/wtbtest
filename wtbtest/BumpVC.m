@@ -86,6 +86,12 @@
         }];
     }
     
+    PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+    [bumpObj setObject:self.listing.objectId forKey:@"listingId"];
+    [bumpObj setObject:self.listing forKey:@"listing"];
+    [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+    [bumpObj saveInBackground];
+    
     //animate a +1
     [self.plusOneImageView setAlpha:1.0f];
     [self.plusOneImageView setHidden:NO];

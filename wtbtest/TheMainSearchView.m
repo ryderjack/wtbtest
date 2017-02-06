@@ -34,6 +34,18 @@
     [self.searchBar sizeToFit];
     self.searchBar.placeholder = @"Search for stuff you're selling";
     
+    //segment control
+    self.segmentedControl = [[HMSegmentedControl alloc] init];
+    self.segmentedControl.frame = CGRectMake(self.placeholderView.frame.origin.x, self.placeholderView.frame.origin.y, [UIApplication sharedApplication].keyWindow.frame.size.width,self.placeholderView.frame.size.height);
+    self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
+    self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
+    self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+    self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10]};
+    self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]};
+    [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
+    [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"P E O P L E"]];
+    [self.view addSubview:self.segmentedControl];
+    
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
     self.navigationItem.rightBarButtonItem = cancelButton;
     
@@ -62,11 +74,11 @@
     // Dispose of any resources that can be recreated.
 }
 
-- (IBAction)segmentControlChanged:(id)sender {
-    if (self.segmentControl.selectedSegmentIndex == 0) {
+-(void)segmentControlChanged{
+    if (self.segmentedControl.selectedSegmentIndex == 0) {
         self.userSearch = NO;
         self.searchBar.placeholder = @"Search for stuff you're selling";
-       
+        
         if (self.noUserLabel) {
             [self.noUserLabel removeFromSuperview];
             self.noUserLabel = nil;
@@ -167,13 +179,11 @@
                 }
                 
                 if (![[searchHistory lastObject] isEqualToString:self.searchString] && [history containsObject:self.searchString]) {
-                    NSLog(@"one");
                     [searchHistory removeObject:self.searchString];
                     [searchHistory addObject:self.searchString];
                 }
                 else if (![searchHistory containsObject:self.searchString]) {
-                    NSLog(@"two");
-                    [searchHistory addObject:self.searchString]; ///////causing the crash!!!!!!!
+                    [searchHistory addObject:self.searchString];
                 }
                 [[PFUser currentUser] setObject:searchHistory forKey:@"searches"];
             }
@@ -190,21 +200,17 @@
         
         if (searchesList.count > 0) {
             if ([searchesList containsObject:self.searchString] && ![searchesList[0] isEqualToString:self.searchString]) {
-                NSLog(@"three");
                 [searchesList removeObject:self.searchString];
             }
             
             if (![searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
-                NSLog(@"four");
                 [searchesList insertObject:self.searchString atIndex:0];
             }
             else if ([searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
                 //do nothing as already last entry
-                NSLog(@"five");
             }
         }
         else if (![stringCheck isEqualToString:@""]){
-            NSLog(@"six");
             [searchesList insertObject:self.searchString atIndex:0];
         }
         
@@ -213,7 +219,7 @@
     }
     else{
         //user entered
-        NSLog(@"entered username");
+//        NSLog(@"entered username");
     }
 }
 
@@ -228,9 +234,15 @@
         PFQuery *userQueryForRand = [PFUser query];
         [userQueryForRand whereKey:@"username" containsString:[self.searchBar.text lowercaseString]];
         [userQueryForRand whereKey:@"completedReg" equalTo:@"YES"];
-        [userQueryForRand findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        
+        PFQuery *facebookNameSearch = [PFUser query];
+        [facebookNameSearch whereKey:@"fullnameLower" containsString:[self.searchBar.text lowercaseString]];
+        
+        PFQuery *query = [PFQuery orQueryWithSubqueries:@[userQueryForRand,facebookNameSearch]];
+
+        [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
             if (objects) {
-                NSLog(@"users found %lu", objects.count);
+//                NSLog(@"users found %lu", objects.count);
                 if (objects.count == 0) {
                     
                     if (!self.noUserLabel) {

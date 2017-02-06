@@ -734,10 +734,6 @@
 {
     
     if (self.promptedBefore != YES) {
-        NSError *error = nil;
-        NSDataDetector *dataDetector = [NSDataDetector dataDetectorWithTypes:NSTextCheckingTypePhoneNumber
-                                                                       error:&error];
-        
         NSArray *checkingforemailarray = [text componentsSeparatedByString:@" "];
         for (NSString *stringer in checkingforemailarray) {
             NSString *string = [stringer stringByReplacingOccurrencesOfString:@"?" withString:@""];
@@ -745,6 +741,11 @@
             
             //email check
             if ([self NSStringIsValidEmail:string]) {
+                [Answers logCustomEventWithName:@"Deal on Bump warning"
+                               customAttributes:@{
+                                                  @"trigger":@"email",
+                                                  @"message":text
+                                                  }];
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
                 self.offerReminderMode = YES;
@@ -754,6 +755,11 @@
             
             //facebook check
             if ([[string lowercaseString] isEqualToString:@"facebook"]) {
+                [Answers logCustomEventWithName:@"Deal on Bump warning"
+                               customAttributes:@{
+                                                  @"trigger":@"facebook",
+                                                  @"message":text
+                                                  }];
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
                 self.offerReminderMode = YES;
@@ -761,37 +767,34 @@
                 return;
             }
             
-//            [dataDetector enumerateMatchesInString:string
-//                                           options:0
-//                                             range:NSMakeRange(0, string.length)
-//                                        usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
-//             {
-//                 NSString *numberWithExtra = result.phoneNumber;
-//                 NSCharacterSet *toRemove = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
-//                 NSString *trimmed = [[numberWithExtra componentsSeparatedByCharactersInSet:toRemove] componentsJoinedByString:@""];
-//                 if(trimmed && trimmed.length)
-//                 {
-//                     NSLog(@"phone number found");
-//                     //present 'Send Offer' reminder alert
-//                     self.promptedBefore = YES;
-//                     self.offerReminderMode = YES;
-//                     [self showCustomAlert];
-//                     return;
-//                 }
-//             }];
-            
-            
-            //phone number check
-//            if ([[string lowercaseString] isEqualToString:@"facebook"]) {
-//                //present 'Send Offer' reminder alert
-//                self.promptedBefore = YES;
-//                self.offerReminderMode = YES;
-//                [self showCustomAlert];
-//                return;
-//            }
+            //check for number
+            NSError *error = NULL;
+            NSDataDetector *detector = [NSDataDetector dataDetectorWithTypes:NSTextCheckingTypePhoneNumber error:&error];
+            NSArray *matches = [detector matchesInString:string options:0 range:NSMakeRange(0, [string length])];
+            if (matches != nil) {
+                for (NSTextCheckingResult *match in matches) {
+                    if ([match resultType] == NSTextCheckingTypePhoneNumber) {
+                        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                                       customAttributes:@{
+                                                          @"trigger":@"phone number",
+                                                          @"message":text
+                                                          }];
+                         //present 'Send Offer' reminder alert
+                         self.promptedBefore = YES;
+                         self.offerReminderMode = YES;
+                         [self showCustomAlert];
+                        return;
+                    }
+                }
+            }
             
             //depop
             if ([[string lowercaseString] isEqualToString:@"depop"]) {
+                [Answers logCustomEventWithName:@"Deal on Bump warning"
+                               customAttributes:@{
+                                                  @"trigger":@"depop",
+                                                  @"message":text
+                                                  }];
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
                 self.offerReminderMode = YES;
@@ -801,6 +804,11 @@
             
             //instagram
             if ([[string lowercaseString] isEqualToString:@"instagram"]) {
+                [Answers logCustomEventWithName:@"Deal on Bump warning"
+                               customAttributes:@{
+                                                  @"trigger":@"instagram",
+                                                  @"message":text
+                                                  }];
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
                 self.offerReminderMode = YES;
@@ -810,6 +818,11 @@
             
             //big cartel
             if ([[string lowercaseString] containsString:@".bigcartel"]) {
+                [Answers logCustomEventWithName:@"Deal on Bump warning"
+                               customAttributes:@{
+                                                  @"trigger":@"bigcartel",
+                                                  @"message":text
+                                                  }];
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
                 self.offerReminderMode = YES;

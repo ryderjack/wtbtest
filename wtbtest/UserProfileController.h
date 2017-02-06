@@ -22,6 +22,9 @@
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSArray *WTBArray;
 @property (nonatomic, strong) NSArray *forSaleArray;
+@property (nonatomic, strong) NSMutableArray *bumpedArray;
+@property (nonatomic, strong) NSMutableArray *bumpedIds;
+
 
 @property (nonatomic, strong) NSMutableArray *feedbackArray;
 @property (nonatomic, strong) PFUser *user;
@@ -35,7 +38,9 @@
 @property (nonatomic) BOOL isSeller;
 @property (nonatomic) BOOL forSalePressed;
 @property (nonatomic) BOOL WTBPressed;
-@property (nonatomic) BOOL saleMode;
+@property (nonatomic) BOOL bumpedPressed;
+@property (nonatomic) BOOL saleMode; //from buy now tab
+@property (nonatomic) BOOL wantedMode; //user is not a seller so just display wanted & bumped
 
 //modes
 @property (nonatomic) BOOL fromSearch;
@@ -64,7 +69,6 @@
 @property (nonatomic, strong) UIButton *reviewsButton;
 @property (nonatomic, strong) UIButton *imageButton;
 @property (nonatomic, strong) PFImageView *editImageView;
-
 
 //web view
 @property (nonatomic, strong) TOJRWebView *webView;

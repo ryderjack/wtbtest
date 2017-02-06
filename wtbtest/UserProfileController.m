@@ -66,7 +66,9 @@
     self.collectionView.alwaysBounceVertical = YES;
     
     self.WTBArray = [[NSArray alloc]init];
+    self.bumpedArray = [[NSMutableArray alloc]init];
     self.forSaleArray = [[NSMutableArray alloc]init];
+    self.bumpedIds = [[NSMutableArray alloc]init];
     
 //    NSLog(@"USER %@", self.user);
 
@@ -116,7 +118,7 @@
         if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.isSeller == YES) {
             //trusted seller so load
             //WTSs and WTB
-            [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"S E L L I N G"]];
+            [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"S E L L I N G", @"B U M P E D"]];
             self.numberOfSegments = 2;
 
             [self loadWTBListings];
@@ -125,14 +127,14 @@
         else if (self.saleMode == YES){
             //gone on profile from a for sale item so
             //WTS only
-            [self.segmentedControl setSectionTitles:@[@"S E L L I N G"]];
+            [self.segmentedControl setSectionTitles:@[@"S E L L I N G", @"B U M P E D"]];
             self.numberOfSegments = 1;
             [self loadWTSListings];
         }
         else if (self.isSeller == YES) {
             //trusted seller but not looking at own profile
             //WTS and WTB
-            [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"S E L L I N G"]];
+            [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"S E L L I N G", @"B U M P E D"]];
             self.numberOfSegments = 2;
             if (self.fromSearch == YES) {
                 [self.segmentedControl setSelectedSegmentIndex:1];
@@ -143,9 +145,10 @@
         else{
             //user is not a seller
             //just WTB
-            [self.segmentedControl setSectionTitles:@[@"W A N T E D"]];
+            [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"B U M P E D"]];
             self.numberOfSegments = 1;
             self.isSeller = NO;
+            self.wantedMode = YES;
             [self loadWTBListings];
         }
     }];
@@ -173,6 +176,8 @@
     
     [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
+            [self loadBumpedListings];
+            
             PFFile *img = [self.user objectForKey:@"picture"];
             
             self.usernameLabel.text = self.user.username;
@@ -323,10 +328,15 @@
         [self.segmentedControl setSelectedSegmentIndex:1];
         [self loadWTSListings];
     }
-    if (self.WTBPressed == YES) {
+    else if (self.WTBPressed == YES) {
         [self.segmentedControl setSelectedSegmentIndex:0];
         self.WTBPressed = NO;
         [self loadWTBListings];
+    }
+    else if (self.bumpedPressed == YES) {
+//        [self.segmentedControl setSelectedSegmentIndex:];
+        self.bumpedPressed = NO;
+        [self loadBumpedListings];
     }
 }
 
@@ -348,7 +358,7 @@
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [wtbQuery whereKey:@"postUser" equalTo:self.user];
     [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
-    [wtbQuery orderByDescending:@"createdAt"];
+    [wtbQuery orderByDescending:@"lastUpdated"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             self.WTBArray = objects;
@@ -362,11 +372,40 @@
     }];
 }
 
+-(void)loadBumpedListings{
+    PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"BumpedListings"];
+    [bumpedQuery whereKey:@"status" notEqualTo:@"deleted"];
+    [bumpedQuery whereKey:@"bumpUser" equalTo:self.user];
+    [bumpedQuery orderByDescending:@"createdAt"];
+    [bumpedQuery includeKey:@"listing"];
+    [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            if (objects.count == 0) {
+                return;
+            }
+            [self.bumpedArray removeAllObjects];
+            [self.bumpedIds removeAllObjects];
+            
+            for (PFObject *bumpOb in objects) {
+                if (![self.bumpedIds containsObject:bumpOb.objectId]) {
+                    [self.bumpedArray addObject:[bumpOb objectForKey:@"listing"]];
+                }
+            }
+            [self.collectionView performBatchUpdates:^{
+                [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+            } completion:nil];
+        }
+        else{
+            NSLog(@"error getting bumped %@", error);
+        }
+    }];
+}
+
 -(void)loadWTSListings{
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"forSaleItems"];
     [wtbQuery whereKey:@"sellerUser" equalTo:self.user];
     [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
-    [wtbQuery orderByDescending:@"createdAt"];
+    [wtbQuery orderByDescending:@"lastUpdated"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects.count > 0) {
@@ -403,11 +442,35 @@
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    if (self.segmentedControl.selectedSegmentIndex == 1 || self.saleMode) {
-        return self.forSaleArray.count;
+    if (self.saleMode == YES) {
+        //just selling and bumped
+        if (self.segmentedControl.selectedSegmentIndex == 0 ) {
+            return self.forSaleArray.count;
+        }
+        else{
+            return self.bumpedArray.count;
+        }
+    }
+    else if (self.wantedMode == YES){
+        //jsut wanted and bumped
+        if (self.segmentedControl.selectedSegmentIndex == 0) {
+            return self.WTBArray.count;
+        }
+        else{
+            return self.bumpedArray.count;
+        }
     }
     else{
-        return self.WTBArray.count;
+        // all 3
+        if (self.segmentedControl.selectedSegmentIndex == 0) {
+            return self.WTBArray.count;
+        }
+        else if (self.segmentedControl.selectedSegmentIndex == 1) {
+            return self.forSaleArray.count;
+        }
+        else{
+            return self.bumpedArray.count;
+        }
     }
 }
 
@@ -420,14 +483,35 @@
     
     PFObject *listingObject;
     
-    if (self.saleMode== YES) {
-        listingObject = [self.forSaleArray objectAtIndex:indexPath.row];
+    if (self.saleMode == YES) {
+        //just selling and bumped
+        if (self.segmentedControl.selectedSegmentIndex == 0 ) {
+            listingObject = [self.forSaleArray objectAtIndex:indexPath.row];
+        }
+        else{
+            listingObject = [self.bumpedArray objectAtIndex:indexPath.row];
+        }
     }
-    else if (self.segmentedControl.selectedSegmentIndex == 0) {
-        listingObject = [self.WTBArray objectAtIndex:indexPath.row];
+    else if (self.wantedMode == YES){
+        //jsut wanted and bumped
+        if (self.segmentedControl.selectedSegmentIndex == 0) {
+            listingObject = [self.WTBArray objectAtIndex:indexPath.row];
+        }
+        else{
+            listingObject = [self.bumpedArray objectAtIndex:indexPath.row];
+        }
     }
     else{
-        listingObject = [self.forSaleArray objectAtIndex:indexPath.row];
+        // all 3
+        if (self.segmentedControl.selectedSegmentIndex == 0) {
+            listingObject = [self.WTBArray objectAtIndex:indexPath.row];
+        }
+        else if (self.segmentedControl.selectedSegmentIndex == 1) {
+            listingObject = [self.forSaleArray objectAtIndex:indexPath.row];
+        }
+        else{
+            listingObject = [self.bumpedArray objectAtIndex:indexPath.row];
+        }
     }
     
     [cell.itemImageView setFile:[listingObject objectForKey:@"image1"]];
@@ -454,32 +538,62 @@
 
     PFObject *selected;
     
-    NSLog(@"select");
-    
     if (self.saleMode == YES) {
-        selected = [self.forSaleArray objectAtIndex:indexPath.item];
-        self.forSalePressed = YES;
-        ForSaleListing *vc = [[ForSaleListing alloc]init];
-        vc.listingObject = selected;
-        vc.pureWTS = YES; //always pure WTS from a profile
-        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-        [self presentViewController:nav animated:YES completion:nil];
+        //just selling and bumped
+        if (self.segmentedControl.selectedSegmentIndex == 0 ) {
+            selected = [self.forSaleArray objectAtIndex:indexPath.item];
+            self.forSalePressed = YES;
+            ForSaleListing *vc = [[ForSaleListing alloc]init];
+            vc.listingObject = selected;
+            vc.pureWTS = YES; //always pure WTS from a profile
+            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+            [self presentViewController:nav animated:YES completion:nil];
+        }
+        else{
+            selected = [self.bumpedArray objectAtIndex:indexPath.item];
+            self.bumpedPressed = YES;
+            ListingController *vc = [[ListingController alloc]init];
+            vc.listingObject = selected;
+            [self.navigationController pushViewController:vc animated:YES];        }
     }
-    else if (self.segmentedControl.selectedSegmentIndex == 0) {
-        selected = [self.WTBArray objectAtIndex:indexPath.item];
-        self.WTBPressed = YES;
-        ListingController *vc = [[ListingController alloc]init];
-        vc.listingObject = selected;
-        [self.navigationController pushViewController:vc animated:YES];
+    else if (self.wantedMode == YES){
+        //jsut wanted and bumped
+        if (self.segmentedControl.selectedSegmentIndex == 0) {
+            selected = [self.WTBArray objectAtIndex:indexPath.item];
+            self.WTBPressed = YES;
+            ListingController *vc = [[ListingController alloc]init];
+            vc.listingObject = selected;
+            [self.navigationController pushViewController:vc animated:YES];        }
+        else{
+            selected = [self.bumpedArray objectAtIndex:indexPath.item];
+            self.bumpedPressed = YES;
+            ListingController *vc = [[ListingController alloc]init];
+            vc.listingObject = selected;
+            [self.navigationController pushViewController:vc animated:YES];        }
     }
     else{
-        selected = [self.forSaleArray objectAtIndex:indexPath.item];
-        self.forSalePressed = YES;
-        ForSaleListing *vc = [[ForSaleListing alloc]init];
-        vc.listingObject = selected;
-        vc.pureWTS = YES;
-        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-        [self presentViewController:nav animated:YES completion:nil];
+        // all 3
+        if (self.segmentedControl.selectedSegmentIndex == 0) {
+            selected = [self.WTBArray objectAtIndex:indexPath.item];
+            self.WTBPressed = YES;
+            ListingController *vc = [[ListingController alloc]init];
+            vc.listingObject = selected;
+            [self.navigationController pushViewController:vc animated:YES];        }
+        else if (self.segmentedControl.selectedSegmentIndex == 1) {
+            selected = [self.forSaleArray objectAtIndex:indexPath.item];
+            self.forSalePressed = YES;
+            ForSaleListing *vc = [[ForSaleListing alloc]init];
+            vc.listingObject = selected;
+            vc.pureWTS = YES; //always pure WTS from a profile
+            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+            [self presentViewController:nav animated:YES completion:nil];
+        }
+        else{
+            selected = [self.bumpedArray objectAtIndex:indexPath.item];
+            self.bumpedPressed = YES;
+            ListingController *vc = [[ListingController alloc]init];
+            vc.listingObject = selected;
+            [self.navigationController pushViewController:vc animated:YES];        }
     }
 }
 

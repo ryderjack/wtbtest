@@ -38,6 +38,8 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
+    [self.navigationController.navigationBar setHidden:NO];
+    
     [self loadBumps];
 }
 

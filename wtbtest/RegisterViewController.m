@@ -167,9 +167,11 @@
     }
     if ([userData objectForKey:@"first_name"]) {
         user[@"firstName"] = [userData objectForKey:@"first_name"];
+        user[@"firstNameLower"] = [[userData objectForKey:@"first_name"] lowercaseString];;
     }
     if ([userData objectForKey:@"last_name"]) {
         user[@"lastName"] = [userData objectForKey:@"last_name"];
+        user[@"lastNameLower"] = [[userData objectForKey:@"last_name"] lowercaseString];;
     }
     if ([userData objectForKey:@"id"]) {
         user[PF_USER_FACEBOOKID] = userData[@"id"];
@@ -429,6 +431,7 @@
                     if (number == 0) {
                         NSLog(@"username is available!");
                         self.user[PF_USER_FULLNAME] = name;
+                        self.user[@"fullnameLower"] = [name lowercaseString];
                         self.user[PF_USER_EMAIL] = email;
                         self.user[@"paypal"] = email;
                         self.user[PF_USER_USERNAME] = [username lowercaseString];
