@@ -22,10 +22,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *depopCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *pictureCelll;
 @property (strong, nonatomic) IBOutlet UITableViewCell *contactEmailCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *lastNameCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *usernameCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *emailFields;
-@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (weak, nonatomic) IBOutlet UITextField *firstNameField;
+@property (weak, nonatomic) IBOutlet UITextField *lastNameField;
 @property (weak, nonatomic) IBOutlet UILabel *addLabel;
 @property (weak, nonatomic) IBOutlet UITextField *contactEmailField;
 
@@ -33,6 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonnull, strong) NSString *currentPaypal;
 @property (nonnull, strong) NSString *currentContact;
+@property (weak, nonatomic) IBOutlet UILabel *usernameLabel;
 
 
 //buttons
@@ -49,6 +53,9 @@ NS_ASSUME_NONNULL_BEGIN
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
 @property (nonatomic, strong) MBProgressHUD *hud;
+
+//other
+@property (nonatomic, strong) NSArray *profanityList;
 
 NS_ASSUME_NONNULL_END
 @end

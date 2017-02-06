@@ -16,11 +16,16 @@
     
     self.titleLabel.adjustsFontSizeToFitWidth = YES;
     self.titleLabel.minimumScaleFactor=0.5;
-    
     self.titleLabel.numberOfLines = 2;
     
     self.priceLabel.adjustsFontSizeToFitWidth = YES;
     self.priceLabel.minimumScaleFactor=0.5;
+    
+    self.distanceLabel.adjustsFontSizeToFitWidth = YES;
+    self.distanceLabel.minimumScaleFactor=0.5;
+    
+    self.sizeLabel.adjustsFontSizeToFitWidth = YES;
+    self.sizeLabel.minimumScaleFactor=0.5;
     
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(bumpButtonPressed:)];
     tap.numberOfTapsRequired = 1;

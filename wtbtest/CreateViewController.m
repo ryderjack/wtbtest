@@ -225,7 +225,7 @@
         return 1;
     }
     else if (section == 2){
-        return 5;
+        return 4;
     }
     else if (section == 3){
         return 1;
@@ -259,9 +259,9 @@
         else if(indexPath.row == 3){
             return self.locCell;
         }
-        else if(indexPath.row == 4){
-            return self.payCell;
-        }
+//        else if(indexPath.row == 4){
+//            return self.payCell;
+//        }
     }
     //add extra cell to ensure 'UPDATE' button doesn't cover footer of last section
     else if (indexPath.section ==3){
@@ -459,12 +459,12 @@
     }
 }
 -(NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section{
-    if (section == 2) {
-        return @"Pro Tip: an accurate Budget = interested sellers";
-    }
-    else{
+//    if (section == 2) {
+//        return @"Pro Tip: an accurate Budget = interested sellers";
+//    }
+//    else{
         return @"";
-    }
+//    }
 }
 -(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
     if (section == 3) {
@@ -1148,7 +1148,6 @@
                     [self.listing setObject:self.geopoint forKey:@"geopoint"];
                 }
                 if (![self.chooseLocation.text isEqualToString:@"Optional"]) {
-                    NSLog(@"Adding LOC");
                     [self.listing setObject:self.chooseLocation.text forKey:@"location"];
                 }
                 
@@ -1384,6 +1383,8 @@
                     PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
                     [self.listing setObject:imageFile4 forKey:@"image4"];
                 }
+                
+                [self.listing setObject:[NSDate date] forKey:@"lastUpdated"];
                 
                 [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                     if (succeeded) {
@@ -1748,7 +1749,6 @@
 }
 
 -(void)useCurrentLoc{
-    self.somethingChanged = YES;
     [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
         if (!error) {
             double latitude = geoPoint.latitude;
@@ -1762,6 +1762,7 @@
                     NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.ISOcountryCode];
                     
                     if (geoPoint) {
+                        self.somethingChanged = YES;
                         self.geopoint = geoPoint;
                         self.chooseLocation.text = [NSString stringWithFormat:@"%@",titleString];
                     }

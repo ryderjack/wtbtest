@@ -172,8 +172,7 @@
             NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
             [self presentViewController:navController animated:NO completion:nil];
         }
-        
-        if (![currentUser objectForKey:PF_USER_FULLNAME] || ![currentUser objectForKey:PF_USER_EMAIL] || ![currentUser objectForKey:@"currency"] || ![currentUser objectForKey:PF_USER_FACEBOOKID] || ![currentUser objectForKey: PF_USER_GENDER] || ![currentUser objectForKey:@"picture"] || currentUser.username.length > 10) {
+        else if (![currentUser objectForKey:PF_USER_FULLNAME] || ![currentUser objectForKey:PF_USER_EMAIL] || ![currentUser objectForKey:@"currency"] || ![currentUser objectForKey:PF_USER_FACEBOOKID] || ![currentUser objectForKey: PF_USER_GENDER] || ![currentUser objectForKey:@"picture"] || currentUser.username.length > 10) {
             //been an error on sign up as user doesn't have all info saved
             currentUser[@"completedReg"] = @"NO";
             [currentUser saveInBackground];
@@ -182,44 +181,49 @@
             NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
             [self presentViewController:navController animated:NO completion:nil];
         }
-        
-        //check if user is banned
-        PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
-        [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
-        [bannedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-            if (number > 1) {
-                //user is banned - log them out
-                [PFUser logOut];
-                WelcomeViewController *vc = [[WelcomeViewController alloc]init];
-                NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
-                [self presentViewController:navController animated:NO completion:nil];
-            }
-        }];
-        
-        if (![currentUser objectForKey:@"wantedWords"]) {
-            PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
-            [myPosts whereKey:@"postUser" equalTo:currentUser];
-            [myPosts orderByDescending:@"createdAt"];
-            myPosts.limit = 10;
-            [myPosts findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                if (objects) {
-                    NSMutableArray *wantedWords = [NSMutableArray array];
-                    
-                    for (PFObject *listing in objects) {
-                        NSArray *keywords = [listing objectForKey:@"keywords"];
+        else{
+            //user has signed up fine
+            
+            //check if they have wanted words
+            if (![currentUser objectForKey:@"wantedWords"]) {
+                PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
+                [myPosts whereKey:@"postUser" equalTo:currentUser];
+                [myPosts orderByDescending:@"createdAt"];
+                myPosts.limit = 10;
+                [myPosts findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                    if (objects) {
+                        NSMutableArray *wantedWords = [NSMutableArray array];
                         
-                        for (NSString *word in keywords) {
-                            if (![wantedWords containsObject:word]) {
-                                [wantedWords addObject:word];
+                        for (PFObject *listing in objects) {
+                            NSArray *keywords = [listing objectForKey:@"keywords"];
+                            
+                            for (NSString *word in keywords) {
+                                if (![wantedWords containsObject:word]) {
+                                    [wantedWords addObject:word];
+                                }
                             }
                         }
+                        NSLog(@"wanted words: %@", wantedWords);
+                        [currentUser setObject:wantedWords forKey:@"wantedWords"];
+                        [currentUser saveInBackground];
                     }
-                    NSLog(@"wanted words: %@", wantedWords);
-                    [currentUser setObject:wantedWords forKey:@"wantedWords"];
-                    [currentUser saveInBackground];
-                }
-                else{
-                    NSLog(@"nee posts pet");
+                    else{
+                        NSLog(@"nee posts pet");
+                    }
+                }];
+            }
+            
+            // finally check if they've been banned - put it last because otherwise if logout user from a previous user check this will still run and throw error 'can't do a comparison query for type (null)
+            
+            PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+            [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+            [bannedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+                if (number > 1) {
+                    //user is banned - log them out
+                    [PFUser logOut];
+                    WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+                    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+                    [self presentViewController:navController animated:NO completion:nil];
                 }
             }];
         }
@@ -337,6 +341,12 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    
+    //CHANGE
+    //Tut1ViewController *vc = [[Tut1ViewController alloc]init];
+    //vc.clickMode = YES;
+    //[self presentViewController:vc
+    //                   animated:YES completion:nil];
 
     [self.collectionView.infiniteScrollingView stopAnimating];
     [Answers logCustomEventWithName:@"Viewed page"
@@ -825,8 +835,12 @@
                 if (placemarks) {
                     CLPlacemark *placemark = [placemarks lastObject];
                     NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.ISOcountryCode];
-                    [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
-                    [[PFUser currentUser]saveInBackground];
+                    
+                    if (![titleString containsString:@"(null)"]) { //protect against saving when user hasn't granted location permission
+                        [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
+                        [[PFUser currentUser]saveInBackground];
+                    }
+                    
                 }
                 else{
                     NSLog(@"error %@", error);

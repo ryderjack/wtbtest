@@ -29,6 +29,9 @@
     self.soldLabel.adjustsFontSizeToFitWidth = YES;
     self.soldLabel.minimumScaleFactor=0.5;
     
+    self.priceLabel.adjustsFontSizeToFitWidth = YES;
+    self.priceLabel.minimumScaleFactor=0.5;
+    
     [self.soldLabel setHidden:YES];
     [self.soldCheckImageVoew setHidden:YES];
         
@@ -82,15 +85,6 @@
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
-    
-    self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 + self.tabBarController.tabBar.frame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
-    [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
-    [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
-    [self.longButton addTarget:self action:@selector(BarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
-    self.longButton.alpha = 0.0f;
-    [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
-    
-    [self showBarButton];
     
     //carousel setup
     self.carouselView.type = iCarouselTypeLinear;
@@ -188,6 +182,10 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     if (self.buttonShowing == NO) {
+        NSLog(@"SHOW BAR BUTTON");
+        if (!self.longButton) {
+            [self setupBarButton];
+        }
         [self showBarButton];
     }
     
@@ -276,16 +274,12 @@
                 
                 float price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
                 
-                //since EUR has been recently added, do a check if the listing has a EUR price. If not, calc and save
-                if ([self.currency isEqualToString:@"EUR"] && price == 0) {
-                    int pounds = [[self.listingObject objectForKey:@"salePriceGBP"]intValue];
-                    int EUR = pounds*1.16;
-                    self.listingObject[@"salePriceEUR"] = @(EUR);
-                    price = EUR;
-                    [self.listingObject saveInBackground];
+                if (price == 0.00) {
+                    self.priceLabel.text = @"Negotiable";
                 }
-                
-                self.priceLabel.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+                else{
+                    self.priceLabel.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+                }
                 self.sizeLabel.text = [self.listingObject objectForKey:@"location"];
                 
                 if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Accessories"]) {
@@ -343,7 +337,6 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
-    NSLog(@"DISAPPEAR CALLED IN FOR SALE");
     [self hideBarButton];
 }
 
@@ -725,7 +718,6 @@
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
             convoObject[@"buyerUser"] = [PFUser currentUser];
             convoObject[@"sellerUser"] = [self.listingObject objectForKey:@"sellerUser"];
-            
             if (self.pureWTS == YES) {
                 convoObject[@"pureWTS"] = @"YES";
                 convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
@@ -820,5 +812,14 @@
         [self.navigationController dismissViewControllerAnimated:YES completion:nil];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)setupBarButton{
+    self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 + self.tabBarController.tabBar.frame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+    [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+    [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+    [self.longButton addTarget:self action:@selector(BarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.longButton.alpha = 0.0f;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
 }
 @end

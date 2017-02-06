@@ -206,6 +206,7 @@
                     // is status message set as seen so badge number decrements and then continue to add other messages to arrays
                     
                     if ([[messageOb objectForKey:@"isStatusMsg"]isEqualToString:@"YES"]){
+                        NSLog(@"SET STATUS MESSAGE SEEN");
                         [messageOb setObject:@"seen" forKey:@"status"];
                         [messageOb saveInBackground];
                         
@@ -233,6 +234,7 @@
                     
                     if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                         [messageOb setObject:@"seen" forKey:@"status"];
+                        NSLog(@"SET AS SEEN %@", messageOb); //i think the inbox cell is refreshing the last sent's status but it has the old last sent so this needs to be reloaded!!! 
                         [messageOb saveInBackground];
                         if (self.userIsBuyer == YES) {
                             [self.convoObject setObject:@0 forKey:@"buyerUnseen"];
@@ -416,6 +418,7 @@
         //to avoid needless calls only fetch once we know somethings changed
         [self.convoObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (!error) {
+                NSLog(@"CONVO %@", self.convoObject);
                 //get order status
                 [self refreshStatus];
             }
@@ -731,9 +734,82 @@
 {
     
     if (self.promptedBefore != YES) {
+        NSError *error = nil;
+        NSDataDetector *dataDetector = [NSDataDetector dataDetectorWithTypes:NSTextCheckingTypePhoneNumber
+                                                                       error:&error];
+        
         NSArray *checkingforemailarray = [text componentsSeparatedByString:@" "];
-        for (NSString *string in checkingforemailarray) {
+        for (NSString *stringer in checkingforemailarray) {
+            NSString *string = [stringer stringByReplacingOccurrencesOfString:@"?" withString:@""];
+            //check for user trying to direct other user elsewhere & remind them to send an offer
+            
+            //email check
             if ([self NSStringIsValidEmail:string]) {
+                //present 'Send Offer' reminder alert
+                self.promptedBefore = YES;
+                self.offerReminderMode = YES;
+                [self showCustomAlert];
+                return;
+            }
+            
+            //facebook check
+            if ([[string lowercaseString] isEqualToString:@"facebook"]) {
+                //present 'Send Offer' reminder alert
+                self.promptedBefore = YES;
+                self.offerReminderMode = YES;
+                [self showCustomAlert];
+                return;
+            }
+            
+//            [dataDetector enumerateMatchesInString:string
+//                                           options:0
+//                                             range:NSMakeRange(0, string.length)
+//                                        usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
+//             {
+//                 NSString *numberWithExtra = result.phoneNumber;
+//                 NSCharacterSet *toRemove = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+//                 NSString *trimmed = [[numberWithExtra componentsSeparatedByCharactersInSet:toRemove] componentsJoinedByString:@""];
+//                 if(trimmed && trimmed.length)
+//                 {
+//                     NSLog(@"phone number found");
+//                     //present 'Send Offer' reminder alert
+//                     self.promptedBefore = YES;
+//                     self.offerReminderMode = YES;
+//                     [self showCustomAlert];
+//                     return;
+//                 }
+//             }];
+            
+            
+            //phone number check
+//            if ([[string lowercaseString] isEqualToString:@"facebook"]) {
+//                //present 'Send Offer' reminder alert
+//                self.promptedBefore = YES;
+//                self.offerReminderMode = YES;
+//                [self showCustomAlert];
+//                return;
+//            }
+            
+            //depop
+            if ([[string lowercaseString] isEqualToString:@"depop"]) {
+                //present 'Send Offer' reminder alert
+                self.promptedBefore = YES;
+                self.offerReminderMode = YES;
+                [self showCustomAlert];
+                return;
+            }
+            
+            //instagram
+            if ([[string lowercaseString] isEqualToString:@"instagram"]) {
+                //present 'Send Offer' reminder alert
+                self.promptedBefore = YES;
+                self.offerReminderMode = YES;
+                [self showCustomAlert];
+                return;
+            }
+            
+            //big cartel
+            if ([[string lowercaseString] containsString:@".bigcartel"]) {
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
                 self.offerReminderMode = YES;
@@ -2232,7 +2308,7 @@
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{
-    imageView.layer.cornerRadius = imageView.frame.size.width / 2;
+    imageView.layer.cornerRadius = 4;
     imageView.layer.masksToBounds = YES;
     imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     imageView.contentMode = UIViewContentModeScaleAspectFill;
@@ -2269,8 +2345,8 @@
     self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.customAlert.delegate = self;
     if (self.offerReminderMode == YES) {
-        self.customAlert.titleLabel.text = @"Sell on Bump";
-        self.customAlert.messageLabel.text = @"Build your reputation, stay protected & get paid with PayPal. Just tap the tag icon and hit 'Send an offer'!";
+        self.customAlert.titleLabel.text = @"Sell through Bump";
+        self.customAlert.messageLabel.text = @"Build your reputation, stay protected & get paid with PayPal. Just tap the tag icon and hit 'Send an offer'! Plus ZERO fees!";
         self.customAlert.numberOfButtons = 1;
         [self.customAlert.doneButton setTitle:@"S E N D  O F F E R" forState:UIControlStateNormal];
         [self.customAlert.doneButton setBackgroundColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];

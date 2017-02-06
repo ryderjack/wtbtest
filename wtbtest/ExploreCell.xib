@@ -54,7 +54,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="distance" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="UHy-1o-roN">
-                        <rect key="frame" x="103" y="226" width="64" height="21"/>
+                        <rect key="frame" x="103" y="224" width="64" height="25"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="64" id="Ryq-no-cQG"/>
                         </constraints>
@@ -100,7 +100,7 @@
                 <constraint firstItem="E8w-iA-Awe" firstAttribute="top" secondItem="4AD-vX-nRN" secondAttribute="top" id="Wv9-1i-U80"/>
                 <constraint firstItem="mzw-pp-kQK" firstAttribute="bottom" secondItem="kHw-t2-lsA" secondAttribute="bottom" constant="1" id="Xd8-U6-jB1"/>
                 <constraint firstAttribute="bottom" secondItem="gcs-of-dV6" secondAttribute="bottom" constant="5" id="YTI-xU-ShT"/>
-                <constraint firstItem="UHy-1o-roN" firstAttribute="top" secondItem="8Dp-d2-LSo" secondAttribute="bottom" constant="2" id="asW-Ew-vUD"/>
+                <constraint firstItem="UHy-1o-roN" firstAttribute="top" secondItem="8Dp-d2-LSo" secondAttribute="bottom" id="asW-Ew-vUD"/>
                 <constraint firstItem="UHy-1o-roN" firstAttribute="centerY" secondItem="gcs-of-dV6" secondAttribute="centerY" id="c9L-IE-LYG"/>
                 <constraint firstItem="E8w-iA-Awe" firstAttribute="bottom" secondItem="mzw-pp-kQK" secondAttribute="bottom" id="cbj-Tq-bzS"/>
                 <constraint firstItem="4AD-vX-nRN" firstAttribute="centerX" secondItem="8Dp-d2-LSo" secondAttribute="centerX" id="dTr-AC-jUl"/>

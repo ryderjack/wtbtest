@@ -63,7 +63,6 @@
 }
 
 - (IBAction)segmentControlChanged:(id)sender {
-    self.searchBar.text = @"";
     if (self.segmentControl.selectedSegmentIndex == 0) {
         self.userSearch = NO;
         self.searchBar.placeholder = @"Search for stuff you're selling";

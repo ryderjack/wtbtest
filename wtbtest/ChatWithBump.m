@@ -34,6 +34,9 @@
     self.inputToolbar.contentView.textView.pasteDelegate = self;
     self.inputToolbar.contentView.textView.placeHolder = @"Ask us anything!";
     self.inputToolbar.contentView.leftBarButtonItem = nil;
+    self.inputToolbar.contentView.backgroundColor = [UIColor whiteColor];
+    [self.inputToolbar.contentView.textView.layer setBorderWidth:0.0];
+    [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
     
     //no avatar images
     self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeZero;
@@ -232,6 +235,13 @@
 -(void)textViewDidChange:(UITextView *)textView{
     if (textView == self.inputToolbar.contentView.textView) {
         [self.inputToolbar toggleSendButtonEnabled];
+        NSString *blankString = [textView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if ([blankString isEqualToString:@""]) {
+            [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
+        }
+        else{
+            [self.inputToolbar.contentView.rightBarButtonItem setHidden:NO];
+        }
     }
 }
 

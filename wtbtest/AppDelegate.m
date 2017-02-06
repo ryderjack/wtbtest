@@ -51,7 +51,7 @@
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
     }]];
 
-    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
     [[ChimpKit sharedKit] setApiKey:@"5cbba863ff961ff8c60266185defc785-us14"];

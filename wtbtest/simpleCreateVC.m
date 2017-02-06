@@ -646,6 +646,7 @@
         [self.listing setObject:self.geopoint forKey:@"geopoint"];
     }
 
+    [self.listing setObject:[NSDate date] forKey:@"lastUpdated"];
     [self.listing setObject:@0 forKey:@"views"];
     [self.listing setObject:@0 forKey:@"bumpCount"];
     [self.listing setObject:self.currency forKey:@"currency"];

@@ -17,8 +17,7 @@
 #import "BLKFlexibleHeightBar.h"
 #import "HMSegmentedControl.h"
 
-
-@interface UserProfileController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, JRWebViewDelegate>
+@interface UserProfileController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, JRWebViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSArray *WTBArray;
@@ -38,7 +37,7 @@
 @property (nonatomic) BOOL WTBPressed;
 @property (nonatomic) BOOL saleMode;
 
-
+//modes
 @property (nonatomic) BOOL fromSearch;
 
 //spinner
@@ -63,6 +62,9 @@
 @property (nonatomic, strong) UIButton *FBButton;
 @property (nonatomic, strong) BLKFlexibleHeightBar *myBar;
 @property (nonatomic, strong) UIButton *reviewsButton;
+@property (nonatomic, strong) UIButton *imageButton;
+@property (nonatomic, strong) PFImageView *editImageView;
+
 
 //web view
 @property (nonatomic, strong) TOJRWebView *webView;
@@ -71,4 +73,7 @@
 @property (nonatomic, strong) HMSegmentedControl *segmentedControl;
 @property (nonatomic) int numberOfSegments;
 
+//image picker
+@property (nonatomic, strong) UIImage *profileImage;
+@property (nonatomic, strong) UIImagePickerController *picker;
 @end

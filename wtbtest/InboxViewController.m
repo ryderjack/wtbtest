@@ -50,6 +50,8 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
+    [self.navigationController.navigationBar setHidden:NO];
+    
 //    NSLog(self.justViewedMsg ? @"appear has just viewed message" : @"nah hasn't viewed msg in appear");
     
     //load when app comes into foreground
@@ -98,7 +100,9 @@
 //                    [self.tableView reloadRowsAtIndexPaths:@[self.lastConvoIndex] withRowAnimation:UITableViewRowAnimationFade];
                     PFObject *convoObject = [self.convoObjects objectAtIndex:self.lastConvoIndex.row];
                     PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
-                    [msgObject setObject:@"seen" forKey:@"status"];
+                    if (![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                        [msgObject setObject:@"seen" forKey:@"status"];
+                    }
                     [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:self.lastConvoIndex, nil] withRowAnimation:UITableViewRowAnimationNone];
                 }
             }
@@ -356,7 +360,6 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSLog(@"cell for item CALLED");
     self.cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
     if (!self.cell) {
         self.cell = [[InboxCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
@@ -402,7 +405,7 @@
     self.cell.timeLabel.text = [NSString stringWithFormat:@"%@", [self.dateFormat stringFromDate:convoDate]];
     [self setProfImageBorder];
 
-    //messaged from a for sale listing
+    //message from a for sale listing
     if ([[convoObject objectForKey:@"pureWTS"]isEqualToString:@"YES"]) {
         //no WTB associated with this convo
         PFObject *saleListing = [convoObject objectForKey:@"wtsListing"];
@@ -410,39 +413,34 @@
         [self.cell.wtbImageView loadInBackground];
         self.cell.wtbTitleLabel.text = @"";
         self.cell.wtbPriceLabel.text = @"";
+        [self setWTSImageBorder];
     }
     
-    //messaged from a user's profile
+    //message from a user's profile
     else if ([[convoObject objectForKey:@"profileConvo"]isEqualToString:@"YES"]) {
         //no WTB or WTS associated with this convo
         self.cell.wtbTitleLabel.text = @"";
         self.cell.wtbPriceLabel.text = @"";
     }
     
-    //conventional message from a WTB listing
+    //message from a WTB listing
     else{
         PFObject *wtbListing = [convoObject objectForKey:@"wtbListing"];
         [self.cell.wtbImageView setFile:[wtbListing objectForKey:@"image1"]];
         [self.cell.wtbImageView loadInBackground];
         self.cell.wtbTitleLabel.text = [NSString stringWithFormat:@"%@", [wtbListing objectForKey:@"title"]];
         
-        //add in a check for a EUR price before setting since recent;y added this currency
-        int price = [[wtbListing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
-        
-        if ([self.currency isEqualToString:@"EUR"] && price == 0) {
-            int pounds = [[wtbListing objectForKey:@"listingPriceGBP"]intValue];
-            int EUR = pounds*1.16;
-            wtbListing[@"listingPriceEUR"] = @(EUR);
-            price = EUR;
-            [wtbListing saveInBackground];
-        }
-        self.cell.wtbPriceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol,price];
+//        int price = [[wtbListing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+//        self.cell.wtbPriceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol,price];
+        self.cell.wtbPriceLabel.text = @"";
+        [self setWTBImageBorder];
     }
-    [self setWTBImageBorder];
 
     PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
     
-    NSLog(@"message in cellforitem %@", msgObject.updatedAt);
+    NSLog(@"LAST SENT %@", msgObject);
+    
+//    NSLog(@"message in cellforitem %@", msgObject.updatedAt);
     
     NSString *text = [msgObject objectForKey:@"message"];
     
@@ -473,28 +471,29 @@
     }
     
     if ([[msgObject objectForKey:@"status"] isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-        //message has not been seen
-        NSLog(@"message aint been seen");
-        [self boldFontForLabel:self.cell.usernameLabel];
-        [self boldFontForLabel:self.cell.messageLabel];
-        self.cell.messageLabel.textColor = [UIColor blackColor];
-        [self boldFontForLabel:self.cell.timeLabel];
-        self.cell.timeLabel.textColor = [UIColor blackColor];
-        [self unboldFontForLabel:self.cell.wtbTitleLabel];
+        //unseen message sent by other user
+        //hide pic
+        [self.cell.seenImageView setHidden:YES];
+        //bold text
+        [self megaBold];
     }
-    else{
-        //message has been seen
-        NSLog(@"msg has been seen");
-        [self unboldFontForLabel:self.cell.usernameLabel];
-        [self unboldFontForLabel:self.cell.messageLabel];
-        [self unboldFontForLabel:self.cell.timeLabel];
-         self.cell.messageLabel.textColor = [UIColor lightGrayColor];
-         self.cell.timeLabel.textColor = [UIColor darkGrayColor];
-        [self.cell.wtbTitleLabel setFont:[UIFont fontWithName:@"PingFangSC-UltraLight" size:14]];
+    else if ([[msgObject objectForKey:@"status"] isEqualToString:@"sent"] && [[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+        //unseen message sent by me
+        //hide pic
+        [self.cell.seenImageView setHidden:YES];
+        //unbolded
+        [self megaUnbold];
     }
-    
-    if ([[msgObject objectForKey:@"status"] isEqualToString:@"seen"] && [[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-        //you sent and other guy has seen so show picture
+    else if ([[msgObject objectForKey:@"status"] isEqualToString:@"seen"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+        //seen message sent by other user
+        //hide pic
+        [self.cell.seenImageView setHidden:YES];
+        //unbolded
+        [self megaUnbold];
+    }
+    else if ([[msgObject objectForKey:@"status"] isEqualToString:@"seen"] && [[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+        //seen message sent by me
+        //show pic
         [self.cell.seenImageView setHidden:NO];
         [self setSeenImageBorder];
         if (isBuyer == YES) {
@@ -504,10 +503,16 @@
             [self.cell.seenImageView setFile:[buyer objectForKey:@"picture"]];
         }
         [self.cell.seenImageView loadInBackground];
+        //unbolded
+        [self megaUnbold];
     }
     else{
+        //fail safe
+        NSLog(@"fail safe");
         [self.cell.seenImageView setHidden:YES];
+        [self megaUnbold];
     }
+    
     return self.cell;
 }
 
@@ -517,8 +522,11 @@
     
     PFObject *convoObject = [self.convoObjects objectAtIndex:indexPath.row];
     PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
-    [msgObject setObject:@"seen" forKey:@"status"];
-    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationNone];
+    if (![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+        NSLog(@"SET AS SEEN IN INBOX %@", msgObject);
+        [msgObject setObject:@"seen" forKey:@"status"];
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationNone];
+    }
     
     int unseen = 0;
     
@@ -534,7 +542,7 @@
         unseen = [[convoObject objectForKey:@"sellerUnseen"] intValue];
         NSLog(@"seller");
     }
-    NSLog(@"unseen %d", unseen);
+    NSLog(@"unseen after selecting convo%d", unseen);
     
     UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[3];
     int currentTabValue = [itemToBadge.badgeValue intValue];
@@ -581,10 +589,12 @@
     
     if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
         //current user is buyer so other user is seller
+        NSLog(@"IM THE BUYER");
         vc.otherUser = [convoObject objectForKey:@"sellerUser"];
         vc.userIsBuyer = YES;
     }
     else{
+        NSLog(@"IM THE SELLER");
         //other user is buyer, current is seller
         vc.otherUser = buyer;
         vc.userIsBuyer = NO;
@@ -598,7 +608,14 @@
 }
 
 -(void)setWTBImageBorder{
-    self.cell.wtbImageView.layer.cornerRadius = 15;
+    self.cell.wtbImageView.layer.cornerRadius =4;
+    self.cell.wtbImageView.layer.masksToBounds = YES;
+    self.cell.wtbImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    self.cell.wtbImageView.contentMode = UIViewContentModeScaleAspectFill;
+}
+
+-(void)setWTSImageBorder{
+    self.cell.wtbImageView.layer.cornerRadius =15;
     self.cell.wtbImageView.layer.masksToBounds = YES;
     self.cell.wtbImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     self.cell.wtbImageView.contentMode = UIViewContentModeScaleAspectFill;
@@ -651,6 +668,24 @@
     UIFont *newFont;
     newFont = [UIFont fontWithName:@"PingFangSC-Regular" size:currentFont.pointSize];
     label.font = newFont;
+}
+
+-(void)megaUnbold{
+    [self unboldFontForLabel:self.cell.usernameLabel];
+    [self unboldFontForLabel:self.cell.messageLabel];
+    [self unboldFontForLabel:self.cell.timeLabel];
+    self.cell.messageLabel.textColor = [UIColor lightGrayColor];
+    self.cell.timeLabel.textColor = [UIColor darkGrayColor];
+    [self.cell.wtbTitleLabel setFont:[UIFont fontWithName:@"PingFangSC-UltraLight" size:14]];
+}
+
+-(void)megaBold{
+    [self boldFontForLabel:self.cell.usernameLabel];
+    [self boldFontForLabel:self.cell.messageLabel];
+    self.cell.messageLabel.textColor = [UIColor blackColor];
+    [self boldFontForLabel:self.cell.timeLabel];
+    self.cell.timeLabel.textColor = [UIColor blackColor];
+    [self unboldFontForLabel:self.cell.wtbTitleLabel];
 }
 
 @end

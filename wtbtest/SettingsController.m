@@ -28,6 +28,8 @@
     self.navigationItem.title = @"S E T T I N G S";
     
     self.nameCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.usernameCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.lastNameCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.emailCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.currencyCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.depopCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -36,6 +38,10 @@
     self.emailFields.delegate = self;
     self.depopField.delegate = self;
     self.contactEmailField.delegate = self;
+    self.firstNameField.delegate = self;
+    self.lastNameField.delegate = self;
+
+    self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
     
     [self setImageBorder:self.testingView];
     
@@ -44,7 +50,19 @@
     self.currentPaypal = [self.currentUser objectForKey:@"paypal"];
     self.currentContact = [self.currentUser objectForKey:@"email"];
     
-    self.nameLabel.text = [NSString stringWithFormat:@"Name: %@",[self.currentUser objectForKey:@"fullname"]];
+    self.usernameLabel.text = [NSString stringWithFormat:@"Username: %@",self.currentUser.username];
+    
+    if ([self.currentUser objectForKey:@"firstName"]) {
+        self.firstNameField.placeholder = [NSString stringWithFormat:@"First: %@",[self.currentUser objectForKey:@"firstName"]];
+    }
+    else{
+        self.firstNameField.placeholder = [NSString stringWithFormat:@"First: %@",[self.currentUser objectForKey:@"fullname"]];
+    }
+    
+    if ([self.currentUser objectForKey:@"lastName"]) {
+        self.lastNameField.placeholder = [NSString stringWithFormat:@"Last: %@",[self.currentUser objectForKey:@"lastName"]];
+    }
+    
     
     //check if got paypal email
     if ([self.currentUser objectForKey:@"paypal"]) {
@@ -106,17 +124,20 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 3;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return 5;
+        return 3;
     }
     else if (section == 1){
-        return 1;
+        return 4;
     }
     else if (section == 2){
+        return 1;
+    }
+    else if (section == 3){
         return 1;
     }
     else{
@@ -127,27 +148,35 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 0) {
         if (indexPath.row == 0) {
-            return self.nameCell;
+            return self.usernameCell;
         }
         else if (indexPath.row == 1) {
-            return self.contactEmailCell;
+            return self.nameCell;
         }
         else if (indexPath.row == 2) {
-            return self.emailCell;
-        }
-        else if (indexPath.row == 3) {
-            return self.addressCell;
-        }
-        else if (indexPath.row == 4) {
-            return self.pictureCelll;
+            return self.lastNameCell;
         }
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
-            return self.currencyCell;
+            return self.contactEmailCell;
+        }
+        else if (indexPath.row == 1) {
+            return self.emailCell;
+        }
+        else if (indexPath.row == 2) {
+            return self.addressCell;
+        }
+        else if (indexPath.row == 3) {
+            return self.pictureCelll;
         }
     }
     else if (indexPath.section == 2){
+        if (indexPath.row == 0) {
+            return self.currencyCell;
+        }
+    }
+    else if (indexPath.section == 3){
         if (indexPath.row == 0) {
             return self.depopCell;
         }
@@ -158,7 +187,7 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     
-    if (indexPath.section == 0) {
+    if (indexPath.section == 1) {
         if (indexPath.row == 3) {
             //goto shipping controller
             ShippingController *vc = [[ShippingController alloc]init];
@@ -281,6 +310,32 @@
             }];
         }
     }
+    else if (textField == self.firstNameField){
+        NSString *stringCheck = [self.firstNameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+        
+        if (![stringCheck isEqualToString:@""]) {
+            NSArray *names = [self.firstNameField.text componentsSeparatedByString:@" "];
+            
+            if (![names containsObject:self.profanityList]) {
+                [self.currentUser setObject:[self.firstNameField.text capitalizedString] forKey:@"firstName"];
+                [self.currentUser saveInBackground];
+            }
+        }
+        self.navigationItem.hidesBackButton = NO;
+    }
+    else if (textField == self.lastNameField){
+        NSString *stringCheck = [self.lastNameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+        
+        if (![stringCheck isEqualToString:@""]) {
+            NSArray *names = [self.lastNameField.text componentsSeparatedByString:@" "];
+            
+            if (![names containsObject:self.profanityList]) {
+                [self.currentUser setObject:[self.lastNameField.text capitalizedString] forKey:@"lastName"];
+                [self.currentUser saveInBackground];
+            }
+        }
+        self.navigationItem.hidesBackButton = NO;
+    }
     else{
         self.navigationItem.hidesBackButton = NO;
     }
@@ -372,28 +427,35 @@
     CGRect headerFrame = header.frame;
     header.textLabel.frame = headerFrame;
     header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
-    if (section ==1){
-        header.textLabel.text = @"    Currency";
+    if (section ==2){
+        header.textLabel.text = @"  Currency";
+    }
+    else if (section == 1){
+        header.textLabel.text = @"  Account";
+    }
+    else if (section == 3){
+        header.textLabel.text = @"  Other";
     }
     else if (section == 0){
-        header.textLabel.text = @"    Account";
-    }
-    else if (section == 2){
-        header.textLabel.text = @"    Depop";
+        header.textLabel.text = @"  Me";
     }
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
     
-    if (section ==1){
-        return @"    Currency";
+    if (section ==2){
+        return @"  Currency";
     }
     else if (section == 0){
-        return @"    Account";
+        return @"  Me";
     }
-    else if (section == 2){
-        return @"    Depop";
+    else if (section == 1){
+        return @"  Account";
     }
+    else if (section == 3){
+        return @"  Other";
+    }
+    
     return nil;
 }
 

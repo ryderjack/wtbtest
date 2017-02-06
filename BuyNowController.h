@@ -63,6 +63,7 @@
 @property (nonatomic) BOOL fromInfinEbay;
 @property (nonatomic) BOOL ebayEnabled;
 @property (nonatomic, strong) NSMutableArray *seenEbayItems;
+@property (nonatomic) int currentCount;
 
 //item viewer
 @property (nonatomic, strong) viewItemClass *itemView;

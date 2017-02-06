@@ -18,6 +18,7 @@
 #import <Crashlytics/Crashlytics.h>
 #import "MessageViewController.h"
 #import "SquareCashStyleBehaviorDefiner.h"
+#import "UIImage+Resize.h"
 
 @interface UserProfileController ()
 
@@ -77,6 +78,9 @@
             [self setupTrustedChecks];
         }
         
+        //setup edit button here as userimageview didnt seem to have a frame if did it any earlier..
+        [self setupEditButton];
+
         //segment control
         self.segmentedControl = [[HMSegmentedControl alloc] init];
         self.segmentedControl.frame = CGRectMake(0, self.myBar.frame.size.height-50,[UIApplication sharedApplication].keyWindow.frame.size.width, 50);
@@ -177,29 +181,64 @@
             if ([self.user objectForKey:@"profileLocation"]) {
                 
                 //setup correct font weights for main name/loc label
-                NSMutableAttributedString *attString =
-                [[NSMutableAttributedString alloc]
-                 initWithString:[NSString stringWithFormat:@"%@\n%@", [self.user objectForKey:@"fullname"],[self.user objectForKey:@"profileLocation"]]];
+                NSString *nameString = @"";
                 
-                NSString *nameString = [self.user objectForKey:@"fullname"];
+                if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
+                    nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
+                }
+                else{
+                    nameString = [self.user objectForKey:@"fullname"];
+                }
+                
                 NSString *locString = [self.user objectForKey:@"profileLocation"];
                 
-                [attString addAttribute: NSFontAttributeName
-                                  value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
-                                  range: NSMakeRange(0,nameString.length)];
-                
-                
-                [attString addAttribute: NSFontAttributeName
-                                  value:  [UIFont fontWithName:@"PingFangSC-Regular" size:15]
-                                  range: NSMakeRange(nameString.length+1,locString.length)];
-                
-                self.nameAndLoc.attributedText = attString;
-                
-                self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@\n%@", [self.user objectForKey:@"fullname"],[self.user objectForKey:@"profileLocation"]];
+                if ([locString containsString:@"null"] || [locString containsString:@"(null)"]) {
+                    //if been an error saving the loc then don't display the null
+                    NSMutableAttributedString *attString =
+                    [[NSMutableAttributedString alloc]
+                     initWithString:[NSString stringWithFormat:@"%@",nameString]];
+                    
+                    
+                    [attString addAttribute: NSFontAttributeName
+                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
+                                      range: NSMakeRange(0,nameString.length)];
+                    
+                    self.nameAndLoc.attributedText = attString;
+                    self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@",nameString];
+                }
+                else{
+                    NSMutableAttributedString *attString =
+                    [[NSMutableAttributedString alloc]
+                     initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,locString]];
+                    
+                    
+                    [attString addAttribute: NSFontAttributeName
+                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
+                                      range: NSMakeRange(0,nameString.length)];
+                    
+                    
+                    [attString addAttribute: NSFontAttributeName
+                                      value:  [UIFont fontWithName:@"PingFangSC-Regular" size:15]
+                                      range: NSMakeRange(nameString.length+1,locString.length)];
+                    
+                    self.nameAndLoc.attributedText = attString;
+                    self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@\n%@",nameString,locString];
+                }
             }
             else{
-                self.nameAndLoc.text = [NSString stringWithFormat:@"%@", [self.user objectForKey:@"fullname"]];
-                self.smallNameAndLoc.text = [NSString stringWithFormat:@"%@", [self.user objectForKey:@"fullname"]];
+                
+                //setup correct font weights for main name/loc label
+                NSString *nameString = @"";
+                
+                if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
+                    nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
+                }
+                else{
+                    nameString = [self.user objectForKey:@"fullname"];
+                }
+                
+                self.nameAndLoc.text = [NSString stringWithFormat:@"%@", nameString];
+                self.smallNameAndLoc.text = [NSString stringWithFormat:@"%@", nameString];
             }
             
             [self.userImageView setFile:img];
@@ -339,6 +378,9 @@
                 else if (self.saleMode == YES){
                     [self.collectionView reloadData];
                 }
+                else{
+                    [self.collectionView reloadData];
+                }
             }
             else{
                 // no WTSs
@@ -419,6 +461,7 @@
         self.forSalePressed = YES;
         ForSaleListing *vc = [[ForSaleListing alloc]init];
         vc.listingObject = selected;
+        vc.pureWTS = YES; //always pure WTS from a profile
         NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
         [self presentViewController:nav animated:YES completion:nil];
     }
@@ -434,176 +477,10 @@
         self.forSalePressed = YES;
         ForSaleListing *vc = [[ForSaleListing alloc]init];
         vc.listingObject = selected;
+        vc.pureWTS = YES;
         NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
         [self presentViewController:nav animated:YES completion:nil];
     }
-}
-
--(void)showAlertViewWithPath:(NSIndexPath *)indexPath{
-    
-    PFObject *selected;
-
-    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        [self dismissViewControllerAnimated:YES completion:^{
-        }];
-    }]];
-    
-    if (self.segmentedControl.selectedSegmentIndex == 0) {
-        //for WTBs
-        
-        selected = [self.WTBArray objectAtIndex:indexPath.item];
-        
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"View listing" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            ListingController *vc = [[ListingController alloc]init];
-            vc.listingObject = selected;
-            [self.navigationController pushViewController:vc animated:YES];
-        }]];
-        
-        if ([[selected objectForKey:@"status"] isEqualToString:@"purchased"]) {
-            //        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            //            [selected setObject:@"live" forKey:@"status"];
-            //            [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            //                if (succeeded) {
-            //                    [self.collectionView reloadData];
-            //                }
-            //            }];
-            //        }]];
-        }
-        else{
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                
-                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as purchased" message:@"Are you sure you want to mark your WTB as purchased? Sellers will no longer be able to view your WTB and offer to sell you items" preferredStyle:UIAlertControllerStyleAlert];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                    
-                }]];
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                    [selected setObject:@"purchased" forKey:@"status"];
-                    [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                        if (succeeded) {
-                            [self.collectionView reloadItemsAtIndexPaths:@[indexPath]];
-                        }
-                    }];
-                }]];
-                [self presentViewController:alertView animated:YES completion:nil];
-            }]];
-            
-//            if ([[selected objectForKey:@"status"]isEqualToString:@"ended"]) {
-//                
-//                [actionSheet addAction:[UIAlertAction actionWithTitle:@"Relist WTB" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Relist" message:@"Are you sure you want to relist your WTB?" preferredStyle:UIAlertControllerStyleAlert];
-//                    
-//                    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-//                        
-//                    }]];
-//                    [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//                        [selected setObject:@"live" forKey:@"status"];
-//                        
-//                        //expiration in 2 weeks
-//                        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-//                        dayComponent.day = 14;
-//                        NSCalendar *theCalendar = [NSCalendar currentCalendar];
-//                        NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-//                        [selected setObject:expirationDate forKey:@"expiration"];
-//                        
-//                        [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                            if (succeeded) {
-//                                [self.collectionView reloadData];
-//                            }
-//                        }];
-//                    }]];
-//                    [self presentViewController:alertView animated:YES completion:nil];
-//                }]];
-//            }
-        }
-        
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your WTB?" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                
-            }]];
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-                PFObject *selected = [self.WTBArray objectAtIndex:indexPath.item];
-                [selected setObject:@"deleted" forKey:@"status"];
-                [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-                        NSMutableArray *deletedArray = [NSMutableArray arrayWithArray:self.WTBArray];
-                        [deletedArray removeObjectAtIndex:indexPath.item];
-                        self.WTBArray = deletedArray;
-                        [self.collectionView reloadData];
-                    }
-                }];
-            }]];
-            
-            [self presentViewController:alertView animated:YES completion:nil];
-        }]];
-    }
-    else{
-        //for WTSs
-        selected = [self.forSaleArray objectAtIndex:indexPath.item];
-        
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"View listing" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            ForSaleListing *vc = [[ForSaleListing alloc]init];
-            vc.listingObject = selected;
-            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-            [self presentViewController:nav animated:YES completion:nil];
-        }]];
-        
-        if ([[selected objectForKey:@"status"] isEqualToString:@"sold"]) {
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as sold" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                [selected setObject:@"live" forKey:@"status"];
-                [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-                        [self.collectionView reloadItemsAtIndexPaths:@[indexPath]];
-                    }
-                }];
-            }]];
-        }
-        else{
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as sold" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                
-                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Mark as sold" message:@"Are you sure you want to mark your item as sold? It will no longer be recommended to interested buyers" preferredStyle:UIAlertControllerStyleAlert];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                    
-                }]];
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                    [selected setObject:@"sold" forKey:@"status"];
-                    [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                        if (succeeded) {
-                            [self.collectionView reloadItemsAtIndexPaths:@[indexPath]];
-                        }
-                    }];
-                }]];
-                [self presentViewController:alertView animated:YES completion:nil];
-            }]];
-        }
-        
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-            }]];
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-                [selected setObject:@"deleted" forKey:@"status"];
-                [selected saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-                        NSMutableArray *deletedArray = [NSMutableArray arrayWithArray:self.forSaleArray];
-                        [deletedArray removeObjectAtIndex:indexPath.item];
-                        self.forSaleArray = deletedArray;
-                        [self.collectionView reloadData];
-                    }
-                }];
-            }]];
-            
-            [self presentViewController:alertView animated:YES completion:nil];
-        }]];
-    }
-
-    [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
 -(void)fbPressed{
@@ -722,12 +599,12 @@
     }]];
     
     if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report User" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
-            [self reportUser];
-        }]];
-        
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Message User" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
             [self setupMessages];
+        }]];
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report User" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
+            [self reportUser];
         }]];
     }
     
@@ -757,10 +634,10 @@
             vc.otherUser = self.user;
             
             if ([[[object objectForKey:@"sellerUser"]objectId] isEqualToString:self.user.objectId]) {
-                vc.userIsBuyer = NO;
+                vc.userIsBuyer = YES;
             }
             else{
-                vc.userIsBuyer = YES;
+                vc.userIsBuyer = NO;
             }
             vc.otherUserName = self.user.username;
             vc.pureWTS = YES;
@@ -834,7 +711,6 @@
     
     self.collectionView.delegate = (id<UICollectionViewDelegate>)self.splitter;
     self.collectionView.contentInset = UIEdgeInsetsMake(self.myBar.maximumBarHeight, 0.0, 0.0, 0.0);
-
     
     // big mode setup
     
@@ -983,13 +859,11 @@
     [self.usernameLabel addLayoutAttributes:initialLayoutAttributesUsernameLabel forProgress:0.0];
     
     [self.middleUsernameLabel addLayoutAttributes:middleInitial forProgress:0.0];
-    
     [self.starImageView addLayoutAttributes:initialLayoutAttributesStarView forProgress:0.0];
     [self.reviewsButton addLayoutAttributes:initialLayoutAttributesReviews forProgress:0.0];
     [backButton addLayoutAttributes:initialLayoutAttributesBackButton forProgress:0.0];
     [self.FBButton addLayoutAttributes:initialLayoutAttributesfbButton forProgress:0.0];
     [self.dotsButton addLayoutAttributes:initialLayoutAttributesDotsButton forProgress:0.0];
-    
     
     // small mode
     
@@ -1036,6 +910,24 @@
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesSmallImage = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesSmallImage];
     finalLayoutAttributesSmallImage.alpha = 1.0;
     [self.smallImageView addLayoutAttributes:finalLayoutAttributesSmallImage forProgress:0.9];
+    
+    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        //profile image button
+        self.imageButton = [[UIButton alloc]initWithFrame:self.userImageView.frame];
+        [self.imageButton addTarget:self action:@selector(profileImagePressed) forControlEvents:UIControlEventTouchUpInside];
+        [self.myBar addSubview:self.imageButton];
+        
+        //image view button
+        BLKFlexibleHeightBarSubviewLayoutAttributes *initialImageButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
+        initialImageButton.size = self.userImageView.frame.size;
+        initialImageButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-15.0);
+        [self.imageButton addLayoutAttributes:initialImageButton forProgress:0.0];
+        
+        // image button final
+        BLKFlexibleHeightBarSubviewLayoutAttributes *finalImageButtonAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialImageButton];
+        finalImageButtonAttributes.alpha = 0.0;
+        [self.imageButton addLayoutAttributes:finalImageButtonAttributes forProgress:0.4];
+    }
 }
 
 -(void)setupTrustedChecks{
@@ -1066,6 +958,78 @@
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalSmallCheckAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:checkSmallAttributes];
     finalSmallCheckAttributes.alpha = 1.0;
     [checkImageViewSmall addLayoutAttributes:finalSmallCheckAttributes forProgress:0.9];
+}
+
+-(void)profileImagePressed{
+    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        if (!self.picker) {
+            self.picker = [[UIImagePickerController alloc] init];
+            self.picker.delegate = self;
+            self.picker.allowsEditing = NO;
+            self.picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+        }
+        [self presentViewController:self.picker animated:YES completion:nil];
+    }]];
+    
+    [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+    self.profileImage = info[UIImagePickerControllerOriginalImage];
+    [self showHUD];
+    UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
+    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(imageToSave, 0.7)];
+    [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            [self.userImageView setFile:filePicture];
+            [self.userImageView loadInBackground];
+            
+            [PFUser currentUser][@"picture"] = filePicture;
+            [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    NSLog(@"saved!");
+                    [self hideHUD];
+                }
+                else{
+                    NSLog(@"error saving %@", error);
+                    [self hideHUD];
+                }
+            }];
+        }
+        else{
+            NSLog(@"error saving file %@", error);
+            [self hideHUD];
+        }
+    }];
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    [picker dismissViewControllerAnimated:YES completion:NULL];
+}
+
+-(void)setupEditButton{
+    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        
+        //setup the actual edit button
+        self.editImageView = [[PFImageView alloc]initWithFrame:CGRectMake(0,0, 30, 30)];
+        [self.editImageView setImage:[UIImage imageNamed:@"editButton"]];
+        [self.myBar addSubview:self.editImageView];
+        
+        BLKFlexibleHeightBarSubviewLayoutAttributes *editAttributes = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
+        editAttributes.size = self.editImageView.frame.size;
+        editAttributes.frame = CGRectMake(self.userImageView.frame.origin.x+70,self.userImageView.frame.origin.y+70, 30, 30);
+        [self.editImageView addLayoutAttributes:editAttributes forProgress:0.0];
+        
+        BLKFlexibleHeightBarSubviewLayoutAttributes *finalEditAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:editAttributes];
+        finalEditAttributes.alpha = 0.0;
+        [self.editImageView addLayoutAttributes:finalEditAttributes forProgress:0.4];
+    }
 }
 
 @end

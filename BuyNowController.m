@@ -51,13 +51,14 @@
     
     self.pullFinished = YES;
     self.infinFinished = NO;
-    self.showRelated = YES;  //if YES show related, if NO don't show CHANGE
+    self.showRelated = YES; 
     self.ebayEnabled = YES;
     self.viewedItem = NO;
     self.fromInfinEbay = NO;
     [self.anotherPromptButton setHidden:YES];
     
-    self.pullSkipped = 0; //CHANGE
+    self.pullSkipped = 0;
+    self.currentCount = 0;
     
     // Option 1
     // Load user's latest 5 WTBs
@@ -72,10 +73,12 @@
             NSString *shouldShowRelated = [object objectForKey:@"relatedShow"];
             if ([shouldShowRelated isEqualToString:@"NO"]) {
                 self.showRelated = NO;
+                [self.tableView reloadData];
             }
             NSString *shouldShowEbay = [object objectForKey:@"ebayEnabled"];
             if ([shouldShowEbay isEqualToString:@"NO"]) {
                 self.ebayEnabled = NO;
+                [self.tableView reloadData];
             }
         }
         else{
@@ -127,8 +130,24 @@
         }
         else{
             PFObject *WTB = [wtbDict valueForKey:@"WTB"];
+            //to keep track of which WTBs have ebay items since cloud code comes back in random order
+            NSNumber *index;
             
-            NSDictionary *params = @{@"itemTitle": [WTB objectForKey:@"title"], @"price": @1000, @"limit": @5}; //price is ignored atm in cloud code
+            if (self.fromInfinEbay == YES && self.showRelated == YES) {
+                index = [NSNumber numberWithInt:(indexNo + self.currentCount)-1]; //to ensure reloading correct table view indexes
+            }
+            else if (self.fromInfinEbay == YES && self.showRelated == NO){
+                index = [NSNumber numberWithInt:(indexNo + self.currentCount)-1];
+            }
+            else if (self.fromInfinEbay == NO && self.showRelated == YES){
+                index = [NSNumber numberWithInt:indexNo-1];
+            }
+            else{
+                //no related cell so don't -1 off the table view index number
+                index = [NSNumber numberWithInt:indexNo-1];
+            }
+            
+            NSDictionary *params = @{@"itemTitle": [WTB objectForKey:@"title"], @"price": @1000, @"limit": @5, @"index":index}; //price is ignored atm in cloud code
             
             [PFCloud callFunctionInBackground:@"eBayFetch" withParameters:params block:^(NSDictionary *response, NSError *error) {
                 if (!error) {
@@ -144,32 +163,25 @@
                             NSMutableArray *matches = [wtbDict valueForKey:@"matches"];
                             [matches insertObject:itemDict atIndex:0];
                             [wtbDict setValue:matches forKey:@"matches"];
+                            
+                            //access table view cell at the correct index
+                            int indexToUpdate = [[params valueForKey:@"index"] intValue];
+                            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:indexToUpdate inSection:0];
+                            RecommendCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+                            
+                            //insert ebay item at the beginning & reload that collection view
+                            NSIndexPath *indexPath1 = [NSIndexPath indexPathForItem:0 inSection:0];
+                            [cell.collectionView insertItemsAtIndexPaths:[NSArray arrayWithObject:indexPath1]];
+                            [cell.collectionView reloadData];
+                            
                             [self.seenEbayItems addObject:[itemDict valueForKey:@"itemURL"]];
-                            break;
+                            break; //break to only add one ebay item to the array as loop completes only once
                         }
-                    }
-                    
-                    //objects to check will always be +1 more than checker as it includes the related row in the CV (if showrelated==YES of course!)
-                    if (objectsToCheck.count == checker+1 && self.showRelated == YES && self.fromInfinEbay == NO) {
-                        [self.tableView reloadData];
-
-                    }
-                    else if (objectsToCheck.count == checker && self.showRelated == NO && self.fromInfinEbay == NO){
-                        [self.tableView reloadData];
-
-                    }
-                    else if (objectsToCheck.count == checker && self.fromInfinEbay == YES){
-                        [self.tableView reloadData];
-
-                    }
-                    else{
-                        //must have more WTBs to search eBay for
                     }
                 }
                 else{
+                    checker++;
                     NSLog(@"ebay error %@", error);
-                    [self.tableView reloadData];
-
                 }
             }];
         }
@@ -475,15 +487,17 @@
                             if (self.results.count > 0) {
                                 NSLog(@"ADDING DIC");
                                 self.pullSkipped = 0;
-                                NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:@"YES",@"related", nil];
-                                [self.results insertObject:dict atIndex:0];
+                                if (self.showRelated == YES) {
+                                    NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:@"YES",@"related", nil];
+                                    [self.results insertObject:dict atIndex:0];
+                                }
                             }
                             else if (self.results.count == 0){
                                 int postNumber = (int)[[PFUser currentUser]objectForKey:@"postNumber"];
                                 
                                 if (self.pullSkipped <= postNumber) {
                                     NSLog(@"pull again!");
-                                    self.pullSkipped = self.pullSkipped + 10; //this should match the limit number //CHANGE
+                                    self.pullSkipped = self.pullSkipped + 10; //this should match the limit number //CHECK
                                     self.pullFinished = YES;
                                     [self recommendFromServer];
                                     return;
@@ -612,6 +626,7 @@
                             NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc]
                                                                 initWithKey: @"createdAt" ascending: NO];
                             NSArray *sortedArray = [holding sortedArrayUsingDescriptors: [NSArray arrayWithObject:sortDescriptor]];
+                            self.currentCount =(int)self.results.count;
                             [self.results addObjectsFromArray:sortedArray];
                             
                             if (holding.count == 0 ) {
@@ -785,12 +800,14 @@ numberOfRowsInSection:(NSInteger)section
 -(UICollectionViewCell *)collectionView:(AFCollectionView *)collectionView
                  cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
+//    NSLog(@"CELL FOR ITEM CALLED");
     ForSaleCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.itemView.image = nil;
     NSDictionary *wtbDict = [self.results objectAtIndex:collectionView.indexPath.row];
     
+    //check if its a related item
+    
     if ([wtbDict valueForKey:@"related"] && self.showRelated == YES) {
-//        NSLog(@"should show a product in this collection view!");
         if (indexPath.row == self.products.count-1 && self.products.count > 1) {
             [cell.itemView setImage:[UIImage imageNamed:@"viewMore"]];
         }
@@ -809,20 +826,19 @@ numberOfRowsInSection:(NSInteger)section
         }
     }
     else{
-//        NSArray *collectionViewArray = [self.wtbArray[collectionView.indexPath.row] objectForKey:@"buyNow"];
         
         NSArray *collectionViewArray = [wtbDict valueForKey:@"matches"];
         
-//        NSLog(@"collection view array %@", collectionViewArray);
-        
+        //check if its an eBay item
         if ([collectionViewArray[indexPath.item]isKindOfClass:[NSDictionary class]]) {
-//            NSLog(@"its an ebay item");
             NSDictionary *ebayItem = collectionViewArray[indexPath.item];
             NSURL *imageFileUrl = [[NSURL alloc] initWithString:[ebayItem valueForKey:@"itemImageURL"]];
             NSData *imageData = [NSData dataWithContentsOfURL:imageFileUrl];
+            cell.itemView.image = [UIImage imageNamed:@"empty"];
             cell.itemView.image = [UIImage imageWithData:imageData];
         }
         else{
+            // otherwise it's just a normal for sale item
             PFObject *WTS = collectionViewArray[indexPath.item];
             [WTS fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
@@ -830,6 +846,7 @@ numberOfRowsInSection:(NSInteger)section
                     
                     //setup cell
                     [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
+                    cell.itemView.image = [UIImage imageNamed:@"empty"];
                     [cell.itemView loadInBackground];
                     [WTS setObject:WTB forKey:@"WTB"];
                 }
@@ -1325,7 +1342,7 @@ numberOfRowsInSection:(NSInteger)section
 
 -(void)ebayListingSetup{
     self.ebayTapped = YES;
-    [self.itemView.visitButton setTitle:@"V I S I T  E B A Y" forState:UIControlStateNormal];
+    [self.itemView.visitButton setTitle:@"V I E W  I T E M" forState:UIControlStateNormal];
     NSURL *imageFileUrl = [[NSURL alloc] initWithString:[self.ebayToView valueForKey:@"itemImageURL"]];
     NSData *imageData = [NSData dataWithContentsOfURL:imageFileUrl];
     self.itemView.itemImageView.image = [UIImage imageWithData:imageData];
@@ -1353,7 +1370,7 @@ numberOfRowsInSection:(NSInteger)section
 
 -(void)itemViewListingSetup{
     self.ebayTapped = NO;
-    [self.itemView.visitButton setTitle:@"V I S I T  E N D." forState:UIControlStateNormal];
+    [self.itemView.visitButton setTitle:@"V I E W  I T E M" forState:UIControlStateNormal];
     [self.listingToView fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
             //setup image

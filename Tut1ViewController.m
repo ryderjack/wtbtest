@@ -277,6 +277,7 @@
 -(void)setupBumping{
     [UIView animateKeyframesWithDuration:3.0 delay:0.3 options:UIViewKeyframeAnimationOptionCalculationModeLinear | UIViewKeyframeAnimationOptionRepeat animations:^{
         [self.cursorImageView setAlpha:0.0f];
+        self.cursorImageView.transform = CGAffineTransformMakeTranslation(-110, 90);
         self.screenImageView.image = [UIImage imageNamed:@"iPhoneIntroBumped"];
         [self.screenImageView setAlpha:0.0f];
         

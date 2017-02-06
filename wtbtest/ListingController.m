@@ -110,13 +110,13 @@
             
             self.titleLabel.text = [self.listingObject objectForKey:@"title"];
             
-            if ([[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue]) {
-                int price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
-                self.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol ,price];
-            }
-            else{
+//            if ([[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue]) {
+//                int price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+//                self.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol ,price];
+//            }
+//            else{
                 self.priceLabel.text = @"Negotiable";
-            }
+//            }
             
             [self.cellArray addObject:self.payCell];
             
@@ -207,6 +207,7 @@
                     btn.frame = CGRectMake(0,0,36,36);
                     [btn addTarget:self action:@selector(buyerPressed) forControlEvents:UIControlEventTouchUpInside];
                     PFImageView *buttonView = [[PFImageView alloc]initWithFrame:btn.frame];
+                    [buttonView setBackgroundColor:[UIColor lightGrayColor]];
 //                    [buttonView.layer setBorderColor: [[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0] CGColor]];
 //                    [buttonView.layer setBorderWidth: 1.0];
                     
@@ -620,60 +621,6 @@
     self.buyerImgView.contentMode = UIViewContentModeScaleAspectFill;
 }
 
-- (void)handleSwipe:(UISwipeGestureRecognizer *)swipe {
-    if (self.numberOfPics > 1) {
-        self.picView.image = nil;
-    }
-    if (swipe.direction == UISwipeGestureRecognizerDirectionLeft) {
-        NSLog(@"Left Swipe");
-        if (self.picIndicator.currentPage != 4) {
-            if (self.picIndicator.currentPage == 0 && self.numberOfPics >1) {
-                [self.picView setFile:self.secondImage];
-                [self.picIndicator setCurrentPage:1];
-            }
-            else if (self.picIndicator.currentPage == 1 && self.numberOfPics >2){
-                [self.picView setFile:self.thirdImage];
-                [self.picIndicator setCurrentPage:2];
-            }
-            else if (self.picIndicator.currentPage == 2 && self.numberOfPics >3){
-                [self.picView setFile:self.fourthImage];
-                [self.picIndicator setCurrentPage:3];
-            }
-        }
-    }
-    if (swipe.direction == UISwipeGestureRecognizerDirectionRight) {
-        NSLog(@"Right Swipe");
-        if (self.picIndicator.currentPage != 0) {
-            if (self.picIndicator.currentPage == 1) {
-                [UIView animateWithDuration:0.5f animations:^{
-                    [self.picView setFile:self.firstImage];
-                }];
-                [self.picIndicator setCurrentPage:0];
-            }
-            else if (self.picIndicator.currentPage == 2){
-                [self.picView setFile:self.secondImage];
-                [self.picIndicator setCurrentPage:1];
-            }
-            else if (self.picIndicator.currentPage == 3){
-                [self.picView setFile:self.thirdImage];
-                [self.picIndicator setCurrentPage:2];
-            }
-        }
-    }
-    if (self.numberOfPics > self.picIndicator.currentPage) {
-        //set placeholder spinner view
-        [self showimageHUD];
-        
-        [self.picView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
-        } progressBlock:^(int percentDone) {
-            if (percentDone == 100) {
-                //remove spinner
-                [self hideImageHud];
-            }
-        }];
-    }
-}
-
 -(void)showAlertView{
     [self hideBarButton];
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
@@ -986,13 +933,13 @@
             
             self.titleLabel.text = [self.listingObject objectForKey:@"title"];
             
-            if ([[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue]) {
-                int price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
-                self.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol ,price];
-            }
-            else{
+//            if ([[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue]) {
+//                int price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+//                self.priceLabel.text = [NSString stringWithFormat:@"%@%d",self.currencySymbol ,price];
+//            }
+//            else{
                 self.priceLabel.text = @"Negotiable";
-            }
+//            }
             
             [self.cellArray addObject:self.payCell];
             
@@ -1085,7 +1032,7 @@
     }
     else if (index == 3){
         [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image4"]];
-    }
+    }    
     [((PFImageView *)view) loadInBackground];
     
     return view;

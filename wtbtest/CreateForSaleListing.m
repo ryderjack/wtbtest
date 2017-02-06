@@ -56,7 +56,7 @@
     self.fourthImageView.layer.cornerRadius = 4;
     self.fourthImageView.layer.masksToBounds = YES;
     
-    self.payField.placeholder = @"";
+    self.payField.placeholder = @"Optional";
     self.genderSize = @"";
     self.photostotal = 0;
     self.descriptionField.delegate = self;
@@ -154,15 +154,12 @@
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
         self.currencySymbol = @"£";
-        self.payField.placeholder = @"£100";
     }
     else if ([self.currency isEqualToString:@"EUR"]) {
         self.currencySymbol = @"€";
-        self.payField.placeholder = @"€100";
     }
     else if ([self.currency isEqualToString:@"USD"]) {
         self.currencySymbol = @"$";
-        self.payField.placeholder = @"$100";
     }
 }
 
@@ -377,7 +374,7 @@
 -(void)dismissVC{
     //only show warning if listing is partially completed
     if (self.editMode == YES && self.somethingChanged == NO) {
-        [self dismissViewControllerAnimated:YES completion:nil];
+        [self.navigationController popViewControllerAnimated:YES];
     }
     else{
         if ([self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"] && [self.chooseCondition.text isEqualToString:@"select"] && [self.chooseCategroy.text isEqualToString:@"select"] && [self.chooseSize.text isEqualToString:@"select"] && [self.payField.text isEqualToString:@""] && [self.firstImageView.image isEqual:[UIImage imageNamed:@"addImage"]]){
@@ -415,12 +412,14 @@
 }
 
 -(void)textFieldDidBeginEditing:(UITextField *)textField{
+    self.somethingChanged = YES;
     if (textField == self.payField) {
         self.payField.text = [NSString stringWithFormat:@"%@", self.currencySymbol];
     }
 }
 
 -(void)textViewDidBeginEditing:(UITextView *)textView{
+    self.somethingChanged = YES;
     if ([textView.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"]) {
         textView.text = @"";
         textView.textColor = [UIColor colorWithRed:74/255.0f green:74/255.0f blue:74/255.0f alpha:1.0f];
@@ -429,6 +428,12 @@
 
 -(void)textFieldDidEndEditing:(UITextField *)textField{
     if (textField == self.payField) {
+        
+        if ([self.payField.text isEqualToString:self.currencySymbol]) {
+            self.payField.text = @"";
+            return;
+        }
+        
         NSString *prefixToRemove = [NSString stringWithFormat:@"%@", self.currencySymbol];
         NSString *priceString = [[NSString alloc]init];
         priceString = [self.payField.text substringFromIndex:[prefixToRemove length]];
@@ -441,7 +446,7 @@
         
         priceArray = priceArrayMutable;
         
-        NSLog(@"price array %lu", (unsigned long)priceArray.count);
+       // NSLog(@"price array %lu", (unsigned long)priceArray.count);
         
         if (priceArray.count == 0) {
             priceString = @"0.00";
@@ -718,6 +723,7 @@
 }
 
 -(void)finalImage:(UIImage *)image{
+    self.somethingChanged = YES;
     if (self.camButtonTapped == 1) {
         [self.firstImageView setHidden:NO];
         [self.firstImageView setImage:image];
@@ -785,7 +791,7 @@
             [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
                 if (placemarks) {
                     CLPlacemark *placemark = [placemarks lastObject];
-                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.administrativeArea];
+                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.ISOcountryCode];
                     
                     if (geoPoint) {
                         self.geopoint = geoPoint;
@@ -1036,68 +1042,17 @@
     
     NSString *descriptionCheck = [self.descriptionField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
-    if([self.chooseCategroy.text isEqualToString:@"Accessories"] && ( [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"]|| [self.payField.text isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]])){
+    if([self.chooseCategroy.text isEqualToString:@"Accessories"] && ( [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"] || self.photostotal == 0)){
         NSLog(@"accessories selected but haven't filled everything else in");
         [self showAlertWithTitle:@"Empty Fields" andMsg:@"Make sure you add all your item info!"];
         [self.longButton setEnabled:YES];
     }
-    else if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.payField.text isEqualToString:@""] || [self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"]|| [descriptionCheck isEqualToString:@""] || self.photostotal == 0 || [self.payField.text isEqualToString:[NSString stringWithFormat:@"%@", self.currencySymbol]]) {
+    else if ([self.chooseCategroy.text isEqualToString:@"select"] || [self.chooseCondition.text isEqualToString:@"select"] || [self.chooseLocation.text isEqualToString:@"select"] || [self.chooseSize.text isEqualToString:@"select"] || [self.descriptionField.text isEqualToString:@"e.g. Supreme Union Jack Bogo #box #logo"]|| [descriptionCheck isEqualToString:@""] || self.photostotal == 0 ) {
         [self showAlertWithTitle:@"Empty Fields" andMsg:@"Make sure you add all your item info!"];
         [self.longButton setEnabled:YES];
     }
     else{
         [self showHUD];
-        
-        NSString *prefixToRemove = [NSString stringWithFormat:@"%@", self.currencySymbol];
-        NSString *priceString = [[NSString alloc]init];
-        priceString = [self.payField.text substringFromIndex:[prefixToRemove length]];
-        
-        NSArray *priceArray = [priceString componentsSeparatedByString:@"."];
-        if ([priceArray[0] isEqualToString:self.currencySymbol]) {
-            
-            priceString = [NSString stringWithFormat:@"%@0.00", self.currencySymbol];
-        }
-        else if (priceArray.count > 1){
-            NSString *intAmount = priceArray[0];
-            
-            if (intAmount.length == 1){
-                NSLog(@"just the currency symbol then a decimal point");
-                intAmount = [NSString stringWithFormat:@"%@00", self.currencySymbol];
-            }
-            else{
-                //all good
-                NSLog(@"length of int %lu", (unsigned long)intAmount.length);
-            }
-            
-            NSMutableString *centAmount = priceArray[1];
-            if (centAmount.length == 2){
-                //all good
-            }
-            else if (centAmount.length == 1){
-                NSLog(@"got 1 decimal place");
-                centAmount = [NSMutableString stringWithFormat:@"%@0", centAmount];
-            }
-            else{
-                NSLog(@"point but no numbers after it");
-                centAmount = [NSMutableString stringWithFormat:@"%@00", centAmount];
-            }
-            
-            priceString = [NSString stringWithFormat:@"%@.%@", intAmount, centAmount];
-        }
-        else{
-            priceString = [NSString stringWithFormat:@"%@.00", priceString];
-            NSLog(@"no decimal point so price is %@", priceString);
-        }
-        
-        if ([priceString isEqualToString:[NSString stringWithFormat:@"%@0.00", self.currencySymbol]] || [priceString isEqualToString:@""] || [priceString isEqualToString:[NSString stringWithFormat:@"%@.00", self.currencySymbol]] || [priceString isEqualToString:@"  "]) {
-            //invalid price number
-            NSLog(@"invalid price number");
-            [self showAlertWithTitle:@"Enter Valid Price" andMsg:@"Make sure to use a sensible price!"];
-            [self.longButton setEnabled:YES];
-            return;
-        }
-        
-        CGFloat strFloat = (CGFloat)[priceString floatValue];
         
         PFObject *forSaleItem;
         
@@ -1109,26 +1064,81 @@
             [forSaleItem setObject:@0 forKey:@"views"];
         }
         
-        if ([self.currency isEqualToString:@"GBP"]) {
-            forSaleItem[@"salePriceGBP"] = @(strFloat);
-            float USD = strFloat*1.32;
-            forSaleItem[@"salePriceUSD"] = @(USD);
-            float EUR = strFloat*1.16;
-            forSaleItem[@"salePriceEUR"] = @(EUR);
+        NSString *priceCheck = [self.payField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+        
+        if (![priceCheck isEqualToString:@""] &&
+            ![self.payField.text isEqualToString:[NSString stringWithFormat:@"%@0.00", self.currencySymbol]] &&
+            ![self.payField.text isEqualToString:[NSString stringWithFormat:@"%@.00", self.currencySymbol]]) {
+            
+            NSString *prefixToRemove = [NSString stringWithFormat:@"%@", self.currencySymbol];
+            NSString *priceString = [[NSString alloc]init];
+            priceString = [self.payField.text substringFromIndex:[prefixToRemove length]];
+            
+            NSArray *priceArray = [priceString componentsSeparatedByString:@"."];
+            if ([priceArray[0] isEqualToString:self.currencySymbol]) {
+                priceString = [NSString stringWithFormat:@"%@0.00", self.currencySymbol];
+            }
+            else if (priceArray.count > 1){
+                NSString *intAmount = priceArray[0];
+                
+                if (intAmount.length == 1){
+                    NSLog(@"just the currency symbol then a decimal point");
+                    intAmount = [NSString stringWithFormat:@"%@00", self.currencySymbol];
+                }
+                else{
+                    //all good
+                    NSLog(@"length of int %lu", (unsigned long)intAmount.length);
+                }
+                
+                NSMutableString *centAmount = priceArray[1];
+                if (centAmount.length == 2){
+                    //all good
+                }
+                else if (centAmount.length == 1){
+                    NSLog(@"got 1 decimal place");
+                    centAmount = [NSMutableString stringWithFormat:@"%@0", centAmount];
+                }
+                else{
+                    NSLog(@"point but no numbers after it");
+                    centAmount = [NSMutableString stringWithFormat:@"%@00", centAmount];
+                }
+                
+                priceString = [NSString stringWithFormat:@"%@.%@", intAmount, centAmount];
+            }
+            else{
+                priceString = [NSString stringWithFormat:@"%@.00", priceString];
+                NSLog(@"no decimal point so price is %@", priceString);
+            }
+            
+            CGFloat strFloat = (CGFloat)[priceString floatValue];
+            
+            if ([self.currency isEqualToString:@"GBP"]) {
+                forSaleItem[@"salePriceGBP"] = @(strFloat);
+                float USD = strFloat*1.32;
+                forSaleItem[@"salePriceUSD"] = @(USD);
+                float EUR = strFloat*1.16;
+                forSaleItem[@"salePriceEUR"] = @(EUR);
+            }
+            else if ([self.currency isEqualToString:@"USD"]) {
+                forSaleItem[@"salePriceUSD"] = @(strFloat);
+                float GBP = strFloat*0.76;
+                forSaleItem[@"salePriceGBP"] = @(GBP);
+                float EUR = strFloat*0.89;
+                forSaleItem[@"salePriceEUR"] = @(EUR);
+            }
+            else if ([self.currency isEqualToString:@"EUR"]) {
+                forSaleItem[@"salePriceEUR"] = @(strFloat);
+                float GBP = strFloat*0.86;
+                forSaleItem[@"salePriceGBP"] = @(GBP);
+                float USD = strFloat*1.12;
+                forSaleItem[@"salePriceUSD"] = @(USD);
+            }
         }
-        else if ([self.currency isEqualToString:@"USD"]) {
-            forSaleItem[@"salePriceUSD"] = @(strFloat);
-            float GBP = strFloat*0.76;
-            forSaleItem[@"salePriceGBP"] = @(GBP);
-            float EUR = strFloat*0.89;
-            forSaleItem[@"salePriceEUR"] = @(EUR);
-        }
-        else if ([self.currency isEqualToString:@"EUR"]) {
-            forSaleItem[@"salePriceEUR"] = @(strFloat);
-            float GBP = strFloat*0.86;
-            forSaleItem[@"salePriceGBP"] = @(GBP);
-            float USD = strFloat*1.12;
-            forSaleItem[@"salePriceUSD"] = @(USD);
+        else{
+            // price not set so save as 0.00 and in for sale listing, display this as 'Negotiable'
+            forSaleItem[@"salePriceUSD"] = @(0.00);
+            forSaleItem[@"salePriceGBP"] = @(0.00);
+            forSaleItem[@"salePriceEUR"] = @(0.00);
         }
         
         NSString *descriptionKeywordsString = [self.descriptionField.text stringByReplacingOccurrencesOfString:@"#" withString:@""];
@@ -1314,8 +1324,14 @@
     else{
         symbol = @"$";
     }
-    self.payField.text = [NSString stringWithFormat:@"%@%@",symbol,[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", [self.listing objectForKey:@"currency"]]]];
-    
+    float price = [[self.listing objectForKey:@"salePriceUSD"]floatValue]; //if it wasn't set all prices should be 0.00
+
+    if (price == 0.00) {
+        self.payField.text = @"";
+    }
+    else{
+        self.payField.text = [NSString stringWithFormat:@"%@%@",symbol,[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", [self.listing objectForKey:@"currency"]]]];
+    }
     
     self.chooseCondition.text = [self.listing objectForKey:@"condition"];
     
