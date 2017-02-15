@@ -12,8 +12,10 @@
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
 #import <iCarousel.h>
+#import "SendDialogBox.h"
+#import <FBSDKShareKit/FBSDKShareKit.h>
 
-@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate>
+@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
 @property (nonatomic, strong) PFObject *WTBObject;
@@ -71,5 +73,20 @@
 @property (weak, nonatomic) IBOutlet iCarousel *carouselView;
 @property (nonatomic, strong) NSMutableArray *imageArray;
 
+//send cell
+@property (strong, nonatomic) IBOutlet UITableViewCell *sendCell;
+@property (weak, nonatomic) IBOutlet UIButton *sendButton;
+
+//send dialog box
+@property (nonatomic, strong) SendDialogBox *sendBox;
+@property (nonatomic, strong) UIView *bgView;
+@property (nonatomic) BOOL setupBox;
+@property (nonatomic, strong) NSMutableArray *facebookUsers;
+@property (nonatomic) BOOL sendMode;
+@property (nonatomic) int friendIndexSelected;
+@property (nonatomic) BOOL selectedFriend;
+@property (nonatomic) BOOL hidingSendBox;
+@property (nonatomic) BOOL changeKeyboard;
+@property (nonatomic) BOOL wasShowing;
 
 @end

@@ -29,6 +29,12 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    [self.createButton setHidden:YES];
+    [self.actionLabel setHidden:YES];
+    
+    [self.bumpImageView setHidden:YES];
+    [self.bumpLabel setHidden:YES];
+    
     self.forSalePressed = NO;
     self.WTBPressed = NO;
     self.numberOfSegments = 0;
@@ -71,87 +77,96 @@
     self.bumpedIds = [[NSMutableArray alloc]init];
     
 //    NSLog(@"USER %@", self.user);
-
-    PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
-    [trustedQuery whereKey:@"user" equalTo:self.user];
-    [trustedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-        if (number >= 1) {
-            self.isSeller = YES;
-            [self setupTrustedChecks];
-        }
+    
+    if (self.tabMode == YES) {
+        self.user = [PFUser currentUser];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(newTBMessage) name:@"NewTBMessage" object:nil];
+    }
+    
+    if (self.user) { //added in this check as saw a crash when querying a null user
         
-        //setup edit button here as userimageview didnt seem to have a frame if did it any earlier..
-        [self setupEditButton];
-
-        //segment control
-        self.segmentedControl = [[HMSegmentedControl alloc] init];
-        self.segmentedControl.frame = CGRectMake(0, self.myBar.frame.size.height-50,[UIApplication sharedApplication].keyWindow.frame.size.width, 50);
-        self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
-        self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
-        self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
-        self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10]};
-        self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]};
-        [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
-        
-        BLKFlexibleHeightBarSubviewLayoutAttributes *initialSegAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] init];
-        initialSegAttributes.frame = CGRectMake(0, self.myBar.frame.size.height-50,[UIApplication sharedApplication].keyWindow.frame.size.width, 50);
-        [self.segmentedControl addLayoutAttributes:initialSegAttributes forProgress:0];
-        
-        BLKFlexibleHeightBarSubviewLayoutAttributes *finalSegAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialSegAttributes];
-        finalSegAttributes.transform = CGAffineTransformMakeTranslation(0, -286);
-        [self.segmentedControl addLayoutAttributes:finalSegAttributes forProgress:1.0];
-        [self.myBar addSubview:self.segmentedControl];
-
-        //setup correct dots button
-        if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.isSeller == YES){
-            //same person and a seller
-            //show add button
-            [self.dotsButton setImage:[UIImage imageNamed:@"plusIconRound"] forState:UIControlStateNormal];
-            [self.dotsButton addTarget:self action:@selector(addForSalePressed) forControlEvents:UIControlEventTouchUpInside];
-        }
-        else{
-            //show dots
-            [self.dotsButton setImage:[UIImage imageNamed:@"dotsFilled"] forState:UIControlStateNormal];
-            [self.dotsButton addTarget:self action:@selector(showAlertView) forControlEvents:UIControlEventTouchUpInside];
-        }
-        
-        if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.isSeller == YES) {
-            //trusted seller so load
-            //WTSs and WTB
-            [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"S E L L I N G", @"B U M P E D"]];
-            self.numberOfSegments = 2;
-
-            [self loadWTBListings];
-            [self loadWTSListings];
-        }
-        else if (self.saleMode == YES){
-            //gone on profile from a for sale item so
-            //WTS only
-            [self.segmentedControl setSectionTitles:@[@"S E L L I N G", @"B U M P E D"]];
-            self.numberOfSegments = 1;
-            [self loadWTSListings];
-        }
-        else if (self.isSeller == YES) {
-            //trusted seller but not looking at own profile
-            //WTS and WTB
-            [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"S E L L I N G", @"B U M P E D"]];
-            self.numberOfSegments = 2;
-            if (self.fromSearch == YES) {
-                [self.segmentedControl setSelectedSegmentIndex:1];
+        PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
+        [trustedQuery whereKey:@"user" equalTo:self.user];
+        [trustedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+            if (number >= 1) {
+                self.isSeller = YES;
+                [self setupTrustedChecks];
             }
-            [self loadWTBListings];
-            [self loadWTSListings];
-        }
-        else{
-            //user is not a seller
-            //just WTB
-            [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"B U M P E D"]];
-            self.numberOfSegments = 1;
-            self.isSeller = NO;
-            self.wantedMode = YES;
-            [self loadWTBListings];
-        }
-    }];
+            self.isSeller = YES; //CHECK
+
+            //setup edit button here as userimageview didnt seem to have a frame if did it any earlier..
+            [self setupEditButton];
+            
+            //segment control
+            self.segmentedControl = [[HMSegmentedControl alloc] init];
+            self.segmentedControl.frame = CGRectMake(0, self.myBar.frame.size.height-50,[UIApplication sharedApplication].keyWindow.frame.size.width, 50);
+            self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
+            self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
+            self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+            self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10]};
+            self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]};
+            [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
+            
+            BLKFlexibleHeightBarSubviewLayoutAttributes *initialSegAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] init];
+            initialSegAttributes.frame = CGRectMake(0, self.myBar.frame.size.height-50,[UIApplication sharedApplication].keyWindow.frame.size.width, 50);
+            [self.segmentedControl addLayoutAttributes:initialSegAttributes forProgress:0];
+            
+            BLKFlexibleHeightBarSubviewLayoutAttributes *finalSegAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialSegAttributes];
+            finalSegAttributes.transform = CGAffineTransformMakeTranslation(0, -286);
+            [self.segmentedControl addLayoutAttributes:finalSegAttributes forProgress:1.0];
+            [self.myBar addSubview:self.segmentedControl];
+            
+            //setup correct dots button
+            if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.isSeller == YES){
+                //same person and a seller
+                //show add button
+                [self.dotsButton setImage:[UIImage imageNamed:@"plusIconRound"] forState:UIControlStateNormal];
+                [self.dotsButton addTarget:self action:@selector(addForSalePressed) forControlEvents:UIControlEventTouchUpInside];
+            }
+            else{
+                //show dots
+                [self.dotsButton setImage:[UIImage imageNamed:@"dotsFilled"] forState:UIControlStateNormal];
+                [self.dotsButton addTarget:self action:@selector(showAlertView) forControlEvents:UIControlEventTouchUpInside];
+            }
+            
+            if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.isSeller == YES) {
+                //trusted seller so load
+                //WTSs and WTB
+                [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"S E L L I N G", @"B U M P E D"]];
+                self.numberOfSegments = 2;
+                
+                [self loadWTBListings];
+                [self loadWTSListings];
+            }
+            else if (self.saleMode == YES){
+                //gone on profile from a for sale item so
+                //WTS only
+                [self.segmentedControl setSectionTitles:@[@"S E L L I N G", @"B U M P E D"]];
+                self.numberOfSegments = 1;
+                [self loadWTSListings];
+            }
+            else if (self.isSeller == YES) {
+                //trusted seller but not looking at own profile
+                //WTS and WTB
+                [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"S E L L I N G", @"B U M P E D"]];
+                self.numberOfSegments = 2;
+                if (self.fromSearch == YES) {
+                    [self.segmentedControl setSelectedSegmentIndex:1];
+                }
+                [self loadWTBListings];
+                [self loadWTSListings];
+            }
+            else{
+                //user is not a seller
+                //just WTB
+                [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"B U M P E D"]];
+                self.numberOfSegments = 1;
+                self.isSeller = NO;
+                self.wantedMode = YES;
+                [self loadWTBListings];
+            }
+        }];
+    }
     
     [self setAutomaticallyAdjustsScrollViewInsets:NO];
     
@@ -173,6 +188,25 @@
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+    //check if must show unread icon on cog icon 
+    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.fromSearch != YES) {
+        if ([self.navigationController tabBarItem].badgeValue != nil) {
+//            NSLog(@"unseen TB msg");
+            [self.backButton setImage:[UIImage imageNamed:@"unreadCog"] forState:UIControlStateNormal];
+        }
+        else{
+            [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
+        }
+    }
+    
+    //refresh listings when user taps on profile tab
+    if (self.tabMode == YES) {
+        [self loadWTBListings];
+        if (self.isSeller == YES) {
+            [self loadWTSListings];
+        }
+    }
     
     [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
@@ -269,14 +303,17 @@
             
             int total = purchased+sold;
             
-            if (total > 0) {
+            if (total > 0 || self.tabMode == YES) {
                 [self.myBar addSubview:self.starImageView];
                 [self.myBar addSubview:self.reviewsButton];
                 [self.myBar addSubview:self.usernameLabel];
                 
                 [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Reviews",total] forState:UIControlStateNormal];
-                
-                if (starNumber == 0) {
+                if (total == 0 && self.tabMode == YES) {
+                    [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
+                    [self.reviewsButton setTitle:@"Earn reputation & stay protected on Bump" forState:UIControlStateNormal];
+                }
+                else if (starNumber == 0) {
                     [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
                 }
                 else if (starNumber == 1){
@@ -362,6 +399,23 @@
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             self.WTBArray = objects;
+
+            if (objects.count == 0 && self.segmentedControl.selectedSegmentIndex == 0 && self.tabMode == YES) {
+                [self.createButton setHidden:NO];
+                [self.actionLabel setHidden:NO];
+                
+                [self.bumpImageView setHidden:YES];
+                [self.bumpLabel setHidden:YES];
+            }
+            
+            else if (objects.count != 0) {
+                [self.createButton setHidden:YES];
+                [self.actionLabel setHidden:YES];
+                
+                [self.bumpImageView setHidden:YES];
+                [self.bumpLabel setHidden:YES];
+            }
+
             [self.collectionView performBatchUpdates:^{
                 [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
             } completion:nil];
@@ -373,30 +427,97 @@
 }
 
 -(void)loadBumpedListings{
-    PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"BumpedListings"];
-    [bumpedQuery whereKey:@"status" notEqualTo:@"deleted"];
-    [bumpedQuery whereKey:@"bumpUser" equalTo:self.user];
-    [bumpedQuery orderByDescending:@"createdAt"];
-    [bumpedQuery includeKey:@"listing"];
-    [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+    NSArray *bumped = [self.user objectForKey:@"bumpArray"];
+    NSLog(@"LOAD BUMPED %@", bumped);
+
+    PFQuery *bumpedListings = [PFQuery queryWithClassName:@"wantobuys"];
+    [bumpedListings whereKey:@"status" notEqualTo:@"deleted"];
+    [bumpedListings whereKey:@"objectId" containedIn:bumped];
+    [bumpedListings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            if (objects.count == 0) {
-                return;
-            }
+            //reset arrays
             [self.bumpedArray removeAllObjects];
             [self.bumpedIds removeAllObjects];
             
-            for (PFObject *bumpOb in objects) {
-                if (![self.bumpedIds containsObject:bumpOb.objectId]) {
-                    [self.bumpedArray addObject:[bumpOb objectForKey:@"listing"]];
+            //display correct label
+            if (self.tabMode == YES) {
+                //looking at own profile for sure
+                
+                if (self.wantedMode == YES){
+                    //just wanted and bumped
+                    if (self.segmentedControl.selectedSegmentIndex == 1) {
+                        if (objects.count == 0) {
+                            [self.createButton setHidden:YES];
+                            [self.actionLabel setHidden:YES];
+                            
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height > 568) {
+                                //don't show on iPhone SE as screen isn't big enough
+                                [self.bumpImageView setHidden:NO];
+                            }
+                            [self.bumpLabel setHidden:NO];
+                        }
+                        else{
+                            [self.bumpLabel setHidden:YES];
+                            [self.bumpImageView setHidden:YES];
+                        }
+                    }
+
+                }
+                else if(self.segmentedControl.selectedSegmentIndex == 2){
+                    if (objects.count == 0) {
+                        [self.createButton setHidden:YES];
+                        [self.actionLabel setHidden:YES];
+                        
+                        if ([ [ UIScreen mainScreen ] bounds ].size.height > 568) {
+                            //don't show on iPhone SE as screen isn't big enough
+                            [self.bumpImageView setHidden:NO];
+                        }
+                        [self.bumpLabel setHidden:NO];
+                    }
+                    else{
+                        [self.bumpLabel setHidden:YES];
+                        [self.bumpImageView setHidden:YES];
+                    }
                 }
             }
+            
+            if (objects.count == 0) {
+                
+                return;
+            }
+
+            NSMutableArray *placeholderBumps = [NSMutableArray array];
+
+            //check for duplicates
+            for (PFObject *WTB in objects) {
+                if (![self.bumpedIds containsObject:WTB.objectId]) {
+                    [placeholderBumps addObject:WTB];
+                    [self.bumpedIds addObject:WTB.objectId];
+                }
+            }
+            
+            //order array based on personal bump array
+            for (NSString *objectID in bumped) {
+                for (PFObject *listing in placeholderBumps) {
+                    if ([listing.objectId isEqualToString:objectID]) {
+                        [self.bumpedArray addObject:listing];
+                        break;
+                    }
+                }
+            }
+            
+            //reverse order
+            NSArray* reversedArray = [[self.bumpedArray reverseObjectEnumerator] allObjects];
+            [self.bumpedArray removeAllObjects];
+            [self.bumpedArray addObjectsFromArray:reversedArray];
+            
             [self.collectionView performBatchUpdates:^{
                 [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
             } completion:nil];
+
         }
         else{
-            NSLog(@"error getting bumped %@", error);
+            NSLog(@"error getting bumped objects %@", error);
         }
     }];
 }
@@ -408,22 +529,31 @@
     [wtbQuery orderByDescending:@"lastUpdated"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
+            
+            if (self.tabMode == YES) {
+                if (self.segmentedControl.selectedSegmentIndex == 1 && self.isSeller == YES) {
+                    //selling
+                    if (objects.count == 0) {
+                        [self.createButton setHidden:NO];
+                        [self.actionLabel setHidden:NO];
+                    }
+                    else{
+                        [self.createButton setHidden:YES];
+                        [self.actionLabel setHidden:YES];
+                    }
+                }
+            }
+            
             if (objects.count > 0) {
                 self.forSaleArray = objects;
                 if (self.forSalePressed == YES) {
-                    [self.collectionView reloadData];
                     self.forSalePressed = NO;
-                }
-                else if (self.saleMode == YES){
-                    [self.collectionView reloadData];
-                }
-                else{
-                    [self.collectionView reloadData];
                 }
             }
             else{
                 // no WTSs
             }
+            [self.collectionView reloadData];
         }
         else{
             NSLog(@"error getting WTSs %@", error);
@@ -517,7 +647,8 @@
     [cell.itemImageView setFile:[listingObject objectForKey:@"image1"]];
     [cell.itemImageView loadInBackground];
 
-    if ([[listingObject objectForKey:@"status"]isEqualToString:@"purchased"]) {
+    //don't show purchased on bumped listings section
+    if ([[listingObject objectForKey:@"status"]isEqualToString:@"purchased"] && self.segmentedControl.selectedSegmentIndex != 1 && self.segmentedControl.selectedSegmentIndex != 2) {
         cell.itemImageView.alpha = 0.5;
         [cell.purchasedImageView setImage:[UIImage imageNamed:@"purchasedIcon"]];
         [cell.purchasedImageView setHidden:NO];
@@ -612,7 +743,8 @@
 }
 
 -(void)cancelWebPressed{
-    [self dismissViewControllerAnimated:YES completion:nil];
+    NSLog(@"cancel pressed");
+    [self.webView dismissViewControllerAnimated:YES completion:nil];
 }
 
 -(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
@@ -690,6 +822,175 @@
 }
 
 -(void)segmentControlChanged{
+    [self.createButton setHidden:YES];
+    [self.bumpImageView setHidden:YES];
+    [self.bumpLabel setHidden:YES];
+    [self.actionLabel setHidden:YES];
+
+    if (self.tabMode == YES) {
+        //looking at own profile for sure
+        
+        if (self.wantedMode == YES){
+            //just wanted and bumped
+            if (self.segmentedControl.selectedSegmentIndex == 0) {
+                //wanted
+                NSLog(@"selected wanted");
+                if (self.WTBArray.count == 0) {
+                    [self.createButton setHidden:NO];
+                    [self.actionLabel setHidden:NO];
+                    
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+            }
+            else{
+                //bumped
+                NSLog(@"selected bumped");
+                if (self.bumpedArray.count == 0) {
+                    [self.createButton setHidden:YES];
+                    [self.actionLabel setHidden:YES];
+                    
+                    if ([ [ UIScreen mainScreen ] bounds ].size.height > 568) {
+                        //don't show on iPhone SE as screen isn't big enough
+                        [self.bumpImageView setHidden:NO];
+                    }
+                    [self.bumpLabel setHidden:NO];
+                }
+            }
+        }
+        else{
+            // all 3
+            if (self.segmentedControl.selectedSegmentIndex == 0) {
+                //wanted
+                if (self.WTBArray.count == 0) {
+                    [self.createButton setHidden:NO];
+                    [self.actionLabel setHidden:NO];
+                    
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+                
+            }
+            else if (self.segmentedControl.selectedSegmentIndex == 1) {
+                //selling
+                if (self.forSaleArray.count == 0) {
+                    [self.createButton setHidden:NO];
+                    [self.actionLabel setHidden:NO];
+                    
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+            }
+            else{
+                //bumped
+                NSLog(@"selected bumped");
+                if (self.bumpedArray.count == 0) {
+                    [self.createButton setHidden:YES];
+                    [self.actionLabel setHidden:YES];
+                    
+                    if ([ [ UIScreen mainScreen ] bounds ].size.height > 568) {
+                        //don't show on iPhone SE as screen isn't big enough
+                        [self.bumpImageView setHidden:NO];
+                    }
+                    [self.bumpLabel setHidden:NO];
+                }
+            }
+        }
+    }
+    else{
+        //looking at other user's profile
+        if (self.saleMode == YES) {
+            //just selling and bumped
+            if (self.segmentedControl.selectedSegmentIndex == 0 ) {
+                //selling
+                if (self.forSaleArray.count == 0) {
+                    [self.actionLabel setHidden:NO];
+                    self.actionLabel.text = @"nothing to show";
+                    
+                    [self.createButton setHidden:YES];
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+            }
+            else{
+                //bumped
+                if (self.bumpedArray.count == 0) {
+                    [self.actionLabel setHidden:NO];
+                    self.actionLabel.text = @"nothing to showxr";
+                    
+                    [self.createButton setHidden:YES];
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+            }
+        }
+        else if (self.wantedMode == YES){
+            //just wanted and bumped
+            if (self.segmentedControl.selectedSegmentIndex == 0) {
+                //wanted
+                NSLog(@"selected wanted 1");
+                if (self.WTBArray.count == 0) {
+                    [self.actionLabel setHidden:NO];
+                    self.actionLabel.text = @"nothing to show";
+                    
+                    [self.createButton setHidden:YES];
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+            }
+            else{
+                //bumped
+                NSLog(@"selected bumped 1");
+                if (self.bumpedArray.count == 0) {
+                    [self.actionLabel setHidden:NO];
+                    self.actionLabel.text = @"nothing to show";
+                    
+                    [self.createButton setHidden:YES];
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+            }
+        }
+        else{
+            // all 3
+            if (self.segmentedControl.selectedSegmentIndex == 0) {
+                //wanted
+                if (self.WTBArray.count == 0) {
+                    [self.actionLabel setHidden:NO];
+                    self.actionLabel.text = @"nothing to show";
+                    
+                    [self.createButton setHidden:YES];
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+                
+            }
+            else if (self.segmentedControl.selectedSegmentIndex == 1) {
+                //selling
+                if (self.forSaleArray.count == 0) {
+                    [self.actionLabel setHidden:NO];
+                    self.actionLabel.text = @"nothing to show";
+                    
+                    [self.createButton setHidden:YES];
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+            }
+            else{
+                //bumped
+                NSLog(@"selected bumped");
+                if (self.bumpedArray.count == 0) {
+                    [self.actionLabel setHidden:NO];
+                    self.actionLabel.text = @"nothing to show";
+                    
+                    [self.createButton setHidden:YES];
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+            }
+        }
+
+    }
     [self.collectionView reloadData];
 }
 
@@ -861,10 +1162,17 @@
     //nav bar buttons
     
     //back button
-    UIButton *backButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
-    [backButton setImage:[UIImage imageNamed:@"backArrowThin"] forState:UIControlStateNormal];
-    [backButton addTarget:self action:@selector(backPressed) forControlEvents:UIControlEventTouchUpInside];
-    [self.myBar addSubview:backButton];
+    self.backButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
+    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.fromSearch != YES) {
+        [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
+        [self.backButton addTarget:self action:@selector(profileCogPressed) forControlEvents:UIControlEventTouchUpInside];
+    }
+    else{
+        [self.backButton setImage:[UIImage imageNamed:@"backArrowThin"] forState:UIControlStateNormal];
+        [self.backButton addTarget:self action:@selector(backPressed) forControlEvents:UIControlEventTouchUpInside];
+
+    }
+    [self.myBar addSubview:self.backButton];
     
     //facebook button
     self.FBButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
@@ -954,7 +1262,7 @@
     
     //back button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesBackButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
-    initialLayoutAttributesBackButton.size = backButton.frame.size;
+    initialLayoutAttributesBackButton.size = self.backButton.frame.size;
     initialLayoutAttributesBackButton.frame = CGRectMake(5, 25, 30, 30);
     
     //fb button
@@ -975,7 +1283,7 @@
     [self.middleUsernameLabel addLayoutAttributes:middleInitial forProgress:0.0];
     [self.starImageView addLayoutAttributes:initialLayoutAttributesStarView forProgress:0.0];
     [self.reviewsButton addLayoutAttributes:initialLayoutAttributesReviews forProgress:0.0];
-    [backButton addLayoutAttributes:initialLayoutAttributesBackButton forProgress:0.0];
+    [self.backButton addLayoutAttributes:initialLayoutAttributesBackButton forProgress:0.0];
     [self.FBButton addLayoutAttributes:initialLayoutAttributesfbButton forProgress:0.0];
     [self.dotsButton addLayoutAttributes:initialLayoutAttributesDotsButton forProgress:0.0];
     
@@ -1093,35 +1401,51 @@
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+-(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
     self.profileImage = info[UIImagePickerControllerOriginalImage];
     [self showHUD];
     UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
-    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(imageToSave, 0.7)];
-    [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-        if (succeeded) {
-            [self.userImageView setFile:filePicture];
-            [self.userImageView loadInBackground];
-            
-            [PFUser currentUser][@"picture"] = filePicture;
-            [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                if (succeeded) {
-                    NSLog(@"saved!");
-                    [self hideHUD];
-                }
-                else{
-                    NSLog(@"error saving %@", error);
-                    [self hideHUD];
-                }
-            }];
-        }
-        else{
-            NSLog(@"error saving file %@", error);
-            [self hideHUD];
-        }
-    }];
-    [picker dismissViewControllerAnimated:YES completion:nil];
+    
+    NSData* data = UIImageJPEGRepresentation(imageToSave, 0.7f);
+    if (data == nil) {
+        NSLog(@"error with data");
+        [self hideHUD];
+        [picker dismissViewControllerAnimated:YES completion:nil];
+        [self showAlertWithTitle:@"Image Error" andMsg:@"Woops, something went wrong. Please try again! If this keeps happening please message Team Bump from your profile"];
+        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                       customAttributes:@{
+                                          @"pageName":@"Profile"
+                                          }];
+    }
+    else{
+        PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:data];
+        [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            if (succeeded) {
+                [self.userImageView setFile:filePicture];
+                [self.userImageView loadInBackground];
+                
+                [PFUser currentUser][@"picture"] = filePicture;
+                [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        NSLog(@"saved!");
+                        [self hideHUD];
+                    }
+                    else{
+                        NSLog(@"error saving %@", error);
+                        [self hideHUD];
+                    }
+                }];
+            }
+            else{
+                NSLog(@"error saving file %@", error);
+                [self hideHUD];
+            }
+        }];
+        [picker dismissViewControllerAnimated:YES completion:nil];
+    }
+
 }
+
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
     [picker dismissViewControllerAnimated:YES completion:NULL];
@@ -1146,4 +1470,44 @@
     }
 }
 
+-(void)profileCogPressed{
+    ProfileController *profile = [[ProfileController alloc]init];
+    profile.modal = YES;
+    profile.delegate = self;
+    if ([self.navigationController tabBarItem].badgeValue != nil) {
+        profile.unseenTBMsg = YES;
+    }
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:profile];
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+-(void)newTBMessage{
+    [self.backButton setImage:[UIImage imageNamed:@"unreadCog"] forState:UIControlStateNormal];
+}
+
+-(void)TeamBumpInboxTapped{
+    [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
+    [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:nil];
+}
+- (IBAction)createPressed:(id)sender {
+    if (self.segmentedControl.selectedSegmentIndex == 0){
+        self.tabBarController.selectedIndex = 2;
+    }
+    else if (self.segmentedControl.selectedSegmentIndex == 1){
+        CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+        vc.usernameToCheck = self.usernameToList;
+        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+        self.forSalePressed = YES;
+        [self presentViewController:nav animated:YES completion:nil];
+    }
+}
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
 @end

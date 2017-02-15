@@ -68,6 +68,8 @@
                 [installation saveInBackground];
                 
                 //take to app
+                [self.delegate welcomeDismissed];
+                
                 [self dismissViewControllerAnimated:YES completion:nil];
             }
             else{

@@ -19,6 +19,9 @@
 #import "UIImage+Resize.h"
 #import "Tut1ViewController.h"
 #import <Crashlytics/Crashlytics.h>
+#import "CustomMessagesCollectionViewCell.h"
+#import "CustomMessagesCollectionViewCellIncoming.h"
+#import "ForSaleListing.h"
 
 @interface MessageViewController ()
 
@@ -31,6 +34,14 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    //register custom cell stuff
+//    self.incomingCellIdentifier = CustomMessagesCollectionViewCellIncoming.cellReuseIdentifier;
+//    self.incomingMediaCellIdentifier = CustomMessagesCollectionViewCellIncoming.mediaCellReuseIdentifier;
+//    
+//    UINib *incomingNib = [UINib nibWithNibName:@"CustomMessagesCollectionViewCellIncoming" bundle:nil];
+//    [self.collectionView registerNib:incomingNib forCellWithReuseIdentifier:self.incomingCellIdentifier];
+//    [self.collectionView registerNib:incomingNib forCellWithReuseIdentifier:self.incomingMediaCellIdentifier];
     
     if (![self.otherUserName isEqualToString:@""]) {
         self.title = self.otherUserName;
@@ -76,8 +87,9 @@
     else{
         [self.navigationItem setRightBarButtonItem:self.profileButton];
     }
+    self.collectionView.collectionViewLayout.messageBubbleFont = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
     
-    self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
+    self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
     self.inputToolbar.contentView.textView.pasteDelegate = self;
     self.inputToolbar.contentView.textView.placeHolder = @"<< Tap the tag for more actions";
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"tagFill"] forState:UIControlStateNormal];
@@ -96,12 +108,11 @@
         [self.halo start];
     }
     
-    //no avatar images
+    //avatar images
     self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeMake(35, 35);
     self.collectionView.collectionViewLayout.outgoingAvatarViewSize = CGSizeZero;
     
     //Register custom menu actions for cells.
-
     [JSQMessagesCollectionViewCell registerMenuAction:@selector(customAction:)];
     
     self.senderId = [PFUser currentUser].objectId;
@@ -134,7 +145,9 @@
     
     self.purchasedBubbleImageData = [bubbleFactoryOutline incomingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1]];
     
-    self.offerBubbleImageData = [self.bubbleFactory outgoingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
+    self.offerBubbleImageData = [self.bubbleFactory outgoingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0]];
+    
+    self.sharedListingBubbleImageData = [self.bubbleFactory outgoingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
     
      self.masker = [[JSQMessagesMediaViewBubbleImageMasker alloc]initWithBubbleImageFactory:self.bubbleFactory];
     
@@ -351,6 +364,22 @@
                                 message.isPurchased = YES;
                             }
                         }
+                        else if ([[messageOb objectForKey:@"sharedMessage"]isEqualToString:@"YES"]){
+                            if ([messageOb objectForKey:@"Sale"]) {
+                                //shared a for sale listing
+                                message.sharedListing = [messageOb objectForKey:@"sharedSaleListing"];
+                                message.saleShare = YES;
+                            }
+                            else{
+                                //shared a WTB
+                                message.sharedListing = [messageOb objectForKey:@"sharedListing"];
+                                message.saleShare = NO;
+                            }
+                            message.isShared = YES;
+                            message.isOfferMessage = NO;
+                            message.isWaiting = NO;
+                            message.isPurchased = NO;
+                        }
                         if (![self.messages containsObject:message]) {
                             [self.messages insertObject:message atIndex:0];
                         }
@@ -435,6 +464,16 @@
             self.currencySymbol = @"$";
         }
     }
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    //pass convo back to inbox
+    [super viewWillDisappear:animated];
+    
+    //send back last message sent
+    NSLog(@"last message %@", self.lastMessage);
+    [self.delegate lastMessageInConvo:self.lastMessage];
+    
 }
 
 -(void)fromForeGroundRefresh{
@@ -657,12 +696,6 @@
     
     self.collectionView.collectionViewLayout.springinessEnabled = NO;
     
-    if (self.sellThisPressed == YES) {
-        self.sellThisPressed = NO;
-        self.offerMode = YES;
-        self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Selling: \nCondition: \nPrice: %@\nMeetup: ", self.currencySymbol];
-    }
-    
     if (self.messageSellerPressed == YES) {
         self.messageSellerPressed = NO;
 
@@ -744,7 +777,8 @@
                 [Answers logCustomEventWithName:@"Deal on Bump warning"
                                customAttributes:@{
                                                   @"trigger":@"email",
-                                                  @"message":text
+                                                  @"message":text,
+                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                   }];
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
@@ -758,7 +792,8 @@
                 [Answers logCustomEventWithName:@"Deal on Bump warning"
                                customAttributes:@{
                                                   @"trigger":@"facebook",
-                                                  @"message":text
+                                                  @"message":text,
+                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                   }];
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
@@ -777,7 +812,8 @@
                         [Answers logCustomEventWithName:@"Deal on Bump warning"
                                        customAttributes:@{
                                                           @"trigger":@"phone number",
-                                                          @"message":text
+                                                          @"message":text,
+                                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                           }];
                          //present 'Send Offer' reminder alert
                          self.promptedBefore = YES;
@@ -793,7 +829,8 @@
                 [Answers logCustomEventWithName:@"Deal on Bump warning"
                                customAttributes:@{
                                                   @"trigger":@"depop",
-                                                  @"message":text
+                                                  @"message":text,
+                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                   }];
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
@@ -807,7 +844,8 @@
                 [Answers logCustomEventWithName:@"Deal on Bump warning"
                                customAttributes:@{
                                                   @"trigger":@"instagram",
-                                                  @"message":text
+                                                  @"message":text,
+                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                   }];
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
@@ -821,7 +859,8 @@
                 [Answers logCustomEventWithName:@"Deal on Bump warning"
                                customAttributes:@{
                                                   @"trigger":@"bigcartel",
-                                                  @"message":text
+                                                  @"message":text,
+                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                   }];
                 //present 'Send Offer' reminder alert
                 self.promptedBefore = YES;
@@ -830,9 +869,22 @@
                 return;
             }
         }
+        if ([text containsString:@"your number"]) {
+            [Answers logCustomEventWithName:@"Deal on Bump warning"
+                           customAttributes:@{
+                                              @"trigger":@"phone number",
+                                              @"message":text,
+                                              @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                              }];
+            //present 'Send Offer' reminder alert
+            self.promptedBefore = YES;
+            self.offerReminderMode = YES;
+            [self showCustomAlert];
+            return;
+        }
     }
     
-    NSString *messageString = text;
+    NSString *messageString = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     self.sentPush = NO;
     if (self.offerMode == YES) {
         
@@ -945,11 +997,14 @@
             [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded){
                     NSLog(@"done saving convo");
+                    //sent a message so force reload in inbox VC
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
                 }
                 else{
                     NSLog(@"error with conv %@", error);
                 }
             }];
+
             
             NSString *pushText = [NSString stringWithFormat:@"%@: %@", [[PFUser currentUser]username], messageString];
             
@@ -967,6 +1022,10 @@
                 [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                     if (!error) {
                         NSLog(@"push response %@", response);
+                        [Answers logCustomEventWithName:@"Push Sent"
+                                       customAttributes:@{
+                                                          @"Type":@"Message"
+                                                          }];
                     }
                     else{
                         NSLog(@"push error %@", error);
@@ -1143,7 +1202,7 @@
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send Pics from my Depop" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             BOOL seen = [[NSUserDefaults standardUserDefaults] boolForKey:@"seenDepop"];
             if (!seen) {
-                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Send Pics from your Depop" message:@"When you have the images of the items you'd like to send in the middle of your screen, hit Choose!" preferredStyle:UIAlertControllerStyleAlert];
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Send Pics from your Depop" message:@"When you have the images of the items you'd like to send in the middle of your screen, hit 'Screenshot'!" preferredStyle:UIAlertControllerStyleAlert];
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                     [self showDepop];
                 }]];
@@ -1272,7 +1331,7 @@
     }];
 }
 
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(nonnull NSDictionary<NSString *,id> *)info{
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
     //display crop picker
     [picker dismissViewControllerAnimated:YES completion:^{
@@ -1452,7 +1511,14 @@
             }
             
             [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
-            [self.convoObject saveInBackground];
+            [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
+                }
+                else{
+                    NSLog(@"error saving convo in final image %@", error);
+                }
+            }];
             
             // add new message object to relevant arrays
             [self.sentMessagesParseArray insertObject:picObject atIndex:0];
@@ -1520,6 +1586,9 @@
     
     if (message.isOfferMessage == YES) {
         return self.offerBubbleImageData;
+    }
+    else if(message.isShared == YES){
+        return self.sharedListingBubbleImageData;
     }
     else if (message.isWaiting == YES){
         return self.waitingBubbleImageData;
@@ -1622,7 +1691,12 @@
     /**
      *  Override point for customizing cells
      */
-    JSQMessagesCollectionViewCell *cell = (JSQMessagesCollectionViewCell *)[super collectionView:collectionView cellForItemAtIndexPath:indexPath];
+    
+  JSQMessagesCollectionViewCell *cell = (JSQMessagesCollectionViewCell *)[super collectionView:collectionView cellForItemAtIndexPath:indexPath];
+    
+    JSQMessage *msg = [self.messages objectAtIndex:indexPath.item];
+    
+//    CustomMessagesCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:self.incomingCellIdentifier forIndexPath:indexPath];
     
     UIEdgeInsets insets = {-5, 0, 0, 10};
     cell.cellBottomLabel.textInsets = insets;
@@ -1641,7 +1715,6 @@
      *  Instead, override the properties you want on `self.collectionView.collectionViewLayout` from `viewDidLoad`
      */
     
-    JSQMessage *msg = [self.messages objectAtIndex:indexPath.item];
     
     if (!msg.isMediaMessage) {
         
@@ -1650,7 +1723,7 @@
                                               NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle | NSUnderlinePatternSolid) };
     }
     
-    if (msg.isOfferMessage) {
+    if (msg.isOfferMessage || msg.isShared) {
         cell.textView.textColor = [UIColor whiteColor];
     }
     
@@ -1791,6 +1864,21 @@
     }
     else if (tappedMessage.isPurchased == YES){
     }
+    else if(tappedMessage.isShared == YES){
+        if (tappedMessage.saleShare == YES) {
+            ForSaleListing *vc = [[ForSaleListing alloc]init];
+            vc.listingObject = tappedMessage.sharedListing;
+            vc.source = @"share";
+            vc.pureWTS = YES;
+            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+            [self presentViewController:nav animated:YES completion:nil];
+        }
+        else{
+            ListingController *vc = [[ListingController alloc]init];
+            vc.listingObject = tappedMessage.sharedListing;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+    }
     else{
         if (tappedMessage.isOfferMessage == YES && ![tappedMessage.senderId isEqualToString:self.senderId]) { //doesnt work after offer with image just been sent but does that matter because seller shouldnt click thru to offer
             if ([[tappedMessage.offerObject objectForKey:@"status"]isEqualToString:@"open"]) {
@@ -1808,6 +1896,7 @@
 
 - (void)collectionView:(JSQMessagesCollectionView *)collectionView didTapCellAtIndexPath:(NSIndexPath *)indexPath touchLocation:(CGPoint)touchLocation
 {
+    
     NSLog(@"Tapped cell at %@!",NSStringFromCGPoint(touchLocation));
 }
 
@@ -2358,12 +2447,23 @@
     self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.customAlert.delegate = self;
     if (self.offerReminderMode == YES) {
-        self.customAlert.titleLabel.text = @"Sell through Bump";
-        self.customAlert.messageLabel.text = @"Build your reputation, stay protected & get paid with PayPal. Just tap the tag icon and hit 'Send an offer'! Plus ZERO fees!";
-        self.customAlert.numberOfButtons = 1;
-        [self.customAlert.doneButton setTitle:@"S E N D  O F F E R" forState:UIControlStateNormal];
-        [self.customAlert.doneButton setBackgroundColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
-        [self.customAlert.doneButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        if (self.userIsBuyer == YES) {
+            self.customAlert.titleLabel.text = @"Buy through Bump";
+            self.customAlert.messageLabel.text = @"Build your reputation, stay protected & pay ZERO transaction fees. Ask the seller to send you an offer just by hittint the tag icon in the chat!";
+            self.customAlert.numberOfButtons = 1;
+            [self.customAlert.doneButton setTitle:@"D I S M I S S" forState:UIControlStateNormal];
+            [self.customAlert.doneButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+            [self.customAlert.doneButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+        }
+        else{
+            self.customAlert.titleLabel.text = @"Sell through Bump";
+            self.customAlert.messageLabel.text = @"Build your reputation, stay protected & get paid with PayPal. Just tap the tag icon and hit 'Send an offer'! Plus ZERO fees!";
+            self.customAlert.numberOfButtons = 1;
+            [self.customAlert.doneButton setTitle:@"S E N D  O F F E R" forState:UIControlStateNormal];
+            [self.customAlert.doneButton setBackgroundColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
+            [self.customAlert.doneButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        }
+
     }
     else{
         self.customAlert.titleLabel.text = @"Permssion Needed";
@@ -2409,14 +2509,21 @@
 -(void)donePressed{
     if (self.offerReminderMode == YES) {
         
-        [Answers logCustomEventWithName:@"Send an offer tapped from prompt"
-                       customAttributes:@{}];
-        
-        MakeOfferController *vc = [[MakeOfferController alloc]init];
-        vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
-        vc.currencySymbol = self.currencySymbol;
-        vc.delegate = self;
-        [self.navigationController presentViewController:vc animated:YES completion:nil];
+        if (self.userIsBuyer == YES) {
+            [Answers logCustomEventWithName:@"Dismissed buying warning"
+                           customAttributes:@{}];
+        }
+        else{
+            [Answers logCustomEventWithName:@"Send an offer tapped from prompt"
+                           customAttributes:@{}];
+            
+            MakeOfferController *vc = [[MakeOfferController alloc]init];
+            vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
+            vc.currencySymbol = self.currencySymbol;
+            vc.delegate = self;
+            [self.navigationController presentViewController:vc animated:YES completion:nil];
+        }
+
     }
     [UIView animateWithDuration:0.3
                           delay:0

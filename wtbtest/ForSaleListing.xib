@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1217" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -14,6 +14,7 @@
     </dependencies>
     <customFonts key="customFonts">
         <array key="PingFang.ttc">
+            <string>PingFangSC-Medium</string>
             <string>PingFangSC-Regular</string>
         </array>
     </customFonts>
@@ -32,6 +33,8 @@
                 <outlet property="pageIndicator" destination="uzi-Ps-bMW" id="9yK-wr-hvS"/>
                 <outlet property="priceLabel" destination="Ayy-hd-P8G" id="zZd-f2-Bbt"/>
                 <outlet property="sellerImgView" destination="yZH-9F-rN2" id="GlA-oX-MhH"/>
+                <outlet property="sendButton" destination="BH4-3F-0iW" id="KxH-Vc-vGm"/>
+                <outlet property="sendCell" destination="KX3-1o-wDp" id="jXG-9T-CVJ"/>
                 <outlet property="sizeLabel" destination="HqL-yO-6Oa" id="MiH-Jr-hqn"/>
                 <outlet property="soldCheckImageVoew" destination="ukx-xL-Dpq" id="Q2D-yG-A1Y"/>
                 <outlet property="soldLabel" destination="vjW-m8-KPl" id="9cn-9K-F1s"/>
@@ -296,7 +299,7 @@
                 </constraints>
             </tableViewCellContentView>
             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-            <point key="canvasLocation" x="-180.5" y="1724.5"/>
+            <point key="canvasLocation" x="-190" y="1792"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="368" id="D8Q-ok-yR2">
             <rect key="frame" x="0.0" y="0.0" width="320" height="368"/>
@@ -350,10 +353,58 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="-1375" y="-70"/>
         </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="139" id="KX3-1o-wDp">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="143"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KX3-1o-wDp" id="GX1-CF-Yht">
+                <rect key="frame" x="0.0" y="0.0" width="375" height="142"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kJO-Fv-diV">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="142"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="142" id="hY2-Hn-Wvx"/>
+                        </constraints>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="BH4-3F-0iW">
+                        <rect key="frame" x="162" y="42" width="50" height="50"/>
+                        <state key="normal" image="envelopeSend.png"/>
+                        <connections>
+                            <action selector="sendPressed:" destination="-1" eventType="touchUpInside" id="VNK-s7-4aW"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="S00-EF-S0Y">
+                        <rect key="frame" x="147" y="105" width="80" height="26"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="80" id="QTe-6j-pou"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="10"/>
+                        <state key="normal" title="S E N D">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        </state>
+                    </button>
+                </subviews>
+                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                <constraints>
+                    <constraint firstItem="BH4-3F-0iW" firstAttribute="centerX" secondItem="S00-EF-S0Y" secondAttribute="centerX" id="34H-kS-DJm"/>
+                    <constraint firstItem="BH4-3F-0iW" firstAttribute="top" secondItem="GX1-CF-Yht" secondAttribute="topMargin" constant="34" id="4Pu-VC-cQL"/>
+                    <constraint firstItem="S00-EF-S0Y" firstAttribute="top" secondItem="BH4-3F-0iW" secondAttribute="bottom" constant="13" id="93c-T2-qcG"/>
+                    <constraint firstItem="kJO-Fv-diV" firstAttribute="leading" secondItem="GX1-CF-Yht" secondAttribute="leading" id="Aa0-du-Led"/>
+                    <constraint firstAttribute="trailing" secondItem="kJO-Fv-diV" secondAttribute="trailing" id="Ds1-g6-gjz"/>
+                    <constraint firstAttribute="bottom" secondItem="kJO-Fv-diV" secondAttribute="bottom" id="L5z-E2-j9z"/>
+                    <constraint firstItem="kJO-Fv-diV" firstAttribute="centerX" secondItem="S00-EF-S0Y" secondAttribute="centerX" id="XdJ-4c-AYy"/>
+                    <constraint firstItem="kJO-Fv-diV" firstAttribute="top" secondItem="GX1-CF-Yht" secondAttribute="top" id="qEa-wQ-cTP"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+            <point key="canvasLocation" x="-191.5" y="2017.5"/>
+        </tableViewCell>
     </objects>
     <resources>
         <image name="clock.png" width="17" height="17"/>
         <image name="comment.png" width="17" height="16"/>
+        <image name="envelopeSend.png" width="50" height="50"/>
         <image name="expand.png" width="17" height="17"/>
         <image name="location.png" width="11" height="17"/>
         <image name="soldCheck.png" width="15" height="15"/>

@@ -37,6 +37,9 @@
 
 @property (nonatomic, strong) PFGeoPoint *geoPoint;
 
+//tab bar
+@property (nonatomic, strong) NSNumber *tabBarHeight;
+
 //custom segment control
 @property (nonatomic, strong) HMSegmentedControl *segmentedControl;
 @property (weak, nonatomic) IBOutlet UIView *placeholderView;

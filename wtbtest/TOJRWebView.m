@@ -147,7 +147,7 @@
     }
     else if (self.tapCount == 2){
         UIImage *screenshot2 = [self screenshotTwo];
-        [self.delegate screeshotPressed:screenshot2 withTaps:self.tapCount]; //CHANGE should probs avoid the auto cropping for now as chance could go wrong
+        [self.delegate screeshotPressed:screenshot2 withTaps:self.tapCount]; //CHECK should probs avoid the auto cropping for now as chance could go wrong
     }
      */
     else{

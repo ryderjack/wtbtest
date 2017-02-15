@@ -81,5 +81,9 @@
 //intro stuff
 @property (weak, nonatomic) IBOutlet UIButton *skipButton;
 
+//bouncing dismiss button
+@property (nonatomic, strong) UIButton *bouncingButton;
+@property (nonatomic) BOOL settingUp;
+
 
 @end

@@ -209,7 +209,7 @@
         [self.heroImageView setHidden:NO];
         self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
         self.titleLabel.text = @"Bumping";
-        self.descriptionLabel.text = @"Bump listings to help get them noticed just by tapping the up arrow";
+        self.descriptionLabel.text = @"Bump listings to help them get noticed just by tapping the up arrow";
         [self setupBumping];
         
         if (self.explainMode == YES) {
@@ -403,6 +403,10 @@
                          [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                              if (!error) {
                                  NSLog(@"push response %@", response);
+                                 [Answers logCustomEventWithName:@"Push Sent"
+                                                customAttributes:@{
+                                                                   @"Type":@"Bump"
+                                                                   }];
                              }
                              else{
                                  NSLog(@"push error %@", error);
@@ -439,6 +443,10 @@
                          [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                              if (!error) {
                                  NSLog(@"push response %@", response);
+                                 [Answers logCustomEventWithName:@"Push Sent"
+                                                customAttributes:@{
+                                                                   @"Type":@"Bump"
+                                                                   }];
                              }
                              else{
                                  NSLog(@"push error %@", error);
@@ -473,6 +481,10 @@
                          [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                              if (!error) {
                                  NSLog(@"push response %@", response);
+                                 [Answers logCustomEventWithName:@"Push Sent"
+                                                customAttributes:@{
+                                                                   @"Type":@"Bump"
+                                                                   }];
                              }
                              else{
                                  NSLog(@"push error %@", error);
@@ -508,6 +520,10 @@
                          [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                              if (!error) {
                                  NSLog(@"push response %@", response);
+                                 [Answers logCustomEventWithName:@"Push Sent"
+                                                customAttributes:@{
+                                                                   @"Type":@"Bump"
+                                                                   }];
                              }
                              else{
                                  NSLog(@"push error %@", error);

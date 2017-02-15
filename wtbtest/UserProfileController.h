@@ -16,8 +16,8 @@
 #import "TOJRWebView.h"
 #import "BLKFlexibleHeightBar.h"
 #import "HMSegmentedControl.h"
-
-@interface UserProfileController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, JRWebViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate>
+#import "ProfileController.h"
+@interface UserProfileController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, JRWebViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ProfileSettingsDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSArray *WTBArray;
@@ -44,6 +44,7 @@
 
 //modes
 @property (nonatomic) BOOL fromSearch;
+@property (nonatomic) BOOL tabMode;
 
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
@@ -69,6 +70,7 @@
 @property (nonatomic, strong) UIButton *reviewsButton;
 @property (nonatomic, strong) UIButton *imageButton;
 @property (nonatomic, strong) PFImageView *editImageView;
+@property (nonatomic, strong) UIButton *backButton;
 
 //web view
 @property (nonatomic, strong) TOJRWebView *webView;
@@ -80,4 +82,14 @@
 //image picker
 @property (nonatomic, strong) UIImage *profileImage;
 @property (nonatomic, strong) UIImagePickerController *picker;
+
+//prompts for new user w/ empty profile
+//WTBs
+@property (weak, nonatomic) IBOutlet UIButton *createButton;
+@property (weak, nonatomic) IBOutlet UILabel *actionLabel;
+
+//Bumps
+@property (weak, nonatomic) IBOutlet UIImageView *bumpImageView;
+@property (weak, nonatomic) IBOutlet UILabel *bumpLabel;
+
 @end

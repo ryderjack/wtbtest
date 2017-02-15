@@ -18,7 +18,6 @@
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (nonatomic, strong) NSMutableDictionary *contentOffsetDictionary;
-@property (nonatomic, strong) NSMutableArray *wtbArray;
 
 @property (nonatomic, strong) NSMutableArray *viewsArray;
 @property (nonatomic, strong) NSMutableArray *products;
@@ -64,6 +63,7 @@
 @property (nonatomic) BOOL ebayEnabled;
 @property (nonatomic, strong) NSMutableArray *seenEbayItems;
 @property (nonatomic) int currentCount;
+@property (nonatomic) int ebaySkip;
 
 //item viewer
 @property (nonatomic, strong) viewItemClass *itemView;

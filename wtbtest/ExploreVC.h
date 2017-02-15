@@ -19,8 +19,11 @@
 #import "TheMainSearchView.h"
 #import "searchedViewC.h"
 #import "customAlertViewClass.h"
+#import "HMSegmentedControl.h"
+#import "WelcomeViewController.h"
 
-@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate, customAlertDelegate>
+
+@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate, customAlertDelegate, WelcomeDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
@@ -53,12 +56,13 @@
 @property (nonatomic) BOOL listingTapped;
 @property (nonatomic) BOOL cleverMode;
 @property (nonatomic) BOOL ignoreShownTo;
+@property (nonatomic) BOOL ignoreShownToLatest;
+@property (nonatomic) BOOL triedAlready;
 
 @property (nonatomic, strong) NSArray *uselessWords;
 
 //cell
 @property (nonatomic, strong) ExploreCell *cell;
-
 @property (nonatomic, strong) NSArray *calcdKeywords;
 
 //bump in app notification
@@ -71,6 +75,21 @@
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;
 @property (nonatomic, strong) UIView *searchBgView;
+
+//message sent in app notification
+@property (nonatomic) BOOL justAMessage;
+
+//segment control in header
+@property (nonatomic, strong) HMSegmentedControl *segmentedControl;
+@property (nonatomic) BOOL latestMode;
+
+//push alert #2 (1st is upon signup)
+@property (nonatomic, strong) customAlertViewClass *pushAlert;
+@property (nonatomic) BOOL shownPushAlert;
+
+//thrown user back to welcome VC
+@property (nonatomic) BOOL welcomeShowing;
+
 
 -(void)doubleTapScroll;
 @end

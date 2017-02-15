@@ -75,44 +75,119 @@
         [self loadMessages];
     }
     else{
-        [self updateUnseenCount];
+//        [self updateUnseenCount];
         self.justViewedMsg = NO;
-        NSLog(@"fetch");
-        [self.lastConvo fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                PFObject *lastMessage = [self.lastConvo objectForKey:@"lastSent"];
-                NSLog(@"message in appear %@", lastMessage.updatedAt);
+//
+//        //check if last message sent in this convo is different
+//        
+//        if (![self.lastSentDate isEqualToDate:self.lastMessageInConvo.createdAt]) {
+//            NSLog(@"GOT A NEW MESSAGE, last sent 1: %@    2: %@", self.lastSentDate, self.lastMessageInConvo.createdAt);
+//            
+//            //YES, got a new message
+//            [self.lastConvo setObject:self.lastMessageInConvo forKey:@"lastSent"];
+//            NSLog(@"STATUS OF THE NEW MSG: %@", [self.lastMessageInConvo objectForKey:@"status"]);
+//            
+//            // move it to the top if not already there
+//            
+//            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+//
+//            if (self.lastConvoIndex != indexPath) {
+//                NSLog(@"put at top. Previous index: %ld and last sent in that convo: %@", self.lastConvoIndex.row, [self.lastConvo objectForKey:@"lastSent"]);
+//                
+//               // [self.convoObjects removeObjectAtIndex:self.lastConvoIndex.row];
+//               // [self.convoObjects insertObject:self.lastConvo atIndex:0];
+//                
+//               // [self.convoObjects replaceObjectAtIndex:0 withObject:self.lastConvo];
+//                
+//                [self.tableView reloadData];
+//                [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
+//            }
+//            else{
+//                NSLog(@"already at top");
+//                //already at the top
+////                NSLog(@"convos: %@ and last index: %@", self.convoObjects, self.lastConvoIndex);
+//                
+//                [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:self.lastConvoIndex, nil] withRowAnimation:UITableViewRowAnimationNone];
+//                
+//                //set it as seen
+//                InboxCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+//                [self unboldFontForLabel:cell.usernameLabel];
+//                [self unboldFontForLabel:cell.messageLabel];
+//                [self unboldFontForLabel:cell.timeLabel];
+//                cell.messageLabel.textColor = [UIColor lightGrayColor];
+//                cell.timeLabel.textColor = [UIColor darkGrayColor];
+//                [cell.wtbTitleLabel setFont:[UIFont fontWithName:@"PingFangSC-UltraLight" size:14]];
+//            }
+//            
+//
+//            
+//            
+//        }
+//        else{
+//            NSLog(@"NO NEW MESSAGES");
+//            //NO new messages
+//            // set updated message (so status can be reflected in the reload)
+//            [self.lastConvo setObject:self.lastMessageInConvo forKey:@"lastSent"];
+//            [self.tableView reloadRowsAtIndexPaths:@[self.lastConvoIndex] withRowAnimation:UITableViewRowAnimationFade];
+//
+//        }
+//        self.lastConvo = nil;
+//        self.lastSentDate = nil;
 
-
-                if (self.lastSentDate != lastMessage.createdAt && [[lastMessage objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                    NSLog(@"bring to the top!");
-                    //put last selected at front of array and reload table
-                    [self.convoObjects removeObject:self.lastConvo];
-                    [self.convoObjects insertObject:object atIndex:0];
-                    [self.tableView reloadData];
-                    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
-                    
-                    self.lastConvo = nil;
-                    self.lastSentDate = nil;
-                }
-                else{
-                    NSLog(@"must not have sent a message after clicking but reload anyway");
-//                    [self.tableView reloadRowsAtIndexPaths:@[self.lastConvoIndex] withRowAnimation:UITableViewRowAnimationFade];
-                    PFObject *convoObject = [self.convoObjects objectAtIndex:self.lastConvoIndex.row];
-                    PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
-                    if (![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-                        [msgObject setObject:@"seen" forKey:@"status"];
-                    }
-                    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:self.lastConvoIndex, nil] withRowAnimation:UITableViewRowAnimationNone];
-                }
-            }
-            else{
-                NSLog(@"error fetching");
-                [self.tableView reloadRowsAtIndexPaths:@[self.lastConvoIndex] withRowAnimation:UITableViewRowAnimationFade];
-                self.lastConvo = nil;
-                self.lastSentDate = nil;
-            }
-        }];
+        
+        
+        
+        
+        
+        
+//        [self.lastConvo fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//            if (object) {
+//                PFObject *lastMessage = [object objectForKey:@"lastSent"];
+//                NSLog(@"message in appear %@", lastMessage);
+//
+//
+//                if (self.lastSentDate != lastMessage.createdAt && [[lastMessage objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+//                    NSLog(@"bring to the top if not already there");
+//                    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+//                    
+//                    if (self.lastConvoIndex == indexPath) {
+//                        NSLog(@"ALREADY AT TOP");
+//                        [self.convoObjects replaceObjectAtIndex:0 withObject:object];
+//                        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:self.lastConvoIndex, nil] withRowAnimation:UITableViewRowAnimationNone];
+//                    }
+//                    else{
+//                        NSLog(@"NOT ALREADY AT TOP SO PUT IT THERE");
+//                        //put last selected at front of array and reload table
+//                        [self.convoObjects removeObject:self.lastConvo];
+//                        [self.convoObjects insertObject:object atIndex:0];
+//                        [self.tableView reloadData];
+//                        [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
+//                    }
+//
+//                    
+//                    self.lastConvo = nil;
+//                    self.lastSentDate = nil;
+//                }
+//                else{
+//                    NSLog(@"must not have sent a message after clicking but reload anyway, this convo: %@", object);
+////                    [self.tableView reloadRowsAtIndexPaths:@[self.lastConvoIndex] withRowAnimation:UITableViewRowAnimationFade];
+////                    PFObject *convoObject = [self.convoObjects objectAtIndex:self.lastConvoIndex.row];
+//                    PFObject *convoObject = object;
+//                    PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
+//                    NSLog(@"last sent here %@", msgObject);
+//                    if (![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+//                        [msgObject setObject:@"seen" forKey:@"status"];
+//                    }
+//                    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:self.lastConvoIndex, nil] withRowAnimation:UITableViewRowAnimationNone];
+//                }
+//            }
+//            else{
+//                NSLog(@"error fetching");
+//                [self.tableView reloadRowsAtIndexPaths:@[self.lastConvoIndex] withRowAnimation:UITableViewRowAnimationFade];
+//                self.lastConvo = nil;
+//                self.lastSentDate = nil;
+//            }
+//        }];
     }
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
@@ -132,6 +207,7 @@
 }
 
 -(void)loadMessages{
+    NSLog(@"LOAD MESSAGES CALLED");
     self.pullFinished = NO;
 //    self.justViewedMsg = NO;
     
@@ -437,9 +513,7 @@
     }
 
     PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
-    
-    NSLog(@"LAST SENT %@", msgObject);
-    
+        
 //    NSLog(@"message in cellforitem %@", msgObject.updatedAt);
     
     NSString *text = [msgObject objectForKey:@"message"];
@@ -447,7 +521,7 @@
     if ([[msgObject objectForKey:@"mediaMessage"]isEqualToString:@"YES"]) {
         
         if ([[msgObject objectForKey:@"senderName"]isEqualToString:[PFUser currentUser].username]) {
-            self.cell.messageLabel.text = @"you sent a photo 📸";
+            self.cell.messageLabel.text = @"You sent a photo 📸";
         }
         else{
             self.cell.messageLabel.text = [NSString stringWithFormat:@"%@ sent a photo 📸", [msgObject objectForKey:@"senderName"]];
@@ -455,10 +529,29 @@
     }
     else if ([[msgObject objectForKey:@"offer"]isEqualToString:@"YES"]){
         if ([[msgObject objectForKey:@"senderName"]isEqualToString:[PFUser currentUser].username]) {
-            self.cell.messageLabel.text = @"you sent an offer 🔌";
+            self.cell.messageLabel.text = @"You sent an offer 🔌";
         }
         else{
             self.cell.messageLabel.text = [NSString stringWithFormat:@"%@ sent an offer 🔌", [msgObject objectForKey:@"senderName"]];
+        }
+    }
+    else if ([[msgObject objectForKey:@"sharedMessage"]isEqualToString:@"YES"]){
+        if ([msgObject objectForKey:@"Sale"]) {
+            //shared a for sale item
+            if ([[msgObject objectForKey:@"senderName"]isEqualToString:[PFUser currentUser].username]) {
+                self.cell.messageLabel.text = @"You shared an item 📲";
+            }
+            else{
+                self.cell.messageLabel.text = [NSString stringWithFormat:@"%@ shared an item with you 📲", [msgObject objectForKey:@"senderName"]];
+            }
+        }
+        else{
+            if ([[msgObject objectForKey:@"senderName"]isEqualToString:[PFUser currentUser].username]) {
+                self.cell.messageLabel.text = @"You shared a listing 📲";
+            }
+            else{
+                self.cell.messageLabel.text = [NSString stringWithFormat:@"%@ shared a listing with you 📲", [msgObject objectForKey:@"senderName"]];
+            }
         }
     }
     else{
@@ -470,7 +563,14 @@
         }
     }
     
-    if ([[msgObject objectForKey:@"status"] isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+    if ([convoObject.objectId isEqualToString:self.lastConvo.objectId] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+        
+        //this is the convo the user is currently in so set the last sent to 'Seen' if sent by other user
+        [self.cell.seenImageView setHidden:YES];
+        [self megaUnbold];
+        self.lastConvo = nil;
+    }
+    else if ([[msgObject objectForKey:@"status"] isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
         //unseen message sent by other user
         //hide pic
         [self.cell.seenImageView setHidden:YES];
@@ -523,7 +623,6 @@
     PFObject *convoObject = [self.convoObjects objectAtIndex:indexPath.row];
     PFObject *msgObject = [convoObject objectForKey:@"lastSent"];
     if (![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
-        NSLog(@"SET AS SEEN IN INBOX %@", msgObject);
         [msgObject setObject:@"seen" forKey:@"status"];
         [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationNone];
     }
@@ -574,6 +673,7 @@
     MessageViewController *vc = [[MessageViewController alloc]init];
     vc.convoId = [convoObject objectForKey:@"convoId"];
     vc.convoObject = convoObject;
+    vc.delegate = self;
     
     if ([[convoObject objectForKey:@"pureWTS"]isEqualToString:@"YES"]) {
         vc.pureWTS = YES;
@@ -607,6 +707,7 @@
     [self.navigationController pushViewController:vc animated:YES];
 }
 
+//multiple bcoz of imageview.cornerradius bug
 -(void)setWTBImageBorder{
     self.cell.wtbImageView.layer.cornerRadius =4;
     self.cell.wtbImageView.layer.masksToBounds = YES;
@@ -688,4 +789,9 @@
     [self unboldFontForLabel:self.cell.wtbTitleLabel];
 }
 
+#pragma mark - messageVC delegates
+
+
+-(void)lastMessageInConvo:(PFObject *)message{
+}
 @end

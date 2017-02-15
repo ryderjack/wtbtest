@@ -57,7 +57,8 @@
 
 - (IBAction)bumpPressed:(id)sender {
     NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listing objectForKey:@"bumpArray"]];
-    
+    NSMutableArray *personalBumpArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
         NSLog(@"already bumped it");
     }
@@ -69,6 +70,17 @@
         [self.listing addObject:[PFUser currentUser].objectId forKey:@"bumpArray"];
         [self.listing incrementKey:@"bumpCount"];
         [self.listing saveInBackground];
+        
+        if (![personalBumpArray containsObject:self.listing.objectId]) {
+            [personalBumpArray addObject:self.listing.objectId];
+        }
+        [[PFUser currentUser]setObject:personalBumpArray forKey:@"bumpArray"];
+        [[PFUser currentUser]saveInBackground];
+        
+        [Answers logCustomEventWithName:@"Bumped a listing"
+                       customAttributes:@{
+                                          @"where":@"From Facebook Push"
+                                          }];
     }
     
     //send push
@@ -85,12 +97,6 @@
             }
         }];
     }
-    
-    PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
-    [bumpObj setObject:self.listing.objectId forKey:@"listingId"];
-    [bumpObj setObject:self.listing forKey:@"listing"];
-    [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
-    [bumpObj saveInBackground];
     
     //animate a +1
     [self.plusOneImageView setAlpha:1.0f];
@@ -112,6 +118,7 @@
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
+    //bouncing animation
     [UIView animateKeyframesWithDuration:0.5 delay:0.0 options:UIViewAnimationOptionAutoreverse | UIViewAnimationOptionRepeat animations:^{
         [UIView setAnimationRepeatAutoreverses:YES]; //This ensures the animation not only animations forwards but back to its original position
         [UIView setAnimationRepeatCount:INFINITY]; //Set the number of times you want the animation to repeat

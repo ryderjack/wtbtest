@@ -38,11 +38,9 @@
     
      UIBarButtonItem *sellingButton = [[UIBarButtonItem alloc] initWithTitle:@"Sell" style:UIBarButtonItemStylePlain target:self action:@selector(showSellingAlert)];
     [self.navigationItem setLeftBarButtonItem:sellingButton];
-
     
     self.contentOffsetDictionary = [NSMutableDictionary dictionary];
     
-    self.wtbArray = [NSMutableArray array];
     self.viewsArray = [NSMutableArray array];
     self.products = [NSMutableArray array];
     self.results = [NSMutableArray array];
@@ -59,12 +57,16 @@
     
     self.pullSkipped = 0;
     self.currentCount = 0;
+    self.ebaySkip = 0;
     
-    // Option 1
-    // Load user's latest 5 WTBs
-    // for each WTB search for the WTS posts which have the most keywords in common (if none then don't show)
-    // save pointers to those WTSs on the WTB object as Recommendation key
-    // so it's a case of displaying the objects for this key in cell for item
+    //refresh ebay items when come back from bg
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(ebayRefresh)
+                                                 name:UIApplicationWillEnterForegroundNotification
+                                               object:[UIApplication sharedApplication]];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(justPostedNewListing) name:@"justPostedListing" object:nil];
+
     
     PFQuery *versionQuery = [PFQuery queryWithClassName:@"versions"];
     [versionQuery orderByDescending:@"createdAt"];
@@ -90,6 +92,8 @@
     self.tap.numberOfTapsRequired = 1;
     
     [self setUpItemView];
+    
+    [self recommendFromServer];
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
@@ -113,6 +117,7 @@
 }
 
 -(void)getEbayProducts:(NSArray *)objectsToCheck{
+    NSLog(@"GET EBAY");
     if (self.ebayEnabled == NO) {
         return;
     }
@@ -120,7 +125,7 @@
     __block int indexNo = 0;
     __block int checker = 0;
 
-//    NSLog(@"objects to check count %lu", (unsigned long)objectsToCheck.count);
+    NSLog(@"objects to check count %lu", (unsigned long)objectsToCheck.count);
     
     for (NSDictionary *wtbDict in objectsToCheck) {
         indexNo++;
@@ -130,6 +135,14 @@
         }
         else{
             PFObject *WTB = [wtbDict valueForKey:@"WTB"];
+            
+//            NSLog(@"WTB TO CHECK %@", WTB);
+            
+            if (!WTB) { //add in check to prevent crashing if no WTB
+                NSLog(@"no WTB to check");
+                continue;
+            }
+            
             //to keep track of which WTBs have ebay items since cloud code comes back in random order
             NSNumber *index;
             
@@ -147,7 +160,9 @@
                 index = [NSNumber numberWithInt:indexNo-1];
             }
             
-            NSDictionary *params = @{@"itemTitle": [WTB objectForKey:@"title"], @"price": @1000, @"limit": @5, @"index":index}; //price is ignored atm in cloud code
+            NSNumber *ebaySkipPointer = [NSNumber numberWithInt:self.ebaySkip];
+            
+            NSDictionary *params = @{@"itemTitle": [WTB objectForKey:@"title"], @"price": @1000, @"limit": @5, @"index":index, @"skip":ebaySkipPointer}; //price is ignored atm in cloud code
             
             [PFCloud callFunctionInBackground:@"eBayFetch" withParameters:params block:^(NSDictionary *response, NSError *error) {
                 if (!error) {
@@ -161,20 +176,44 @@
                         else{
                             //insert eBay item to first postiion in match array
                             NSMutableArray *matches = [wtbDict valueForKey:@"matches"];
-                            [matches insertObject:itemDict atIndex:0];
-                            [wtbDict setValue:matches forKey:@"matches"];
                             
-                            //access table view cell at the correct index
-                            int indexToUpdate = [[params valueForKey:@"index"] intValue];
-                            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:indexToUpdate inSection:0];
-                            RecommendCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
                             
-                            //insert ebay item at the beginning & reload that collection view
-                            NSIndexPath *indexPath1 = [NSIndexPath indexPathForItem:0 inSection:0];
-                            [cell.collectionView insertItemsAtIndexPaths:[NSArray arrayWithObject:indexPath1]];
-                            [cell.collectionView reloadData];
+                            //check if first object in the array is from ebay, if so - remove then add
+                            if ([[matches objectAtIndex:0]isKindOfClass:[NSDictionary class]]) {
+                                NSLog(@"ALREADY AN EBAY ITEM HERE %@", [matches objectAtIndex:0]);
+                                [matches replaceObjectAtIndex:0 withObject:itemDict];
+                                [wtbDict setValue:matches forKey:@"matches"];
+                                
+                                //access table view cell at the correct index
+                                int indexToUpdate = [[params valueForKey:@"index"] intValue];
+                                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:indexToUpdate inSection:0];
+                                RecommendCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+                                
+                                NSIndexPath *indexPath1 = [NSIndexPath indexPathForItem:0 inSection:0];
+                                NSLog(@"RELOADING with new ebay item");
+                                [cell.collectionView reloadItemsAtIndexPaths:@[indexPath1]];
+                                
+                                [self.seenEbayItems addObject:[itemDict valueForKey:@"itemURL"]];
+                            }
+                            else{
+                                [matches insertObject:itemDict atIndex:0];
+                                [wtbDict setValue:matches forKey:@"matches"];
+                                
+                                //access table view cell at the correct index
+                                int indexToUpdate = [[params valueForKey:@"index"] intValue];
+                                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:indexToUpdate inSection:0];
+                                RecommendCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+                                
+                                //insert ebay item at the beginning & reload that collection view
+                                NSIndexPath *indexPath1 = [NSIndexPath indexPathForItem:0 inSection:0];
+                                [cell.collectionView insertItemsAtIndexPaths:[NSArray arrayWithObject:indexPath1]];
+                                NSLog(@"RELOADING");
+                                [cell.collectionView reloadData];
+                                
+                                [self.seenEbayItems addObject:[itemDict valueForKey:@"itemURL"]];
+                            }
                             
-                            [self.seenEbayItems addObject:[itemDict valueForKey:@"itemURL"]];
+
                             break; //break to only add one ebay item to the array as loop completes only once
                         }
                     }
@@ -405,11 +444,11 @@
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
     self.pullQuery.limit = 10;
     self.pullQuery.skip = self.pullSkipped;
-    [self.pullQuery orderByDescending:@"createdAt"];
+    [self.pullQuery orderByDescending:@"lastUpdated"];
     [self.pullQuery cancel];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            if (objects.count == 0) {
+            if (objects.count == 0 && self.pullSkipped == 0) {
                 // whole page should become for sale stuff.. and header should say no WTBs
                 if (!self.topLabel && !self.bottomLabel) {
                     self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
@@ -439,6 +478,37 @@
                 self.pullFinished = YES;
                 [self.anotherPromptButton setHidden:NO];
                 [self.anotherPromptButton setTitle:@"C R E A T E  A  L I S T I N G" forState:UIControlStateNormal];
+                return;
+            }
+            else if (objects.count == 0 && self.pullSkipped != 0){
+                if (!self.topLabel && !self.bottomLabel) {
+                    self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
+                    self.topLabel.textAlignment = NSTextAlignmentCenter;
+                    [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
+                    self.topLabel.numberOfLines = 1;
+                    self.topLabel.textColor = [UIColor lightGrayColor];
+                    self.topLabel.text = @"Woops";
+                    [self.view addSubview:self.topLabel];
+                    
+                    self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+90, 250, 200)];
+                    self.bottomLabel.textAlignment = NSTextAlignmentCenter;
+                    [self.bottomLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:17]];
+                    self.bottomLabel.numberOfLines = 0;
+                    self.bottomLabel.textColor = [UIColor lightGrayColor];
+                    self.bottomLabel.text = @"None of our sellers on Bump seem to be selling related items, check out the Featured items above in the meantime!";
+                    [self.view addSubview:self.bottomLabel];
+                }
+                else{
+                    self.topLabel.text = @"Woops";
+                    self.bottomLabel.text = @"None of our sellers on Bump seem to be selling related items, check out the Featured items above in the meantime!";
+                    
+                    [self.topLabel setHidden:NO];
+                    [self.bottomLabel setHidden:NO];
+                }
+                [self.tableView.pullToRefreshView stopAnimating];
+                self.pullFinished = YES;
+                [self.anotherPromptButton setHidden:NO];
+                [self.anotherPromptButton setTitle:@"C R E A T E  A N O T H E R  L I S T I N G" forState:UIControlStateNormal];
                 return;
             }
             [self.anotherPromptButton setHidden:YES];
@@ -478,7 +548,7 @@
                         if (productCount == objects.count) {
                             NSLog(@"finished checking all products");
                             NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc]
-                                                                initWithKey: @"createdAt" ascending: NO];
+                                                                initWithKey: @"lastUpdated" ascending: NO];
                             NSArray *sortedArray = [holdingArray sortedArrayUsingDescriptors: [NSArray arrayWithObject:sortDescriptor]];
                             
                             [self.results removeAllObjects];
@@ -545,6 +615,9 @@
                             [self getRelatedProducts];
                             self.fromInfinEbay = NO;
                             if (self.ebayEnabled != NO) {
+                                if (self.ebaySkip != 0) {
+                                    self.ebaySkip = self.ebaySkip+5;
+                                }
                                 [self getEbayProducts:self.results];
                             }
                         }
@@ -572,7 +645,7 @@
     [self.infiniteQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
     [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
     self.infiniteQuery.limit = 10;
-    [self.infiniteQuery orderByDescending:@"createdAt"];
+    [self.infiniteQuery orderByDescending:@"lastUpdated"];
     self.infiniteQuery.skip = self.skipped;
     [self.infiniteQuery cancel];
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -624,7 +697,7 @@
                         
                         if (productCount == objects.count) {
                             NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc]
-                                                                initWithKey: @"createdAt" ascending: NO];
+                                                                initWithKey: @"lastUpdated" ascending: NO];
                             NSArray *sortedArray = [holding sortedArrayUsingDescriptors: [NSArray arrayWithObject:sortDescriptor]];
                             self.currentCount =(int)self.results.count;
                             [self.results addObjectsFromArray:sortedArray];
@@ -800,7 +873,6 @@ numberOfRowsInSection:(NSInteger)section
 -(UICollectionViewCell *)collectionView:(AFCollectionView *)collectionView
                  cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-//    NSLog(@"CELL FOR ITEM CALLED");
     ForSaleCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.itemView.image = nil;
     NSDictionary *wtbDict = [self.results objectAtIndex:collectionView.indexPath.row];
@@ -982,7 +1054,8 @@ numberOfRowsInSection:(NSInteger)section
         self.viewedItem = NO;
     }
     else{
-        [self recommendFromServer];
+        //refresh ebay items on will appear
+        [self ebayRefresh];
     }
 
 }
@@ -1445,6 +1518,8 @@ numberOfRowsInSection:(NSInteger)section
 
 -(void)imagePressed{
     if (self.ebayTapped != YES) {
+        [Answers logCustomEventWithName:@"END Item Image Tapped "
+                       customAttributes:@{}];
         //END. so show image
         [self presentDetailImage];
     }
@@ -1468,5 +1543,20 @@ numberOfRowsInSection:(NSInteger)section
     self.itemView.sizeLabel.text = @"";
     self.itemView.timeLabel.text = @"";
     self.itemView.descriptionLabel.text = @"";
+}
+
+-(void)ebayRefresh{
+    if (self.tabBarController.selectedIndex == 1) {
+        [Answers logCustomEventWithName:@"eBay Refresh"
+                       customAttributes:@{}];
+        
+        //to avoid reloading ebay when not even looking at this tab
+        self.ebaySkip = self.ebaySkip+5;
+        [self getEbayProducts:self.results];
+    }
+}
+
+-(void)justPostedNewListing{
+    [self recommendFromServer];
 }
 @end

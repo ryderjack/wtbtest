@@ -9,6 +9,8 @@
 #import "CreateForSaleListing.h"
 #import "UIImage+Resize.h"
 #import <Crashlytics/Crashlytics.h>
+#import "NavigationController.h"
+#import "SettingsController.h"
 
 @interface CreateForSaleListing ()
 
@@ -76,7 +78,7 @@
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
-    self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
+    self.profanityList = @[@"cunt", @"wanker", @"nigger", @"penis", @"cock"];
     
     self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
     
@@ -572,6 +574,11 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Added for sale picture"
+                       customAttributes:@{
+                                          @"source":@"Camera"
+                                          }];
+        
         CameraController *vc = [[CameraController alloc]init];
         vc.delegate = self;
         vc.offerMode = YES;
@@ -579,6 +586,10 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Added for sale picture"
+                       customAttributes:@{
+                                          @"source":@"Library"
+                                          }];
         if (!self.picker) {
             self.picker = [[UIImagePickerController alloc] init];
             self.picker.delegate = self;
@@ -588,10 +599,29 @@
         [self presentViewController:self.picker animated:YES completion:nil];
     }]];
     
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from my Depop" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Added for sale picture"
+                       customAttributes:@{
+                                          @"source":@"Depop"
+                                          }];
+        BOOL seen = [[NSUserDefaults standardUserDefaults] boolForKey:@"seenDepop"];
+        if (!seen) {
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Add Pics from your Depop" message:@"When you have the images of the items you'd like to send in the middle of your screen, hit 'Screenshot'!" preferredStyle:UIAlertControllerStyleAlert];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [self showDepop];
+            }]];
+            [self presentViewController:alertView animated:YES completion:nil];
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenDepop"];
+        }
+        else{
+            [self showDepop];
+        }
+    }]];
+    
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(nonnull NSDictionary<NSString *,id> *)info{
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
     
 //    NSLog(@"size of OG image %f %f", chosenImage.size.width, chosenImage.size.height);
@@ -1153,12 +1183,28 @@
         
         //save keywords (minus useless words)
         NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"",@"selling", @"new", @"condition", @"good", @"great",@"wts", nil];
-        
+        NSCharacterSet *charactersToRemove = [[NSCharacterSet alphanumericCharacterSet] invertedSet];
+
         NSString *title = [descriptionKeywordsString lowercaseString];
         NSArray *strings = [title componentsSeparatedByString:@" "];
         NSMutableArray *mutableStrings = [NSMutableArray arrayWithArray:strings];
         [mutableStrings removeObjectsInArray:wasteWords];
-        [forSaleItem setObject:mutableStrings forKey:@"keywords"];
+        [mutableStrings removeObjectsInArray:[NSArray arrayWithObject:charactersToRemove]];
+        
+        NSMutableArray *finalKeywordArray = [NSMutableArray array];
+        
+        for (NSString *string in mutableStrings) {
+            if (![string canBeConvertedToEncoding:NSASCIIStringEncoding]) {
+                NSLog(@"can't be converted %@", string);
+            }
+            else{
+                [finalKeywordArray addObject:string];
+            }
+        }
+
+        NSLog(@"keywords: %@", finalKeywordArray);
+        
+        [forSaleItem setObject:finalKeywordArray forKey:@"keywords"];
         
         if (![self.genderSize isEqualToString:@""]) {
             [forSaleItem setObject:self.genderSize forKey:@"sizeGender"];
@@ -1176,6 +1222,21 @@
         
         if (self.photostotal == 1) {
             NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            
+            if (data == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"Selling",
+                                                  @"imageView":@"first",
+                                                  @"photosTotal":@1
+                                                  }];
+                
+                //prevent crash when creating a PFFile with nil data
+                [self hidHUD];
+                [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                [self.longButton setEnabled:YES];
+                return;
+            }
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
             [forSaleItem setObject:imageFile1 forKey:@"image1"];
             
@@ -1187,10 +1248,42 @@
         }
         else if (self.photostotal == 2){
             NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            
+            if (data1 == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"Selling",
+                                                  @"imageView":@"first",
+                                                  @"photosTotal":@2
+                                                  }];
+                
+                //prevent crash when creating a PFFile with nil data
+                [self hidHUD];
+                [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                [self.longButton setEnabled:YES];
+                return;
+            }
+            
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
             [forSaleItem setObject:imageFile1 forKey:@"image1"];
             
             NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+            
+            if (data2 == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"Selling",
+                                                  @"imageView":@"second",
+                                                  @"photosTotal":@2
+                                                  }];
+                
+                //prevent crash when creating a PFFile with nil data
+                [self hidHUD];
+                [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                [self.longButton setEnabled:YES];
+                return;
+            }
+            
             PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
             [forSaleItem setObject:imageFile2 forKey:@"image2"];
             
@@ -1201,14 +1294,61 @@
         }
         else if (self.photostotal == 3){
             NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7);
+            if (data1 == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"Selling",
+                                                  @"imageView":@"first",
+                                                  @"photosTotal":@3
+                                                  }];
+                
+                //prevent crash when creating a PFFile with nil data
+                [self hidHUD];
+                [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                [self.longButton setEnabled:YES];
+                return;
+            }
+            
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
             [forSaleItem setObject:imageFile1 forKey:@"image1"];
             
             NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+            
+            if (data2 == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"Selling",
+                                                  @"imageView":@"second",
+                                                  @"photosTotal":@3
+                                                  }];
+                
+                //prevent crash when creating a PFFile with nil data
+                [self hidHUD];
+                [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                [self.longButton setEnabled:YES];
+                return;
+            }
+            
             PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
             [forSaleItem setObject:imageFile2 forKey:@"image2"];
             
             NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
+            
+            if (data3 == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"Selling",
+                                                  @"imageView":@"third",
+                                                  @"photosTotal":@3
+                                                  }];
+                
+                //prevent crash when creating a PFFile with nil data
+                [self hidHUD];
+                [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                [self.longButton setEnabled:YES];
+                return;
+            }
+            
             PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
             [forSaleItem setObject:imageFile3 forKey:@"image3"];
             
@@ -1218,18 +1358,81 @@
         }
         else if (self.photostotal == 4){
             NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            
+            if (data1 == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"Selling",
+                                                  @"imageView":@"first",
+                                                  @"photosTotal":@4
+                                                  }];
+                
+                //prevent crash when creating a PFFile with nil data
+                [self hidHUD];
+                [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                [self.longButton setEnabled:YES];
+                return;
+            }
+            
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
             [forSaleItem setObject:imageFile1 forKey:@"image1"];
             
             NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+            
+            if (data2 == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"Selling",
+                                                  @"imageView":@"second",
+                                                  @"photosTotal":@4
+                                                  }];
+                
+                //prevent crash when creating a PFFile with nil data
+                [self hidHUD];
+                [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                [self.longButton setEnabled:YES];
+                return;
+            }
+            
             PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
             [forSaleItem setObject:imageFile2 forKey:@"image2"];
             
             NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
+            
+            if (data3 == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"Selling",
+                                                  @"imageView":@"third",
+                                                  @"photosTotal":@4
+                                                  }];
+                
+                //prevent crash when creating a PFFile with nil data
+                [self hidHUD];
+                [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                [self.longButton setEnabled:YES];
+                return;
+            }
+            
             PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
             [forSaleItem setObject:imageFile3 forKey:@"image3"];
             
             NSData* data4 = UIImageJPEGRepresentation(self.fourthImageView.image, 0.7f);
+            
+            if (data4 == nil) {
+                [Answers logCustomEventWithName:@"PFFile Nil Data"
+                               customAttributes:@{
+                                                  @"pageName":@"Selling",
+                                                  @"imageView":@"fourth",
+                                                  @"photosTotal":@4
+                                                  }];
+                
+                //prevent crash when creating a PFFile with nil data
+                [self hidHUD];
+                [self showAlertWithTitle:@"Image Error" andMsg:@"Please check your connection and try again!"];
+                [self.longButton setEnabled:YES];
+                return;
+            }
             PFFile *imageFile4 = [PFFile fileWithName:@"Imag4.jpg" data:data4];
             [forSaleItem setObject:imageFile4 forKey:@"image4"];
         }
@@ -1412,4 +1615,61 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
+-(void)showDepop{
+    if ([[PFUser currentUser]objectForKey:@"depopHandle"]) {
+        //has added their depop handle
+        NSString *handle = [[PFUser currentUser]objectForKey:@"depopHandle"];
+        NSString *URLString = [NSString stringWithFormat:@"http://depop.com/%@",handle];
+        self.webViewController = nil;
+        self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
+        self.webViewController.title = [NSString stringWithFormat:@"%@", handle];
+        self.webViewController.showUrlWhileLoading = NO;
+        self.webViewController.showPageTitles = NO;
+        self.webViewController.delegate = self;
+        self.webViewController.depopMode = YES;
+        self.webViewController.doneButtonTitle = @"";
+        self.webViewController.paypalMode = NO;
+        self.webViewController.infoMode = NO;
+        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
+        [self presentViewController:navigationController animated:YES completion:nil];
+    }
+    else{
+        //hasn't added handle, prompt to do so
+        [self showDepopAlert];
+    }
+}
+
+-(void)showDepopAlert{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"No Depop Username" message:@"Add your Depop Username in Settings on Bump and you'll be able to add images of items you've already listed there without leaving Bump #zerofees" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"ADD" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Add Depop Pressed in Create For Sale"
+                       customAttributes:@{}];
+        SettingsController *vc = [[SettingsController alloc]init];
+        [self.navigationController pushViewController:vc animated:YES];
+    }]];
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Later" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Add Depop Later in Create For Sale"
+                       customAttributes:@{}];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)paidPressed{
+    //do nothing
+}
+
+-(void)cancelWebPressed{
+    [self.webViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)cameraPressed{
+    //do nothing
+}
+
+-(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
+    [self.webViewController dismissViewControllerAnimated:YES completion:^{
+        [self displayCropperWithImage:screenshot];
+    }];
+}
 @end

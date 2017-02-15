@@ -45,13 +45,13 @@
 //        configuration.server = @"http://localhost:1337/parse";
         
         //production
-        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
+//        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
         
         //preproduction
-//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
+        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
     }]];
 
-    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
     [[ChimpKit sharedKit] setApiKey:@"5cbba863ff961ff8c60266185defc785-us14"];
@@ -71,7 +71,11 @@
     self.createView = [[CreateViewController alloc]init];
     self.simpleCreateView = [[simpleCreateVC alloc]init];
     self.exploreView = [[ExploreVC alloc]init];
-    self.profileView = [[ProfileController alloc]init];
+    
+    self.profileView = [[UserProfileController alloc]init];
+    self.profileView.user = [PFUser currentUser];
+    self.profileView.tabMode = YES;
+    
     self.inboxView = [[InboxViewController alloc]init];
     self.buyView = [[BuyNowController alloc]init];
         
@@ -309,6 +313,7 @@
             int userUnseen = [[object objectForKey:@"userUnseen"]intValue];
             if (userUnseen > 0) {
                 [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:[NSString stringWithFormat:@"%d", userUnseen]];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"NewTBMessage" object:nil];
             }
             else{
                 [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:nil];
@@ -332,10 +337,17 @@
 }
 
 -(void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification{
-    [Answers logCustomEventWithName:@"Opened First Reminder Push"
-                   customAttributes:@{}];
-    
-    self.tabBarController.selectedIndex = 1;
+    if ([notification.alertBody isEqualToString:@"What's your next cop? Get inspired and create a wanted listing for it on Bump now"]){
+        [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
+                       customAttributes:@{}];
+        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
+    }
+    else{
+        [Answers logCustomEventWithName:@"Opened First Reminder Push"
+                       customAttributes:@{}];
+        
+        self.tabBarController.selectedIndex = 1;
+    }
 }
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
@@ -400,6 +412,22 @@
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
+    
+    if ([[NSUserDefaults standardUserDefaults]boolForKey:@"longTermLocalSeen"] != YES){
+        
+        //schedule 5 day inactivity local notification
+        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+        dayComponent.day = 6;
+        NSCalendar *theCalendar = [NSCalendar currentCalendar];
+        NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+        
+        UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+        [localNotification setAlertBody:@"What's your next cop? Get inspired and create a wanted listing for it on Bump now"];
+        [localNotification setFireDate: dateToFire];
+        [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+        [localNotification setRepeatInterval: 0];
+        [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+    }
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
@@ -416,6 +444,19 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     [FBSDKAppEvents activateApp];
+    if ([PFUser currentUser]) {
+        [[PFUser currentUser]setObject:[NSDate date] forKey:@"lastActive"];
+        [[PFUser currentUser]saveInBackground];
+    }
+    
+    //cancel long term local push
+    NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+    for(UILocalNotification *notification in notificationArray){
+        if ([notification.alertBody isEqualToString:@"What's your next cop? Get inspired and create a wanted listing for it on Bump now"]) {
+            // delete this notification
+            [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
+        }
+    }
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {
@@ -439,6 +480,9 @@
 - (void)tabBarController:(UITabBarController *)tabBarController
  didSelectViewController:(UIViewController *)viewController
 {
+    //notification used to disimss bar button when tabs switched on a modal VC that doesn't responds to VWDis
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"switchedTabs" object:viewController];
+    
     static UIViewController *previousController = nil;
     if (previousController == viewController) {
         // the same tab was tapped a second time

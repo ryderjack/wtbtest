@@ -10,8 +10,9 @@
 #import "InboxCell.h"
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
+#import "MessageViewController.h"
 
-@interface InboxViewController : UITableViewController
+@interface InboxViewController : UITableViewController <messagesDelegate>
 
 @property (nonatomic, strong) InboxCell *cell;
 @property (nonatomic, strong) NSMutableArray *convoObjects;
@@ -42,6 +43,9 @@
 @property (nonatomic, strong) NSIndexPath *lastConvoIndex;
 
 @property (nonatomic, strong) PFInstallation *currentInstallation;
+
+//updating inbox cell
+@property (nonatomic, strong) PFObject *lastMessageInConvo;
 
 
 @end

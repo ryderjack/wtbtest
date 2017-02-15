@@ -38,6 +38,19 @@
     versionLabel.text = [NSString stringWithFormat:@"%@", [thisInstall objectForKey:@"appVersion"]];
     [footerView addSubview:versionLabel];
     self.tableView.tableFooterView = footerView;
+    
+    if (self.modal == YES) {
+        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
+        self.navigationItem.leftBarButtonItem = cancelButton;
+    }
+    
+    if (self.unseenTBMsg == YES) {
+        NSLog(@"unseen TB msg");
+        [self.unreadView setHidden:NO];
+    }
+    else{
+        [self.unreadView setHidden:YES];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -60,35 +73,27 @@
                                       @"pageName":@"Profile"
                                       }];
     
-    if ([self.navigationController tabBarItem].badgeValue != nil) {
-        NSLog(@"unseen TB msg");
-        [self.unreadView setHidden:NO];
-    }
-    else{
-        [self.unreadView setHidden:YES];
-    }
-    
 }
 
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 4;
+    return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return 1;
-    }
-    else if (section == 1){
         return 2;
     }
-    else if (section == 2){
+    else if (section == 1){
         return 1;
     }
-    else if (section == 3){
+    else if (section == 2){
         return 3;
     }
+//    else if (section == 3){
+//        return 3;
+//    }
     else{
         return 1;
     }
@@ -96,12 +101,12 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+//    if (indexPath.section == 0){
+//        if (indexPath.row == 0) {
+//            return self.profileCell;
+//        }
+//    }
     if (indexPath.section == 0){
-        if (indexPath.row == 0) {
-            return self.profileCell;
-        }
-    }
-    else if (indexPath.section == 1){
         if (indexPath.row == 0) {
             return self.purchasedItems;
         }
@@ -109,12 +114,12 @@
             return self.soldItems;
         }
     }
-    else if (indexPath.section == 2){
+    else if (indexPath.section == 1){
         if (indexPath.row == 0) {
             return self.settingsCell;
         }
     }
-    else if (indexPath.section == 3){
+    else if (indexPath.section == 2){
         if (indexPath.row == 1) {
             return self.howItWorks;
         }
@@ -136,15 +141,15 @@
     
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     
-    if (indexPath.section == 0) {
-        if (indexPath.row == 0) {
-            //profile pressed
-            UserProfileController *vc = [[UserProfileController alloc]init];
-            vc.user = [PFUser currentUser];
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-    }
-    else if (indexPath.section == 1){
+//    if (indexPath.section == 0) {
+//        if (indexPath.row == 0) {
+//            //profile pressed
+//            UserProfileController *vc = [[UserProfileController alloc]init];
+//            vc.user = [PFUser currentUser];
+//            [self.navigationController pushViewController:vc animated:YES];
+//        }
+//    }
+    if (indexPath.section == 0){
         if (indexPath.row == 0) {
             //purchase pressed
             OffersController *vc = [[OffersController alloc]init];
@@ -158,14 +163,14 @@
             [self.navigationController pushViewController:vc animated:YES];
         }
     }
-    else if (indexPath.section == 2){
+    else if (indexPath.section == 1){
         if (indexPath.row == 0) {
             //settings pressed
             SettingsController *vc = [[SettingsController alloc]init];
             [self.navigationController pushViewController:vc animated:YES];
         }
     }
-    else if (indexPath.section == 3){
+    else if (indexPath.section == 2){
         if (indexPath.row == 1) {
             //how it works pressed
             ContainerViewController *vc = [[ContainerViewController alloc]init];
@@ -175,6 +180,10 @@
         }
         else if (indexPath.row == 0) {
             //chat w/ Bump
+            
+            //reset profile badges
+            [self.delegate TeamBumpInboxTapped];
+            
             PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
             NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
             [convoQuery whereKey:@"convoId" equalTo:convoId];
@@ -278,6 +287,10 @@
         default:
             break;
     }
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)cancelPressed{
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 

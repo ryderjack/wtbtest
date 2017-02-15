@@ -86,6 +86,7 @@
     if (self.viewedListing != YES) {
         [self queryParsePull];
     }
+    NSLog(@"FRAME IN SEARCHED %@", self.tabBarHeight);
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
@@ -131,7 +132,7 @@
     
     //remove useless words
     [wordsToSearch removeObjectsInArray:self.uselessWords];
-    [self.pullQuery whereKey:@"keywords" containsAllObjectsInArray:wordsToSearch];
+    [self.pullQuery whereKey:@"searchKeywords" containsAllObjectsInArray:wordsToSearch];
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
     [self.pullQuery cancel];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -181,7 +182,7 @@
     
     //remove useless words
     [wordsToSearch removeObjectsInArray:self.uselessWords];
-    [self.infiniteQuery whereKey:@"keywords" containsAllObjectsInArray:wordsToSearch];
+    [self.infiniteQuery whereKey:@"searchKeywords" containsAllObjectsInArray:wordsToSearch];
     [self.infiniteQuery cancel];
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
@@ -330,6 +331,8 @@
     
     ListingController *vc = [[ListingController alloc]init];
     vc.listingObject = selected;
+    vc.fromSearch = YES;
+    vc.tabBarHeight = self.tabBarHeight;
     [self.navigationController pushViewController:vc animated:YES];
 }
 
@@ -355,6 +358,8 @@
                                       }];
     
     NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[listingObject objectForKey:@"bumpArray"]];
+    NSMutableArray *personalBumpArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
         NSLog(@"already bumped it m8");
         [cell.bumpButton setSelected:NO];
@@ -364,25 +369,23 @@
         [listingObject setObject:bumpArray forKey:@"bumpArray"];
         [listingObject incrementKey:@"bumpCount" byAmount:@-1];
         
-        //update bumpObj
-        PFQuery *bumpObj = [PFQuery queryWithClassName:@"BumpedListings"];
-        [bumpObj whereKey:@"listingId" equalTo:listingObject.objectId];
-        [bumpObj whereKey:@"bumpUser" equalTo:[PFUser currentUser]];
-        [bumpObj getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                [object setObject:@"deleted" forKey:@"status"];
-                [object saveInBackground];
-            }
-        }];
+        if ([personalBumpArray containsObject:listingObject.objectId]) {
+            [personalBumpArray removeObject:listingObject.objectId];
+        }
     }
     else{
         NSLog(@"bumped");
         [cell.bumpButton setSelected:YES];
         [cell.transView setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
         cell.transView.alpha = 0.9;
+        
         [bumpArray addObject:[PFUser currentUser].objectId];
         [listingObject addObject:[PFUser currentUser].objectId forKey:@"bumpArray"];
         [listingObject incrementKey:@"bumpCount"];
+        
+        if (![personalBumpArray containsObject:listingObject.objectId]) {
+            [personalBumpArray addObject:listingObject.objectId];
+        }
         NSString *pushText = [NSString stringWithFormat:@"%@ just bumped your listing 👊", [PFUser currentUser].username];
         
         if (![[[listingObject objectForKey:@"postUser"]objectId] isEqualToString:[[PFUser currentUser]objectId]]) {
@@ -391,6 +394,10 @@
             [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                 if (!error) {
                     NSLog(@"push response %@", response);
+                    [Answers logCustomEventWithName:@"Push Sent"
+                                   customAttributes:@{
+                                                      @"Type":@"Bump"
+                                                      }];
                 }
                 else{
                     NSLog(@"push error %@", error);
@@ -403,13 +410,12 @@
                                               @"where":@"Search"
                                               }];
         }
-        PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
-        [bumpObj setObject:listingObject.objectId forKey:@"listingId"];
-        [bumpObj setObject:listingObject forKey:@"listing"];
-        [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
-        [bumpObj saveInBackground];
     }
+    
     [listingObject saveInBackground];
+    [[PFUser currentUser]setObject:personalBumpArray forKey:@"bumpArray"];
+    [[PFUser currentUser]saveInBackground];
+    
     if (bumpArray.count > 0) {
         int count = (int)[bumpArray count];
         [cell.bumpButton setTitle:[NSString stringWithFormat:@"%@",[self abbreviateNumber:count]] forState:UIControlStateNormal];

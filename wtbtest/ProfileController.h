@@ -10,6 +10,12 @@
 #import <MessageUI/MessageUI.h>
 #import "TOJRWebView.h"
 
+@class ProfileController;
+
+@protocol ProfileSettingsDelegate <NSObject>
+- (void)TeamBumpInboxTapped;
+@end
+
 @interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate, JRWebViewDelegate>
 
 //cells
@@ -24,6 +30,15 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *savedLaterCell;
 @property (weak, nonatomic) IBOutlet UIImageView *unreadView;
 @property (strong, nonatomic) IBOutlet UITableViewCell *termsCell;
+
+//delegate
+@property (nonatomic, weak) id <ProfileSettingsDelegate> delegate;
+
+//modes
+@property (nonatomic) BOOL modal;
+
+//Team Bump
+@property (nonatomic) BOOL unseenTBMsg;
 
 //web
 @property (nonatomic, strong) TOJRWebView *webView;

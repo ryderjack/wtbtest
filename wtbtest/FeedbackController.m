@@ -313,6 +313,9 @@
                                                                     NSLog(@"saved convo with updated last sent date %@", convo);
                                                                     [self hideHUD];
                                                                     [self.navigationController popViewControllerAnimated:YES];
+                                                                    
+                                                                    //refresh inbox
+                                                                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
                                                                 }
                                                                 else{
                                                                     NSLog(@"error saving convo %@", error);

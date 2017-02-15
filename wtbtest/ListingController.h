@@ -14,6 +14,10 @@
 #import <DGActivityIndicatorView.h>
 #import <iCarousel.h>
 #import "DetailImageController.h"
+#import "SendDialogBox.h"
+#import <FBSDKShareKit/FBSDKShareKit.h>
+#import "customAlertViewClass.h"
+#import "CreateSuccessView.h"
 
 @class ListingController;
 
@@ -21,7 +25,7 @@
 - (void)addItemViewController:(ListingController *)controller listing:(PFObject *)object;
 @end
 
-@interface ListingController : UITableViewController <iCarouselDataSource, iCarouselDelegate, DetailImageDelegate>
+@interface ListingController : UITableViewController <iCarouselDataSource, iCarouselDelegate, DetailImageDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate, FBSDKAppInviteDialogDelegate, customAlertDelegate, successDelegate>
 
 @property (nonatomic, weak) id <ListingControllerDelegate> delegate;
 @property (nonatomic, strong) PFObject *listingObject;
@@ -90,11 +94,11 @@
 @property (weak, nonatomic) IBOutlet UIButton *viewBumpsButton;
 
 //search
-@property (nonatomic) BOOL searchOn;
+@property (nonatomic) BOOL fromSearch;
 
 //modes
 @property (nonatomic, strong) NSMutableArray *cellArray;
-@property (nonatomic) BOOL editPressed;
+@property (nonatomic) BOOL editModePressed;
 
 //profileButton
 @property (nonatomic, strong) UIBarButtonItem *profileButton;
@@ -106,7 +110,45 @@
 //carousel Cell
 @property (weak, nonatomic) IBOutlet iCarousel *carouselView;
 
+//new button cell
+@property (weak, nonatomic) IBOutlet UIButton *iwantButton;
+@property (weak, nonatomic) IBOutlet UIButton *sendButton;
+@property (weak, nonatomic) IBOutlet UIButton *iwantLabel;
+@property (nonatomic) BOOL wantMode;
 
+//send dialog box
+@property (nonatomic, strong) SendDialogBox *sendBox;
+@property (nonatomic, strong) UIView *bgView;
+@property (nonatomic) BOOL setupBox;
+@property (nonatomic, strong) NSMutableArray *facebookUsers;
+@property (nonatomic) BOOL sendMode;
+@property (nonatomic) int friendIndexSelected;
+@property (nonatomic) BOOL selectedFriend;
+@property (nonatomic) BOOL hidingSendBox;
+@property (nonatomic) BOOL changeKeyboard;
+@property (nonatomic) BOOL wasShowing;
 
+//tab bar
+@property (nonatomic, strong) NSNumber *tabBarHeight;
+@property (nonatomic) int tabBarHeightInt;
+
+//confirmation dialogue box
+@property (nonatomic, strong) customAlertViewClass *customAlert;
+@property (nonatomic, strong) UIView *searchBgView;
+@property (nonatomic, strong) NSMutableArray *results;
+@property (nonatomic) BOOL alertShowing;
+
+//create similar listing
+@property (nonatomic, strong) PFObject *similarListing;
+@property (nonatomic, strong) PFGeoPoint *similarGeopoint;
+@property (nonatomic, strong) NSString *similarLocationString;
+
+//success view
+@property (nonatomic, strong) CreateSuccessView *successView;
+@property (nonatomic, strong) NSMutableArray *buyNowArray;
+@property (nonatomic, strong) NSMutableArray *buyNowIDs;
+@property (nonatomic) BOOL setupYes;
+@property (nonatomic) BOOL completionShowing;
+@property (nonatomic) BOOL shouldShowSuccess;
 
 @end

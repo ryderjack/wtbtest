@@ -57,4 +57,7 @@
 
 @property (nonatomic, weak) id <searchedViewCDelegate> delegate;
 
+//tab bar
+@property (nonatomic, strong) NSNumber *tabBarHeight;
+
 @end

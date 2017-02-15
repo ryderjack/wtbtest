@@ -7,7 +7,6 @@
 //
 
 #import "searchResultsController.h"
-#import "resultCell.h"
 
 @interface searchResultsController ()
 @end
@@ -17,7 +16,6 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    [self.tableView registerNib:[UINib nibWithNibName:@"resultCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
     self.visibleResults = [[NSMutableArray alloc]init];
 //    self.userResults = [NSArray array];
 //    self.itemResults = [NSArray array];

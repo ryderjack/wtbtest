@@ -9,8 +9,8 @@
 #import "TheMainSearchView.h"
 #import "UserProfileController.h"
 #import "NavigationController.h"
-#import "resultCell.h"
 #import <Crashlytics/Crashlytics.h>
+#import "SearchCell.h"
 
 @interface TheMainSearchView ()
 
@@ -22,7 +22,7 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     
-    [self.tableView registerNib:[UINib nibWithNibName:@"resultCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
+    [self.tableView registerNib:[UINib nibWithNibName:@"SearchCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
     
     self.searchString = @"";
     
@@ -107,19 +107,33 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
-    cell.textLabel.text = @"";
+    SearchCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
+    cell.usernameLabel.text = @"";
+    cell.nameLabel.text = @"";
+    cell.userImageView.image = nil;
     
     if (self.userSearch == YES) {
         if (self.userResults.count >=indexPath.row+1) {
             PFUser *user = self.userResults[indexPath.row];
-            cell.textLabel.text = user.username;
+            
+            [cell.userImageView setHidden:NO];
+            [self setImageBorder:cell.userImageView];
+            
+            cell.usernameLabel.text = user.username;
+            cell.nameLabel.text = [user objectForKey:@"fullname"];
+            [cell.userImageView setFile:[user objectForKey:@"picture"]];
+            [cell.userImageView loadInBackground];
         }
     }
     else{
-        cell.textLabel.text = self.listingResults[indexPath.row];
+        [cell.userImageView setHidden:YES];
+        cell.usernameLabel.text = self.listingResults[indexPath.row];
     }
     return cell;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return 70;
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -127,6 +141,10 @@
     
     if (self.userSearch == YES) {
         PFUser *user = [self.userResults objectAtIndex:indexPath.row];
+        
+        if ([user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+            
+        }
         UserProfileController *vc = [[UserProfileController alloc]init];
         vc.user = user;
         vc.fromSearch = YES;
@@ -142,6 +160,7 @@
         vc.currency = self.currency;
         vc.delegate = self;
         vc.currentLocation = self.geoPoint;
+        vc.tabBarHeight = self.tabBarHeight;
         [self.navigationController pushViewController:vc animated:YES];
     }
 }
@@ -368,5 +387,12 @@
 
 -(void)hideKeyb{
     [self.searchBar resignFirstResponder];
+}
+
+-(void)setImageBorder:(UIImageView *)imageView{
+    imageView.layer.cornerRadius = imageView.frame.size.width / 2;
+    imageView.layer.masksToBounds = YES;
+    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    imageView.contentMode = UIViewContentModeScaleAspectFill;
 }
 @end

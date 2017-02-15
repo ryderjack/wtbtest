@@ -15,6 +15,10 @@
 #import <Crashlytics/Crashlytics.h>
 #import "NavigationController.h"
 #import "whoBumpedTableView.h"
+#import "SendToUserCell.h"
+#import "ExploreVC.h"
+#import "ForSaleCell.h"
+#import "ForSaleListing.h"
 
 @interface ListingController ()
 
@@ -35,6 +39,9 @@
     [self.purchasedLabel setHidden:YES];
     [self.purchasedCheckView setHidden:YES];
     
+    self.buyNowArray = [NSMutableArray array];
+    self.buyNowIDs = [NSMutableArray array];
+    
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
         self.currencySymbol = @"£";
@@ -49,18 +56,35 @@
     self.buyernameLabel.text = @"";
     self.pastDealsLabel.text = @"Loading";
     
+    self.facebookUsers = [NSMutableArray array];
+    self.friendIndexSelected = 0;
+    
     //how to work out cells to display
     //create array of cells and add to it when want to display
     
     self.cellArray = [NSMutableArray array];
     
-    self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 + self.tabBarController.tabBar.frame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+    //when presented from search the tab bar does not belong to parent so its passed from previous VCs
+    if (self.fromSearch == YES) {
+        self.tabBarHeightInt = [self.tabBarHeight intValue];
+        
+        //register for notification so we know when to dismiss long button after switching tabs
+        //because its a modalVC 'willdisappear' never called
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showHideLongButton:) name:@"switchedTabs" object:nil];
+    }
+    else{
+        self.tabBarHeightInt = self.tabBarController.tabBar.frame.size.height;
+    }
+    
+    self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 + self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
     [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
     [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
     [self.longButton addTarget:self action:@selector(BarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.longButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
+        
     [self showBarButton];
+    self.changeKeyboard = YES;
     
     //carousel setup
     self.carouselView.type = iCarouselTypeLinear;
@@ -154,18 +178,24 @@
             
             self.idLabel.text = [NSString stringWithFormat:@"ID %@",self.listingObject.objectId];
             [self.cellArray addObject:self.adminCell];
-
+            [self.tableView reloadData];
             
             //buyer info
             self.buyer = [self.listingObject objectForKey:@"postUser"];
             
             if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                
+                [self.iwantLabel setTitle:@"S H A R E" forState:UIControlStateNormal];
+                [self.iwantButton setImage:[UIImage imageNamed:@"otherSend"] forState:UIControlStateNormal]; //CHECK
+                self.wantMode = NO;
+                
                 [self.longButton setTitle:@"E D I T" forState:UIControlStateNormal];
                 [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
                 [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
             }
             else{
                 [self.longButton setTitle:@"M E S S A G E  B U Y E R" forState:UIControlStateNormal];
+                self.wantMode = YES;
                 //not the same buyer
                 [self.listingObject incrementKey:@"views"];
                 [self.listingObject saveInBackground];
@@ -188,13 +218,15 @@
                 [self.upVoteButton setSelected:NO];
             }
             if (bumpArray.count > 0) {
-                [self.viewBumpsButton setHidden:NO];
+                [self.viewBumpsButton setTitle:@"V I E W" forState:UIControlStateNormal];
                 int count = (int)[bumpArray count];
+                [self.viewBumpsButton setEnabled:YES];
                 [self.upVoteButton setTitle:[NSString stringWithFormat:@"%@",[self abbreviateNumber:count]] forState:UIControlStateNormal];
             }
             else{
-                [self.upVoteButton setTitle:@"Tap to Bump!" forState:UIControlStateNormal];
-                [self.viewBumpsButton setHidden:YES];
+                [self.viewBumpsButton setEnabled:NO];
+                [self.upVoteButton setTitle:@"" forState:UIControlStateNormal];
+                [self.viewBumpsButton setTitle:@"B U M P" forState:UIControlStateNormal];
             }
             
             [self setImageBorder];
@@ -258,6 +290,16 @@
     self.extraLabel.adjustsFontSizeToFitWidth = YES;
     self.extraLabel.minimumScaleFactor=0.5;
     
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(comeBackToForeground)
+                                                 name:UIApplicationDidBecomeActiveNotification
+                                               object:[UIApplication sharedApplication]];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(goneToBackground)
+                                                 name:UIApplicationWillResignActiveNotification
+                                               object:[UIApplication sharedApplication]];
+    
     self.carouselMainCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.payCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.sizeCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -271,6 +313,9 @@
     self.spaceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    
+    [self SetupSendBox];
+    [self loadFacebookFriends];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -285,15 +330,36 @@
         [self showBarButton];
     }
     
-    if (self.editPressed == YES) {
+    if (self.editModePressed == YES) {
         [self listingRefresh];
-        self.editPressed = NO;
+        self.editModePressed = NO;
     }
+    
+    if (self.shouldShowSuccess == YES) {
+        [self showSuccess];
+    }
+}
+
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear: animated];
+    NSLog(@"DID APPEAR");
+    
+    //make sure not adding duplicate observers
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+    
+    [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
+    [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     [self hideBarButton];
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+
 }
 
 - (void)didReceiveMemoryWarning {
@@ -438,7 +504,7 @@
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
-            return 121;
+            return 144;
         }
     }
     else if (indexPath.section ==3){
@@ -511,47 +577,60 @@
     }];
 }
 
-- (IBAction)sharePressed:(id)sender {
-    [self hideBarButton];
-    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        [self showBarButton];
-    }]];
-    
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share to Facebook Group" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        FBGroupShareViewController *vc = [[FBGroupShareViewController alloc]init];
-        vc.objectId = self.listingObject.objectId;
-        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:vc];
-        [self presentViewController:navigationController animated:YES completion:nil];
-    }]];
-    
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        NSMutableArray *items = [NSMutableArray new];
-        [items addObject:[NSString stringWithFormat:@"Check out this WTB: %@ for %@%@\nPosted on Bump http://apple.co/2aY3rBk", [self.listingObject objectForKey:@"title"],self.currency,[self.listingObject objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]]];
-        UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
-        [self presentViewController:activityController animated:YES completion:nil];
-    }]];
-    
-    [self presentViewController:actionSheet animated:YES completion:nil];
-}
-
 -(void)BarButtonPressed{
     [self.longButton setEnabled:NO];
-    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        self.editPressed = YES;
-        CreateViewController *vc = [[CreateViewController alloc]init];
-        vc.status = @"edit";
-        vc.listing = self.listingObject;
-        vc.editFromListing = YES;
-        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-        [self presentViewController:nav animated:YES completion:^{
+    if (self.sendMode == YES) {
+        //either send message or dismiss
+        if ([self.longButton.titleLabel.text isEqualToString:@"D I S M I S S"]) {
+            [Answers logCustomEventWithName:@"Dismissed Send Box"
+                           customAttributes:@{
+                                              @"where":@"Listing"
+                                              }];
+            NSLog(@"dismiss");
+            [self hideSendBox];
             [self.longButton setEnabled:YES];
-        }];
+        }
+        else{
+            [Answers logCustomEventWithName:@"Sent listing to friend"
+                           customAttributes:@{
+                                              @"where":@"Listing",
+                                              @"message":self.sendBox.messageField.text
+                                              }];
+            //increment sent property on listing
+            [self.listingObject incrementKey:@"sentNumber"];
+            [self.listingObject saveInBackground];
+            
+            //send a message G
+            [self sendMessageWithText:self.sendBox.messageField.text];
+            [self hideSendBox];
+            self.sendMode = NO;
+            [self.longButton setEnabled:YES];
+        }
     }
     else{
-        [self showHUD];
-        [self setupMessages];
+        if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+            [Answers logCustomEventWithName:@"Edit Pressed"
+                           customAttributes:@{
+                                              @"where":@"Listing"
+                                              }];
+            self.editModePressed = YES;
+            CreateViewController *vc = [[CreateViewController alloc]init];
+            vc.status = @"edit";
+            vc.listing = self.listingObject;
+            vc.editFromListing = YES;
+            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+            [self presentViewController:nav animated:YES completion:^{
+                [self.longButton setEnabled:YES];
+            }];
+        }
+        else{
+            [Answers logCustomEventWithName:@"Message Buyer Pressed"
+                           customAttributes:@{
+                                              @"where":@"Listing"
+                                              }];
+            [self showHUD];
+            [self setupMessages];
+        }
     }
 }
 
@@ -624,11 +703,7 @@
 -(void)showAlertView{
     [self hideBarButton];
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        [self showBarButton];
-    }]];
-    
+
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
@@ -719,6 +794,33 @@
         }]];
     }
     
+//    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//        [Answers logCustomEventWithName:@"General Share Pressed"
+//                       customAttributes:@{
+//                                          @"where":@"Listing"
+//                                          }];
+//        NSMutableArray *items = [NSMutableArray new];
+//        [items addObject:[NSString stringWithFormat:@"Check out this WTB: %@\nPosted on Bump http://apple.co/2aY3rBk", [self.listingObject objectForKey:@"title"]]];
+//        UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+//        
+//        [self presentViewController:activityController animated:YES completion:nil];
+//    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share to a Facebook Group" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Share to FB Group Pressed"
+                       customAttributes:@{
+                                          @"where":@"Listing"
+                                          }];
+        FBGroupShareViewController *vc = [[FBGroupShareViewController alloc]init];
+        vc.objectId = self.listingObject.objectId;
+        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:vc];
+        [self presentViewController:navigationController animated:YES completion:nil];
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
+    }]];
+    
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
@@ -772,6 +874,8 @@
                                       }];
     
     NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listingObject objectForKey:@"bumpArray"]];
+    NSMutableArray *personalBumpArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
         NSLog(@"already bumped it m8");
         [self.upVoteButton setSelected:NO];
@@ -779,16 +883,9 @@
         [self.listingObject setObject:bumpArray forKey:@"bumpArray"];
         [self.listingObject incrementKey:@"bumpCount" byAmount:@-1];
         
-        //update bumpObj
-        PFQuery *bumpObj = [PFQuery queryWithClassName:@"BumpedListings"];
-        [bumpObj whereKey:@"listingId" equalTo:self.listingObject.objectId];
-        [bumpObj whereKey:@"bumpUser" equalTo:[PFUser currentUser]];
-        [bumpObj getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                [object setObject:@"deleted" forKey:@"status"];
-                [object saveInBackground];
-            }
-        }];
+        if ([personalBumpArray containsObject:self.listingObject.objectId]) {
+            [personalBumpArray removeObject:self.listingObject.objectId];
+        }
     }
     else{
         NSLog(@"bumped");
@@ -796,6 +893,10 @@
         [bumpArray addObject:[PFUser currentUser].objectId];
         [self.listingObject addObject:[PFUser currentUser].objectId forKey:@"bumpArray"];
         [self.listingObject incrementKey:@"bumpCount"];
+        
+        if (![personalBumpArray containsObject:self.listingObject.objectId]) {
+            [personalBumpArray addObject:self.listingObject.objectId];
+        }
         NSString *pushText = [NSString stringWithFormat:@"%@ just bumped your listing 👊", [PFUser currentUser].username];
         
         if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
@@ -804,6 +905,10 @@
             [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                 if (!error) {
                     NSLog(@"push response %@", response);
+                    [Answers logCustomEventWithName:@"Push Sent"
+                                   customAttributes:@{
+                                                      @"Type":@"Bump"
+                                                      }];
                 }
                 else{
                     NSLog(@"push error %@", error);
@@ -816,21 +921,22 @@
                                               @"where":@"Listing"
                                               }];
         }
-        PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
-        [bumpObj setObject:self.listingObject.objectId forKey:@"listingId"];
-        [bumpObj setObject:self.listingObject forKey:@"listing"];
-        [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
-        [bumpObj saveInBackground];
     }
+    
     [self.listingObject saveInBackground];
+    [[PFUser currentUser]setObject:personalBumpArray forKey:@"bumpArray"];
+    [[PFUser currentUser]saveInBackground];
+    
     if (bumpArray.count > 0) {
-        [self.viewBumpsButton setHidden:NO];
+        [self.viewBumpsButton setTitle:@"V I E W" forState:UIControlStateNormal];
         int count = (int)[bumpArray count];
+        [self.viewBumpsButton setEnabled:YES];
         [self.upVoteButton setTitle:[NSString stringWithFormat:@"%@",[self abbreviateNumber:count]] forState:UIControlStateNormal];
     }
     else{
-        [self.viewBumpsButton setHidden:YES];
-        [self.upVoteButton setTitle:@"Tap to Bump!" forState:UIControlStateNormal];
+        [self.viewBumpsButton setTitle:@"B U M P" forState:UIControlStateNormal];
+        [self.viewBumpsButton setEnabled:NO];
+        [self.upVoteButton setTitle:@"" forState:UIControlStateNormal];
     }
 }
 
@@ -1015,6 +1121,7 @@
                         options:UIViewAnimationOptionCurveEaseIn
                      animations:^{
                          self.longButton.alpha = 1.0f;
+                         [self.longButton setEnabled:YES];
                      }
                      completion:^(BOOL finished) {
                          self.buttonShowing = YES;
@@ -1114,9 +1221,1262 @@
 }
 
 -(void)dismissedDetailImageView{
-    NSLog(self.buttonShowing ? @"YES":@"NO");
     [self showBarButton];
 }
 
+-(void)SetupSendBox{
+    //setup
+    self.sendBox = nil;
+    self.bgView = nil;
+    self.setupBox = YES;
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"SendDialogView" owner:self options:nil];
+    self.sendBox = (SendDialogBox *)[nib objectAtIndex:0];
+    //self.sendBox.alpha = 0.0;
+    [self.sendBox setCollectionViewDataSourceDelegate:self indexPath:nil];
+    [self.sendBox setBackgroundColor:[UIColor whiteColor]];
+    [self.sendBox.noFriendsButton addTarget:self action:@selector(inviteFriendsPressed) forControlEvents:UIControlEventTouchUpInside];
+    
+    self.sendBox.messageField.layer.borderColor = [UIColor colorWithRed:0.86 green:0.86 blue:0.86 alpha:1.0].CGColor;
+    [self.sendBox.messageField setHidden:YES];
+    self.sendBox.messageField.delegate = self;
+    
+    [self.navigationController.view addSubview:self.sendBox];
+    
+    [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height,[UIApplication sharedApplication].keyWindow.frame.size.width,290)];
+    
+    self.bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.bgView.backgroundColor = [UIColor blackColor];
+    self.bgView.alpha = 0.0;
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideSendBox)];
+    tap.numberOfTapsRequired = 1;
+    [self.bgView addGestureRecognizer:tap];
+    [self.navigationController.view insertSubview:self.bgView belowSubview:self.sendBox];
+}
+- (IBAction)sendPressed:(id)sender {
+    [Answers logCustomEventWithName:@"Pressed send listing button"
+                   customAttributes:@{
+                                      @"where":@"Listing"
+                                      }];
+    [self ShowInitialSendBox];
+}
+
+-(void)hideSendBox{
+    
+    NSLog(@"HIDE");
+    self.sendMode = NO;
+    if ([self.sendBox.messageField isFirstResponder]) {
+        //hide text field & prep for keyboard will dismiss delegate being called
+        self.hidingSendBox = YES;
+        [self.sendBox.messageField resignFirstResponder];
+    }
+    
+    //reset BOOL for other calls to keyboard will hide
+    self.hidingSendBox = NO;
+    
+    //reset textfield
+    self.sendBox.messageField.text = @"";
+    
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        [self.longButton setTitle:@"E D I T" forState:UIControlStateNormal];
+        [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+        [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+    }
+    else{
+        [self.longButton setTitle:@"M E S S A G E  B U Y E R" forState:UIControlStateNormal];
+        [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+        [self.longButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    }
+    [self.longButton setEnabled:YES];
+    
+    //reset collection view
+    self.selectedFriend = NO;
+    [self.sendBox.collectionView reloadData];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+
+                            [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height,[UIApplication sharedApplication].keyWindow.frame.size.width,290)]; //iPhone 6/7 specific
+                            [self.bgView setAlpha:0.0];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                     }];
+}
+
+#pragma collection view delegates
+
+-(NSInteger)collectionView:(UICollectionView *)collectionView
+    numberOfItemsInSection:(NSInteger)section
+{
+    if (collectionView == self.sendBox.collectionView) {
+        return self.facebookUsers.count;
+    }
+    else{
+        return self.buyNowArray.count;
+    }
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    
+    if (collectionView != self.sendBox.collectionView) {
+        //buy now items
+        if (indexPath.row == self.buyNowArray.count-1 && self.buyNowArray.count > 1) {
+            
+            [Answers logCustomEventWithName:@"Tapped 'view more' after creating listing"
+                           customAttributes:@{}];
+
+            self.tabBarController.selectedIndex = 1;
+            [self successDonePressed];
+        }
+        else{
+            [Answers logCustomEventWithName:@"Tapped for sale listing after creating listing"
+                           customAttributes:@{}];
+            
+            [self hideSuccess];
+            
+            self.shouldShowSuccess = YES;
+            
+            PFObject *WTS = [self.buyNowArray objectAtIndex:indexPath.item];
+            ForSaleListing *vc = [[ForSaleListing alloc]init];
+            vc.listingObject = WTS;
+            vc.WTBObject = self.similarListing;
+            vc.source = @"I want too";
+            vc.pureWTS = NO;
+            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+            [self presentViewController:nav animated:YES completion:nil];
+        }
+    }
+    else{
+        //send collection view
+        NSLog(@"selected");
+        
+        if (self.selectedFriend == YES && self.friendIndexSelected == indexPath.row) {
+            //already selected this user so deselect him
+            NSLog(@"deselect");
+            
+            self.selectedFriend = NO;
+            [self.sendBox.collectionView reloadData];
+            [self.sendBox.smallInviteButton setHidden:NO];
+            
+            if ([self.sendBox.messageField isFirstResponder]) {
+                //dismiss keyboard only and show initial will be called there
+                [self.sendBox.messageField resignFirstResponder];
+            }
+            else{
+                //reset to OG appearance by calling show initial
+                [self ShowInitialSendBox];
+            }
+        }
+        else{
+            [self.sendBox.smallInviteButton setHidden:YES];
+            self.selectedFriend = YES;
+            self.friendIndexSelected = (int)indexPath.row;
+            [self.sendBox.collectionView reloadData];
+            
+            //scroll up
+            [UIView animateWithDuration:0.5
+                                  delay:0.0
+                 usingSpringWithDamping:0.7
+                  initialSpringVelocity:0.5
+                                options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                    //Animations
+                                    self.bgView.alpha = 0.8;
+                                    
+                                    [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height-(290+self.tabBarHeightInt),[UIApplication sharedApplication].keyWindow.frame.size.width,290)];
+                                    [self.sendBox.messageField setHidden:NO];
+                                }
+                             completion:^(BOOL finished) {
+                                 
+                             }];
+            
+            //title button
+            [self.longButton setTitle:@"S E N D" forState:UIControlStateNormal];
+            [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+            [self.longButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        }
+    }
+}
+
+-(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView
+                 cellForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (collectionView != self.sendBox.collectionView) {
+        ForSaleCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
+        cell.itemView.image = nil;
+        
+        if (indexPath.row == self.buyNowArray.count-1 && self.buyNowArray.count > 1) {
+            [cell.itemView setImage:[UIImage imageNamed:@"viewMore"]];
+        }
+        else{
+            PFObject *WTS = [self.buyNowArray objectAtIndex:indexPath.item];
+            //        NSLog(@"WTS: %@ at index: %ld", WTS, (long)indexPath.row);
+            //setup cell
+            [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
+            [cell.itemView loadInBackground];
+        }
+        
+        cell.itemView.layer.cornerRadius = 35;
+        cell.itemView.layer.masksToBounds = YES;
+        cell.itemView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+        cell.itemView.contentMode = UIViewContentModeScaleAspectFill;
+        
+        return cell;
+    }
+    
+    SendToUserCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
+    cell.userImageView.image = nil;
+    
+    PFObject *fbUser = [self.facebookUsers objectAtIndex:indexPath.item];
+
+    [cell.userImageView setFile:[fbUser objectForKey:@"picture"]];
+    [cell.userImageView loadInBackground];
+    
+    cell.userImageView.layer.cornerRadius = 30;
+    cell.userImageView.layer.masksToBounds = YES;
+    cell.userImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    cell.userImageView.contentMode = UIViewContentModeScaleAspectFill;
+    
+    if (self.selectedFriend == YES) {
+        if (indexPath.row == self.friendIndexSelected) {
+            [cell.userImageView.layer setBorderColor: [[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0] CGColor]];
+            [cell.userImageView.layer setBorderWidth: 3.0];
+            cell.alpha = 1.0;
+            self.sendBox.usernameLabel.text = [fbUser objectForKey:@"username"];
+        }
+        else{
+            cell.alpha = 0.5;
+            [cell.userImageView.layer setBorderWidth: 0.0];
+        }
+    }
+    else{
+        [cell.userImageView.layer setBorderWidth: 0.0];
+        self.sendBox.usernameLabel.text = @"";
+        cell.alpha = 1.0;
+    }
+    
+    cell.usernameLabel.text = [fbUser objectForKey:@"username"];
+    cell.fullnameLabel.text = [fbUser objectForKey:@"fullname"];
+    
+    return cell;
+}
+
+-(void)loadFacebookFriends{
+    
+    [self.facebookUsers removeAllObjects];
+    
+    //get recents first
+    PFQuery *recentsQuery = [PFUser query];
+    [recentsQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"recentFriends"]];
+    [recentsQuery whereKey:@"completedReg" equalTo:@"YES"];
+    [recentsQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            if (objects.count > 0) {
+                NSLog(@"got some recents %@", objects);
+                [self.facebookUsers addObjectsFromArray:objects];
+            }
+            //get recents first
+            PFQuery *friendsQuery = [PFUser query];
+            [friendsQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
+            [friendsQuery whereKey:@"completedReg" equalTo:@"YES"];
+            [friendsQuery orderByAscending:@"fullname"];
+            [friendsQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                if (objects) {
+                    if (objects.count == 0) {
+                        [self.sendBox.noFriendsButton setHidden:NO];
+                        [self.sendBox.smallInviteButton setHidden:YES];
+                    }
+                    else if (self.facebookUsers.count == 1 && objects.count == 1){
+                        //only got one friend who's a recent
+                        [self.sendBox.noFriendsButton setHidden:YES];
+                        [self.sendBox.collectionView reloadData];
+                        
+                        [self.sendBox.smallInviteButton setHidden:NO];
+                        [self.sendBox.smallInviteButton addTarget:self action:@selector(inviteFriendsPressed) forControlEvents:UIControlEventTouchUpInside];
+                    }
+                    else{
+                        NSLog(@"yo");
+                        [self.sendBox.smallInviteButton setHidden:NO];
+                        [self.sendBox.smallInviteButton addTarget:self action:@selector(inviteFriendsPressed) forControlEvents:UIControlEventTouchUpInside];
+                        
+                        [self.sendBox.noFriendsButton setHidden:YES];
+                        [self.facebookUsers addObjectsFromArray:objects];
+                        [self.sendBox.collectionView reloadData];
+                    }
+
+                }
+                else{
+                    NSLog(@"error getting facebook friends %@", error);
+                    if (self.facebookUsers.count == 0) {
+                        [self.sendBox.noFriendsButton setHidden:NO];
+                        [self.sendBox.smallInviteButton setHidden:YES];
+                    }
+                }
+            }];
+        }
+        else{
+            NSLog(@"error loading recent friends! %@", error);
+            if (self.facebookUsers.count == 0) {
+                [self.sendBox.noFriendsButton setHidden:NO];
+                [self.sendBox.smallInviteButton setHidden:YES];
+            }
+        }
+    }];
+}
+
+#pragma keyboard observer methods
+
+-(void)listingKeyboardOnScreen:(NSNotification *)notification
+{
+    NSLog(@"KEYBOARD WILL SHOW");
+    if (self.changeKeyboard == NO) {
+        return;
+    }
+    NSDictionary *info  = notification.userInfo;
+    NSValue      *value = info[UIKeyboardFrameEndUserInfoKey];
+    
+    CGRect rawFrame      = [value CGRectValue];
+    CGRect keyboardFrame = [self.view convertRect:rawFrame fromView:nil];
+    
+    //move up sendbox
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            
+                            //animate the send box
+
+                            [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height-(keyboardFrame.size.height + self.sendBox.frame.size.height),self.sendBox.frame.size.width,self.sendBox.frame.size.height)];
+                            
+                            //animate the long button up
+                            [self.longButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 + keyboardFrame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+
+-(void)listingKeyboardOFFScreen:(NSNotification *)notification
+{
+    NSLog(@"KEYBOARD WILL HIDE");
+
+    if (self.changeKeyboard == NO) {
+        return;
+    }
+    self.selectedFriend = NO;
+    [self.sendBox.collectionView reloadData];
+    [self.sendBox.messageField resignFirstResponder];
+    
+    //scroll down to hide textfield & change title button
+    [self ShowInitialSendBox];
+    
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            
+                            //animate the long button down
+                            [self.longButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 + self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+
+-(void)ShowInitialSendBox{
+    NSLog(@"SHOW INITIAL");
+    [self.sendBox.smallInviteButton setHidden:NO];
+    
+    //update bar button title
+    [self.longButton setTitle:@"D I S M I S S" forState:UIControlStateNormal];
+    [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+    [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+    
+    //show
+    [self.sendBox setAlpha:1.0];
+    
+    if (self.hidingSendBox != YES) {
+        //if hiding don't set sendmode as YES!
+        self.sendMode = YES;
+    }
+    
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            self.bgView.alpha = 0.8;
+
+                            [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height-(240+self.tabBarHeightInt),[UIApplication sharedApplication].keyWindow.frame.size.width,290)];
+                        }
+                     completion:^(BOOL finished) {
+                     }];
+}
+
+-(void)sendMessageWithText:(NSString *)messageText{
+    //check if there is a profile convo between the users
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
+    PFUser *selectedUser = [self.facebookUsers objectAtIndex:self.friendIndexSelected];
+    
+    //update recents
+    if ([[PFUser currentUser]objectForKey:@"recentFriends"]) {
+        NSMutableArray *recentFriends = [NSMutableArray arrayWithArray:[[PFUser currentUser]objectForKey:@"recentFriends"]];
+        if (recentFriends.count >= 1) {
+            //check if most recent friend is the same, if so don't readd to array
+            if (![recentFriends[0]isEqualToString:[selectedUser objectForKey:@"facebookId"]]) {
+                NSLog(@"not the same so add to recent array");
+                [recentFriends insertObject:[selectedUser objectForKey:@"facebookId"] atIndex:0];
+                [[PFUser currentUser]setObject:recentFriends forKey:@"recentFriends"];
+            }
+        }
+    }
+    else{
+        NSLog(@"creating recent friends");
+        NSMutableArray *recentFriends = [NSMutableArray array];
+        [recentFriends insertObject:[selectedUser objectForKey:@"facebookId"] atIndex:0];
+        [[PFUser currentUser]setObject:recentFriends forKey:@"recentFriends"];
+    }
+    [[PFUser currentUser]saveInBackground];
+    
+    
+    //possible convoIDs
+    NSString *possID = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId,selectedUser.objectId];
+    NSString *otherId = [NSString stringWithFormat:@"%@%@",selectedUser.objectId,[PFUser currentUser].objectId];
+    
+    NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
+    
+    [convoQuery whereKey:@"convoId" containedIn:idArray];
+    [convoQuery includeKey:@"buyerUser"];
+    [convoQuery includeKey:@"sellerUser"];
+    
+    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            //convo exists
+            PFObject *convo = object;
+            
+            //send image1
+            PFFile *imageFile = [self.listingObject objectForKey:@"image1"];
+            
+            PFObject *picObject = [PFObject objectWithClassName:@"messageImages"];
+            [picObject setObject:imageFile forKey:@"Image"];
+            [picObject setObject:convo forKey:@"convo"];
+            [picObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                if (succeeded) {
+                    
+                    //save first message
+                    PFObject *msgObject = [PFObject objectWithClassName:@"messages"];
+                    msgObject[@"message"] = picObject.objectId;
+                    msgObject[@"sender"] = [PFUser currentUser];
+                    msgObject[@"senderId"] = [PFUser currentUser].objectId;
+                    msgObject[@"senderName"] = [PFUser currentUser].username;
+                    msgObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                    msgObject[@"status"] = @"sent";
+                    msgObject[@"mediaMessage"] = @"YES";
+                    [msgObject saveInBackground];
+                    
+                    //save boiler plate message
+                    PFObject *boilerObject = [PFObject objectWithClassName:@"messages"];
+                    boilerObject[@"message"] = [NSString stringWithFormat:@"%@ shared %@'s listing.\nTap to view", [PFUser currentUser].username, [[self.listingObject objectForKey:@"postUser"]username]];
+                    boilerObject[@"sender"] = [PFUser currentUser];
+                    boilerObject[@"senderId"] = [PFUser currentUser].objectId;
+                    boilerObject[@"senderName"] = [PFUser currentUser].username;
+                    boilerObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                    boilerObject[@"status"] = @"sent";
+                    boilerObject[@"mediaMessage"] = @"NO";
+                    boilerObject[@"sharedMessage"] = @"YES";
+                    boilerObject[@"sharedListing"] = self.listingObject;
+                    
+                    [boilerObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            PFObject *lastSent = boilerObject;
+                            
+                            NSString *stringCheck = [messageText stringByReplacingOccurrencesOfString:@" " withString:@""];
+                            if (![stringCheck isEqualToString:@""]) {
+                                //send message too
+                                
+                                //save boiler plate message
+                                PFObject *customObject = [PFObject objectWithClassName:@"messages"];
+                                customObject[@"message"] = messageText;
+                                customObject[@"sender"] = [PFUser currentUser];
+                                customObject[@"senderId"] = [PFUser currentUser].objectId;
+                                customObject[@"senderName"] = [PFUser currentUser].username;
+                                customObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                                customObject[@"status"] = @"sent";
+                                customObject[@"mediaMessage"] = @"NO";
+                                [customObject saveInBackground];
+                                
+                                lastSent = customObject;
+                            }
+                            NSString *pushString = [NSString stringWithFormat:@"%@ shared a listing with you 📲",[[PFUser currentUser]username]];
+                            
+                            //send push to other user
+                            NSDictionary *params = @{@"userId": selectedUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+                            [PFCloud callFunctionInBackground:@"sendPush" withParameters: params block:^(NSDictionary *response, NSError *error) {
+                                if (!error) {
+                                    NSLog(@"response %@", response);
+                                }
+                                else{
+                                    NSLog(@"image push error %@", error);
+                                }
+                            }];
+                            
+                            if ([[[convo objectForKey:@"sellerUser"]objectId]isEqualToString:[[PFUser currentUser]objectId]]) {
+                                [convo incrementKey:@"buyerUnseen"];
+                            }
+                            else{
+                                [convo incrementKey:@"sellerUnseen"];
+                            }
+                            
+                            //do all this after final message saved
+                            [convo setObject:lastSent forKey:@"lastSent"];
+                            [convo incrementKey:@"totalMessages"];
+                            [convo setObject:[NSDate date] forKey:@"lastSentDate"];
+                            [convo saveInBackground];
+                            
+                            [[NSNotificationCenter defaultCenter] postNotificationName:@"messageSentDropDown" object:selectedUser];
+                        }
+                        else{
+                            NSLog(@"error sending message %@", error);
+                        }
+                    }];
+                }
+            }];
+        }
+        else{
+            //create a new convo and goto it
+            PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
+            convoObject[@"sellerUser"] = [PFUser currentUser];
+            convoObject[@"buyerUser"] = selectedUser;
+            convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId,selectedUser.objectId];
+            convoObject[@"profileConvo"] = @"YES";
+            convoObject[@"totalMessages"] = @0;
+            convoObject[@"buyerUnseen"] = @0;
+            convoObject[@"sellerUnseen"] = @0;
+            
+            [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    NSLog(@"saved new convo");
+                    
+                    PFObject *convo = convoObject;
+                    
+                    //send image1
+                    PFFile *imageFile = [self.listingObject objectForKey:@"image1"];
+                    
+                    PFObject *picObject = [PFObject objectWithClassName:@"messageImages"];
+                    [picObject setObject:imageFile forKey:@"Image"];
+                    [picObject setObject:convo forKey:@"convo"];
+                    [picObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                        if (succeeded) {
+                            
+                            //save first message
+                            PFObject *msgObject = [PFObject objectWithClassName:@"messages"];
+                            msgObject[@"message"] = picObject.objectId;
+                            msgObject[@"sender"] = [PFUser currentUser];
+                            msgObject[@"senderId"] = [PFUser currentUser].objectId;
+                            msgObject[@"senderName"] = [PFUser currentUser].username;
+                            msgObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                            msgObject[@"status"] = @"sent";
+                            msgObject[@"mediaMessage"] = @"YES";
+                            [msgObject saveInBackground];
+                            
+                            //save boiler plate message
+                            PFObject *boilerObject = [PFObject objectWithClassName:@"messages"];
+                            boilerObject[@"message"] = [NSString stringWithFormat:@"%@ shared %@'s listing.\nTap to view", [PFUser currentUser].username, [[self.listingObject objectForKey:@"postUser"]username]];
+                            boilerObject[@"sender"] = [PFUser currentUser];
+                            boilerObject[@"senderId"] = [PFUser currentUser].objectId;
+                            boilerObject[@"senderName"] = [PFUser currentUser].username;
+                            boilerObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                            boilerObject[@"status"] = @"sent";
+                            boilerObject[@"mediaMessage"] = @"NO";
+                            boilerObject[@"sharedMessage"] = @"YES";
+                            boilerObject[@"sharedListing"] = self.listingObject;
+                            [boilerObject saveInBackground];
+                            
+                            PFObject *lastSent = boilerObject;
+                            
+                            NSString *stringCheck = [messageText stringByReplacingOccurrencesOfString:@" " withString:@""];
+                            if (![stringCheck isEqualToString:@""]) {
+                                //send message too
+                                
+                                //save custom message
+                                PFObject *customObject = [PFObject objectWithClassName:@"messages"];
+                                customObject[@"message"] = [messageText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                                customObject[@"sender"] = [PFUser currentUser];
+                                customObject[@"senderId"] = [PFUser currentUser].objectId;
+                                customObject[@"senderName"] = [PFUser currentUser].username;
+                                customObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                                customObject[@"status"] = @"sent";
+                                customObject[@"mediaMessage"] = @"NO";
+                                [customObject saveInBackground];
+                                
+                                lastSent = customObject;
+                            }
+                            
+                            NSString *pushString = [NSString stringWithFormat:@"%@ shared a listing with you 📲",[[PFUser currentUser]username]];
+                            
+                            //send push to other user
+                            NSDictionary *params = @{@"userId": selectedUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+                            [PFCloud callFunctionInBackground:@"sendPush" withParameters: params block:^(NSDictionary *response, NSError *error) {
+                                if (!error) {
+                                    NSLog(@"response %@", response);
+                                }
+                                else{
+                                    NSLog(@"image push error %@", error);
+                                }
+                            }];
+                            
+                            if ([[[convo objectForKey:@"sellerUser"]objectId]isEqualToString:[[PFUser currentUser]objectId]]) {
+                                [convo incrementKey:@"buyerUnseen"];
+                            }
+                            else{
+                                [convo incrementKey:@"sellerUnseen"];
+                            }
+                            
+                            //do all this after final message saved
+                            [convo setObject:lastSent forKey:@"lastSent"];
+                            [convo incrementKey:@"totalMessages"];
+                            [convo setObject:[NSDate date] forKey:@"lastSentDate"];
+                            [convo saveInBackground];
+                            
+                            [[NSNotificationCenter defaultCenter] postNotificationName:@"messageSentDropDown" object:selectedUser];
+                            
+                            [self.listingObject incrementKey:@"shares"];
+                            [self.listingObject saveInBackground];
+                        }
+                    }];
+                }
+                else{
+                    NSLog(@"error saving convo in profile");
+                }
+            }];
+        }
+    }];
+}
+
+#pragma mark app invite stuff
+-(void)inviteFriendsPressed{
+    NSLog(@"INvite pressed");
+    FBSDKAppInviteContent *content =[[FBSDKAppInviteContent alloc] init];
+    content.appLinkURL = [NSURL URLWithString:@"https://www.mydomain.com/myapplink"];
+    //optionally set previewImageURL
+    content.appInvitePreviewImageURL = [NSURL URLWithString:@"https://www.mydomain.com/my_invite_image.jpg"];
+    
+    // Present the dialog. Assumes self is a view controller
+    // which implements the protocol `FBSDKAppInviteDialogDelegate`.
+    [FBSDKAppInviteDialog showFromViewController:self
+                                     withContent:content
+                                        delegate:self];
+}
+
+-(void)appInviteDialog:(FBSDKAppInviteDialog *)appInviteDialog didCompleteWithResults:(NSDictionary *)results{
+    NSLog(@"results %@", results);
+}
+
+-(void)appInviteDialog:(FBSDKAppInviteDialog *)appInviteDialog didFailWithError:(NSError *)error{
+    NSLog(@"error %@", error);
+}
+
+-(void)showHideLongButton:(NSNotification*)note {
+    UIViewController *viewController = [note object];
+    if ([viewController isKindOfClass:[NavigationController class]]) {
+        NavigationController *vc = (NavigationController *)viewController;
+        if ([vc.visibleViewController isKindOfClass:[ExploreVC class]]){
+            [self showBarButton];
+        }
+        else{
+            [self hideBarButton];
+        }
+    }
+}
+- (IBAction)iwantbuttonPressed:(id)sender {
+    if (self.wantMode == YES) { //CHECK
+        //present confirmation step
+        [self showWantConfirmation];
+    }
+    else{
+        //share
+        [self hideBarButton];
+        UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share to a Facebook Group" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Share to FB Group Pressed"
+                           customAttributes:@{
+                                              @"where":@"Listing"
+                                              }];
+            FBGroupShareViewController *vc = [[FBGroupShareViewController alloc]init];
+            vc.objectId = self.listingObject.objectId;
+            NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:vc];
+            [self presentViewController:navigationController animated:YES completion:nil];
+        }]];
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            [self showBarButton];
+        }]];
+        
+        [self presentViewController:actionSheet animated:YES completion:nil];
+    }
+}
+
+-(void)showWantConfirmation{
+    if (self.alertShowing == YES) {
+        return;
+    }
+    
+    [Answers logCustomEventWithName:@"I want too confirmation seen"
+                   customAttributes:@{}];
+    
+    self.alertShowing = YES;
+    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.searchBgView.alpha = 0.0;
+    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
+    self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
+    self.customAlert.delegate = self;
+    self.customAlert.titleLabel.text = @"Want this too?";
+    self.customAlert.messageLabel.text = @"Tap to create a similar listing on Bump & browse relevant for sale items immediately";
+    self.customAlert.numberOfButtons = 2;
+    [self.customAlert.secondButton setTitle:@"C R E A T E" forState:UIControlStateNormal];
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
+    }
+    else{
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
+    }
+    
+    self.customAlert.layer.cornerRadius = 10;
+    self.customAlert.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.customAlert];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.2
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake(0, 0, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake(0, 0, 300, 188)]; //iPhone 6/7 specific
+                            }
+                            self.customAlert.center = self.view.center;
+                            
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+    
+    //get current loc in time for when they create the listing
+    [self useCurrentLoc];
+}
+
+-(void)donePressed{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.searchBgView = nil;
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                            }
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.alertShowing = NO;
+                         [self.customAlert setAlpha:0.0];
+                         self.customAlert = nil;
+                     }];
+}
+
+-(void)firstPressed{
+    [self donePressed];
+}
+-(void)secondPressed{
+    //dismiss the custom alert view
+    //but keep bg darkened out
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                            }
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.alertShowing = NO;
+                         [self.customAlert setAlpha:0.0];
+                         self.customAlert = nil;
+                     }];
+    
+    //create the listing
+    [self saveListing];
+    
+}
+
+-(void)saveListing{
+    [self showHUD];
+    
+    NSString *itemTitle = [self.listingObject objectForKey:@"title"];
+    
+    self.similarListing =[PFObject objectWithClassName:@"wantobuys"];
+    
+    [self.similarListing setObject:itemTitle forKey:@"title"];
+    [self.similarListing setObject:[itemTitle lowercaseString]forKey:@"titleLower"];
+    
+    //save keywords (minus useless words)
+    [self.similarListing setObject:[self.listingObject objectForKey:@"keywords"] forKey:@"keywords"];
+    [self.similarListing setObject:[self.listingObject objectForKey:@"searchKeywords"] forKey:@"searchKeywords"];
+    [self.similarListing setObject:@"live" forKey:@"status"];
+    
+    //expiration in 2 weeks
+    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+    dayComponent.minute = 1;
+    NSCalendar *theCalendar = [NSCalendar currentCalendar];
+    NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+    [self.similarListing setObject:expirationDate forKey:@"expiration"];
+    
+    if (self.similarGeopoint != nil) {
+        [self.similarListing setObject:self.similarLocationString forKey:@"location"];
+        [self.similarListing setObject:self.similarGeopoint forKey:@"geopoint"];
+    }
+    
+    [self.similarListing setObject:[NSDate date] forKey:@"lastUpdated"];
+    [self.similarListing setObject:@0 forKey:@"views"];
+    [self.similarListing setObject:@0 forKey:@"bumpCount"];
+    [self.similarListing setObject:self.currency forKey:@"currency"];
+    [self.similarListing setObject:[PFUser currentUser] forKey:@"postUser"];
+    [self.similarListing setObject:[self.listingObject objectForKey:@"image1"] forKey:@"image1"];
+    
+    [self.similarListing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            
+            NSLog(@"listing saved! %@", self.similarListing.objectId);
+            
+            [self findRelevantItems];
+            
+            //analytics
+            [Answers logCustomEventWithName:@"Listing Complete"
+                           customAttributes:@{
+                                              @"mode":@"I want too"
+                                              }];
+            
+            //add listing to home page via notif.
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"justPostedListing" object:self.similarListing];
+            [[PFUser currentUser]incrementKey:@"postNumber"];
+            [[PFUser currentUser] saveInBackground];
+            
+            //schedule local notif. for first listing
+            if (![[PFUser currentUser] objectForKey:@"postNumber"]) {
+                
+                //local notifications set up
+                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                dayComponent.day = 2;
+                NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                
+                UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+                [localNotification setAlertBody:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"];
+                [localNotification setFireDate: dateToFire];
+                [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+                [localNotification setRepeatInterval: 0];
+                [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+            }
+            
+            //send FB friends a push asking them to Bump listing!
+            NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just posted a listing - Tap to Bump it 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
+            
+            PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
+            [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
+            [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
+            [bumpedQuery whereKeyExists:@"user"];
+            [bumpedQuery includeKey:@"user"];
+            bumpedQuery.limit = 10;
+            [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                if (objects) {
+                    NSLog(@"these objects can be pushed to %@", objects);
+                    if (objects.count > 0) {
+                        //create safe date which is 3 days from now
+                        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                        dayComponent.day = 3;
+                        NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                        NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                        
+                        for (PFObject *bumpObj in objects) {
+                            [bumpObj setObject:safeDate forKey:@"safeDate"];
+                            [bumpObj incrementKey:@"timesBumped"];
+                            [bumpObj saveInBackground];
+                            PFUser *friendUser = [bumpObj objectForKey:@"user"];
+                            
+                            NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.similarListing.objectId};
+                            
+                            [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                                if (!error) {
+                                    NSLog(@"push response %@", response);
+                                    [Answers logCustomEventWithName:@"Sent FB Friend a Bump Push"
+                                                   customAttributes:@{}];
+                                    [Answers logCustomEventWithName:@"Push Sent"
+                                                   customAttributes:@{
+                                                                      @"Type":@"FB Friend"
+                                                                      }];
+                                }
+                                else{
+                                    NSLog(@"push error %@", error);
+                                }
+                            }];
+                        }
+                    }
+                }
+                else{
+                    NSLog(@"error finding relevant bumped obj's %@", error);
+                }
+            }];
+            
+            //update wanted words from previous 10 listings
+            PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
+            [myPosts whereKey:@"postUser" equalTo:[PFUser currentUser]];
+            [myPosts orderByDescending:@"createdAt"];
+            myPosts.limit = 10;
+            [myPosts findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                if (objects) {
+                    NSMutableArray *wantedWords = [NSMutableArray array];
+                    
+                    for (PFObject *listing in objects) {
+                        NSArray *keywords = [listing objectForKey:@"keywords"];
+                        
+                        for (NSString *word in keywords) {
+                            if (![wantedWords containsObject:word]) {
+                                [wantedWords addObject:word];
+                            }
+                        }
+                    }
+                    [[PFUser currentUser] setObject:wantedWords forKey:@"wantedWords"];
+                    [[PFUser currentUser] saveInBackground];
+                }
+                else{
+                    NSLog(@"nee posts pet");
+                }
+            }];
+            
+            [self hideHUD];
+            [self setUpSuccess];
+            
+        }
+        else{
+            //error saving listing
+            NSLog(@"error saving listing so hiding");
+            [self hideHUD];
+            NSLog(@"error saving %@", error);
+        }
+    }];
+}
+
+-(void)useCurrentLoc{
+    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
+        if (!error) {
+            double latitude = geoPoint.latitude;
+            double longitude = geoPoint.longitude;
+            
+            CLLocation *loc = [[CLLocation alloc]initWithLatitude:latitude longitude:longitude];
+            CLGeocoder *geocoder = [[CLGeocoder alloc]init];
+            [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
+                if (placemarks) {
+                    CLPlacemark *placemark = [placemarks lastObject];
+                    self.similarLocationString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.administrativeArea];
+                    
+                    if (geoPoint) {
+                        self.similarGeopoint = geoPoint;
+                    }
+                    else{
+                        NSLog(@"error with location");
+                    }
+                }
+                else{
+                    NSLog(@"error %@", error);
+                }
+            }];
+        }
+        else{
+            NSLog(@"error %@", error);
+        }
+    }];
+}
+
+
+#pragma mark - success view methods
+
+-(void)setUpSuccess{
+    self.successView = nil;
+    
+    self.completionShowing = YES;
+    self.setupYes = YES;
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"SuccessView" owner:self options:nil];
+    self.successView = (CreateSuccessView *)[nib objectAtIndex:0];
+    self.successView.delegate = self;
+    self.successView.alpha = 0.0;
+    [self.successView setCollectionViewDataSourceDelegate:self indexPath:nil];
+    [[UIApplication sharedApplication].keyWindow insertSubview:self.successView aboveSubview:self.searchBgView];
+
+//    [self.navigationController.view insertSubview:self.successView aboveSubview:self.searchBgView];
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -460, 300, 460)];
+    }
+    else{
+        [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170, -480, 340, 480)]; //iPhone 6/7 specific
+    }
+    
+    self.successView.layer.cornerRadius = 10;
+    self.successView.layer.masksToBounds = YES;
+    
+    [self showSuccess];
+}
+
+-(void)showSuccess{
+    NSLog(@"SHOW SUCCESS");
+    
+    [self.successView setAlpha:1.0];
+    [UIView animateWithDuration:1.5
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.successView setFrame:CGRectMake(0, 0, 300, 460)];
+                            }
+                            else{
+                                [self.successView setFrame:CGRectMake(0, 0, 340, 480)];
+                            }
+                            self.successView.center = self.view.center;
+                            
+                            if (self.shouldShowSuccess == YES) {
+                                self.searchBgView.alpha = 0.8;
+                                self.shouldShowSuccess = NO;
+                            }
+                            
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+
+-(void)hideSuccess{
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150,1000, 300, 460)];
+                            }
+                            else{
+                                [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170,1000, 340, 480)]; //iPhone 6/7 specific
+                            }
+                            [self.searchBgView setAlpha:0.0];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.completionShowing = NO;
+                         [self.successView setAlpha:0.0];
+                         
+                         if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                             //iphone5
+                             [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -460, 300, 460)];
+                         }
+                         else{
+                             [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170, -480, 340, 480)]; //iPhone 6/7 specific
+                         }
+                     }];
+}
+
+-(void)sharePressed{
+    [Answers logCustomEventWithName:@"Success Share pressed"
+                   customAttributes:@{
+                                      @"pageName":@"I want too"
+                                      }];
+    [self hideSuccess];
+    
+    self.shouldShowSuccess = YES;
+    
+    FBGroupShareViewController *vc = [[FBGroupShareViewController alloc]init];
+    vc.objectId = self.similarListing.objectId;
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:vc];
+    [self presentViewController:navigationController animated:YES completion:nil];
+}
+
+-(void)successDonePressed{
+    [Answers logCustomEventWithName:@"Success Done pressed"
+                   customAttributes:@{
+                                      @"pageName":@"I want too"
+                                      }];
+    [self hideSuccess];
+}
+
+-(void)createPressed{
+    [Answers logCustomEventWithName:@"Success Create pressed"
+                   customAttributes:@{
+                                      @"pageName":@"I want too"
+                                      }];
+    [self hideSuccess];
+    self.tabBarController.selectedIndex = 2;
+}
+
+-(void)editPressed{
+    [Answers logCustomEventWithName:@"Success Edit pressed"
+                   customAttributes:@{
+                                      @"pageName":@"I want too"
+                                      }];
+    [self hideSuccess];
+    
+    self.shouldShowSuccess = YES;
+    
+    //show edit VC
+    CreateViewController *vc = [[CreateViewController alloc]init];
+    vc.status = @"edit";
+    vc.listing = self.similarListing;
+    vc.addDetails = YES;
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+-(void)addMorePressed{
+    [Answers logCustomEventWithName:@"Success Add more pressed"
+                   customAttributes:@{
+                                      @"pageName":@"create"
+                                      }];
+    [self hideSuccess];
+    
+    self.shouldShowSuccess = YES;
+
+    //show edit VC
+    CreateViewController *vc = [[CreateViewController alloc]init];
+    vc.status = @"edit";
+    vc.listing = self.similarListing;
+    vc.addDetails = YES;
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+-(void)findRelevantItems{
+    [self.buyNowArray removeAllObjects];
+    [self.buyNowIDs removeAllObjects];
+    
+    NSArray *WTBKeywords = [self.similarListing objectForKey:@"keywords"];
+    
+    PFQuery *salesQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    [salesQuery whereKey:@"status" equalTo:@"live"];
+    [salesQuery whereKey:@"keywords" containedIn:WTBKeywords];
+    //    [salesQuery orderByDescending:@"createdAt"];
+    salesQuery.limit = 10;
+    [salesQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            [self.buyNowArray addObjectsFromArray:objects];
+            
+            for (PFObject *forSale in objects) {
+                [self.buyNowIDs addObject:forSale.objectId];
+            }
+            
+            NSLog(@"FIRST LOT %lu", objects.count);
+            
+            if (objects.count < 10) {
+                PFQuery *salesQuery2 = [PFQuery queryWithClassName:@"forSaleItems"];
+                [salesQuery2 whereKey:@"status" equalTo:@"live"];
+                [salesQuery2 orderByDescending:@"createdAt"];
+                [salesQuery whereKey:@"objectId" notContainedIn:self.buyNowIDs];
+                salesQuery2.limit = 10-self.buyNowArray.count;
+                [salesQuery2 findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                    if (objects) {
+                        for (PFObject *forSale in objects) {
+                            if (![self.buyNowIDs containsObject:forSale.objectId]) {
+                                [self.buyNowArray addObject:forSale];
+                                [self.buyNowIDs addObject:forSale.objectId];
+                            }
+                        }
+                        NSLog(@"SECOND LOT %lu", objects.count);
+                        [self.successView.collectionView reloadData];
+                    }
+                    else{
+                        NSLog(@"error in second query %@", error);
+                    }
+                }];
+            }
+            else{
+                [self.successView.collectionView reloadData];
+            }
+        }
+        else{
+            NSLog(@"error %@", error);
+        }
+    }];
+}
+
+-(void)goneToBackground{
+    //block further keyboard changes
+    self.changeKeyboard = NO;
+
+    //remember keyboard state
+    if ([self.sendBox.messageField isFirstResponder]) {
+        self.wasShowing = YES;
+    }
+    else{
+        self.wasShowing = NO;
+    }
+}
+
+-(void)comeBackToForeground{
+    self.changeKeyboard = YES;
+    
+    if (self.wasShowing == YES) {
+        [self.sendBox.messageField becomeFirstResponder];
+    }
+}
 
 @end

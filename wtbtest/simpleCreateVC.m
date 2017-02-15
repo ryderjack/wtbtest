@@ -40,6 +40,12 @@
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(toggleKeyboard)];
     tap.numberOfTapsRequired = 1;
     [self.view addGestureRecognizer:tap];
+    
+    if (self.introMode != YES) {
+        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+        [center addObserver:self selector:@selector(keyboardOnScreen:) name:UIKeyboardDidShowNotification object:nil];
+        [center addObserver:self selector:@selector(keyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -237,7 +243,7 @@
 }
 
 #pragma mark - various image picker delegate methods
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(nonnull NSDictionary<NSString *,id> *)info{
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
     //display crop picker
     [picker dismissViewControllerAnimated:YES completion:^{
@@ -400,7 +406,7 @@
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSMutableArray *items = [NSMutableArray new];
-        [items addObject:[NSString stringWithFormat:@"Check out my wanted listing: %@ for %@%@\nPosted on Bump http://apple.co/2aY3rBk", [self.listing objectForKey:@"title"],self.currency,[self.listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]]];
+        [items addObject:[NSString stringWithFormat:@"Check out my wanted listing: %@\nPosted on Bump http://apple.co/2aY3rBk", [self.listing objectForKey:@"title"]]];
         UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
         [self presentViewController:activityController animated:YES completion:nil];
     }]];
@@ -606,6 +612,18 @@
     NSMutableArray *mutableStrings = [NSMutableArray arrayWithArray:strings];
     [mutableStrings removeObjectsInArray:wasteWords];
     
+    NSMutableArray *finalKeywordArray = [NSMutableArray array];
+    
+    for (NSString *string in mutableStrings) {
+        if (![string canBeConvertedToEncoding:NSASCIIStringEncoding]) {
+//            NSLog(@"can't be converted %@", string);
+        }
+        else{
+            [finalKeywordArray addObject:string];
+        }
+    }
+    [self.listing setObject:finalKeywordArray forKey:@"keywords"];
+    
     if ([mutableStrings containsObject:@"bogo"]) {
         [mutableStrings addObject:@"box"];
         [mutableStrings addObject:@"logo"];
@@ -631,7 +649,7 @@
         [mutableStrings addObject:@"sweat"];
     }
     
-    [self.listing setObject:mutableStrings forKey:@"keywords"];
+    [self.listing setObject:mutableStrings forKey:@"searchKeywords"];
     [self.listing setObject:@"live" forKey:@"status"];
     
     //expiration in 2 weeks
@@ -746,6 +764,10 @@
                                     NSLog(@"push response %@", response);
                                     [Answers logCustomEventWithName:@"Sent FB Friend a Bump Push"
                                                    customAttributes:@{}];
+                                    [Answers logCustomEventWithName:@"Push Sent"
+                                                   customAttributes:@{
+                                                                      @"Type":@"FB Friend"
+                                                                      }];
                                 }
                                 else{
                                     NSLog(@"push error %@", error);
@@ -960,6 +982,8 @@
     [Answers logCustomEventWithName:@"Accepted Push Permissions"
                    customAttributes:@{}];
     [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForPushPermission"];
+    [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"declinedPushPermissions"];
+
     UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
                                                     UIUserNotificationTypeBadge |
                                                     UIUserNotificationTypeSound);
@@ -994,6 +1018,74 @@
     [Answers logCustomEventWithName:@"Skipped intro create"
                    customAttributes:@{}];
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+}
+
+
+#pragma keyboard observer methods
+
+-(void)keyboardOnScreen:(NSNotification *)notification
+{
+    if (self.settingUp == YES) {
+        return;
+    }
+    
+    self.settingUp = YES;
+    
+    NSDictionary *info  = notification.userInfo;
+    NSValue      *value = info[UIKeyboardFrameEndUserInfoKey];
+    
+    CGRect rawFrame      = [value CGRectValue];
+    CGRect keyboardFrame = [self.view convertRect:rawFrame fromView:nil];
+        
+    [self.bouncingButton removeFromSuperview];
+    self.bouncingButton = nil;
+    
+    self.bouncingButton = [[UIButton alloc]initWithFrame:CGRectMake(30, keyboardFrame.origin.y-70, 50, 50)];
+    [self.bouncingButton setImage:[UIImage imageNamed:@"bouncingButton"] forState:UIControlStateNormal];
+    [self.bouncingButton addTarget:self action:@selector(toggleKeyboard) forControlEvents:UIControlEventTouchUpInside];
+        
+    self.bouncingButton.frame = CGRectMake(30, keyboardFrame.origin.y-70, 50, 50);
+    [self.bouncingButton setAlpha:0.0];
+    [self.bouncingButton.layer removeAllAnimations];
+    
+    [self.view.layer removeAllAnimations];
+    
+    [self.view addSubview:self.bouncingButton];
+
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.bouncingButton setAlpha:1.0];
+                     }
+                     completion:^(BOOL finished) {
+                     }];
+    
+    
+    [UIView animateKeyframesWithDuration:0.5 delay:0.0 options:UIViewAnimationOptionAutoreverse | UIViewAnimationOptionRepeat animations:^{
+        [UIView setAnimationRepeatAutoreverses:YES]; //This ensures the animation not only animations forwards but back to its original position
+        [UIView setAnimationRepeatCount:INFINITY]; //Set the number of times you want the animation to repeat
+        self.bouncingButton.imageView.transform = CGAffineTransformMakeTranslation(0, 20);
+    } completion:^(BOOL finished) {
+        
+    }];
+}
+
+-(void)keyboardOFFScreen:(NSNotification *)notification
+{
+    //animate down
+    [UIView animateWithDuration:1.0
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bouncingButton.frame = CGRectMake(self.bouncingButton.frame.origin.x, self.bouncingButton.frame.origin.y+200, 50, 50);
+                         [self.bouncingButton setAlpha:0.0];
+                     }
+                     completion:^(BOOL finished) {
+                         [self.bouncingButton removeFromSuperview];
+                         self.settingUp = NO;
+
+                     }];
 }
 
 @end

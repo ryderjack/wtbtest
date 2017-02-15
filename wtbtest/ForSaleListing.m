@@ -14,6 +14,7 @@
 #import "CreateForSaleListing.h"
 #import <Crashlytics/Crashlytics.h>
 #import "NavigationController.h"
+#import "SendToUserCell.h"
 
 @interface ForSaleListing ()
 
@@ -81,7 +82,8 @@
     self.descriptionCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.spaceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.infoCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    
+    self.sendCell.selectionStyle = UITableViewCellSelectionStyleNone;
+
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
@@ -92,6 +94,27 @@
     self.carouselView.dataSource = self;
     self.carouselView.pagingEnabled = YES;
     self.carouselView.bounceDistance = 0.3;
+    
+    //send box setup
+    self.facebookUsers = [NSMutableArray array];
+    self.friendIndexSelected = 0;
+    
+    //add keyboard observers
+    self.changeKeyboard = YES;
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(comeBackToForeground)
+                                                 name:UIApplicationDidBecomeActiveNotification
+                                               object:[UIApplication sharedApplication]];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(goneToBackground)
+                                                 name:UIApplicationWillResignActiveNotification
+                                               object:[UIApplication sharedApplication]];
+    
+    [self SetupSendBox];
+    [self loadFacebookFriends];
+
 }
 
 #pragma mark - carousel delegates
@@ -327,6 +350,10 @@
                         [self showAlertWithTitle:@"Seller not found!" andMsg:nil];
                     }
                 }];
+                
+                if ([self.source isEqualToString:@"share"]) {
+                    [self.tableView reloadData];
+                }
             }
         }
         else{
@@ -338,6 +365,23 @@
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     [self hideBarButton];
+    
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+}
+
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+    
+    //make sure not adding duplicate observers
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+    
+    [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
+    [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -348,7 +392,7 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 3;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -359,6 +403,9 @@
         return 2;
     }
     else if (section ==2){
+        return 1;
+    }
+    else if (section ==3){
         return 1;
     }
     return 1;
@@ -381,6 +428,11 @@
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
+            return self.sendCell;
+        }
+    }
+    else if (indexPath.section == 3){
+        if (indexPath.row == 0) {
             return self.spaceCell;
         }
     }
@@ -402,6 +454,11 @@
         }
     }
     else if (indexPath.section == 2){
+        if (indexPath.row == 0) {
+            return 143;
+        }
+    }
+    else if (indexPath.section == 3){
         if (indexPath.row == 0) {
             return 100;
         }
@@ -649,16 +706,46 @@
 
 -(void)BarButtonPressed{
     [self.longButton setEnabled:NO];
-    if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        [self setupMessages];
+    if (self.sendMode == YES) {
+        //either send message or dismiss
+        if ([self.longButton.titleLabel.text isEqualToString:@"D I S M I S S"]) {
+            [Answers logCustomEventWithName:@"Dismissed Send Box"
+                           customAttributes:@{
+                                              @"where":@"for sale"
+                                              }];
+            NSLog(@"dismiss");
+            [self hideSendBox];
+            [self.longButton setEnabled:YES];
+        }
+        else{
+            [Answers logCustomEventWithName:@"Sent listing to friend"
+                           customAttributes:@{
+                                              @"where":@"for sale",
+                                              @"message":self.sendBox.messageField.text
+                                              }];
+            //increment sent property on listing
+            [self.listingObject incrementKey:@"sentNumber"];
+            [self.listingObject saveInBackground];
+            
+            //send a message G
+            [self sendMessageWithText:self.sendBox.messageField.text];
+            [self hideSendBox];
+            self.sendMode = NO;
+            [self.longButton setEnabled:YES];
+        }
     }
     else{
-        NSLog(@"edit listing");
-        CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-        vc.editMode = YES;
-        vc.listing = self.listingObject;
-        [self.longButton setEnabled:YES];
-        [self.navigationController pushViewController:vc animated:YES];
+        if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+            [self setupMessages];
+        }
+        else{
+            NSLog(@"edit listing");
+            CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+            vc.editMode = YES;
+            vc.listing = self.listingObject;
+            [self.longButton setEnabled:YES];
+            [self.navigationController pushViewController:vc animated:YES];
+        }
     }
 }
 -(void)setupMessages{
@@ -822,4 +909,627 @@
     self.longButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
 }
+
+#pragma marl - send box delegates
+-(void)SetupSendBox{
+    //setup
+    self.sendBox = nil;
+    self.bgView = nil;
+    self.setupBox = YES;
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"SendDialogView" owner:self options:nil];
+    self.sendBox = (SendDialogBox *)[nib objectAtIndex:0];
+    //self.sendBox.alpha = 0.0;
+    [self.sendBox setCollectionViewDataSourceDelegate:self indexPath:nil];
+    [self.sendBox setBackgroundColor:[UIColor whiteColor]];
+    [self.sendBox.noFriendsButton addTarget:self action:@selector(inviteFriendsPressed) forControlEvents:UIControlEventTouchUpInside];
+    
+    self.sendBox.messageField.layer.borderColor = [UIColor colorWithRed:0.86 green:0.86 blue:0.86 alpha:1.0].CGColor;
+    [self.sendBox.messageField setHidden:YES];
+    self.sendBox.messageField.delegate = self;
+    
+    [self.navigationController.view addSubview:self.sendBox];
+    
+    [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height,[UIApplication sharedApplication].keyWindow.frame.size.width,290)];
+    
+    self.bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.bgView.backgroundColor = [UIColor blackColor];
+    self.bgView.alpha = 0.0;
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideSendBox)];
+    tap.numberOfTapsRequired = 1;
+    [self.bgView addGestureRecognizer:tap];
+    [self.navigationController.view insertSubview:self.bgView belowSubview:self.sendBox];
+}
+- (IBAction)sendPressed:(id)sender {
+    [self ShowInitialSendBox];
+}
+
+-(void)hideSendBox{
+    
+    NSLog(@"HIDE");
+    self.sendMode = NO;
+    if ([self.sendBox.messageField isFirstResponder]) {
+        //hide text field & prep for keyboard will dismiss delegate being called
+        self.hidingSendBox = YES;
+        [self.sendBox.messageField resignFirstResponder];
+    }
+    
+    //reset BOOL for other calls to keyboard will hide
+    self.hidingSendBox = NO;
+    
+    //reset textfield
+    self.sendBox.messageField.text = @"";
+    
+    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        [self.longButton setTitle:@"E D I T" forState:UIControlStateNormal];
+        [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+        [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+    }
+    else{
+        [self.longButton setTitle:@"M E S S A G E  B U Y E R" forState:UIControlStateNormal];
+        [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+        [self.longButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    }
+    [self.longButton setEnabled:YES];
+    
+    //reset collection view
+    self.selectedFriend = NO;
+    [self.sendBox.collectionView reloadData];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            
+                            [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height,[UIApplication sharedApplication].keyWindow.frame.size.width,290)]; //iPhone 6/7 specific
+                            [self.bgView setAlpha:0.0];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                     }];
+}
+
+#pragma collection view delegates
+
+-(NSInteger)collectionView:(UICollectionView *)collectionView
+    numberOfItemsInSection:(NSInteger)section
+{
+    return self.facebookUsers.count;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    
+
+        //send collection view
+        NSLog(@"selected");
+        
+        if (self.selectedFriend == YES && self.friendIndexSelected == indexPath.row) {
+            //already selected this user so deselect him
+            NSLog(@"deselect");
+            
+            self.selectedFriend = NO;
+            [self.sendBox.collectionView reloadData];
+            [self.sendBox.smallInviteButton setHidden:NO];
+            
+            if ([self.sendBox.messageField isFirstResponder]) {
+                //dismiss keyboard only and show initial will be called there
+                [self.sendBox.messageField resignFirstResponder];
+            }
+            else{
+                //reset to OG appearance by calling show initial
+                [self ShowInitialSendBox];
+            }
+        }
+        else{
+            [self.sendBox.smallInviteButton setHidden:YES];
+            self.selectedFriend = YES;
+            self.friendIndexSelected = (int)indexPath.row;
+            [self.sendBox.collectionView reloadData];
+            
+            //scroll up
+            [UIView animateWithDuration:0.5
+                                  delay:0.0
+                 usingSpringWithDamping:0.7
+                  initialSpringVelocity:0.5
+                                options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                    //Animations
+                                    self.bgView.alpha = 0.8;
+                                    
+                                    [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height-290,[UIApplication sharedApplication].keyWindow.frame.size.width,290)];
+                                    [self.sendBox.messageField setHidden:NO];
+                                }
+                             completion:^(BOOL finished) {
+                                 
+                             }];
+            
+            //title button
+            [self.longButton setTitle:@"S E N D" forState:UIControlStateNormal];
+            [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+            [self.longButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        }
+}
+
+-(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView
+                 cellForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+
+    SendToUserCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
+    cell.userImageView.image = nil;
+    
+    PFObject *fbUser = [self.facebookUsers objectAtIndex:indexPath.item];
+    
+    [cell.userImageView setFile:[fbUser objectForKey:@"picture"]];
+    [cell.userImageView loadInBackground];
+    
+    cell.userImageView.layer.cornerRadius = 30;
+    cell.userImageView.layer.masksToBounds = YES;
+    cell.userImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    cell.userImageView.contentMode = UIViewContentModeScaleAspectFill;
+    
+    if (self.selectedFriend == YES) {
+        if (indexPath.row == self.friendIndexSelected) {
+            [cell.userImageView.layer setBorderColor: [[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0] CGColor]];
+            [cell.userImageView.layer setBorderWidth: 3.0];
+            cell.alpha = 1.0;
+            self.sendBox.usernameLabel.text = [fbUser objectForKey:@"username"];
+        }
+        else{
+            cell.alpha = 0.5;
+            [cell.userImageView.layer setBorderWidth: 0.0];
+        }
+    }
+    else{
+        [cell.userImageView.layer setBorderWidth: 0.0];
+        self.sendBox.usernameLabel.text = @"";
+        cell.alpha = 1.0;
+    }
+    
+    cell.usernameLabel.text = [fbUser objectForKey:@"username"];
+    cell.fullnameLabel.text = [fbUser objectForKey:@"fullname"];
+    
+    return cell;
+}
+
+-(void)loadFacebookFriends{
+    
+    [self.facebookUsers removeAllObjects];
+    
+    //get recents first
+    PFQuery *recentsQuery = [PFUser query];
+    [recentsQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"recentFriends"]];
+    [recentsQuery whereKey:@"completedReg" equalTo:@"YES"];
+    [recentsQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            if (objects.count > 0) {
+                [self.facebookUsers addObjectsFromArray:objects];
+            }
+            //get rest
+            PFQuery *friendsQuery = [PFUser query];
+            [friendsQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
+            [friendsQuery whereKey:@"completedReg" equalTo:@"YES"];
+            [friendsQuery orderByAscending:@"fullname"];
+            [friendsQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                if (objects) {
+                    if (objects.count == 0) {
+                        [self.sendBox.noFriendsButton setHidden:NO];
+                        [self.sendBox.smallInviteButton setHidden:YES];
+                    }
+                    else if (self.facebookUsers.count == 1 && objects.count == 1){
+                        //only got one friend who's a recent
+                        [self.sendBox.noFriendsButton setHidden:YES];
+                        [self.sendBox.collectionView reloadData];
+                        
+                        [self.sendBox.smallInviteButton setHidden:NO];
+                        [self.sendBox.smallInviteButton addTarget:self action:@selector(inviteFriendsPressed) forControlEvents:UIControlEventTouchUpInside];
+                    }
+                    else{
+                        [self.sendBox.smallInviteButton setHidden:NO];
+                        [self.sendBox.smallInviteButton addTarget:self action:@selector(inviteFriendsPressed) forControlEvents:UIControlEventTouchUpInside];
+                        
+                        [self.sendBox.noFriendsButton setHidden:YES];
+                        [self.facebookUsers addObjectsFromArray:objects];
+                        [self.sendBox.collectionView reloadData];
+                    }
+                    
+                }
+                else{
+                    NSLog(@"error getting facebook friends %@", error);
+                    if (self.facebookUsers.count == 0) {
+                        [self.sendBox.noFriendsButton setHidden:NO];
+                        [self.sendBox.smallInviteButton setHidden:YES];
+                    }
+                }
+            }];
+        }
+        else{
+            NSLog(@"error loading recent friends! %@", error);
+            if (self.facebookUsers.count == 0) {
+                [self.sendBox.noFriendsButton setHidden:NO];
+                [self.sendBox.smallInviteButton setHidden:YES];
+            }
+        }
+    }];
+}
+
+#pragma keyboard observer methods
+
+-(void)listingKeyboardOnScreen:(NSNotification *)notification
+{
+    NSLog(@"KEYBOARD WILL SHOW");
+    if (self.changeKeyboard == NO) {
+        return;
+    }
+    NSDictionary *info  = notification.userInfo;
+    NSValue      *value = info[UIKeyboardFrameEndUserInfoKey];
+    
+    CGRect rawFrame      = [value CGRectValue];
+    CGRect keyboardFrame = [self.view convertRect:rawFrame fromView:nil];
+    
+    //move up sendbox
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            
+                            //animate the send box
+                            
+                            [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height-(keyboardFrame.size.height + self.sendBox.frame.size.height),self.sendBox.frame.size.width,self.sendBox.frame.size.height)];
+                            
+                            //animate the long button up
+                            [self.longButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 + keyboardFrame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+
+-(void)listingKeyboardOFFScreen:(NSNotification *)notification
+{
+    NSLog(@"KEYBOARD WILL HIDE");
+    
+    if (self.changeKeyboard == NO) {
+        return;
+    }
+    self.selectedFriend = NO;
+    [self.sendBox.collectionView reloadData];
+    [self.sendBox.messageField resignFirstResponder];
+    
+    //scroll down to hide textfield & change title button
+    [self ShowInitialSendBox];
+    
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            
+                            //animate the long button down
+                            [self.longButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+
+-(void)ShowInitialSendBox{
+    NSLog(@"SHOW INITIAL");
+    [self.sendBox.smallInviteButton setHidden:NO];
+    
+    //update bar button title
+    [self.longButton setTitle:@"D I S M I S S" forState:UIControlStateNormal];
+    [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+    [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+    
+    //show
+    [self.sendBox setAlpha:1.0];
+    
+    if (self.hidingSendBox != YES) {
+        //if hiding don't set sendmode as YES!
+        self.sendMode = YES;
+    }
+    
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            self.bgView.alpha = 0.8;
+                            
+                            [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height-240,[UIApplication sharedApplication].keyWindow.frame.size.width,290)];
+                        }
+                     completion:^(BOOL finished) {
+                     }];
+}
+
+#pragma mark app invite stuff
+-(void)inviteFriendsPressed{
+    NSLog(@"INvite pressed");
+    FBSDKAppInviteContent *content =[[FBSDKAppInviteContent alloc] init];
+    content.appLinkURL = [NSURL URLWithString:@"https://www.mydomain.com/myapplink"];
+    //optionally set previewImageURL
+    content.appInvitePreviewImageURL = [NSURL URLWithString:@"https://www.mydomain.com/my_invite_image.jpg"];
+    
+    // Present the dialog. Assumes self is a view controller
+    // which implements the protocol `FBSDKAppInviteDialogDelegate`.
+    [FBSDKAppInviteDialog showFromViewController:self
+                                     withContent:content
+                                        delegate:self];
+}
+
+-(void)appInviteDialog:(FBSDKAppInviteDialog *)appInviteDialog didCompleteWithResults:(NSDictionary *)results{
+    NSLog(@"results %@", results);
+}
+
+-(void)appInviteDialog:(FBSDKAppInviteDialog *)appInviteDialog didFailWithError:(NSError *)error{
+    NSLog(@"error %@", error);
+}
+
+-(void)goneToBackground{
+    //block further keyboard changes
+    self.changeKeyboard = NO;
+    
+    //remember keyboard state
+    if ([self.sendBox.messageField isFirstResponder]) {
+        self.wasShowing = YES;
+    }
+    else{
+        self.wasShowing = NO;
+    }
+}
+
+-(void)comeBackToForeground{
+    self.changeKeyboard = YES;
+    
+    if (self.wasShowing == YES) {
+        [self.sendBox.messageField becomeFirstResponder];
+    }
+}
+
+-(void)sendMessageWithText:(NSString *)messageText{
+    //check if there is a profile convo between the users
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
+    PFUser *selectedUser = [self.facebookUsers objectAtIndex:self.friendIndexSelected];
+    
+    //update recents
+    if ([[PFUser currentUser]objectForKey:@"recentFriends"]) {
+        NSMutableArray *recentFriends = [NSMutableArray arrayWithArray:[[PFUser currentUser]objectForKey:@"recentFriends"]];
+        if (recentFriends.count >= 1) {
+            //check if most recent friend is the same, if so don't readd to array
+            if (![recentFriends[0]isEqualToString:[selectedUser objectForKey:@"facebookId"]]) {
+                NSLog(@"not the same so add to recent array");
+                [recentFriends insertObject:[selectedUser objectForKey:@"facebookId"] atIndex:0];
+                [[PFUser currentUser]setObject:recentFriends forKey:@"recentFriends"];
+            }
+        }
+    }
+    else{
+        NSLog(@"creating recent friends");
+        NSMutableArray *recentFriends = [NSMutableArray array];
+        [recentFriends insertObject:[selectedUser objectForKey:@"facebookId"] atIndex:0];
+        [[PFUser currentUser]setObject:recentFriends forKey:@"recentFriends"];
+    }
+    [[PFUser currentUser]saveInBackground];
+    
+    
+    //possible convoIDs
+    NSString *possID = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId,selectedUser.objectId];
+    NSString *otherId = [NSString stringWithFormat:@"%@%@",selectedUser.objectId,[PFUser currentUser].objectId];
+    
+    NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
+    
+    [convoQuery whereKey:@"convoId" containedIn:idArray];
+    [convoQuery includeKey:@"buyerUser"];
+    [convoQuery includeKey:@"sellerUser"];
+    
+    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            //convo exists
+            PFObject *convo = object;
+            
+            //send image1
+            PFFile *imageFile = [self.listingObject objectForKey:@"image1"];
+            
+            PFObject *picObject = [PFObject objectWithClassName:@"messageImages"];
+            [picObject setObject:imageFile forKey:@"Image"];
+            [picObject setObject:convo forKey:@"convo"];
+            [picObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                if (succeeded) {
+                    
+                    //save first message
+                    PFObject *msgObject = [PFObject objectWithClassName:@"messages"];
+                    msgObject[@"message"] = picObject.objectId;
+                    msgObject[@"sender"] = [PFUser currentUser];
+                    msgObject[@"senderId"] = [PFUser currentUser].objectId;
+                    msgObject[@"senderName"] = [PFUser currentUser].username;
+                    msgObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                    msgObject[@"status"] = @"sent";
+                    msgObject[@"mediaMessage"] = @"YES";
+                    [msgObject saveInBackground];
+                    
+                    //save boiler plate message
+                    PFObject *boilerObject = [PFObject objectWithClassName:@"messages"];
+                    boilerObject[@"message"] = [NSString stringWithFormat:@"%@ shared %@'s sale item.\nTap to view", [PFUser currentUser].username, [[self.listingObject objectForKey:@"sellerUser"]username]];
+                    boilerObject[@"sender"] = [PFUser currentUser];
+                    boilerObject[@"senderId"] = [PFUser currentUser].objectId;
+                    boilerObject[@"senderName"] = [PFUser currentUser].username;
+                    boilerObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                    boilerObject[@"status"] = @"sent";
+                    boilerObject[@"mediaMessage"] = @"NO";
+                    boilerObject[@"sharedMessage"] = @"YES";
+                    boilerObject[@"Sale"] = @"YES";
+                    boilerObject[@"sharedSaleListing"] = self.listingObject;
+                    
+                    [boilerObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            PFObject *lastSent = boilerObject;
+                            
+                            NSString *stringCheck = [messageText stringByReplacingOccurrencesOfString:@" " withString:@""];
+                            if (![stringCheck isEqualToString:@""]) {
+                                //send message too
+                                
+                                //save boiler plate message
+                                PFObject *customObject = [PFObject objectWithClassName:@"messages"];
+                                customObject[@"message"] = messageText;
+                                customObject[@"sender"] = [PFUser currentUser];
+                                customObject[@"senderId"] = [PFUser currentUser].objectId;
+                                customObject[@"senderName"] = [PFUser currentUser].username;
+                                customObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                                customObject[@"status"] = @"sent";
+                                customObject[@"mediaMessage"] = @"NO";
+                                [customObject saveInBackground];
+                                
+                                lastSent = customObject;
+                            }
+                            NSString *pushString = [NSString stringWithFormat:@"%@ shared an item with you 📲",[[PFUser currentUser]username]];
+                            
+                            //send push to other user
+                            NSDictionary *params = @{@"userId": selectedUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+                            [PFCloud callFunctionInBackground:@"sendPush" withParameters: params block:^(NSDictionary *response, NSError *error) {
+                                if (!error) {
+                                    NSLog(@"response %@", response);
+                                }
+                                else{
+                                    NSLog(@"image push error %@", error);
+                                }
+                            }];
+                            
+                            if ([[[convo objectForKey:@"sellerUser"]objectId]isEqualToString:[[PFUser currentUser]objectId]]) {
+                                [convo incrementKey:@"buyerUnseen"];
+                            }
+                            else{
+                                [convo incrementKey:@"sellerUnseen"];
+                            }
+                            
+                            //do all this after final message saved
+                            [convo setObject:lastSent forKey:@"lastSent"];
+                            [convo incrementKey:@"totalMessages"];
+                            [convo setObject:[NSDate date] forKey:@"lastSentDate"];
+                            [convo saveInBackground];
+                            
+                            [[NSNotificationCenter defaultCenter] postNotificationName:@"messageSentDropDown" object:selectedUser];
+                        }
+                        else{
+                            NSLog(@"error sending message %@", error);
+                        }
+                    }];
+                }
+            }];
+        }
+        else{
+            //create a new convo and goto it
+            PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
+            convoObject[@"sellerUser"] = [PFUser currentUser];
+            convoObject[@"buyerUser"] = selectedUser;
+            convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId,selectedUser.objectId];
+            convoObject[@"profileConvo"] = @"YES";
+            convoObject[@"totalMessages"] = @0;
+            convoObject[@"buyerUnseen"] = @0;
+            convoObject[@"sellerUnseen"] = @0;
+            
+            [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    NSLog(@"saved new convo");
+                    
+                    PFObject *convo = convoObject;
+                    
+                    //send image1
+                    PFFile *imageFile = [self.listingObject objectForKey:@"image1"];
+                    
+                    PFObject *picObject = [PFObject objectWithClassName:@"messageImages"];
+                    [picObject setObject:imageFile forKey:@"Image"];
+                    [picObject setObject:convo forKey:@"convo"];
+                    [picObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                        if (succeeded) {
+                            
+                            //save first message
+                            PFObject *msgObject = [PFObject objectWithClassName:@"messages"];
+                            msgObject[@"message"] = picObject.objectId;
+                            msgObject[@"sender"] = [PFUser currentUser];
+                            msgObject[@"senderId"] = [PFUser currentUser].objectId;
+                            msgObject[@"senderName"] = [PFUser currentUser].username;
+                            msgObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                            msgObject[@"status"] = @"sent";
+                            msgObject[@"mediaMessage"] = @"YES";
+                            [msgObject saveInBackground];
+                            
+                            //save boiler plate message
+                            PFObject *boilerObject = [PFObject objectWithClassName:@"messages"];
+                            boilerObject[@"message"] = [NSString stringWithFormat:@"%@ shared %@'s sale item.\nTap to view", [PFUser currentUser].username, [[self.listingObject objectForKey:@"sellerUser"]username]];
+                            boilerObject[@"sender"] = [PFUser currentUser];
+                            boilerObject[@"senderId"] = [PFUser currentUser].objectId;
+                            boilerObject[@"senderName"] = [PFUser currentUser].username;
+                            boilerObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                            boilerObject[@"status"] = @"sent";
+                            boilerObject[@"mediaMessage"] = @"NO";
+                            boilerObject[@"sharedMessage"] = @"YES";
+                            boilerObject[@"Sale"] = @"YES";
+                            boilerObject[@"sharedSaleListing"] = self.listingObject;
+                            [boilerObject saveInBackground];
+                            
+                            PFObject *lastSent = boilerObject;
+                            
+                            NSString *stringCheck = [messageText stringByReplacingOccurrencesOfString:@" " withString:@""];
+                            if (![stringCheck isEqualToString:@""]) {
+                                //send message too
+                                
+                                //save custom message
+                                PFObject *customObject = [PFObject objectWithClassName:@"messages"];
+                                customObject[@"message"] = [messageText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                                customObject[@"sender"] = [PFUser currentUser];
+                                customObject[@"senderId"] = [PFUser currentUser].objectId;
+                                customObject[@"senderName"] = [PFUser currentUser].username;
+                                customObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                                customObject[@"status"] = @"sent";
+                                customObject[@"mediaMessage"] = @"NO";
+                                [customObject saveInBackground];
+                                
+                                lastSent = customObject;
+                            }
+                            
+                            NSString *pushString = [NSString stringWithFormat:@"%@ shared an item with you 📲",[[PFUser currentUser]username]];
+                            
+                            //send push to other user
+                            NSDictionary *params = @{@"userId": selectedUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+                            [PFCloud callFunctionInBackground:@"sendPush" withParameters: params block:^(NSDictionary *response, NSError *error) {
+                                if (!error) {
+                                    NSLog(@"response %@", response);
+                                }
+                                else{
+                                    NSLog(@"image push error %@", error);
+                                }
+                            }];
+                            
+                            if ([[[convo objectForKey:@"sellerUser"]objectId]isEqualToString:[[PFUser currentUser]objectId]]) {
+                                [convo incrementKey:@"buyerUnseen"];
+                            }
+                            else{
+                                [convo incrementKey:@"sellerUnseen"];
+                            }
+                            
+                            //do all this after final message saved
+                            [convo setObject:lastSent forKey:@"lastSent"];
+                            [convo incrementKey:@"totalMessages"];
+                            [convo setObject:[NSDate date] forKey:@"lastSentDate"];
+                            [convo saveInBackground];
+                            
+                            [[NSNotificationCenter defaultCenter] postNotificationName:@"messageSentDropDown" object:selectedUser];
+                            
+                            [self.listingObject incrementKey:@"shares"];
+                            [self.listingObject saveInBackground];
+                        }
+                    }];
+                }
+                else{
+                    NSLog(@"error saving convo in profile");
+                }
+            }];
+        }
+    }];
+}
+
 @end

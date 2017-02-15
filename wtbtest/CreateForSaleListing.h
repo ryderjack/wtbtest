@@ -15,8 +15,10 @@
 #import <BASSquareCropperViewController.h>
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
+#import "TOJRWebView.h"
 
-@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate>
+
+@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *imageCell;
@@ -85,4 +87,7 @@
 //big button
 @property (nonatomic, strong) UIButton *longButton;
 @property (nonatomic) BOOL buttonShowing;
+
+//web
+@property (nonatomic, strong) TOJRWebView *webViewController;
 @end

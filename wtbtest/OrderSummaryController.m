@@ -435,7 +435,7 @@
                 if (object) {
                     //create a status message & save as last sent
                     NSString *messageString = [NSString stringWithFormat:@"%@ has shipped the item ✈️", [PFUser currentUser].username];
-                    
+
                     PFObject *messageObject = [PFObject objectWithClassName:@"messages"];
                     messageObject[@"message"] = messageString;
                     messageObject[@"sender"] = [PFUser currentUser];
@@ -454,7 +454,15 @@
                             [convo setObject:[NSDate date] forKey:@"lastSentDate"];
                             [convo incrementKey:@"buyerUnseen"];
                             [convo incrementKey:@"totalMessages"];
-                            [convo saveInBackground];
+                            [convo saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                if (succeeded) {
+                                    //refresh inbox
+                                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
+                                }
+                                else{
+                                    NSLog(@"error saving convo after shipping %@", error);
+                                }
+                            }];
                         }
                         else{
                             NSLog(@"error saving msg %@", error);

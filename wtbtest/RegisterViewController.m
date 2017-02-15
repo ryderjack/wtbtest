@@ -68,7 +68,7 @@
                          NSLog(@"showing");
                      }];
     
-    //get updated friends list
+    //get friends list
     FBSDKGraphRequest *request = [[FBSDKGraphRequest alloc]
                                   initWithGraphPath:@"me/friends"
                                   parameters:@{@"fields": @"id, name"}
@@ -78,7 +78,18 @@
                                           NSError *error) {
         // Handle the result
         if (!error) {
+            //SAVE THEM TOO!!!!
             NSArray* friends = [result objectForKey:@"data"];
+            NSLog(@"Found: %lu friends with bump installed", (unsigned long)friends.count);
+            NSMutableArray *friendsHoldingArray = [NSMutableArray array];
+            
+            for (NSDictionary *friend in friends) {
+                [friendsHoldingArray addObject:[friend objectForKey:@"id"]];
+            }
+            
+            [[PFUser currentUser]setObject:friendsHoldingArray forKey:@"friends"];
+            [[PFUser currentUser] saveInBackground];
+            
             if (friends.count > 2) {
                 [self setImageBorder:self.friendOneImageView];
                 [self setImageBorder:self.friendTwoImageView];
@@ -437,7 +448,8 @@
                         self.user[PF_USER_USERNAME] = [username lowercaseString];
                         self.user[@"currency"] = self.selectedCurrency;
                         self.user[@"completedReg"] = @"YES";
-                        
+                        self.user[@"bumpArray"] = @[];
+
                         [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
                          {
                              if (succeeded)
@@ -676,7 +688,7 @@
     [self presentViewController:self.picker animated:YES completion:nil];
 }
 
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(nonnull NSDictionary<NSString *,id> *)info{
     
     self.pressedCam = YES;
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
@@ -684,22 +696,35 @@
     [self showHUD];
     UIImage *imageToSave = [chosenImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
     
-    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(imageToSave, 0.7)];
-    
-    [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-        if (succeeded) {
-            [self.profilePicture setFile:filePicture];
-            [self.profilePicture loadInBackground];
-            [self hideHUD];
-
-            self.user[PF_USER_PICTURE] = filePicture;
-        }
-        else{
-            NSLog(@"error saving file %@", error);
-            [self hideHUD];
-        }
-    }];
-    [picker dismissViewControllerAnimated:YES completion:nil];
+    NSData* data = UIImageJPEGRepresentation(imageToSave, 0.7f);
+    if (data == nil) {
+        NSLog(@"error with data");
+        [self hideHUD];
+        [picker dismissViewControllerAnimated:YES completion:nil];
+        [self showAlertWithTitle:@"Image Error" andMsg:@"Woops, something went wrong. Please try again!"];
+        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                       customAttributes:@{
+                                          @"pageName":@"Reg"
+                                          }];
+    }
+    else{
+        PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:data];
+        
+        [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            if (succeeded) {
+                [self.profilePicture setFile:filePicture];
+                [self.profilePicture loadInBackground];
+                [self hideHUD];
+                
+                self.user[PF_USER_PICTURE] = filePicture;
+            }
+            else{
+                NSLog(@"error saving file %@", error);
+                [self hideHUD];
+            }
+        }];
+        [picker dismissViewControllerAnimated:YES completion:nil];
+    }
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
@@ -753,4 +778,12 @@
     });
 }
 
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
 @end

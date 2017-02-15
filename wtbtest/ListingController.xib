@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1217" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -11,6 +11,7 @@
     </dependencies>
     <customFonts key="customFonts">
         <array key="PingFang.ttc">
+            <string>PingFangSC-Medium</string>
             <string>PingFangSC-Regular</string>
         </array>
     </customFonts>
@@ -29,6 +30,8 @@
                 <outlet property="conditionCell" destination="2MB-Pt-CPs" id="3hb-BD-v2M"/>
                 <outlet property="conditionLabel" destination="sff-ya-Qgc" id="42H-IQ-llM"/>
                 <outlet property="idLabel" destination="Wmt-C0-kyp" id="WKC-uw-0Sv"/>
+                <outlet property="iwantButton" destination="qLl-wf-Ue6" id="FgH-gk-zZn"/>
+                <outlet property="iwantLabel" destination="bxY-UM-9Lb" id="33V-7J-yg0"/>
                 <outlet property="locationCell" destination="0iW-vp-780" id="Qzk-cs-9qt"/>
                 <outlet property="locationLabel" destination="xK3-6X-r7c" id="4iy-WT-ziS"/>
                 <outlet property="mainCell" destination="7oO-Et-nt3" id="Qg7-gu-Giq"/>
@@ -40,6 +43,7 @@
                 <outlet property="priceLabel" destination="5sx-RB-gTv" id="Zyo-wl-fat"/>
                 <outlet property="purchasedCheckView" destination="Q6t-03-GEX" id="Der-Sg-i3o"/>
                 <outlet property="purchasedLabel" destination="Olc-lY-AYt" id="zX8-ee-Xj3"/>
+                <outlet property="sendButton" destination="C8Z-2m-eAq" id="Pkz-qN-cl2"/>
                 <outlet property="sizeCell" destination="heo-GX-JcV" id="Py8-ii-ZMK"/>
                 <outlet property="sizeLabel" destination="HKy-Pd-Eab" id="Paf-Wj-R3E"/>
                 <outlet property="spaceCell" destination="hZq-I9-dbn" id="DP0-dF-68S"/>
@@ -337,25 +341,17 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="-178" y="715"/>
         </tableViewCell>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="121" id="15I-2T-vWl">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="121"/>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="144" id="15I-2T-vWl">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="144"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="15I-2T-vWl" id="VnW-5H-wse">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="120"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="143"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pTf-3U-7tm">
-                        <rect key="frame" x="8" y="72" width="304" height="40"/>
-                        <state key="normal" image="shareListingLong.png"/>
-                        <connections>
-                            <action selector="sharePressed:" destination="-1" eventType="touchUpInside" id="uTM-3e-ubQ"/>
-                        </connections>
-                    </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ln7-Ug-WZr">
-                        <rect key="frame" x="95" y="8" width="130" height="31"/>
+                        <rect key="frame" x="84" y="42" width="152" height="50"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="16"/>
                         <inset key="titleEdgeInsets" minX="6" minY="0.0" maxX="0.0" maxY="0.0"/>
-                        <inset key="imageEdgeInsets" minX="-20" minY="0.0" maxX="0.0" maxY="0.0"/>
                         <state key="normal" image="listngUpVoteGrey.png">
                             <color key="titleColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         </state>
@@ -364,14 +360,53 @@
                             <action selector="upvotePressed:" destination="-1" eventType="touchUpInside" id="pcF-Af-IPM"/>
                         </connections>
                     </button>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="xw7-Fs-wVq">
-                        <rect key="frame" x="120" y="38" width="80" height="30"/>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="C8Z-2m-eAq">
+                        <rect key="frame" x="26" y="42" width="50" height="50"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="80" id="jen-me-56T"/>
+                            <constraint firstAttribute="height" constant="50" id="7yY-Hq-sji"/>
+                            <constraint firstAttribute="width" constant="50" id="Nl1-1R-4T9"/>
                         </constraints>
-                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
-                        <state key="normal" title="view">
-                            <color key="titleColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                        <state key="normal" image="envelopeSend.png"/>
+                        <connections>
+                            <action selector="sendPressed:" destination="-1" eventType="touchUpInside" id="GmN-so-s3V"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="qLl-wf-Ue6">
+                        <rect key="frame" x="244" y="42" width="50" height="50"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="50" id="BoB-vY-ePb"/>
+                            <constraint firstAttribute="height" constant="50" id="J99-00-juW"/>
+                        </constraints>
+                        <state key="normal" image="iwanticon.png"/>
+                        <connections>
+                            <action selector="iwantbuttonPressed:" destination="-1" eventType="touchUpInside" id="e7f-1z-6wM"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="FqQ-fb-7TH">
+                        <rect key="frame" x="11" y="105" width="80" height="26"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="10"/>
+                        <state key="normal" title="S E N D">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        </state>
+                        <connections>
+                            <action selector="viewbumpsPressed:" destination="-1" eventType="touchUpInside" id="yV4-xp-Yjh"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="bxY-UM-9Lb">
+                        <rect key="frame" x="229" y="105" width="80" height="26"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="10"/>
+                        <state key="normal" title="I  W A N T">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        </state>
+                        <connections>
+                            <action selector="viewbumpsPressed:" destination="-1" eventType="touchUpInside" id="MPC-7g-DYk"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="xw7-Fs-wVq">
+                        <rect key="frame" x="120" y="105" width="80" height="26"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="10"/>
+                        <state key="normal" title="V I E W">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         </state>
                         <connections>
                             <action selector="viewbumpsPressed:" destination="-1" eventType="touchUpInside" id="Zzd-ii-KKi"/>
@@ -379,18 +414,26 @@
                     </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="xw7-Fs-wVq" firstAttribute="centerX" secondItem="pTf-3U-7tm" secondAttribute="centerX" id="1BJ-CC-2pD"/>
-                    <constraint firstItem="xw7-Fs-wVq" firstAttribute="top" secondItem="VnW-5H-wse" secondAttribute="topMargin" constant="30" id="8zO-fT-L9J"/>
-                    <constraint firstItem="ln7-Ug-WZr" firstAttribute="leading" secondItem="VnW-5H-wse" secondAttribute="leadingMargin" constant="87" id="FbW-XH-1U2"/>
-                    <constraint firstItem="pTf-3U-7tm" firstAttribute="top" secondItem="ln7-Ug-WZr" secondAttribute="bottom" constant="33" id="Lmc-oc-8rL"/>
-                    <constraint firstItem="ln7-Ug-WZr" firstAttribute="centerX" secondItem="VnW-5H-wse" secondAttribute="centerX" id="Lp4-dr-0W4"/>
-                    <constraint firstItem="pTf-3U-7tm" firstAttribute="top" secondItem="xw7-Fs-wVq" secondAttribute="bottom" constant="4" id="X8I-9j-omj"/>
-                    <constraint firstItem="ln7-Ug-WZr" firstAttribute="centerX" secondItem="xw7-Fs-wVq" secondAttribute="centerX" id="lUb-nb-3Lv"/>
-                    <constraint firstItem="ln7-Ug-WZr" firstAttribute="top" secondItem="VnW-5H-wse" secondAttribute="topMargin" id="wtf-g9-M3z"/>
-                    <constraint firstItem="pTf-3U-7tm" firstAttribute="bottom" secondItem="VnW-5H-wse" secondAttribute="bottomMargin" id="xBd-XX-DQw"/>
+                    <constraint firstItem="FqQ-fb-7TH" firstAttribute="top" secondItem="C8Z-2m-eAq" secondAttribute="bottom" constant="13" id="1b7-6k-F14"/>
+                    <constraint firstItem="C8Z-2m-eAq" firstAttribute="leading" secondItem="VnW-5H-wse" secondAttribute="leadingMargin" constant="18" id="5HX-tZ-s9J"/>
+                    <constraint firstItem="qLl-wf-Ue6" firstAttribute="leading" secondItem="ln7-Ug-WZr" secondAttribute="trailing" constant="8" symbolic="YES" id="Gf3-bd-aWh"/>
+                    <constraint firstItem="C8Z-2m-eAq" firstAttribute="centerX" secondItem="FqQ-fb-7TH" secondAttribute="centerX" id="M24-cJ-HwZ"/>
+                    <constraint firstItem="ln7-Ug-WZr" firstAttribute="centerX" secondItem="xw7-Fs-wVq" secondAttribute="centerX" id="NIE-Pa-MPF"/>
+                    <constraint firstItem="xw7-Fs-wVq" firstAttribute="leading" secondItem="FqQ-fb-7TH" secondAttribute="trailing" constant="29" id="Ua2-K7-O9A"/>
+                    <constraint firstItem="ln7-Ug-WZr" firstAttribute="leading" secondItem="C8Z-2m-eAq" secondAttribute="trailing" constant="8" symbolic="YES" id="ZzZ-gr-rgG"/>
+                    <constraint firstItem="xw7-Fs-wVq" firstAttribute="baseline" secondItem="bxY-UM-9Lb" secondAttribute="baseline" id="cML-3l-O51"/>
+                    <constraint firstItem="bxY-UM-9Lb" firstAttribute="leading" secondItem="xw7-Fs-wVq" secondAttribute="trailing" constant="29" id="dsn-JU-bmk"/>
+                    <constraint firstItem="FqQ-fb-7TH" firstAttribute="top" secondItem="xw7-Fs-wVq" secondAttribute="top" id="fce-St-FDM"/>
+                    <constraint firstItem="FqQ-fb-7TH" firstAttribute="leading" secondItem="VnW-5H-wse" secondAttribute="leadingMargin" constant="3" id="i4W-Qz-tYD"/>
+                    <constraint firstItem="C8Z-2m-eAq" firstAttribute="bottom" secondItem="qLl-wf-Ue6" secondAttribute="bottom" id="iq8-nY-UwH"/>
+                    <constraint firstItem="qLl-wf-Ue6" firstAttribute="centerX" secondItem="bxY-UM-9Lb" secondAttribute="centerX" id="lZT-vx-ARK"/>
+                    <constraint firstItem="ln7-Ug-WZr" firstAttribute="bottom" secondItem="C8Z-2m-eAq" secondAttribute="bottom" id="web-Qb-i9O"/>
+                    <constraint firstItem="C8Z-2m-eAq" firstAttribute="top" secondItem="VnW-5H-wse" secondAttribute="topMargin" constant="34" id="xpw-F7-DRz"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="qLl-wf-Ue6" secondAttribute="trailing" constant="18" id="yFj-vs-YMY"/>
+                    <constraint firstItem="ln7-Ug-WZr" firstAttribute="top" secondItem="C8Z-2m-eAq" secondAttribute="top" id="zzz-Rk-3dO"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-178" y="1266.5"/>
+            <point key="canvasLocation" x="-178" y="1255"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="158" id="vll-s6-WMk">
             <rect key="frame" x="0.0" y="0.0" width="320" height="158"/>
@@ -400,7 +443,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="About the buyer" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="F8I-Py-L1I">
-                        <rect key="frame" x="14" y="8" width="146" height="20"/>
+                        <rect key="frame" x="14" y="8" width="146" height="21"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="146" id="jPZ-wv-Wh9"/>
                         </constraints>
@@ -409,13 +452,13 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="lCL-d1-y7M">
-                        <rect key="frame" x="11" y="33" width="298" height="91.5"/>
+                        <rect key="frame" x="11" y="34" width="298" height="90"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="wfg-yD-IRF" customClass="PFImageView">
-                                <rect key="frame" x="8" y="20" width="50" height="51.5"/>
+                                <rect key="frame" x="8" y="20" width="50" height="50"/>
                             </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="trustedCheck.png" translatesAutoresizingMaskIntoConstraints="NO" id="pVD-OL-oRX" customClass="PFImageView">
-                                <rect key="frame" x="8" y="51.5" width="20" height="20"/>
+                                <rect key="frame" x="8" y="50" width="20" height="20"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="20" id="l8O-h3-QIR"/>
                                 </constraints>
@@ -430,7 +473,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="deals" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="x8B-MK-Pxw">
-                                <rect key="frame" x="66" y="35" width="108" height="42.5"/>
+                                <rect key="frame" x="66" y="35" width="108" height="41"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="108" id="ZYl-eT-5Fh"/>
                                 </constraints>
@@ -456,13 +499,13 @@
                         </constraints>
                     </view>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="0star.png" translatesAutoresizingMaskIntoConstraints="NO" id="nDm-QT-8vg">
-                        <rect key="frame" x="173" y="66.5" width="128" height="25"/>
+                        <rect key="frame" x="173" y="67" width="128" height="25"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="128" id="fum-8x-7w2"/>
                         </constraints>
                     </imageView>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ldJ-N6-20G">
-                        <rect key="frame" x="11" y="36" width="298" height="88.5"/>
+                        <rect key="frame" x="11" y="37" width="298" height="87"/>
                         <connections>
                             <action selector="buyerPressed:" destination="-1" eventType="touchUpInside" id="SZv-ZZ-Kvc"/>
                         </connections>
@@ -565,13 +608,14 @@
     <resources>
         <image name="0star.png" width="131" height="25"/>
         <image name="clock.png" width="17" height="17"/>
+        <image name="envelopeSend.png" width="50" height="50"/>
         <image name="expand.png" width="17" height="17"/>
+        <image name="iwanticon.png" width="50" height="50"/>
         <image name="listngUpVoteBlue" width="86" height="86"/>
         <image name="listngUpVoteGrey.png" width="19" height="19"/>
         <image name="location.png" width="11" height="17"/>
         <image name="purchasedCheck.png" width="15" height="15"/>
         <image name="settings.png" width="15" height="16"/>
-        <image name="shareListingLong.png" width="304" height="40"/>
         <image name="tag.png" width="17" height="17"/>
         <image name="trustedCheck.png" width="20" height="20"/>
     </resources>

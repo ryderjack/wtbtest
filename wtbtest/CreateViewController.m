@@ -627,19 +627,7 @@
             [self popUpAlert];
         }
         
-        // instructions on saving images from google
-        BOOL seen = [[NSUserDefaults standardUserDefaults] boolForKey:@"seenGoogle"];
-        if (!seen) {
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Search Google" message:@"Simply tap the image you'd like to use to get it fullscreen and when you're happy, hit Choose!" preferredStyle:UIAlertControllerStyleAlert];
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                [self showGoogle];
-            }]];
-            [self presentViewController:alertView animated:YES completion:nil];
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenGoogle"];
-        }
-        else{
-            [self showGoogle];
-        }
+        [self showGoogle]; // don't need instructions - will be on the JRWebView if needed
     }]];
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
@@ -679,7 +667,7 @@
     }];
 }
 
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(nonnull NSDictionary<NSString *,id> *)info{
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
     //display crop picker
     [picker dismissViewControllerAnimated:YES completion:^{
@@ -1032,6 +1020,21 @@
                 NSMutableArray *mutableStrings = [NSMutableArray arrayWithArray:strings];
                 [mutableStrings removeObjectsInArray:wasteWords];
                 
+                NSMutableArray *finalKeywordArray = [NSMutableArray array];
+                
+                for (NSString *string in mutableStrings) {
+                    if (![string canBeConvertedToEncoding:NSASCIIStringEncoding]) {
+                        NSLog(@"can't be converted %@", string);
+                    }
+                    else{
+                        [finalKeywordArray addObject:string];
+                    }
+                }
+                [self.listing setObject:finalKeywordArray forKey:@"keywords"];
+
+                //then add extra terms and save as searchKeywords
+                mutableStrings = finalKeywordArray;
+                
                 if ([mutableStrings containsObject:@"bogo"]) {
                     [mutableStrings addObject:@"box"];
                     [mutableStrings addObject:@"logo"];
@@ -1056,7 +1059,7 @@
                     [mutableStrings addObject:@"sweat"];
                 }
                 
-                [self.listing setObject:mutableStrings forKey:@"keywords"];
+                [self.listing setObject:mutableStrings forKey:@"searchKeywords"];
                 
                 //if got price
                 if (![self.payField.text isEqualToString:@"Optional"]) {

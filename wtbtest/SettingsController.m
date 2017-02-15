@@ -188,14 +188,14 @@
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     
     if (indexPath.section == 1) {
-        if (indexPath.row == 3) {
+        if (indexPath.row == 2) {
             //goto shipping controller
             ShippingController *vc = [[ShippingController alloc]init];
             vc.delegate = self;
             vc.settingsMode = YES;
             [self.navigationController pushViewController:vc animated:YES];
         }
-        else if (indexPath.row == 4){
+        else if (indexPath.row == 3){
             if (!self.picker) {
                 self.picker = [[UIImagePickerController alloc] init];
                 self.picker.delegate = self;
@@ -207,35 +207,52 @@
     }
 }
 
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+-(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
+    NSLog(@"INFO: %@", info);
+    
     self.profileImage = info[UIImagePickerControllerOriginalImage];
     self.testingView.image = nil;
     [self showHUD];
     UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
-    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:UIImageJPEGRepresentation(imageToSave, 0.7)];
-    [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-        if (succeeded) {
-            [self.testingView setFile:filePicture];
-            [self.testingView loadInBackground];
-            
-            self.currentUser [@"picture"] = filePicture;
-            [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                if (succeeded) {
-                    NSLog(@"saved!");
-                    [self hideHUD];
-                }
-                else{
-                    NSLog(@"error saving %@", error);
-                    [self hideHUD];
-                }
-            }];
-        }
-        else{
-            NSLog(@"error saving file %@", error);
-            [self hideHUD];
-        }
-    }];
-    [picker dismissViewControllerAnimated:YES completion:nil];
+    
+    
+    NSData* data = UIImageJPEGRepresentation(imageToSave, 0.7f);
+    if (data == nil) {
+        NSLog(@"error with data");
+        [self hideHUD];
+        [picker dismissViewControllerAnimated:YES completion:nil];
+        [self showAlertWithTitle:@"Image Error" andMsg:@"Woops, something went wrong. Please try again! If this keeps happening please message Team Bump from your profile"];
+        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                       customAttributes:@{
+                                          @"pageName":@"settings"
+                                          }];
+    }
+    else{
+        PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:data];
+        [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            if (succeeded) {
+                [self.testingView setFile:filePicture];
+                [self.testingView loadInBackground];
+                
+                self.currentUser [@"picture"] = filePicture;
+                [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        NSLog(@"saved!");
+                        [self hideHUD];
+                    }
+                    else{
+                        NSLog(@"error saving %@", error);
+                        [self hideHUD];
+                    }
+                }];
+            }
+            else{
+                NSLog(@"error saving file %@", error);
+                [self hideHUD];
+            }
+        }];
+        [picker dismissViewControllerAnimated:YES completion:nil];
+    }
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
@@ -504,5 +521,14 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
     });
+}
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 @end

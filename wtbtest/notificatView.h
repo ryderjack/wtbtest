@@ -24,4 +24,7 @@
 @property (nonatomic, strong) NSString *listingID;
 @property (nonatomic, strong) PFObject *listing;
 
+//imgview
+@property (nonatomic) BOOL sentMode;
+
 @end
