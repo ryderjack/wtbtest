@@ -40,7 +40,7 @@
     
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
     layout.sectionInset = UIEdgeInsetsMake(10, 10, 10, 10);
-    layout.itemSize = CGSizeMake(100, 100);
+    layout.itemSize = CGSizeMake(104, 104);
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
     [self.collectionView setCollectionViewLayout:layout];
     self.collectionView.showsHorizontalScrollIndicator = NO;

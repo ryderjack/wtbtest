@@ -8,6 +8,7 @@
 
 #import "CreateSuccessView.h"
 #import "ForSaleCell.h"
+#import <Crashlytics/Crashlytics.h>
 
 @implementation CreateSuccessView
 
@@ -16,6 +17,9 @@
 // An empty implementation adversely affects performance during animation.
 - (void)drawRect:(CGRect)rect {
     // Drawing code
+    
+    self.mainLabel.adjustsFontSizeToFitWidth = YES;
+    self.mainLabel.minimumScaleFactor=0.5;
     
     self.backgroundColor = [UIColor clearColor];
     
@@ -58,6 +62,16 @@
 }
 - (IBAction)addMorePressed:(id)sender {
     [self.delegate addMorePressed];
+}
+- (IBAction)addSizePressed:(id)sender {
+    
+    [Answers logCustomEventWithName:@"Add Size Pressed"
+                   customAttributes:@{}];
+    
+    [self.delegate editPressed];
+}
+- (IBAction)firstPressed:(id)sender {
+    [self.delegate successDonePressed];
 }
 
 @end

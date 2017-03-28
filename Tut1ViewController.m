@@ -154,7 +154,7 @@
         [self.bottomRightImageView setHidden:YES];
         
         [self.heroImageView setHidden:NO];
-        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
+        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1"];
         self.titleLabel.text = @"Bump";
         self.descriptionLabel.text = @"List items you want & find buyers that want your stuff";
         if (self.clickMode != YES) {
@@ -169,27 +169,27 @@
                              completion:nil];
         }
     }
+//    else if (self.index == 1){
+//        [self.heroImageView setHidden:NO];
+//        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro2.1"];
+//        self.titleLabel.text = @"Selling";
+//        self.descriptionLabel.text = @"1. Tap a listing\n2. Message the buyer\n3. Hit the tag & send them an offer";
+//        [self.createButton setHidden:YES];
+//        
+//        if (self.messageExplain == YES) {
+//            [self.dimissButton setAlpha:0.0];
+//            [self.dimissButton setHidden:NO];
+//            [UIView animateWithDuration:1.0
+//                                  delay:1.0
+//                                options:UIViewAnimationOptionCurveEaseIn
+//                             animations:^{
+//                                 [self.dimissButton setAlpha:1.0];
+//                             }
+//                             completion:nil];
+//        }
+//        [self setupSelling];
+//    }
     else if (self.index == 1){
-        [self.heroImageView setHidden:NO];
-        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro2.1"];
-        self.titleLabel.text = @"Selling";
-        self.descriptionLabel.text = @"1. Tap a listing\n2. Message the buyer\n3. Hit the tag & send them an offer";
-        [self.createButton setHidden:YES];
-        
-        if (self.messageExplain == YES) {
-            [self.dimissButton setAlpha:0.0];
-            [self.dimissButton setHidden:NO];
-            [UIView animateWithDuration:1.0
-                                  delay:1.0
-                                options:UIViewAnimationOptionCurveEaseIn
-                             animations:^{
-                                 [self.dimissButton setAlpha:1.0];
-                             }
-                             completion:nil];
-        }
-        [self setupSelling];
-    }
-    else if (self.index == 2){
         [self.topLeftImageView setHidden:YES];
         [self.topRightImageView setHidden:YES];
         [self.bottomLeftImageView setHidden:YES];
@@ -197,10 +197,10 @@
         
         [self.heroImageView setHidden:NO];
         self.heroImageView.image = [UIImage imageNamed:@"iPhone3"];
-        self.titleLabel.text = @"Buying";
+        self.titleLabel.text = @"Discover";
         self.descriptionLabel.text = @"Bump also recommends items that can be purchased straight away";
     }
-    else if (self.index == 3){
+    else if (self.index == 2){
         [self.topLeftImageView setHidden:YES];
         [self.topRightImageView setHidden:YES];
         [self.bottomLeftImageView setHidden:YES];
@@ -225,7 +225,7 @@
                              completion:nil];
         }
     }
-    else if (self.index == 4){
+    else if (self.index == 3){
         if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
             //iPhone 5
             [self.topLeftImageView setHidden:YES];
@@ -356,7 +356,7 @@
         [self dismissViewControllerAnimated:YES completion:nil];
     }
     else{
-        if (self.index == 4) {
+        if (self.index == 3) {
             PFUser *current = [PFUser currentUser];
             [current setObject:@"YES" forKey:@"completedIntroTutorial"];
             [current saveInBackground];
@@ -382,6 +382,10 @@
 }
 
 -(void)bump1Pressed{
+    [Answers logCustomEventWithName:@"Intro Bump Pressed"
+                   customAttributes:@{
+                                      @"Number":@"1"
+                                      }];
     self.bumpCount++;
     [UIView animateWithDuration:0.6
                           delay:0
@@ -414,13 +418,17 @@
                          }];
                          
                          PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
-                         [bumpObj setObject:self.firstListing.objectId forKey:@"listingId"];
                          [bumpObj setObject:self.firstListing forKey:@"listing"];
+                         [bumpObj setObject:@"live" forKey:@"status"];
                          [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
                          [bumpObj saveInBackground];
                      }];
 }
 -(void)bump2Pressed{
+    [Answers logCustomEventWithName:@"Intro Bump Pressed"
+                   customAttributes:@{
+                                      @"Number":@"2"
+                                      }];
     self.bumpCount++;
     [UIView animateWithDuration:0.6
                           delay:0
@@ -454,13 +462,17 @@
                          }];
                          
                          PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
-                         [bumpObj setObject:self.secondListing.objectId forKey:@"listingId"];
                          [bumpObj setObject:self.secondListing forKey:@"listing"];
+                         [bumpObj setObject:@"live" forKey:@"status"];
                          [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
                          [bumpObj saveInBackground];
                      }];
 }
 -(void)bump3Pressed{
+    [Answers logCustomEventWithName:@"Intro Bump Pressed"
+                   customAttributes:@{
+                                      @"Number":@"3"
+                                      }];
     self.bumpCount++;
     [UIView animateWithDuration:0.6
                           delay:0
@@ -492,13 +504,17 @@
                          }];
                          
                          PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
-                         [bumpObj setObject:self.thirdListing.objectId forKey:@"listingId"];
                          [bumpObj setObject:self.thirdListing forKey:@"listing"];
+                         [bumpObj setObject:@"live" forKey:@"status"];
                          [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
                          [bumpObj saveInBackground];
                      }];
 }
 -(void)bump4Pressed{
+    [Answers logCustomEventWithName:@"Intro Bump Pressed"
+                   customAttributes:@{
+                                      @"Number":@"4"
+                                      }];
     self.bumpCount++;
     [UIView animateWithDuration:0.6
                           delay:0
@@ -531,29 +547,29 @@
                          }];
                          
                          PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
-                         [bumpObj setObject:self.fourthListing.objectId forKey:@"listingId"];
                          [bumpObj setObject:self.fourthListing forKey:@"listing"];
+                         [bumpObj setObject:@"live" forKey:@"status"];
                          [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
                          [bumpObj saveInBackground];
                      }];
 }
 
 -(void)progressTutorial{
+//    if (self.index == 1){
+//        [self.heroImageView setHidden:NO];
+//        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro2.1"];
+//        [UIView animateWithDuration:3.5
+//                              delay:0.0
+//                            options:UIViewAnimationOptionCurveEaseIn
+//                         animations:^{
+//                             self.titleLabel.text = @"Selling";
+//                             self.descriptionLabel.text = @"1. Tap a listing\n2. Message the buyer\n3. Hit the tag & send them an offer";
+//                         }
+//                         completion:nil];
+//        [self setupSelling];
+//        [self fadeInProgressButton];
+//    }
     if (self.index == 1){
-        [self.heroImageView setHidden:NO];
-        self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro2.1"];
-        [UIView animateWithDuration:3.5
-                              delay:0.0
-                            options:UIViewAnimationOptionCurveEaseIn
-                         animations:^{
-                             self.titleLabel.text = @"Selling";
-                             self.descriptionLabel.text = @"1. Tap a listing\n2. Message the buyer\n3. Hit the tag & send them an offer";
-                         }
-                         completion:nil];
-        [self setupSelling];
-        [self fadeInProgressButton];
-    }
-    else if (self.index == 2){
         [self.topLeftImageView setHidden:YES];
         [self.topRightImageView setHidden:YES];
         [self.bottomLeftImageView setHidden:YES];
@@ -566,8 +582,8 @@
                               delay:0.0
                             options:UIViewAnimationOptionCurveEaseIn
                          animations:^{
-                             self.titleLabel.text = @"Buying";
-                             self.descriptionLabel.text = @"Bump also recommends items that can be purchased straight away";
+                             self.titleLabel.text = @"Discover";
+                             self.descriptionLabel.text = @"Bump recommends items from our Seller Network & upcoming releases";
                          }
                          completion:nil];
         
@@ -583,7 +599,7 @@
                              completion:nil];
         });
     }
-    else if (self.index == 3){
+    else if (self.index == 2){
         [self.topLeftImageView setHidden:YES];
         [self.topRightImageView setHidden:YES];
         [self.bottomLeftImageView setHidden:YES];
@@ -596,7 +612,7 @@
         [self setupBumping];
         [self fadeInProgressButton];
     }
-    else if (self.index == 4){
+    else if (self.index == 3){
         if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
             //iPhone 5
             [self.topLeftImageView setHidden:YES];

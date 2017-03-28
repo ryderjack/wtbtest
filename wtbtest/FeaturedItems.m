@@ -10,6 +10,7 @@
 #import "ForSaleListing.h"
 #import "NavigationController.h"
 #import "ProfileItemCell.h"
+#import <SVPullToRefresh/SVPullToRefresh.h>
 
 
 @interface FeaturedItems ()
@@ -20,11 +21,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.title = @"F E A T U R E D";
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     // Register cell classes
     [self.collectionView registerClass:[ProfileItemCell class] forCellWithReuseIdentifier:@"Cell"];
@@ -61,10 +59,33 @@
     
     self.listings = [NSMutableArray array];
     
-    [self loadListings];
-
+    self.pullFinished = YES;
+    self.infinFinished = YES;
+    self.skipped = 0;
+    
+    
+    
 }
 
+-(void)didMoveToParentViewController:(UIViewController *)parent {
+    [super didMoveToParentViewController:parent];
+    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
+    [self.collectionView addPullToRefreshWithActionHandler:^{
+        if (self.pullFinished == YES) {
+            [self loadShop];
+        }
+    }];
+    
+    self.otherSpinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+    [self.collectionView.pullToRefreshView setCustomView:self.otherSpinner forState:SVPullToRefreshStateAll];
+    [self.otherSpinner startAnimating];
+    
+    [self.collectionView addInfiniteScrollingWithActionHandler:^{
+        if (self.infinFinished == YES) {
+            [self loadInfinShop];
+        }
+    }];
+}
 -(NSMutableArray *)getRandomsLessThan:(int)M {  /////////////////////CHECK - ennsure number of for sale listings is bigger than 30
     NSMutableArray *listOfNumbers = [[NSMutableArray alloc] init];
     for (int i=0 ; i<M ; ++i) {
@@ -130,6 +151,43 @@
     }];
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+    if ([self.mode isEqualToString:@"shop"]) {
+        //load that type
+        if ([self.shop isEqualToString:@"yeezy"]) {
+            self.title = @"S H O P  Y E E Z Y";
+        }
+        else if ([self.shop isEqualToString:@"sup"]){
+            self.title = @"S H O P  S U P R E M E";
+        }
+        else if ([self.shop isEqualToString:@"palace"]){
+            self.title = @"S H O P  P A L A C E";
+        }
+        
+        if (self.viewedItem == YES) {
+            self.viewedItem = NO;
+        }
+        else{
+            [self loadShop];
+        }
+        
+    }
+    else{
+        //load featured poss?
+    }
+    
+    [self.infiniteQuery cancel];
+    [self.collectionView.pullToRefreshView stopAnimating];
+    [self.collectionView.infiniteScrollingView stopAnimating];
+    self.infinFinished = YES;
+}
+
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
@@ -151,6 +209,7 @@
     [cell.purchasedImageView setHidden:YES];
     cell.itemImageView.image = nil;
     cell.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+    cell.itemImageView.contentMode = UIViewContentModeScaleAspectFill;
     
     PFObject *listingObject = [self.listings objectAtIndex:indexPath.item];
     
@@ -161,13 +220,16 @@
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    
+    self.viewedItem = YES;
+    
     PFObject *selected = [self.listings objectAtIndex:indexPath.item];
     ForSaleListing *vc = [[ForSaleListing alloc]init];
     vc.listingObject = selected;
-    vc.source = @"featured";
+    vc.source = @"shop";
     vc.pureWTS = YES;
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-    [self presentViewController:nav animated:YES completion:nil];
+    vc.fromBuyNow = YES;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 
 -(void)showHUD{
@@ -189,6 +251,102 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [self hideHUD];
+}
+
+-(void)loadShop{
+    if (self.pullFinished == NO) {
+        return;
+    }
+    
+    self.pullFinished = NO;
+    
+    self.pullQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    [self.pullQuery whereKey:@"status" equalTo:@"live"];
+    if ([self.shop isEqualToString:@"yeezy"]) {
+        [self.pullQuery whereKey:@"keywords" containedIn:@[@"yeezy", @"350", @"750", @"yeezys", @"pirates", @"moonrock", @"V2", @"kanye", @"merch", @"pablo", @"west", @"dons", @"oreo"]];
+    }
+    else if ([self.shop isEqualToString:@"sup"]){
+        [self.pullQuery whereKey:@"keywords" containedIn:@[@"supreme", @"sup", @"bogo", @"box logo", @"preme"]];
+    }
+    else if ([self.shop isEqualToString:@"palace"]){
+        [self.pullQuery whereKey:@"keywords" containedIn:@[@"palace", @"palidas", @"triferg", @"tri-ferg", @"tri", @"ferg"]];
+    }
+    self.pullQuery.limit = 30;
+    [self.pullQuery orderByDescending:@"lastUpdated"];
+    [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            if (objects.count == 0) {
+                [self.collectionView.pullToRefreshView stopAnimating];
+                self.pullFinished = YES;
+                return;
+            }
+            self.skipped = (int)objects.count;
+
+            [self.listings removeAllObjects];
+            [self.listings addObjectsFromArray:objects];
+            
+            [self shuffle:self.listings];
+            
+            [self.collectionView reloadData];
+            
+            self.pullFinished = YES;
+            [self.collectionView.pullToRefreshView stopAnimating];
+        }
+    }];
+}
+
+-(void)loadInfinShop{
+    if (self.infinFinished == NO || self.pullFinished == NO) {
+        return;
+    }
+    
+    self.infinFinished = NO;
+    
+    self.infiniteQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
+    if ([self.shop isEqualToString:@"yeezy"]) {
+        [self.infiniteQuery whereKey:@"keywords" containedIn:@[@"yeezy", @"350", @"750", @"yeezys", @"pirates", @"moonrock", @"V2", @"kanye", @"merch", @"pablo", @"west", @"dons", @"oreo"]];
+    }
+    else if ([self.shop isEqualToString:@"sup"]){
+        [self.infiniteQuery whereKey:@"keywords" containedIn:@[@"supreme", @"sup", @"bogo", @"box logo", @"preme"]];
+    }
+    else if ([self.shop isEqualToString:@"palace"]){
+        [self.infiniteQuery whereKey:@"keywords" containedIn:@[@"palace", @"palidas", @"triferg", @"tri-ferg", @"tri", @"ferg"]];
+    }
+    self.infiniteQuery.limit = 30;
+    self.infiniteQuery.skip = self.skipped;
+    [self.infiniteQuery orderByDescending:@"lastUpdated"];
+    [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            if (objects.count == 0) {
+                [self.collectionView.infiniteScrollingView stopAnimating];
+                self.infinFinished = YES;
+                return;
+            }
+            
+            self.skipped = self.skipped + (int)objects.count;
+            
+            self.infinFinished = YES;
+            [self.collectionView.infiniteScrollingView stopAnimating];
+            
+            NSMutableArray *holding = [NSMutableArray arrayWithArray:objects];
+            [self shuffle:holding];
+           
+            [self.listings addObjectsFromArray:holding];
+            [self.collectionView reloadData];
+        }
+    }];
+}
+
+- (void)shuffle:(NSMutableArray *)array
+{
+    NSUInteger count = [array count];
+    if (count <= 1) return;
+    for (NSUInteger i = 0; i < count - 1; ++i) {
+        NSInteger remainingCount = count - i;
+        NSInteger exchangeIndex = i + arc4random_uniform((u_int32_t )remainingCount);
+        [array exchangeObjectAtIndex:i withObjectAtIndex:exchangeIndex];
+    }
 }
 
 @end

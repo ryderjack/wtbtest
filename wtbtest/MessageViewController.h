@@ -16,6 +16,9 @@
 #import <PulsingHaloLayer.h>
 #import "customAlertViewClass.h"
 #import <QBImagePickerController/QBImagePickerController.h>
+#import <iCarousel.h>
+#import <SwipeView/SwipeView.h>
+#import "FeedbackController.h"
 
 @class MessageViewController;
 
@@ -23,7 +26,7 @@
 - (void)lastMessageInConvo:(PFObject *)message;
 @end
 
-@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,JRWebViewDelegate, MakeOfferDelegate, customAlertDelegate,QBImagePickerControllerDelegate, UITextViewDelegate>
+@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,JRWebViewDelegate, MakeOfferDelegate, customAlertDelegate,QBImagePickerControllerDelegate, UITextViewDelegate, SwipeViewDelegate, SwipeViewDataSource, feedbackDelegate>
 
 //basic setup
 @property (nonatomic, strong) NSString *convoId;
@@ -32,6 +35,15 @@
 @property (nonatomic, strong) PFObject *convoObject;
 @property (nonatomic, strong) PFUser *otherUser;
 @property (nonatomic, strong) NSMutableArray *messages;
+@property (nonatomic, strong) NSMutableArray *pictureMessages;
+
+//carousel of suggested messages
+@property (nonatomic, strong) SwipeView *carousel;
+@property (nonatomic, strong) NSMutableArray *suggestedMessagesArray;
+@property (nonatomic) BOOL showSuggested;
+@property (nonatomic) BOOL changeKeyboard;
+@property (nonatomic) BOOL paypalMessage;
+@property (nonatomic) BOOL paypalPush;
 
 //Bubble tings
 @property (nonatomic, strong) JSQMessagesBubbleImage *outgoingBubbleImageData;
@@ -64,7 +76,6 @@
 @property (nonatomic, strong) NSString *sellerItemTitle;
 
 //nav bar buttons
-@property (nonatomic, strong) UIBarButtonItem *cancelButton;
 @property (nonatomic, strong) UIBarButtonItem *profileButton;
 @property (nonatomic, strong) UIBarButtonItem *listingButton;
 
@@ -120,6 +131,21 @@
 
 //delegate
 @property (nonatomic, weak) id <messagesDelegate> delegate;
+
+//convo images
+@property (nonatomic, strong) NSMutableArray *convoImagesArray;
+
+//tab bar
+@property (nonatomic, strong) NSNumber *tabBarHeight;
+@property (nonatomic) int tabBarHeightInt;
+
+//readjust carousel height based on text input
+@property (nonatomic) float lastInputToolbarHeight;
+@property (nonatomic) BOOL movingCarousel;
+
+//scroll
+@property (nonatomic) BOOL firstLayout;
+@property (nonatomic) float topEdge;
 
 
 @end

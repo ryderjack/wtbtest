@@ -13,5 +13,6 @@
 @property (weak, nonatomic) IBOutlet PFImageView *userImageView;
 @property (weak, nonatomic) IBOutlet UILabel *usernameLabel;
 @property (weak, nonatomic) IBOutlet UILabel *fullnameLabel;
+@property (weak, nonatomic) IBOutlet UIView *outerView;
 
 @end

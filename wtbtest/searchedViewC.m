@@ -329,6 +329,8 @@
 
     selected = [self.results objectAtIndex:indexPath.item];
     
+    NSLog(@"TAB BAR HEIGHT %@", self.tabBarHeight);
+    
     ListingController *vc = [[ListingController alloc]init];
     vc.listingObject = selected;
     vc.fromSearch = YES;
@@ -357,8 +359,15 @@
                                       @"where":@"Search"
                                       }];
     
-    NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[listingObject objectForKey:@"bumpArray"]];
-    NSMutableArray *personalBumpArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+    NSMutableArray *bumpArray = [NSMutableArray array];
+    if ([listingObject objectForKey:@"bumpArray"]) {
+        [bumpArray addObjectsFromArray:[listingObject objectForKey:@"bumpArray"]];
+    }
+    
+    NSMutableArray *personalBumpArray = [NSMutableArray array];
+    if ([[PFUser currentUser] objectForKey:@"bumpArray"]) {
+        [personalBumpArray addObjectsFromArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+    }
 
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
         NSLog(@"already bumped it m8");
@@ -372,6 +381,19 @@
         if ([personalBumpArray containsObject:listingObject.objectId]) {
             [personalBumpArray removeObject:listingObject.objectId];
         }
+        
+        //update bump object
+        PFQuery *bumpQ = [PFQuery queryWithClassName:@"BumpedListings"];
+        [bumpQ whereKey:@"bumpUser" equalTo:[PFUser currentUser]];
+        [bumpQ whereKey:@"listing" equalTo:listingObject];
+        [bumpQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            if (objects) {
+                for (PFObject *bump in objects) {
+                    [bump setObject:@"deleted" forKey:@"status"];
+                    [bump saveInBackground];
+                }
+            }
+        }];
     }
     else{
         NSLog(@"bumped");
@@ -410,6 +432,12 @@
                                               @"where":@"Search"
                                               }];
         }
+        
+        PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+        [bumpObj setObject:listingObject forKey:@"listing"];
+        [bumpObj setObject:@"live" forKey:@"status"];
+        [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+        [bumpObj saveInBackground];
     }
     
     [listingObject saveInBackground];

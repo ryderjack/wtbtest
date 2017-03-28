@@ -23,7 +23,7 @@
     
     self.navigationItem.title = @"S E L L I N G";
     
-        self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     //button setup
     [self.firstCam setEnabled:YES];
@@ -79,6 +79,8 @@
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
     self.profanityList = @[@"cunt", @"wanker", @"nigger", @"penis", @"cock"];
+    self.multipleSizeArray = [NSArray array];
+    self.imagesToProcess = [NSMutableArray array];
     
     self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
     
@@ -111,24 +113,18 @@
     self.longButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
     
-    [UIView animateWithDuration:0.3
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         self.longButton.alpha = 1.0f;
-                     }
-                     completion:^(BOOL finished) {
-                         self.buttonShowing = YES;
-                     }];
+    [self showBarButton];
     
-//    PFQuery *userQueryForRand = [PFUser query];
-//    [userQueryForRand whereKey:@"username" containedIn:@[self.usernameToCheck]];
-//    [userQueryForRand findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//        for (PFUser *user in objects) {
-//            self.cabin = user;
-//            NSLog(@"cabin set %@",self.cabin);
-//        }
-//    }];
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]) {
+        PFQuery *userQueryForRand = [PFUser query];
+        [userQueryForRand whereKey:@"username" containedIn:@[self.usernameToCheck]];
+        [userQueryForRand findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            for (PFUser *user in objects) {
+                self.cabin = user;
+                NSLog(@"cabin set %@",self.cabin);
+            }
+        }];
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -141,16 +137,7 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     if (self.buttonShowing == NO) {
-        self.longButton.alpha = 0.0f;
-        [UIView animateWithDuration:0.2
-                              delay:0
-                            options:UIViewAnimationOptionCurveEaseIn
-                         animations:^{
-                             self.longButton.alpha = 1.0f;
-                         }
-                         completion:^(BOOL finished) {
-                             self.buttonShowing = YES;
-                         }];
+        [self showBarButton];
     }
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
@@ -276,13 +263,24 @@
                     vc.delegate = self;
                     vc.setting = @"sizefoot";
                     vc.sellListing = YES;
-                    
+                    vc.multipleAllowed = YES;
+                    vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+
                     // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"select"]) {
+                    if (![self.chooseSize.text isEqualToString:@"select"] && ![self.chooseSize.text isEqualToString:@"Multiple"]) {
                         NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
                         NSLog(@"selected already %@", selectedArray);
                         vc.holdingArray = [NSArray arrayWithArray:selectedArray];
                         vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+                    }
+                    else if ([self.chooseSize.text isEqualToString:@"Multiple"]){
+                        NSMutableArray *placeholder = [NSMutableArray array];
+                        
+                        for (id object in self.multipleSizeArray) {
+                            NSString *string = [NSString stringWithFormat:@"%@", object];
+                            [placeholder addObject:string];
+                        }
+                        vc.holdingArray = placeholder;
                     }
                     else{
                         vc.holdingGender = @"";
@@ -296,10 +294,22 @@
                     vc.delegate = self;
                     vc.setting = @"sizeclothing";
                     vc.sellListing = YES;
+                    vc.multipleAllowed = YES;
+                    vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+
                     // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"select"]) {
+                    if (![self.chooseSize.text isEqualToString:@"select"] && ![self.chooseSize.text isEqualToString:@"Multiple"]) {
                         NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
                         vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+                    }
+                    else if ([self.chooseSize.text isEqualToString:@"Multiple"]){
+                        NSMutableArray *placeholder = [NSMutableArray array];
+                        
+                        for (id object in self.multipleSizeArray) {
+                            NSString *string = [NSString stringWithFormat:@"%@", object];
+                            [placeholder addObject:string];
+                        }
+                        vc.holdingArray = placeholder;
                     }
                     
                     self.selection = @"size";
@@ -570,7 +580,10 @@
 -(void)alertSheet{
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
+    [self hideBarButton];
+    
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -585,18 +598,57 @@
         [self presentViewController:vc animated:YES completion:nil];
     }]];
     
+//    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//        [Answers logCustomEventWithName:@"Added for sale picture"
+//                       customAttributes:@{
+//                                          @"source":@"Library"
+//                                          }];
+//        if (!self.picker) {
+//            self.picker = [[UIImagePickerController alloc] init];
+//            self.picker.delegate = self;
+//            self.picker.allowsEditing = NO;
+//            self.picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+//        }
+//        [self presentViewController:self.picker animated:YES completion:nil];
+//    }]];
+    
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        
         [Answers logCustomEventWithName:@"Added for sale picture"
                        customAttributes:@{
                                           @"source":@"Library"
                                           }];
-        if (!self.picker) {
-            self.picker = [[UIImagePickerController alloc] init];
-            self.picker.delegate = self;
-            self.picker.allowsEditing = NO;
-            self.picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-        }
-        [self presentViewController:self.picker animated:YES completion:nil];
+
+        [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+            switch (status) {
+                case PHAuthorizationStatusAuthorized:{
+                    QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                    imagePickerController.delegate = self;
+                    imagePickerController.allowsMultipleSelection = YES;
+                    imagePickerController.maximumNumberOfSelection = 4-self.photostotal;
+                    imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                    imagePickerController.numberOfColumnsInPortrait = 3;
+                    imagePickerController.showsNumberOfSelectedAssets = YES;
+                    [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                }
+                    break;
+                case PHAuthorizationStatusRestricted:{
+                    NSLog(@"restricted");
+                }
+                    break;
+                case PHAuthorizationStatusDenied:
+                {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        //show alert
+                        [self showAlertWithTitle:@"Library Permission" andMsg:@"Bump needs access to your photos to create a listing, enable this in your iPhone's Settings"];
+                    });
+                    NSLog(@"denied");
+                }
+                    break;
+                default:
+                    break;
+            }
+        }];
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from my Depop" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -617,9 +669,51 @@
             [self showDepop];
         }
     }]];
-    
+
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
+
+- (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingAssets:(NSArray *)assets {
+    [self dismissViewControllerAnimated:YES completion:^{
+        PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+        requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
+        requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+        requestOptions.networkAccessAllowed = YES;
+
+        PHImageManager *manager = [PHImageManager defaultManager];
+        
+        [self.imagesToProcess removeAllObjects];
+        
+        for (PHAsset *asset in assets) {
+            //goto cropper
+            [manager requestImageForAsset:asset
+                               targetSize:PHImageManagerMaximumSize
+                              contentMode:PHImageContentModeDefault
+                                  options:requestOptions
+                            resultHandler:^void(UIImage *image, NSDictionary *info) {
+                                //new policy: all resizing done in finalImage, instead of scattered
+                                [self.imagesToProcess addObject:image];
+                                if (self.imagesToProcess.count == assets.count) {
+                                    [self processMultiple];
+                                }
+                            }];
+        }
+    }];
+}
+
+-(void)processMultiple{
+    //got array of images to crop
+    self.multipleMode = YES;
+    
+    if (self.imagesToProcess.count > 0) {
+        [self displayCropperWithImage:self.imagesToProcess[0]];
+    }
+}
+
+- (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController {
+    [self dismissViewControllerAnimated:YES completion:NULL];
+}
+
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(nonnull NSDictionary<NSString *,id> *)info{
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
@@ -633,18 +727,6 @@
     [picker dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:chosenImage];
     }];
-}
-
-- (UIImage *)resizeImage:(UIImage *)image toWidth:(float)width andHeight:(float)height {
-    
-    CGSize newSize = CGSizeMake(width, height);
-    CGRect newRectangle = CGRectMake(0, 0, width, height);
-    UIGraphicsBeginImageContext(newSize);
-    [image drawInRect:newRectangle];
-    UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    return resizedImage;
 }
 
 -(void)displayCropperWithImage:(UIImage *)image{
@@ -665,7 +747,7 @@
 - (void)squareCropperDidCropImage:(UIImage *)croppedImage inCropper:(BASSquareCropperViewController *)cropper{
     [cropper dismissViewControllerAnimated:YES completion:NULL];
     
-    UIImage *newImage = [croppedImage resizedImage:CGSizeMake(750.00, 750.00) interpolationQuality:kCGInterpolationHigh];
+//    UIImage *newImage = [croppedImage resizedImage:CGSizeMake(750.00, 750.00) interpolationQuality:kCGInterpolationHigh];
     
 //    NSLog(@"size of Cropped image %f %f", croppedImage.size.width, croppedImage.size.height);
 //    
@@ -675,11 +757,16 @@
 //    NSData *imgData1 = UIImageJPEGRepresentation(newImage, 1.0);
 //    NSLog(@"RESIZED (bytes):%lu",(unsigned long)[imgData1 length]);
 
-    [self finalImage:newImage];
+    [self finalImage:croppedImage];
 }
 
 - (void)squareCropperDidCancelCropInCropper:(BASSquareCropperViewController *)cropper{
     [cropper dismissViewControllerAnimated:YES completion:NULL];
+    
+    if (self.multipleMode == YES && self.imagesToProcess.count > 1) {
+        [self.imagesToProcess removeObjectAtIndex:0];
+        [self processMultiple];
+    }
 }
 
 -(void)dismissPressed:(BOOL)yesorno{
@@ -695,7 +782,7 @@
 }
 
 -(void)sizePopUp{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Choose a category first!" message:@"Make sure you've entered a category for your item!" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Choose a category first" message:@"Make sure you've entered a category for your item!" preferredStyle:UIAlertControllerStyleAlert];
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
@@ -753,48 +840,105 @@
 }
 
 -(void)finalImage:(UIImage *)image{
+    UIImage *newImage = [image scaleImageToSize:CGSizeMake(750, 750)];
+
     self.somethingChanged = YES;
-    if (self.camButtonTapped == 1) {
-        [self.firstImageView setHidden:NO];
-        [self.firstImageView setImage:image];
+    
+    if (self.multipleMode == YES) {
+        if (self.photostotal == 0) {
+            //add image to first image view
+            [self.firstImageView setHidden:NO];
+            [self.firstImageView setImage:newImage];
+            
+            [self.firstDelete setHidden:NO];
+            [self.secondCam setEnabled:YES];
+            [self.firstCam setEnabled:NO];
+            
+            [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
+            [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
+            [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.photostotal == 1){
+            [self.secondImageView setHidden:NO];
+            [self.secondImageView setImage:newImage];
+            
+            [self.secondDelete setHidden:NO];
+            [self.thirdCam setEnabled:YES];
+            [self.secondCam setEnabled:NO];
+            
+            [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
+            [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.photostotal == 2){
+            [self.thirdImageView setHidden:NO];
+            [self.thirdImageView setImage:newImage];
+            
+            [self.thirdDelete setHidden:NO];
+            [self.fourthCam setEnabled:YES];
+            [self.thirdCam setEnabled:NO];
+            
+            [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
+        }
+        else if (self.photostotal == 3){
+            [self.fourthImageView setHidden:NO];
+            [self.fourthImageView setImage:newImage];
+            
+            [self.fourthDelete setHidden:NO];
+            [self.fourthCam setEnabled:NO];
+        }
         
-        [self.firstDelete setHidden:NO];
-        [self.secondCam setEnabled:YES];
-        [self.firstCam setEnabled:NO];
-        
-        [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        self.photostotal ++;
+
+        if (self.imagesToProcess.count > 0) {
+            [self.imagesToProcess removeObjectAtIndex:0];
+            
+            //call process again
+            [self processMultiple];
+        }
     }
-    else if (self.camButtonTapped ==2){
-        [self.secondImageView setHidden:NO];
-        [self.secondImageView setImage:image];
-        
-        [self.secondDelete setHidden:NO];
-        [self.thirdCam setEnabled:YES];
-        [self.secondCam setEnabled:NO];
-        
-        [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+    else{
+        if (self.camButtonTapped == 1) {
+            [self.firstImageView setHidden:NO];
+            [self.firstImageView setImage:newImage];
+            
+            [self.firstDelete setHidden:NO];
+            [self.secondCam setEnabled:YES];
+            [self.firstCam setEnabled:NO];
+            
+            [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
+            [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
+            [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.camButtonTapped ==2){
+            [self.secondImageView setHidden:NO];
+            [self.secondImageView setImage:newImage];
+            
+            [self.secondDelete setHidden:NO];
+            [self.thirdCam setEnabled:YES];
+            [self.secondCam setEnabled:NO];
+            
+            [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
+            [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.camButtonTapped ==3){
+            [self.thirdImageView setHidden:NO];
+            [self.thirdImageView setImage:newImage];
+            
+            [self.thirdDelete setHidden:NO];
+            [self.fourthCam setEnabled:YES];
+            [self.thirdCam setEnabled:NO];
+            
+            [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
+        }
+        else if (self.camButtonTapped ==4){
+            [self.fourthImageView setHidden:NO];
+            [self.fourthImageView setImage:newImage];
+            
+            [self.fourthDelete setHidden:NO];
+            [self.fourthCam setEnabled:NO];
+        }
+        self.photostotal ++;
     }
-    else if (self.camButtonTapped ==3){
-        [self.thirdImageView setHidden:NO];
-        [self.thirdImageView setImage:image];
-        
-        [self.thirdDelete setHidden:NO];
-        [self.fourthCam setEnabled:YES];
-        [self.thirdCam setEnabled:NO];
-        
-        [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
-    }
-    else if (self.camButtonTapped ==4){
-        [self.fourthImageView setHidden:NO];
-        [self.fourthImageView setImage:image];
-        
-        [self.fourthDelete setHidden:NO];
-        [self.fourthCam setEnabled:NO];
-    }
-    self.photostotal ++;
 }
 
 - (void)saleaddDoneButton {
@@ -848,6 +992,10 @@
 }
 
 -(void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)selectionString withgender:(NSString *)genderString andsizes:(NSArray *)array{
+    
+    //empty array
+    self.multipleSizeArray = @[];
+    
     if ([self.selection isEqualToString:@"condition"]) {
         if ([selectionString isEqualToString:@"Brand New With Tags"]) {
             selectionString = @"BNWT";
@@ -867,6 +1015,7 @@
         self.chooseCategroy.text = selectionString;
     }
     else if ([self.selection isEqualToString:@"size"]){
+        self.chooseSize.text = @"select";
         if (genderString) {
             self.genderSize = genderString;
         }
@@ -883,6 +1032,10 @@
                 else{
                     self.chooseSize.text = [NSString stringWithFormat:@"UK %@",array[0]];
                 }
+            }
+            else if (array.count>1){
+                self.chooseSize.text = @"Multiple";
+                self.multipleSizeArray = array;
             }
         }
         else{
@@ -974,98 +1127,385 @@
 - (IBAction)firstDeletePressed:(id)sender {
     if (self.photostotal == 1) {
         self.photostotal--;
-        [self.firstImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.secondImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        [self.firstDelete setHidden:YES];
         
-        [self.firstCam setEnabled:YES];
-        [self.secondCam setEnabled:NO];
+        [UIView transitionWithView:self.firstImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.firstImageView setImage:[UIImage imageNamed:@"addImage"]];
+                        } completion:^(BOOL finished) {
+                            [self.firstCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.secondImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.secondImageView setImage:[UIImage imageNamed:@"camHolder"]];
+                        } completion:^(BOOL finished) {
+                            [self.secondCam setEnabled:NO];
+                        }];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.firstDelete setAlpha:0.0f];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.firstDelete setHidden:YES];
+                             [self.firstDelete setAlpha:1.0f];
+                         }];
     }
     else if (self.photostotal ==2){
         self.photostotal--;
-        [self.firstImageView setImage:self.secondImageView.image];
-        [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        [self.secondDelete setHidden:YES];
         
-        [self.secondCam setEnabled:YES];
-        [self.thirdCam setEnabled:NO];
+        [UIView transitionWithView:self.firstImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.firstImageView setImage:self.secondImageView.image];
+                        } completion:^(BOOL finished) {
+                        }];
+        
+        [UIView transitionWithView:self.secondImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
+                        } completion:^(BOOL finished) {
+                            [self.secondCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.thirdImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
+                        } completion:^(BOOL finished) {
+                            [self.thirdCam setEnabled:NO];
+                        }];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.secondDelete setAlpha:0.0f];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.secondDelete setHidden:YES];
+                             [self.secondDelete setAlpha:1.0f];
+                         }];
     }
     else if (self.photostotal ==3){
         self.photostotal--;
-        [self.firstImageView setImage:self.secondImageView.image];
-        [self.secondImageView setImage:self.thirdImageView.image];
-        [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        [self.thirdDelete setHidden:YES];
+    
+        [UIView transitionWithView:self.firstImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.firstImageView setImage:self.secondImageView.image];
+                        } completion:^(BOOL finished) {
+                        }];
         
-        [self.thirdCam setEnabled:YES];
-        [self.fourthCam setEnabled:NO];
+        [UIView transitionWithView:self.secondImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.secondImageView setImage:self.thirdImageView.image];
+                        } completion:^(BOOL finished) {
+                            [self.secondCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.thirdImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
+                        } completion:^(BOOL finished) {
+                            [self.thirdCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.fourthImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+                        } completion:^(BOOL finished) {
+                            [self.fourthCam setEnabled:NO];
+                        }];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.thirdDelete setAlpha:0.0f];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.thirdDelete setHidden:YES];
+                             [self.thirdDelete setAlpha:1.0f];
+                         }];
     }
     else if (self.photostotal ==4){
         self.photostotal--;
-        [self.firstImageView setImage:self.secondImageView.image];
-        [self.secondImageView setImage:self.thirdImageView.image];
-        [self.thirdImageView setImage:self.fourthImageView.image];
-        [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.fourthDelete setHidden:YES];
-        [self.fourthCam setEnabled:YES];
+        
+        [UIView transitionWithView:self.firstImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.firstImageView setImage:self.secondImageView.image];
+                        } completion:^(BOOL finished) {
+                        }];
+        
+        [UIView transitionWithView:self.secondImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.secondImageView setImage:self.thirdImageView.image];
+                        } completion:^(BOOL finished) {
+                            [self.secondCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.thirdImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.thirdImageView setImage:self.fourthImageView.image];
+                        } completion:^(BOOL finished) {
+                            [self.thirdCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.fourthImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
+                        } completion:^(BOOL finished) {
+                            [self.fourthCam setEnabled:YES];
+                        }];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.fourthDelete setAlpha:0.0f];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.fourthDelete setHidden:YES];
+                             [self.fourthDelete setAlpha:1.0f];
+                         }];
     }
 }
 - (IBAction)secondDeletePressed:(id)sender {
     
     if (self.photostotal ==2){
         self.photostotal--;
-        [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        [self.secondDelete setHidden:YES];
         
-        [self.secondCam setEnabled:YES];
-        [self.thirdCam setEnabled:NO];
+        [UIView transitionWithView:self.secondImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.secondImageView setImage:[UIImage imageNamed:@"addImage"]];
+                        } completion:^(BOOL finished) {
+                            [self.secondCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.thirdImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.thirdImageView setImage:[UIImage imageNamed:@"camHolder"]];
+                        } completion:^(BOOL finished) {
+                            [self.thirdCam setEnabled:NO];
+                        }];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.secondDelete setAlpha:0.0f];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.secondDelete setHidden:YES];
+                             [self.secondDelete setAlpha:1.0f];
+                         }];
     }
     else if (self.photostotal ==3){
         self.photostotal--;
-        [self.secondImageView setImage:self.thirdImageView.image];
-        [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        [self.thirdDelete setHidden:YES];
         
-        [self.thirdCam setEnabled:YES];
-        [self.fourthCam setEnabled:NO];
+        [UIView transitionWithView:self.secondImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.secondImageView setImage:self.thirdImageView.image];
+                        } completion:^(BOOL finished) {
+                            [self.secondCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.thirdImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
+                        } completion:^(BOOL finished) {
+                            [self.thirdCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.fourthImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+                        } completion:^(BOOL finished) {
+                            [self.fourthCam setEnabled:NO];
+                        }];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.thirdDelete setAlpha:0.0f];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.thirdDelete setHidden:YES];
+                             [self.thirdDelete setAlpha:1.0f];
+                         }];
     }
     else if (self.photostotal ==4){
         self.photostotal--;
-        [self.secondImageView setImage:self.thirdImageView.image];
-        [self.thirdImageView setImage:self.fourthImageView.image];
-        [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.fourthDelete setHidden:YES];
-        [self.fourthCam setEnabled:YES];
+        
+        [UIView transitionWithView:self.secondImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.secondImageView setImage:self.thirdImageView.image];
+                        } completion:^(BOOL finished) {
+                            [self.secondCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.thirdImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.thirdImageView setImage:self.fourthImageView.image];
+                        } completion:^(BOOL finished) {
+                            [self.thirdCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.fourthImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
+                        } completion:^(BOOL finished) {
+                            [self.fourthCam setEnabled:YES];
+                        }];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.fourthDelete setAlpha:0.0f];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.fourthDelete setHidden:YES];
+                             [self.fourthDelete setAlpha:1.0f];
+                         }];
     }
 }
 - (IBAction)thirdDeletePressed:(id)sender {
     
     if (self.photostotal ==3){
         self.photostotal--;
-        [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        [self.thirdDelete setHidden:YES];
         
-        [self.thirdCam setEnabled:YES];
-        [self.fourthCam setEnabled:NO];
+        [UIView transitionWithView:self.thirdImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.thirdImageView setImage:[UIImage imageNamed:@"addImage"]];
+                        } completion:^(BOOL finished) {
+                            [self.thirdCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.fourthImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.fourthImageView setImage:[UIImage imageNamed:@"camHolder"]];
+                        } completion:^(BOOL finished) {
+                            [self.fourthCam setEnabled:NO];
+                        }];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.thirdDelete setAlpha:0.0f];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.thirdDelete setHidden:YES];
+                             [self.thirdDelete setAlpha:1.0f];
+                         }];
     }
     else if (self.photostotal ==4){
         self.photostotal--;
-        [self.thirdImageView setImage:self.fourthImageView.image];
-        [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
-        [self.fourthDelete setHidden:YES];
-        [self.fourthCam setEnabled:YES];
+        
+        [UIView transitionWithView:self.thirdImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.thirdImageView setImage:self.fourthImageView.image];
+                        } completion:^(BOOL finished) {
+                            [self.thirdCam setEnabled:YES];
+                        }];
+        
+        [UIView transitionWithView:self.fourthImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
+                        } completion:^(BOOL finished) {
+                            [self.fourthCam setEnabled:YES];
+                        }];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.fourthDelete setAlpha:0.0f];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.fourthDelete setHidden:YES];
+                             [self.fourthDelete setAlpha:1.0f];
+                         }];
     }
 }
 - (IBAction)fourthDeletePressed:(id)sender {
     self.photostotal--;
-    [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
-    [self.fourthCam setEnabled:YES];
-    [self.fourthDelete setHidden:YES];
+    
+    if (self.photostotal ==4){
+        self.photostotal--;
+        
+        [UIView transitionWithView:self.fourthImageView
+                          duration:0.3f
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self.fourthImageView setImage:[UIImage imageNamed:@"addImage"]];
+                        } completion:^(BOOL finished) {
+                            [self.fourthCam setEnabled:YES];
+                        }];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             [self.fourthDelete setAlpha:0.0f];
+                         }
+                         completion:^(BOOL finished) {
+                             [self.fourthDelete setHidden:YES];
+                             [self.fourthDelete setAlpha:1.0f];
+                         }];
+    }
 }
 - (void)savePressed{
     [self.longButton setEnabled:NO];
@@ -1181,6 +1621,10 @@
         [forSaleItem setObject:self.chooseSize.text forKey:@"sizeLabel"];
         [forSaleItem setObject:@"live" forKey:@"status"];
         
+        if (self.multipleSizeArray.count != 0) {
+            [forSaleItem setObject:self.multipleSizeArray forKey:@"multipleSizes"];
+        }
+        
         //save keywords (minus useless words)
         NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"",@"selling", @"new", @"condition", @"good", @"great",@"wts", nil];
         NSCharacterSet *charactersToRemove = [[NSCharacterSet alphanumericCharacterSet] invertedSet];
@@ -1212,16 +1656,22 @@
         [forSaleItem setObject:self.chooseLocation.text forKey:@"location"];
         [forSaleItem setObject:self.geopoint forKey:@"geopoint"];
         [forSaleItem setObject:self.currency forKey:@"currency"];
-        [forSaleItem setObject:[PFUser currentUser] forKey:@"sellerUser"];
-//        [forSaleItem setObject:self.cabin forKey:@"sellerUser"];
         
-        UIImage *imageOne = [self.firstImageView.image resizedImage:CGSizeMake(200.0, 200.0) interpolationQuality:kCGInterpolationHigh];
-        NSData* dataOne = UIImageJPEGRepresentation(imageOne, 0.7f);
+        if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]) {
+            [forSaleItem setObject:self.cabin forKey:@"sellerUser"];
+        }
+        else{
+            [forSaleItem setObject:[PFUser currentUser] forKey:@"sellerUser"];
+        }
+        
+        UIImage *imageOne = [self.firstImageView.image scaleImageToSize:CGSizeMake(200, 200)];
+        
+        NSData* dataOne = UIImageJPEGRepresentation(imageOne, 0.8f);
         PFFile *thumbFile = [PFFile fileWithName:@"thumb1.jpg" data:dataOne];
         [forSaleItem setObject:thumbFile forKey:@"thumbnail"];
         
         if (self.photostotal == 1) {
-            NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            NSData* data = UIImageJPEGRepresentation(self.firstImageView.image, 0.8f);
             
             if (data == nil) {
                 [Answers logCustomEventWithName:@"PFFile Nil Data"
@@ -1247,7 +1697,7 @@
             }
         }
         else if (self.photostotal == 2){
-            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.8f);
             
             if (data1 == nil) {
                 [Answers logCustomEventWithName:@"PFFile Nil Data"
@@ -1267,7 +1717,7 @@
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
             [forSaleItem setObject:imageFile1 forKey:@"image1"];
             
-            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.8f);
             
             if (data2 == nil) {
                 [Answers logCustomEventWithName:@"PFFile Nil Data"
@@ -1293,7 +1743,7 @@
             }
         }
         else if (self.photostotal == 3){
-            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7);
+            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.8);
             if (data1 == nil) {
                 [Answers logCustomEventWithName:@"PFFile Nil Data"
                                customAttributes:@{
@@ -1312,7 +1762,7 @@
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
             [forSaleItem setObject:imageFile1 forKey:@"image1"];
             
-            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.8f);
             
             if (data2 == nil) {
                 [Answers logCustomEventWithName:@"PFFile Nil Data"
@@ -1332,7 +1782,7 @@
             PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
             [forSaleItem setObject:imageFile2 forKey:@"image2"];
             
-            NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
+            NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.8f);
             
             if (data3 == nil) {
                 [Answers logCustomEventWithName:@"PFFile Nil Data"
@@ -1357,7 +1807,7 @@
             }
         }
         else if (self.photostotal == 4){
-            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.7f);
+            NSData* data1 = UIImageJPEGRepresentation(self.firstImageView.image, 0.8f);
             
             if (data1 == nil) {
                 [Answers logCustomEventWithName:@"PFFile Nil Data"
@@ -1377,7 +1827,7 @@
             PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data1];
             [forSaleItem setObject:imageFile1 forKey:@"image1"];
             
-            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.7f);
+            NSData* data2 = UIImageJPEGRepresentation(self.secondImageView.image, 0.8f);
             
             if (data2 == nil) {
                 [Answers logCustomEventWithName:@"PFFile Nil Data"
@@ -1397,7 +1847,7 @@
             PFFile *imageFile2 = [PFFile fileWithName:@"Image2.jpg" data:data2];
             [forSaleItem setObject:imageFile2 forKey:@"image2"];
             
-            NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.7f);
+            NSData* data3 = UIImageJPEGRepresentation(self.thirdImageView.image, 0.8f);
             
             if (data3 == nil) {
                 [Answers logCustomEventWithName:@"PFFile Nil Data"
@@ -1417,7 +1867,7 @@
             PFFile *imageFile3 = [PFFile fileWithName:@"Imag3.jpg" data:data3];
             [forSaleItem setObject:imageFile3 forKey:@"image3"];
             
-            NSData* data4 = UIImageJPEGRepresentation(self.fourthImageView.image, 0.7f);
+            NSData* data4 = UIImageJPEGRepresentation(self.fourthImageView.image, 0.8f);
             
             if (data4 == nil) {
                 [Answers logCustomEventWithName:@"PFFile Nil Data"
@@ -1449,14 +1899,18 @@
                         [Answers logCustomEventWithName:@"Created for sale listing"
                                        customAttributes:@{}];
                         
-                        [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
-                        [[PFUser currentUser] saveInBackground];
-                        //                [self.cabin incrementKey:@"forSalePostNumber"];
-                        //                [self.cabin saveInBackground];
+                        if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]) {
+                            [self.cabin incrementKey:@"forSalePostNumber"];
+                            [self.cabin saveInBackground];
+                        }
+                        else{
+                            [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
+                            [[PFUser currentUser] saveInBackground];
+                        }
                         
                         [self.longButton setEnabled:YES];
                         
-                        self.hud.labelText = @"Saved!";
+                        self.hud.labelText = @"Posted!";
                         
                         double delayInSeconds = 1.0; // number of seconds to wait
                         dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
@@ -1504,15 +1958,7 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [self hidHUD];
-    [UIView animateWithDuration:0.3
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         [self.longButton setAlpha:0.0];
-                     }
-                     completion:^(BOOL finished) {
-                         self.buttonShowing = NO;
-                     }];
+    [self hideBarButton];
 }
 
 -(void)saleListingSetup{
@@ -1547,7 +1993,14 @@
     self.chooseCategroy.text = [self.listing objectForKey:@"category"];
     
     //sizing
-    self.chooseSize.text = [self.listing objectForKey:@"sizeLabel"];
+    NSString *sizeLabel = [self.listing objectForKey:@"sizeLabel"];
+    
+    if ([sizeLabel isEqualToString:@"Multiple"]) {
+        self.multipleSizeArray = [self.listing objectForKey:@"multipleSizes"];
+    }
+
+    self.chooseSize.text = sizeLabel;
+    
     //if gendersize required (if category is footwear) set variable
     if ([self.listing objectForKey:@"sizeGender"]) {
         self.genderSize = [self.listing objectForKey:@"sizeGender"];
@@ -1671,5 +2124,30 @@
     [self.webViewController dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:screenshot];
     }];
+}
+
+-(void)showBarButton{
+    NSLog(@"SHOW");
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.longButton.alpha = 1.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.buttonShowing = YES;
+                     }];
+}
+
+-(void)hideBarButton{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.longButton setAlpha:0.0];
+                     }
+                     completion:^(BOOL finished) {
+                         self.buttonShowing = NO;
+                     }];
 }
 @end

@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1217" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -24,8 +24,6 @@
                 <outlet property="GBPButton" destination="Cvh-OI-gYs" id="LXW-ig-arq"/>
                 <outlet property="USDButton" destination="cEa-Yn-PfW" id="I6q-Sm-Q4E"/>
                 <outlet property="currencyCell" destination="srK-IK-XBv" id="4ZB-Wz-LjM"/>
-                <outlet property="depopCell" destination="UiZ-we-GRX" id="ehR-BQ-KeM"/>
-                <outlet property="depopField" destination="5ss-h2-8KT" id="IXl-ka-M2G"/>
                 <outlet property="emailCell" destination="31R-2I-7WM" id="BEE-bT-C9t"/>
                 <outlet property="emailField" destination="daW-QA-8ze" id="vUi-QU-ivG"/>
                 <outlet property="friendOneImageView" destination="HDl-vx-7o4" id="GZF-rh-8I9"/>
@@ -84,7 +82,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="userIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="itN-Wv-lHg">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="regUserIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="itN-Wv-lHg">
                         <rect key="frame" x="18" y="14" width="15" height="15"/>
                         <constraints>
                             <constraint firstAttribute="width" secondItem="itN-Wv-lHg" secondAttribute="height" multiplier="1:1" id="E7Z-hk-IrN"/>
@@ -117,10 +115,10 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="emailIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="dDx-w2-RSy">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="regEmail.png" translatesAutoresizingMaskIntoConstraints="NO" id="dDx-w2-RSy">
                         <rect key="frame" x="18" y="14" width="15" height="15"/>
                         <constraints>
-                            <constraint firstAttribute="width" secondItem="dDx-w2-RSy" secondAttribute="height" multiplier="1:1" id="4bY-JK-beV"/>
+                            <constraint firstAttribute="height" constant="15" id="POF-8D-bDT"/>
                             <constraint firstAttribute="width" constant="15" id="swS-NA-qRF"/>
                         </constraints>
                     </imageView>
@@ -158,10 +156,10 @@
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="16"/>
                         <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="alphabet" returnKeyType="done"/>
                     </textField>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="globeIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="1uH-0b-XhF">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="regGlobe.png" translatesAutoresizingMaskIntoConstraints="NO" id="1uH-0b-XhF">
                         <rect key="frame" x="18" y="14" width="15" height="15"/>
                         <constraints>
-                            <constraint firstAttribute="width" secondItem="1uH-0b-XhF" secondAttribute="height" multiplier="1:1" id="Wko-7E-6aR"/>
+                            <constraint firstAttribute="height" constant="15" id="Umq-Jm-cdq"/>
                             <constraint firstAttribute="width" constant="15" id="zEP-Bg-mEY"/>
                         </constraints>
                     </imageView>
@@ -178,33 +176,24 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="-62" y="371"/>
         </tableViewCell>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="147" id="X40-2w-7JG">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="147"/>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="156" id="X40-2w-7JG">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="156"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="X40-2w-7JG" id="zTO-I7-1Ra">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="146"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="156"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Picture" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4rO-7b-Q08">
-                        <rect key="frame" x="18" y="8" width="134" height="18"/>
-                        <constraints>
-                            <constraint firstAttribute="height" constant="18" id="6S5-ND-KSF"/>
-                        </constraints>
-                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="17"/>
-                        <color key="textColor" red="0.22546875476837158" green="0.22546195983886719" blue="0.22546583414077759" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                        <nil key="highlightedColor"/>
-                    </label>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="TNt-d3-tiV" customClass="PFImageView">
-                        <rect key="frame" x="120" y="45" width="80" height="80"/>
+                        <rect key="frame" x="120" y="20" width="80" height="80"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="80" id="Qwt-vF-Sxh"/>
-                            <constraint firstAttribute="width" secondItem="TNt-d3-tiV" secondAttribute="height" multiplier="1:1" id="mLg-MU-yu9"/>
+                            <constraint firstAttribute="height" constant="80" id="6GG-hk-VaQ"/>
+                            <constraint firstAttribute="width" constant="80" id="QXy-ZI-f4Z"/>
                         </constraints>
                     </imageView>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MmZ-dZ-81L">
-                        <rect key="frame" x="230" y="2" width="82" height="30"/>
+                        <rect key="frame" x="119" y="117" width="82" height="30"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="82" id="kjr-Id-rVd"/>
+                            <constraint firstAttribute="width" constant="82" id="6Qc-y7-6XD"/>
                         </constraints>
                         <state key="normal" title="Choose">
                             <color key="titleColor" red="0.59215686270000001" green="0.59215686270000001" blue="0.59215686270000001" alpha="1" colorSpace="calibratedRGB"/>
@@ -215,17 +204,14 @@
                     </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="MmZ-dZ-81L" firstAttribute="trailing" secondItem="zTO-I7-1Ra" secondAttribute="trailingMargin" id="7Z2-LL-J1Z"/>
-                    <constraint firstItem="TNt-d3-tiV" firstAttribute="top" secondItem="4rO-7b-Q08" secondAttribute="bottom" constant="19" id="BnB-vR-BhN"/>
-                    <constraint firstItem="MmZ-dZ-81L" firstAttribute="leading" secondItem="4rO-7b-Q08" secondAttribute="trailing" constant="78" id="BoG-Ba-Lgb"/>
-                    <constraint firstItem="4rO-7b-Q08" firstAttribute="leading" secondItem="zTO-I7-1Ra" secondAttribute="leadingMargin" constant="10" id="ZbT-2y-t0o"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="TNt-d3-tiV" secondAttribute="bottom" constant="13" id="ccW-yy-zAT"/>
-                    <constraint firstItem="4rO-7b-Q08" firstAttribute="top" secondItem="zTO-I7-1Ra" secondAttribute="topMargin" id="kVR-ho-ooj"/>
-                    <constraint firstItem="4rO-7b-Q08" firstAttribute="centerY" secondItem="MmZ-dZ-81L" secondAttribute="centerY" id="oIr-f4-qhH"/>
-                    <constraint firstItem="TNt-d3-tiV" firstAttribute="centerX" secondItem="zTO-I7-1Ra" secondAttribute="centerX" id="pzy-wr-QWv"/>
+                    <constraint firstItem="MmZ-dZ-81L" firstAttribute="top" secondItem="TNt-d3-tiV" secondAttribute="bottom" constant="17" id="1FI-nO-Sd6"/>
+                    <constraint firstItem="TNt-d3-tiV" firstAttribute="top" secondItem="zTO-I7-1Ra" secondAttribute="topMargin" constant="12" id="4nk-E8-LEA"/>
+                    <constraint firstItem="MmZ-dZ-81L" firstAttribute="bottom" secondItem="zTO-I7-1Ra" secondAttribute="bottomMargin" id="PGs-3A-e2P"/>
+                    <constraint firstItem="TNt-d3-tiV" firstAttribute="centerX" secondItem="MmZ-dZ-81L" secondAttribute="centerX" id="R2a-IC-2tU"/>
+                    <constraint firstItem="TNt-d3-tiV" firstAttribute="centerX" secondItem="zTO-I7-1Ra" secondAttribute="centerX" id="b3m-Me-fRZ"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-62" y="718.5"/>
+            <point key="canvasLocation" x="-62" y="723"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="88" id="m1m-sl-Qpn">
             <rect key="frame" x="0.0" y="0.0" width="320" height="88"/>
@@ -278,9 +264,10 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="currencyIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="T7V-xg-gIc">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="regDollar.png" translatesAutoresizingMaskIntoConstraints="NO" id="T7V-xg-gIc">
                         <rect key="frame" x="18" y="14" width="15" height="15"/>
                         <constraints>
+                            <constraint firstAttribute="height" constant="15" id="bik-NC-CaG"/>
                             <constraint firstAttribute="width" constant="15" id="gIM-cT-WYP"/>
                         </constraints>
                     </imageView>
@@ -352,50 +339,6 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="-62" y="459"/>
         </tableViewCell>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="UiZ-we-GRX">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
-            <autoresizingMask key="autoresizingMask"/>
-            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="UiZ-we-GRX" id="Ndx-rw-Eyd">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
-                <autoresizingMask key="autoresizingMask"/>
-                <subviews>
-                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="depop username (optional)" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="5ss-h2-8KT">
-                        <rect key="frame" x="49" y="0.0" width="222" height="43"/>
-                        <color key="tintColor" red="0.43137254899999999" green="0.87450980389999999" blue="0.92156862750000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                        <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="16"/>
-                        <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" returnKeyType="done"/>
-                    </textField>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="link.png" translatesAutoresizingMaskIntoConstraints="NO" id="8kP-9B-LSY">
-                        <rect key="frame" x="18" y="14" width="15" height="15"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="15" id="3qI-D1-aJH"/>
-                        </constraints>
-                    </imageView>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Bxh-57-ybi">
-                        <rect key="frame" x="281" y="11" width="21" height="21"/>
-                        <state key="normal" image="infoB.png"/>
-                        <connections>
-                            <action selector="depopInfoPressed:" destination="-1" eventType="touchUpInside" id="iyb-Pw-gsR"/>
-                        </connections>
-                    </button>
-                </subviews>
-                <constraints>
-                    <constraint firstItem="Bxh-57-ybi" firstAttribute="top" secondItem="Ndx-rw-Eyd" secondAttribute="topMargin" constant="3" id="7d9-YK-W4Z"/>
-                    <constraint firstItem="8kP-9B-LSY" firstAttribute="top" secondItem="Ndx-rw-Eyd" secondAttribute="topMargin" constant="6" id="CPn-eO-gCM"/>
-                    <constraint firstItem="5ss-h2-8KT" firstAttribute="leading" secondItem="8kP-9B-LSY" secondAttribute="trailing" constant="16" id="D7i-aZ-uZ4"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="Bxh-57-ybi" secondAttribute="trailing" constant="10" id="D86-Ig-EoD"/>
-                    <constraint firstItem="Bxh-57-ybi" firstAttribute="centerY" secondItem="Ndx-rw-Eyd" secondAttribute="centerY" id="IKn-iI-ADd"/>
-                    <constraint firstItem="5ss-h2-8KT" firstAttribute="top" secondItem="Ndx-rw-Eyd" secondAttribute="top" id="NOb-cm-kIR"/>
-                    <constraint firstItem="5ss-h2-8KT" firstAttribute="centerX" secondItem="Ndx-rw-Eyd" secondAttribute="centerX" id="Ywf-ei-Gxy"/>
-                    <constraint firstItem="Bxh-57-ybi" firstAttribute="leading" secondItem="5ss-h2-8KT" secondAttribute="trailing" constant="10" id="Zgm-IX-oGi"/>
-                    <constraint firstItem="8kP-9B-LSY" firstAttribute="leading" secondItem="Ndx-rw-Eyd" secondAttribute="leadingMargin" constant="10" id="bHe-vs-Fpf"/>
-                    <constraint firstItem="8kP-9B-LSY" firstAttribute="centerY" secondItem="Bxh-57-ybi" secondAttribute="centerY" id="gTD-yD-9xT"/>
-                    <constraint firstItem="8kP-9B-LSY" firstAttribute="centerY" secondItem="5ss-h2-8KT" secondAttribute="centerY" id="hcn-0A-qal"/>
-                </constraints>
-            </tableViewCellContentView>
-            <point key="canvasLocation" x="-62" y="561"/>
-        </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="80" id="bDI-pb-ngd">
             <rect key="frame" x="0.0" y="0.0" width="320" height="80"/>
             <autoresizingMask key="autoresizingMask"/>
@@ -455,11 +398,9 @@
         </tableViewCell>
     </objects>
     <resources>
-        <image name="currencyIcon.png" width="17" height="17"/>
-        <image name="emailIcon.png" width="13" height="14"/>
-        <image name="globeIcon.png" width="13" height="14"/>
-        <image name="infoB.png" width="22" height="22"/>
-        <image name="link.png" width="17" height="17"/>
-        <image name="userIcon.png" width="13" height="14"/>
+        <image name="regDollar.png" width="17" height="17"/>
+        <image name="regEmail.png" width="17" height="17"/>
+        <image name="regGlobe.png" width="17" height="17"/>
+        <image name="regUserIcon.png" width="17" height="17"/>
     </resources>
 </document>

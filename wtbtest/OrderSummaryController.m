@@ -357,7 +357,6 @@
     FeedbackController *vc = [[FeedbackController alloc]init];
     vc.IDUser = self.otherUser.objectId;
     vc.purchased = self.purchased;
-    vc.orderObject = self.orderObject;
     [self.navigationController pushViewController:vc animated:YES];
 }
 - (IBAction)reportPressed:(id)sender {

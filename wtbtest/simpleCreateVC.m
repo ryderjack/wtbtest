@@ -14,6 +14,7 @@
 #import "ForSaleListing.h"
 #import "ForSaleCell.h"
 #import "CreateViewController.h"
+#import "CreateForSaleListing.h"
 
 @interface simpleCreateVC ()
 
@@ -23,6 +24,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    [self.orImageView setHidden:YES];
+    [self.sellButton setHidden:YES];
 
     self.titleTextLabel.delegate = self;
     self.photostotal = 0;
@@ -42,9 +46,38 @@
     [self.view addGestureRecognizer:tap];
     
     if (self.introMode != YES) {
-        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-        [center addObserver:self selector:@selector(keyboardOnScreen:) name:UIKeyboardDidShowNotification object:nil];
-        [center addObserver:self selector:@selector(keyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+        //uncomment these to enable the bouncing button
+//        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+//        [center addObserver:self selector:@selector(keyboardOnScreen:) name:UIKeyboardDidShowNotification object:nil];
+//        [center addObserver:self selector:@selector(keyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+        
+        PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
+        [trustedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+        [trustedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+            if (number >= 1) {
+                self.isSeller = YES;
+                
+                self.orImageView.alpha = 0.0f;
+                self.sellButton.alpha = 0.0f;
+
+                [self.orImageView setHidden:NO];
+                [self.sellButton setHidden:NO];
+                
+                [UIView animateWithDuration:0.5
+                                      delay:0
+                                    options:UIViewAnimationOptionCurveEaseIn
+                                 animations:^{
+                                     [self.orImageView setAlpha:1.0];
+                                     [self.sellButton setAlpha:1.0];
+                                 }
+                                 completion:nil];
+            }
+            else{
+                self.isSeller = NO;
+                [self.orImageView setHidden:YES];
+                [self.sellButton setHidden:YES];
+            }
+        }];
     }
 }
 
@@ -56,8 +89,32 @@
 -(void)viewWillAppear:(BOOL)animated{
     [self.navigationController.navigationBar setHidden:YES];
     
+    if (self.createdListing == YES) {
+        if ([self.listing objectForKey:@"sizeLabel"]) {
+            [self.successView.firstButton setHidden:YES];
+            [self.successView.secondButton setHidden:YES];
+        }
+    }
+    
     if (self.introMode == YES) {
+        [self.orImageView setHidden:YES];
+        [self.sellButton setHidden:YES];
+        
+        self.skipButton.alpha = 0.0f;
         [self.skipButton setHidden:NO];
+        
+        //unhide after 5 seconds
+        double delayInSeconds = 5.0;
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            [UIView animateWithDuration:1.0
+                                  delay:0.0
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [self.skipButton setAlpha:1.0];
+                             }
+                             completion:nil];
+        });
     }
     else{
         [self.skipButton setHidden:YES];
@@ -137,6 +194,7 @@
         for (NSString *string in words) {
             if ([self.profanityList containsObject:string.lowercaseString]) {
                 textField.text = @"";
+                return;
             }
         }
     }
@@ -239,6 +297,8 @@
 //        }];
     }]];
     
+
+    
     [self.JRWebView presentViewController:actionSheet animated:YES completion:nil];
 }
 
@@ -290,7 +350,8 @@
 }
 -(void)finalImage:(UIImage *)image{
     //save image if just been taken
-    UIImage *newImage = [image resizedImage:CGSizeMake(750.00, 750.00) interpolationQuality:kCGInterpolationHigh];
+    
+    UIImage *newImage = [image scaleImageToSize:CGSizeMake(750, 750)];
 
     if (self.shouldSave == YES) {
         UIImageWriteToSavedPhotosAlbum(newImage, nil, nil, nil);
@@ -326,6 +387,9 @@
     self.successView.layer.cornerRadius = 10;
     self.successView.layer.masksToBounds = YES;
     
+    [self.successView.firstButton setHidden:NO];
+    [self.successView.secondButton setHidden:NO];
+    
     self.bgView = [[UIView alloc]initWithFrame:self.view.frame];
     self.bgView.backgroundColor = [UIColor blackColor];
     self.bgView.alpha = 0.0;
@@ -356,6 +420,7 @@
 }
 
 -(void)hideSuccess{
+    self.createdListing = NO;
     self.finishedListing = YES;
     [UIView animateWithDuration:1.0
                           delay:0.0
@@ -384,6 +449,10 @@
                          else{
                              [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170, -480, 340, 480)]; //iPhone 6/7 specific
                          }
+                         
+                         //reset buttons
+                         [self.successView.firstButton setHidden:NO];
+                         [self.successView.secondButton setHidden:NO];
                      }];
 }
 
@@ -687,10 +756,21 @@
     PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
     [self.listing setObject:imageFile1 forKey:@"image1"];
     
+    //set index on WTB
+    if ([[PFUser currentUser]objectForKey:@"postNumber"]) {
+        int index = [[[PFUser currentUser]objectForKey:@"postNumber"]intValue]+1;
+        [self.listing setObject:[NSNumber numberWithInt:index] forKey:@"index"];
+    }
+    else{
+        [self.listing setObject:@0 forKey:@"index"];
+    }
+    
     [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
             
             NSLog(@"listing saved! %@", self.listing.objectId);
+            
+            self.createdListing = YES;
             
             [self findRelevantItems];
             
@@ -712,11 +792,18 @@
 
             //add listing to home page via notif.
             [[NSNotificationCenter defaultCenter] postNotificationName:@"justPostedListing" object:self.listing];
-            [[PFUser currentUser]incrementKey:@"postNumber"];
-            [[PFUser currentUser] saveInBackground];
             
             //schedule local notif. for first listing
             if (![[PFUser currentUser] objectForKey:@"postNumber"]) {
+                
+                //cancel first listing local push
+                NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+                for(UILocalNotification *notification in notificationArray){
+                    if ([notification.alertBody isEqualToString:@"What do you want to buy? Create your first wanted listing on Bump now!"]) {
+                        // delete this notification
+                        [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
+                    }
+                }
                 
                 //local notifications set up
                 NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
@@ -725,12 +812,15 @@
                 NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
                 
                 UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-                [localNotification setAlertBody:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"];
+                [localNotification setAlertBody:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"]; //make sure this matches the app delegate local notifications handler method
                 [localNotification setFireDate: dateToFire];
                 [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
                 [localNotification setRepeatInterval: 0];
                 [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
             }
+            
+            [[PFUser currentUser]incrementKey:@"postNumber"];
+            [[PFUser currentUser] saveInBackground];
             
             //send FB friends a push asking them to Bump listing!
             NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just posted a listing - Tap to Bump it 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
@@ -1017,7 +1107,29 @@
 - (IBAction)skipButtonPressed:(id)sender {
     [Answers logCustomEventWithName:@"Skipped intro create"
                    customAttributes:@{}];
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    
+    //schedule local push reminder
+    //local notifications set up
+    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+    dayComponent.day = 1;
+    NSCalendar *theCalendar = [NSCalendar currentCalendar];
+    NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+    
+    UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+    [localNotification setAlertBody:@"What do you want to buy? Create your first wanted listing on Bump now!"]; //make sure this matches the app delegate local notifications handler method
+    [localNotification setFireDate: dateToFire];
+    [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+    [localNotification setRepeatInterval: 0];
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+    
+    //setup so user is taken to Buy Now
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"viewMorePressed"];
+    [self.navigationController dismissViewControllerAnimated:YES completion:^{
+        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+        appDelegate.tabBarController.selectedIndex = 1;
+    }];
+    
+//    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
 
@@ -1049,7 +1161,6 @@
     [self.bouncingButton.layer removeAllAnimations];
     
     [self.view.layer removeAllAnimations];
-    
     [self.view addSubview:self.bouncingButton];
 
     [UIView animateWithDuration:0.3
@@ -1086,6 +1197,15 @@
                          self.settingUp = NO;
 
                      }];
+}
+- (IBAction)sellPressed:(id)sender {
+    [Answers logCustomEventWithName:@"Sell Pressed in Create"
+                   customAttributes:@{}];
+    
+    self.titleTextLabel.text = @"";
+    CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    [self presentViewController:nav animated:YES completion:nil];
 }
 
 @end

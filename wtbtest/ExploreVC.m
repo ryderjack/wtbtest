@@ -16,6 +16,7 @@
 #import "UserProfileController.h"
 #import "ContainerViewController.h"
 #import "Tut1ViewController.h"
+#import "ChatWithBump.h"
 
 @interface ExploreVC ()
 
@@ -81,6 +82,9 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(insertLatestListing:) name:@"justPostedListing" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBumpDrop:) name:@"showBumpedDropDown" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(messageSentDrop:) name:@"messageSentDropDown" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showScreenShot:) name:@"screenshotDropDown" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showReleasePage:) name:@"showRelease" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setUpRateViewWithNav:) name:@"showRate" object:nil];
     
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.delegate = self;
@@ -118,6 +122,7 @@
     
     self.filtersArray = [NSMutableArray array];
     
+    
     // set searchbar font
     NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                       NSFontAttributeName, nil];
@@ -136,6 +141,7 @@
     }
     else{
         //get updated friends list
+        NSLog(@"get friends list");
         FBSDKGraphRequest *request = [[FBSDKGraphRequest alloc]
                                       initWithGraphPath:@"me/friends"
                                       parameters:@{@"fields": @"id, name"}
@@ -177,6 +183,7 @@
     PFUser *currentUser = [PFUser currentUser];
     
     if (currentUser) {
+        NSLog(@"got a current user");
         if (![[currentUser objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
             [Answers logCustomEventWithName:@"Registration error"
                            customAttributes:@{
@@ -191,27 +198,29 @@
             [self presentViewController:navController animated:NO completion:nil];
         }
         
-        //removed these variables as they're cripplingly rigid..
+        //check if all essential info saved from reg - if not then let them do it again
         
-//        else if (![currentUser objectForKey:PF_USER_FULLNAME] || ![currentUser objectForKey:PF_USER_EMAIL] || ![currentUser objectForKey:@"currency"] || ![currentUser objectForKey:PF_USER_FACEBOOKID] || ![currentUser objectForKey: PF_USER_GENDER] || ![currentUser objectForKey:@"picture"]) {
-//            //been an error on sign up as user doesn't have all info saved
-//            
-//            [Answers logCustomEventWithName:@"Registration error"
-//                           customAttributes:@{
-//                                              @"error":@"lack of info",
-//                                              @"user":currentUser.username
-//                                              }];
-//            
-//            currentUser[@"completedReg"] = @"NO";
-//            [currentUser saveInBackground];
-//            [PFUser logOut];
-//            WelcomeViewController *vc = [[WelcomeViewController alloc]init];
-//            NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
-//            [self presentViewController:navController animated:NO completion:nil];
-//        }
-        else{
-            //user has signed up fine
+        else if (![currentUser objectForKey:PF_USER_FULLNAME] || ![currentUser objectForKey:PF_USER_EMAIL] || ![currentUser objectForKey:@"currency"] || ![currentUser objectForKey:PF_USER_FACEBOOKID] || currentUser.username.length >20) { //CHECK
+            //been an error on sign up as user doesn't have all info saved / error with username
             
+            [Answers logCustomEventWithName:@"Registration error"
+                           customAttributes:@{
+                                              @"error":@"lack of info",
+                                              @"user":currentUser.username
+                                              }];
+            
+            currentUser[@"completedReg"] = @"NO";
+            [currentUser saveInBackground];
+            [PFUser logOut];
+            WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+            self.welcomeShowing = YES;
+            NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+            [self presentViewController:navController animated:NO completion:nil];
+        }
+        else{
+            //user has signed up fine, do final checks
+            NSLog(@"user has signed up fine, lets do final checks");
+
             //check if have lowercase fullname
             if (![currentUser objectForKey:@"fullnameLower"]) {
                 //for search purposes so can search by name!
@@ -278,6 +287,32 @@
                 }];
             }
             
+            //check if their listings have been indexed for Buy Now 2.0
+            if (![currentUser objectForKey:@"indexedListings"]) {
+                
+                PFQuery *usersListings = [PFQuery queryWithClassName:@"wantobuys"];
+                [usersListings whereKey:@"postUser" equalTo:currentUser];
+                [usersListings orderByDescending:@"createdAt"];
+                usersListings.limit = 500;
+                [usersListings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                    if (objects) {
+                     
+                        int indexCount = 0;
+                        for (PFObject *listing in objects) {
+                            NSLog(@"SETTING INDEX %d", indexCount);
+                            [listing setObject:[NSNumber numberWithInt:indexCount] forKey:@"index"];
+                            [listing saveInBackground];
+                            indexCount++;
+                        }
+                        currentUser[@"indexedListings"] = @"YES";
+                        [currentUser saveInBackground];
+                    }
+                    else{
+                        NSLog(@"error fetching user's listings to index %@", error);
+                    }
+                }];
+            }
+            
             // finally check if they've been banned - put it last because otherwise if logout user from a previous user check this will still run and throw error 'can't do a comparison query for type (null)
             
             PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
@@ -307,8 +342,16 @@
                 UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:nil preferredStyle:UIAlertControllerStyleAlert];
                 
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    [Answers logCustomEventWithName:@"Cancel Update pressed"
+                                   customAttributes:@{
+                                                      @"page":@"Explore"
+                                                      }];
                 }]];
                 [alertView addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [Answers logCustomEventWithName:@"Update pressed"
+                                   customAttributes:@{
+                                                      @"page":@"Explore"
+                                                      }];
                     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
                                                                 @"itms-apps://itunes.apple.com/app/id1096047233"]];
                 }]];
@@ -357,6 +400,8 @@
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, [UIColor blackColor], NSForegroundColorAttributeName,  nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+    [self.navigationController.navigationBar setHidden:NO];
     
     if (![PFUser currentUser]) {
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
@@ -891,11 +936,8 @@
                 [self.noresultsLabel setHidden:YES];
                 [self.noResultsImageView setHidden:YES];
                 
-                NSLog(@"MY ARRAY: %@",[[PFUser currentUser] objectForKey:@"seenListings"]);
-                
                 NSLog(@"START TO IGNORE WHAT IVE ALREADY SEEN");
                 self.ignoreShownTo = YES;
-                
                 
                 //reset seen list for next time
                 [[PFUser currentUser]setObject:@[] forKey:@"seenListings"];
@@ -1125,12 +1167,12 @@
 
 -(void)setupInfinQuery{
     if (self.filtersArray.count > 0) {
-        if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.infiniteQuery orderByDescending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
-        }
-        else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
-        }
+//        if ([self.filtersArray containsObject:@"hightolow"]) {
+//            [self.infiniteQuery orderByDescending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
+//        }
+//        else if ([self.filtersArray containsObject:@"lowtohigh"]){
+//            [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
+//        }
         
         if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
             [self.infiniteQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation];
@@ -1263,12 +1305,12 @@
 }
 -(void)setupPullQuery{
     if (self.filtersArray.count > 0) {
-        if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.pullQuery orderByDescending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
-        }
-        else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.pullQuery orderByAscending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
-        }
+//        if ([self.filtersArray containsObject:@"hightolow"]) {
+//            [self.pullQuery orderByDescending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
+//        }
+//        else if ([self.filtersArray containsObject:@"lowtohigh"]){
+//            [self.pullQuery orderByAscending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
+//        }
         
         if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
             [self.pullQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation];
@@ -1449,8 +1491,15 @@
                                       }];
     
     ExploreCell *cell = sender;
-    NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[listingObject objectForKey:@"bumpArray"]];
-    NSMutableArray *personalBumpArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+    NSMutableArray *bumpArray = [NSMutableArray array];
+    if ([listingObject objectForKey:@"bumpArray"]) {
+        [bumpArray addObjectsFromArray:[listingObject objectForKey:@"bumpArray"]];
+    }
+    
+    NSMutableArray *personalBumpArray = [NSMutableArray array];
+    if ([[PFUser currentUser] objectForKey:@"bumpArray"]) {
+        [personalBumpArray addObjectsFromArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+    }
 
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
         NSLog(@"already bumped it m8");
@@ -1464,7 +1513,19 @@
         if ([personalBumpArray containsObject:listingObject.objectId]) {
             [personalBumpArray removeObject:listingObject.objectId];
         }
-
+        
+        //update bump object
+        PFQuery *bumpQ = [PFQuery queryWithClassName:@"BumpedListings"];
+        [bumpQ whereKey:@"bumpUser" equalTo:[PFUser currentUser]];
+        [bumpQ whereKey:@"listing" equalTo:listingObject];
+        [bumpQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            if (objects) {
+                for (PFObject *bump in objects) {
+                    [bump setObject:@"deleted" forKey:@"status"];
+                    [bump saveInBackground];
+                }
+            }
+        }];
     }
     else{
         NSLog(@"bumped");
@@ -1504,6 +1565,12 @@
                                               @"where":@"Home"
                                               }];
         }
+        
+        PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+        [bumpObj setObject:listingObject forKey:@"listing"];
+        [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+        [bumpObj setObject:@"live" forKey:@"status"];
+        [bumpObj saveInBackground];
     }
     
     //save listing
@@ -1543,6 +1610,21 @@
     NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
     [nav pushViewController:vc animated:YES];
 }
+
+- (void)showReleasePage:(NSNotification*)note {
+    NSString *releaseLink = [note object];
+    
+    self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:releaseLink]];
+    self.web.showUrlWhileLoading = YES;
+    self.web.showPageTitles = YES;
+    self.web.doneButtonTitle = @"";
+    self.web.paypalMode = NO;
+    self.web.infoMode = NO;
+    self.web.delegate = self;
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
+    [self presentViewController:navigationController animated:YES completion:nil];
+}
+
 - (void)handleDrop:(NSNotification*)note {
     NSString *listingID = [note object];
     
@@ -1575,6 +1657,8 @@
                     self.dropDown.mainLabel.text = [NSString stringWithFormat:@"Your Facebook friend %@ just posted a listing - Tap to Bump it 👊", [postUser objectForKey:@"fullname"]];
                     self.justABump = NO;
                     self.justAMessage = NO;
+                    self.sendMode = NO;
+
                     //animate down
                     [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
                     
@@ -1609,13 +1693,12 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+                            [self.dropDown setFrame:CGRectMake(0, -150, self.view.frame.size.width, 119)];
                         }
                      completion:^(BOOL finished) {
                          //Completion Block
                          [self.dropDown removeFromSuperview];
                      }];
-    
 }
 
 -(void)handleBumpDrop:(NSNotification*)note {
@@ -1656,6 +1739,8 @@
                     self.dropDown.mainLabel.text = message;
                     self.justABump = YES;
                     self.justAMessage = NO;
+                    self.sendMode = NO;
+
                     //animate down
                     [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
                     
@@ -1703,8 +1788,12 @@
                          [self.dropDown removeFromSuperview];
                      }];
     
-    if (self.justAMessage == YES){
-        
+    if (self.justAMessage == YES && self.sendMode == YES){
+        //trigger send box
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"showSendBox" object:nil];
+    }
+    else if (self.justAMessage == YES){
+        //do nothing
     }
     else if (self.justABump == NO) {
         BumpVC *vc = [[BumpVC alloc]init];
@@ -1730,18 +1819,23 @@
     self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
     self.searchBgView.alpha = 0.0;
     
-    UIImageView *imgView = [[UIImageView alloc]initWithFrame:self.searchBgView.frame];
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-        //iphone 5
-        [imgView setImage:[UIImage imageNamed:@"searchIntro1"]];
+    if (self.lowRating == YES) {
+        [self.searchBgView setBackgroundColor:[UIColor blackColor]];
     }
     else{
-        //iPhone 6 specific
-        [imgView setImage:[UIImage imageNamed:@"searchIntro"]];
+        UIImageView *imgView = [[UIImageView alloc]initWithFrame:self.searchBgView.frame];
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+            //iphone 5
+            [imgView setImage:[UIImage imageNamed:@"searchIntro1"]];
+        }
+        else{
+            //iPhone 6 specific
+            [imgView setImage:[UIImage imageNamed:@"searchIntro"]];
+        }
+        [self.searchBgView addSubview:imgView];
     }
-    [self.searchBgView addSubview:imgView];
-    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
     
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
     [UIView animateWithDuration:0.3
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -1753,8 +1847,18 @@
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
     self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.customAlert.delegate = self;
-    self.customAlert.titleLabel.text = @"Selling Something?";
-    self.customAlert.messageLabel.text = @"Hit the Search button to find wanted listings that match what you’re selling";
+    
+    if (self.lowRating == YES) {
+        self.customAlert.titleLabel.text = @"Your Feedback";
+        self.customAlert.messageLabel.text = @"Hit 'Message' to send Team Bump some quick feedback 💬";
+        self.customAlert.numberOfButtons = 2;
+    }
+    else{
+        self.customAlert.titleLabel.text = @"Selling Something?";
+        self.customAlert.messageLabel.text = @"Hit the Search button to find wanted listings that match what you’re selling";
+        self.customAlert.numberOfButtons = 1;
+    }
+
     
     if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
         //iphone5
@@ -1769,7 +1873,7 @@
     
     [[UIApplication sharedApplication].keyWindow addSubview:self.customAlert];
     
-    [UIView animateWithDuration:1.5
+    [UIView animateWithDuration:1.0
                           delay:1.0
          usingSpringWithDamping:0.5
           initialSpringVelocity:0.5
@@ -1781,6 +1885,10 @@
                             }
                             else{
                                 [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 100, 300, 188)]; //iPhone 6/7 specific
+                            }
+                            
+                            if (self.lowRating == YES) {
+                                self.customAlert.center = self.view.center;
                             }
                         }
                      completion:^(BOOL finished) {
@@ -1825,7 +1933,7 @@
     
     [[UIApplication sharedApplication].keyWindow addSubview:self.pushAlert];
     
-    [UIView animateWithDuration:1.5
+    [UIView animateWithDuration:1.0
                           delay:0.2
          usingSpringWithDamping:0.5
           initialSpringVelocity:0.5
@@ -1879,9 +1987,15 @@
                          }];
     }
     else{
-        //search intro
-        [[PFUser currentUser]setObject:@"YES" forKey:@"searchIntro"];
-        [[PFUser currentUser] saveInBackground];
+        if (self.lowRating == YES) {
+            self.lowRating = NO;
+        }
+        else{
+            //search intro
+            [[PFUser currentUser]setObject:@"YES" forKey:@"searchIntro"];
+            [[PFUser currentUser] saveInBackground];
+        }
+
         [UIView animateWithDuration:0.3
                               delay:0
                             options:UIViewAnimationOptionCurveEaseIn
@@ -1915,31 +2029,85 @@
 }
 //custom alert delegates
 -(void)firstPressed{
-    //push reminder
-    [Answers logCustomEventWithName:@"Denied Push Permissions"
-                   customAttributes:@{
-                                      @"mode":@"redownloaded"
-                                      }];
-    [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"declinedPushPermissions"];
+    
+    if (self.lowRating == YES) {
+        [Answers logCustomEventWithName:@"Dismissed Feedback Ask Prompt"
+                       customAttributes:@{}];
+
+    }
+    else{
+        //push reminder
+        [Answers logCustomEventWithName:@"Denied Push Permissions"
+                       customAttributes:@{
+                                          @"mode":@"redownloaded"
+                                          }];
+        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"declinedPushPermissions"];
+    }
+
     [self donePressed];
 }
 -(void)secondPressed{
-    //push reminder
-    [Answers logCustomEventWithName:@"Accepted Push Permissions"
-                   customAttributes:@{
-                                      @"mode":@"redownloaded"
-                                      }];
-    [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForPushPermission"];
-    [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"declinedPushPermissions"];
-
-    UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
-                                                    UIUserNotificationTypeBadge |
-                                                    UIUserNotificationTypeSound);
-    UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:userNotificationTypes
-                                                                             categories:nil];
-    [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
-    [[UIApplication sharedApplication] registerForRemoteNotifications];
     
+    if (self.lowRating == YES) {
+        [Answers logCustomEventWithName:@"Message Team Bump pressed from Rate prompt"
+                       customAttributes:@{}];
+        
+        NSLog(@"NAV %@", self.messageNav);
+        
+        //goto Team Bump messages
+        PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
+        NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+        [convoQuery whereKey:@"convoId" equalTo:convoId];
+        [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                //convo exists, go there
+                ChatWithBump *vc = [[ChatWithBump alloc]init];
+                vc.convoId = [object objectForKey:@"convoId"];
+                vc.convoObject = object;
+                vc.otherUser = [PFUser currentUser];
+                NavigationController *nav = (NavigationController*)self.messageNav;
+                [nav pushViewController:vc animated:YES];
+            }
+            else{
+                //create a new one
+                PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
+                convoObject[@"otherUser"] = [PFUser currentUser];
+                convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+                convoObject[@"totalMessages"] = @0;
+                [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        //saved, goto VC
+                        ChatWithBump *vc = [[ChatWithBump alloc]init];
+                        vc.convoId = [convoObject objectForKey:@"convoId"];
+                        vc.convoObject = convoObject;
+                        vc.otherUser = [PFUser currentUser];
+                        NavigationController *nav = (NavigationController*)self.messageNav;
+                        [nav pushViewController:vc animated:YES];
+                    }
+                    else{
+                        NSLog(@"error saving convo");
+                    }
+                }];
+            }
+        }];
+    }
+    else{
+        //push reminder
+        [Answers logCustomEventWithName:@"Accepted Push Permissions"
+                       customAttributes:@{
+                                          @"mode":@"redownloaded"
+                                          }];
+        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForPushPermission"];
+        [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"declinedPushPermissions"];
+        
+        UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
+                                                        UIUserNotificationTypeBadge |
+                                                        UIUserNotificationTypeSound);
+        UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:userNotificationTypes
+                                                                                 categories:nil];
+        [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+        [[UIApplication sharedApplication] registerForRemoteNotifications];
+    }
     [self donePressed];
 }
 
@@ -1970,7 +2138,7 @@
 }
 
 -(void)doubleTapScroll{
-    if (self.results.count != 0) {
+    if (self.results.count != 0 && self.listingTapped == NO) {
         [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
                                     atScrollPosition:UICollectionViewScrollPositionTop
                                             animated:YES];
@@ -2055,6 +2223,204 @@
 
 -(void)welcomeDismissed{
     self.welcomeShowing = NO;
+}
+
+-(void)showScreenShot:(NSNotification*)note {
+    
+    [Answers logCustomEventWithName:@"Showing Screenshot Notification"
+                   customAttributes:@{}];
+    
+    self.dropDown = nil;
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
+    self.dropDown = (notificatView *)[nib objectAtIndex:0];
+    self.dropDown.delegate = self;
+    self.dropDown.sentMode = YES;
+    [self.dropDown.imageView setImage:[UIImage imageNamed:@"envelopeSend"]];
+    [self setImageBorder:self.dropDown.imageView];
+    
+    self.dropDown.mainLabel.text = @"Tap Send to share this listing with friends on Bump!";
+    
+    //setup what happens when user taps notification
+    self.justAMessage = YES;
+    self.sendMode = YES;
+    
+    //animate down
+    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
+                        }
+                     completion:^(BOOL finished) {
+                         //schedule auto dismiss
+                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                             [self dismissDrop];
+                         });
+                     }];
+    
+    UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.dropDown addGestureRecognizer:swipeGesture];
+}
+
+#pragma mark - web view delegates
+-(void)paidPressed{
+    //do nothing
+}
+
+-(void)cancelWebPressed{
+    [self.web dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)cameraPressed{
+    //do nothing
+}
+
+-(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
+    //do nothing
+}
+
+#pragma mark - rate delegates
+
+-(void)setUpRateViewWithNav:(NSNotification*)note{
+    
+    UINavigationController *nav = [note object];
+
+    self.messageNav = nav;
+    
+    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.searchBgView.alpha = 0.0;
+    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"RateView" owner:self options:nil];
+    self.rateView = (RateCustomView *)[nib objectAtIndex:0];
+    self.rateView.delegate = self;
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.rateView setFrame:CGRectMake((self.view.frame.size.width/2)-135, -220, 270, 220)];
+    }
+    else{
+        [self.rateView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -210, 300, 210)]; //iPhone 6/7 specific
+    }
+    
+    self.rateView.layer.cornerRadius = 10;
+    self.rateView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.rateView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:1.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.rateView setFrame:CGRectMake(0, 0, 270,220)];
+                            }
+                            else{
+                                [self.rateView setFrame:CGRectMake(0, 0, 300, 210)]; //iPhone 6/7 specific
+                            }
+                            
+                            self.rateView.center = self.view.center;
+
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+
+-(void)dismissRatePressed{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.searchBgView = nil;
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.rateView setFrame:CGRectMake((self.view.frame.size.width/2)-187.5, 1000, 375, 235)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.rateView setAlpha:0.0];
+                         self.rateView = nil;
+                         
+                         if (self.lowRating == YES) {
+                             //show prompt
+                             [self setUpIntroAlert];
+                         }
+                     }];
+    
+}
+-(void)ratePressedWithNumber:(int)starNumber{
+    
+    [Answers logCustomEventWithName:@"User Rated App"
+                   customAttributes:@{
+                                      @"Rating":[NSString stringWithFormat:@"%d", starNumber]
+                                      }];
+    
+    if (starNumber >= 4) {
+        
+        //take to store
+        NSURL *storeURL = [NSURL URLWithString:@"itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=1096047233&onlyLatestVersion=true&pageNumber=0&sortOrdering=1&type=Purple+Software&action=write-review"];
+        if ([[UIApplication sharedApplication] canOpenURL: storeURL]) {
+            [[UIApplication sharedApplication] openURL: storeURL];
+        }
+        
+//        NSString *reqSysVer = @"10.3";
+//        NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+//        if ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending) { //CHANGE
+//            NSLog(@"10.3 or later");
+//        }
+//        else{
+//            NSLog(@"current version is %@", currSysVer);
+//            
+//            NSURL *storeURL = [NSURL URLWithString:@"itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=1096047233&onlyLatestVersion=true&pageNumber=0&sortOrdering=1&type=Purple+Software&action=write-review"];
+//            if ([[UIApplication sharedApplication] canOpenURL: storeURL]) {
+//                [[UIApplication sharedApplication] openURL: storeURL];
+//            }
+//        }
+
+        [self dismissRatePressed];
+        
+    }
+    else{
+        //prompt for team bump message
+        self.lowRating = YES;
+        [self dismissRatePressed];
+    }
+    
+    //save info
+    [[PFUser currentUser]setObject:[NSNumber numberWithInt:starNumber] forKey:@"lastRating"];
+    [[PFUser currentUser]setObject:[NSDate date] forKey:@"reviewDate"];
+    NSString *currentVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+    [[PFUser currentUser]setObject:currentVersion forKey:@"versionReviewed"];
+    [[PFUser currentUser]saveInBackground];
 }
 
 

@@ -15,7 +15,8 @@
 #import "Tut1ViewController.h"
 #import <Crashlytics/Crashlytics.h>
 #import "UIImage+Resize.h"
-
+#import <QuartzCore/QuartzCore.h>
+#import <SDWebImage/UIImageView+WebCache.h>
 
 @interface RegisterViewController ()
 @end
@@ -95,7 +96,7 @@
                 [self setImageBorder:self.friendTwoImageView];
                 [self setImageBorder:self.friendThreeImageView];
                 
-                self.friendsLabel.text = [NSString stringWithFormat:@"%lu friends on Bump", friends.count];
+                self.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", friends.count];
                 self.showFriendsCell = YES;
                 
                 int rowIndex = 0;//your row index where you want to add cell
@@ -104,20 +105,15 @@
                 NSArray *array = [NSArray arrayWithObject:iPath];
                 [self.tableView insertRowsAtIndexPaths:array withRowAnimation:UITableViewRowAnimationFade];
                 
-                NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", [friends[0] objectForKey:@"id"]];
-                NSURL *picUrl = [NSURL URLWithString:userImageURL];
-                NSData *pic = [NSData dataWithContentsOfURL:picUrl];
-                [self.friendOneImageView setImage:[UIImage imageWithData:pic]];
+                //set images
+                NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", [friends[0] objectForKey:@"id"]]];
+                [self.friendOneImageView sd_setImageWithURL:picUrl];
                 
-                NSString *user2ImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", [friends[1] objectForKey:@"id"]];
-                NSURL *picUrl2 = [NSURL URLWithString:user2ImageURL];
-                NSData *pic2 = [NSData dataWithContentsOfURL:picUrl2];
-                [self.friendTwoImageView setImage:[UIImage imageWithData:pic2]];
+                NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",[friends[1] objectForKey:@"id"]]];
+                [self.friendTwoImageView sd_setImageWithURL:picUrl2];
                 
-                NSString *user3ImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", [friends[2] objectForKey:@"id"]];
-                NSURL *picUrl3 = [NSURL URLWithString:user3ImageURL];
-                NSData *pic3 = [NSData dataWithContentsOfURL:picUrl3];
-                [self.friendThreeImageView setImage:[UIImage imageWithData:pic3]];
+                NSURL *picUrl3 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",[friends[2] objectForKey:@"id"]]];
+                [self.friendThreeImageView sd_setImageWithURL:picUrl3];
             }
         }
     }];
@@ -292,7 +288,7 @@
             return 44;
         }
         else if(indexPath.row == 5){
-            return 147;
+            return 156;
         }
     }
     else if (indexPath.section ==1){
@@ -448,6 +444,7 @@
                         self.user[PF_USER_USERNAME] = [username lowercaseString];
                         self.user[@"currency"] = self.selectedCurrency;
                         self.user[@"completedReg"] = @"YES";
+                        self.user[@"indexedListings"] = @"YES";
                         self.user[@"bumpArray"] = @[];
 
                         [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
@@ -508,7 +505,7 @@
                                  convoObject[@"totalMessages"] = @0;
                                  [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                                      if (succeeded) {
-                                         NSString *messageString = @"🙌 Welcome to Bump 🙌\n\n💎 Want to buy something?\nCreate listings for items you want then sit back and wait for sellers to send you offers to buy their stuff (Plus there's ZERO fees). Bump also recommends related items to you - just tap the cart icon!\n\n🤑Selling something?\nUse the search & filter tools to find people that want what you're selling and then send them an offer to buy your item.\n\n📲 How to sell?\nJust tap the tag icon in a chat and hit 'Send an offer'. Buyers can then tap the offer message to complete the purchase using PayPal without leaving Bump!\n\nGot any questions? Just message us here - we're available 24/7/365\n\nHappy Buying!\nTeam Bump";
+                                         NSString *messageString = @"🙌 Welcome to Bump 🙌\n\n👟 Want to buy streetwear?\nCreate wanted listings in seconds that tell sellers what you're looking for, then check out items you can buy straight away on Bump.\n\n🤑 Selling something?\nUse the search tools to find people that want what you're selling and send them a message!\n\n💥 Discover\nTap the shopping cart icon to browse items for sale as well as the latest sneaker releases & schedule reminders too.\n\nGot any questions? Just send us a message 👊\n\nSophie @ Team Bump";
                                          
                                          //saved, create intro message
                                          PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
@@ -692,10 +689,12 @@
     
     self.pressedCam = YES;
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
-    self.profilePicture.image = nil;
-    [self showHUD];
-    UIImage *imageToSave = [chosenImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
     
+    [self showHUD];
+//    UIImage *imageToSave = [chosenImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
+    
+    UIImage *imageToSave = [chosenImage scaleImageToSize:CGSizeMake(750, 750)];
+
     NSData* data = UIImageJPEGRepresentation(imageToSave, 0.7f);
     if (data == nil) {
         NSLog(@"error with data");
@@ -712,6 +711,7 @@
         
         [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
+                self.profilePicture.image = nil;
                 [self.profilePicture setFile:filePicture];
                 [self.profilePicture loadInBackground];
                 [self hideHUD];
@@ -785,5 +785,27 @@
     [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
+}
+
+- (UIImage *)scaleImageToSize:(CGSize)newSize ofImage: (UIImage *)image {
+    
+    CGRect scaledImageRect = CGRectZero;
+    
+    CGFloat aspectWidth = newSize.width / image.size.width;
+    CGFloat aspectHeight = newSize.height / image.size.height;
+    CGFloat aspectRatio = MAX ( aspectWidth, aspectHeight );
+    
+    scaledImageRect.size.width = image.size.width * aspectRatio;
+    scaledImageRect.size.height = image.size.height * aspectRatio;
+    scaledImageRect.origin.x = (newSize.width - scaledImageRect.size.width) / 2.0f;
+    scaledImageRect.origin.y = (newSize.height - scaledImageRect.size.height) / 2.0f;
+    
+    UIGraphicsBeginImageContextWithOptions( newSize, NO, 0 );
+    [image drawInRect:scaledImageRect];
+    UIImage* scaledImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return scaledImage;
+    
 }
 @end

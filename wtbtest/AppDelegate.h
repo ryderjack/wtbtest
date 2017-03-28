@@ -15,8 +15,10 @@
 #import "BuyNowController.h"
 #import "simpleCreateVC.h"
 #import "UserProfileController.h"
+#import "PurchaseTab.h"
+#import "TOJRWebView.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate, UITabBarControllerDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, UITabBarControllerDelegate, JRWebViewDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 @property (strong, nonatomic) UITabBarController *tabBarController;
@@ -28,7 +30,12 @@
 @property (strong, nonatomic) InboxViewController *inboxView;
 @property (nonatomic, strong) PFInstallation *installation;
 @property (nonatomic, strong) BuyNowController *buyView;
+@property (nonatomic, strong) PurchaseTab *purchaseView;
 @property (nonatomic, strong) NSMutableArray *unseenMessages;
+
+//web view
+@property (nonatomic, strong) TOJRWebView *web;
+
 
 @end
 

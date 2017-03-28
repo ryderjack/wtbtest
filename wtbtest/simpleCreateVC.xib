@@ -10,12 +10,15 @@
     </dependencies>
     <customFonts key="customFonts">
         <array key="PingFang.ttc">
+            <string>PingFangSC-Regular</string>
             <string>PingFangSC-Semibold</string>
         </array>
     </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="simpleCreateVC">
             <connections>
+                <outlet property="orImageView" destination="zWw-Dk-BeK" id="TC7-Og-oe1"/>
+                <outlet property="sellButton" destination="4zV-eh-9bA" id="x4k-rm-lsh"/>
                 <outlet property="skipButton" destination="wOy-Uj-bsa" id="mqS-p3-azI"/>
                 <outlet property="titleTextLabel" destination="PeA-Us-ew8" id="KH3-2Y-aP0"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
@@ -27,22 +30,22 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="What do you want to buy?" textAlignment="center" clearsOnBeginEditing="YES" minimumFontSize="17" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="PeA-Us-ew8">
-                    <rect key="frame" x="16" y="90" width="343" height="84"/>
+                    <rect key="frame" x="16" y="108" width="344" height="41"/>
                     <color key="tintColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="84" id="iGK-xJ-If1"/>
+                        <constraint firstAttribute="height" constant="41" id="kVu-B8-2H7"/>
                     </constraints>
                     <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="17"/>
                     <textInputTraits key="textInputTraits" autocapitalizationType="words" returnKeyType="done"/>
                 </textField>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="wOy-Uj-bsa">
-                    <rect key="frame" x="164.5" y="182" width="46" height="30"/>
+                    <rect key="frame" x="165.5" y="182" width="46" height="30"/>
                     <constraints>
-                        <constraint firstAttribute="width" constant="46" id="1bh-nN-ZwI"/>
-                        <constraint firstAttribute="height" constant="30" id="Hhv-0y-2ZI"/>
+                        <constraint firstAttribute="width" constant="46" id="5fW-Io-moz"/>
+                        <constraint firstAttribute="height" constant="30" id="QAv-Wf-kEU"/>
                     </constraints>
-                    <fontDescription key="fontDescription" name="PingFangSC-Thin" family="PingFang SC" pointSize="13"/>
+                    <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
                     <state key="normal" title="Skip">
                         <color key="titleColor" red="0.86195838869999997" green="0.86195838869999997" blue="0.86195838869999997" alpha="1" colorSpace="calibratedRGB"/>
                     </state>
@@ -50,16 +53,41 @@
                         <action selector="skipButtonPressed:" destination="-1" eventType="touchUpInside" id="MeT-A8-mLQ"/>
                     </connections>
                 </button>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="createOR.png" translatesAutoresizingMaskIntoConstraints="NO" id="zWw-Dk-BeK">
+                    <rect key="frame" x="100.5" y="159" width="174" height="7"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="174" id="rb2-r9-DBW"/>
+                    </constraints>
+                </imageView>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4zV-eh-9bA">
+                    <rect key="frame" x="82" y="176" width="211" height="41"/>
+                    <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="17"/>
+                    <state key="normal" title="Sell an item">
+                        <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="sellPressed:" destination="-1" eventType="touchUpInside" id="Gh2-tI-fx3"/>
+                    </connections>
+                </button>
             </subviews>
             <color key="backgroundColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
-                <constraint firstItem="PeA-Us-ew8" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="16" id="07k-wM-kQf"/>
-                <constraint firstItem="PeA-Us-ew8" firstAttribute="centerX" secondItem="wOy-Uj-bsa" secondAttribute="centerX" id="5ko-Id-sIE"/>
-                <constraint firstItem="PeA-Us-ew8" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="90" id="C5h-kM-PGX"/>
-                <constraint firstItem="PeA-Us-ew8" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="LB6-2q-ElN"/>
-                <constraint firstItem="wOy-Uj-bsa" firstAttribute="top" secondItem="PeA-Us-ew8" secondAttribute="bottom" constant="8" symbolic="YES" id="rrU-ko-5Vr"/>
+                <constraint firstItem="PeA-Us-ew8" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="16" id="GaE-kr-Fp3"/>
+                <constraint firstItem="4zV-eh-9bA" firstAttribute="top" secondItem="zWw-Dk-BeK" secondAttribute="bottom" constant="10" id="HDH-at-SMS"/>
+                <constraint firstItem="PeA-Us-ew8" firstAttribute="centerX" secondItem="zWw-Dk-BeK" secondAttribute="centerX" id="LKI-uV-3vS"/>
+                <constraint firstItem="PeA-Us-ew8" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="108" id="Lfa-w6-nyf"/>
+                <constraint firstItem="4zV-eh-9bA" firstAttribute="centerY" secondItem="wOy-Uj-bsa" secondAttribute="centerY" id="RHd-fu-g18"/>
+                <constraint firstItem="4zV-eh-9bA" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="82" id="S86-CE-JOJ"/>
+                <constraint firstItem="zWw-Dk-BeK" firstAttribute="centerX" secondItem="4zV-eh-9bA" secondAttribute="centerX" id="Y7F-Yt-HYZ"/>
+                <constraint firstItem="zWw-Dk-BeK" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="ZM3-5H-CvP"/>
+                <constraint firstItem="wOy-Uj-bsa" firstAttribute="top" secondItem="zWw-Dk-BeK" secondAttribute="bottom" constant="16" id="aNK-fa-0at"/>
+                <constraint firstItem="zWw-Dk-BeK" firstAttribute="top" secondItem="PeA-Us-ew8" secondAttribute="bottom" constant="10" id="igP-aG-gie"/>
+                <constraint firstItem="PeA-Us-ew8" firstAttribute="centerX" secondItem="wOy-Uj-bsa" secondAttribute="centerX" id="j5v-O3-uOO"/>
             </constraints>
-            <point key="canvasLocation" x="33" y="54"/>
+            <point key="canvasLocation" x="32.5" y="53.5"/>
         </view>
     </objects>
+    <resources>
+        <image name="createOR.png" width="175" height="7"/>
+    </resources>
 </document>

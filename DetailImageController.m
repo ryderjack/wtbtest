@@ -7,6 +7,7 @@
 //
 
 #import "DetailImageController.h"
+#import <SDWebImage/UIImageView+WebCache.h>
 
 @interface DetailImageController ()
 
@@ -20,8 +21,10 @@
     tap.numberOfTapsRequired = 1;
     [self.view addGestureRecognizer:tap];
     
-    if (self.numberOfPics > 1) {
-
+    if (self.numberOfPics > 20) {
+        [self.pageControl setHidden:YES];
+    }
+    else if (self.numberOfPics > 1){
         [self.pageControl setNumberOfPages:self.numberOfPics];
     }
     else{
@@ -47,6 +50,10 @@
     self.scrollView.contentSize = self.carousel.frame.size;
     self.scrollView.delegate = self;
     
+    //zoom setup
+    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleTapFrom:)];
+    [doubleTap setNumberOfTapsRequired:2];
+    [self.scrollView addGestureRecognizer:doubleTap];
     
     //carousel setup
     self.carousel.type = iCarouselTypeLinear;
@@ -84,7 +91,6 @@
 
 - (void)handleSwipe:(UISwipeGestureRecognizer *)swipe {
 
-
     if (self.numberOfPics > self.pageControl.currentPage) {
         //set placeholder spinner view
         MBProgressHUD __block *hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
@@ -94,23 +100,17 @@
         DGActivityIndicatorView __block *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
         hud.customView = spinner;
         [spinner startAnimating];
-        
-        //[self.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
-        //} progressBlock:^(int percentDone) {
-        //    if (percentDone == 100) {
-        //        //remove spinner
-        //        [spinner stopAnimating];
-        //       [MBProgressHUD hideHUDForView:self.imageView animated:NO];
-        //        spinner = nil;
-        //        hud = nil;
-        //    }
-        //}];
     }
 }
 
 - (NSInteger)numberOfItemsInCarousel:(__unused iCarousel *)carousel
 {
-    return self.numberOfPics;
+    if (self.convoMode == YES) {
+        return self.convoImagesArray.count;
+    }
+    else{
+        return self.numberOfPics;
+    }
 }
 
 - (UIView *)carousel:(__unused iCarousel *)carousel viewForItemAtIndex:(NSInteger)index reusingView:(UIView *)view
@@ -122,8 +122,19 @@
         view = [[PFImageView alloc] initWithFrame:CGRectMake(0, 0, self.carousel.frame.size.width,self.carousel.frame.size.height)];
         view.contentMode = UIViewContentModeScaleAspectFit;
     }
-    if (self.messagesPicMode == YES) {
+    
+    ((PFImageView *)view).image = nil;
+    
+    if (self.convoMode == YES) {
+        PFObject *imageMessage = [self.convoImagesArray objectAtIndex:index];
+        PFFile *file = [imageMessage objectForKey:@"Image"];
+        [((PFImageView *)view) setFile:file];
+    }
+    else if (self.messagesPicMode == YES) {
         [((PFImageView *)view)setImage:self.messagePicture];
+    }
+    else if (self.affiliate == YES){
+        [((PFImageView *)view)sd_setImageWithURL:[NSURL URLWithString:[self.listing objectForKey:@"imageURL"]]];
     }
     else{
         if (self.offerMode == YES) {
@@ -180,6 +191,39 @@
         return NO;
     }
     return 2;
+}
+
+#pragma mark - zoom methods
+
+- (void)handleDoubleTapFrom:(UITapGestureRecognizer *)recognizer {
+    
+    float newScale = [self.scrollView zoomScale] * 4.0;
+    
+    if (self.scrollView.zoomScale > 1.0)
+    {
+        [self.scrollView setZoomScale:1.0 animated:YES];
+    }
+    else
+    {
+        CGRect zoomRect = [self zoomRectForScale:newScale
+                                      withCenter:[recognizer locationInView:recognizer.view]];
+        [self.scrollView zoomToRect:zoomRect animated:YES];
+    }
+}
+
+- (CGRect)zoomRectForScale:(float)scale withCenter:(CGPoint)center {
+    
+    CGRect zoomRect;
+    
+    zoomRect.size.height = [self.scrollView frame].size.height / scale;
+    zoomRect.size.width  = [self.scrollView frame].size.width  / scale;
+    
+    center = [self.scrollView convertPoint:center fromView:self.view];
+    
+    zoomRect.origin.x    = center.x - ((zoomRect.size.width / 2.0));
+    zoomRect.origin.y    = center.y - ((zoomRect.size.height / 2.0));
+    
+    return zoomRect;
 }
 
 @end

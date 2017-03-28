@@ -27,6 +27,13 @@
 @property (weak, nonatomic) IBOutlet UIView *insideView;
 @property (weak, nonatomic) IBOutlet AFCollectionView *collectionView;
 @property (nonatomic, weak) id <successDelegate> delegate;
+@property (weak, nonatomic) IBOutlet UILabel *mainLabel;
+
+//buttons
+@property (weak, nonatomic) IBOutlet UIButton *secondButton;
+@property (weak, nonatomic) IBOutlet UIButton *firstButton;
+@property (weak, nonatomic) IBOutlet UIButton *doneButton;
+
 
 - (void)setCollectionViewDataSourceDelegate:(id<UICollectionViewDataSource, UICollectionViewDelegate>)dataSourceDelegate indexPath:(NSIndexPath *)indexPath;
 @end

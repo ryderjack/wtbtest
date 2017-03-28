@@ -88,6 +88,8 @@
         self.userSearch = YES;
         self.searchBar.placeholder = @"Search for users";
     }
+    
+
     [self.tableView reloadData];
 }
 
@@ -261,9 +263,9 @@
 
         [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
             if (objects) {
-//                NSLog(@"users found %lu", objects.count);
+                self.userResults = objects;
+
                 if (objects.count == 0) {
-                    
                     if (!self.noUserLabel) {
                         self.noUserLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                         self.noUserLabel.textAlignment = NSTextAlignmentCenter;
@@ -278,10 +280,9 @@
                     if (self.noUserLabel) {
                         [self.noUserLabel removeFromSuperview];
                     }
-                    self.userResults = objects;
-                    self.userSearch = YES;
-                    [self.tableView reloadData];
                 }
+                self.userSearch = YES;
+                [self.tableView reloadData];
             }
             else{
                 NSLog(@"error getting users %@", error);

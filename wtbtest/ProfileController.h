@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 #import <MessageUI/MessageUI.h>
 #import "TOJRWebView.h"
+#import "inviteViewClass.h"
 
 @class ProfileController;
 
@@ -16,7 +17,7 @@
 - (void)TeamBumpInboxTapped;
 @end
 
-@interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate, JRWebViewDelegate>
+@interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate, JRWebViewDelegate, inviteDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *receivedOffers;
@@ -28,8 +29,10 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *howItWorks;
 @property (strong, nonatomic) IBOutlet UITableViewCell *feedbackCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *savedLaterCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *inviteCell;
 @property (weak, nonatomic) IBOutlet UIImageView *unreadView;
 @property (strong, nonatomic) IBOutlet UITableViewCell *termsCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *rateCell;
 
 //delegate
 @property (nonatomic, weak) id <ProfileSettingsDelegate> delegate;
@@ -42,5 +45,11 @@
 
 //web
 @property (nonatomic, strong) TOJRWebView *webView;
+
+//invite pop up
+@property (nonatomic, strong) inviteViewClass *inviteView;
+@property (nonatomic, strong) UIView *bgView;
+@property (nonatomic) BOOL alertShowing;
+@property (nonatomic, strong) UITapGestureRecognizer *tap;
 
 @end

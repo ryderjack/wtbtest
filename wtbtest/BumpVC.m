@@ -56,8 +56,15 @@
 }
 
 - (IBAction)bumpPressed:(id)sender {
-    NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listing objectForKey:@"bumpArray"]];
-    NSMutableArray *personalBumpArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+    NSMutableArray *bumpArray = [NSMutableArray array];
+    if ([self.listing objectForKey:@"bumpArray"]) {
+        [bumpArray addObjectsFromArray:[self.listing objectForKey:@"bumpArray"]];
+    }
+    
+    NSMutableArray *personalBumpArray = [NSMutableArray array];
+    if ([[PFUser currentUser] objectForKey:@"bumpArray"]) {
+        [personalBumpArray addObjectsFromArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+    }
 
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
         NSLog(@"already bumped it");
@@ -81,6 +88,12 @@
                        customAttributes:@{
                                           @"where":@"From Facebook Push"
                                           }];
+        
+        PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+        [bumpObj setObject:self.listing forKey:@"listing"];
+        [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+        [bumpObj setObject:@"live" forKey:@"status"];
+        [bumpObj saveInBackground];
     }
     
     //send push

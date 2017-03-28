@@ -51,7 +51,7 @@
 @property (nonatomic) BOOL introMode;
 @property (nonatomic) BOOL somethingChanged;
 @property (nonatomic) BOOL finishedListing;
-
+@property (nonatomic) BOOL createdListing;
 
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;
@@ -85,5 +85,9 @@
 @property (nonatomic, strong) UIButton *bouncingButton;
 @property (nonatomic) BOOL settingUp;
 
+//sell stuff
+@property (weak, nonatomic) IBOutlet UIImageView *orImageView;
+@property (weak, nonatomic) IBOutlet UIButton *sellButton;
+@property (nonatomic) BOOL isSeller;
 
 @end

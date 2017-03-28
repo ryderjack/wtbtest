@@ -47,5 +47,6 @@
 //updating inbox cell
 @property (nonatomic, strong) PFObject *lastMessageInConvo;
 
+-(void)doubleTapScroll;
 
 @end

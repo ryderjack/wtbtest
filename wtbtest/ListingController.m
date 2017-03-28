@@ -7,7 +7,6 @@
 //
 
 #import "ListingController.h"
-#import "CreateViewController.h"
 #import "FeedbackController.h"
 #import "MessageViewController.h"
 #import "FBGroupShareViewController.h"
@@ -19,6 +18,7 @@
 #import "ExploreVC.h"
 #import "ForSaleCell.h"
 #import "ForSaleListing.h"
+#import <SDWebImage/UIImageView+WebCache.h>
 
 @interface ListingController ()
 
@@ -64,10 +64,11 @@
     
     self.cellArray = [NSMutableArray array];
     
-    //when presented from search the tab bar does not belong to parent so its passed from previous VCs
-    if (self.fromSearch == YES) {
-        self.tabBarHeightInt = [self.tabBarHeight intValue];
+    //when presented from search the tab bar does not belong to parent so access presenting VC tabbar
+    if (self.tabBarController.tabBar.frame.size.height == 0) {
         
+        self.tabBarHeightInt = self.presentingViewController.tabBarController.tabBar.frame.size.height;
+                
         //register for notification so we know when to dismiss long button after switching tabs
         //because its a modalVC 'willdisappear' never called
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showHideLongButton:) name:@"switchedTabs" object:nil];
@@ -255,12 +256,15 @@
                     [btn addSubview:buttonView];
                     self.profileButton = [[UIBarButtonItem alloc] initWithCustomView:btn];
                     
-                    if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"purchased"]) {
-                        self.navigationItem.rightBarButtonItem = self.profileButton;
-                    }
-                    else{
-                        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.profileButton,infoButton, nil]];
-                    }
+                    
+                    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.profileButton,infoButton, nil]];
+                    
+//                    if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"purchased"]) {
+//                        self.navigationItem.rightBarButtonItem = self.profileButton;
+//                    }
+//                    else{
+//                        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.profileButton,infoButton, nil]];
+//                    }
                 }
                 else{
                     NSLog(@"buyer error %@", error);
@@ -272,6 +276,10 @@
             NSLog(@"error fetching listing %@", error);
         }
     }];
+    
+    //dismiss Invite gesture
+    self.inviteTap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
+    self.inviteTap.numberOfTapsRequired = 1;
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -336,7 +344,18 @@
     }
     
     if (self.shouldShowSuccess == YES) {
+        self.createdListing = YES;
         [self showSuccess];
+    }
+    
+    if (self.createdListing == YES) {
+        NSLog(@"new listing %@",[self.similarListing objectForKey:@"sizeLabel"]);
+
+        if ([self.similarListing objectForKey:@"sizeLabel"]) {
+            NSLog(@"got a size label");
+            [self.successView.firstButton setHidden:YES];
+            [self.successView.secondButton setHidden:YES];
+        }
     }
 }
 
@@ -348,17 +367,26 @@
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
     [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+    [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
+    [center removeObserver:self name:@"showSendBox" object:nil];
     
     [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
     [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+    [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
+    [center addObserver:self selector:@selector(sendPressed:) name:@"showSendBox" object:nil];
+
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     [self hideBarButton];
+    [self hideSendBox];
+
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
     [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+    [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
+    [center removeObserver:self name:@"showSendBox" object:nil];
 
 }
 
@@ -613,11 +641,14 @@
                            customAttributes:@{
                                               @"where":@"Listing"
                                               }];
+            [self hideBarButton];
+
             self.editModePressed = YES;
             CreateViewController *vc = [[CreateViewController alloc]init];
             vc.status = @"edit";
             vc.listing = self.listingObject;
             vc.editFromListing = YES;
+            vc.delegate = self;
             NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
             [self presentViewController:nav animated:YES completion:^{
                 [self.longButton setEnabled:YES];
@@ -652,6 +683,7 @@
             vc.listing = self.listingObject;
             vc.otherUser = [object objectForKey:@"buyerUser"];
             vc.otherUserName = [[object objectForKey:@"buyerUser"]username];
+            vc.tabBarHeight = self.tabBarHeight;
             [self.longButton setEnabled:YES];
             [self hideHUD];
             [self.navigationController pushViewController:vc animated:YES];
@@ -669,6 +701,7 @@
             convoObject[@"totalMessages"] = @0;
             convoObject[@"buyerUnseen"] = @0;
             convoObject[@"sellerUnseen"] = @0;
+            convoObject[@"source"] = @"WTB";
             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
                     //saved
@@ -679,6 +712,7 @@
                     vc.userIsBuyer = NO;
                     vc.otherUser = [self.listingObject objectForKey:@"postUser"];
                     vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
+                    vc.tabBarHeight = self.tabBarHeight;
                     [self hideHUD];
                     [self.longButton setEnabled:YES];
                     [self.navigationController pushViewController:vc animated:YES];
@@ -712,6 +746,7 @@
             [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
                 [self showBarButton];
             }]];
+            
             [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
                 [self.listingObject setObject:@"deleted" forKey:@"status"];
                 [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
@@ -725,14 +760,26 @@
         }]];
         
         if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"purchased"]) {
-//                    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//                        [self.listingObject setObject:@"live" forKey:@"status"];
-//                        [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                            if (succeeded) {
-//                                [self.collectionView reloadData];
-//                            }
-//                        }];
-//                    }]];
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [self.listingObject setObject:@"live" forKey:@"status"];
+                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        //hide label
+                        
+                        [UIView animateWithDuration:0.5
+                                              delay:0
+                                            options:UIViewAnimationOptionCurveEaseIn
+                                         animations:^{
+                                             self.purchasedLabel.alpha = 0.0;
+                                             self.purchasedCheckView.alpha = 0.0;
+                                         }
+                                         completion:^(BOOL finished) {
+                                             [self.purchasedLabel setHidden:YES];
+                                             [self.purchasedCheckView setHidden:YES];
+                                         }];
+                    }
+                }];
+            }]];
         }
         else if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"live"]) {
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -873,8 +920,19 @@
                                       @"where":@"Listing"
                                       }];
     
-    NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listingObject objectForKey:@"bumpArray"]];
-    NSMutableArray *personalBumpArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+    //bump array is stored on listing and is the ultimate guide
+    //personal bump array is used for displaying on profile quickly
+    //also save a Bump object whenever there's a bump so we can access dates/users later
+    
+    NSMutableArray *bumpArray = [NSMutableArray array];
+    if ([self.listingObject objectForKey:@"bumpArray"]) {
+        [bumpArray addObjectsFromArray:[self.listingObject objectForKey:@"bumpArray"]];
+    }
+    
+    NSMutableArray *personalBumpArray = [NSMutableArray array];
+    if ([[PFUser currentUser] objectForKey:@"bumpArray"]) {
+        [personalBumpArray addObjectsFromArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
+    }
 
     if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
         NSLog(@"already bumped it m8");
@@ -886,6 +944,19 @@
         if ([personalBumpArray containsObject:self.listingObject.objectId]) {
             [personalBumpArray removeObject:self.listingObject.objectId];
         }
+        
+        //update bump object
+        PFQuery *bumpQ = [PFQuery queryWithClassName:@"BumpedListings"];
+        [bumpQ whereKey:@"bumpUser" equalTo:[PFUser currentUser]];
+        [bumpQ whereKey:@"listing" equalTo:self.listingObject];
+        [bumpQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            if (objects) {
+                for (PFObject *bump in objects) {
+                    [bump setObject:@"deleted" forKey:@"status"];
+                    [bump saveInBackground];
+                }
+            }
+        }];
     }
     else{
         NSLog(@"bumped");
@@ -921,6 +992,12 @@
                                               @"where":@"Listing"
                                               }];
         }
+        
+        PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
+        [bumpObj setObject:self.listingObject forKey:@"listing"];
+        [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
+        [bumpObj setObject:@"live" forKey:@"status"];
+        [bumpObj saveInBackground];
     }
     
     [self.listingObject saveInBackground];
@@ -1256,7 +1333,7 @@
 - (IBAction)sendPressed:(id)sender {
     [Answers logCustomEventWithName:@"Pressed send listing button"
                    customAttributes:@{
-                                      @"where":@"Listing"
+                                      @"where":@"wanted"
                                       }];
     [self ShowInitialSendBox];
 }
@@ -1441,20 +1518,27 @@
     cell.userImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     cell.userImageView.contentMode = UIViewContentModeScaleAspectFill;
     
+    cell.outerView.layer.cornerRadius = 34;
+    cell.outerView.layer.masksToBounds = YES;
+    cell.outerView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    cell.outerView.contentMode = UIViewContentModeScaleAspectFill;
+    
     if (self.selectedFriend == YES) {
         if (indexPath.row == self.friendIndexSelected) {
-            [cell.userImageView.layer setBorderColor: [[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0] CGColor]];
-            [cell.userImageView.layer setBorderWidth: 3.0];
+            [cell.outerView.layer setBorderColor: [[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0] CGColor]];
+            [cell.outerView.layer setBorderWidth: 2.0];
+            
             cell.alpha = 1.0;
             self.sendBox.usernameLabel.text = [fbUser objectForKey:@"username"];
         }
         else{
             cell.alpha = 0.5;
-            [cell.userImageView.layer setBorderWidth: 0.0];
+            [cell.outerView.layer setBorderWidth: 0.0];
         }
     }
     else{
-        [cell.userImageView.layer setBorderWidth: 0.0];
+        [cell.outerView.layer setBorderWidth: 0.0];
+
         self.sendBox.usernameLabel.text = @"";
         cell.alpha = 1.0;
     }
@@ -1469,17 +1553,33 @@
     
     [self.facebookUsers removeAllObjects];
     
+    NSArray *recentArray = [[PFUser currentUser]objectForKey:@"recentFriends"];
+    
+    //protect against duplicates
+    NSOrderedSet *orderedSet = [NSOrderedSet orderedSetWithArray:recentArray];
+    NSArray *recentsWithoutDuplicates = [orderedSet array];
+    
     //get recents first
     PFQuery *recentsQuery = [PFUser query];
-    [recentsQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"recentFriends"]];
+    [recentsQuery whereKey:@"facebookId" containedIn:recentsWithoutDuplicates];
     [recentsQuery whereKey:@"completedReg" equalTo:@"YES"];
     [recentsQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
+            
             if (objects.count > 0) {
-                NSLog(@"got some recents %@", objects);
-                [self.facebookUsers addObjectsFromArray:objects];
+                //order array based on recentFriends array
+                for (NSString *facebookID in recentArray) {
+                    
+                    for (PFObject *friend in objects) {
+                        if ([[friend objectForKey:@"facebookId"] isEqualToString:facebookID] && ![self.facebookUsers containsObject:friend]) {
+                            [self.facebookUsers addObject:friend];
+                            break;
+                        }
+                    }
+                }
             }
-            //get recents first
+
+            //now get other friends
             PFQuery *friendsQuery = [PFUser query];
             [friendsQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
             [friendsQuery whereKey:@"completedReg" equalTo:@"YES"];
@@ -1499,7 +1599,6 @@
                         [self.sendBox.smallInviteButton addTarget:self action:@selector(inviteFriendsPressed) forControlEvents:UIControlEventTouchUpInside];
                     }
                     else{
-                        NSLog(@"yo");
                         [self.sendBox.smallInviteButton setHidden:NO];
                         [self.sendBox.smallInviteButton addTarget:self action:@selector(inviteFriendsPressed) forControlEvents:UIControlEventTouchUpInside];
                         
@@ -1630,9 +1729,15 @@
     if ([[PFUser currentUser]objectForKey:@"recentFriends"]) {
         NSMutableArray *recentFriends = [NSMutableArray arrayWithArray:[[PFUser currentUser]objectForKey:@"recentFriends"]];
         if (recentFriends.count >= 1) {
-            //check if most recent friend is the same, if so don't readd to array
+            //check if most recent friend is the same, if so don't re-add to array
             if (![recentFriends[0]isEqualToString:[selectedUser objectForKey:@"facebookId"]]) {
                 NSLog(@"not the same so add to recent array");
+                
+                if ([recentFriends containsObject:[selectedUser objectForKey:@"facebookId"]]) {
+                    NSLog(@"removing user from recents before adding again");
+                    [recentFriends removeObject:[selectedUser objectForKey:@"facebookId"]];
+                }
+                
                 [recentFriends insertObject:[selectedUser objectForKey:@"facebookId"] atIndex:0];
                 [[PFUser currentUser]setObject:recentFriends forKey:@"recentFriends"];
             }
@@ -1678,13 +1783,15 @@
                     msgObject[@"senderId"] = [PFUser currentUser].objectId;
                     msgObject[@"senderName"] = [PFUser currentUser].username;
                     msgObject[@"convoId"] = [convo objectForKey:@"convoId"];
+                    msgObject[@"sharedMessage"] = @"YES";
+                    msgObject[@"sharedListing"] = self.listingObject;
                     msgObject[@"status"] = @"sent";
                     msgObject[@"mediaMessage"] = @"YES";
                     [msgObject saveInBackground];
                     
                     //save boiler plate message
                     PFObject *boilerObject = [PFObject objectWithClassName:@"messages"];
-                    boilerObject[@"message"] = [NSString stringWithFormat:@"%@ shared %@'s listing.\nTap to view", [PFUser currentUser].username, [[self.listingObject objectForKey:@"postUser"]username]];
+                    boilerObject[@"message"] = [NSString stringWithFormat:@"%@ shared %@'s wanted listing.\nTap to view", [PFUser currentUser].username, [[self.listingObject objectForKey:@"postUser"]username]];
                     boilerObject[@"sender"] = [PFUser currentUser];
                     boilerObject[@"senderId"] = [PFUser currentUser].objectId;
                     boilerObject[@"senderName"] = [PFUser currentUser].username;
@@ -1715,7 +1822,7 @@
                                 
                                 lastSent = customObject;
                             }
-                            NSString *pushString = [NSString stringWithFormat:@"%@ shared a listing with you 📲",[[PFUser currentUser]username]];
+                            NSString *pushString = [NSString stringWithFormat:@"%@ shared a wanted listing with you 📲",[[PFUser currentUser]username]];
                             
                             //send push to other user
                             NSDictionary *params = @{@"userId": selectedUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
@@ -1785,11 +1892,14 @@
                             msgObject[@"convoId"] = [convo objectForKey:@"convoId"];
                             msgObject[@"status"] = @"sent";
                             msgObject[@"mediaMessage"] = @"YES";
+                            msgObject[@"sharedMessage"] = @"YES";
+                            msgObject[@"sharedListing"] = self.listingObject;
+                            
                             [msgObject saveInBackground];
                             
                             //save boiler plate message
                             PFObject *boilerObject = [PFObject objectWithClassName:@"messages"];
-                            boilerObject[@"message"] = [NSString stringWithFormat:@"%@ shared %@'s listing.\nTap to view", [PFUser currentUser].username, [[self.listingObject objectForKey:@"postUser"]username]];
+                            boilerObject[@"message"] = [NSString stringWithFormat:@"%@ shared %@'s wanted listing.\nTap to view", [PFUser currentUser].username, [[self.listingObject objectForKey:@"postUser"]username]];
                             boilerObject[@"sender"] = [PFUser currentUser];
                             boilerObject[@"senderId"] = [PFUser currentUser].objectId;
                             boilerObject[@"senderName"] = [PFUser currentUser].username;
@@ -1820,7 +1930,7 @@
                                 lastSent = customObject;
                             }
                             
-                            NSString *pushString = [NSString stringWithFormat:@"%@ shared a listing with you 📲",[[PFUser currentUser]username]];
+                            NSString *pushString = [NSString stringWithFormat:@"%@ shared a wanted listing with you 📲",[[PFUser currentUser]username]];
                             
                             //send push to other user
                             NSDictionary *params = @{@"userId": selectedUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
@@ -1864,16 +1974,19 @@
 #pragma mark app invite stuff
 -(void)inviteFriendsPressed{
     NSLog(@"INvite pressed");
-    FBSDKAppInviteContent *content =[[FBSDKAppInviteContent alloc] init];
-    content.appLinkURL = [NSURL URLWithString:@"https://www.mydomain.com/myapplink"];
-    //optionally set previewImageURL
-    content.appInvitePreviewImageURL = [NSURL URLWithString:@"https://www.mydomain.com/my_invite_image.jpg"];
+    [self showInviteView];
+    [self hideSendBox];
     
-    // Present the dialog. Assumes self is a view controller
-    // which implements the protocol `FBSDKAppInviteDialogDelegate`.
-    [FBSDKAppInviteDialog showFromViewController:self
-                                     withContent:content
-                                        delegate:self];
+//    FBSDKAppInviteContent *content =[[FBSDKAppInviteContent alloc] init];
+//    content.appLinkURL = [NSURL URLWithString:@"https://www.mydomain.com/myapplink"];
+//    //optionally set previewImageURL
+//    content.appInvitePreviewImageURL = [NSURL URLWithString:@"https://www.mydomain.com/my_invite_image.jpg"];
+//    
+//    // Present the dialog. Assumes self is a view controller
+//    // which implements the protocol `FBSDKAppInviteDialogDelegate`.
+//    [FBSDKAppInviteDialog showFromViewController:self
+//                                     withContent:content
+//                                        delegate:self];
 }
 
 -(void)appInviteDialog:(FBSDKAppInviteDialog *)appInviteDialog didCompleteWithResults:(NSDictionary *)results{
@@ -1897,7 +2010,7 @@
     }
 }
 - (IBAction)iwantbuttonPressed:(id)sender {
-    if (self.wantMode == YES) { //CHECK
+    if (self.wantMode == YES) {
         //present confirmation step
         [self showWantConfirmation];
     }
@@ -1955,7 +2068,7 @@
     self.customAlert.numberOfButtons = 2;
     [self.customAlert.secondButton setTitle:@"C R E A T E" forState:UIControlStateNormal];
     
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+    if ([ [ UIScreen mainScreen ] bounds].size.height == 568) {
         //iphone5
         [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
     }
@@ -2069,7 +2182,14 @@
     
     //save keywords (minus useless words)
     [self.similarListing setObject:[self.listingObject objectForKey:@"keywords"] forKey:@"keywords"];
-    [self.similarListing setObject:[self.listingObject objectForKey:@"searchKeywords"] forKey:@"searchKeywords"];
+
+    if ([self.listingObject objectForKey:@"searchKeywords"]) {
+        [self.similarListing setObject:[self.listingObject objectForKey:@"searchKeywords"] forKey:@"searchKeywords"];
+    }
+    else{
+        [self.similarListing setObject:[self.listingObject objectForKey:@"keywords"] forKey:@"searchKeywords"];
+    }
+    
     [self.similarListing setObject:@"live" forKey:@"status"];
     
     //expiration in 2 weeks
@@ -2078,7 +2198,7 @@
     NSCalendar *theCalendar = [NSCalendar currentCalendar];
     NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
     [self.similarListing setObject:expirationDate forKey:@"expiration"];
-    
+        
     if (self.similarGeopoint != nil) {
         [self.similarListing setObject:self.similarLocationString forKey:@"location"];
         [self.similarListing setObject:self.similarGeopoint forKey:@"geopoint"];
@@ -2096,6 +2216,8 @@
             
             NSLog(@"listing saved! %@", self.similarListing.objectId);
             
+            self.createdListing = YES;
+            
             [self findRelevantItems];
             
             //analytics
@@ -2106,8 +2228,6 @@
             
             //add listing to home page via notif.
             [[NSNotificationCenter defaultCenter] postNotificationName:@"justPostedListing" object:self.similarListing];
-            [[PFUser currentUser]incrementKey:@"postNumber"];
-            [[PFUser currentUser] saveInBackground];
             
             //schedule local notif. for first listing
             if (![[PFUser currentUser] objectForKey:@"postNumber"]) {
@@ -2125,6 +2245,9 @@
                 [localNotification setRepeatInterval: 0];
                 [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
             }
+            
+            [[PFUser currentUser]incrementKey:@"postNumber"];
+            [[PFUser currentUser] saveInBackground];
             
             //send FB friends a push asking them to Bump listing!
             NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just posted a listing - Tap to Bump it 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
@@ -2260,7 +2383,6 @@
     [self.successView setCollectionViewDataSourceDelegate:self indexPath:nil];
     [[UIApplication sharedApplication].keyWindow insertSubview:self.successView aboveSubview:self.searchBgView];
 
-//    [self.navigationController.view insertSubview:self.successView aboveSubview:self.searchBgView];
     
     if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
         //iphone5
@@ -2272,6 +2394,9 @@
     
     self.successView.layer.cornerRadius = 10;
     self.successView.layer.masksToBounds = YES;
+    
+    [self.successView.firstButton setHidden:NO];
+    [self.successView.secondButton setHidden:NO];
     
     [self showSuccess];
 }
@@ -2307,6 +2432,7 @@
 }
 
 -(void)hideSuccess{
+    self.createdListing = NO;
     [UIView animateWithDuration:1.0
                           delay:0.0
          usingSpringWithDamping:0.1
@@ -2334,6 +2460,10 @@
                          else{
                              [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170, -480, 340, 480)]; //iPhone 6/7 specific
                          }
+                         
+                         //reset buttons
+                         [self.successView.firstButton setHidden:NO];
+                         [self.successView.secondButton setHidden:NO];
                      }];
 }
 
@@ -2478,5 +2608,221 @@
         [self.sendBox.messageField becomeFirstResponder];
     }
 }
+
+-(void)userDidTakeScreenshot{
+    [Answers logCustomEventWithName:@"Screenshot taken"
+                   customAttributes:@{
+                                      @"where":@"Listing"
+                                      }];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"screenshotDropDown" object:self.firstImage];
+}
+
+-(void)dismissCreateController:(CreateViewController *)controller{
+    [self showBarButton];
+}
+
+#pragma mark - invite view delegates
+
+-(void)showInviteView{
+    [Answers logCustomEventWithName:@"Invite Showing"
+                   customAttributes:@{
+                                      @"where": @"listing"
+                                      }];
+    
+    if (self.inviteAlertShowing == YES) {
+        return;
+    }
+    
+    self.inviteAlertShowing = YES;
+    self.inviteBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.inviteBgView.alpha = 0.0;
+    [self.inviteBgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.inviteBgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.inviteBgView.alpha = 0.8f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"inviteView" owner:self options:nil];
+    self.inviteView = (inviteViewClass *)[nib objectAtIndex:0];
+    self.inviteView.delegate = self;
+    
+    //setup images
+    NSMutableArray *friendsArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"friends"]];
+    
+    //manage friends count label
+    if (friendsArray.count > 5) {
+        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friendsArray.count];
+    }
+    else{
+        self.inviteView.friendsLabel.text = @"Help us grow 🚀";
+    }
+    
+    if (friendsArray.count > 0) {
+        [self shuffle:friendsArray];
+        if (friendsArray.count >2) {
+            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+            
+            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
+            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+            
+            NSURL *picUrl3 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[2]]];
+            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+        }
+        else if (friendsArray.count == 2){
+            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+            
+            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
+            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+            
+            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
+            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+        }
+        else if (friendsArray.count == 1){
+            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+            
+            NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
+            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+            
+            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
+            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+        }
+    }
+    else{
+        NSURL *picUrl = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image
+        [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+        
+        NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
+        [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+        
+        NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
+        [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+    }
+    
+    [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -300, 300, 300)];
+    
+    self.inviteView.layer.cornerRadius = 10;
+    self.inviteView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.inviteView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.inviteView setFrame:CGRectMake(0, 0, 300, 300)];
+                            self.inviteView.center = self.view.center;
+                        }
+                     completion:^(BOOL finished) {
+                         [self.inviteBgView addGestureRecognizer:self.inviteTap];
+                     }];
+}
+
+-(void)hideInviteView{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.inviteBgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.inviteBgView = nil;
+                         [self.inviteBgView removeGestureRecognizer:self.inviteTap];
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 300)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.inviteAlertShowing = NO;
+                         [self.inviteView setAlpha:0.0];
+                         self.inviteView = nil;
+                     }];
+}
+
+-(void)whatsappPressed{
+    [Answers logCustomEventWithName:@"Whatsapp share pressed"
+                   customAttributes:@{}];
+    NSString *shareString = @"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com";
+    NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
+    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+        [[UIApplication sharedApplication] openURL: whatsappURL];
+    }
+}
+
+-(void)messengerPressed{
+    [Answers logCustomEventWithName:@"Messenger share pressed"
+                   customAttributes:@{}];
+    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=http://sobump.com"];
+    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+        [[UIApplication sharedApplication] openURL: messengerURL];
+    }
+}
+
+-(void)textPressed{
+    [Answers logCustomEventWithName:@"More share pressed"
+                   customAttributes:@{}];
+    NSMutableArray *items = [NSMutableArray new];
+    [items addObject:@"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com"];
+    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+    
+    [self hideBarButton];
+    [self hideInviteView];
+    
+    activityController.completionWithItemsHandler = ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *error){
+        //called when dismissed
+        [self showBarButton];
+    };
+    
+    [self presentViewController:activityController animated:YES completion:nil];
+}
+
+- (void)shuffle:(NSMutableArray *)array
+{
+    NSUInteger count = [array count];
+    if (count <= 1) return;
+    for (NSUInteger i = 0; i < count - 1; ++i) {
+        NSInteger remainingCount = count - i;
+        NSInteger exchangeIndex = i + arc4random_uniform((u_int32_t )remainingCount);
+        [array exchangeObjectAtIndex:i withObjectAtIndex:exchangeIndex];
+    }
+}
+
+- (NSString *)urlencode:(NSString *)stringToEncode{
+    NSMutableString *output = [NSMutableString string];
+    const unsigned char *source = (const unsigned char *)[stringToEncode UTF8String];
+    int sourceLen = (int)strlen((const char *)source);
+    for (int i = 0; i < sourceLen; ++i) {
+        const unsigned char thisChar = source[i];
+        if (thisChar == ' '){
+            [output appendString:@"+"];
+        } else if (thisChar == '.' || thisChar == '-' || thisChar == '_' || thisChar == '~' ||
+                   (thisChar >= 'a' && thisChar <= 'z') ||
+                   (thisChar >= 'A' && thisChar <= 'Z') ||
+                   (thisChar >= '0' && thisChar <= '9')) {
+            [output appendFormat:@"%c", thisChar];
+        } else {
+            [output appendFormat:@"%%%02X", thisChar];
+        }
+    }
+    return output;
+}
+
 
 @end

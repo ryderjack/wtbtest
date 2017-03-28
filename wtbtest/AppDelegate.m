@@ -24,12 +24,12 @@
 
 @implementation AppDelegate
 
-+ (void)initialize
-{
-    //configure iRate
-    [iRate sharedInstance].daysUntilPrompt = 5;
-    [iRate sharedInstance].usesUntilPrompt = 15;
-}
+//+ (void)initialize
+//{
+//    //configure iRate
+//    [iRate sharedInstance].daysUntilPrompt = 5;
+//    [iRate sharedInstance].usesUntilPrompt = 15;
+//}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     
@@ -45,10 +45,10 @@
 //        configuration.server = @"http://localhost:1337/parse";
         
         //production
-//        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
+        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
         
         //preproduction
-        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
+//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
     }]];
 
 //    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
@@ -78,7 +78,8 @@
     
     self.inboxView = [[InboxViewController alloc]init];
     self.buyView = [[BuyNowController alloc]init];
-        
+    self.purchaseView = [[PurchaseTab alloc]init];
+    
     [self.window setBackgroundColor:[UIColor whiteColor]];
     
     NavigationController *navController = [[NavigationController alloc] initWithRootViewController:self.exploreView];
@@ -88,9 +89,10 @@
 //    NavigationController *navController3 = [[NavigationController alloc] initWithRootViewController:self.welcomeView];
     NavigationController *navController4 = [[NavigationController alloc] initWithRootViewController:self.inboxView];
     NavigationController *navController5 = [[NavigationController alloc] initWithRootViewController:self.buyView];
+    NavigationController *navController7 = [[NavigationController alloc] initWithRootViewController:self.purchaseView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController,navController5,navController6,navController4, navController2, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController,navController7,navController6,navController4, navController2, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
     [self.tabBarController.tabBar setTintColor:[UIColor whiteColor]];
@@ -163,47 +165,92 @@
         [timer2 fire];
     }
     
-    [iRate sharedInstance].previewMode = NO;
-    [iRate sharedInstance].message = @"Enjoying Bump? Please leave us a review or send us some feedback!";
+//    [iRate sharedInstance].previewMode = NO;
+//    [iRate sharedInstance].message = @"Enjoying Bump? Please leave us a review or send us some feedback!";
     
-    NSDictionary *notification = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
-    if (notification) {
-        NSLog(@"app recieved notification from remote%@",notification);
-        [self application:application didReceiveRemoteNotification:notification];
-    }else{
-        NSLog(@"app did not recieve notification");
-    }
+    //check if there's a local 'sneaker release' push
+    UILocalNotification *localNotif = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
+    NSDictionary *localUserInfo = localNotif.userInfo;
+    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
     
-    //Handle fresh opened from a notification
-    NSDictionary *userInfo = [launchOptions valueForKey:@"UIApplicationLaunchOptionsRemoteNotificationKey"];
-    
-    NSString *bumpedStatus = [userInfo objectForKey:@"bumpRequest"];
-    NSString *listing = [userInfo objectForKey:@"listingID"];
-    
-    NSDictionary *dic = [userInfo objectForKey:@"aps"];
-    NSString *strMsg = [dic objectForKey:@"alert"];
-    
-    if([strMsg containsString:@"bumped your listing"]){
-        //open listing
-        [Answers logCustomEventWithName:@"Opened listing after receiving Bump Push"
+    if (localNotif && releaseLink)
+    {
+        [Answers logCustomEventWithName:@"Opened Release Push"
                        customAttributes:@{}];
         
-        PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listing];
-        ListingController *vc = [[ListingController alloc]init];
-        vc.listingObject = listingObject;
+        //open Web
+        NSLog(@"open web view! did finish launching");
+        self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:releaseLink]];
+        self.web.showUrlWhileLoading = YES;
+        self.web.showPageTitles = YES;
+        self.web.doneButtonTitle = @"";
+        self.web.paypalMode = NO;
+        self.web.infoMode = NO;
+        self.web.delegate = self;
+        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
+        [self.window.rootViewController presentViewController:navigationController animated:YES completion:nil];
         
-        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-        [nav pushViewController:vc animated:YES];
-
     }
-    else if([bumpedStatus isEqualToString:@"YES"]){
-        //open BumpedVC
-        [Answers logCustomEventWithName:@"Opened BumpVC after receiving FB Friend Push"
+    else if ([localNotif.alertBody isEqualToString:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"]){
+        [Answers logCustomEventWithName:@"Opened First Reminder Push"
                        customAttributes:@{}];
         
-        BumpVC *vc = [[BumpVC alloc]init];
-        vc.listingID = listing;
-        [self.window.rootViewController presentViewController:vc animated:YES completion:nil];
+        self.tabBarController.selectedIndex = 1;
+    }
+    else if ([localNotif.alertBody isEqualToString:@"What do you want to buy? Create your first wanted listing on Bump now!"]){
+        [Answers logCustomEventWithName:@"Opened First Listing Post Reminder Push"
+                       customAttributes:@{}];
+        
+        self.tabBarController.selectedIndex = 2;
+    }
+    else if ([localNotif.alertBody isEqualToString:@"What's your next cop? Get inspired and create a wanted listing for it on Bump now"]){
+        [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
+                       customAttributes:@{}];
+        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
+    }
+    else{
+        //no local release alert so check for remote
+        
+        //needed to handle the standard pushes that require no opening
+        NSDictionary *notification = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+        if (notification) {
+            NSLog(@"app recieved notification from remote%@",notification);
+            [self application:application didReceiveRemoteNotification:notification];
+        }else{
+            NSLog(@"app did not recieve notification");
+        }
+        
+        //Handle fresh opened from a push notification
+        NSDictionary *userInfo = [launchOptions valueForKey:@"UIApplicationLaunchOptionsRemoteNotificationKey"];
+        
+        NSString *bumpedStatus = [userInfo objectForKey:@"bumpRequest"];
+        NSString *listing = [userInfo objectForKey:@"listingID"];
+        
+        NSDictionary *dic = [userInfo objectForKey:@"aps"];
+        NSString *strMsg = [dic objectForKey:@"alert"];
+        
+        if([strMsg containsString:@"bumped your listing"]){
+            //open listing
+            [Answers logCustomEventWithName:@"Opened listing after receiving Bump Push"
+                           customAttributes:@{}];
+            
+            PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listing];
+            ListingController *vc = [[ListingController alloc]init];
+            vc.listingObject = listingObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+            
+        }
+        else if([bumpedStatus isEqualToString:@"YES"]){
+            //open BumpedVC
+            [Answers logCustomEventWithName:@"Opened BumpVC after receiving FB Friend Push"
+                           customAttributes:@{}];
+            
+            BumpVC *vc = [[BumpVC alloc]init];
+            vc.listingID = listing;
+            [self.window.rootViewController presentViewController:vc animated:YES completion:nil];
+        }
     }
     
     return YES;
@@ -337,16 +384,38 @@
 }
 
 -(void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification{
+    
+    NSDictionary *localUserInfo = notification.userInfo;
+    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
+    
     if ([notification.alertBody isEqualToString:@"What's your next cop? Get inspired and create a wanted listing for it on Bump now"]){
         [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
                        customAttributes:@{}];
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
     }
-    else{
+    else if([notification.alertBody containsString:@"Reminder: the"] && releaseLink){
+        [Answers logCustomEventWithName:@"Opened Release Push"
+                       customAttributes:@{}];
+        
+        //open Web
+        NSLog(@"open web view! did receive");
+        self.tabBarController.selectedIndex = 0;
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"showRelease" object:releaseLink];
+    }
+    else if ([notification.alertBody isEqualToString:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"]){
         [Answers logCustomEventWithName:@"Opened First Reminder Push"
                        customAttributes:@{}];
         
         self.tabBarController.selectedIndex = 1;
+    }
+    else if ([notification.alertBody isEqualToString:@"What do you want to buy? Create your first wanted listing on Bump now!"]){
+        [Answers logCustomEventWithName:@"Opened First Listing Post Reminder Push"
+                       customAttributes:@{}];
+        
+        self.tabBarController.selectedIndex = 2;
+    }
+    else{
+        //fail safe
     }
 }
 
@@ -492,10 +561,32 @@
             if ([vc.visibleViewController isKindOfClass:[ExploreVC class]]){
                 [self.exploreView doubleTapScroll];
             }
+            else if ([vc.visibleViewController isKindOfClass:[InboxViewController class]]){
+                [self.inboxView doubleTapScroll];
+            }
+            else if ([vc.visibleViewController isKindOfClass:[PurchaseTab class]]){
+                [self.purchaseView doubleTapScroll];
+            }
         }
         
     }
     previousController = viewController;
 }
 
+#pragma mark - web view delegates
+-(void)paidPressed{
+    //do nothing
+}
+
+-(void)cancelWebPressed{
+    [self.web dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)cameraPressed{
+    //do nothing
+}
+
+-(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
+    //do nothing
+}
 @end

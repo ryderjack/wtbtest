@@ -10,9 +10,9 @@
 #import <Parse/Parse.h>
 #import "JSQMessages.h"
 #import <ParseUI/ParseUI.h>
+#import <QBImagePickerController/QBImagePickerController.h>
 
-@interface ChatWithBump : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, UICollectionViewDelegate, UINavigationControllerDelegate>
-
+@interface ChatWithBump : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, UICollectionViewDelegate, UINavigationControllerDelegate,QBImagePickerControllerDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -34,5 +34,11 @@
 
 @property (nonatomic, strong) PFObject *messageObject;
 @property (nonatomic, strong) PFObject *lastMessage;
+
+//avatar
+@property (nonatomic, strong) JSQMessagesAvatarImage *avaImage;
+
+//convo images
+@property (nonatomic, strong) NSMutableArray *convoImagesArray;
 
 @end

@@ -18,6 +18,8 @@
 #import <FBSDKShareKit/FBSDKShareKit.h>
 #import "customAlertViewClass.h"
 #import "CreateSuccessView.h"
+#import "CreateViewController.h"
+#import "inviteViewClass.h"
 
 @class ListingController;
 
@@ -25,7 +27,7 @@
 - (void)addItemViewController:(ListingController *)controller listing:(PFObject *)object;
 @end
 
-@interface ListingController : UITableViewController <iCarouselDataSource, iCarouselDelegate, DetailImageDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate, FBSDKAppInviteDialogDelegate, customAlertDelegate, successDelegate>
+@interface ListingController : UITableViewController <iCarouselDataSource, iCarouselDelegate, DetailImageDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate, FBSDKAppInviteDialogDelegate, customAlertDelegate, successDelegate, CreateViewControllerDelegate,inviteDelegate>
 
 @property (nonatomic, weak) id <ListingControllerDelegate> delegate;
 @property (nonatomic, strong) PFObject *listingObject;
@@ -150,5 +152,12 @@
 @property (nonatomic) BOOL setupYes;
 @property (nonatomic) BOOL completionShowing;
 @property (nonatomic) BOOL shouldShowSuccess;
+@property (nonatomic) BOOL createdListing;
+
+//invite pop up
+@property (nonatomic, strong, nullable) inviteViewClass *inviteView;
+@property (nonatomic) BOOL inviteAlertShowing;
+@property (nonatomic, strong, nullable) UIView *inviteBgView;
+@property (nonatomic, strong) UITapGestureRecognizer *inviteTap;
 
 @end

@@ -7,6 +7,9 @@
 //
 
 #import "ChatWithBump.h"
+#import <Crashlytics/Crashlytics.h>
+#import "UIImage+Resize.h"
+#import "DetailImageController.h"
 
 @interface ChatWithBump ()
 
@@ -30,17 +33,27 @@
     
     self.navigationItem.rightBarButtonItem = imageButton;
     
-    self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"HelveticaNeue" size:15];
+    self.collectionView.collectionViewLayout.messageBubbleFont = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
+    self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
+    
     self.inputToolbar.contentView.textView.pasteDelegate = self;
     self.inputToolbar.contentView.textView.placeHolder = @"Ask us anything!";
-    self.inputToolbar.contentView.leftBarButtonItem = nil;
+//    self.inputToolbar.contentView.leftBarButtonItem = nil;
+    
+    [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"sendPicBlk"] forState:UIControlStateNormal];
+    [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"sendPicBlue"] forState:UIControlStateHighlighted];
+    
     self.inputToolbar.contentView.backgroundColor = [UIColor whiteColor];
     [self.inputToolbar.contentView.textView.layer setBorderWidth:0.0];
     [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
     
-    //no avatar images
-    self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeZero;
+    //avatar images
+    self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeMake(35, 35);
     self.collectionView.collectionViewLayout.outgoingAvatarViewSize = CGSizeZero;
+    
+    UIImage *image = [JSQMessagesAvatarImageFactory circularAvatarImage:[UIImage imageNamed:@"29"] withDiameter:35];
+    UIImage *placeholder = [JSQMessagesAvatarImageFactory circularAvatarImage:[UIImage imageNamed:@"empty"] withDiameter:35];
+    self.avaImage = [[JSQMessagesAvatarImage alloc]initWithAvatarImage:image highlightedImage:image placeholderImage:placeholder];
     
     //Register custom menu actions for cells.
     
@@ -51,10 +64,12 @@
     self.messages = [[NSMutableArray alloc]init];
     self.messagesParseArray = [[NSMutableArray alloc]init];
     self.sentMessagesParseArray = [[NSMutableArray alloc]init];
+    self.convoImagesArray = [[NSMutableArray alloc]init];
     
     //hide by default
     self.showLoadEarlierMessagesHeader = NO;
     
+    [self loadConvoImages];
     [self loadMessages];
     
     self.bubbleFactory = [[JSQMessagesBubbleImageFactory alloc] initWithBubbleImage:[UIImage jsq_bubbleRegularTaillessImage] capInsets:UIEdgeInsetsZero];
@@ -95,17 +110,88 @@
                             [self.sentMessagesParseArray addObject:messageOb];
                         }
                     }
-                    
-                NSString *messageText = [messageOb objectForKey:@"message"];
                 
-                message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
+                    if ([[messageOb objectForKey:@"mediaMessage"] isEqualToString:@"YES"]) {
+                        
+                        //media message
+                        __block id<JSQMessageMediaData> newMediaData = nil;
+                        __block id newMediaAttachmentCopy = nil;
+                        __block JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc]init];
+                        photoItem.image = [UIImage imageNamed:@"empty"];
+                        
+                        if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                            photoItem.appliesMediaViewMaskAsOutgoing = YES;
+                        }
+                        else{
+                            photoItem.appliesMediaViewMaskAsOutgoing = NO;
+                        }
+                        
+                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
+                        message.msgObject = messageOb;
+                        
+                        [self.messages insertObject:message atIndex:0];
+                        
+                        //added so placeholder view is correct
+                        
+                        if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                            photoItem.appliesMediaViewMaskAsOutgoing = YES;
+                        }
+                        else{
+                            photoItem.appliesMediaViewMaskAsOutgoing = NO;
+                        }
+                        
+                        PFQuery *imageQuery = [PFQuery queryWithClassName:@"teamBumpmMsgImages"];
+                        [imageQuery whereKey:@"objectId" equalTo:[messageOb objectForKey:@"message"]];
+                        [imageQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                            if (!error) {
+                                PFFile *img = [object objectForKey:@"Image"];
+                                [img getDataInBackgroundWithBlock:^(NSData *data, NSError *error) {
+                                    if (!error) {
+                                        UIImage *messageImage = [UIImage imageWithData:data];
+                                        photoItem.image = messageImage;
+                                        
+                                        newMediaAttachmentCopy = [UIImage imageWithCGImage:photoItem.image.CGImage];
+                                        newMediaData = photoItem;
+                                        [message setValue:newMediaData forKey:@"media"];
+                                        
+                                        if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                                            [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
+                                        }
+                                        else{
+                                            [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView];
+                                        }
+                                        [self.collectionView.collectionViewLayout invalidateLayoutWithContext:[JSQMessagesCollectionViewFlowLayoutInvalidationContext context]];
+                                        
+                                        [self.collectionView reloadData];
+                                        
+                                        message = nil;
+                                    }
+                                    else{
+                                        NSLog(@"error getting img data %@", error);
+                                    }
+                                }];
+                            }
+                            else{
+                                NSLog(@"error with image query %@", error);
+                            }
+                        }];
+                    }
+                    else{
+                        NSString *messageText = [messageOb objectForKey:@"message"];
+                        
+                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
+                        
+                        if (![self.messages containsObject:message]) {
+                            [self.messages insertObject:message atIndex:0];
+                        }
+                    }
+                }
                 
-                [self.messages insertObject:message atIndex:0];
-            }
-                [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                }];
-
+                [self.convoObject saveInBackground];
+                
+                [self.collectionView.collectionViewLayout invalidateLayoutWithContext:[JSQMessagesCollectionViewFlowLayoutInvalidationContext context]];
                 [self.collectionView reloadData];
+                
                 [self scrollToBottomAnimated:NO];
             }
             else{
@@ -248,7 +334,186 @@
 - (void)didPressAccessoryButton:(UIButton *)sender
 {
     [self.inputToolbar.contentView.textView resignFirstResponder];
+    [self alertSheet];
 }
+
+-(void)alertSheet{
+    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose pictures" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Choose pictures tapped"
+                       customAttributes:@{
+                                          @"where":@"Team Bump"
+                                          }];
+        
+        [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+            switch (status) {
+                case PHAuthorizationStatusAuthorized:{
+                    
+                    QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                    imagePickerController.delegate = self;
+                    imagePickerController.allowsMultipleSelection = YES;
+                    imagePickerController.maximumNumberOfSelection = 4;
+                    imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                    imagePickerController.numberOfColumnsInPortrait = 2;
+                    imagePickerController.showsNumberOfSelectedAssets = YES;
+                    [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                }
+                    break;
+                case PHAuthorizationStatusRestricted:{
+                    NSLog(@"restricted");
+                }
+                    break;
+                case PHAuthorizationStatusDenied:
+                {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self showAlertWithTitle:@"Photos Permission" andMsg:@"Bump needs access to your photos so we can send one 📷"];
+                    });
+                    NSLog(@"denied");
+                }
+                    break;
+                default:
+                    break;
+            }
+        }];
+    }]];
+    
+    [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+- (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingAssets:(NSArray *)assets {
+    [self dismissViewControllerAnimated:YES completion:^{
+        PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+        requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
+        requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+        requestOptions.networkAccessAllowed = YES;
+
+        PHImageManager *manager = [PHImageManager defaultManager];
+        
+        for (PHAsset *asset in assets) {
+            [manager requestImageForAsset:asset
+                               targetSize:PHImageManagerMaximumSize
+                              contentMode:PHImageContentModeDefault
+                                  options:requestOptions
+                            resultHandler:^void(UIImage *image, NSDictionary *info) {
+                                //new policy: all resizing done in finalImage, instead of scattered
+                                [self finalImage:image];
+                            }];
+        }
+    }];
+}
+
+- (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController {
+    [self dismissViewControllerAnimated:YES completion:NULL];
+}
+
+-(void)finalImage:(UIImage *)image{
+    
+    [JSQSystemSoundPlayer jsq_playMessageSentSound];
+    
+    UIImage *newImage = [image scaleImageToSizeFIT:CGSizeMake(750, 750)];
+    
+    JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc] initWithImage:newImage];
+    JSQMessage *photoMessage = [JSQMessage messageWithSenderId:self.senderId
+                                                   displayName:self.senderDisplayName
+                                                         media:photoItem];
+    [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
+    [self.messages addObject:photoMessage];
+    [self finishSendingMessageAnimated:YES];
+    
+    NSData* data = UIImageJPEGRepresentation(newImage, 0.8);
+    
+    if (data == nil) {
+        //prevent crash when creating a PFFile with nil data
+        [Answers logCustomEventWithName:@"PFFile Nil Data"
+                       customAttributes:@{
+                                          @"pageName":@"Team Bump Chat"
+                                          }];
+        [self showAlertWithTitle:@"Image Error" andMsg:@"Something went wrong getting your image, please try again!"];
+        return;
+    }
+    
+    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:data];
+    
+    PFObject *picObject = [PFObject objectWithClassName:@"teamBumpmMsgImages"];
+    [picObject setObject:filePicture forKey:@"Image"];
+    [picObject setObject:self.convoObject forKey:@"convo"];
+    [self.convoImagesArray addObject:picObject];
+    
+    [picObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        if (succeeded) {
+            
+            self.messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
+            self.messageObject[@"message"] = picObject.objectId;
+            self.messageObject[@"sender"] = [PFUser currentUser];
+            self.messageObject[@"senderId"] = [PFUser currentUser].objectId;
+            self.messageObject[@"senderName"] = [PFUser currentUser].username;
+            self.messageObject[@"convoId"] = self.convoId;
+            self.messageObject[@"status"] = @"sent";
+            self.messageObject[@"mediaMessage"] = @"YES";
+            if (self.tagString) {
+                [self.messageObject setObject:self.tagString forKey:@"tagString"];
+            }
+            [self.messageObject saveInBackground];
+            
+            //set as last message sent
+            self.lastMessage = self.messageObject;
+            
+            //set msg object so photo is tagged
+            photoMessage.msgObject = self.messageObject;
+            
+            if (![self.senderId isEqualToString:self.otherUser.objectId]) {
+                [self.convoObject incrementKey:@"convoImages"];
+            }
+            
+            [self.convoObject setObject:self.messageObject forKey:@"lastSent"];
+            
+            [self.convoObject incrementKey:@"totalMessages"];
+            [self.convoObject incrementKey:@"BumpUnseen"];
+            [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
+            [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
+                }
+                else{
+                    NSLog(@"error saving convo in final image %@", error);
+                }
+            }];
+            
+            // add new message object to relevant arrays
+            [self.sentMessagesParseArray insertObject:picObject atIndex:0];
+            [self.messagesParseArray insertObject:picObject atIndex:0];
+            
+            //call attributedString method to update labels
+            NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
+            NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
+            NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
+            
+            [self collectionView:self.collectionView attributedTextForCellBottomLabelAtIndexPath:pathToLastItem];
+            [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
+            [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
+        }
+        else{
+            NSLog(@"error saving pic msg %@", error);
+            
+            [self.convoImagesArray removeObject:picObject];
+            
+            [Answers logCustomEventWithName:@"Error Saving Pic File"
+                           customAttributes:@{
+                                              @"where":@"Team Bump Chat"
+                                              }];
+            
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Error sending image" message:@"Make sure you're connected to the internet" preferredStyle:UIAlertControllerStyleAlert];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            }]];
+            [self presentViewController:alertView animated:YES completion:nil];
+        }
+    }];
+}
+
 
 #pragma mark - JSQMessages CollectionView DataSource
 
@@ -319,6 +584,32 @@
     //        }
     //    }
     
+    JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+    
+    if ([message.senderId isEqualToString:self.senderId]) {
+        return nil;
+    }
+    else{
+        //get array of messages other user has sent
+        NSMutableArray *otherUserSentMessages = [self.messagesParseArray mutableCopy];
+        [otherUserSentMessages removeObjectsInArray:self.sentMessagesParseArray];
+        
+        if (otherUserSentMessages.count > 0) {
+            PFObject *lastMessage = otherUserSentMessages[0];
+            if ([lastMessage.createdAt isEqualToDate:message.date]) {
+                //this is the last sent message by other user
+                //so show avatar
+                return self.avaImage;
+            }
+            else{
+                return nil;
+            }
+        }
+        else{
+            return nil;
+        }
+    }
+    
     
     return nil;
 }
@@ -331,11 +622,37 @@
      *
      *  Show a timestamp for every 3rd message
      */
-    if (indexPath.item % 3 == 0) {
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+                                    NSFontAttributeName,[UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+    
+    
+    //show timestamp if message was sent >= 1 hour after previous message
+    if (indexPath.item == 0) {
         JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
-        return [[JSQMessagesTimestampFormatter sharedFormatter] attributedTimestampForDate:message.date];
+        NSAttributedString *finalStamp = [[NSAttributedString alloc]initWithString:[[[JSQMessagesTimestampFormatter sharedFormatter] attributedTimestampForDate:message.date] string] attributes:textAttributes];
+        return finalStamp;
     }
-    return nil;
+    else{
+        //get previous message
+        JSQMessage *previousMessage = [self.messages objectAtIndex:indexPath.item-1];
+        JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+        
+        //check difference between 2 dates
+        NSDate* date1 = previousMessage.date;
+        NSDate* date2 = message.date;
+        NSTimeInterval distanceBetweenDates = [date2 timeIntervalSinceDate:date1];
+        double secondsInAnHour = 3600;
+        NSInteger hoursBetweenDates = distanceBetweenDates / secondsInAnHour;
+        
+        if (hoursBetweenDates >= 1) {
+            NSAttributedString *finalStamp = [[NSAttributedString alloc]initWithString:[[[JSQMessagesTimestampFormatter sharedFormatter] attributedTimestampForDate:message.date] string] attributes:textAttributes];
+            return finalStamp;
+        }
+        else{
+            return nil;
+        }
+    }
 }
 
 - (NSAttributedString *)collectionView:(JSQMessagesCollectionView *)collectionView attributedTextForMessageBubbleTopLabelAtIndexPath:(NSIndexPath *)indexPath
@@ -436,11 +753,28 @@
      *
      *  Show a timestamp for every 3rd message
      */
-    if (indexPath.item % 3 == 0) {
-        return kJSQMessagesCollectionViewCellLabelHeightDefault;
+    if (indexPath.item == 0) {
+        return kJSQMessagesCollectionViewCellLabelHeightDefault+10;
     }
-    
-    return 0.0f;
+    else{
+        //get previous message
+        JSQMessage *previousMessage = [self.messages objectAtIndex:indexPath.item-1];
+        JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+        
+        //check difference between 2 dates
+        NSDate* date1 = previousMessage.date;
+        NSDate* date2 = message.date;
+        NSTimeInterval distanceBetweenDates = [date2 timeIntervalSinceDate:date1];
+        double secondsInAnHour = 3600;
+        NSInteger hoursBetweenDates = distanceBetweenDates / secondsInAnHour;
+        
+        if (hoursBetweenDates >= 1) {
+            return kJSQMessagesCollectionViewCellLabelHeightDefault+10;
+        }
+        else{
+            return 0.0;
+        }
+    }
 }
 
 - (CGFloat)collectionView:(JSQMessagesCollectionView *)collectionView
@@ -487,7 +821,41 @@
 
 - (void)collectionView:(JSQMessagesCollectionView *)collectionView didTapMessageBubbleAtIndexPath:(NSIndexPath *)indexPath
 {
+    JSQMessage *tappedMessage = [self.messages objectAtIndex:indexPath.item];
     
+    if ([[self.messages objectAtIndex:indexPath.item] isMediaMessage] == YES){
+        
+        [Answers logCustomEventWithName:@"Tapped Image in Team Bump Chat"
+                       customAttributes:@{}];
+        
+        DetailImageController *vc = [[DetailImageController alloc]init];
+        vc.listingPic = NO;
+        vc.numberOfPics = (int)self.convoImagesArray.count;
+        
+        //calculate the index of the image tapped so correct selectedIndex shown in DetailImageVC
+        int selectedIndex;
+        PFObject *msgObject = tappedMessage.msgObject;
+        NSString *messageString = [msgObject objectForKey:@"message"];
+        
+        for (int i = 0; i<self.convoImagesArray.count; i++) {
+            PFObject *imageMessage = self.convoImagesArray[i];
+            if ([messageString isEqualToString:imageMessage.objectId]) {
+                selectedIndex = i;
+                break;
+            }
+        }
+        
+        vc.chosenIndex = selectedIndex;
+        vc.convoImagesArray = self.convoImagesArray;
+        vc.convoMode = YES;
+        vc.tagText = [tappedMessage.msgObject objectForKey:@"tagString"];
+        id<JSQMessageMediaData> mediaItem = tappedMessage.media;
+        
+        JSQPhotoMediaItem *photoItem = (JSQPhotoMediaItem *)mediaItem;
+        vc.messagePicture = photoItem.image;
+        
+        [self presentViewController:vc animated:YES completion:nil];
+    }
 }
 
 - (void)collectionView:(JSQMessagesCollectionView *)collectionView didTapCellAtIndexPath:(NSIndexPath *)indexPath touchLocation:(CGPoint)touchLocation
@@ -524,6 +892,27 @@
     UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
     [alert addAction:ok];
     [self presentViewController:alert animated:YES completion:nil];
+}
+
+-(void)loadConvoImages{
+    PFQuery *imageQuery = [PFQuery queryWithClassName:@"teamBumpmMsgImages"];
+    [imageQuery whereKey:@"convo" equalTo:self.convoObject];
+    [imageQuery orderByDescending:@"createdAt"];
+    [imageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            [self.convoImagesArray addObjectsFromArray:objects];
+            
+            //reverse order
+            NSArray *convoImg = [[self.convoImagesArray reverseObjectEnumerator] allObjects];
+            [self.convoImagesArray removeAllObjects];
+            [self.convoImagesArray addObjectsFromArray:convoImg];
+            
+            NSLog(@"convo img count %lu", (unsigned long)self.convoImagesArray.count);
+        }
+        else{
+            NSLog(@"error getting convo images %@", error);
+        }
+    }];
 }
 
 @end

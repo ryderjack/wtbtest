@@ -211,10 +211,10 @@
     NSLog(@"INFO: %@", info);
     
     self.profileImage = info[UIImagePickerControllerOriginalImage];
-    self.testingView.image = nil;
     [self showHUD];
-    UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
-    
+//    UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
+    UIImage *imageToSave = [self.profileImage scaleImageToSize:CGSizeMake(750, 750)];
+
     
     NSData* data = UIImageJPEGRepresentation(imageToSave, 0.7f);
     if (data == nil) {
@@ -228,6 +228,7 @@
                                           }];
     }
     else{
+//        self.testingView.image = nil;
         PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:data];
         [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {

@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1217" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -15,7 +15,6 @@
         <array key="PingFang.ttc">
             <string>PingFangSC-Medium</string>
             <string>PingFangSC-Regular</string>
-            <string>PingFangSC-Semibold</string>
         </array>
     </customFonts>
     <objects>
@@ -59,16 +58,6 @@
                         <constraint firstAttribute="width" constant="185" id="mmL-sC-FwD"/>
                     </constraints>
                 </imageView>
-                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="0vb-01-q90">
-                    <rect key="frame" x="0.0" y="613.5" width="375" height="33"/>
-                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
-                    <state key="normal" title="D I S M I S S">
-                        <color key="titleColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                    </state>
-                    <connections>
-                        <action selector="createPressed:" destination="-1" eventType="touchUpInside" id="MGt-98-gPl"/>
-                    </connections>
-                </button>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="iPhoneIntro2.3.png" translatesAutoresizingMaskIntoConstraints="NO" id="nux-8c-4T5">
                     <rect key="frame" x="98.5" y="86" width="185" height="374"/>
                     <constraints>
@@ -146,24 +135,34 @@
                     <rect key="frame" x="199.5" y="309" width="116" height="116"/>
                     <color key="backgroundColor" red="0.90588235289999997" green="0.90588235289999997" blue="0.90588235289999997" alpha="1" colorSpace="calibratedRGB"/>
                 </imageView>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="0vb-01-q90">
+                    <rect key="frame" x="0.0" y="617" width="375" height="30"/>
+                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="8"/>
+                    <state key="normal" title="D I S M I S S" backgroundImage="tutorialButtonBg.png">
+                        <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="createPressed:" destination="-1" eventType="touchUpInside" id="MGt-98-gPl"/>
+                    </connections>
+                </button>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nD1-X5-R5W">
-                    <rect key="frame" x="0.0" y="614" width="375" height="33"/>
+                    <rect key="frame" x="0.0" y="617" width="375" height="30"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="33" id="bcE-KW-vQ2"/>
+                        <constraint firstAttribute="height" constant="30" id="bcE-KW-vQ2"/>
                     </constraints>
-                    <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="14"/>
-                    <state key="normal" title="C R E A T E  A  L I S T I N G">
-                        <color key="titleColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="8"/>
+                    <state key="normal" title="C R E A T E  A  L I S T I N G" backgroundImage="tutorialButtonBg.png">
+                        <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </state>
                     <connections>
                         <action selector="createPressed:" destination="-1" eventType="touchUpInside" id="eue-lq-oND"/>
                     </connections>
                 </button>
             </subviews>
-            <color key="backgroundColor" red="0.30196078431372547" green="0.63921568627450975" blue="0.9882352941176471" alpha="1" colorSpace="calibratedRGB"/>
+            <color key="backgroundColor" red="0.24313725490196078" green="0.59215686274509804" blue="1" alpha="1" colorSpace="calibratedRGB"/>
             <constraints>
                 <constraint firstItem="zij-rD-QcO" firstAttribute="trailing" secondItem="lRq-4c-dRa" secondAttribute="trailing" id="0CY-kc-PKI"/>
-                <constraint firstItem="nD1-X5-R5W" firstAttribute="top" secondItem="f2N-7h-uu8" secondAttribute="bottom" constant="93" id="0Qz-7I-a3J"/>
+                <constraint firstItem="nD1-X5-R5W" firstAttribute="top" secondItem="f2N-7h-uu8" secondAttribute="bottom" constant="96" id="0Qz-7I-a3J"/>
                 <constraint firstItem="iwT-8Z-PPR" firstAttribute="top" secondItem="lRq-4c-dRa" secondAttribute="top" id="2Uq-NB-loY"/>
                 <constraint firstItem="J8R-Pe-2yV" firstAttribute="top" secondItem="nux-8c-4T5" secondAttribute="bottom" constant="-210" id="2zo-Vh-XSg"/>
                 <constraint firstItem="f2N-7h-uu8" firstAttribute="top" secondItem="nux-8c-4T5" secondAttribute="bottom" constant="26" id="3X1-jX-ZcT"/>
@@ -222,5 +221,6 @@
         <image name="iPhoneIntro2.2.png" width="185" height="375"/>
         <image name="iPhoneIntro2.3.png" width="185" height="375"/>
         <image name="tryBg.png" width="133" height="182"/>
+        <image name="tutorialButtonBg.png" width="320" height="30"/>
     </resources>
 </document>

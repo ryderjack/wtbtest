@@ -105,9 +105,11 @@
     if (!cell) {
         cell = [[ReviewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
     }
-    
+    [cell.itemImageView setHidden:YES];
     cell.userImageView.image = nil;
     cell.itemImageView.image = nil;
+    
+    [self setImageBorder:cell.userImageView withNumber:30];
     
     PFObject *feedbackObject = [self.feedbackArray objectAtIndex:indexPath.row];
     
@@ -136,32 +138,13 @@
         [cell.starImageView setImage:[UIImage imageNamed:@"5star"]];
     }
 
-
     PFUser *gaveUser = [feedbackObject objectForKey:@"gaveFeedback"];
     [cell.userImageView setFile:[gaveUser objectForKey:@"picture"]];
     [cell.userImageView loadInBackground];
     cell.usernameLabel.text = gaveUser.username;
     
-    [self setImageBorder:cell.userImageView withNumber:30];
-    [self setImageBorder:cell.itemImageView withNumber:25];
-    
-    if ([feedbackObject objectForKey:@"WTB"]) {
-        [cell.itemImageView setHidden:NO];
-        PFObject *WTB = [feedbackObject objectForKey:@"WTB"];
-        [cell.itemImageView setFile:[WTB objectForKey:@"image1"]];
-        [cell.itemImageView loadInBackground];
-    }
-    else{
-        [cell.itemImageView setHidden:YES];
-    }
-    
-    if ([[[feedbackObject objectForKey:@"sellerUser"]objectId] isEqualToString:self.user.objectId]) {
-            cell.commentLabel.text = [NSString stringWithFormat:@"Sale: %@",[feedbackObject objectForKey:@"comment"]];
-        }
-    else{
-        cell.commentLabel.text = [NSString stringWithFormat:@"Purchase: %@",[feedbackObject objectForKey:@"comment"]];
-    }
-    
+    cell.commentLabel.text = [feedbackObject objectForKey:@"comment"];
+
     return cell;
 }
 

@@ -11,20 +11,17 @@
 #import <ParseUI/ParseUI.h>
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
+#import "inviteViewClass.h"
 
-@interface FeedbackController : UITableViewController <UITextFieldDelegate>
+@class FeedbackController;
+
+@protocol feedbackDelegate <NSObject>
+- (void)leftReview;
+@end
+
+@interface FeedbackController : UITableViewController <UITextFieldDelegate,inviteDelegate>
 NS_ASSUME_NONNULL_BEGIN
-@property (strong, nonatomic) IBOutlet UITableViewCell *userCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *starCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *buttonCell;
-
-//user cell
-@property (weak, nonatomic) IBOutlet UILabel *aboutLabel;
-@property (weak, nonatomic) IBOutlet UILabel *userNameLabel;
-@property (weak, nonatomic) IBOutlet UILabel *dealsLabel;
-@property (weak, nonatomic) IBOutlet UIImageView *starView;
-@property (weak, nonatomic) IBOutlet PFImageView *pictureView;
-@property (weak, nonatomic) IBOutlet PFImageView *checkImageView;
 
 //star cell
 @property (weak, nonatomic) IBOutlet UIButton *firstStar;
@@ -34,25 +31,44 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UIButton *fifthStar;
 @property (weak, nonatomic) IBOutlet UITextField *commentField;
 
-//button cell
-@property (weak, nonatomic) IBOutlet UIButton *feedbackButton;
-@property (weak, nonatomic) IBOutlet UIButton *problemButton;
+@property (weak, nonatomic) IBOutlet UILabel *usersNameLabel;
+
+@property (nonatomic) BOOL isBuyer;
 
 @property (nonatomic, strong) PFUser *user;
 @property (nonnull, strong) NSString *IDUser;
 @property (nonatomic) BOOL purchased;
 @property (nonatomic) int starNumber;
-@property (weak, nonatomic) IBOutlet UILabel *warningLabel;
 
-@property (nonatomic, strong) PFObject *orderObject;
 @property (nonatomic, strong) NSString *statusString;
+@property (nonatomic, strong) PFObject *convoObject;
 
+//main cell
+@property (weak, nonatomic) IBOutlet UILabel *explainLabel;
+@property (weak, nonatomic) IBOutlet PFImageView *userImageView;
 
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
 @property (nonatomic, strong) MBProgressHUD *hud;
 
 @property (nonatomic, strong) NSArray *profanityList;
+
+//big button
+@property (nonatomic, strong) UIButton *longButton;
+@property (nonatomic) BOOL buttonShowing;
+
+//delegate
+@property (nonatomic, weak) id <feedbackDelegate> delegate;
+
+//invite pop up
+@property (nonatomic, strong, nullable) inviteViewClass *inviteView;
+@property (nonatomic, strong, nullable) UIView *bgView;
+@property (nonatomic) BOOL alertShowing;
+@property (nonatomic, strong) UITapGestureRecognizer *tap;
+
+//rate
+@property (nonatomic, strong) UINavigationController *messageNav;
+
 
 NS_ASSUME_NONNULL_END
 @end

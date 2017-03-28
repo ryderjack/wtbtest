@@ -19,6 +19,7 @@
 #import <MBProgressHUD.h>
 #import "CreateSuccessView.h"
 #import "customAlertViewClass.h"
+#import <QBImagePickerController/QBImagePickerController.h>
 
 @class CreateViewController;
 
@@ -26,7 +27,7 @@
 - (void)dismissCreateController:(CreateViewController *)controller;
 @end
 
-@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate>
+@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
@@ -40,6 +41,10 @@
 
 //delegate
 @property (nonatomic, weak) id <CreateViewControllerDelegate> delegate;
+
+//add multiple images at once
+@property (nonatomic) BOOL multipleMode;
+@property (nonatomic, strong) NSMutableArray *imagesToProcess;
 
 //choose buttons
 @property (weak, nonatomic) IBOutlet UILabel *chooseCondition;

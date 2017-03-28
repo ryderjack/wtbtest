@@ -21,9 +21,10 @@
 #import "customAlertViewClass.h"
 #import "HMSegmentedControl.h"
 #import "WelcomeViewController.h"
+#import "TOJRWebView.h"
+#import "RateCustomView.h"
 
-
-@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate, customAlertDelegate, WelcomeDelegate>
+@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate, customAlertDelegate, WelcomeDelegate, JRWebViewDelegate,rateDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
@@ -71,6 +72,8 @@
 @property (nonatomic) BOOL justABump;
 @property (nonatomic) NSArray *wantedWords;
 @property (nonatomic) NSArray *searchWords;
+@property (nonatomic) BOOL sendMode;
+
 
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;
@@ -90,6 +93,13 @@
 //thrown user back to welcome VC
 @property (nonatomic) BOOL welcomeShowing;
 
+//web view for releases
+@property (nonatomic, strong) TOJRWebView *web;
+
+//custom rate
+@property (nonatomic, strong) RateCustomView *rateView;
+@property (nonatomic) BOOL lowRating;
+@property (nonatomic, strong) UINavigationController *messageNav;
 
 -(void)doubleTapScroll;
 @end

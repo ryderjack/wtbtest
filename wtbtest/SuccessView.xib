@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="16A323" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -7,6 +7,7 @@
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
+        <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -14,7 +15,6 @@
     <customFonts key="customFonts">
         <array key="PingFang.ttc">
             <string>PingFangSC-Medium</string>
-            <string>PingFangSC-Regular</string>
             <string>PingFangSC-Semibold</string>
         </array>
     </customFonts>
@@ -128,20 +128,6 @@
                                 <action selector="editPressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="E7K-n1-Sed"/>
                             </connections>
                         </button>
-                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6HB-p8-Jb1">
-                            <rect key="frame" x="116" y="109" width="142" height="30"/>
-                            <constraints>
-                                <constraint firstAttribute="width" constant="142" id="JJg-QN-5Ps"/>
-                                <constraint firstAttribute="height" constant="30" id="XxX-7u-62N"/>
-                            </constraints>
-                            <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="12"/>
-                            <state key="normal" title="Add more details">
-                                <color key="titleColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                            </state>
-                            <connections>
-                                <action selector="addMorePressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="nh3-Jc-o00"/>
-                            </connections>
-                        </button>
                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Listing posted. Congrats!" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SZ3-fQ-mAw">
                             <rect key="frame" x="8" y="65" width="359" height="38"/>
                             <constraints>
@@ -151,11 +137,53 @@
                             <nil key="textColor"/>
                             <nil key="highlightedColor"/>
                         </label>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6HB-p8-Jb1">
+                            <rect key="frame" x="100" y="108" width="176" height="30"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="176" id="JJg-QN-5Ps"/>
+                                <constraint firstAttribute="height" constant="30" id="XxX-7u-62N"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
+                            <state key="normal" title="Add more details">
+                                <color key="titleColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            </state>
+                            <connections>
+                                <action selector="addMorePressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="nh3-Jc-o00"/>
+                            </connections>
+                        </button>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gsX-UX-SqP">
+                            <rect key="frame" x="0.0" y="406" width="188" height="45"/>
+                            <color key="backgroundColor" red="0.90588235289999997" green="0.90588235289999997" blue="0.90588235289999997" alpha="1" colorSpace="calibratedRGB"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="188" id="2BM-LV-vtO"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="14"/>
+                            <state key="normal" title="D O N E">
+                                <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                            </state>
+                            <connections>
+                                <action selector="doneButtonPressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="Dfv-Si-QgH"/>
+                                <action selector="firstPressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="7uc-0V-iqU"/>
+                            </connections>
+                        </button>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="KGx-oF-N0a">
+                            <rect key="frame" x="187" y="406" width="188" height="45"/>
+                            <color key="backgroundColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                            <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="14"/>
+                            <state key="normal" title="A D D  S I Z E">
+                                <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </state>
+                            <connections>
+                                <action selector="addSizePressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="THO-Hs-OeN"/>
+                            </connections>
+                        </button>
                     </subviews>
                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     <constraints>
                         <constraint firstItem="uMI-8M-MfA" firstAttribute="leading" secondItem="G0N-EC-v5U" secondAttribute="leading" id="095-PA-IKZ"/>
                         <constraint firstItem="SK0-ao-JG5" firstAttribute="baseline" secondItem="Xb3-en-zlq" secondAttribute="baseline" id="0hD-WB-w0q"/>
+                        <constraint firstItem="gsX-UX-SqP" firstAttribute="leading" secondItem="G0N-EC-v5U" secondAttribute="leading" id="1eP-2e-eVv"/>
+                        <constraint firstItem="KGx-oF-N0a" firstAttribute="baseline" secondItem="gsX-UX-SqP" secondAttribute="firstBaseline" id="5AT-xh-xqh"/>
                         <constraint firstItem="6HB-p8-Jb1" firstAttribute="centerX" secondItem="5tr-fh-EOV" secondAttribute="centerX" id="5LN-se-H4t"/>
                         <constraint firstItem="QUR-wj-8JZ" firstAttribute="top" secondItem="BMi-XY-Jfy" secondAttribute="top" id="5pF-GL-wXo"/>
                         <constraint firstItem="drQ-ZH-3Zc" firstAttribute="top" secondItem="QUR-wj-8JZ" secondAttribute="top" id="AZE-5a-zbS"/>
@@ -165,9 +193,17 @@
                         <constraint firstItem="SZ3-fQ-mAw" firstAttribute="leading" secondItem="2GK-Be-cPr" secondAttribute="leadingMargin" id="LiD-QG-RxT"/>
                         <constraint firstItem="qcM-dR-ptv" firstAttribute="top" secondItem="2GK-Be-cPr" secondAttribute="top" constant="-65" id="Mfe-ST-knr"/>
                         <constraint firstItem="SZ3-fQ-mAw" firstAttribute="centerX" secondItem="6HB-p8-Jb1" secondAttribute="centerX" id="Mhn-e0-eDB"/>
+                        <constraint firstItem="KGx-oF-N0a" firstAttribute="width" secondItem="gsX-UX-SqP" secondAttribute="width" id="Mtt-Lf-iXH"/>
+                        <constraint firstItem="KGx-oF-N0a" firstAttribute="leading" secondItem="gsX-UX-SqP" secondAttribute="trailing" constant="-1" id="NBR-iE-5Aq"/>
+                        <constraint firstAttribute="trailing" secondItem="KGx-oF-N0a" secondAttribute="trailing" id="NxU-03-XIg"/>
                         <constraint firstItem="drQ-ZH-3Zc" firstAttribute="bottom" secondItem="QUR-wj-8JZ" secondAttribute="bottom" id="OdM-gA-YSZ"/>
                         <constraint firstItem="drQ-ZH-3Zc" firstAttribute="top" secondItem="uMI-8M-MfA" secondAttribute="bottom" constant="15" id="RoR-Bd-G9z"/>
+                        <constraint firstItem="gsX-UX-SqP" firstAttribute="top" secondItem="KGx-oF-N0a" secondAttribute="top" id="Suu-Xc-HdO"/>
+                        <constraint firstItem="gsX-UX-SqP" firstAttribute="leading" secondItem="2GK-Be-cPr" secondAttribute="leading" id="T0H-Dh-X51"/>
+                        <constraint firstItem="gsX-UX-SqP" firstAttribute="top" secondItem="G0N-EC-v5U" secondAttribute="top" id="TaE-79-W2e"/>
                         <constraint firstItem="Xb3-en-zlq" firstAttribute="leading" secondItem="SK0-ao-JG5" secondAttribute="trailing" constant="39" id="UsH-s5-4xq"/>
+                        <constraint firstItem="gsX-UX-SqP" firstAttribute="baseline" secondItem="KGx-oF-N0a" secondAttribute="baseline" id="Utc-8m-Ycm"/>
+                        <constraint firstItem="gsX-UX-SqP" firstAttribute="baseline" secondItem="G0N-EC-v5U" secondAttribute="baseline" id="XRv-Ps-M0s"/>
                         <constraint firstItem="QUR-wj-8JZ" firstAttribute="bottom" secondItem="BMi-XY-Jfy" secondAttribute="bottom" id="YSu-vG-2HZ"/>
                         <constraint firstItem="KDc-iE-h4J" firstAttribute="baseline" secondItem="SK0-ao-JG5" secondAttribute="baseline" id="Yn5-2C-hE7"/>
                         <constraint firstItem="uMI-8M-MfA" firstAttribute="leading" secondItem="2GK-Be-cPr" secondAttribute="leading" id="c4c-oU-TH0"/>
@@ -178,16 +214,19 @@
                         <constraint firstItem="SK0-ao-JG5" firstAttribute="firstBaseline" secondItem="Xb3-en-zlq" secondAttribute="firstBaseline" id="iFB-fQ-DUv"/>
                         <constraint firstItem="drQ-ZH-3Zc" firstAttribute="centerX" secondItem="KDc-iE-h4J" secondAttribute="centerX" id="j4w-Cn-YBp"/>
                         <constraint firstItem="KDc-iE-h4J" firstAttribute="firstBaseline" secondItem="SK0-ao-JG5" secondAttribute="firstBaseline" id="jsa-Ne-011"/>
+                        <constraint firstItem="KGx-oF-N0a" firstAttribute="trailing" secondItem="G0N-EC-v5U" secondAttribute="trailing" id="kUU-7x-9sz"/>
                         <constraint firstItem="5tr-fh-EOV" firstAttribute="centerX" secondItem="uMI-8M-MfA" secondAttribute="centerX" id="ksJ-OC-xVe"/>
-                        <constraint firstItem="5tr-fh-EOV" firstAttribute="top" secondItem="6HB-p8-Jb1" secondAttribute="bottom" constant="7" id="o7V-lI-GyZ"/>
+                        <constraint firstItem="5tr-fh-EOV" firstAttribute="top" secondItem="6HB-p8-Jb1" secondAttribute="bottom" constant="8" id="o7V-lI-GyZ"/>
                         <constraint firstItem="SK0-ao-JG5" firstAttribute="leading" secondItem="KDc-iE-h4J" secondAttribute="trailing" constant="25" id="oGI-CD-Uhf"/>
-                        <constraint firstItem="6HB-p8-Jb1" firstAttribute="top" secondItem="SZ3-fQ-mAw" secondAttribute="bottom" constant="6" id="pYA-Hl-rzU"/>
+                        <constraint firstItem="6HB-p8-Jb1" firstAttribute="top" secondItem="SZ3-fQ-mAw" secondAttribute="bottom" constant="5" id="pYA-Hl-rzU"/>
                         <constraint firstItem="uMI-8M-MfA" firstAttribute="top" secondItem="5tr-fh-EOV" secondAttribute="bottom" id="rKD-sP-RZU"/>
+                        <constraint firstItem="gsX-UX-SqP" firstAttribute="baseline" secondItem="G0N-EC-v5U" secondAttribute="firstBaseline" id="ri2-cS-Qb2"/>
                         <constraint firstAttribute="bottom" secondItem="G0N-EC-v5U" secondAttribute="bottom" id="s9h-uB-J7F"/>
                         <constraint firstItem="QUR-wj-8JZ" firstAttribute="leading" secondItem="drQ-ZH-3Zc" secondAttribute="trailing" constant="30" id="sq3-6P-qDb"/>
                         <constraint firstItem="KDc-iE-h4J" firstAttribute="top" secondItem="drQ-ZH-3Zc" secondAttribute="bottom" constant="7" id="tKh-Og-oIJ"/>
+                        <constraint firstItem="gsX-UX-SqP" firstAttribute="baseline" secondItem="KGx-oF-N0a" secondAttribute="firstBaseline" id="wih-wL-rzF"/>
                         <constraint firstItem="SZ3-fQ-mAw" firstAttribute="top" secondItem="2GK-Be-cPr" secondAttribute="top" constant="65" id="yxe-2f-APx"/>
-                        <constraint firstItem="6HB-p8-Jb1" firstAttribute="top" secondItem="qcM-dR-ptv" secondAttribute="bottom" constant="43" id="znx-Ny-7K3"/>
+                        <constraint firstItem="6HB-p8-Jb1" firstAttribute="top" secondItem="qcM-dR-ptv" secondAttribute="bottom" constant="42" id="znx-Ny-7K3"/>
                     </constraints>
                 </view>
             </subviews>
@@ -202,8 +241,12 @@
             <connections>
                 <outlet property="collectionView" destination="uMI-8M-MfA" id="eEE-Nl-xpE"/>
                 <outlet property="createButton" destination="BMi-XY-Jfy" id="iOY-cv-t2b"/>
+                <outlet property="doneButton" destination="G0N-EC-v5U" id="NUe-eM-ytR"/>
                 <outlet property="editButton" destination="QUR-wj-8JZ" id="IvZ-aO-5hO"/>
+                <outlet property="firstButton" destination="gsX-UX-SqP" id="HIO-GE-Yyc"/>
                 <outlet property="insideView" destination="2GK-Be-cPr" id="TaQ-QV-nRb"/>
+                <outlet property="mainLabel" destination="SZ3-fQ-mAw" id="YAy-oH-PLx"/>
+                <outlet property="secondButton" destination="KGx-oF-N0a" id="wYE-VT-Q9s"/>
                 <outlet property="shareButton" destination="drQ-ZH-3Zc" id="lUQ-Hb-Q1W"/>
             </connections>
             <point key="canvasLocation" x="64.5" y="-62"/>

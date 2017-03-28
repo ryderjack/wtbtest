@@ -17,19 +17,16 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     if ([self.setting isEqualToString:@"condition"]) {
-        self.title = @"Condition";
+        self.title = @"C O N D I T I O N";
     }
     else if ([self.setting isEqualToString:@"category"]){
-        self.title = @"Category";
+        self.title = @"C A T E G O R Y";
     }
     else if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]){
-        self.title = @"Size";
-    }
-    else if ([self.setting isEqualToString:@"delivery"]){
-        self.title = @"Delivery";
+        self.title = @"S I Z E";
     }
     else{
-        self.title = @"Select";
+        self.title = @"S E L E C T";
     }
     
     self.selectedSizes = [NSMutableArray array];
@@ -95,9 +92,24 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, [UIColor blackColor], NSForegroundColorAttributeName,  nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+}
+
+-(void)viewDidAppear:(BOOL)animated{
+    if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]){
+        if (self.sellListing == YES) {
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenMultipleSellPrompt"] != YES) {
+                [self showMultipleALert];
+            }
+        }
+        else{
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenMultipleWantPrompt"] != YES) {
+                [self showMultipleALert];
+            }
+        }
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -212,7 +224,7 @@
             }
             
             [self.cell.segmentControl setHidden:YES];
-
+            
             if ([self.holdingGender isEqualToString:self.genderSelected]) {
                 
                 //highlight previously chosen sizes
@@ -246,19 +258,6 @@
             }
         }
     }
-    else if ([self.setting isEqualToString:@"delivery"]){
-        self.cell.textLabel.text = [self.deliveryArray objectAtIndex:indexPath.row];
-        [self.cell.segmentControl setHidden:YES];
-        
-        if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
-            //already been selected, show checkmark
-            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
-        }
-        else{
-            //hasnt already been selected
-            self.cell.accessoryType = UITableViewCellAccessoryNone;
-        }
-    }
     
     return self.cell;
 }
@@ -288,13 +287,9 @@
         
         if ([self.setting isEqualToString:@"sizefoot"]) {
             if ([self.genderSelected isEqualToString:@"Mens"]) {
-                NSLog(@"removing mens size %@ and array %@", [self.mensSizeUKArray objectAtIndex:indexPath.row-1], self.selectedSizes);
                 [self.selectedSizes removeObject:[self.mensSizeUKArray objectAtIndex:indexPath.row-1]];
-                
-                NSLog(@"new array %@", self.selectedSizes);
             }
             else{
-                NSLog(@"removing female size %@",[self.femaleSizeUKArray objectAtIndex:indexPath.row-1] );
                 [self.selectedSizes removeObject:[self.femaleSizeUKArray objectAtIndex:indexPath.row-1]];
             }
         }
@@ -323,44 +318,44 @@
         //if setting is size add a checkmark if array is < 3
         if (([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"])) {
             
-            if (self.sellListing == YES) {
-                //put the pop logic here
-                [self.selectedSizes removeAllObjects];
-                
-                if ([self.setting isEqualToString:@"sizefoot"]) {
-                    if (indexPath.row == 0) {
-                        //segment control so don't add anything
-                    }
-                    else{
-                        //add adjusted index path (due to segment control at 0
-                        if ([self.genderSelected isEqualToString:@"Mens"]) {
-                            [self.selectedSizes addObject:[self.mensSizeUKArray objectAtIndex:indexPath.row-1]];
-                        }
-                        else{
-                            [self.selectedSizes addObject:[self.femaleSizeUKArray objectAtIndex:indexPath.row-1]];
-                        }
-                    }
-                }
-                else if ([self.setting isEqualToString:@"sizeclothing"]) {
-                    [self.selectedSizes addObject:[self.clothingyArray objectAtIndex:indexPath.row]];
-                }
-                
-                self.lastSelectedPath = indexPath;
-                
-                //remove all checkmarks in tableview
-                for (UITableViewCell *cell in [tableView visibleCells]) {
-                    cell.accessoryType = UITableViewCellAccessoryNone;
-                }
-                
-                //add checkmark
-                UITableViewCell *currentCell = [tableView cellForRowAtIndexPath:indexPath];
-                currentCell.accessoryType = UITableViewCellAccessoryCheckmark;
-                
-                [self.navigationController popViewControllerAnimated:YES];
-                
-                return;
-            }
-            else{
+//            if (self.sellListing == YES) {
+//                //put the pop logic here
+//                [self.selectedSizes removeAllObjects];
+//                
+//                if ([self.setting isEqualToString:@"sizefoot"]) {
+//                    if (indexPath.row == 0) {
+//                        //segment control so don't add anything
+//                    }
+//                    else{
+//                        //add adjusted index path (due to segment control at 0
+//                        if ([self.genderSelected isEqualToString:@"Mens"]) {
+//                            [self.selectedSizes addObject:[self.mensSizeUKArray objectAtIndex:indexPath.row-1]];
+//                        }
+//                        else{
+//                            [self.selectedSizes addObject:[self.femaleSizeUKArray objectAtIndex:indexPath.row-1]];
+//                        }
+//                    }
+//                }
+//                else if ([self.setting isEqualToString:@"sizeclothing"]) {
+//                    [self.selectedSizes addObject:[self.clothingyArray objectAtIndex:indexPath.row]];
+//                }
+//                
+//                self.lastSelectedPath = indexPath;
+//                
+//                //remove all checkmarks in tableview
+//                for (UITableViewCell *cell in [tableView visibleCells]) {
+//                    cell.accessoryType = UITableViewCellAccessoryNone;
+//                }
+//                
+//                //add checkmark
+//                UITableViewCell *currentCell = [tableView cellForRowAtIndexPath:indexPath];
+//                currentCell.accessoryType = UITableViewCellAccessoryCheckmark;
+//                
+//                [self.navigationController popViewControllerAnimated:YES];
+//                
+//                return;
+//            }
+//            else{
                 // if selected index is last (='Any' or 'Other') then clear the array and remove all checkmarks
                 if (indexPath == pathToLastRow) {
                     //clear sizes array
@@ -390,7 +385,10 @@
                 
                 int limit = 0;
                 
-                if (self.sellListing == YES) {
+                if (self.multipleAllowed == YES) {
+                    limit = 10;
+                }
+                else if (self.sellListing == YES){
                     limit = 1;
                 }
                 else{
@@ -445,7 +443,7 @@
                 
                 //can return beacuse other code is for other settings
                 return;
-            }
+//            }
         }
         else{
             //add a checkmark to latest cell because its not a size selection VC
@@ -503,9 +501,12 @@
          NSMutableArray *numbersArray = [NSMutableArray array];
          
          for (NSString *size in sizeStrings) {
-             //split string to get first part before |
-             NSArray *strings = [size componentsSeparatedByString:@"|"];
              
+             //ensure its actually a string (was crashing when had a number here
+             NSString *stringCheck = [NSString stringWithFormat:@"%@",size];
+             
+             //split string to get first part before |
+             NSArray *strings = [stringCheck componentsSeparatedByString:@"|"];
              //get only number from that initial part of the string
              
              NSString *numberString = [strings[0] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
@@ -559,4 +560,107 @@
     [self.selectedSizes removeAllObjects];
 }
 
+-(void)showMultipleALert{
+    
+    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.searchBgView.alpha = 0.0;
+    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
+    self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
+    self.customAlert.delegate = self;
+    
+    self.customAlert.titleLabel.text = @"Multiple Sizes";
+    
+    //prompt user that multiple sizes can be selected
+    if (self.sellListing == YES) {
+        self.customAlert.messageLabel.text = @"Tap all the sizes you're selling!";
+        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"seenMultipleSellPrompt"];
+    }
+    else{
+        self.customAlert.messageLabel.text = @"Tap all the sizes you're interested in buying!";
+        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"seenMultipleWantPrompt"];
+    }
+    
+
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
+    }
+    else{
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
+    }
+    
+    self.customAlert.layer.cornerRadius = 10;
+    self.customAlert.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.customAlert];
+    
+    [UIView animateWithDuration:0.5
+                          delay:0.2
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 100, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 100, 300, 188)]; //iPhone 6/7 specific
+                            }
+                            self.customAlert.center = self.view.center;
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+
+
+-(void)donePressed{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.searchBgView = nil;
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                            }
+                            else{
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                            }
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.customAlert setAlpha:0.0];
+                         self.customAlert = nil;
+                     }];
+}
+
+-(void)firstPressed{
+}
+
+-(void)secondPressed{
+}
 @end

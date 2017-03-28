@@ -19,6 +19,7 @@
     
     self.fullnameLabel.adjustsFontSizeToFitWidth = YES;
     self.fullnameLabel.minimumScaleFactor=0.5;
+    
 }
 
 @end

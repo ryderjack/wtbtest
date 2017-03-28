@@ -41,10 +41,16 @@
 @property (nonatomic) BOOL bumpedPressed;
 @property (nonatomic) BOOL saleMode; //from buy now tab
 @property (nonatomic) BOOL wantedMode; //user is not a seller so just display wanted & bumped
+@property (nonatomic) BOOL noDeals;
 
 //modes
 @property (nonatomic) BOOL fromSearch;
 @property (nonatomic) BOOL tabMode;
+
+//which segment is showing
+@property (nonatomic) BOOL WTBSelected;
+@property (nonatomic) BOOL WTSSelected;
+@property (nonatomic) BOOL bumpsSelected;
 
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
@@ -91,5 +97,8 @@
 //Bumps
 @property (weak, nonatomic) IBOutlet UIImageView *bumpImageView;
 @property (weak, nonatomic) IBOutlet UILabel *bumpLabel;
+
+@property (nonatomic, strong) NSDateFormatter *inputDateFormatter;
+
 
 @end

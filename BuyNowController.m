@@ -65,7 +65,7 @@
                                                  name:UIApplicationWillEnterForegroundNotification
                                                object:[UIApplication sharedApplication]];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(justPostedNewListing) name:@"justPostedListing" object:nil];
+//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(justPostedNewListing) name:@"justPostedListing" object:nil];
 
     
     PFQuery *versionQuery = [PFQuery queryWithClassName:@"versions"];
@@ -172,6 +172,7 @@
                     for (NSDictionary *itemDict in response) {
                         //check if item has been surfaced before in this session
                         if ([self.seenEbayItems containsObject:[itemDict valueForKey:@"itemURL"]]) {
+                            continue;
                         }
                         else{
                             //insert eBay item to first postiion in match array
@@ -189,11 +190,13 @@
                                 NSIndexPath *indexPath = [NSIndexPath indexPathForRow:indexToUpdate inSection:0];
                                 RecommendCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
                                 
-                                NSIndexPath *indexPath1 = [NSIndexPath indexPathForItem:0 inSection:0];
-                                NSLog(@"RELOADING with new ebay item");
-                                [cell.collectionView reloadItemsAtIndexPaths:@[indexPath1]];
-                                
-                                [self.seenEbayItems addObject:[itemDict valueForKey:@"itemURL"]];
+                                if ([cell.collectionView numberOfItemsInSection:0]>0) {
+                                    NSIndexPath *indexPath1 = [NSIndexPath indexPathForItem:0 inSection:0];
+                                    NSLog(@"RELOADING with new ebay item");
+                                    [cell.collectionView reloadItemsAtIndexPaths:@[indexPath1]];
+                                    
+                                    [self.seenEbayItems addObject:[itemDict valueForKey:@"itemURL"]];
+                                }
                             }
                             else{
                                 [matches insertObject:itemDict atIndex:0];
@@ -206,7 +209,7 @@
                                 
                                 //insert ebay item at the beginning & reload that collection view
                                 NSIndexPath *indexPath1 = [NSIndexPath indexPathForItem:0 inSection:0];
-                                [cell.collectionView insertItemsAtIndexPaths:[NSArray arrayWithObject:indexPath1]];
+                                [cell.collectionView insertItemsAtIndexPaths:[NSArray arrayWithObject:indexPath1]]; /////
                                 NSLog(@"RELOADING");
                                 [cell.collectionView reloadData];
                                 
@@ -312,7 +315,10 @@
                             }
                             [self.products removeAllObjects];
                             [self.products addObjectsFromArray:holdingArray];
-//                            NSLog(@"products array %lu", self.products.count);
+                            
+//                            [self.tableView reloadData];
+                            
+                            NSLog(@"products array %lu", self.products.count);
                             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
                             [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
                         }
@@ -321,6 +327,7 @@
                             //error getting more so just show the first lot loaded
                             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
                             [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+//                            [self.tableView reloadData];
                         }
                     }];
                 }
@@ -682,17 +689,16 @@
                         productCount++;
                         
                         NSDictionary *wtbDict = response;
-//                        NSLog(@"(INFIN) wtb: %@   matches: %@", [wtbDict valueForKey:@"WTB"], [wtbDict valueForKey:@"matches"]);
                         
                         //if matches array key is empty don't recommend anything
                         if ([[wtbDict valueForKey:@"matches"]count]==0){
                             //do nothing as have no matches from our sellers network
-                            NSLog(@"no matches from seller network so don't add this dictionary to array");
+//                            NSLog(@"no matches from seller network so don't add this dictionary to array");
                         }
                         else{
                             [wtbDict setValue:WTB forKey:@"WTB"];
                             [holding addObject:wtbDict];
-                            NSLog(@"INFIN ADD");
+//                            NSLog(@"INFIN ADD");
                         }
                         
                         if (productCount == objects.count) {
@@ -914,13 +920,11 @@ numberOfRowsInSection:(NSInteger)section
             PFObject *WTS = collectionViewArray[indexPath.item];
             [WTS fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
-                    PFObject *WTB = [wtbDict valueForKey:@"WTB"];
                     
                     //setup cell
                     [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
                     cell.itemView.image = [UIImage imageNamed:@"empty"];
                     [cell.itemView loadInBackground];
-                    [WTS setObject:WTB forKey:@"WTB"];
                 }
                 else{
                     NSLog(@"error fetching %@", error);
@@ -1018,18 +1022,25 @@ numberOfRowsInSection:(NSInteger)section
         else{
             PFObject *WTS = collectionViewArray[indexPath.item];
             
+            
             [Answers logCustomEventWithName:@"Tapped item for sale"
                            customAttributes:@{
                                               @"itemType":@"sellersNetwork"
                                               }];
-            self.viewedItem = YES;
-            ForSaleListing *vc = [[ForSaleListing alloc]init];
-            vc.listingObject = WTS;
-            vc.WTBObject = [WTS objectForKey:@"WTB"];
-            vc.source = @"recommended";
-            vc.pureWTS = NO;
-            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-            [self presentViewController:nav animated:YES completion:nil];
+            if ([wtbDict valueForKey:@"WTB"]) {
+                PFObject *WTB = [wtbDict valueForKey:@"WTB"];
+
+                self.viewedItem = YES;
+                ForSaleListing *vc = [[ForSaleListing alloc]init];
+                vc.listingObject = WTS;
+                
+                vc.WTBObject = WTB;
+                
+                vc.source = @"recommended";
+                vc.pureWTS = NO;
+                NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+                [self presentViewController:nav animated:YES completion:nil];
+            }
         }
     }
 }
@@ -1557,6 +1568,6 @@ numberOfRowsInSection:(NSInteger)section
 }
 
 -(void)justPostedNewListing{
-    [self recommendFromServer];
+  //  [self recommendFromServer];
 }
 @end

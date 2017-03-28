@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1217" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -25,45 +25,10 @@
             <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="1) Browse images from Google" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="eRh-wR-KeN">
-                    <rect key="frame" x="41" y="174" width="293" height="42"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="42" id="YFZ-VG-zE9"/>
-                    </constraints>
-                    <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
-                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                    <nil key="highlightedColor"/>
-                </label>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="2) Tap on your chosen image until it's fullscreen" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Q2J-aE-uSe">
-                    <rect key="frame" x="41" y="250" width="293" height="42"/>
-                    <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
-                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                    <nil key="highlightedColor"/>
-                </label>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="3) Hit 'Screenshot' " textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="IoL-5k-ECc">
-                    <rect key="frame" x="41" y="326" width="293" height="42"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="42" id="ciD-Ee-EQk"/>
-                    </constraints>
-                    <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
-                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                    <nil key="highlightedColor"/>
-                </label>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Iv0-ue-11X">
-                    <rect key="frame" x="41" y="408" width="293" height="94"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="94" id="3He-HJ-gAu"/>
-                    </constraints>
-                    <string key="text">Can't find an image?
-Tap 'Camera' in the top right to add an image from your device</string>
-                    <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
-                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                    <nil key="highlightedColor"/>
-                </label>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nEM-8Z-fSc">
-                    <rect key="frame" x="64" y="523" width="246" height="30"/>
+                    <rect key="frame" x="64" y="617" width="247" height="30"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="30" id="Xqt-XZ-F7j"/>
+                        <constraint firstAttribute="height" constant="30" id="XPp-sV-u75"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="17"/>
                     <state key="normal" title="Dismiss">
@@ -74,35 +39,49 @@ Tap 'Camera' in the top right to add an image from your device</string>
                     </connections>
                 </button>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="How to add an image to your listing" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BjU-as-zbi">
-                    <rect key="frame" x="41" y="78" width="293" height="57"/>
+                    <rect key="frame" x="41" y="20" width="294" height="57"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="57" id="0xa-Jg-JUc"/>
+                        <constraint firstAttribute="height" constant="57" id="gNL-zT-vzR"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="15"/>
+                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Iv0-ue-11X">
+                    <rect key="frame" x="41" y="424" width="294" height="94"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="94" id="mUt-Uf-wbn"/>
+                    </constraints>
+                    <string key="text">Can't find an image?
+Tap 'Camera' in the top right to add an image from your device</string>
+                    <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
+                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="1) Browse images from Google  2) Tap on your chosen image until it's fullscreen  3) Hit 'Screenshot' " textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="eRh-wR-KeN">
+                    <rect key="frame" x="41" y="79" width="295" height="158"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="158" id="teU-dd-nrF"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
                     <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
             </subviews>
             <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
             <constraints>
-                <constraint firstItem="eRh-wR-KeN" firstAttribute="trailing" secondItem="Q2J-aE-uSe" secondAttribute="trailing" id="2i6-lT-5d3"/>
-                <constraint firstItem="IoL-5k-ECc" firstAttribute="trailing" secondItem="Iv0-ue-11X" secondAttribute="trailing" id="522-mE-EHR"/>
-                <constraint firstItem="BjU-as-zbi" firstAttribute="leading" secondItem="eRh-wR-KeN" secondAttribute="leading" id="EFJ-fw-3XF"/>
-                <constraint firstItem="nEM-8Z-fSc" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="64" id="ERt-3K-bQS"/>
-                <constraint firstItem="nEM-8Z-fSc" firstAttribute="top" secondItem="Iv0-ue-11X" secondAttribute="bottom" constant="21" id="Ecw-3o-HEd"/>
-                <constraint firstItem="BjU-as-zbi" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="78" id="GUp-W8-Cpl"/>
-                <constraint firstItem="BjU-as-zbi" firstAttribute="trailing" secondItem="eRh-wR-KeN" secondAttribute="trailing" id="ObT-xm-m3c"/>
-                <constraint firstItem="BjU-as-zbi" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="41" id="WIB-T2-BA1"/>
-                <constraint firstItem="IoL-5k-ECc" firstAttribute="leading" secondItem="Iv0-ue-11X" secondAttribute="leading" id="eEm-ga-Q2J"/>
-                <constraint firstItem="eRh-wR-KeN" firstAttribute="top" secondItem="BjU-as-zbi" secondAttribute="bottom" constant="39" id="o9b-DJ-QuU"/>
-                <constraint firstItem="IoL-5k-ECc" firstAttribute="top" secondItem="Q2J-aE-uSe" secondAttribute="bottom" constant="34" id="pyf-EL-2gN"/>
-                <constraint firstItem="BjU-as-zbi" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="qNh-Np-6js"/>
-                <constraint firstItem="Q2J-aE-uSe" firstAttribute="leading" secondItem="IoL-5k-ECc" secondAttribute="leading" id="s1n-J5-i7b"/>
-                <constraint firstItem="Q2J-aE-uSe" firstAttribute="top" secondItem="eRh-wR-KeN" secondAttribute="bottom" constant="34" id="td3-P0-tty"/>
-                <constraint firstItem="Iv0-ue-11X" firstAttribute="centerX" secondItem="nEM-8Z-fSc" secondAttribute="centerX" id="wPj-f0-CFQ"/>
-                <constraint firstItem="Iv0-ue-11X" firstAttribute="top" secondItem="IoL-5k-ECc" secondAttribute="bottom" constant="40" id="y15-ve-2iI"/>
-                <constraint firstItem="eRh-wR-KeN" firstAttribute="leading" secondItem="Q2J-aE-uSe" secondAttribute="leading" id="ygi-g6-KSH"/>
-                <constraint firstItem="Q2J-aE-uSe" firstAttribute="trailing" secondItem="IoL-5k-ECc" secondAttribute="trailing" id="zM0-p0-Q4p"/>
+                <constraint firstItem="BjU-as-zbi" firstAttribute="trailing" secondItem="Iv0-ue-11X" secondAttribute="trailing" id="BcL-av-FpO"/>
+                <constraint firstItem="Iv0-ue-11X" firstAttribute="centerX" secondItem="nEM-8Z-fSc" secondAttribute="centerX" id="DVN-Xv-i10"/>
+                <constraint firstItem="eRh-wR-KeN" firstAttribute="top" secondItem="BjU-as-zbi" secondAttribute="bottom" constant="2" id="NoZ-eM-42S"/>
+                <constraint firstItem="BjU-as-zbi" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="YAb-FM-hfi"/>
+                <constraint firstItem="nEM-8Z-fSc" firstAttribute="top" secondItem="Iv0-ue-11X" secondAttribute="bottom" constant="99" id="f4A-xQ-llt"/>
+                <constraint firstItem="BjU-as-zbi" firstAttribute="leading" secondItem="eRh-wR-KeN" secondAttribute="leading" id="hd5-M4-E5V"/>
+                <constraint firstItem="eRh-wR-KeN" firstAttribute="leading" secondItem="Iv0-ue-11X" secondAttribute="leading" id="okn-v8-GTF"/>
+                <constraint firstItem="BjU-as-zbi" firstAttribute="centerX" secondItem="eRh-wR-KeN" secondAttribute="centerX" id="pxx-Ik-Zjj"/>
+                <constraint firstItem="BjU-as-zbi" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="20" id="qey-d0-4Mu"/>
+                <constraint firstItem="nEM-8Z-fSc" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="64" id="sXX-7H-AtP"/>
+                <constraint firstAttribute="bottom" secondItem="nEM-8Z-fSc" secondAttribute="bottom" constant="20" id="uFJ-qM-RSs"/>
+                <constraint firstItem="BjU-as-zbi" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="41" id="w9L-sq-SWI"/>
             </constraints>
             <point key="canvasLocation" x="33.5" y="87.5"/>
         </view>

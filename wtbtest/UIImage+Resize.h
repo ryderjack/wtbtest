@@ -18,4 +18,10 @@
                                   bounds:(CGSize)bounds
                     interpolationQuality:(CGInterpolationQuality)quality;
 
+//aspect fill
+- (UIImage *)scaleImageToSize:(CGSize)newSize;
+
+//aspect fit
+- (UIImage *)scaleImageToSizeFIT:(CGSize)newSize;
+
 @end

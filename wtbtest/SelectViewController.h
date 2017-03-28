@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "selectCell.h"
 #import <Parse/Parse.h>
-
+#import "customAlertViewClass.h"
 
 @class SelectViewController;
 
@@ -17,7 +17,7 @@
 - (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)selectionString withgender:(NSString *)genderString andsizes:(NSArray *)array;
 @end
 
-@interface SelectViewController : UITableViewController <selectCellDelegate>
+@interface SelectViewController : UITableViewController <selectCellDelegate, customAlertDelegate>
 
 @property (nonatomic, weak) id <SelectViewControllerDelegate> delegate;
 @property (nonatomic, strong) NSString *setting;
@@ -44,4 +44,9 @@
 @property (nonatomic, strong) selectCell *cell;
 
 @property (nonatomic) BOOL sellListing;
+@property (nonatomic) BOOL multipleAllowed;
+
+//multiple reminder
+@property (nonatomic, strong) customAlertViewClass *customAlert;
+@property (nonatomic, strong) UIView *searchBgView;
 @end

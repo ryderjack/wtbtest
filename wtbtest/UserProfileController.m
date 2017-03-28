@@ -39,6 +39,8 @@
     self.WTBPressed = NO;
     self.numberOfSegments = 0;
     
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+
     // Register cell classes
     [self.collectionView registerClass:[ProfileItemCell class] forCellWithReuseIdentifier:@"Cell"];
     UINib *cellNib = [UINib nibWithNibName:@"ProfileItemCell" bundle:nil];
@@ -92,7 +94,8 @@
                 self.isSeller = YES;
                 [self setupTrustedChecks];
             }
-            self.isSeller = YES; //CHECK
+            
+//            self.isSeller = YES; //CHECK
 
             //setup edit button here as userimageview didnt seem to have a frame if did it any earlier..
             [self setupEditButton];
@@ -131,28 +134,35 @@
             
             if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.isSeller == YES) {
                 //trusted seller so load
-                //WTSs and WTB
+                //all 3
                 [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"S E L L I N G", @"B U M P E D"]];
-                self.numberOfSegments = 2;
+                self.numberOfSegments = 3;
                 
                 [self loadWTBListings];
                 [self loadWTSListings];
-            }
-            else if (self.saleMode == YES){
-                //gone on profile from a for sale item so
-                //WTS only
-                [self.segmentedControl setSectionTitles:@[@"S E L L I N G", @"B U M P E D"]];
-                self.numberOfSegments = 1;
-                [self loadWTSListings];
+                
+                self.WTBSelected = YES;
+                self.WTSSelected = NO;
+                self.bumpsSelected = NO;
             }
             else if (self.isSeller == YES) {
                 //trusted seller but not looking at own profile
                 //WTS and WTB
                 [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"S E L L I N G", @"B U M P E D"]];
-                self.numberOfSegments = 2;
-                if (self.fromSearch == YES) {
+                self.numberOfSegments = 3;
+                if (self.fromSearch == YES || self.saleMode == YES) {
                     [self.segmentedControl setSelectedSegmentIndex:1];
+                    
+                    self.WTSSelected = YES;
+                    self.WTBSelected = NO;
+                    self.bumpsSelected = NO;
                 }
+                else{
+                    self.WTSSelected = NO;
+                    self.WTBSelected = YES;
+                    self.bumpsSelected = NO;
+                }
+                
                 [self loadWTBListings];
                 [self loadWTSListings];
             }
@@ -160,8 +170,12 @@
                 //user is not a seller
                 //just WTB
                 [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"B U M P E D"]];
-                self.numberOfSegments = 1;
-                self.isSeller = NO;
+                
+                self.WTBSelected = YES;
+                self.WTSSelected = NO;
+                self.bumpsSelected = NO;
+                
+                self.numberOfSegments = 2;
                 self.wantedMode = YES;
                 [self loadWTBListings];
             }
@@ -190,7 +204,7 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     //check if must show unread icon on cog icon 
-    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.fromSearch != YES) {
+    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.tabMode == YES) {
         if ([self.navigationController tabBarItem].badgeValue != nil) {
 //            NSLog(@"unseen TB msg");
             [self.backButton setImage:[UIImage imageNamed:@"unreadCog"] forState:UIControlStateNormal];
@@ -201,179 +215,183 @@
     }
     
     //refresh listings when user taps on profile tab
-    if (self.tabMode == YES) {
+    if (self.tabMode == YES && self.user) {
         [self loadWTBListings];
         if (self.isSeller == YES) {
             [self loadWTSListings];
         }
     }
     
-    [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            [self loadBumpedListings];
-            
-            PFFile *img = [self.user objectForKey:@"picture"];
-            
-            self.usernameLabel.text = self.user.username;
-            self.middleUsernameLabel.text = self.user.username;
-            
-            if ([self.user objectForKey:@"profileLocation"]) {
+    //protect against (null) user crash
+    if (self.user) {
+        [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                [self loadBumpedListings];
                 
-                //setup correct font weights for main name/loc label
-                NSString *nameString = @"";
+                PFFile *img = [self.user objectForKey:@"picture"];
                 
-                if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
-                    nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
+                self.usernameLabel.text = self.user.username;
+                self.middleUsernameLabel.text = self.user.username;
+                
+                if ([self.user objectForKey:@"profileLocation"]) {
+                    
+                    //setup correct font weights for main name/loc label
+                    NSString *nameString = @"";
+                    
+                    if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
+                        nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
+                    }
+                    else{
+                        nameString = [self.user objectForKey:@"fullname"];
+                    }
+                    
+                    NSString *locString = [self.user objectForKey:@"profileLocation"];
+                    
+                    if ([locString containsString:@"null"] || [locString containsString:@"(null)"]) {
+                        //if been an error saving the loc then don't display the null
+                        NSMutableAttributedString *attString =
+                        [[NSMutableAttributedString alloc]
+                         initWithString:[NSString stringWithFormat:@"%@",nameString]];
+                        
+                        
+                        [attString addAttribute: NSFontAttributeName
+                                          value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
+                                          range: NSMakeRange(0,nameString.length)];
+                        
+                        self.nameAndLoc.attributedText = attString;
+                        self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@",nameString];
+                    }
+                    else{
+                        NSMutableAttributedString *attString =
+                        [[NSMutableAttributedString alloc]
+                         initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,locString]];
+                        
+                        
+                        [attString addAttribute: NSFontAttributeName
+                                          value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
+                                          range: NSMakeRange(0,nameString.length)];
+                        
+                        
+                        [attString addAttribute: NSFontAttributeName
+                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:15]
+                                          range: NSMakeRange(nameString.length+1,locString.length)];
+                        
+                        self.nameAndLoc.attributedText = attString;
+                        self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@\n%@",nameString,locString];
+                    }
                 }
                 else{
-                    nameString = [self.user objectForKey:@"fullname"];
+                    
+                    //setup correct font weights for main name/loc label
+                    NSString *nameString = @"";
+                    
+                    if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
+                        nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
+                    }
+                    else{
+                        nameString = [self.user objectForKey:@"fullname"];
+                    }
+                    
+                    self.nameAndLoc.text = [NSString stringWithFormat:@"%@", nameString];
+                    self.smallNameAndLoc.text = [NSString stringWithFormat:@"%@", nameString];
                 }
                 
-                NSString *locString = [self.user objectForKey:@"profileLocation"];
+                [self.userImageView setFile:img];
+                [self.userImageView loadInBackground];
                 
-                if ([locString containsString:@"null"] || [locString containsString:@"(null)"]) {
-                    //if been an error saving the loc then don't display the null
-                    NSMutableAttributedString *attString =
-                    [[NSMutableAttributedString alloc]
-                     initWithString:[NSString stringWithFormat:@"%@",nameString]];
+                [self.smallImageView setFile:img];
+                [self.smallImageView loadInBackground];
+            }
+            else{
+                NSLog(@"couldn't fetch user");
+                [self showError];
+            }
+        }];
+        
+        PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+        [dealsQuery whereKey:@"User" equalTo:self.user];
+        [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                int starNumber = [[object objectForKey:@"currentRating"] intValue];
+                int total = [[object objectForKey:@"dealsTotal"]intValue];
+                
+                //            NSLog(@"total %d and star number %d", total, starNumber);
+                
+                if (total > 0 || self.tabMode == YES) {
+                    [self.myBar addSubview:self.starImageView];
+                    [self.myBar addSubview:self.reviewsButton];
+                    [self.myBar addSubview:self.usernameLabel];
+                    self.noDeals = NO;
                     
-                    
-                    [attString addAttribute: NSFontAttributeName
-                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
-                                      range: NSMakeRange(0,nameString.length)];
-                    
-                    self.nameAndLoc.attributedText = attString;
-                    self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@",nameString];
+                    [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Reviews",total] forState:UIControlStateNormal];
+                    if (total == 0 && self.tabMode == YES) {
+                        self.noDeals = YES;
+                        [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
+                        [self.reviewsButton setTitle:@"Earn reputation by chatting on Bump!" forState:UIControlStateNormal];
+                    }
+                    else if (starNumber == 0) {
+                        [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
+                    }
+                    else if (starNumber == 1){
+                        [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
+                    }
+                    else if (starNumber == 2){
+                        [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
+                    }
+                    else if (starNumber == 3){
+                        [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
+                    }
+                    else if (starNumber == 4){
+                        [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
+                    }
+                    else if (starNumber == 5){
+                        [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
+                    }
                 }
                 else{
-                    NSMutableAttributedString *attString =
-                    [[NSMutableAttributedString alloc]
-                     initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,locString]];
-                    
-                    
-                    [attString addAttribute: NSFontAttributeName
-                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
-                                      range: NSMakeRange(0,nameString.length)];
-                    
-                    
-                    [attString addAttribute: NSFontAttributeName
-                                      value:  [UIFont fontWithName:@"PingFangSC-Regular" size:15]
-                                      range: NSMakeRange(nameString.length+1,locString.length)];
-                    
-                    self.nameAndLoc.attributedText = attString;
-                    self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@\n%@",nameString,locString];
+                    [self.myBar addSubview:self.middleUsernameLabel];
+                }
+                
+                if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                    // looking at other user's profile
+                    NSArray *friends = [[PFUser currentUser] objectForKey:@"friends"];
+                    if ([friends containsObject:[self.user objectForKey:@"facebookId"]]) {
+                        [self.FBButton setImage:[UIImage imageNamed:@"FbFriends"] forState:UIControlStateNormal];
+                    }
                 }
             }
             else{
-                
-                //setup correct font weights for main name/loc label
-                NSString *nameString = @"";
-                
-                if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
-                    nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
-                }
-                else{
-                    nameString = [self.user objectForKey:@"fullname"];
-                }
-                
-                self.nameAndLoc.text = [NSString stringWithFormat:@"%@", nameString];
-                self.smallNameAndLoc.text = [NSString stringWithFormat:@"%@", nameString];
-            }
-            
-            [self.userImageView setFile:img];
-            [self.userImageView loadInBackground];
-            
-            [self.smallImageView setFile:img];
-            [self.smallImageView loadInBackground];
-        }
-        else{
-            NSLog(@"couldn't fetch user");
-            [self showError];
-        }
-    }];
-
-    PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
-    [dealsQuery whereKey:@"User" equalTo:self.user];
-    [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            int starNumber = [[object objectForKey:@"currentRating"] intValue];
-            
-            int purchased = [[object objectForKey:@"purchased"]intValue];
-            int sold = [[object objectForKey:@"sold"] intValue];
-            
-            int total = purchased+sold;
-            
-            if (total > 0 || self.tabMode == YES) {
-                [self.myBar addSubview:self.starImageView];
-                [self.myBar addSubview:self.reviewsButton];
-                [self.myBar addSubview:self.usernameLabel];
-                
-                [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Reviews",total] forState:UIControlStateNormal];
-                if (total == 0 && self.tabMode == YES) {
-                    [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
-                    [self.reviewsButton setTitle:@"Earn reputation & stay protected on Bump" forState:UIControlStateNormal];
-                }
-                else if (starNumber == 0) {
-                    [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
-                }
-                else if (starNumber == 1){
-                    [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
-                }
-                else if (starNumber == 2){
-                    [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
-                }
-                else if (starNumber == 3){
-                    [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
-                }
-                else if (starNumber == 4){
-                    [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
-                }
-                else if (starNumber == 5){
-                    [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
-                }
-            }
-            else{
+                NSLog(@"error getting deals data!");
                 [self.myBar addSubview:self.middleUsernameLabel];
             }
+        }];
+        
+        self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+        if ([self.currency isEqualToString:@"GBP"]) {
+            self.currencySymbol = @"£";
+        }
+        else if ([self.currency isEqualToString:@"EUR"]) {
+            self.currencySymbol = @"€";
+        }
+        else if ([self.currency isEqualToString:@"USD"]) {
+            self.currencySymbol = @"$";
+        }
+        
+        if (self.forSalePressed == YES && self.numberOfSegments >= 2) {
+            [self.segmentedControl setSelectedSegmentIndex:1];
+            [self segmentControlChanged];
+            [self loadWTSListings];
             
-            if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
-                // looking at other user's profile
-                NSArray *friends = [[PFUser currentUser] objectForKey:@"friends"];
-                if ([friends containsObject:[self.user objectForKey:@"facebookId"]]) {
-                    [self.FBButton setImage:[UIImage imageNamed:@"FbFriends"] forState:UIControlStateNormal];
-                }
-            }
         }
-        else{
-            NSLog(@"error getting deals data!");
-            [self.myBar addSubview:self.middleUsernameLabel];
+        else if (self.WTBPressed == YES) {
+            [self.segmentedControl setSelectedSegmentIndex:0];
+            self.WTBPressed = NO;
+            [self loadWTBListings];
         }
-    }];
-    
-    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
-    if ([self.currency isEqualToString:@"GBP"]) {
-        self.currencySymbol = @"£";
-    }
-    else if ([self.currency isEqualToString:@"EUR"]) {
-        self.currencySymbol = @"€";
-    }
-    else if ([self.currency isEqualToString:@"USD"]) {
-        self.currencySymbol = @"$";
-    }
-    
-    if (self.forSalePressed == YES && self.numberOfSegments == 2) {
-        [self.segmentedControl setSelectedSegmentIndex:1];
-        [self loadWTSListings];
-    }
-    else if (self.WTBPressed == YES) {
-        [self.segmentedControl setSelectedSegmentIndex:0];
-        self.WTBPressed = NO;
-        [self loadWTBListings];
-    }
-    else if (self.bumpedPressed == YES) {
-//        [self.segmentedControl setSelectedSegmentIndex:];
-        self.bumpedPressed = NO;
-        [self loadBumpedListings];
+        else if (self.bumpedPressed == YES) {
+            self.bumpedPressed = NO;
+            [self loadBumpedListings];
+        }
     }
 }
 
@@ -392,6 +410,11 @@
 }
 
 -(void)loadWTBListings{
+    
+    if (!self.user) {
+        return;
+    }
+    
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [wtbQuery whereKey:@"postUser" equalTo:self.user];
     [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
@@ -400,25 +423,33 @@
         if (objects) {
             self.WTBArray = objects;
 
-            if (objects.count == 0 && self.segmentedControl.selectedSegmentIndex == 0 && self.tabMode == YES) {
+            if (objects.count == 0 && self.WTBSelected == YES && self.tabMode == YES) {
                 [self.createButton setHidden:NO];
                 [self.actionLabel setHidden:NO];
                 
                 [self.bumpImageView setHidden:YES];
                 [self.bumpLabel setHidden:YES];
             }
+            else if (objects.count == 0 && self.WTBSelected == YES && self.tabMode != YES){
+                [self.actionLabel setHidden:NO];
+                self.actionLabel.text = @"nothing to show";
+                
+                [self.createButton setHidden:YES];
+                [self.bumpImageView setHidden:YES];
+                [self.bumpLabel setHidden:YES];
+            }
             
-            else if (objects.count != 0) {
+            else if (objects.count != 0 && self.WTBSelected == YES) {
                 [self.createButton setHidden:YES];
                 [self.actionLabel setHidden:YES];
                 
                 [self.bumpImageView setHidden:YES];
                 [self.bumpLabel setHidden:YES];
             }
-
-            [self.collectionView performBatchUpdates:^{
-                [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
-            } completion:nil];
+            
+            if (self.WTBSelected == YES) {
+                [self.collectionView reloadData];
+            }
         }
         else{
             NSLog(@"error getting WTBs %@", error);
@@ -428,7 +459,6 @@
 
 -(void)loadBumpedListings{
     NSArray *bumped = [self.user objectForKey:@"bumpArray"];
-    NSLog(@"LOAD BUMPED %@", bumped);
 
     PFQuery *bumpedListings = [PFQuery queryWithClassName:@"wantobuys"];
     [bumpedListings whereKey:@"status" notEqualTo:@"deleted"];
@@ -439,50 +469,45 @@
             [self.bumpedArray removeAllObjects];
             [self.bumpedIds removeAllObjects];
             
+            NSLog(@"BUMPS: %ld", objects.count);
+            
             //display correct label
-            if (self.tabMode == YES) {
-                //looking at own profile for sure
+            if (self.tabMode == YES && self.bumpsSelected == YES && objects.count == 0) {
+                //bump selected on own profile & nothing to show
+                [self.createButton setHidden:YES];
+                [self.actionLabel setHidden:YES];
                 
-                if (self.wantedMode == YES){
-                    //just wanted and bumped
-                    if (self.segmentedControl.selectedSegmentIndex == 1) {
-                        if (objects.count == 0) {
-                            [self.createButton setHidden:YES];
-                            [self.actionLabel setHidden:YES];
-                            
-                            if ([ [ UIScreen mainScreen ] bounds ].size.height > 568) {
-                                //don't show on iPhone SE as screen isn't big enough
-                                [self.bumpImageView setHidden:NO];
-                            }
-                            [self.bumpLabel setHidden:NO];
-                        }
-                        else{
-                            [self.bumpLabel setHidden:YES];
-                            [self.bumpImageView setHidden:YES];
-                        }
-                    }
-
+                if ([ [ UIScreen mainScreen ] bounds ].size.height > 568) {
+                    [self.bumpImageView setHidden:NO];
                 }
-                else if(self.segmentedControl.selectedSegmentIndex == 2){
-                    if (objects.count == 0) {
-                        [self.createButton setHidden:YES];
-                        [self.actionLabel setHidden:YES];
-                        
-                        if ([ [ UIScreen mainScreen ] bounds ].size.height > 568) {
-                            //don't show on iPhone SE as screen isn't big enough
-                            [self.bumpImageView setHidden:NO];
-                        }
-                        [self.bumpLabel setHidden:NO];
-                    }
-                    else{
-                        [self.bumpLabel setHidden:YES];
-                        [self.bumpImageView setHidden:YES];
-                    }
+                else{
+                    //don't show on iPhone SE as screen isn't big enough
+                    [self.bumpImageView setHidden:YES];
                 }
+                [self.bumpLabel setHidden:NO];
+            }
+            else if(self.bumpsSelected == YES && objects.count == 0 && self.tabMode != YES){
+                [self.actionLabel setHidden:NO];
+                self.actionLabel.text = @"nothing to show";
+                
+                [self.createButton setHidden:YES];
+                [self.bumpImageView setHidden:YES];
+                [self.bumpLabel setHidden:YES];
+            }
+            else if (objects.count != 0 && self.bumpsSelected == YES) {
+                [self.createButton setHidden:YES];
+                [self.actionLabel setHidden:YES];
+                
+                [self.bumpImageView setHidden:YES];
+                [self.bumpLabel setHidden:YES];
             }
             
             if (objects.count == 0) {
-                
+                if (self.bumpsSelected == YES) {
+                    [self.collectionView performBatchUpdates:^{
+                        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+                    } completion:nil];
+                }
                 return;
             }
 
@@ -511,9 +536,15 @@
             [self.bumpedArray removeAllObjects];
             [self.bumpedArray addObjectsFromArray:reversedArray];
             
-            [self.collectionView performBatchUpdates:^{
-                [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
-            } completion:nil];
+            if (self.bumpsSelected == YES) {
+                [self.collectionView performBatchUpdates:^{
+                    [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+                } completion:nil];
+            }
+            else if (self.bumpsSelected == NO && self.WTBSelected == NO && self.WTSSelected == NO){
+                //fail safe reload
+                [self.collectionView reloadData];
+            }
 
         }
         else{
@@ -523,37 +554,52 @@
 }
 
 -(void)loadWTSListings{
+    
+    if (!self.user) {
+        return;
+    }
+    
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"forSaleItems"];
     [wtbQuery whereKey:@"sellerUser" equalTo:self.user];
     [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
     [wtbQuery orderByDescending:@"lastUpdated"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
-            
-            if (self.tabMode == YES) {
-                if (self.segmentedControl.selectedSegmentIndex == 1 && self.isSeller == YES) {
-                    //selling
-                    if (objects.count == 0) {
-                        [self.createButton setHidden:NO];
-                        [self.actionLabel setHidden:NO];
-                    }
-                    else{
-                        [self.createButton setHidden:YES];
-                        [self.actionLabel setHidden:YES];
-                    }
-                }
+            self.forSaleArray = objects;
+
+            if (objects.count == 0 && self.WTSSelected == YES && self.tabMode == YES) {
+                [self.createButton setHidden:NO];
+                [self.actionLabel setHidden:NO];
+                
+                [self.bumpImageView setHidden:YES];
+                [self.bumpLabel setHidden:YES];
+            }
+            else if (objects.count == 0 && self.WTSSelected == YES && self.tabMode != YES){
+                [self.actionLabel setHidden:NO];
+                self.actionLabel.text = @"nothing to show";
+                
+                [self.createButton setHidden:YES];
+                [self.bumpImageView setHidden:YES];
+                [self.bumpLabel setHidden:YES];
+            }
+            else if (objects.count != 0 && self.WTSSelected == YES) {
+                [self.createButton setHidden:YES];
+                [self.actionLabel setHidden:YES];
+                
+                [self.bumpImageView setHidden:YES];
+                [self.bumpLabel setHidden:YES];
             }
             
-            if (objects.count > 0) {
-                self.forSaleArray = objects;
-                if (self.forSalePressed == YES) {
-                    self.forSalePressed = NO;
-                }
+            if (self.forSalePressed == YES) {
+                self.forSalePressed = NO;
             }
-            else{
-                // no WTSs
+
+            if (self.WTSSelected == YES) {
+                NSLog(@"SHOULD RELOAD");
+                [self.collectionView performBatchUpdates:^{
+                    [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+                } completion:nil];
             }
-            [self.collectionView reloadData];
         }
         else{
             NSLog(@"error getting WTSs %@", error);
@@ -572,35 +618,17 @@
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    if (self.saleMode == YES) {
-        //just selling and bumped
-        if (self.segmentedControl.selectedSegmentIndex == 0 ) {
-            return self.forSaleArray.count;
-        }
-        else{
-            return self.bumpedArray.count;
-        }
+    if (self.WTSSelected == YES) {
+        return self.forSaleArray.count;
     }
-    else if (self.wantedMode == YES){
-        //jsut wanted and bumped
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            return self.WTBArray.count;
-        }
-        else{
-            return self.bumpedArray.count;
-        }
+    else if (self.WTBSelected == YES){
+        return self.WTBArray.count;
+    }
+    else if (self.bumpsSelected == YES){
+        return self.bumpedArray.count;
     }
     else{
-        // all 3
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            return self.WTBArray.count;
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 1) {
-            return self.forSaleArray.count;
-        }
-        else{
-            return self.bumpedArray.count;
-        }
+        return 0;
     }
 }
 
@@ -613,36 +641,22 @@
     
     PFObject *listingObject;
     
-    if (self.saleMode == YES) {
-        //just selling and bumped
-        if (self.segmentedControl.selectedSegmentIndex == 0 ) {
-            listingObject = [self.forSaleArray objectAtIndex:indexPath.row];
-        }
-        else{
-            listingObject = [self.bumpedArray objectAtIndex:indexPath.row];
-        }
+    if (self.WTSSelected == YES) {
+        NSLog(@"WTS selected");
+        listingObject = [self.forSaleArray objectAtIndex:indexPath.row];
     }
-    else if (self.wantedMode == YES){
-        //jsut wanted and bumped
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            listingObject = [self.WTBArray objectAtIndex:indexPath.row];
-        }
-        else{
-            listingObject = [self.bumpedArray objectAtIndex:indexPath.row];
-        }
+    else if (self.WTBSelected == YES){
+        NSLog(@"WTB selected");
+        listingObject = [self.WTBArray objectAtIndex:indexPath.row];
+    }
+    else if (self.bumpsSelected == YES){
+        NSLog(@"Bump selected");
+        listingObject = [self.bumpedArray objectAtIndex:indexPath.row];
     }
     else{
-        // all 3
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            listingObject = [self.WTBArray objectAtIndex:indexPath.row];
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 1) {
-            listingObject = [self.forSaleArray objectAtIndex:indexPath.row];
-        }
-        else{
-            listingObject = [self.bumpedArray objectAtIndex:indexPath.row];
-        }
+        listingObject = [self.WTBArray objectAtIndex:indexPath.row];
     }
+    
     
     [cell.itemImageView setFile:[listingObject objectForKey:@"image1"]];
     [cell.itemImageView loadInBackground];
@@ -669,62 +683,39 @@
 
     PFObject *selected;
     
-    if (self.saleMode == YES) {
-        //just selling and bumped
-        if (self.segmentedControl.selectedSegmentIndex == 0 ) {
-            selected = [self.forSaleArray objectAtIndex:indexPath.item];
-            self.forSalePressed = YES;
-            ForSaleListing *vc = [[ForSaleListing alloc]init];
-            vc.listingObject = selected;
-            vc.pureWTS = YES; //always pure WTS from a profile
-            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-            [self presentViewController:nav animated:YES completion:nil];
-        }
-        else{
-            selected = [self.bumpedArray objectAtIndex:indexPath.item];
-            self.bumpedPressed = YES;
-            ListingController *vc = [[ListingController alloc]init];
-            vc.listingObject = selected;
-            [self.navigationController pushViewController:vc animated:YES];        }
+    if (self.WTSSelected == YES) {
+        NSLog(@"WTS selected");
+        selected = [self.forSaleArray objectAtIndex:indexPath.row];
+        self.forSalePressed = YES;
+        ForSaleListing *vc = [[ForSaleListing alloc]init];
+        vc.listingObject = selected;
+        vc.fromBuyNow = YES;
+        vc.pureWTS = YES; //always pure WTS from a profile
+        [self.navigationController pushViewController:vc animated:YES];
     }
-    else if (self.wantedMode == YES){
-        //jsut wanted and bumped
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            selected = [self.WTBArray objectAtIndex:indexPath.item];
-            self.WTBPressed = YES;
-            ListingController *vc = [[ListingController alloc]init];
-            vc.listingObject = selected;
-            [self.navigationController pushViewController:vc animated:YES];        }
-        else{
-            selected = [self.bumpedArray objectAtIndex:indexPath.item];
-            self.bumpedPressed = YES;
-            ListingController *vc = [[ListingController alloc]init];
-            vc.listingObject = selected;
-            [self.navigationController pushViewController:vc animated:YES];        }
+    else if (self.WTBSelected == YES){
+        NSLog(@"WTB selected");
+        selected = [self.WTBArray objectAtIndex:indexPath.row];
+        self.WTBPressed = YES;
+        ListingController *vc = [[ListingController alloc]init];
+        vc.listingObject = selected;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else if (self.bumpsSelected == YES){
+        NSLog(@"Bump selected");
+        selected = [self.bumpedArray objectAtIndex:indexPath.row];
+        self.bumpedPressed = YES;
+        ListingController *vc = [[ListingController alloc]init];
+        vc.listingObject = selected;
+        [self.navigationController pushViewController:vc animated:YES];
     }
     else{
-        // all 3
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            selected = [self.WTBArray objectAtIndex:indexPath.item];
-            self.WTBPressed = YES;
-            ListingController *vc = [[ListingController alloc]init];
-            vc.listingObject = selected;
-            [self.navigationController pushViewController:vc animated:YES];        }
-        else if (self.segmentedControl.selectedSegmentIndex == 1) {
-            selected = [self.forSaleArray objectAtIndex:indexPath.item];
-            self.forSalePressed = YES;
-            ForSaleListing *vc = [[ForSaleListing alloc]init];
-            vc.listingObject = selected;
-            vc.pureWTS = YES; //always pure WTS from a profile
-            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-            [self presentViewController:nav animated:YES completion:nil];
-        }
-        else{
-            selected = [self.bumpedArray objectAtIndex:indexPath.item];
-            self.bumpedPressed = YES;
-            ListingController *vc = [[ListingController alloc]init];
-            vc.listingObject = selected;
-            [self.navigationController pushViewController:vc animated:YES];        }
+        //fail safe
+        selected = [self.WTBArray objectAtIndex:indexPath.row];
+        self.WTBPressed = YES;
+        ListingController *vc = [[ListingController alloc]init];
+        vc.listingObject = selected;
+        [self.navigationController pushViewController:vc animated:YES];
     }
 }
 
@@ -783,50 +774,87 @@
 }
 
 -(void)addForSalePressed{
-    //uncomment when adding items for other users
-//    UIAlertController *alertController = [UIAlertController
-//                                          alertControllerWithTitle:@"Post as User"
-//                                          message:@"Enter username"
-//                                          preferredStyle:UIAlertControllerStyleAlert];
-//
-//    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
-//     {
-//         textField.placeholder = @"username";
-//     }];
-//
-//    UIAlertAction *okAction = [UIAlertAction
-//                               actionWithTitle:@"DONE"
-//                               style:UIAlertActionStyleDefault
-//                               handler:^(UIAlertAction *action)
-//                               {
-//                                   UITextField *usernameField = alertController.textFields.firstObject;
-//                                   self.usernameToList = usernameField.text;
-//                                   [self SetupListing];
-//                               }];
-//
-//    [alertController addAction:okAction];
-//
-//    [self presentViewController:alertController animated:YES completion:nil];
     
-    CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-    vc.usernameToCheck = self.usernameToList;
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-    self.forSalePressed = YES;
-    [self presentViewController:nav animated:YES completion:nil];
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]) {
+        //sam's upload stock code
+        UIAlertController *alertController = [UIAlertController
+                                              alertControllerWithTitle:@"Post as User"
+                                              message:@"Enter username"
+                                              preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+         {
+             textField.placeholder = @"username";
+         }];
+        
+        UIAlertAction *okAction = [UIAlertAction
+                                   actionWithTitle:@"DONE"
+                                   style:UIAlertActionStyleDefault
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                       UITextField *usernameField = alertController.textFields.firstObject;
+                                       self.usernameToList = usernameField.text;
+                                       [self SetupListing];
+                                   }];
+        
+        [alertController addAction:okAction];
+        
+        [self presentViewController:alertController animated:YES completion:nil];
+
+    }
+    else{
+        CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+        self.forSalePressed = YES;
+        [self presentViewController:nav animated:YES completion:nil];
+    }
 }
 
 -(void)ReviewsPressed{
+    if (self.noDeals == YES) {
+        return;
+    }
     ReviewsVC *vc = [[ReviewsVC alloc]init];
     vc.user = self.user;
     [self.navigationController pushViewController:vc animated:YES];
 }
 
 -(void)segmentControlChanged{
+    NSLog(@"CHANGED");
     [self.createButton setHidden:YES];
     [self.bumpImageView setHidden:YES];
     [self.bumpLabel setHidden:YES];
     [self.actionLabel setHidden:YES];
-
+    
+    //scroll to top before reloading
+    if (self.WTBSelected == YES) {
+        NSLog(@"wtb selected");
+        
+        if (self.WTBArray.count != 0) {
+            [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+                                        atScrollPosition:UICollectionViewScrollPositionTop
+                                                animated:NO];
+        }
+    }
+    else if (self.WTSSelected == YES){
+        NSLog(@"wts selected");
+        
+        if (self.forSaleArray.count != 0) {
+            [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+                                        atScrollPosition:UICollectionViewScrollPositionTop
+                                                animated:NO];
+        }
+    }
+    else if (self.bumpsSelected == YES){
+        NSLog(@"bump selected");
+        
+        if (self.bumpedArray.count != 0) {
+            [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+                                        atScrollPosition:UICollectionViewScrollPositionTop
+                                                animated:NO];
+        }
+    }
+    
     if (self.tabMode == YES) {
         //looking at own profile for sure
         
@@ -834,6 +862,10 @@
             //just wanted and bumped
             if (self.segmentedControl.selectedSegmentIndex == 0) {
                 //wanted
+                self.WTBSelected = YES;
+                self.WTSSelected = NO;
+                self.bumpsSelected = NO;
+                
                 NSLog(@"selected wanted");
                 if (self.WTBArray.count == 0) {
                     [self.createButton setHidden:NO];
@@ -845,6 +877,10 @@
             }
             else{
                 //bumped
+                self.WTBSelected = NO;
+                self.WTSSelected = NO;
+                self.bumpsSelected = YES;
+                
                 NSLog(@"selected bumped");
                 if (self.bumpedArray.count == 0) {
                     [self.createButton setHidden:YES];
@@ -862,6 +898,10 @@
             // all 3
             if (self.segmentedControl.selectedSegmentIndex == 0) {
                 //wanted
+                self.WTBSelected = YES;
+                self.WTSSelected = NO;
+                self.bumpsSelected = NO;
+                
                 if (self.WTBArray.count == 0) {
                     [self.createButton setHidden:NO];
                     [self.actionLabel setHidden:NO];
@@ -873,6 +913,11 @@
             }
             else if (self.segmentedControl.selectedSegmentIndex == 1) {
                 //selling
+                NSLog(@"SELLING");
+                self.WTBSelected = NO;
+                self.WTSSelected = YES;
+                self.bumpsSelected = NO;
+                
                 if (self.forSaleArray.count == 0) {
                     [self.createButton setHidden:NO];
                     [self.actionLabel setHidden:NO];
@@ -883,6 +928,10 @@
             }
             else{
                 //bumped
+                self.WTBSelected = NO;
+                self.WTSSelected = NO;
+                self.bumpsSelected = YES;
+                
                 NSLog(@"selected bumped");
                 if (self.bumpedArray.count == 0) {
                     [self.createButton setHidden:YES];
@@ -898,37 +947,14 @@
         }
     }
     else{
-        //looking at other user's profile
-        if (self.saleMode == YES) {
-            //just selling and bumped
-            if (self.segmentedControl.selectedSegmentIndex == 0 ) {
-                //selling
-                if (self.forSaleArray.count == 0) {
-                    [self.actionLabel setHidden:NO];
-                    self.actionLabel.text = @"nothing to show";
-                    
-                    [self.createButton setHidden:YES];
-                    [self.bumpImageView setHidden:YES];
-                    [self.bumpLabel setHidden:YES];
-                }
-            }
-            else{
-                //bumped
-                if (self.bumpedArray.count == 0) {
-                    [self.actionLabel setHidden:NO];
-                    self.actionLabel.text = @"nothing to showxr";
-                    
-                    [self.createButton setHidden:YES];
-                    [self.bumpImageView setHidden:YES];
-                    [self.bumpLabel setHidden:YES];
-                }
-            }
-        }
-        else if (self.wantedMode == YES){
+        if (self.wantedMode == YES){
             //just wanted and bumped
             if (self.segmentedControl.selectedSegmentIndex == 0) {
                 //wanted
-                NSLog(@"selected wanted 1");
+                self.WTBSelected = YES;
+                self.WTSSelected = NO;
+                self.bumpsSelected = NO;
+                
                 if (self.WTBArray.count == 0) {
                     [self.actionLabel setHidden:NO];
                     self.actionLabel.text = @"nothing to show";
@@ -940,7 +966,10 @@
             }
             else{
                 //bumped
-                NSLog(@"selected bumped 1");
+                self.WTBSelected = NO;
+                self.WTSSelected = NO;
+                self.bumpsSelected = YES;
+                
                 if (self.bumpedArray.count == 0) {
                     [self.actionLabel setHidden:NO];
                     self.actionLabel.text = @"nothing to show";
@@ -955,6 +984,10 @@
             // all 3
             if (self.segmentedControl.selectedSegmentIndex == 0) {
                 //wanted
+                self.WTBSelected = YES;
+                self.WTSSelected = NO;
+                self.bumpsSelected = NO;
+                
                 if (self.WTBArray.count == 0) {
                     [self.actionLabel setHidden:NO];
                     self.actionLabel.text = @"nothing to show";
@@ -967,6 +1000,10 @@
             }
             else if (self.segmentedControl.selectedSegmentIndex == 1) {
                 //selling
+                self.WTBSelected = NO;
+                self.WTSSelected = YES;
+                self.bumpsSelected = NO;
+                
                 if (self.forSaleArray.count == 0) {
                     [self.actionLabel setHidden:NO];
                     self.actionLabel.text = @"nothing to show";
@@ -978,6 +1015,10 @@
             }
             else{
                 //bumped
+                self.WTBSelected = NO;
+                self.WTSSelected = NO;
+                self.bumpsSelected = YES;
+                
                 NSLog(@"selected bumped");
                 if (self.bumpedArray.count == 0) {
                     [self.actionLabel setHidden:NO];
@@ -991,6 +1032,7 @@
         }
 
     }
+
     [self.collectionView reloadData];
 }
 
@@ -1014,11 +1056,11 @@
     }]];
     
     if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Message User" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Message" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
             [self setupMessages];
         }]];
         
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report User" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
             [self reportUser];
         }]];
     }
@@ -1071,6 +1113,7 @@
             convoObject[@"totalMessages"] = @0;
             convoObject[@"buyerUnseen"] = @0;
             convoObject[@"sellerUnseen"] = @0;
+            convoObject[@"source"] = @"profile";
             
             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
@@ -1163,7 +1206,7 @@
     
     //back button
     self.backButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
-    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.fromSearch != YES) {
+    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.tabMode == YES) {
         [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
         [self.backButton addTarget:self action:@selector(profileCogPressed) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -1404,8 +1447,9 @@
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
     self.profileImage = info[UIImagePickerControllerOriginalImage];
     [self showHUD];
-    UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
-    
+//    UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
+    UIImage *imageToSave = [self.profileImage scaleImageToSize:CGSizeMake(750, 750)];
+
     NSData* data = UIImageJPEGRepresentation(imageToSave, 0.7f);
     if (data == nil) {
         NSLog(@"error with data");
@@ -1510,4 +1554,6 @@
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
+
+
 @end

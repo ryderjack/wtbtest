@@ -30,15 +30,19 @@
                 <outlet property="imageViewTwo" destination="y3p-lF-leA" id="1AX-Nk-f5D"/>
                 <outlet property="infoCell" destination="rcc-Ie-f9g" id="Uos-kC-kqV"/>
                 <outlet property="locationLabel" destination="8Hw-QH-TZ9" id="HyD-Gp-Ih2"/>
+                <outlet property="multipleButton" destination="6tM-kB-huZ" id="YhQ-XG-ete"/>
                 <outlet property="pageIndicator" destination="uzi-Ps-bMW" id="9yK-wr-hvS"/>
                 <outlet property="priceLabel" destination="Ayy-hd-P8G" id="zZd-f2-Bbt"/>
                 <outlet property="sellerImgView" destination="yZH-9F-rN2" id="GlA-oX-MhH"/>
                 <outlet property="sendButton" destination="BH4-3F-0iW" id="KxH-Vc-vGm"/>
                 <outlet property="sendCell" destination="KX3-1o-wDp" id="jXG-9T-CVJ"/>
+                <outlet property="sendLabel" destination="S00-EF-S0Y" id="dba-Gz-Whu"/>
+                <outlet property="sizeIcon" destination="Nn3-8a-0Vr" id="nZL-7N-Ck5"/>
                 <outlet property="sizeLabel" destination="HqL-yO-6Oa" id="MiH-Jr-hqn"/>
                 <outlet property="soldCheckImageVoew" destination="ukx-xL-Dpq" id="Q2D-yG-A1Y"/>
                 <outlet property="soldLabel" destination="vjW-m8-KPl" id="9cn-9K-F1s"/>
                 <outlet property="spaceCell" destination="2TT-cf-rpt" id="FDx-oR-0oi"/>
+                <outlet property="timeIcon" destination="DU1-H8-E0J" id="ChQ-hJ-R1a"/>
                 <outlet property="trustedCheck" destination="3mu-95-dbz" id="fqK-a1-mh2"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
@@ -151,17 +155,29 @@
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6tM-kB-huZ">
+                        <rect key="frame" x="239" y="41" width="68" height="21"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
+                        <state key="normal" title="Multiple">
+                            <color key="titleColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="multiplePressed:" destination="-1" eventType="touchUpInside" id="x0Q-my-Fza"/>
+                        </connections>
+                    </button>
                 </subviews>
                 <color key="backgroundColor" red="0.96862745098039216" green="0.97254901960784312" blue="0.9882352941176471" alpha="1" colorSpace="calibratedRGB"/>
                 <constraints>
                     <constraint firstItem="3Wv-NP-Oie" firstAttribute="centerX" secondItem="g2Q-tV-NGs" secondAttribute="centerX" id="1Hg-3r-QgU"/>
                     <constraint firstItem="g2Q-tV-NGs" firstAttribute="leading" secondItem="MrZ-MJ-EK6" secondAttribute="leading" id="45Q-qK-arN"/>
                     <constraint firstItem="3Wv-NP-Oie" firstAttribute="leading" secondItem="Ayy-hd-P8G" secondAttribute="trailing" constant="16" id="4hb-Ez-dmN"/>
+                    <constraint firstItem="6tM-kB-huZ" firstAttribute="baseline" secondItem="8Hw-QH-TZ9" secondAttribute="firstBaseline" id="7NV-g8-ep3"/>
                     <constraint firstItem="aaj-sI-1FF" firstAttribute="top" secondItem="Nn3-8a-0Vr" secondAttribute="top" constant="1" id="8gY-Kg-mBM"/>
                     <constraint firstItem="3Wv-NP-Oie" firstAttribute="top" secondItem="MrZ-MJ-EK6" secondAttribute="topMargin" constant="-4" id="8l0-Vw-cG2"/>
                     <constraint firstItem="HqL-yO-6Oa" firstAttribute="top" secondItem="Ayy-hd-P8G" secondAttribute="bottom" constant="19" id="9JX-T7-Tk1"/>
                     <constraint firstItem="aaj-sI-1FF" firstAttribute="trailing" secondItem="C6Q-zM-h9F" secondAttribute="trailing" constant="2" id="BXT-oU-pZi"/>
                     <constraint firstAttribute="trailing" secondItem="g2Q-tV-NGs" secondAttribute="trailing" id="C57-yN-zeH"/>
+                    <constraint firstItem="6tM-kB-huZ" firstAttribute="firstBaseline" secondItem="8Hw-QH-TZ9" secondAttribute="baseline" id="C8d-sD-S68"/>
                     <constraint firstItem="Ayy-hd-P8G" firstAttribute="baseline" secondItem="8Hw-QH-TZ9" secondAttribute="baseline" id="CkF-61-pBd"/>
                     <constraint firstItem="aaj-sI-1FF" firstAttribute="top" secondItem="MrZ-MJ-EK6" secondAttribute="topMargin" constant="37" id="DEl-1s-8cY"/>
                     <constraint firstItem="8Hw-QH-TZ9" firstAttribute="leading" secondItem="HnS-9a-JfY" secondAttribute="leading" id="Ean-Xc-cX0"/>
@@ -177,8 +193,11 @@
                     <constraint firstItem="g2Q-tV-NGs" firstAttribute="top" secondItem="MrZ-MJ-EK6" secondAttribute="topMargin" constant="21" id="RZA-Cx-96D"/>
                     <constraint firstItem="DU1-H8-E0J" firstAttribute="centerY" secondItem="HnS-9a-JfY" secondAttribute="centerY" id="UVA-wv-g9c"/>
                     <constraint firstItem="aaj-sI-1FF" firstAttribute="centerY" secondItem="Ayy-hd-P8G" secondAttribute="centerY" constant="1" id="VEF-EJ-Y2F"/>
+                    <constraint firstItem="6tM-kB-huZ" firstAttribute="top" secondItem="8Hw-QH-TZ9" secondAttribute="top" id="VfT-Fy-moA"/>
                     <constraint firstItem="C6Q-zM-h9F" firstAttribute="centerY" secondItem="HqL-yO-6Oa" secondAttribute="centerY" id="WAR-Ij-S1h"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="6tM-kB-huZ" secondAttribute="trailing" constant="5" id="an9-NA-ayr"/>
                     <constraint firstItem="Ayy-hd-P8G" firstAttribute="leading" secondItem="aaj-sI-1FF" secondAttribute="trailing" constant="16" id="eaI-bs-XPa"/>
+                    <constraint firstItem="6tM-kB-huZ" firstAttribute="baseline" secondItem="8Hw-QH-TZ9" secondAttribute="baseline" id="gjQ-Jr-feA"/>
                     <constraint firstItem="8Hw-QH-TZ9" firstAttribute="leading" secondItem="Nn3-8a-0Vr" secondAttribute="trailing" constant="16" id="jft-gx-lbY"/>
                     <constraint firstItem="HnS-9a-JfY" firstAttribute="baseline" secondItem="HqL-yO-6Oa" secondAttribute="firstBaseline" id="ma0-17-sec"/>
                     <constraint firstItem="HnS-9a-JfY" firstAttribute="leading" secondItem="DU1-H8-E0J" secondAttribute="trailing" constant="15" id="nPL-WP-zE0"/>
@@ -189,6 +208,7 @@
                     <constraint firstItem="8Hw-QH-TZ9" firstAttribute="trailing" secondItem="HnS-9a-JfY" secondAttribute="trailing" id="tv2-sN-YEF"/>
                     <constraint firstItem="aaj-sI-1FF" firstAttribute="leading" secondItem="C6Q-zM-h9F" secondAttribute="leading" constant="-3" id="v4Q-lT-UY7"/>
                     <constraint firstAttribute="trailingMargin" secondItem="8Hw-QH-TZ9" secondAttribute="trailing" constant="25" id="weo-6l-Ee2"/>
+                    <constraint firstItem="6tM-kB-huZ" firstAttribute="leading" secondItem="Nn3-8a-0Vr" secondAttribute="trailing" constant="3" id="xlG-qF-SHc"/>
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-398" y="84"/>

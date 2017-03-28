@@ -65,12 +65,12 @@
     index++;
     
     if (self.explainMode == YES) {
-        if (index == 4) {
+        if (index == 3) {
             return nil;
         }
     }
     else{
-        if (index == 5) {
+        if (index == 4) {
             return nil;
         }
     }
@@ -93,10 +93,10 @@
 - (NSInteger)presentationCountForPageViewController:(UIPageViewController *)pageViewController {
     // The number of items reflected in the page indicator.
     if (self.explainMode == YES) {
-        return 4;
+        return 3;
     }
     else{
-        return 5;
+        return 4;
     }
 }
 

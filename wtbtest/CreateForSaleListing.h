@@ -16,9 +16,9 @@
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
 #import "TOJRWebView.h"
+#import <QBImagePickerController/QBImagePickerController.h>
 
-
-@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate>
+@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *imageCell;
@@ -35,6 +35,10 @@
 @property (weak, nonatomic) IBOutlet UIButton *secondCam;
 @property (weak, nonatomic) IBOutlet UIButton *thirdCam;
 @property (weak, nonatomic) IBOutlet UIButton *fourthCam;
+
+//add multiple images at once
+@property (nonatomic) BOOL multipleMode;
+@property (nonatomic, strong) NSMutableArray *imagesToProcess;
 
 //delete buttons
 @property (weak, nonatomic) IBOutlet UIButton *firstDelete;
@@ -66,6 +70,7 @@
 @property (nonatomic, strong) NSString *currencySymbol;
 @property (nonatomic, strong) NSArray *profanityList;
 
+@property (nonatomic, strong) NSArray *multipleSizeArray;
 @property (nonatomic, strong) NSString *tagString;
 @property (nonatomic, strong) NSString *selection;
 @property (nonatomic, strong) NSString *genderSize;

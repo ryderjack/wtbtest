@@ -14,8 +14,11 @@
 #import <iCarousel.h>
 #import "SendDialogBox.h"
 #import <FBSDKShareKit/FBSDKShareKit.h>
+#import "customAlertViewClass.h"
+#import "inviteViewClass.h"
+#import "TOJRWebView.h"
 
-@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate>
+@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
 @property (nonatomic, strong) PFObject *WTBObject;
@@ -35,6 +38,16 @@
 @property (weak, nonatomic) IBOutlet UILabel *IDLabel;
 @property (weak, nonatomic) IBOutlet UILabel *sizeLabel;
 @property (weak, nonatomic) IBOutlet UILabel *descriptionLabel;
+
+//icons
+@property (weak, nonatomic) IBOutlet UIImageView *sizeIcon;
+@property (weak, nonatomic) IBOutlet UIImageView *timeIcon;
+
+//multiple sizes
+@property (weak, nonatomic) IBOutlet UIButton *multipleButton;
+@property (nonatomic) BOOL alertShowing;
+@property (nonatomic, strong) customAlertViewClass *customAlert;
+@property (nonatomic, strong) UIView *searchBgView;
 
 @property (weak, nonatomic) IBOutlet PFImageView *imageViewTwo;
 //seller info
@@ -60,9 +73,12 @@
 
 @property (nonatomic, strong) UIBarButtonItem *infoButton;
 
+//mode
+@property (nonatomic) BOOL fromBuyNow;
 @property (nonatomic, strong) NSString *source;
 @property (nonatomic) BOOL pureWTS;
 @property (nonatomic) BOOL relatedProduct;
+@property (nonatomic) BOOL affiliateMode;
 @property (weak, nonatomic) IBOutlet PFImageView *trustedCheck;
 
 //big button
@@ -76,6 +92,7 @@
 //send cell
 @property (strong, nonatomic) IBOutlet UITableViewCell *sendCell;
 @property (weak, nonatomic) IBOutlet UIButton *sendButton;
+@property (weak, nonatomic) IBOutlet UIButton *sendLabel;
 
 //send dialog box
 @property (nonatomic, strong) SendDialogBox *sendBox;
@@ -88,5 +105,19 @@
 @property (nonatomic) BOOL hidingSendBox;
 @property (nonatomic) BOOL changeKeyboard;
 @property (nonatomic) BOOL wasShowing;
+
+//invite pop up
+@property (nonatomic, strong, nullable) inviteViewClass *inviteView;
+@property (nonatomic) BOOL inviteAlertShowing;
+@property (nonatomic, strong, nullable) UIView *inviteBgView;
+@property (nonatomic, strong) UITapGestureRecognizer *inviteTap;
+@property (nonatomic) int tabBarHeightInt;
+
+//affiliate
+@property (nonatomic, strong) PFObject *affiliateObject;
+
+//web
+@property (nonatomic, strong) TOJRWebView *web;
+
 
 @end

@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.2.12</string>
+	<string>1.2.17</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -33,7 +33,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1157</string>
+	<string>1166</string>
 	<key>Fabric</key>
 	<dict>
 		<key>APIKey</key>
@@ -51,6 +51,8 @@
 		<string>fb-messenger-api</string>
 		<string>fbauth2</string>
 		<string>fbshareextension</string>
+		<string>whatsapp</string>
+		<string>fb-messenger</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
