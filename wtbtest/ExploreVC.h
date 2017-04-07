@@ -23,8 +23,10 @@
 #import "WelcomeViewController.h"
 #import "TOJRWebView.h"
 #import "RateCustomView.h"
+#import "inviteViewClass.h"
+#import "HomeHeaderView.h"
 
-@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate, customAlertDelegate, WelcomeDelegate, JRWebViewDelegate,rateDelegate>
+@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate, customAlertDelegate, WelcomeDelegate, JRWebViewDelegate,rateDelegate,inviteDelegate,UISearchBarDelegate,HeaderDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
@@ -74,10 +76,10 @@
 @property (nonatomic) NSArray *searchWords;
 @property (nonatomic) BOOL sendMode;
 
-
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;
 @property (nonatomic, strong) UIView *searchBgView;
+@property (nonatomic) BOOL searchIntroShowing;
 
 //message sent in app notification
 @property (nonatomic) BOOL justAMessage;
@@ -100,6 +102,26 @@
 @property (nonatomic, strong) RateCustomView *rateView;
 @property (nonatomic) BOOL lowRating;
 @property (nonatomic, strong) UINavigationController *messageNav;
+
+//invite pop up
+@property (nonatomic, strong, nullable) inviteViewClass *inviteView;
+@property (nonatomic, strong, nullable) UIView *bgView;
+@property (nonatomic) BOOL alertShowing;
+@property (nonatomic, strong) UITapGestureRecognizer *tap;
+
+//search bar
+@property (nonatomic, strong) UISearchBar *navSearchbar;
+
+//trending emoji array
+@property (nonatomic, strong) NSArray *trendingEmojis;
+@property (nonatomic, strong) NSString *randEmoji;
+@property (nonatomic) BOOL setTitle;
+
+//header
+@property (nonatomic, strong) NSArray *homeItems;
+@property (nonatomic, strong) HomeHeaderView *headerView;
+
+
 
 -(void)doubleTapScroll;
 @end

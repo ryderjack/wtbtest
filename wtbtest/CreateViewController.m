@@ -615,14 +615,16 @@
         [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
             switch (status) {
                 case PHAuthorizationStatusAuthorized:{
-                    QBImagePickerController *imagePickerController = [QBImagePickerController new];
-                    imagePickerController.delegate = self;
-                    imagePickerController.allowsMultipleSelection = YES;
-                    imagePickerController.maximumNumberOfSelection = 4-self.photostotal;
-                    imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                    imagePickerController.numberOfColumnsInPortrait = 3;
-                    imagePickerController.showsNumberOfSelectedAssets = YES;
-                    [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                        imagePickerController.delegate = self;
+                        imagePickerController.allowsMultipleSelection = YES;
+                        imagePickerController.maximumNumberOfSelection = 4-self.photostotal;
+                        imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                        imagePickerController.numberOfColumnsInPortrait = 3;
+                        imagePickerController.showsNumberOfSelectedAssets = YES;
+                        [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                    });
                 }
                     break;
                 case PHAuthorizationStatusRestricted:{
@@ -718,7 +720,6 @@
     self.webViewController.delegate = self;
     self.webViewController.editMode = YES;
     self.webViewController.doneButtonTitle = @"";
-    self.webViewController.paypalMode = NO;
     self.webViewController.infoMode = NO;
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
@@ -1370,11 +1371,12 @@
                 [self.listing setObject:@"live" forKey:@"status"];
                 
                 //expiration in 2 weeks
-                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                dayComponent.minute = 1;
-                NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-                [self.listing setObject:expirationDate forKey:@"expiration"];
+//                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+//                dayComponent.day = 14;
+//                NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//                NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+//                [self.listing setObject:expirationDate forKey:@"expiration"];
+                
                 [self.listing setObject:self.currency forKey:@"currency"];
                 [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
                 
@@ -2009,6 +2011,10 @@
         self.chooseCategroy.text = @"Optional";
     }
     else{
+        if ([[self.listing objectForKey:@"category"]isEqualToString:@"Accessories"]) {
+            //set to blank for accessories
+            self.chooseSize.text = @"";
+        }
         self.chooseCategroy.text = [self.listing objectForKey:@"category"];
     }
     

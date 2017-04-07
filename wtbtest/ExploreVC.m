@@ -17,6 +17,9 @@
 #import "ContainerViewController.h"
 #import "Tut1ViewController.h"
 #import "ChatWithBump.h"
+#import <StoreKit/StoreKit.h>
+#import <SDWebImage/UIImageView+WebCache.h>
+#import "AddSizeController.h"
 
 @interface ExploreVC ()
 
@@ -38,12 +41,17 @@
     
     self.navigationItem.title = @"W A N T E D";
     
-    UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"searchBarButton"] style:UIBarButtonItemStylePlain target:self action:@selector(searchPressed)];
-    self.navigationItem.leftBarButtonItem = searchButton;
+//    UIBarButtonItem *searchButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"searchBarButton"] style:UIBarButtonItemStylePlain target:self action:@selector(searchPressed)];
+//    self.navigationItem.leftBarButtonItem = searchButton;
+//    
+//    UIBarButtonItem *filterBarButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"filterBarIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(filterPressed:)];
+//    self.navigationItem.rightBarButtonItem = filterBarButton;
     
-    UIBarButtonItem *filterBarButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"filterBarIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(filterPressed:)];
-    self.navigationItem.rightBarButtonItem = filterBarButton;
-    
+    self.navSearchbar = [[UISearchBar alloc]init];
+    self.navSearchbar.placeholder = @"Search through wanted items";
+    self.navSearchbar.delegate = self;
+    self.navigationItem.titleView = self.navSearchbar;
+
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     //collection view/cell setup
@@ -54,7 +62,11 @@
     
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
     
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+    if ([(NSString*)[UIDevice currentDevice].model hasPrefix:@"iPad"]){
+        //iPad (needs to be first as iPad can run in iPhone mode so screen size is same as an iPhones)
+        [flowLayout setItemSize:CGSizeMake(140, 210)];
+    }
+    else if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
         //iphone5
         [flowLayout setItemSize:CGSizeMake(148, 215)];
     }
@@ -67,12 +79,20 @@
         [flowLayout setItemSize:CGSizeMake(124, 180)];
     }
     else{
-        [flowLayout setItemSize:CGSizeMake(175, 254)]; //iPhone 6 specific
+        //iPhone 6 specific
+        [flowLayout setItemSize:CGSizeMake(175, 254)];
     }
+    
+    
     [flowLayout setMinimumInteritemSpacing:0];
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
-    flowLayout.headerReferenceSize = CGSizeMake(self.collectionView.frame.size.width, 50);
+    
+    [self.collectionView registerNib:[UINib nibWithNibName:@"HomeHeaderView" bundle:nil]
+          forSupplementaryViewOfKind:UICollectionElementKindSectionHeader
+                 withReuseIdentifier:@"Home"];
+    
+//    flowLayout.headerReferenceSize = CGSizeMake(self.collectionView.frame.size.width, 50);
 //    flowLayout.sectionHeadersPinToVisibleBounds = YES;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBump:) name:@"showBumpedVC" object:nil];
@@ -85,7 +105,8 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showScreenShot:) name:@"screenshotDropDown" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showReleasePage:) name:@"showRelease" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setUpRateViewWithNav:) name:@"showRate" object:nil];
-    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showInviteView) name:@"showInvite" object:nil];
+
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.delegate = self;
     self.collectionView.alwaysBounceVertical = YES;
@@ -93,6 +114,7 @@
     
     self.results = [[NSMutableArray alloc]init];
     self.resultIDs = [[NSMutableArray alloc]init];
+    self.homeItems = [NSArray array];
     
     //setup header
     [self.collectionView registerClass:[UICollectionReusableView class]
@@ -122,12 +144,13 @@
     
     self.filtersArray = [NSMutableArray array];
     
-    
     // set searchbar font
     NSDictionary *searchAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                       NSFontAttributeName, nil];
     [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:searchAttributes];
     
+    self.trendingEmojis = [NSArray arrayWithObjects:@"👊", @"👇",@"🚀",@"🏎",@"🙌",@"💪",@"😗",@"👻",@"💥",@"🤙",@"👍",@"👀",@"🐒",@"🔥",@"🍆",@"🔑",@"🎈",@"🤑", nil];
+
     
     if (![FBSDKAccessToken currentAccessToken]) {
         NSLog(@"invalid token in VDL");
@@ -181,7 +204,7 @@
     }
     
     PFUser *currentUser = [PFUser currentUser];
-    
+
     if (currentUser) {
         NSLog(@"got a current user");
         if (![[currentUser objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
@@ -338,30 +361,51 @@
     [versionQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             NSString *latest = [object objectForKey:@"number"];
-            if (![appVersion isEqualToString:latest]) {
-                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:nil preferredStyle:UIAlertControllerStyleAlert];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                    [Answers logCustomEventWithName:@"Cancel Update pressed"
-                                   customAttributes:@{
-                                                      @"page":@"Explore"
-                                                      }];
-                }]];
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                    [Answers logCustomEventWithName:@"Update pressed"
-                                   customAttributes:@{
-                                                      @"page":@"Explore"
-                                                      }];
-                    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
-                                                                @"itms-apps://itunes.apple.com/app/id1096047233"]];
-                }]];
-//                [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
+            
+            //add in a check if user was created in past 2 days
+            //only show update prompt if created later than that
+            //to protect against the update crossover period
+            
+            NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:currentUser.createdAt];
+            double secondsInADay = 86400;
+            NSInteger daysSinceSigningUp = distanceBetweenDates / secondsInADay;
+            
+            if (daysSinceSigningUp > 2) {
+                //can prompt now
+                if (![appVersion isEqualToString:latest]) {
+                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:nil preferredStyle:UIAlertControllerStyleAlert];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                        [Answers logCustomEventWithName:@"Cancel Update pressed"
+                                       customAttributes:@{
+                                                          @"page":@"Explore",
+                                                          @"userVersion":appVersion,
+                                                          @"updateVersion":latest
+                                                          }];
+                    }]];
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        [Answers logCustomEventWithName:@"Update pressed"
+                                       customAttributes:@{
+                                                          @"page":@"Explore"
+                                                          }];
+                        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
+                                                                    @"itms-apps://itunes.apple.com/app/id1096047233"]];
+                    }]];
+                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
+                }
             }
         }
         else{
             NSLog(@"error getting latest version %@", error);
         }
     }];
+    
+    
+    //dismiss Invite gesture
+    self.tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
+    self.tap.numberOfTapsRequired = 1;
+    
+    [self getCarouselData];
     
 //    [PFUser logOut]; //CHECK
 }
@@ -395,6 +439,12 @@
     return UIEdgeInsetsMake(8, 8, 8, 8); // top, left, bottom, right
 }
 
+- (CGSize) collectionView:(UICollectionView *)collectionView
+                   layout:(UICollectionViewLayout *)collectionViewLayout
+referenceSizeForHeaderInSection:(NSInteger)section {
+    return CGSizeMake(60.0f, 275.0f);// width is ignored
+}
+
 -(void)viewWillAppear:(BOOL)animated{
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
@@ -402,6 +452,12 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     [self.navigationController.navigationBar setHidden:NO];
+    
+//    if (self.setTitle == YES) {
+//        NSString *randomEmoji = [self.trendingEmojis objectAtIndex:(arc4random() % self.trendingEmojis.count)];
+//        self.randEmoji = [NSString stringWithFormat:@"%@  T R E N D I N G",randomEmoji];
+//        [self.segmentedControl setSectionTitles:@[@"💎  F E A T U R E D",self.randEmoji]];
+//    }
     
     if (![PFUser currentUser]) {
         WelcomeViewController *vc = [[WelcomeViewController alloc]init];
@@ -451,11 +507,15 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
+    self.navigationController.hidesBarsOnSwipe = NO;
 }
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-
+    
+//    self.navigationController.hidesBarsOnSwipe = YES;
+    
+    
     [self.collectionView.infiniteScrollingView stopAnimating];
     [Answers logCustomEventWithName:@"Viewed page"
                    customAttributes:@{
@@ -466,13 +526,18 @@
 //        NSLog(@"got some filters brah %lu", self.filtersArray.count);
         [self.filterButton setTitle:[NSString stringWithFormat:@"F I L T E R S  %lu",self.filtersArray.count] forState:UIControlStateNormal];
     }
-    if ([PFUser currentUser]) {
+    
+    BOOL modalPresent = (self.presentedViewController);
+    if ([PFUser currentUser] && modalPresent != YES) {
         
+        //for showing pop ups
         if (![[[PFUser currentUser] objectForKey:@"searchIntro"] isEqualToString:@"YES"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"viewMorePressed"] != YES && [[[PFUser currentUser] objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
             
+            if (self.welcomeShowing != YES && modalPresent != YES) {
+                [self setUpIntroAlert];
+            }
             //trigger location for first sign in
             [self parseLocation];
-            [self setUpIntroAlert];
         }
         
         //if user redownloaded - ask for push/location permissions again
@@ -486,6 +551,10 @@
             [self parseLocation];
             [self showPushReminder];
         }
+        else if (![[PFUser currentUser]objectForKey:@"sizeCountry"] && self.welcomeShowing != YES) {
+            AddSizeController *vc = [[AddSizeController alloc]init];
+            [self.navigationController presentViewController:vc animated:YES completion:nil];
+        }
     }
 }
 
@@ -493,42 +562,77 @@
 
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
 {
-    UICollectionReusableView *reusableview = nil;
-    
-    if (kind == UICollectionElementKindSectionHeader) {
-        UICollectionReusableView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"HeaderView" forIndexPath:indexPath];
-        [headerView setBackgroundColor: [UIColor whiteColor]];
-        
-//        UIView *bgView = [[UIView alloc]initWithFrame:headerView.frame];
-//        bgView.backgroundColor = [UIColor whiteColor];
-//        bgView.alpha = 0.9;
+//    UICollectionReusableView *reusableview = nil;
+//    
+//    if (kind == UICollectionElementKindSectionHeader) {
+//        UICollectionReusableView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"HeaderView" forIndexPath:indexPath];
+//        [headerView setBackgroundColor: [UIColor whiteColor]];
 //        
-//        [headerView addSubview:bgView];
-        
-        self.segmentedControl = [[HMSegmentedControl alloc] init];
-        self.segmentedControl.frame = headerView.frame;
-        self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
-        self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
-        self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
-        self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10]};
-        self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]};
-        [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
-        self.segmentedControl.backgroundColor = [UIColor whiteColor];
-        //self.segmentedControl = aSegmentedControl;
-        [self.segmentedControl setSectionTitles:@[@"S U G G E S T E D", @"L A T E S T"]];
-        [headerView addSubview:self.segmentedControl];
-
-        if (self.latestMode == YES) {
-            [self.segmentedControl setSelectedSegmentIndex:1];
-        }
-        
-        reusableview = headerView;
-        return reusableview;
-
+////        UIView *bgView = [[UIView alloc]initWithFrame:headerView.frame];
+////        bgView.backgroundColor = [UIColor whiteColor];
+////        bgView.alpha = 0.9;
+////        
+////        [headerView addSubview:bgView];
+//        
+//        self.segmentedControl = [[HMSegmentedControl alloc] init];
+//        self.segmentedControl.frame = headerView.frame;
+//        self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
+//        self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
+//        self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+//        self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10]};
+//        self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]};
+//        [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
+//        self.segmentedControl.backgroundColor = [UIColor whiteColor];
+//        //self.segmentedControl = aSegmentedControl;
+//        [self.segmentedControl setSectionTitles:@[@"S U G G E S T E D", @"L A T E S T"]];
+//        [headerView addSubview:self.segmentedControl];
+//
+//        if (self.latestMode == YES) {
+//            [self.segmentedControl setSelectedSegmentIndex:1];
+//        }
+//
+//        reusableview = headerView;
+//        return reusableview;
+//
+//    }
+//    else{
+//        return reusableview;
+//    }
+    
+    
+    if (!self.headerView) {
+        self.headerView = [collectionView dequeueReusableSupplementaryViewOfKind:kind
+                                                             withReuseIdentifier:@"Home"
+                                                                    forIndexPath:indexPath];
+        self.headerView.delegate = self;
+        self.headerView.itemsArray = self.homeItems;
     }
-    else{
-        return reusableview;
+
+    self.segmentedControl = [[HMSegmentedControl alloc] init];
+    self.segmentedControl.frame = CGRectMake(self.headerView.headerSegmentControl.frame.origin.x,self.headerView.headerSegmentControl.frame.origin.y,[UIApplication sharedApplication].keyWindow.frame.size.width,  self.headerView.headerSegmentControl.frame.size.height);
+    self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
+    self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
+    self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
+    self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+    self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10]};
+    self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]};
+    self.segmentedControl.backgroundColor = [UIColor whiteColor];
+    [self.segmentedControl setSectionTitles:@[@"💎  F E A T U R E D",@"🔥  T R E N D I N G"]];
+
+//    
+//    if (!self.setTitle != YES) {
+//        self.setTitle = YES;
+//        NSLog(@"RAND %@", self.randEmoji);
+//    }
+    [self.headerView addSubview:self.segmentedControl];
+
+    if (self.latestMode == YES) {
+        [self.segmentedControl setSelectedSegmentIndex:1];
     }
+
+    [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
+    
+    return self.headerView;
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -711,10 +815,29 @@
     [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
 
     if (self.latestMode == YES) {
-        [self.infiniteQuery orderByDescending:@"lastUpdated,bumpCount"];
-        if (self.ignoreShownToLatest == NO) {
-            [self.infiniteQuery whereKey:@"objectId" notContainedIn:[[PFUser currentUser]objectForKey:@"seenListings"]];
-//            [self.infiniteQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+        
+        //check if in CMO mode
+        if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+            //CMO switch setup
+            if ([[NSUserDefaults standardUserDefaults]boolForKey:@"CMOModeOn"]==YES) {
+                //just get the latest
+                [self.infiniteQuery orderByDescending:@"createdAt,bumpCount"];
+            }
+            else{
+                //normal latest code
+                [self.infiniteQuery orderByDescending:@"lastUpdated,bumpCount"];
+                if (self.ignoreShownToLatest == NO) {
+                    [self.infiniteQuery whereKey:@"objectId" notContainedIn:[[PFUser currentUser]objectForKey:@"seenListings"]];
+                    //            [self.infiniteQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+                }
+            }
+        }
+        else{
+            [self.infiniteQuery orderByDescending:@"lastUpdated,bumpCount"];
+            if (self.ignoreShownToLatest == NO) {
+                [self.infiniteQuery whereKey:@"objectId" notContainedIn:[[PFUser currentUser]objectForKey:@"seenListings"]];
+                //            [self.infiniteQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+            }
         }
     }
     else{
@@ -853,10 +976,29 @@
     
     if (self.latestMode == YES) {
         
-        [self.pullQuery orderByDescending:@"lastUpdated,bumpCount"];
-        if (self.ignoreShownToLatest == NO ) {
-//            [self.pullQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
-            [self.pullQuery whereKey:@"objectId" notContainedIn:[[PFUser currentUser]objectForKey:@"seenListings"]];
+        //check if in CMO mode
+        if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+            //CMO switch setup
+            if ([[NSUserDefaults standardUserDefaults]boolForKey:@"CMOModeOn"]==YES) {
+                //just get the latest
+                [self.pullQuery orderByDescending:@"createdAt,bumpCount"];
+            }
+            else{
+                //normal latest code
+                [self.pullQuery orderByDescending:@"lastUpdated,bumpCount"];
+                if (self.ignoreShownToLatest == NO ) {
+                    //            [self.pullQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+                    [self.pullQuery whereKey:@"objectId" notContainedIn:[[PFUser currentUser]objectForKey:@"seenListings"]];
+                }
+            }
+            
+        }
+        else{
+            [self.pullQuery orderByDescending:@"lastUpdated,bumpCount"];
+            if (self.ignoreShownToLatest == NO ) {
+                //            [self.pullQuery whereKey:@"shownTo" notEqualTo:[[PFUser currentUser]objectId]];
+                [self.pullQuery whereKey:@"objectId" notContainedIn:[[PFUser currentUser]objectForKey:@"seenListings"]];
+            }
         }
     }
     else{
@@ -1099,13 +1241,11 @@
                         [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
                         [[PFUser currentUser]saveInBackground];
                     }
-                    
                 }
                 else{
                     NSLog(@"error %@", error);
                 }
             }];
-
         }
         else{
             NSLog(@"no geopoint %@", error);
@@ -1157,9 +1297,10 @@
     
     //if array is empty from a 'no results' search then don't scroll to top to avoid crashing as there's 0 index paths to scroll to!
     if (self.results.count != 0) {
-        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
-                                    atScrollPosition:UICollectionViewScrollPositionTop
-                                            animated:NO];
+//        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+//                                    atScrollPosition:UICollectionViewScrollPositionTop
+//                                            animated:NO];
+        
     }
 
     [self queryParsePull];
@@ -1453,6 +1594,9 @@
     ListingController *vc = [[ListingController alloc]init];
     vc.listingObject = selected;
     self.listingTapped = YES;
+    
+    //switch off hiding nav bar
+//    self.navigationController.navigationBarHidden = NO;
     [self.navigationController pushViewController:vc animated:YES];
 }
 
@@ -1608,21 +1752,47 @@
     ListingController *vc = [[ListingController alloc]init];
     vc.listingObject = listing;
     NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+    
+    //unhide nav bar
+//    self.navigationController.navigationBarHidden = NO;
     [nav pushViewController:vc animated:YES];
 }
 
 - (void)showReleasePage:(NSNotification*)note {
-    NSString *releaseLink = [note object];
+    NSString *itemTitle = [note object];
     
-    self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:releaseLink]];
-    self.web.showUrlWhileLoading = YES;
-    self.web.showPageTitles = YES;
-    self.web.doneButtonTitle = @"";
-    self.web.paypalMode = NO;
-    self.web.infoMode = NO;
-    self.web.delegate = self;
-    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
-    [self presentViewController:navigationController animated:YES completion:nil];
+    PFQuery *linkQuery = [PFQuery queryWithClassName:@"Releases"];
+    [linkQuery whereKey:@"status" equalTo:@"live"];
+    [linkQuery whereKey:@"itemTitle" equalTo:itemTitle];
+    [linkQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            NSLog(@"open web view! did finish launching");
+            
+            NSString *link = [object objectForKey:@"itemLink"];
+            
+            if (![link isEqualToString:@"soon"]) {
+                self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:link]];
+                self.web.showUrlWhileLoading = YES;
+                self.web.showPageTitles = YES;
+                self.web.doneButtonTitle = @"";
+                self.web.infoMode = NO;
+                self.web.delegate = self;
+                self.web.dropMode = YES;
+                
+                NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
+                [self presentViewController:navigationController animated:YES completion:nil];
+            }
+        }
+        else{
+            [Answers logCustomEventWithName:@"Error Opening Release"
+                           customAttributes:@{
+                                              @"error":error,
+                                              @"where":@"Explore"
+                                              }];
+            
+            NSLog(@"error getting release %@", error);
+        }
+    }];
 }
 
 - (void)handleDrop:(NSNotification*)note {
@@ -1807,6 +1977,9 @@
         ListingController *vc = [[ListingController alloc]init];
         vc.listingObject = listingObj;
         NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+        
+        //unhide nav bar
+//        self.navigationController.navigationBarHidden = NO;
         [nav pushViewController:vc animated:YES];
     }
 }
@@ -1816,24 +1989,30 @@
 }
 
 -(void)setUpIntroAlert{
-    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
-    self.searchBgView.alpha = 0.0;
     
     if (self.lowRating == YES) {
-        [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+        self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
     }
     else{
-        UIImageView *imgView = [[UIImageView alloc]initWithFrame:self.searchBgView.frame];
-        if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-            //iphone 5
-            [imgView setImage:[UIImage imageNamed:@"searchIntro1"]];
-        }
-        else{
-            //iPhone 6 specific
-            [imgView setImage:[UIImage imageNamed:@"searchIntro"]];
-        }
-        [self.searchBgView addSubview:imgView];
+        
+        //for search intro, only show bg so search bar pops
+        self.searchBgView = [[UIView alloc]initWithFrame:CGRectMake(0,(self.navigationController.navigationBar.frame.size.height + [UIApplication sharedApplication].statusBarFrame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, [UIApplication sharedApplication].keyWindow.frame.size.height-(self.navigationController.navigationBar.frame.size.height+[UIApplication sharedApplication].statusBarFrame.size.height))];
+        
+        
+//        UIImageView *imgView = [[UIImageView alloc]initWithFrame:self.searchBgView.frame];
+//        if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+//            //iphone 5
+//            [imgView setImage:[UIImage imageNamed:@"searchIntro1"]];
+//        }
+//        else{
+//            //iPhone 6 specific
+//            [imgView setImage:[UIImage imageNamed:@"searchIntro"]];
+//        }
+//        [self.searchBgView addSubview:imgView];
     }
+    
+    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+    self.searchBgView.alpha = 0.0;
     
     [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
     [UIView animateWithDuration:0.3
@@ -1855,8 +2034,9 @@
     }
     else{
         self.customAlert.titleLabel.text = @"Selling Something?";
-        self.customAlert.messageLabel.text = @"Hit the Search button to find wanted listings that match what you’re selling";
+        self.customAlert.messageLabel.text = @"Tap the Search bar ☝️ to find wanted listings that match what you’re selling";
         self.customAlert.numberOfButtons = 1;
+        self.searchIntroShowing = YES;
     }
 
     
@@ -2066,6 +2246,9 @@
                 vc.convoObject = object;
                 vc.otherUser = [PFUser currentUser];
                 NavigationController *nav = (NavigationController*)self.messageNav;
+                
+                //unhide nav bar
+//                self.navigationController.navigationBarHidden = NO;
                 [nav pushViewController:vc animated:YES];
             }
             else{
@@ -2082,6 +2265,9 @@
                         vc.convoObject = convoObject;
                         vc.otherUser = [PFUser currentUser];
                         NavigationController *nav = (NavigationController*)self.messageNav;
+                        
+                        //unhide nav bar
+//                        self.navigationController.navigationBarHidden = NO;
                         [nav pushViewController:vc animated:YES];
                     }
                     else{
@@ -2114,11 +2300,26 @@
 -(void)resetHome{
     //only reset if they're looking at home tab
     if (self.tabBarController.selectedIndex == 0) {
+        
+        //unhide nav bar
+//        self.navigationController.navigationBarHidden = NO;
+        
         if (self.results.count != 0) {
-            [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
-                                        atScrollPosition:UICollectionViewScrollPositionTop
-                                                animated:NO];
+//            [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+//                                        atScrollPosition:UICollectionViewScrollPositionTop
+//                                                animated:NO];
+            
+            //scroll to top of header
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
+            
+            CGFloat offsetY = [self.collectionView layoutAttributesForSupplementaryElementOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath].frame.origin.y;
+            
+            CGFloat contentInsetY = self.collectionView.contentInset.top;
+            CGFloat sectionInsetY = ((UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout).sectionInset.top;
+            
+            [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
         }
+
         
         self.ignoreShownTo = NO;
         [self queryParsePull];
@@ -2138,10 +2339,26 @@
 }
 
 -(void)doubleTapScroll{
-    if (self.results.count != 0 && self.listingTapped == NO) {
-        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
-                                    atScrollPosition:UICollectionViewScrollPositionTop
-                                            animated:YES];
+    //switch off hiding nav bar
+//    self.navigationController.navigationBarHidden = NO;
+    BOOL modalPresent = (self.presentedViewController);
+    
+    if (self.results.count != 0 && self.listingTapped == NO && modalPresent != YES) {
+        
+//        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+//                                    atScrollPosition:UICollectionViewScrollPositionTop
+//                                            animated:YES];
+        
+        
+        //scroll to top of header
+        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
+        
+        CGFloat offsetY = [self.collectionView layoutAttributesForSupplementaryElementOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath].frame.origin.y;
+        
+        CGFloat contentInsetY = self.collectionView.contentInset.top;
+        CGFloat sectionInsetY = ((UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout).sectionInset.top;
+        
+        [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
     }
 }
 
@@ -2223,6 +2440,7 @@
 
 -(void)welcomeDismissed{
     self.welcomeShowing = NO;
+    [self queryParsePull];
 }
 
 -(void)showScreenShot:(NSNotification*)note {
@@ -2288,7 +2506,7 @@
 
 #pragma mark - rate delegates
 
--(void)setUpRateViewWithNav:(NSNotification*)note{
+-(void)setUpRateViewWithNav:(NSNotification*)note {
     
     UINavigationController *nav = [note object];
 
@@ -2379,6 +2597,10 @@
 }
 -(void)ratePressedWithNumber:(int)starNumber{
     
+    if (starNumber == 0) {
+        return;
+    }
+    
     [Answers logCustomEventWithName:@"User Rated App"
                    customAttributes:@{
                                       @"Rating":[NSString stringWithFormat:@"%d", starNumber]
@@ -2386,25 +2608,30 @@
     
     if (starNumber >= 4) {
         
-        //take to store
-        NSURL *storeURL = [NSURL URLWithString:@"itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=1096047233&onlyLatestVersion=true&pageNumber=0&sortOrdering=1&type=Purple+Software&action=write-review"];
-        if ([[UIApplication sharedApplication] canOpenURL: storeURL]) {
-            [[UIApplication sharedApplication] openURL: storeURL];
+        NSString *reqSysVer = @"10.3";
+        NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+        if ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending) {
+            NSLog(@"10.3 or later");
+            [SKStoreReviewController requestReview];
+            
+            [Answers logCustomEventWithName:@"In-app 10.3 rating triggered"
+                           customAttributes:@{
+                                              @"Rating":[NSString stringWithFormat:@"%d", starNumber]
+                                              }];
         }
-        
-//        NSString *reqSysVer = @"10.3";
-//        NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
-//        if ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending) { //CHANGE
-//            NSLog(@"10.3 or later");
-//        }
-//        else{
-//            NSLog(@"current version is %@", currSysVer);
-//            
-//            NSURL *storeURL = [NSURL URLWithString:@"itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=1096047233&onlyLatestVersion=true&pageNumber=0&sortOrdering=1&type=Purple+Software&action=write-review"];
-//            if ([[UIApplication sharedApplication] canOpenURL: storeURL]) {
-//                [[UIApplication sharedApplication] openURL: storeURL];
-//            }
-//        }
+        else{
+            NSLog(@"current version is %@", currSysVer);
+            
+            NSURL *storeURL = [NSURL URLWithString:@"itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=1096047233&onlyLatestVersion=true&pageNumber=0&sortOrdering=1&type=Purple+Software&action=write-review"];
+            if ([[UIApplication sharedApplication] canOpenURL: storeURL]) {
+                [[UIApplication sharedApplication] openURL: storeURL];
+            }
+            
+            [Answers logCustomEventWithName:@"Out-of-app rating triggered"
+                           customAttributes:@{
+                                              @"Rating":[NSString stringWithFormat:@"%d", starNumber]
+                                              }];
+        }
 
         [self dismissRatePressed];
         
@@ -2423,5 +2650,306 @@
     [[PFUser currentUser]saveInBackground];
 }
 
+#pragma mark - invite view delegates
+
+-(void)showInviteView{
+    
+    NSLog(@"SHOW INVITE");
+    
+    if (self.alertShowing == YES) {
+        return;
+    }
+    
+    self.alertShowing = YES;
+    self.bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.bgView.alpha = 0.0;
+    [self.bgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.bgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"inviteView" owner:self options:nil];
+    self.inviteView = (inviteViewClass *)[nib objectAtIndex:0];
+    self.inviteView.delegate = self;
+    
+    //setup images
+    NSMutableArray *friendsArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"friends"]];
+    
+    //manage friends count label
+    if (friendsArray.count > 5) {
+        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friendsArray.count];
+    }
+    else{
+        self.inviteView.friendsLabel.text = @"Help us grow 🚀";
+    }
+    
+    if (friendsArray.count > 0) {
+        [self shuffle:friendsArray];
+        if (friendsArray.count >2) {
+            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+            
+            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
+            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+            
+            NSURL *picUrl3 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[2]]];
+            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+        }
+        else if (friendsArray.count == 2){
+            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+            
+            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
+            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+            
+            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
+            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+        }
+        else if (friendsArray.count == 1){
+            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+            
+            NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
+            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+            
+            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
+            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+        }
+    }
+    else{
+        NSURL *picUrl = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image
+        [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+        
+        NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
+        [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+        
+        NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
+        [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+    }
+    
+    [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -300, 300, 300)];
+    
+    self.inviteView.layer.cornerRadius = 10;
+    self.inviteView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.inviteView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.inviteView setFrame:CGRectMake(0, 0, 300, 300)];
+                            self.inviteView.center = self.view.center;
+                        }
+                     completion:^(BOOL finished) {
+                         [self.bgView addGestureRecognizer:self.tap];
+                     }];
+    
+    //save info
+    [[PFUser currentUser]setObject:[NSDate date] forKey:@"inviteDate"];
+    [[PFUser currentUser]saveInBackground];
+}
+
+-(void)hideInviteView{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.bgView = nil;
+                         [self.bgView removeGestureRecognizer:self.tap];
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 300)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.alertShowing = NO;
+                         [self.inviteView setAlpha:0.0];
+                         self.inviteView = nil;
+                     }];
+}
+
+-(void)whatsappPressed{
+    [Answers logCustomEventWithName:@"Whatsapp share pressed"
+                   customAttributes:@{}];
+    NSString *shareString = @"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com";
+    NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
+    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+        [[UIApplication sharedApplication] openURL: whatsappURL];
+    }
+}
+
+-(void)messengerPressed{
+    [Answers logCustomEventWithName:@"Messenger share pressed"
+                   customAttributes:@{}];
+    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=http://sobump.com"];
+    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+        [[UIApplication sharedApplication] openURL: messengerURL];
+    }
+}
+
+-(void)textPressed{
+    [self hideInviteView];
+    
+    [Answers logCustomEventWithName:@"More share pressed"
+                   customAttributes:@{}];
+    NSMutableArray *items = [NSMutableArray new];
+    [items addObject:@"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com"];
+    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+    [self presentViewController:activityController animated:YES completion:nil];
+}
+
+- (void)shuffle:(NSMutableArray *)array
+{
+    NSUInteger count = [array count];
+    if (count <= 1) return;
+    for (NSUInteger i = 0; i < count - 1; ++i) {
+        NSInteger remainingCount = count - i;
+        NSInteger exchangeIndex = i + arc4random_uniform((u_int32_t )remainingCount);
+        [array exchangeObjectAtIndex:i withObjectAtIndex:exchangeIndex];
+    }
+}
+
+- (NSString *)urlencode:(NSString *)stringToEncode{
+    NSMutableString *output = [NSMutableString string];
+    const unsigned char *source = (const unsigned char *)[stringToEncode UTF8String];
+    int sourceLen = (int)strlen((const char *)source);
+    for (int i = 0; i < sourceLen; ++i) {
+        const unsigned char thisChar = source[i];
+        if (thisChar == ' '){
+            [output appendString:@"+"];
+        } else if (thisChar == '.' || thisChar == '-' || thisChar == '_' || thisChar == '~' ||
+                   (thisChar >= 'a' && thisChar <= 'z') ||
+                   (thisChar >= 'A' && thisChar <= 'Z') ||
+                   (thisChar >= '0' && thisChar <= '9')) {
+            [output appendFormat:@"%c", thisChar];
+        } else {
+            [output appendFormat:@"%%%02X", thisChar];
+        }
+    }
+    return output;
+}
+
+-(void)scheduleTestReminder{
+    //schedule local notification
+    
+//    PFQuery *releases = [PFQuery queryWithClassName:@"Releases"];
+//    [releases whereKey:@"itemTitle" equalTo:@"ASICS Gel-Lyte V Green Coffee"];
+//    [releases getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//        if (object) {
+//            NSLog(@"GOT RELEASE");
+//            
+//            NSString *reminderString = @"";
+//            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//            NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+//            
+//            UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+//            
+//            //set alert string
+//            NSString *releaseTime = [object objectForKey:@"releaseTimeString"];
+//            
+//            reminderString = [NSString stringWithFormat:@"Reminder: the '%@' drops at %@ - Swipe to cop!", [object objectForKey:@"itemTitle"],releaseTime];
+//            
+//            //attach the link to the notification for web view when opened
+//            NSDictionary *userDict = [NSDictionary dictionaryWithObjectsAndKeys:[object objectForKey:@"itemTitle"],@"itemTitle",nil];
+//            localNotification.userInfo = userDict;
+//            
+//            //set test push to appear 30 seconds later
+//            dayComponent.second = 30;
+//            NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+//            [localNotification setFireDate: dateToFire];
+//            [localNotification setAlertBody:reminderString];
+//            [localNotification setTimeZone: [NSTimeZone localTimeZone]];
+//            [localNotification setRepeatInterval: 0];
+//            [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+//        }
+//        else{
+//            NSLog(@"couldnt find release");
+//        }
+//    }];
+}
+
+#pragma mark - search bar
+
+-(BOOL)searchBarShouldBeginEditing:(UISearchBar *)searchBar{
+    if (self.searchIntroShowing == YES) {
+        [self donePressed];
+    }
+    [self searchPressed];
+    return NO;
+}
+
+#pragma mark - carousel data queries
+
+-(void)getCarouselData{
+    PFQuery *carouselQuery = [PFQuery queryWithClassName:@"HomeItems"];
+    [carouselQuery whereKey:@"status" equalTo:@"live"];
+    [carouselQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            NSMutableArray *shufArray = [NSMutableArray arrayWithArray:objects];
+            [self shuffle:shufArray];
+            
+            self.homeItems = shufArray;
+            self.headerView.itemsArray = shufArray;
+            [self.headerView.carousel reloadData];
+        }
+        else{
+            NSLog(@"error getting carousel items %@", error);
+        }
+    }];
+}
+
+#pragma  mark - header delegates
+
+-(void)tabHeaderItemSelected:(int)tabNumber{
+    [Answers logCustomEventWithName:@"Header Tapped"
+                   customAttributes:@{
+                                      @"type":@"Releases"
+                                      }];
+    
+    self.tabBarController.selectedIndex = tabNumber;
+}
+
+-(void)webHeaderItemSelected:(NSString *)site{
+    [Answers logCustomEventWithName:@"Header Tapped"
+                   customAttributes:@{
+                                      @"type":@"web",
+                                      @"site":site
+                                      }];
+    
+    self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:site]];
+    self.web.showUrlWhileLoading = YES;
+    self.web.showPageTitles = YES;
+    self.web.doneButtonTitle = @"";
+    self.web.infoMode = NO;
+    self.web.delegate = self;
+    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
+    [self presentViewController:navigationController animated:YES completion:nil];
+}
+
+-(void)searchHeaderSelected{
+    [Answers logCustomEventWithName:@"Header Tapped"
+                   customAttributes:@{
+                                      @"type":@"search"
+                                      }];
+    [self searchPressed];
+}
 
 @end

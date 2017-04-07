@@ -19,7 +19,6 @@
 #import "FeaturedItems.h"
 #import "ChatWithBump.h"
 #import "CreateForSaleListing.h"
-#import "XMLReader.h"
 
 @interface PurchaseTab ()
 
@@ -91,7 +90,7 @@
     self.featuredFinished = YES;
     self.infinFinished = YES;
     
-    self.showAffiliates = YES; //CHANGE
+    self.showAffiliates = YES;
     self.retrieveLimit = 28;
     //28 for YES and 30 for NO ^
     
@@ -102,7 +101,7 @@
 
     //day of the week formatter
     self.dayOfWeekFormatter = [[NSDateFormatter alloc] init];
-    NSTimeZone *inputTimeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];
+    NSTimeZone *inputTimeZone = [NSTimeZone localTimeZone];
     [self.dayOfWeekFormatter setTimeZone:inputTimeZone];
     [self.dayOfWeekFormatter setDateFormat:@"EEE"];
     
@@ -136,6 +135,7 @@
         }
     }];
     
+    self.navigationController.hidesBarsOnSwipe = YES;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -186,30 +186,33 @@
 //        [self loadShopDrop];
     }
     
-//    //check if should show affiliate items
-//    PFQuery *versionQuery = [PFQuery queryWithClassName:@"versions"];
-//    [versionQuery orderByDescending:@"createdAt"];
-//    [versionQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-//        if (object) {
-//            if ([[object objectForKey:@"showAfilliates"]isEqualToString:@"NO"]) {
-//                self.showAffiliates = NO;
-//                self.retrieveLimit = 30;
-//            }
-//            else{
-//                self.showAffiliates = YES;
-//                self.retrieveLimit = 26;
-//            }
-//        }
-//        else{
-//            NSLog(@"error getting latest version %@", error);
-//            self.showAffiliates = NO;
-//            self.retrieveLimit = 30;
-//        }
-//    }];
+    //check if should show affiliate items
+    PFQuery *versionQuery = [PFQuery queryWithClassName:@"versions"];
+    [versionQuery orderByDescending:@"createdAt"];
+    [versionQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            if ([[object objectForKey:@"showAfilliates"]isEqualToString:@"NO"]) {
+                self.showAffiliates = NO;
+                self.retrieveLimit = 30;
+            }
+            else{
+                self.showAffiliates = YES;
+                self.retrieveLimit = 28;
+            }
+        }
+        else{
+            NSLog(@"error getting latest version %@", error);
+            self.showAffiliates = NO;
+            self.retrieveLimit = 30;
+        }
+    }];
 }
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    
+    self.navigationController.hidesBarsOnSwipe = YES;
+
     
     //user has pressed view more from intro WTB, set this to NO so search Intro is triggered next time they're in explore
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"viewMorePressed"] == YES) {
@@ -229,7 +232,6 @@
 #pragma mark <UICollectionViewDataSource>
 
 -(void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
-    NSLog(@"will begin dragging");
     [self pauseTimer];
 }
 
@@ -311,19 +313,24 @@
             if([self isDateToday:[releaseItem objectForKey:@"releaseDate"]]) {
                 //drops today
                 
-                if( [[NSDate date]timeIntervalSinceDate:[releaseItem objectForKey:@"releaseDateWithTime"] ] > 0 ) {
+                NSLog(@"RELEASE TIME AND DATE %@",[releaseItem objectForKey:@"releaseDateWithTime"]);
+                NSLog(@"RELEASED AGO INTERVAL %f",[[NSDate date]timeIntervalSinceDate:[releaseItem objectForKey:@"releaseDateWithTime"]]/60);
+                
+                if( [[NSDate date]timeIntervalSinceDate:[releaseItem objectForKey:@"releaseDateWithTime"]] > 0 ) {
                     
                     [self setAvailabilityImageViewBorder:cell.dropImageView];
                     
                     //check if sold out
                     if ([[releaseItem objectForKey:@"status"]isEqualToString:@"soldout"]) {
                         cell.dropLabel.text = @"S O L D  O U T";
+                        [cell.dropLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:6.0]];
                         [self setSoldOutViewBorder:cell.outerView];
                         [cell.dropLabel setTextColor:[UIColor lightGrayColor]];
                     }
                     else{
                         //if not sold out & already live change the colour to green
                         cell.dropLabel.text = @"L I V E";
+                        [cell.dropLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:6.0]];
                         [self setAvailableViewBorder:cell.outerView];
                         [cell.dropLabel setTextColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
                     }
@@ -331,6 +338,7 @@
                 else{
                     //time hasn't happened yet so use time & black color
                     cell.dropLabel.text = [releaseItem objectForKey:@"releaseTimeString"];
+                    [cell.dropLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:8.0]];
                     [cell.dropLabel setTextColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
                 }
             }
@@ -421,6 +429,9 @@
         }
         else{
 
+            [Answers logCustomEventWithName:@"Affiliate item seen in Buy Now"
+                           customAttributes:@{}];
+            
             cell.itemImageView.image = nil;
             [cell.itemImageView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
             
@@ -487,12 +498,13 @@
                     NSString *releaseLink = [itemObject objectForKey:@"itemLink"];
                     
                     self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:releaseLink]];
-                    self.web.showUrlWhileLoading = YES;
-                    self.web.showPageTitles = YES;
+                    self.web.showUrlWhileLoading = NO;
+                    self.web.showPageTitles = NO;
+                    self.web.title = [NSString stringWithFormat:@"%@",[itemObject objectForKey:@"itemTitle"]];
                     self.web.doneButtonTitle = @"";
-                    self.web.paypalMode = NO;
                     self.web.infoMode = NO;
                     self.web.delegate = self;
+                    self.web.dropMode = YES;
                     
                     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
                     [self presentViewController:navigationController animated:YES completion:nil];
@@ -534,20 +546,26 @@
             vc.source = @"shop";
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
+            
+            //switch off hiding nav bar
+            self.navigationController.navigationBarHidden = NO;
             [self.navigationController pushViewController:vc animated:YES];
         }
     }
     else{
         self.tappedItem = YES;
-        
-        [Answers logCustomEventWithName:@"Tapped Buy Now Item"
-                       customAttributes:@{}];
 
         NSDictionary *itemDict = [self.products objectAtIndex:indexPath.row];
         NSString *dictionaryType = [itemDict valueForKey:@"itemType"];
         
         if ([dictionaryType isEqualToString:@"normal"]) {
             //normal for sale item from a match or featured
+            
+            [Answers logCustomEventWithName:@"Tapped Buy Now Item"
+                           customAttributes:@{
+                                              @"type":@"seller network"
+                                              }];
+            
             PFObject *itemObject = [itemDict valueForKey:@"item"];
             
             ForSaleListing *vc = [[ForSaleListing alloc]init];
@@ -555,11 +573,20 @@
             vc.source = @"buy now";
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
+            
+            //switch off hiding nav bar
+            self.navigationController.navigationBarHidden = NO;
             [self.navigationController pushViewController:vc animated:YES];
         }
         else{
             NSDictionary *itemDict = [self.products objectAtIndex:indexPath.row];
-            NSLog(@"ITEM DICT BEFORE FORSALE %@", itemDict);
+            
+            [Answers logCustomEventWithName:@"Tapped Buy Now Item"
+                           customAttributes:@{
+                                              @"type":@"affiliate"
+                                              }];
+            
+//            NSLog(@"ITEM DICT BEFORE FORSALE %@", itemDict);
             
             //affiliate item
             ForSaleListing *vc = [[ForSaleListing alloc]init];
@@ -570,6 +597,8 @@
             vc.affiliateMode = YES;
             vc.affiliateObject = [itemDict valueForKey:@"item"];
 
+            //switch off hiding nav bar
+            self.navigationController.navigationBarHidden = NO;
             [self.navigationController pushViewController:vc animated:YES];
         }
     }
@@ -1061,12 +1090,14 @@
             [self.products addObjectsFromArray:self.WTBMatches];
             [self shuffle:self.products];
             
-            if (self.showAffiliates == YES) {
+            if (self.showAffiliates == YES && self.affiliateProducts.count > 0) {
                 //add an affiliate product every 11 items so 2 per 30 items
                 for (int i=1; i<self.products.count; i++) {
                     if (i % 11 == 0) {
                         NSLog(@"INSERTING AFF");
                         //divisible by 11 so add an affiliate item
+                        
+                        //hasn't finished loading yet
                         [self.products insertObject:[self.affiliateProducts objectAtIndex:self.indexToAdd] atIndex:i-1];
                         NSLog(@"INSERTED AFF");
                         self.indexToAdd++;
@@ -1100,7 +1131,7 @@
                 [self.WTBMatches addObjectsFromArray:self.featured];
             }
             
-            if (self.showAffiliates == YES) {
+            if (self.showAffiliates == YES && self.affiliateProducts.count > 0) {
                 for (int i=1; i<self.WTBMatches.count; i++) {
                     if (i % 11 == 0) {
                         //divisible by 11 so add an affiliate item
@@ -1122,7 +1153,7 @@
         if (self.infinMatches.count == self.retrieveLimit) {
             //just have WTB matches as products surfaced
             
-            if (self.showAffiliates == YES) {
+            if (self.showAffiliates == YES && self.affiliateProducts.count > 0) {
                 for (int i=1; i<self.infinMatches.count; i++) {
                     if (i % 11 == 0) {
                         //divisible by 11 so add an affiliate item
@@ -1160,7 +1191,7 @@
                 [self.infinMatches addObjectsFromArray:self.featured];
             }
             
-            if (self.showAffiliates == YES) {
+            if (self.showAffiliates == YES && self.affiliateProducts.count > 0) {
                 for (int i=1; i<self.infinMatches.count; i++) {
                     if (i % 11 == 0) {
                         //divisible by 11 so add an affiliate item
@@ -1607,6 +1638,9 @@
 }
 
 -(void)doubleTapScroll{
+    //switch off hiding nav bar
+    self.navigationController.navigationBarHidden = NO;
+    
     if (self.products.count != 0 && self.tappedItem == NO) {
         [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
                                     atScrollPosition:UICollectionViewScrollPositionTop
@@ -1617,12 +1651,14 @@
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     
+    self.navigationController.hidesBarsOnSwipe = NO;
+    
     [self pauseTimer];
     
-    [[PFUser currentUser] setObject:self.yeezySeenArray forKey:@"yeezySeenArray"];
-    [[PFUser currentUser] setObject:self.supSeenArray forKey:@"supSeenArray"];
-    [[PFUser currentUser] setObject:self.palaceSeenArray forKey:@"palaceSeenArray"];
-    [[PFUser currentUser] saveInBackground];
+//    [[PFUser currentUser] setObject:self.yeezySeenArray forKey:@"yeezySeenArray"];
+//    [[PFUser currentUser] setObject:self.supSeenArray forKey:@"supSeenArray"];
+//    [[PFUser currentUser] setObject:self.palaceSeenArray forKey:@"palaceSeenArray"];
+//    [[PFUser currentUser] saveInBackground];
 }
 
 -(void)scrollPlease{
@@ -1630,6 +1666,7 @@
     [self.carousel scrollToItemAtIndex:self.carousel.currentItemIndex+1 animated:YES];
 }
 
+//commented out to keep just releases at the top
 -(void)pauseTimer{
 //    if (self.pausedInProgress == YES) {
 //        return;
@@ -1691,12 +1728,13 @@
                 NSString *releaseLink = [scheduledItem objectForKey:@"itemLink"];
                 
                 self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:releaseLink]];
-                self.web.showUrlWhileLoading = YES;
-                self.web.showPageTitles = YES;
+                self.web.showUrlWhileLoading = NO;
+                self.web.showPageTitles = NO;
+                self.web.title = [NSString stringWithFormat:@"%@",[scheduledItem objectForKey:@"itemTitle"]];
                 self.web.doneButtonTitle = @"";
-                self.web.paypalMode = NO;
                 self.web.infoMode = NO;
                 self.web.delegate = self;
+                self.web.dropMode = YES;
                 
                 NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
                 [self presentViewController:navigationController animated:YES completion:nil];
@@ -1783,19 +1821,11 @@
                 //set alert string
                 NSString *releaseTime = [scheduledItem objectForKey:@"releaseTimeString"];
                 
-                //check if got a link - if so add 'Swipe to cop' to alert
-                if ([scheduledItem objectForKey:@"itemLink"]) {
-                    NSLog(@"got a link!");
-                    reminderString = [NSString stringWithFormat:@"Reminder: the '%@' drops at %@ - Swipe to cop!", [scheduledItem objectForKey:@"itemTitle"],releaseTime];
-                    
-                    //attach the link to the notification for web view when opened
-                    NSDictionary *userDict = [NSDictionary dictionaryWithObjectsAndKeys:[scheduledItem objectForKey:@"itemLink"], @"link", nil];
-                    localNotification.userInfo = userDict;
-                }
-                else{
-                    NSLog(@"no link so standard string");
-                    reminderString = [NSString stringWithFormat:@"Reminder: the '%@' drops at %@!", [scheduledItem objectForKey:@"itemTitle"],releaseTime];
-                }
+                reminderString = [NSString stringWithFormat:@"Reminder: the '%@' drops at %@ - Swipe to cop!", [scheduledItem objectForKey:@"itemTitle"],releaseTime];
+                
+                //attach the title to the notification so can be queried and link added to web view when swiped
+                NSDictionary *userDict = [NSDictionary dictionaryWithObjectsAndKeys:[scheduledItem objectForKey:@"itemTitle"],@"itemTitle",nil];
+                localNotification.userInfo = userDict;
                 
                 //set alert 10 mins before
                 NSDate *dropDate = [scheduledItem objectForKey:@"releaseDateWithTime"];
@@ -1803,7 +1833,7 @@
                 NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:dropDate options:0];
                 [localNotification setFireDate: dateToFire];
                 [localNotification setAlertBody:reminderString];
-                [localNotification setTimeZone: [NSTimeZone timeZoneWithAbbreviation:@"GMT"]];
+                [localNotification setTimeZone: [NSTimeZone localTimeZone]];
                 [localNotification setRepeatInterval: 0];
                 [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
                 
@@ -1880,8 +1910,7 @@
         dawn = [NSString stringWithFormat:@"%@ 00:00", dateString];
     }
     
-    NSTimeZone *gmt = [NSTimeZone timeZoneWithAbbreviation:@"GMT"];
-    [formatter setTimeZone:gmt];
+    [formatter setTimeZone:[NSTimeZone localTimeZone]];
     
     self.thisMorning = [formatter dateFromString:dawn];
     
@@ -2013,8 +2042,8 @@
                                           @"seller":@"NO"
                                           }];
         
-        self.customAlert.titleLabel.text = @"Sell on Bump";
-        self.customAlert.messageLabel.text = @"Currently, only approved sellers can list items for sale. If you're an active seller send us a message to get selling on Bump";
+        self.customAlert.titleLabel.text = @"Sale Listings";
+        self.customAlert.messageLabel.text = @"Currently, only approved sellers can list items for sale. If you're an active seller send us a message to get selling on Bump. Remember you can still sell by messaging buyers on Bump";
         self.customAlert.numberOfButtons = 2;
     }
     
@@ -2112,6 +2141,9 @@
             vc.convoId = [object objectForKey:@"convoId"];
             vc.convoObject = object;
             vc.otherUser = [PFUser currentUser];
+            
+            //switch off hiding nav bar
+            self.navigationController.navigationBarHidden = NO;
             [self.navigationController pushViewController:vc animated:YES];
         }
         else{
@@ -2128,6 +2160,9 @@
                     vc.convoId = [convoObject objectForKey:@"convoId"];
                     vc.convoObject = convoObject;
                     vc.otherUser = [PFUser currentUser];
+                    
+                    //switch off hiding nav bar
+                    self.navigationController.navigationBarHidden = NO;
                     [self.navigationController pushViewController:vc animated:YES];
                 }
                 else{
@@ -2156,7 +2191,7 @@
     }
     
     PFQuery *affQuery = [PFQuery queryWithClassName:@"Affiliates"];
-    affQuery.limit = 500;
+    affQuery.limit = 200;
     [affQuery whereKey:@"itemTitle" notContainedIn:seenAffiliates];
     
     if (self.cleverMode == YES) {
@@ -2218,6 +2253,7 @@
                 [self.affiliateProducts addObject:affDic];
             }
             
+            [self shuffle:self.affiliateProducts];
             
             NSLog(@"added all to affiliates with count %lu", self.affiliateProducts.count);
         

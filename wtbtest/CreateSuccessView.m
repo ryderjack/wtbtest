@@ -23,6 +23,9 @@
     
     self.backgroundColor = [UIColor clearColor];
     
+    [self.firstButton setHidden:YES];
+    [self.secondButton setHidden:YES];
+    
     self.insideView.layer.cornerRadius = 10;
     
     //setup collectionView

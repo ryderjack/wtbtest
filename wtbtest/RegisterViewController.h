@@ -17,8 +17,9 @@
 #import <ChimpKit.h>
 #import <CoreLocation/CoreLocation.h>
 #import "TOJRWebView.h"
+#import "AddSizeController.h"
 
-@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ChimpKitRequestDelegate,CLLocationManagerDelegate, JRWebViewDelegate>
+@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ChimpKitRequestDelegate,CLLocationManagerDelegate, JRWebViewDelegate,sizeDelegate>
 NS_ASSUME_NONNULL_BEGIN
 
 //cells
@@ -29,7 +30,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *pictureCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *regCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *currencyCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *depopCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *friendsCell;
 
 //textfields
@@ -81,6 +81,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 //web
 @property (nonatomic, strong) TOJRWebView *webViewController;
+
 NS_ASSUME_NONNULL_END
 
 @end

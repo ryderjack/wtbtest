@@ -318,7 +318,7 @@
                             
 //                            [self.tableView reloadData];
                             
-                            NSLog(@"products array %lu", self.products.count);
+                            NSLog(@"products array %lu", (unsigned long)self.products.count);
                             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
                             [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
                         }
@@ -1368,7 +1368,6 @@ numberOfRowsInSection:(NSInteger)section
     self.web.showUrlWhileLoading = YES;
     self.web.showPageTitles = YES;
     self.web.doneButtonTitle = @"";
-    self.web.paypalMode = NO;
     self.web.infoMode = NO;
     self.web.delegate = self;
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];

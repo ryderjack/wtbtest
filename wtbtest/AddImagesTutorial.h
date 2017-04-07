@@ -8,6 +8,17 @@
 
 #import <UIKit/UIKit.h>
 
+@class AddImagesTutorial;
+
+@protocol AddImageDelegate <NSObject>
+- (void)dismissedAddImage;
+
+@end
+
 @interface AddImagesTutorial : UIViewController
+
+//delegate
+@property (nonatomic, weak) id <AddImageDelegate> delegate;
+@property (weak, nonatomic) IBOutlet UILabel *emojiLabel;
 
 @end

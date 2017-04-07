@@ -85,8 +85,11 @@
         if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"male"]) {
             self.genderSelected = @"Mens";
         }
-        else{
+        else if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"female"]) {
             self.genderSelected = @"Womens";
+        }
+        else{
+            self.genderSelected = @"Mens";
         }
     }
 }

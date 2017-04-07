@@ -15,6 +15,7 @@
 
 @protocol ProfileSettingsDelegate <NSObject>
 - (void)TeamBumpInboxTapped;
+- (void)snapSeen;
 @end
 
 @interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate, JRWebViewDelegate, inviteDelegate>
@@ -33,6 +34,9 @@
 @property (weak, nonatomic) IBOutlet UIImageView *unreadView;
 @property (strong, nonatomic) IBOutlet UITableViewCell *termsCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *rateCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *snapchatCell;
+@property (weak, nonatomic) IBOutlet UIImageView *snapSeen;
+@property (strong, nonatomic) IBOutlet UITableViewCell *defaultSizesCell;
 
 //delegate
 @property (nonatomic, weak) id <ProfileSettingsDelegate> delegate;
@@ -42,6 +46,7 @@
 
 //Team Bump
 @property (nonatomic) BOOL unseenTBMsg;
+@property (nonatomic) BOOL showSnapDot;
 
 //web
 @property (nonatomic, strong) TOJRWebView *webView;

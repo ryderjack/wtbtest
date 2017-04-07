@@ -21,10 +21,6 @@
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
-    
     self.navigationItem.title = @"S E T T I N G S";
     
     self.nameCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -34,6 +30,7 @@
     self.currencyCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.depopCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.contactEmailCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.cmoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.emailFields.delegate = self;
     self.depopField.delegate = self;
@@ -72,15 +69,15 @@
         self.emailFields.placeholder = @"Enter your PayPal email";
     }
     
-    self.contactEmailField.placeholder = [NSString stringWithFormat:@"Email: %@",self.currentContact];
+    self.contactEmailField.placeholder = [NSString stringWithFormat:@"Contact: %@",self.currentContact];
     
-    if ([self.currentUser objectForKey:@"building"]) {
-        //address been set before
-        self.addLabel.text = [NSString stringWithFormat:@"Address: %@ %@ %@ %@ %@",[self.currentUser objectForKey:@"building"], [self.currentUser objectForKey:@"street"], [self.currentUser objectForKey:@"city"], [self.currentUser objectForKey:@"postcode"], [self.currentUser objectForKey:@"phonenumber"]];
-    }
-    else{
-        self.addLabel.text = @"Enter address";
-    }
+//    if ([self.currentUser objectForKey:@"building"]) {
+//        //address been set before
+//        self.addLabel.text = [NSString stringWithFormat:@"Address: %@ %@ %@ %@ %@",[self.currentUser objectForKey:@"building"], [self.currentUser objectForKey:@"street"], [self.currentUser objectForKey:@"city"], [self.currentUser objectForKey:@"postcode"], [self.currentUser objectForKey:@"phonenumber"]];
+//    }
+//    else{
+//        self.addLabel.text = @"Enter address";
+//    }
     
     NSString *currency = [self.currentUser objectForKey:@"currency"];
     if ([currency isEqualToString:@"GBP"]) {
@@ -102,10 +99,25 @@
     else{
         self.depopField.placeholder = @"Enter Depop username";
     }
+    
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+        //CMO switch setup
+        if ([[NSUserDefaults standardUserDefaults]boolForKey:@"CMOModeOn"]==YES) {
+            [self.cmoSwitch setOn:YES];
+        }
+        else{
+            [self.cmoSwitch setOn:NO];
+        }
+    
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     [self.testingView setFile:[self.currentUser objectForKey:@"picture"]];
     [self.testingView loadInBackground];
@@ -124,7 +136,12 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 4;
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+        return 5;
+    }
+    else{
+        return 4;
+    }
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -132,12 +149,15 @@
         return 3;
     }
     else if (section == 1){
-        return 4;
+        return 3;
     }
     else if (section == 2){
         return 1;
     }
     else if (section == 3){
+        return 1;
+    }
+    else if (section == 4){
         return 1;
     }
     else{
@@ -165,9 +185,6 @@
             return self.emailCell;
         }
         else if (indexPath.row == 2) {
-            return self.addressCell;
-        }
-        else if (indexPath.row == 3) {
             return self.pictureCelll;
         }
     }
@@ -181,6 +198,11 @@
             return self.depopCell;
         }
     }
+    else if (indexPath.section == 4){
+        if (indexPath.row == 0) {
+            return self.cmoCell;
+        }
+    }
     return nil;
 }
 
@@ -188,14 +210,14 @@
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     
     if (indexPath.section == 1) {
-        if (indexPath.row == 2) {
-            //goto shipping controller
-            ShippingController *vc = [[ShippingController alloc]init];
-            vc.delegate = self;
-            vc.settingsMode = YES;
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-        else if (indexPath.row == 3){
+//        if (indexPath.row == 2) {
+//            //goto shipping controller
+//            ShippingController *vc = [[ShippingController alloc]init];
+//            vc.delegate = self;
+//            vc.settingsMode = YES;
+//            [self.navigationController pushViewController:vc animated:YES];
+//        }
+        if (indexPath.row == 2){
             if (!self.picker) {
                 self.picker = [[UIImagePickerController alloc] init];
                 self.picker.delegate = self;
@@ -297,11 +319,12 @@
     }
     
     else if (textField == self.contactEmailField && ![textField.text isEqualToString:@""]){
+       
         if ([self NSStringIsValidEmail:self.contactEmailField.text] == YES) {
             [self.currentUser setObject:self.contactEmailField.text forKey:@"email"];
             [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (error.code == 203) {
-                    self.contactEmailField.text = self.currentContact;
+                    self.contactEmailField.text = @"";
 
                     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"This email address is already in use. Please try another email." preferredStyle:UIAlertControllerStyleAlert];
                     
@@ -318,8 +341,9 @@
             }];
         }
         else{
-            self.emailFields.text = self.currentContact;
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"Please enter a valid email address. If you think this is a mistake please get in touch!" preferredStyle:UIAlertControllerStyleAlert];
+            self.contactEmailField.text = @"";
+            
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"Please enter a valid email address. If you think this is a mistake please send Team Bump a message!" preferredStyle:UIAlertControllerStyleAlert];
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
             }]];
@@ -531,5 +555,15 @@
     [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
+}
+- (IBAction)cmoSwitchChanged:(id)sender {
+    if (self.cmoSwitch.on == YES) {
+        NSLog(@"ON");
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"CMOModeOn"];
+    }
+    else{
+        NSLog(@"OFF");
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"CMOModeOn"];
+    }
 }
 @end

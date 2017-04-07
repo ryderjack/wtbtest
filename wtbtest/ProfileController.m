@@ -17,6 +17,7 @@
 #import "ContainerViewController.h"
 #import "NavigationController.h"
 #import <SDWebImage/UIImageView+WebCache.h>
+#import "AddSizeController.h"
 
 @interface ProfileController ()
 
@@ -27,7 +28,17 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    if (self.showSnapDot == YES) {
+        [self.snapSeen setHidden:NO];
+        [self.delegate snapSeen];
+    }
+    else{
+        [self.snapSeen setHidden:YES];
+    }
+    
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     //version in footer
     UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, -30, self.view.frame.size.width, 30)];
@@ -56,6 +67,12 @@
     //dismiss Invite gesture
     self.tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
     self.tap.numberOfTapsRequired = 1;
+    
+    //user will have seen the add prompt now so disable them seeing it
+    if (![[PFUser currentUser]objectForKey:@"snapSeen"]) {
+        [PFUser currentUser][@"snapSeen"] = @"YES";
+        [[PFUser currentUser]saveInBackground];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -77,7 +94,6 @@
                    customAttributes:@{
                                       @"pageName":@"Profile"
                                       }];
-    
 }
 
 #pragma mark - Table view data source
@@ -92,10 +108,10 @@
         return 2;
     }
     else if (section == 1){
-        return 1;
+        return 2;
     }
     else if (section == 2){
-        return 3;
+        return 4;
     }
     else{
         return 1;
@@ -114,17 +130,23 @@
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
-            return self.settingsCell;
+            return self.snapchatCell;
+        }
+        else if (indexPath.row == 1) {
+            return self.feedbackCell;
         }
     }
     else if (indexPath.section == 2){
-        if (indexPath.row == 1) {
-            return self.howItWorks;
+        if (indexPath.row == 0) {
+            return self.settingsCell;
         }
-        else if (indexPath.row == 0) {
-            return self.feedbackCell;
+        else if (indexPath.row == 1) {
+            return self.defaultSizesCell;
         }
         else if (indexPath.row == 2) {
+            return self.howItWorks;
+        }
+        else if (indexPath.row == 3) {
             return self.termsCell;
         }
     }
@@ -151,20 +173,22 @@
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
-            //settings pressed
-            SettingsController *vc = [[SettingsController alloc]init];
-            [self.navigationController pushViewController:vc animated:YES];
+            
+            //snapchat pressed
+            
+            if (self.snapSeen.isHidden != YES) {
+                [self.snapSeen setHidden:YES];
+            }
+            
+            [Answers logCustomEventWithName:@"Snapchat Add Pressed"
+                           customAttributes:@{}];
+            
+            NSURL *whatsappURL = [NSURL URLWithString:@"snapchat://add/teambump"];
+            if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                [[UIApplication sharedApplication] openURL: whatsappURL];
+            }
         }
-    }
-    else if (indexPath.section == 2){
-        if (indexPath.row == 1) {
-            //how it works pressed
-            ContainerViewController *vc = [[ContainerViewController alloc]init];
-            vc.explainMode = YES;
-            [self presentViewController:vc animated:YES
-                             completion:nil];
-        }
-        else if (indexPath.row == 0) {
+        else if (indexPath.row == 1) {
             //chat w/ Bump
             
             //reset profile badges
@@ -208,7 +232,28 @@
                 }
             }];
         }
+    }
+    else if (indexPath.section == 2){
+        if (indexPath.row == 0) {
+            //settings pressed
+            SettingsController *vc = [[SettingsController alloc]init];
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else if (indexPath.row == 1) {
+            //change sizes pressed
+            AddSizeController *vc = [[AddSizeController alloc]init];
+            vc.editMode = YES;
+            [self presentViewController:vc animated:YES
+                             completion:nil];
+        }
         else if (indexPath.row == 2) {
+            //how it works pressed
+            ContainerViewController *vc = [[ContainerViewController alloc]init];
+            vc.explainMode = YES;
+            [self presentViewController:vc animated:YES
+                             completion:nil];
+        }
+        else if (indexPath.row == 3) {
             //terms pressed
             NSString *URLString = @"http://www.sobump.com/terms.html";
             self.webView = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
@@ -216,7 +261,6 @@
             self.webView.showUrlWhileLoading = YES;
             self.webView.showPageTitles = NO;
             self.webView.doneButtonTitle = @"";
-            self.webView.paypalMode = NO;
             //hide toolbar banner
             self.webView.infoMode = NO;
             self.webView.delegate = self;

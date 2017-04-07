@@ -8,7 +8,6 @@
 
 #import "TOJRWebView.h"
 #import <Crashlytics/Crashlytics.h>
-#import "AddImagesTutorial.h"
 #import <Parse/Parse.h>
 
 @interface TOJRWebView ()
@@ -37,6 +36,13 @@
     else{
         self.seenOneTapWarning = NO;
     }
+    
+    //web view seemed to be pushed down y slightly so ensure its at the top of the view
+    [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, self.view.frame.origin.y, self.webView.frame.size.width, self.webView.frame.size.height)];
+    
+    if (self.dropMode == YES) {
+        self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -46,10 +52,20 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    
+        
     if (self.createMode == YES) {
-        if (![[[PFUser currentUser]objectForKey:@"addImageTutorial"]isEqualToString:@"YES"]) {
+        if ([[[PFUser currentUser]objectForKey:@"addImageTutorial"]isEqualToString:@"NO"]) {
+            
+            //add blur view
+            self.blurView = [[FXBlurView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+            [self.blurView setTintColor:[UIColor whiteColor]];
+            self.navigationController.navigationBar.layer.zPosition = -1;
+            [self.view addSubview:self.blurView];
+            
+            [self hideBarButton];
+            
             AddImagesTutorial *vc = [[AddImagesTutorial alloc]init];
+            vc.delegate = self;
             vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
             [self presentViewController:vc animated:YES completion:nil];
         }
@@ -63,13 +79,26 @@
         self.placeholderView.backgroundColor = [UIColor whiteColor];
         [self.webView addSubview:self.placeholderView];
     }
+    else if(self.dropMode == YES || self.storeMode == YES){
+        [self showHUD];
+    }
 }
 
 -(void)webViewDidFinishLoad:(UIWebView *)webView{
     if (self.createMode == YES || self.editMode == YES || self.depopMode == YES) {
         //scroll down
-        [self.webView.scrollView setContentOffset:CGPointMake(0,180) animated:NO];
+        NSLog(@"OFFSET");
+        [self.webView.scrollView setContentOffset:CGPointMake(0,140) animated:NO];
         [self.placeholderView removeFromSuperview];
+    }
+    else if(self.dropMode == YES || self.storeMode == YES){
+        [self hideHUD];
+    }
+}
+
+-(void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error{
+    if(self.dropMode == YES || self.storeMode == YES){
+        [self hideHUD];
     }
 }
 
@@ -95,16 +124,7 @@
         self.longButton.alpha = 0.0f;
         [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
         
-        [UIView animateWithDuration:0.2
-                              delay:0
-                            options:UIViewAnimationOptionCurveEaseIn
-                         animations:^{
-                             self.longButton.alpha = 1.0f;
-                         }
-                         completion:^(BOOL finished) {
-                             NSLog(@"showing");
-                             self.buttonShowing = YES;
-                         }];
+        [self showBarButton];
     }
     else if (self.balanceMode == YES){
         
@@ -115,6 +135,11 @@
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
+    if (self.showingSpinner == YES) {
+        self.showingSpinner = NO;
+        [self hideHUD];
+    }
+
     [UIView animateWithDuration:0.3
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -127,8 +152,6 @@
                          self.longButton = nil;
                      }];
 }
-
-
 
 -(void)screenshotHit{
     if (self.tapCount == 0 && self.createMode == YES) {
@@ -348,5 +371,80 @@
     //do nothing
 }
 
+-(void)showHUD{
+    //only show HUD on initial web page load
+    if (self.showingSpinner == YES) {
+        return;
+    }
+    self.showingSpinner = YES;
+    
+    self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    if (!self.spinner) {
+        self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    }
+    self.hud.square = YES;
+    
+    if (self.dropMode == YES) {
+        self.hud.labelText = @"🙏";
+    }
+    
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+}
 
+-(void)hideHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
+    });
+}
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)dismissedAddImage{
+    //reset nav bar
+    self.navigationController.navigationBar.layer.zPosition = 0;
+    
+    //hide blur view
+    [UIView animateWithDuration:0.1 delay:0.0 options:0 animations:^{
+        self.blurView.alpha = 0.0f;
+    } completion:^(BOOL finished) {
+        [self.blurView setHidden:YES];
+    }];
+    
+    //reshow bar button
+    [self showBarButton];
+}
+
+-(void)showBarButton{
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.longButton.alpha = 1.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         NSLog(@"showing");
+                         self.buttonShowing = YES;
+                     }];
+}
+
+-(void)hideBarButton{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.longButton setAlpha:0.0];
+                     }
+                     completion:^(BOOL finished) {
+                         self.buttonShowing = NO;
+                     }];
+}
 @end

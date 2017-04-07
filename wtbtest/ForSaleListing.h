@@ -17,8 +17,9 @@
 #import "customAlertViewClass.h"
 #import "inviteViewClass.h"
 #import "TOJRWebView.h"
+#import "DetailImageController.h"
 
-@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate>
+@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
 @property (nonatomic, strong) PFObject *WTBObject;

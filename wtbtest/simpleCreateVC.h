@@ -16,6 +16,7 @@
 #import <MBProgressHUD.h>
 #import "TOJRWebView.h"
 #import "CameraController.h"
+#import "CategoryDropDown.h"
 
 @class simpleCreateVC;
 
@@ -23,7 +24,7 @@
 - (void)dismissSimpleCreateVC:(simpleCreateVC *)controller;
 @end
 
-@interface simpleCreateVC : UIViewController <UITextFieldDelegate,BASSquareCropperDelegate,successDelegate,UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate,JRWebViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,CameraControllerDelegate>
+@interface simpleCreateVC : UIViewController <UITextFieldDelegate,BASSquareCropperDelegate,successDelegate,UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate,JRWebViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,CameraControllerDelegate,categoryDelegate>
 
 //UI
 @property (weak, nonatomic) IBOutlet UITextField *titleTextLabel;
@@ -47,6 +48,12 @@
 @property (nonatomic) BOOL setupYes;
 @property (nonatomic) BOOL completionShowing;
 
+//category drop down
+@property (nonatomic) BOOL setupCategories;
+@property (nonatomic, strong) CategoryDropDown *catView;
+@property (nonatomic) BOOL catShowing;
+@property (nonatomic, strong) UITapGestureRecognizer *catTap;
+
 //modes
 @property (nonatomic) BOOL introMode;
 @property (nonatomic) BOOL somethingChanged;
@@ -64,6 +71,7 @@
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
 @property (nonatomic, strong) NSString *locationString;
+@property (nonatomic, strong) NSString *categorySelected;
 @property (nonatomic, strong) UIImage *firstImage;
 @property (nonatomic, strong) NSArray *profanityList;
 @property (nonatomic) int tapNumber;

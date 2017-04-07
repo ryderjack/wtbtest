@@ -361,8 +361,7 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear: animated];
-    NSLog(@"DID APPEAR");
-    
+        
     //make sure not adding duplicate observers
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
@@ -738,7 +737,7 @@
     [self hideBarButton];
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
 
-    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
+    if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
@@ -1180,6 +1179,7 @@
 }
 
 -(void)hideBarButton{
+    self.buttonShowing = NO;
     [UIView animateWithDuration:0.2
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -1187,11 +1187,11 @@
                          [self.longButton setAlpha:0.0];
                      }
                      completion:^(BOOL finished) {
-                         self.buttonShowing = NO;
                      }];
 }
 
 -(void)showBarButton{
+    self.buttonShowing = YES;
     self.longButton.alpha = 0.0f;
     [UIView animateWithDuration:0.2
                           delay:0
@@ -1201,7 +1201,6 @@
                          [self.longButton setEnabled:YES];
                      }
                      completion:^(BOOL finished) {
-                         self.buttonShowing = YES;
                      }];
 }
 
@@ -2193,12 +2192,12 @@
     [self.similarListing setObject:@"live" forKey:@"status"];
     
     //expiration in 2 weeks
-    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-    dayComponent.minute = 1;
-    NSCalendar *theCalendar = [NSCalendar currentCalendar];
-    NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-    [self.similarListing setObject:expirationDate forKey:@"expiration"];
-        
+//    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+//    dayComponent.day = 14;
+//    NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//    NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+//    [self.similarListing setObject:expirationDate forKey:@"expiration"];
+    
     if (self.similarGeopoint != nil) {
         [self.similarListing setObject:self.similarLocationString forKey:@"location"];
         [self.similarListing setObject:self.similarGeopoint forKey:@"geopoint"];
@@ -2234,7 +2233,8 @@
                 
                 //local notifications set up
                 NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                dayComponent.day = 2;
+                dayComponent.day = 1;
+                [dayComponent setHour: 20];
                 NSCalendar *theCalendar = [NSCalendar currentCalendar];
                 NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
                 

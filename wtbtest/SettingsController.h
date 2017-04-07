@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *contactEmailCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *lastNameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *usernameCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *cmoCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *emailFields;
@@ -56,6 +57,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 //other
 @property (nonatomic, strong) NSArray *profanityList;
+
+//Sam's CMO mode
+@property (weak, nonatomic) IBOutlet UISwitch *cmoSwitch;
 
 NS_ASSUME_NONNULL_END
 @end

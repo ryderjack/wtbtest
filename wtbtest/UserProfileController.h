@@ -100,5 +100,8 @@
 
 @property (nonatomic, strong) NSDateFormatter *inputDateFormatter;
 
+//team bump messages
+@property (nonatomic) int messagesUnseen;
+@property (nonatomic) BOOL showSnap;
 
 @end

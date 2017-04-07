@@ -8,7 +8,6 @@
 
 #import "ForSaleListing.h"
 #import <DGActivityIndicatorView.h>
-#import "DetailImageController.h"
 #import "MessageViewController.h"
 #import "UserProfileController.h"
 #import "CreateForSaleListing.h"
@@ -27,6 +26,11 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    [self.pageIndicator setHidden:YES];
+    self.priceLabel.text = @"";
+    self.locationLabel.text = @"";
+    self.IDLabel.text = @"";
+
     self.navigationItem.title = @"S E L L I N G";
     
     self.soldLabel.adjustsFontSizeToFitWidth = YES;
@@ -231,26 +235,37 @@
         vc.numberOfPics = 4;
         vc.listing = self.listingObject;
     }
+    
+    if (self.tabBarController.tabBar.frame.size.height == 0) {
+        [self hideBarButton];
+        
+        //register for delegate so we know when detail disappears on the modal VC thats displaying this for sale VC
+        vc.delegate = self;
+    }
     [self presentViewController:vc animated:YES completion:nil];
     
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [self.navigationController.navigationBar setHidden:NO];
+    
+    NSLog(@"APPEAR");
 
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     if (self.buttonShowing == NO) {
+        NSLog(@"BAR B NOT SHOWING");
         if (!self.longButton) {
+            NSLog(@"ABOUT TO SETUP");
             [self setupBarButton];
         }
         [self showBarButton];
     }
     
     if (self.affiliateMode == YES) {
-        //change button
+        //set button title
         [self.longButton setTitle:@"V I S I T  S T O R E" forState:UIControlStateNormal];
         
         //hide send button
@@ -341,6 +356,7 @@
                     if ([self.listingObject objectForKey:@"image4"]){
                         [self.pageIndicator setNumberOfPages:4];
                         self.numberOfPics = 4;
+                        [self.pageIndicator setHidden:NO];
                         self.firstImage = [self.listingObject objectForKey:@"image1"];
                         self.secondImage = [self.listingObject objectForKey:@"image2"];
                         self.thirdImage = [self.listingObject objectForKey:@"image3"];
@@ -350,6 +366,7 @@
                     else if ([self.listingObject objectForKey:@"image3"]){
                         [self.pageIndicator setNumberOfPages:3];
                         self.numberOfPics = 3;
+                        [self.pageIndicator setHidden:NO];
                         self.firstImage = [self.listingObject objectForKey:@"image1"];
                         self.secondImage = [self.listingObject objectForKey:@"image2"];
                         self.thirdImage = [self.listingObject objectForKey:@"image3"];
@@ -358,6 +375,7 @@
                     else if ([self.listingObject objectForKey:@"image2"]) {
                         [self.pageIndicator setNumberOfPages:2];
                         self.numberOfPics = 2;
+                        [self.pageIndicator setHidden:NO];
                         self.firstImage = [self.listingObject objectForKey:@"image1"];
                         self.secondImage = [self.listingObject objectForKey:@"image2"];
                         
@@ -475,6 +493,9 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
+    
+    NSLog(@"DISAPPEAR");
+    
     [self hideBarButton];
     
     if (self.affiliateMode != YES) {
@@ -685,7 +706,7 @@
         [self showBarButton];
     }]];
     
-    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]) {
+    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
         
         if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"sold"]) {
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as sold" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -838,20 +859,20 @@
         NSString *descText = [self.affiliateObject objectForKey:@"description"];
         NSString *retailerText = [self.affiliateObject objectForKey:@"retailer"];
         
-//        [Answers logCustomEventWithName:@"Pressed Visit Affiliate Store"
-//                       customAttributes:@{
-//                                          @"item":descText,
-//                                          @"retailer":retailerText
-//                                          }];
+        [Answers logCustomEventWithName:@"Pressed Visit Affiliate Store"
+                       customAttributes:@{
+                                          @"item":descText,
+                                          @"retailer":retailerText
+                                          }];
         
         //open WebView
         self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:[self.affiliateObject objectForKey:@"productURL"]]];
         self.web.showUrlWhileLoading = YES;
         self.web.showPageTitles = YES;
         self.web.doneButtonTitle = @"";
-        self.web.paypalMode = NO;
         self.web.infoMode = NO;
         self.web.delegate = self;
+        self.web.storeMode = YES;
         
         NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
         [self presentViewController:navigationController animated:YES completion:nil];
@@ -1024,6 +1045,9 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 -(void)hideBarButton{
+    NSLog(@"HIDE BAR BUTTON");
+    self.buttonShowing = NO;
+
     [UIView animateWithDuration:0.2
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -1031,11 +1055,13 @@
                          [self.longButton setAlpha:0.0];
                      }
                      completion:^(BOOL finished) {
-                         self.buttonShowing = NO;
                      }];
 }
 
 -(void)showBarButton{
+    NSLog(@"SHOW BAR BUTTON");
+    self.buttonShowing = YES;
+
     self.longButton.alpha = 0.0f;
     [UIView animateWithDuration:0.2
                           delay:0
@@ -1044,7 +1070,6 @@
                          self.longButton.alpha = 1.0f;
                      }
                      completion:^(BOOL finished) {
-                         self.buttonShowing = YES;
                      }];
 }
 
@@ -1127,7 +1152,7 @@
         [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
     }
     else{
-        [self.longButton setTitle:@"M E S S A G E  B U Y E R" forState:UIControlStateNormal];
+        [self.longButton setTitle:@"M E S S A G E  S E L L E R" forState:UIControlStateNormal];
         [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
         [self.longButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     }
@@ -2085,5 +2110,9 @@
     //do nothing
 }
 
+#pragma mark - detail image viewer delegate
+-(void)dismissedDetailImageView{
+    [self showBarButton];
+}
 
 @end

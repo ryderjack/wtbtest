@@ -11,7 +11,6 @@
 #import <ParseUI/ParseUI.h>
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
-#import "inviteViewClass.h"
 
 @class FeedbackController;
 
@@ -19,7 +18,7 @@
 - (void)leftReview;
 @end
 
-@interface FeedbackController : UITableViewController <UITextFieldDelegate,inviteDelegate>
+@interface FeedbackController : UITableViewController <UITextFieldDelegate>
 NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *starCell;
 
@@ -59,12 +58,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 //delegate
 @property (nonatomic, weak) id <feedbackDelegate> delegate;
-
-//invite pop up
-@property (nonatomic, strong, nullable) inviteViewClass *inviteView;
-@property (nonatomic, strong, nullable) UIView *bgView;
-@property (nonatomic) BOOL alertShowing;
-@property (nonatomic, strong) UITapGestureRecognizer *tap;
 
 //rate
 @property (nonatomic, strong) UINavigationController *messageNav;

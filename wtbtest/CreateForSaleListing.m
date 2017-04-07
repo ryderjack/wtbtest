@@ -622,14 +622,17 @@
         [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
             switch (status) {
                 case PHAuthorizationStatusAuthorized:{
-                    QBImagePickerController *imagePickerController = [QBImagePickerController new];
-                    imagePickerController.delegate = self;
-                    imagePickerController.allowsMultipleSelection = YES;
-                    imagePickerController.maximumNumberOfSelection = 4-self.photostotal;
-                    imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                    imagePickerController.numberOfColumnsInPortrait = 3;
-                    imagePickerController.showsNumberOfSelectedAssets = YES;
-                    [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                        imagePickerController.delegate = self;
+                        imagePickerController.allowsMultipleSelection = YES;
+                        imagePickerController.maximumNumberOfSelection = 4-self.photostotal;
+                        imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                        imagePickerController.numberOfColumnsInPortrait = 3;
+                        imagePickerController.showsNumberOfSelectedAssets = YES;
+                        [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                    });
                 }
                     break;
                 case PHAuthorizationStatusRestricted:{
@@ -640,7 +643,9 @@
                 {
                     dispatch_async(dispatch_get_main_queue(), ^{
                         //show alert
-                        [self showAlertWithTitle:@"Library Permission" andMsg:@"Bump needs access to your photos to create a listing, enable this in your iPhone's Settings"];
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [self showAlertWithTitle:@"Library Permission" andMsg:@"Bump needs access to your photos to create a listing, enable this in your iPhone's Settings"];
+                        });
                     });
                     NSLog(@"denied");
                 }
@@ -1263,7 +1268,6 @@
                         animations:^{
                             [self.secondImageView setImage:self.thirdImageView.image];
                         } completion:^(BOOL finished) {
-                            [self.secondCam setEnabled:YES];
                         }];
         
         [UIView transitionWithView:self.thirdImageView
@@ -1272,7 +1276,6 @@
                         animations:^{
                             [self.thirdImageView setImage:self.fourthImageView.image];
                         } completion:^(BOOL finished) {
-                            [self.thirdCam setEnabled:YES];
                         }];
         
         [UIView transitionWithView:self.fourthImageView
@@ -1339,7 +1342,6 @@
                         animations:^{
                             [self.secondImageView setImage:self.thirdImageView.image];
                         } completion:^(BOOL finished) {
-                            [self.secondCam setEnabled:YES];
                         }];
         
         [UIView transitionWithView:self.thirdImageView
@@ -1380,7 +1382,6 @@
                         animations:^{
                             [self.secondImageView setImage:self.thirdImageView.image];
                         } completion:^(BOOL finished) {
-                            [self.secondCam setEnabled:YES];
                         }];
         
         [UIView transitionWithView:self.thirdImageView
@@ -1389,7 +1390,6 @@
                         animations:^{
                             [self.thirdImageView setImage:self.fourthImageView.image];
                         } completion:^(BOOL finished) {
-                            [self.thirdCam setEnabled:YES];
                         }];
         
         [UIView transitionWithView:self.fourthImageView
@@ -1456,7 +1456,6 @@
                         animations:^{
                             [self.thirdImageView setImage:self.fourthImageView.image];
                         } completion:^(BOOL finished) {
-                            [self.thirdCam setEnabled:YES];
                         }];
         
         [UIView transitionWithView:self.fourthImageView
@@ -1484,7 +1483,6 @@
     self.photostotal--;
     
     if (self.photostotal ==4){
-        self.photostotal--;
         
         [UIView transitionWithView:self.fourthImageView
                           duration:0.3f
@@ -1502,6 +1500,7 @@
                              [self.fourthDelete setAlpha:0.0f];
                          }
                          completion:^(BOOL finished) {
+                             NSLog(@"FINISHED");
                              [self.fourthDelete setHidden:YES];
                              [self.fourthDelete setAlpha:1.0f];
                          }];
@@ -2081,7 +2080,6 @@
         self.webViewController.delegate = self;
         self.webViewController.depopMode = YES;
         self.webViewController.doneButtonTitle = @"";
-        self.webViewController.paypalMode = NO;
         self.webViewController.infoMode = NO;
         NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
         [self presentViewController:navigationController animated:YES completion:nil];

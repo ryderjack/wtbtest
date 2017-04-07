@@ -142,12 +142,16 @@
                 [self.suggestedMessagesArray addObjectsFromArray:[self.convoObject objectForKey:@"buyerSuggestedMessages"]];
             }
             else{
-                [self.suggestedMessagesArray addObjectsFromArray:@[@"What are you selling?",@"What size?",@"Yeah I'm interested",@"What's your price?",@"Is the price negotiable?",@"What's your PayPal?",@"Got photos?", @"Not interested thanks", @"Dismiss"]];
+                if (self.messageSellerPressed == YES) {
+                [self.suggestedMessagesArray addObjectsFromArray:@[@"Still available?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Is the price negotiable?",@"What's your PayPal?", @"Not interested thanks", @"Dismiss"]];
+                }
+                else{
+                    [self.suggestedMessagesArray addObjectsFromArray:@[@"What are you selling?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Is the price negotiable?",@"What's your PayPal?", @"Not interested thanks", @"Dismiss"]];
+                }
             }
         }
         else{
             self.showSuggested = NO;
-
         }
     }
     else{
@@ -1168,6 +1172,11 @@
                     //sent a message so force reload in inbox VC
                     [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
                     [self.delegate lastMessageInConvo:nil];
+                    
+                    //if its the first message in the convo that the user has sent, prompt for a review
+                    if ([[self.convoObject objectForKey:@"totalMessages"]intValue] ==1) {
+                        [self reviewPrompt];
+                    }
                 }
                 else{
                     NSLog(@"error with conv %@", error);
@@ -1265,7 +1274,6 @@
     
     [self.collectionView.collectionViewLayout invalidateLayoutWithContext:[JSQMessagesCollectionViewFlowLayoutInvalidationContext context]];
     [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
-    
 }
 
 -(void)textViewDidChange:(UITextView *)textView{
@@ -1332,14 +1340,16 @@
          [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
              switch (status) {
                  case PHAuthorizationStatusAuthorized:{
-                     QBImagePickerController *imagePickerController = [QBImagePickerController new];
-                     imagePickerController.delegate = self;
-                     imagePickerController.allowsMultipleSelection = YES;
-                     imagePickerController.maximumNumberOfSelection = 4;
-                     imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                     imagePickerController.numberOfColumnsInPortrait = 2;
-                     imagePickerController.showsNumberOfSelectedAssets = YES;
-                     [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                     dispatch_async(dispatch_get_main_queue(), ^{
+                         QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                         imagePickerController.delegate = self;
+                         imagePickerController.allowsMultipleSelection = YES;
+                         imagePickerController.maximumNumberOfSelection = 4;
+                         imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                         imagePickerController.numberOfColumnsInPortrait = 2;
+                         imagePickerController.showsNumberOfSelectedAssets = YES;
+                         [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                     });
                  }
                      break;
                  case PHAuthorizationStatusRestricted:{
@@ -1409,15 +1419,16 @@
             [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
                 switch (status) {
                     case PHAuthorizationStatusAuthorized:{
-                        
-                        QBImagePickerController *imagePickerController = [QBImagePickerController new];
-                        imagePickerController.delegate = self;
-                        imagePickerController.allowsMultipleSelection = YES;
-                        imagePickerController.maximumNumberOfSelection = 4;
-                        imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                        imagePickerController.numberOfColumnsInPortrait = 2;
-                        imagePickerController.showsNumberOfSelectedAssets = YES;
-                        [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                            imagePickerController.delegate = self;
+                            imagePickerController.allowsMultipleSelection = YES;
+                            imagePickerController.maximumNumberOfSelection = 4;
+                            imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                            imagePickerController.numberOfColumnsInPortrait = 2;
+                            imagePickerController.showsNumberOfSelectedAssets = YES;
+                            [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                        });
                     }
                         break;
                     case PHAuthorizationStatusRestricted:{
@@ -1469,14 +1480,16 @@
             [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
                 switch (status) {
                     case PHAuthorizationStatusAuthorized:{
-                        QBImagePickerController *imagePickerController = [QBImagePickerController new];
-                        imagePickerController.delegate = self;
-                        imagePickerController.allowsMultipleSelection = YES;
-                        imagePickerController.maximumNumberOfSelection = 4;
-                        imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                        imagePickerController.numberOfColumnsInPortrait = 2;
-                        imagePickerController.showsNumberOfSelectedAssets = YES;
-                        [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                            imagePickerController.delegate = self;
+                            imagePickerController.allowsMultipleSelection = YES;
+                            imagePickerController.maximumNumberOfSelection = 4;
+                            imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                            imagePickerController.numberOfColumnsInPortrait = 2;
+                            imagePickerController.showsNumberOfSelectedAssets = YES;
+                            [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                        });
                     }
                         break;
                     case PHAuthorizationStatusRestricted:{
@@ -1524,10 +1537,7 @@
                                                                       @"pageName":@"MessageVC"
                                                                       }];
                                 }
-                                
                                 [self finalImage:image];
-                                
-                                
                             }];
         }
     }];
@@ -1550,7 +1560,6 @@
         self.webViewController.delegate = self;
         self.webViewController.depopMode = YES;
         self.webViewController.doneButtonTitle = @"";
-        self.webViewController.paypalMode = NO;
         self.webViewController.infoMode = NO;
         NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
         [self presentViewController:navigationController animated:YES completion:nil];
@@ -1624,7 +1633,6 @@
     self.webViewController.showUrlWhileLoading = YES;
     self.webViewController.showPageTitles = NO;
     self.webViewController.doneButtonTitle = @"";
-    self.webViewController.paypalMode = NO;
     self.webViewController.infoMode = NO;
     self.checkPayPalTapped = YES;
     self.webViewController.delegate = self;
@@ -1643,12 +1651,10 @@
     self.webViewController.delegate = self;
     self.webViewController.payMode = YES;
     self.webViewController.doneButtonTitle = @"Paid";
-    self.webViewController.paypalMode = YES;
     self.webViewController.infoMode = YES;
     
     if ([self.otherUser objectForKey:@"paypal"]) {
-        self.webViewController.emailToPay = [self.otherUser objectForKey:@"paypal"];
-        self.webViewController.amountToPay = @"";
+        self.webViewController.infoMode = YES;
     }
     else{
         self.webViewController.infoMode = NO;
@@ -1668,7 +1674,7 @@
     //UIImageJPEGRepresentation seems to use the CGImage property of the UIImage. Problem is, that when you initialize the UIImage with a CIImage, that property is nil.
     
     //in meantime, used another solution - creates a copy of the image (assumes the image is not nil before resizing) and then gets data from that
-//    
+    
     UIGraphicsBeginImageContext(image.size);
     [image drawInRect:CGRectMake(0, 0, image.size.width, image.size.height)];
     UIImage *copiedImage = UIGraphicsGetImageFromCurrentImageContext();
@@ -1703,7 +1709,7 @@
                        customAttributes:@{
                                           @"pageName":@"MessageVC"
                                           }];
-        [self showAlertWithTitle:@"Image Error" andMsg:@"Something went wrong getting your image, please try again!"];
+        [self showAlertWithTitle:@"Image Error" andMsg:@"Something went wrong getting your image, please try sending another picture!"];
         return;
     }
     
@@ -1728,49 +1734,67 @@
             if (self.tagString) {
                 [self.messageObject setObject:self.tagString forKey:@"tagString"];
             }
-            [self.messageObject saveInBackground];
-            
-            //set as last message sent
-            self.lastMessage = self.messageObject;
-            
             //set msg object so photo is tagged
             photoMessage.msgObject = self.messageObject;
             
-            if (![self.senderId isEqualToString:self.otherUser.objectId]) {
-                [self.convoObject incrementKey:@"convoImages"];
-            }
-            
-            [self.convoObject setObject:self.messageObject forKey:@"lastSent"];
-            
-            NSString *pushString = [NSString stringWithFormat:@"%@ sent a picture 💥",[[PFUser currentUser]username]];
-            
-            //send push to other user
-            NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
-            [PFCloud callFunctionInBackground:@"sendPush" withParameters: params block:^(NSDictionary *response, NSError *error) {
-                if (!error) {
-                    NSLog(@"response %@", response);
-                }
-                else{
-                    NSLog(@"image push error %@", error);
-                }
-            }];
-            
-            self.offerMode = NO;
-            [self.convoObject incrementKey:@"totalMessages"];
-            if (self.userIsBuyer == YES) {
-                [self.convoObject incrementKey:@"sellerUnseen"];
-            }
-            else{
-                [self.convoObject incrementKey:@"buyerUnseen"];
-            }
-            
-            [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
-            [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            [self.messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
+                    //set as last message sent
+                    self.lastMessage = self.messageObject;
+                    
+                    if (![self.senderId isEqualToString:self.otherUser.objectId]) {
+                        [self.convoObject incrementKey:@"convoImages"];
+                    }
+                    
+                    [self.convoObject setObject:self.messageObject forKey:@"lastSent"];
+                    
+                    NSString *pushString = [NSString stringWithFormat:@"%@ sent a picture 💥",[[PFUser currentUser]username]];
+                    
+                    //send push to other user
+                    NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+                    [PFCloud callFunctionInBackground:@"sendPush" withParameters: params block:^(NSDictionary *response, NSError *error) {
+                        if (!error) {
+                            NSLog(@"response %@", response);
+                            [Answers logCustomEventWithName:@"Push Sent"
+                                           customAttributes:@{
+                                                              @"Type":@"Image Message"
+                                                              }];
+                        }
+                        else{
+                            NSLog(@"image push error %@", error);
+                        }
+                    }];
+                    
+                    self.offerMode = NO;
+                    [self.convoObject incrementKey:@"totalMessages"];
+                    if (self.userIsBuyer == YES) {
+                        [self.convoObject incrementKey:@"sellerUnseen"];
+                    }
+                    else{
+                        [self.convoObject incrementKey:@"buyerUnseen"];
+                    }
+                    
+                    [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
+                    [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
+                        }
+                        else{
+                            NSLog(@"error saving convo in final image %@", error);
+                            [Answers logCustomEventWithName:@"Error Saving Convo in Final Image"
+                                           customAttributes:@{
+                                                              @"where":@"MessagesVC"
+                                                              }];
+                        }
+                    }];
                 }
                 else{
-                    NSLog(@"error saving convo in final image %@", error);
+                    [self showAlertWithTitle:@"Error sending message" andMsg:[NSString stringWithFormat:@"Make sure you're connected to the internet %ld", (long)error.code]];
+                    [Answers logCustomEventWithName:@"Error Saving Picture message"
+                                   customAttributes:@{
+                                                      @"where":@"MessagesVC",
+                                                      @"error":error
+                                                      }];
                 }
             }];
             
@@ -1798,11 +1822,7 @@
                            customAttributes:@{
                                               @"where":@"MessagesVC"
                                               }];
-            
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Error sending image" message:@"Make sure you're connected to the internet" preferredStyle:UIAlertControllerStyleAlert];
-            [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-            }]];
-            [self presentViewController:alertView animated:YES completion:nil];
+            [self showAlertWithTitle:@"Error sending image" andMsg:[NSString stringWithFormat:@"Make sure you're connected to the internet %ld", (long)error.code]];
         }
     }];
 }
@@ -3042,6 +3062,93 @@
 
 -(void)leftReview{
     [self dismissSuccessBanner];
+}
+
+-(void)reviewPrompt{
+    PFUser *current = [PFUser currentUser];
+
+    if ([current objectForKey:@"reviewDate"]) {
+        //has reviewed before
+        //check the version then time diff
+        
+        NSString *reviewedVersion = [current objectForKey:@"versionReviewed"];
+        NSString *currentVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+        
+        if ([reviewedVersion isEqualToString:currentVersion]) {
+            //already reviewed this version
+            [self invitePrompt];
+        }
+        else{
+            //never reviewed this version, check if last review was later than 14 days ago
+            NSDate *lastReviewDate = [current objectForKey:@"reviewDate"];
+            
+            //check difference between 2 dates
+            NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:lastReviewDate];
+            double secondsInADay = 86400;
+            NSInteger daysBetweenDates = distanceBetweenDates / secondsInADay;
+            
+//            NSLog(@"DAYS SINCE LAST REVIEW: %ld", daysBetweenDates);
+            
+            if (daysBetweenDates >= 14) {
+                //prompt again
+                [Answers logCustomEventWithName:@"Asked to review in messages"
+                               customAttributes:@{}];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.navigationController];
+            }
+            else{
+                //rated in past 14 days already so don't show
+                [self invitePrompt];
+            }
+        }
+    }
+    else{
+        //never been asked to review so prompt
+        [Answers logCustomEventWithName:@"Asked to review in messages"
+                       customAttributes:@{}];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.navigationController];
+    }
+}
+
+-(void)invitePrompt{
+    PFUser *current = [PFUser currentUser];
+    
+    NSDate *lastReviewDate = [current objectForKey:@"reviewDate"];
+    NSTimeInterval distanceBetweenReviewDates = [[NSDate date] timeIntervalSinceDate:lastReviewDate];
+    double secondsInADay = 86400;
+    NSInteger daysBetweenReviewDates = distanceBetweenReviewDates / secondsInADay;
+    
+    if ([current objectForKey:@"inviteDate"]) {
+        //has seen invite dialog before
+        //check when last shown
+        
+        //check if last invite prompt was later than 14 days ago
+        NSDate *lastInviteDate = [current objectForKey:@"inviteDate"];
+        
+        //check difference between 2 dates
+        NSTimeInterval distanceBetweenInviteDates = [[NSDate date] timeIntervalSinceDate:lastInviteDate];
+        NSInteger daysBetweenInviteDates = distanceBetweenInviteDates / secondsInADay;
+        
+        //also check if user was prompted to review more than a day ago, don't want to bombard them
+        if (daysBetweenInviteDates >= 14 && daysBetweenReviewDates > 1) {
+            //prompt again
+            [self triggerInvite];
+        }
+        else{
+            //invite seen in past 14 days already or review was shown in past day too - so don't show
+        }
+    }
+    else{
+        if (daysBetweenReviewDates > 1) {
+            //never been asked to review so prompt (only if haven't been asked to review recently)
+            [self triggerInvite];
+        }
+    }
+}
+
+-(void)triggerInvite{
+    [Answers logCustomEventWithName:@"Asked to invite in messages"
+                   customAttributes:@{}];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"showInvite" object:nil];
 }
 @end
 

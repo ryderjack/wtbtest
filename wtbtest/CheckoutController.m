@@ -147,9 +147,6 @@
     self.webViewController.delegate = self;
     self.webViewController.payMode = YES;
     self.webViewController.doneButtonTitle = @"Paid";
-    self.webViewController.paypalMode = YES;
-    self.webViewController.emailToPay = self.sellerEmail;
-    self.webViewController.amountToPay = self.totalLabel.text;
     self.webViewController.infoMode = YES;
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:^{

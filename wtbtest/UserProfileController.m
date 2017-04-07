@@ -190,7 +190,6 @@
                    customAttributes:@{
                                       @"pageName":@"User Profile"
                                       }];
-    
     [self setupHeaderBar];
 }
 
@@ -421,12 +420,26 @@
     [wtbQuery orderByDescending:@"lastUpdated"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            self.WTBArray = objects;
+            //put the sold listings at the end
+            NSSortDescriptor *sortDescriptorStatus = [[NSSortDescriptor alloc]
+                                                      initWithKey: @"status" ascending: YES];
+            NSSortDescriptor *sortDescriptorUpdated = [[NSSortDescriptor alloc] initWithKey:@"lastUpdated" ascending:NO];
+            NSArray *sortedArray = [objects sortedArrayUsingDescriptors: [NSArray arrayWithObjects:sortDescriptorStatus,sortDescriptorUpdated,nil]];
+            
+            self.WTBArray = sortedArray;
 
             if (objects.count == 0 && self.WTBSelected == YES && self.tabMode == YES) {
-                [self.createButton setHidden:NO];
-                [self.actionLabel setHidden:NO];
                 
+                if ([(NSString*)[UIDevice currentDevice].model hasPrefix:@"iPad"])
+                {
+                    //it's an iPad so hide create button coz can't be seen
+                    [self.createButton setHidden:YES];
+                    [self.actionLabel setHidden:YES];
+                }
+                else{
+                    [self.createButton setHidden:NO];
+                    [self.actionLabel setHidden:NO];
+                }
                 [self.bumpImageView setHidden:YES];
                 [self.bumpLabel setHidden:YES];
             }
@@ -565,8 +578,15 @@
     [wtbQuery orderByDescending:@"lastUpdated"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
-            self.forSaleArray = objects;
+            
+            //put the sold listings at the end
+            NSSortDescriptor *sortDescriptorStatus = [[NSSortDescriptor alloc]
+                                                initWithKey: @"status" ascending: YES];
+            NSSortDescriptor *sortDescriptorUpdated = [[NSSortDescriptor alloc] initWithKey:@"lastUpdated" ascending:NO];
+            NSArray *sortedArray = [objects sortedArrayUsingDescriptors: [NSArray arrayWithObjects:sortDescriptorStatus,sortDescriptorUpdated,nil]];
 
+            self.forSaleArray = sortedArray;
+            
             if (objects.count == 0 && self.WTSSelected == YES && self.tabMode == YES) {
                 [self.createButton setHidden:NO];
                 [self.actionLabel setHidden:NO];
@@ -726,9 +746,10 @@
     self.webView.showUrlWhileLoading = YES;
     self.webView.showPageTitles = NO;
     self.webView.doneButtonTitle = @"";
-    self.webView.paypalMode = NO;
+    self.webView.payMode = NO;
     self.webView.infoMode = NO;
     self.webView.delegate = self;
+    
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
@@ -1518,9 +1539,15 @@
     ProfileController *profile = [[ProfileController alloc]init];
     profile.modal = YES;
     profile.delegate = self;
-    if ([self.navigationController tabBarItem].badgeValue != nil) {
+    
+    if (self.messagesUnseen > 0) {
         profile.unseenTBMsg = YES;
     }
+    if (self.showSnap == YES) {
+        profile.showSnapDot = YES;
+        self.showSnap = NO;
+    }
+    
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:profile];
     [self presentViewController:nav animated:YES completion:nil];
 }
@@ -1532,6 +1559,21 @@
 -(void)TeamBumpInboxTapped{
     [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
     [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:nil];
+}
+
+-(void)snapSeen{
+    UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[4];
+    int currentTabValue = [itemToBadge.badgeValue intValue];
+    
+    if (currentTabValue > 1) {
+        //minus one, still have some TB messages unseen
+        int newTabValue = currentTabValue + 1;
+        itemToBadge.badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
+    }
+    else{
+        //reset to nil
+        [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:nil];
+    }
 }
 - (IBAction)createPressed:(id)sender {
     if (self.segmentedControl.selectedSegmentIndex == 0){

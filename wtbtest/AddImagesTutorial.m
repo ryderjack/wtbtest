@@ -17,8 +17,12 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    self.emojiLabel.adjustsFontSizeToFitWidth = YES;
+    self.emojiLabel.minimumScaleFactor=0.5;
+    
     // Do any additional setup after loading the view from its nib.
-    self.view.backgroundColor = [UIColor colorWithRed:0.00 green:0.00 blue:0.00 alpha:0.7];
+    self.view.backgroundColor = [UIColor colorWithRed:1.00 green:1.00 blue:1.00 alpha:0.6];
     
     [[PFUser currentUser] setObject:@"YES" forKey:@"addImageTutorial"];
     [[PFUser currentUser]saveInBackground];
@@ -30,6 +34,7 @@
     // Dispose of any resources that can be recreated.
 }
 - (IBAction)dismissPressed:(id)sender {
+    [self.delegate dismissedAddImage];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 

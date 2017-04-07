@@ -446,7 +446,7 @@
                         self.user[@"completedReg"] = @"YES";
                         self.user[@"indexedListings"] = @"YES";
                         self.user[@"bumpArray"] = @[];
-
+                        self.user[@"snapSeen"] = @"YES";
                         [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
                          {
                              if (succeeded)
@@ -554,11 +554,17 @@
                                      }
                                  }];
                                  
-                                 //progress to tutorial
                                  [self hideHUD];
-                                 Tut1ViewController *vc = [[Tut1ViewController alloc]init];
-                                 vc.clickMode = YES;
-                                 [self.navigationController pushViewController:vc animated:YES];
+                                 
+                                 //show add size modal first
+                                 AddSizeController *vc = [[AddSizeController alloc]init];
+                                 vc.delegate = self;
+                                 [self.navigationController presentViewController:vc animated:YES completion:nil];
+
+                                 //progress to tutorial
+//                                 Tut1ViewController *vc = [[Tut1ViewController alloc]init];
+//                                 vc.clickMode = YES;
+//                                 [self.navigationController pushViewController:vc animated:YES];
                              }
                              else
                              {
@@ -651,7 +657,6 @@
     self.webViewController.showUrlWhileLoading = YES;
     self.webViewController.showPageTitles = NO;
     self.webViewController.doneButtonTitle = @"";
-    self.webViewController.paypalMode = NO;
     self.webViewController.delegate = self;
     //hide toolbar banner
     self.webViewController.infoMode = NO;
@@ -807,5 +812,12 @@
     
     return scaledImage;
     
+}
+
+-(void)addSizeDismissed{
+    //progress to tutorial
+     Tut1ViewController *vc = [[Tut1ViewController alloc]init];
+     vc.clickMode = YES;
+     [self.navigationController pushViewController:vc animated:YES];
 }
 @end

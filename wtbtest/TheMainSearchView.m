@@ -247,17 +247,37 @@
 -(void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
     if (self.userSearch == YES){
         
-        [Answers logCustomEventWithName:@"Search"
-                       customAttributes:@{
-                                          @"type":@"User search"
-                                          }];
+        //check if user created today for analytics
+        
+        if ([self isDateToday:[PFUser currentUser].createdAt]) {
+            [Answers logCustomEventWithName:@"Search"
+                           customAttributes:@{
+                                              @"type":@"User search",
+                                              @"newUser": @"YES"
+                                              }];
+        }
+        else{
+            [Answers logCustomEventWithName:@"Search"
+                           customAttributes:@{
+                                              @"type":@"User search",
+                                              @"newUser": @"NO"
+                                              }];
+        }
+        
+        NSString *searchCheck = [self.searchBar.text stringByReplacingOccurrencesOfString:@" " withString:@""];
         
         PFQuery *userQueryForRand = [PFUser query];
-        [userQueryForRand whereKey:@"username" containsString:[self.searchBar.text lowercaseString]];
+        [userQueryForRand whereKey:@"username" matchesRegex:self.searchBar.text modifiers:@"i"];
+
+//        [userQueryForRand whereKey:@"username" containsString:[self.searchBar.text lowercaseString]];
         [userQueryForRand whereKey:@"completedReg" equalTo:@"YES"];
         
         PFQuery *facebookNameSearch = [PFUser query];
-        [facebookNameSearch whereKey:@"fullnameLower" containsString:[self.searchBar.text lowercaseString]];
+        
+        //if just typed an empty string, don't search for names that contain this
+        if (![searchCheck isEqualToString:@""]) {
+            [facebookNameSearch whereKey:@"fullnameLower" containsString:[self.searchBar.text lowercaseString]];
+        }
         
         PFQuery *query = [PFQuery orQueryWithSubqueries:@[userQueryForRand,facebookNameSearch]];
 
@@ -395,5 +415,23 @@
     imageView.layer.masksToBounds = YES;
     imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     imageView.contentMode = UIViewContentModeScaleAspectFill;
+}
+
+- (BOOL) isDateToday: (NSDate *) aDate
+{
+    NSCalendar *cal = [NSCalendar currentCalendar];
+    NSDateComponents *components = [cal components:(NSCalendarUnitEra | NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay) fromDate:[NSDate date]];
+    NSDate *today = [cal dateFromComponents:components];
+    
+    components = [cal components:(NSCalendarUnitEra | NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay) fromDate:aDate];
+    
+    NSDate *otherDate = [cal dateFromComponents:components];
+    
+    if([today isEqualToDate:otherDate]) {
+        return YES;
+    }
+    else{
+        return NO;
+    }
 }
 @end

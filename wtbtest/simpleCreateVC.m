@@ -45,6 +45,9 @@
     tap.numberOfTapsRequired = 1;
     [self.view addGestureRecognizer:tap];
     
+    self.catTap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideCatTap)];
+    self.catTap.numberOfTapsRequired = 1;
+    
     if (self.introMode != YES) {
         //uncomment these to enable the bouncing button
 //        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -89,12 +92,12 @@
 -(void)viewWillAppear:(BOOL)animated{
     [self.navigationController.navigationBar setHidden:YES];
     
-    if (self.createdListing == YES) {
-        if ([self.listing objectForKey:@"sizeLabel"]) {
-            [self.successView.firstButton setHidden:YES];
-            [self.successView.secondButton setHidden:YES];
-        }
-    }
+//    if (self.createdListing == YES) {
+//        if ([self.listing objectForKey:@"sizeLabel"]) {
+//            [self.successView.firstButton setHidden:YES];
+//            [self.successView.secondButton setHidden:YES];
+//        }
+//    }
     
     if (self.introMode == YES) {
         [self.orImageView setHidden:YES];
@@ -157,6 +160,10 @@
         [self setUpSuccess];
     }
     
+    if (self.setupCategories != YES) {
+        [self setupCatView];
+    }
+    
     if (self.introMode == YES && self.shownPushAlert != YES) {
         //show prompt for enabling push
         [self showPushAlert];
@@ -202,7 +209,7 @@
     NSString *stringCheck = [textField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if (![stringCheck isEqualToString:@""]) {
         self.finishedListing = NO;
-        [self showGoogle];
+        [self showCategories];
     }
 }
 
@@ -320,10 +327,13 @@
     squareCropperViewController.squareCropperDelegate = self;
     squareCropperViewController.backgroundColor = [UIColor whiteColor];
     squareCropperViewController.borderColor = [UIColor whiteColor];
-    squareCropperViewController.doneFont = [UIFont fontWithName:@"PingFangSC-Regular" size:18.0f];
-    squareCropperViewController.cancelFont = [UIFont fontWithName:@"PingFangSC-Regular" size:16.0f];
+    squareCropperViewController.doneFont = [UIFont fontWithName:@"PingFangSC-Medium" size:15.0f];
+    squareCropperViewController.cancelFont = [UIFont fontWithName:@"PingFangSC-Regular" size:15.0f];
     squareCropperViewController.excludedBackgroundColor = [UIColor blackColor];
     squareCropperViewController.tapNumber = self.tapNumber;
+    NSLog(@"TAP NUMBER %d", self.tapNumber);
+    squareCropperViewController.doneText = @"C O N F I R M";
+    
     [self.JRWebView presentViewController:squareCropperViewController animated:YES completion:nil];
 }
 
@@ -362,6 +372,8 @@
     
     [self saveListing];
 }
+
+#pragma mark - success view methods
 
 -(void)setUpSuccess{
     self.successView = nil;
@@ -673,7 +685,63 @@
     
     [self.listing setObject:itemTitle forKey:@"title"];
     [self.listing setObject:[itemTitle lowercaseString]forKey:@"titleLower"];
+    [self.listing setObject:self.categorySelected forKey:@"category"];
     
+    //set default size on listing
+    
+    PFUser *current = [PFUser currentUser];
+    
+    //check if have sizeCountry
+    if ([current objectForKey:@"sizeCountry"]) {
+        
+        if ([self.categorySelected isEqualToString:@"Clothing"]) {
+            NSArray *clothingSizeArray = [current objectForKey:@"clothingSizeArray"];
+            
+            NSString *sizeLabel = [NSString stringWithFormat:@"%@/%@",clothingSizeArray[0],clothingSizeArray[1]];
+            [self.listing setObject:sizeLabel forKey:@"sizeLabel"];
+            
+            [self.listing setObject:clothingSizeArray[0] forKey:@"firstSize"];
+            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", clothingSizeArray[0]]];
+            
+            [self.listing setObject:clothingSizeArray[1] forKey:@"secondSize"];
+            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", clothingSizeArray[1]]];
+            
+        }
+        else if ([self.categorySelected isEqualToString:@"Footwear"] && [current objectForKey:@"UKShoeSizeArray"]){
+            
+            NSArray *ukSizeArray = [current objectForKey:@"UKShoeSizeArray"];
+            
+            //set size label
+            NSString *sizeLabel = [NSString stringWithFormat:@"UK %@/%@/%@",ukSizeArray[0],ukSizeArray[1],ukSizeArray[2]];
+            [self.listing setObject:sizeLabel forKey:@"sizeLabel"];
+            
+            if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"male"]) {
+                [self.listing setObject:@"Mens" forKey:@"sizeGender"];
+            }
+            else if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"female"]){
+                [self.listing setObject:@"Womens" forKey:@"sizeGender"];
+            }
+            else{
+                [self.listing setObject:@"Mens" forKey:@"sizeGender"];
+            }
+
+            //set YES to different sizes
+            [self.listing setObject:ukSizeArray[0] forKey:@"firstSize"];
+            NSString *newKey = [ukSizeArray[0] stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", newKey]];
+            
+            [self.listing setObject:ukSizeArray[1] forKey:@"secondSize"];
+            NSString *new1Key = [ukSizeArray[1] stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", new1Key]];
+        
+            [self.listing setObject:ukSizeArray[2] forKey:@"thirdSize"];
+            NSString *new2Key = [ukSizeArray[2] stringByReplacingOccurrencesOfString:@"." withString:@"dot"];
+            [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", new2Key]];
+        
+        }
+    }
+    //save each country sizes onto listing (only using UK for search atm)
+
     //save keywords (minus useless words)
     NSArray *wasteWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", @"all",@"any", @"&",@"looking",@"size", @"buy", @"these", @"this", @"that", @"-",@"(", @")",@"/", nil];
     NSString *title = [itemTitle lowercaseString];
@@ -722,11 +790,11 @@
     [self.listing setObject:@"live" forKey:@"status"];
     
     //expiration in 2 weeks
-    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-    dayComponent.minute = 1;
-    NSCalendar *theCalendar = [NSCalendar currentCalendar];
-    NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-    [self.listing setObject:expirationDate forKey:@"expiration"];
+//    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+//    dayComponent.day = 14;
+//    NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//    NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+//    [self.listing setObject:expirationDate forKey:@"expiration"];
 
     if (self.geopoint != nil) {
         [self.listing setObject:self.locationString forKey:@"location"];
@@ -807,7 +875,8 @@
                 
                 //local notifications set up
                 NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                dayComponent.day = 2;
+                dayComponent.day = 1;
+                [dayComponent setHour: 20];
                 NSCalendar *theCalendar = [NSCalendar currentCalendar];
                 NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
                 
@@ -1112,6 +1181,8 @@
     //local notifications set up
     NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
     dayComponent.day = 1;
+    [dayComponent setHour: 20];
+    
     NSCalendar *theCalendar = [NSCalendar currentCalendar];
     NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
     
@@ -1206,6 +1277,108 @@
     CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
     [self presentViewController:nav animated:YES completion:nil];
+}
+
+#pragma mark - categories drop down
+
+-(void)setupCatView{
+    self.catView = nil;
+    self.setupCategories = YES;
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"CategoryView" owner:self options:nil];
+    self.catView = (CategoryDropDown *)[nib objectAtIndex:0];
+    self.catView.delegate = self;
+    self.catView.alpha = 0.0;
+    [self.navigationController.view addSubview:self.catView];
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.catView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -192, 300, 174)];
+    }
+    else{
+        [self.catView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -192, 300, 174)]; //iPhone 6/7 specific
+    }
+    
+    self.catView.layer.cornerRadius = 10;
+    self.catView.layer.masksToBounds = YES;
+}
+-(void)showCategories{
+    self.bgView.alpha = 0.8;
+    [self.catView setAlpha:1.0];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.catView setFrame:CGRectMake(0, 0, 300, 174)];
+                            }
+                            else{
+                                [self.catView setFrame:CGRectMake(0, 0, 300, 174)];
+                            }
+                            self.catView.center = self.view.center;
+                        }
+                     completion:^(BOOL finished) {
+                         [self.bgView addGestureRecognizer:self.catTap];
+                     }];
+}
+
+-(void)hideCatTap{
+    [self hideCategories];
+    [self.titleTextLabel becomeFirstResponder];
+}
+
+-(void)hideCategories{
+
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.catView setFrame:CGRectMake((self.view.frame.size.width/2)-150,1000, 300, 174)];
+                            }
+                            else{
+                                [self.catView setFrame:CGRectMake((self.view.frame.size.width/2)-150,1000, 300, 174)]; //iPhone 6/7 specific
+                            }
+                            [self.bgView setAlpha:0.0];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.catView setAlpha:0.0];
+                         [self.bgView removeGestureRecognizer:self.catTap];
+                         
+                         if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                             //iphone5
+                             [self.catView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -174, 300, 174)];
+                         }
+                         else{
+                             [self.catView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -174, 300, 174)]; //iPhone 6/7 specific
+                         }
+                     }];
+}
+
+-(void)clothingPressed{
+    self.categorySelected = @"Clothing";
+    [self hideCategories];
+    [self showGoogle];
+}
+
+-(void)footPressed{
+    self.categorySelected = @"Footwear";
+    [self hideCategories];
+    [self showGoogle];
+}
+
+-(void)otherPressed{
+    self.categorySelected = @"Accessories";
+    [self hideCategories];
+    [self showGoogle];
 }
 
 @end

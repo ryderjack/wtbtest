@@ -210,7 +210,9 @@
         self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
         self.titleLabel.text = @"Bumping";
         self.descriptionLabel.text = @"Bump listings to help them get noticed just by tapping the up arrow";
-        [self setupBumping];
+        if (![(NSString*)[UIDevice currentDevice].model hasPrefix:@"iPad"]) {
+            [self setupBumping];
+        }
         
         if (self.explainMode == YES) {
             [self.dimissButton setAlpha:0.0];
@@ -288,7 +290,7 @@
         
         //1.2 cursor moves up
         [UIView addKeyframeWithRelativeStartTime:0.02 relativeDuration:0.4 animations:^{
-            self.cursorImageView.transform = CGAffineTransformMakeTranslation(-110,-100);
+            self.cursorImageView.transform = CGAffineTransformMakeTranslation(-110,-115);
         }];
         
         //1.3 show bumped listing
@@ -609,7 +611,12 @@
         self.heroImageView.image = [UIImage imageNamed:@"iPhoneIntro1Bar"];
         self.titleLabel.text = @"Bumping";
         self.descriptionLabel.text = @"Bump listings to help get them noticed just by tapping the up arrow";
-        [self setupBumping];
+        
+        //don't show on iPad as its cut off the screen
+        if (![(NSString*)[UIDevice currentDevice].model hasPrefix:@"iPad"]) {
+            [self setupBumping];
+        }
+        
         [self fadeInProgressButton];
     }
     else if (self.index == 3){

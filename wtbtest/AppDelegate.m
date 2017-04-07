@@ -24,13 +24,6 @@
 
 @implementation AppDelegate
 
-//+ (void)initialize
-//{
-//    //configure iRate
-//    [iRate sharedInstance].daysUntilPrompt = 5;
-//    [iRate sharedInstance].usesUntilPrompt = 15;
-//}
-
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     
     //initial Parse & Fb set up
@@ -51,7 +44,7 @@
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
     }]];
 
-//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
     [[ChimpKit sharedKit] setApiKey:@"5cbba863ff961ff8c60266185defc785-us14"];
@@ -171,25 +164,48 @@
     //check if there's a local 'sneaker release' push
     UILocalNotification *localNotif = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
     NSDictionary *localUserInfo = localNotif.userInfo;
-    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
+//    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
+    NSString *itemTitle = [localUserInfo valueForKey:@"itemTitle"];
     
-    if (localNotif && releaseLink)
+    if (localNotif && itemTitle)
     {
         [Answers logCustomEventWithName:@"Opened Release Push"
-                       customAttributes:@{}];
-        
-        //open Web
-        NSLog(@"open web view! did finish launching");
-        self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:releaseLink]];
-        self.web.showUrlWhileLoading = YES;
-        self.web.showPageTitles = YES;
-        self.web.doneButtonTitle = @"";
-        self.web.paypalMode = NO;
-        self.web.infoMode = NO;
-        self.web.delegate = self;
-        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
-        [self.window.rootViewController presentViewController:navigationController animated:YES completion:nil];
-        
+                       customAttributes:@{
+                                          @"itemTitle":itemTitle
+                                          }];
+        //query for link then open web view
+        PFQuery *linkQuery = [PFQuery queryWithClassName:@"Releases"];
+        [linkQuery whereKey:@"status" equalTo:@"live"];
+        [linkQuery whereKey:@"itemTitle" equalTo:itemTitle];
+        [linkQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                NSLog(@"open web view! did finish launching");
+                
+                NSString *link = [object objectForKey:@"itemLink"];
+                
+                if (![link isEqualToString:@"soon"]) {
+                    self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:link]];
+                    self.web.showUrlWhileLoading = YES;
+                    self.web.showPageTitles = YES;
+                    self.web.doneButtonTitle = @"";
+                    self.web.infoMode = NO;
+                    self.web.dropMode = YES;
+                    self.web.delegate = self;
+                    
+                    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
+                    [self.window.rootViewController presentViewController:navigationController animated:YES completion:nil];
+                }
+            }
+            else{
+                [Answers logCustomEventWithName:@"Error Opening Release"
+                               customAttributes:@{
+                                                  @"error":error,
+                                                  @"where":@"did finish launching"
+                                                  }];
+                
+                NSLog(@"error getting release %@", error);
+            }
+        }];
     }
     else if ([localNotif.alertBody isEqualToString:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"]){
         [Answers logCustomEventWithName:@"Opened First Reminder Push"
@@ -358,12 +374,26 @@
         if (object) {
             //is there anything unseen in the convo
             int userUnseen = [[object objectForKey:@"userUnseen"]intValue];
+            self.profileView.messagesUnseen = userUnseen;
+
             if (userUnseen > 0) {
                 [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:[NSString stringWithFormat:@"%d", userUnseen]];
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"NewTBMessage" object:nil];
             }
             else{
                 [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:nil];
+            }
+            
+            
+            //check if seen snap, if not add badge to user tab
+            if (![[PFUser currentUser]objectForKey:@"snapSeen"]) {
+                UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[4];
+                int currentTabValue = [itemToBadge.badgeValue intValue];
+                int newTabValue = currentTabValue + 1;
+                itemToBadge.badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
+                
+                //to trigger the dot in settings
+                self.profileView.showSnap = YES;
             }
         }
         else{
@@ -386,21 +416,24 @@
 -(void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification{
     
     NSDictionary *localUserInfo = notification.userInfo;
-    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
+//    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
+    NSString *itemTitle = [localUserInfo valueForKey:@"itemTitle"];
     
     if ([notification.alertBody isEqualToString:@"What's your next cop? Get inspired and create a wanted listing for it on Bump now"]){
         [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
                        customAttributes:@{}];
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
     }
-    else if([notification.alertBody containsString:@"Reminder: the"] && releaseLink){
+    else if([notification.alertBody containsString:@"Reminder: the"] && itemTitle){
         [Answers logCustomEventWithName:@"Opened Release Push"
-                       customAttributes:@{}];
+                       customAttributes:@{
+                                          @"itemTitle":itemTitle
+                                          }];
         
         //open Web
         NSLog(@"open web view! did receive");
         self.tabBarController.selectedIndex = 0;
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"showRelease" object:releaseLink];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"showRelease" object:itemTitle];
     }
     else if ([notification.alertBody isEqualToString:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"]){
         [Answers logCustomEventWithName:@"Opened First Reminder Push"
@@ -487,6 +520,7 @@
         //schedule 5 day inactivity local notification
         NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
         dayComponent.day = 6;
+        [dayComponent setHour: 20];
         NSCalendar *theCalendar = [NSCalendar currentCalendar];
         NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
         

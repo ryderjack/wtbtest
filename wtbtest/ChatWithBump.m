@@ -352,15 +352,16 @@
         [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
             switch (status) {
                 case PHAuthorizationStatusAuthorized:{
-                    
-                    QBImagePickerController *imagePickerController = [QBImagePickerController new];
-                    imagePickerController.delegate = self;
-                    imagePickerController.allowsMultipleSelection = YES;
-                    imagePickerController.maximumNumberOfSelection = 4;
-                    imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                    imagePickerController.numberOfColumnsInPortrait = 2;
-                    imagePickerController.showsNumberOfSelectedAssets = YES;
-                    [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                        imagePickerController.delegate = self;
+                        imagePickerController.allowsMultipleSelection = YES;
+                        imagePickerController.maximumNumberOfSelection = 4;
+                        imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                        imagePickerController.numberOfColumnsInPortrait = 2;
+                        imagePickerController.showsNumberOfSelectedAssets = YES;
+                        [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                    });
                 }
                     break;
                 case PHAuthorizationStatusRestricted:{
@@ -432,7 +433,7 @@
                        customAttributes:@{
                                           @"pageName":@"Team Bump Chat"
                                           }];
-        [self showAlertWithTitle:@"Image Error" andMsg:@"Something went wrong getting your image, please try again!"];
+        [self showAlertWithTitle:@"Image Error" andMsg:@"Something went wrong getting your image, please try sending another picture!"];
         return;
     }
     

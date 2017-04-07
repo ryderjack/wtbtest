@@ -8,7 +8,6 @@
 
 #import "FeedbackController.h"
 #import <Crashlytics/Crashlytics.h>
-#import <SDWebImage/UIImageView+WebCache.h>
 #import "NavigationController.h"
 
 @interface FeedbackController ()
@@ -55,7 +54,6 @@
 
     UIBarButtonItem *reportButton = [[UIBarButtonItem alloc] initWithTitle:@"Report" style:UIBarButtonItemStylePlain target:self action:@selector(reportPressed)];
     [self.navigationItem setRightBarButtonItem:reportButton];
-
     
     self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
     [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
@@ -72,9 +70,6 @@
                                       @"pageName":@"Leave Review",
                                       }];
     
-    //dismiss Invite gesture
-    self.tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
-    self.tap.numberOfTapsRequired = 1;
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -448,46 +443,36 @@
                                                 
                                                 if ([reviewedVersion isEqualToString:currentVersion]) {
                                                     //already reviewed this version, check if been prompted to invite friends
-                                                    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"reviewInviteSeen"]) {
-                                                        //seen invite reminder after leaving a review
-                                                        [self dismissFeedback];
-                                                    }
-                                                    else{
-                                                        //show invite popup
-                                                        [self showInviteView];
-                                                    }
+                                                    [self invitePrompt];
+                                                    [self dismissFeedback];
                                                 }
                                                 else{
-                                                    //never reviewed this version, check if last review was later than 5 days ago
+                                                    //never reviewed this version, check if last review was later than 14 days ago
                                                     NSDate *lastReviewDate = [current objectForKey:@"reviewDate"];
                                                     
                                                     //check difference between 2 dates
-                                                    NSTimeInterval distanceBetweenDates = [lastReviewDate timeIntervalSinceDate:[NSDate date]];
+                                                    NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:lastReviewDate];
                                                     double secondsInADay = 86400;
                                                     NSInteger daysBetweenDates = distanceBetweenDates / secondsInADay;
                                                     
-                                                    NSLog(@"DAYS BETWEEN DATES %ld", (long)daysBetweenDates);
-                                                    
-                                                    if (daysBetweenDates >= 5) {
+                                                    if (daysBetweenDates >= 14) {
                                                         //prompt again
+                                                        [Answers logCustomEventWithName:@"Asked to review after leaving Feedback"
+                                                                       customAttributes:@{}];
                                                         [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.messageNav];
                                                         [self dismissFeedback];
                                                     }
                                                     else{
                                                         //rated too soon, check if seen invite
-                                                        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"reviewInviteSeen"]) {
-                                                            //seen invite reminder after leaving a review
-                                                            [self dismissFeedback];
-                                                        }
-                                                        else{
-                                                            //show invite popup
-                                                            [self showInviteView];
-                                                        }
+                                                        [self invitePrompt];
+                                                        [self dismissFeedback];
                                                     }
                                                 }
                                             }
                                             else{
                                                 //never been asked to review so prompt
+                                                [Answers logCustomEventWithName:@"Asked to review after leaving Feedback"
+                                                               customAttributes:@{}];
                                                 [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.messageNav];
                                                 [self dismissFeedback];
                                             }
@@ -550,198 +535,48 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
-#pragma mark - invite view delegates
+-(void)invitePrompt{
+    PFUser *current = [PFUser currentUser];
+    
+    [self triggerInvite];
 
--(void)showInviteView{
-    [Answers logCustomEventWithName:@"Invite Showing"
-                   customAttributes:@{
-                                      @"where": @"feedback"
-                                      }];
     
-    if (self.alertShowing == YES) {
-        return;
-    }
-    
-    self.alertShowing = YES;
-    self.bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
-    self.bgView.alpha = 0.0;
-    [self.bgView setBackgroundColor:[UIColor blackColor]];
-    [[UIApplication sharedApplication].keyWindow addSubview:self.bgView];
-    
-    [UIView animateWithDuration:0.3
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         self.bgView.alpha = 0.6f;
-                     }
-                     completion:nil];
-    
-    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"inviteView" owner:self options:nil];
-    self.inviteView = (inviteViewClass *)[nib objectAtIndex:0];
-    self.inviteView.delegate = self;
-    
-    //setup images
-    NSMutableArray *friendsArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"friends"]];
-    
-    //manage friends count label
-    if (friendsArray.count > 5) {
-        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friendsArray.count];
-    }
-    else{
-        self.inviteView.friendsLabel.text = @"Help us grow 🚀";
-    }
-    
-    if (friendsArray.count > 0) {
-        [self shuffle:friendsArray];
-        if (friendsArray.count >2) {
-            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
-            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-            
-            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
-            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-            
-            NSURL *picUrl3 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[2]]];
-            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-        }
-        else if (friendsArray.count == 2){
-            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
-            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-            
-            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
-            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-            
-            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
-            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-        }
-        else if (friendsArray.count == 1){
-            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
-            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-            
-            NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
-            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-            
-            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
-            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-        }
-    }
-    else{
-        NSURL *picUrl = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image
-        [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-        
-        NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
-        [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-        
-        NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
-        [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-    }
-    
-    [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -300, 300, 300)];
-    
-    self.inviteView.layer.cornerRadius = 10;
-    self.inviteView.layer.masksToBounds = YES;
-    
-    [[UIApplication sharedApplication].keyWindow addSubview:self.inviteView];
-    
-    [UIView animateWithDuration:1.0
-                          delay:0.0
-         usingSpringWithDamping:0.5
-          initialSpringVelocity:0.5
-                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                            //Animations
-                            [self.inviteView setFrame:CGRectMake(0, 0, 300, 300)];
-                            self.inviteView.center = self.view.center;
-                        }
-                     completion:^(BOOL finished) {
-                         [self.bgView addGestureRecognizer:self.tap];
-                     }];
+//    NSDate *lastReviewDate = [current objectForKey:@"reviewDate"];
+//    NSTimeInterval distanceBetweenReviewDates = [[NSDate date] timeIntervalSinceDate:lastReviewDate];
+//    double secondsInADay = 86400;
+//    NSInteger daysBetweenReviewDates = distanceBetweenReviewDates / secondsInADay;
+//    
+//    if ([current objectForKey:@"inviteDate"]) {
+//        //has seen invite dialog before
+//        //check when last shown
+//        
+//        //check if last invite prompt was later than 14 days ago
+//        NSDate *lastInviteDate = [current objectForKey:@"inviteDate"];
+//        
+//        //check difference between 2 dates
+//        NSTimeInterval distanceBetweenInviteDates = [[NSDate date] timeIntervalSinceDate:lastInviteDate];
+//        NSInteger daysBetweenInviteDates = distanceBetweenInviteDates / secondsInADay;
+//        
+//        //also check if user was prompted to review more than a day ago, don't want to bombard them
+//        if (daysBetweenInviteDates >= 14 && daysBetweenReviewDates > 1) {
+//            //prompt again
+//            [self triggerInvite];
+//        }
+//        else{
+//            //invite seen in past 14 days already or review was shown in past day too - so don't show
+//        }
+//    }
+//    else{
+//        if (daysBetweenReviewDates > 1) {
+//            //never been asked to review so prompt (only if haven't been asked to review recently)
+//            [self triggerInvite];
+//        }
+//    }
 }
 
--(void)hideInviteView{
-    [UIView animateWithDuration:0.3
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         self.bgView.alpha = 0.0f;
-                     }
-                     completion:^(BOOL finished) {
-                         self.bgView = nil;
-                         [self.bgView removeGestureRecognizer:self.tap];
-                     }];
-    
-    [UIView animateWithDuration:1.0
-                          delay:0.0
-         usingSpringWithDamping:0.1
-          initialSpringVelocity:0.5
-                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                            //Animations
-                            [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 300)];
-                        }
-                     completion:^(BOOL finished) {
-                         //Completion Block
-                         self.alertShowing = NO;
-                         [self.inviteView setAlpha:0.0];
-                         self.inviteView = nil;
-                         [self dismissFeedback];
-                         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"reviewInviteSeen"];
-                     }];
-}
-
--(void)whatsappPressed{
-    [Answers logCustomEventWithName:@"Whatsapp share pressed"
+-(void)triggerInvite{
+    [Answers logCustomEventWithName:@"Asked to invite in messages"
                    customAttributes:@{}];
-    NSString *shareString = @"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com";
-    NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
-    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
-        [[UIApplication sharedApplication] openURL: whatsappURL];
-    }
-}
-
--(void)messengerPressed{
-    [Answers logCustomEventWithName:@"Messenger share pressed"
-                   customAttributes:@{}];
-    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=http://sobump.com"];
-    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
-        [[UIApplication sharedApplication] openURL: messengerURL];
-    }
-}
-
--(void)textPressed{
-    [Answers logCustomEventWithName:@"More share pressed"
-                   customAttributes:@{}];
-    NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com"];
-    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
-    [self presentViewController:activityController animated:YES completion:nil];
-}
-
-- (void)shuffle:(NSMutableArray *)array
-{
-    NSUInteger count = [array count];
-    if (count <= 1) return;
-    for (NSUInteger i = 0; i < count - 1; ++i) {
-        NSInteger remainingCount = count - i;
-        NSInteger exchangeIndex = i + arc4random_uniform((u_int32_t )remainingCount);
-        [array exchangeObjectAtIndex:i withObjectAtIndex:exchangeIndex];
-    }
-}
-
-- (NSString *)urlencode:(NSString *)stringToEncode{
-    NSMutableString *output = [NSMutableString string];
-    const unsigned char *source = (const unsigned char *)[stringToEncode UTF8String];
-    int sourceLen = (int)strlen((const char *)source);
-    for (int i = 0; i < sourceLen; ++i) {
-        const unsigned char thisChar = source[i];
-        if (thisChar == ' '){
-            [output appendString:@"+"];
-        } else if (thisChar == '.' || thisChar == '-' || thisChar == '_' || thisChar == '~' ||
-                   (thisChar >= 'a' && thisChar <= 'z') ||
-                   (thisChar >= 'A' && thisChar <= 'Z') ||
-                   (thisChar >= '0' && thisChar <= '9')) {
-            [output appendFormat:@"%c", thisChar];
-        } else {
-            [output appendFormat:@"%%%02X", thisChar];
-        }
-    }
-    return output;
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"showInvite" object:nil];
 }
 @end
