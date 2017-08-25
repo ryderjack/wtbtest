@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12118" systemVersion="16E195" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12086"/>
-        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
+        <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <customFonts key="customFonts">
@@ -20,6 +21,7 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="WelcomeViewController">
             <connections>
+                <outlet property="brandSwipeView" destination="YEW-pz-vlB" id="u27-7m-xv2"/>
                 <outlet property="descriptionLabel" destination="BnC-1B-y19" id="u01-8R-IdO"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
@@ -29,64 +31,95 @@
             <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Bump" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="iEU-WM-76G">
-                    <rect key="frame" x="91" y="437" width="193" height="52"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="52" id="ADx-vs-HSZ"/>
-                    </constraints>
-                    <fontDescription key="fontDescription" name="AvenirNext-HeavyItalic" family="Avenir Next" pointSize="30"/>
-                    <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                    <nil key="highlightedColor"/>
-                </label>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Y4l-da-WYp">
-                    <rect key="frame" x="0.0" y="608" width="375" height="60"/>
+                    <rect key="frame" x="187" y="607" width="188" height="60"/>
                     <color key="backgroundColor" red="0.23137254901960785" green="0.34901960784313724" blue="0.59607843137254901" alpha="1" colorSpace="calibratedRGB"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="60" id="PTe-qA-eGu"/>
-                    </constraints>
-                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="17"/>
-                    <state key="normal" title="Log in with Facebook">
+                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
+                    <state key="normal" title="Continue with Facebook">
                         <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </state>
                     <connections>
                         <action selector="facebookTapped:" destination="-1" eventType="touchUpInside" id="FF8-y9-TAX"/>
                     </connections>
                 </button>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Create listings for streetwear you want &amp; discover new products in seconds " textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BnC-1B-y19">
-                    <rect key="frame" x="39" y="497" width="296" height="71"/>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1oS-pR-kS0">
+                    <rect key="frame" x="0.0" y="607" width="188" height="60"/>
+                    <color key="backgroundColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="71" id="xkE-wQ-Wxp"/>
+                        <constraint firstAttribute="height" constant="60" id="P8I-2F-0Uj"/>
                     </constraints>
-                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
-                    <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
+                    <state key="normal" title="Sign up with Email">
+                        <color key="titleColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="calibratedRGB"/>
+                    </state>
+                    <connections>
+                        <action selector="signUpWithEmailPressed:" destination="-1" eventType="touchUpInside" id="TiY-h5-XI9"/>
+                    </connections>
+                </button>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Bump" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="iEU-WM-76G">
+                    <rect key="frame" x="90" y="130" width="194" height="52"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="52" id="Efi-U6-ZD7"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="AvenirNext-HeavyItalic" family="Avenir Next" pointSize="30"/>
+                    <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="calibratedRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="welcomeiPhone.png" translatesAutoresizingMaskIntoConstraints="NO" id="Iur-vO-F7d">
-                    <rect key="frame" x="109.5" y="81" width="156" height="316"/>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Safely Buy &amp; Sell Streetwear with ZERO Fees" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BnC-1B-y19">
+                    <rect key="frame" x="55" y="190" width="265" height="71"/>
                     <constraints>
-                        <constraint firstAttribute="width" secondItem="Iur-vO-F7d" secondAttribute="height" multiplier="155:314" id="sLC-A7-gGe"/>
+                        <constraint firstAttribute="height" constant="71" id="cPH-fC-Wys"/>
                     </constraints>
-                </imageView>
+                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
+                    <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="calibratedRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="YEW-pz-vlB" customClass="SwipeView">
+                    <rect key="frame" x="0.0" y="288" width="375" height="80"/>
+                    <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="80" id="MId-VM-f4M"/>
+                    </constraints>
+                </view>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="LKc-2E-6Ew">
+                    <rect key="frame" x="23" y="539" width="328" height="60"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="60" id="sqe-hb-FxD"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
+                    <state key="normal" title="Already have an account? Log in">
+                        <color key="titleColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <connections>
+                        <action selector="loginPressed:" destination="-1" eventType="touchUpInside" id="8N9-cM-FET"/>
+                    </connections>
+                </button>
             </subviews>
-            <color key="backgroundColor" red="0.30196078431372547" green="0.63921568627450975" blue="0.9882352941176471" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
             <constraints>
-                <constraint firstItem="iEU-WM-76G" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="91" id="7e0-Lv-Rpa"/>
-                <constraint firstItem="Y4l-da-WYp" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="CAW-fL-82V"/>
-                <constraint firstItem="BnC-1B-y19" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="39" id="DSr-Fi-WO4"/>
-                <constraint firstItem="iEU-WM-76G" firstAttribute="top" secondItem="Iur-vO-F7d" secondAttribute="bottom" constant="40" id="DZ9-RU-lUe"/>
-                <constraint firstItem="iEU-WM-76G" firstAttribute="centerX" secondItem="BnC-1B-y19" secondAttribute="centerX" id="ULA-87-Afd"/>
-                <constraint firstItem="BnC-1B-y19" firstAttribute="top" secondItem="iEU-WM-76G" secondAttribute="bottom" constant="8" symbolic="YES" id="XzL-lU-YYx"/>
-                <constraint firstItem="Y4l-da-WYp" firstAttribute="top" secondItem="BnC-1B-y19" secondAttribute="bottom" constant="40" id="gZB-eL-kTk"/>
-                <constraint firstAttribute="bottom" secondItem="Y4l-da-WYp" secondAttribute="bottom" constant="-1" id="hea-Gi-fDw"/>
-                <constraint firstItem="Iur-vO-F7d" firstAttribute="top" relation="greaterThanOrEqual" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="81" id="pcy-RK-uwz"/>
-                <constraint firstItem="Iur-vO-F7d" firstAttribute="centerX" secondItem="iEU-WM-76G" secondAttribute="centerX" id="u77-Bi-jH6"/>
-                <constraint firstItem="BnC-1B-y19" firstAttribute="centerX" secondItem="Y4l-da-WYp" secondAttribute="centerX" id="wbV-Bd-QvR"/>
-                <constraint firstAttribute="trailing" secondItem="Y4l-da-WYp" secondAttribute="trailing" id="zhS-41-Fc5"/>
+                <constraint firstItem="YEW-pz-vlB" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="0e4-uu-1VR"/>
+                <constraint firstItem="iEU-WM-76G" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="130" id="0pn-b3-HpO"/>
+                <constraint firstItem="iEU-WM-76G" firstAttribute="centerX" secondItem="BnC-1B-y19" secondAttribute="centerX" id="4gi-dp-6be"/>
+                <constraint firstItem="YEW-pz-vlB" firstAttribute="top" secondItem="BnC-1B-y19" secondAttribute="bottom" constant="27" id="5oT-Vu-zze"/>
+                <constraint firstItem="Y4l-da-WYp" firstAttribute="baseline" secondItem="1oS-pR-kS0" secondAttribute="firstBaseline" id="HBG-jN-WKF"/>
+                <constraint firstItem="Y4l-da-WYp" firstAttribute="width" secondItem="1oS-pR-kS0" secondAttribute="width" id="KyG-9E-FyR"/>
+                <constraint firstItem="YEW-pz-vlB" firstAttribute="centerX" secondItem="LKc-2E-6Ew" secondAttribute="centerX" id="PHn-PN-V55"/>
+                <constraint firstItem="LKc-2E-6Ew" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="23" id="Q2g-I4-gcu"/>
+                <constraint firstItem="YEW-pz-vlB" firstAttribute="leading" secondItem="1oS-pR-kS0" secondAttribute="leading" id="V4T-7w-iU1"/>
+                <constraint firstItem="Y4l-da-WYp" firstAttribute="height" secondItem="1oS-pR-kS0" secondAttribute="height" id="WBB-Em-LDx"/>
+                <constraint firstItem="BnC-1B-y19" firstAttribute="top" secondItem="iEU-WM-76G" secondAttribute="bottom" constant="8" symbolic="YES" id="b5y-Lf-b0D"/>
+                <constraint firstItem="1oS-pR-kS0" firstAttribute="top" secondItem="LKc-2E-6Ew" secondAttribute="bottom" constant="8" symbolic="YES" id="fLY-ZQ-a7Q"/>
+                <constraint firstItem="YEW-pz-vlB" firstAttribute="trailing" secondItem="Y4l-da-WYp" secondAttribute="trailing" id="icS-hO-OeK"/>
+                <constraint firstItem="BnC-1B-y19" firstAttribute="centerX" secondItem="YEW-pz-vlB" secondAttribute="centerX" id="kwp-fQ-V0q"/>
+                <constraint firstAttribute="bottom" secondItem="1oS-pR-kS0" secondAttribute="bottom" id="lxf-wT-26h"/>
+                <constraint firstItem="iEU-WM-76G" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="90" id="o23-YA-M6g"/>
+                <constraint firstAttribute="trailing" secondItem="YEW-pz-vlB" secondAttribute="trailing" id="pnF-Hl-pDn"/>
+                <constraint firstItem="1oS-pR-kS0" firstAttribute="top" secondItem="Y4l-da-WYp" secondAttribute="top" id="uhu-Wl-lyB"/>
+                <constraint firstItem="BnC-1B-y19" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="55" id="vE1-3V-Y2n"/>
+                <constraint firstItem="1oS-pR-kS0" firstAttribute="baseline" secondItem="Y4l-da-WYp" secondAttribute="firstBaseline" id="wK6-Cf-cgY"/>
+                <constraint firstItem="Y4l-da-WYp" firstAttribute="leading" secondItem="1oS-pR-kS0" secondAttribute="trailing" constant="-1" id="xkd-iz-c7l"/>
             </constraints>
             <point key="canvasLocation" x="137.5" y="355.5"/>
         </view>
     </objects>
-    <resources>
-        <image name="welcomeiPhone.png" width="156" height="315"/>
-    </resources>
 </document>

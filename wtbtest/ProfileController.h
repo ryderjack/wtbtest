@@ -37,6 +37,9 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *snapchatCell;
 @property (weak, nonatomic) IBOutlet UIImageView *snapSeen;
 @property (strong, nonatomic) IBOutlet UITableViewCell *defaultSizesCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *FAQCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *instaCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *logOutCell;
 
 //delegate
 @property (nonatomic, weak) id <ProfileSettingsDelegate> delegate;
@@ -47,6 +50,7 @@
 //Team Bump
 @property (nonatomic) BOOL unseenTBMsg;
 @property (nonatomic) BOOL showSnapDot;
+@property (nonatomic) BOOL tappedTB;
 
 //web
 @property (nonatomic, strong) TOJRWebView *webView;

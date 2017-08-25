@@ -1,9 +1,11 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12120" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
-        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12088"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -17,30 +19,59 @@
                 <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 <subviews>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="O9d-Kr-INi" customClass="PFImageView"/>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="purchasedIcon.png" translatesAutoresizingMaskIntoConstraints="NO" id="lzu-7i-uh0">
-                        <color key="backgroundColor" red="0.86195838869999997" green="0.86195838869999997" blue="0.86195838869999997" alpha="1" colorSpace="calibratedRGB"/>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="O9d-Kr-INi" customClass="PFImageView">
+                        <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
+                    </imageView>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="purchasedIcon2.png" translatesAutoresizingMaskIntoConstraints="NO" id="lzu-7i-uh0">
+                        <rect key="frame" x="31" y="79" width="38" height="13"/>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstAttribute="width" secondItem="lzu-7i-uh0" secondAttribute="height" multiplier="38:13" id="kqE-jt-Xdj"/>
+                            <constraint firstAttribute="width" constant="38" id="bri-mA-DaH"/>
+                            <constraint firstAttribute="height" constant="13" id="sWP-wv-OC6"/>
+                        </constraints>
+                    </imageView>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="blueBoost.png" translatesAutoresizingMaskIntoConstraints="NO" id="eeU-qO-vvw">
+                        <rect key="frame" x="8" y="77" width="15" height="15"/>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="15" id="xkO-bQ-7o0"/>
+                            <constraint firstAttribute="height" constant="15" id="zOi-D9-VDs"/>
+                        </constraints>
+                    </imageView>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="greenBoost.png" translatesAutoresizingMaskIntoConstraints="NO" id="FHj-Nn-lPG">
+                        <rect key="frame" x="24" y="77" width="15" height="15"/>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="15" id="9OP-Vb-hDJ"/>
+                            <constraint firstAttribute="width" constant="15" id="SF4-HW-wec"/>
                         </constraints>
                     </imageView>
                 </subviews>
             </view>
             <constraints>
-                <constraint firstAttribute="trailing" secondItem="O9d-Kr-INi" secondAttribute="trailing" id="5mg-o4-L28"/>
-                <constraint firstItem="O9d-Kr-INi" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="OaI-cP-oXM"/>
-                <constraint firstItem="lzu-7i-uh0" firstAttribute="bottom" secondItem="gTV-IL-0wX" secondAttribute="bottomMargin" id="WeQ-W0-wfj"/>
-                <constraint firstAttribute="bottom" secondItem="O9d-Kr-INi" secondAttribute="bottom" id="XuJ-JW-asm"/>
-                <constraint firstItem="O9d-Kr-INi" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="g0y-Wb-Ti7"/>
-                <constraint firstItem="lzu-7i-uh0" firstAttribute="centerX" secondItem="O9d-Kr-INi" secondAttribute="centerX" id="sDb-NQ-qvc"/>
+                <constraint firstItem="eeU-qO-vvw" firstAttribute="top" secondItem="FHj-Nn-lPG" secondAttribute="top" id="5zx-Yq-vUI"/>
+                <constraint firstItem="eeU-qO-vvw" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leadingMargin" id="6Nr-yI-rli"/>
+                <constraint firstItem="O9d-Kr-INi" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="9h9-Ip-nAh"/>
+                <constraint firstItem="eeU-qO-vvw" firstAttribute="bottom" secondItem="gTV-IL-0wX" secondAttribute="bottomMargin" id="Cno-5j-9HL"/>
+                <constraint firstItem="FHj-Nn-lPG" firstAttribute="leading" secondItem="eeU-qO-vvw" secondAttribute="trailing" constant="1" id="De7-ib-OON"/>
+                <constraint firstItem="O9d-Kr-INi" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="Sw0-Yh-fK8"/>
+                <constraint firstAttribute="bottom" secondItem="O9d-Kr-INi" secondAttribute="bottom" id="YyJ-Ci-YX5"/>
+                <constraint firstItem="eeU-qO-vvw" firstAttribute="bottom" secondItem="FHj-Nn-lPG" secondAttribute="bottom" id="cGg-on-wgh"/>
+                <constraint firstItem="FHj-Nn-lPG" firstAttribute="bottom" secondItem="lzu-7i-uh0" secondAttribute="bottom" id="jxe-Tk-uGx"/>
+                <constraint firstItem="O9d-Kr-INi" firstAttribute="centerX" secondItem="lzu-7i-uh0" secondAttribute="centerX" id="yQA-7U-ree"/>
+                <constraint firstAttribute="trailing" secondItem="O9d-Kr-INi" secondAttribute="trailing" id="zJc-Gs-GMO"/>
             </constraints>
             <connections>
+                <outlet property="boost2ImageView" destination="FHj-Nn-lPG" id="4y8-RT-RWe"/>
+                <outlet property="boostImageView" destination="eeU-qO-vvw" id="Ppu-Xj-ICx"/>
                 <outlet property="itemImageView" destination="O9d-Kr-INi" id="eHM-I9-xXR"/>
                 <outlet property="purchasedImageView" destination="lzu-7i-uh0" id="Xm4-QY-Ri1"/>
             </connections>
         </collectionViewCell>
     </objects>
     <resources>
-        <image name="purchasedIcon.png" width="38" height="13"/>
+        <image name="blueBoost.png" width="20" height="20"/>
+        <image name="greenBoost.png" width="20" height="20"/>
+        <image name="purchasedIcon2.png" width="38" height="13"/>
     </resources>
 </document>

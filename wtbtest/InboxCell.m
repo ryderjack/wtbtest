@@ -24,7 +24,9 @@
     self.wtbPriceLabel.minimumScaleFactor=0.5;
     
     self.timeLabel.adjustsFontSizeToFitWidth = YES;
-    self.timeLabel.minimumScaleFactor=0.5;    
+    self.timeLabel.minimumScaleFactor=0.5;
+    
+    [self.unreadDot.layer setCornerRadius:2.5];
 }
 
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {

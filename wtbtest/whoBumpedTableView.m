@@ -9,6 +9,7 @@
 #import "whoBumpedTableView.h"
 #import "bumperCell.h"
 #import "UserProfileController.h"
+#import "UIImageView+Letters.h"
 
 @interface whoBumpedTableView ()
 
@@ -19,7 +20,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"B U M P S";
+    self.navigationItem.title = @"L I K E S";
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     self.tableView.backgroundColor = [UIColor whiteColor];
@@ -34,7 +35,7 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -83,8 +84,17 @@
     
     cell.usernameLabel.text = user.username;
     
-    [cell.userImageView setFile:[user objectForKey:@"picture"]];
-    [cell.userImageView loadInBackground];
+    if(![user objectForKey:@"picture"]){
+        
+        NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
+                                        NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+        
+        [cell.userImageView setImageWithString:user.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
+    }
+    else{
+        [cell.userImageView setFile:[user objectForKey:@"picture"]];
+        [cell.userImageView loadInBackground];
+    }
     
     return cell;
 }

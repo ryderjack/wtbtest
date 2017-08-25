@@ -19,7 +19,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
-    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
     self.applicationLeftBarButtonItems = @[cancelButton];
     
     if (self.createMode == YES || self.editMode == YES) {
@@ -37,8 +37,10 @@
         self.seenOneTapWarning = NO;
     }
     
-    //web view seemed to be pushed down y slightly so ensure its at the top of the view
-    [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, self.view.frame.origin.y, self.webView.frame.size.width, self.webView.frame.size.height)];
+    if (self.payMode != YES) {
+        //web view seemed to be pushed down y slightly so ensure its at the top of the view
+        [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, self.view.frame.origin.y, self.webView.frame.size.width, self.webView.frame.size.height)];
+    }
     
     if (self.dropMode == YES) {
         self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
@@ -79,7 +81,7 @@
         self.placeholderView.backgroundColor = [UIColor whiteColor];
         [self.webView addSubview:self.placeholderView];
     }
-    else if(self.dropMode == YES || self.storeMode == YES){
+    else if(self.dropMode == YES || self.storeMode == YES || self.payMode == YES){
         [self showHUD];
     }
 }
@@ -91,20 +93,20 @@
         [self.webView.scrollView setContentOffset:CGPointMake(0,140) animated:NO];
         [self.placeholderView removeFromSuperview];
     }
-    else if(self.dropMode == YES || self.storeMode == YES){
+    else if(self.dropMode == YES || self.storeMode == YES || self.payMode){
         [self hideHUD];
     }
 }
 
 -(void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error{
-    if(self.dropMode == YES || self.storeMode == YES){
+    if(self.dropMode == YES || self.storeMode == YES || self.payMode == YES){
         [self hideHUD];
     }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -130,7 +132,7 @@
         
     }
     else if (self.payMode == YES){
-        self.doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Paid" style:UIBarButtonItemStylePlain target:self action:@selector(paidPressed)];
+//        self.doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Paid" style:UIBarButtonItemStylePlain target:self action:@selector(paidPressed)];
     }
 }
 
@@ -244,7 +246,12 @@
 }
 
 -(void)cancelPressed{
-    [self.delegate cancelWebPressed];
+    if (self.payMode == YES) {
+        [self leavePrompt];
+    }
+    else{
+        [self.delegate cancelWebPressed];
+    }
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer{
@@ -405,6 +412,19 @@
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)leavePrompt{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Sure?" message:@"Are you sure you want to leave this page?" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Yes, leave" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self.delegate cancelWebPressed];
+    }]];
+    
     [self presentViewController:alertView animated:YES completion:nil];
 }
 

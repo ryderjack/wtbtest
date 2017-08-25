@@ -20,14 +20,20 @@
 #import "CreateSuccessView.h"
 #import "CreateViewController.h"
 #import "inviteViewClass.h"
+#import "boostController.h"
+#import "ForSaleListing.h"
+#import "BumpingIntroVC.h"
 
 @class ListingController;
 
 @protocol ListingControllerDelegate <NSObject>
 - (void)addItemViewController:(ListingController *)controller listing:(PFObject *)object;
+- (void)deletedWantedItem;
+- (void)changedPurchasedStatus; //could mark as purchased or unpurchased
+-(void)likedWantedItem;
 @end
 
-@interface ListingController : UITableViewController <iCarouselDataSource, iCarouselDelegate, DetailImageDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate, FBSDKAppInviteDialogDelegate, customAlertDelegate, successDelegate, CreateViewControllerDelegate,inviteDelegate>
+@interface ListingController : UITableViewController <iCarouselDataSource, iCarouselDelegate, DetailImageDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate, FBSDKAppInviteDialogDelegate, customAlertDelegate, successDelegate, CreateViewControllerDelegate,inviteDelegate,boostDelegate,UIViewControllerTransitioningDelegate, ForSaleListingDelegate,BumpingIntroDelegate>
 
 @property (nonatomic, weak) id <ListingControllerDelegate> delegate;
 @property (nonatomic, strong) PFObject *listingObject;
@@ -66,7 +72,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *pastDealsLabel;
 @property (weak, nonatomic) IBOutlet PFImageView *buyerImgView;
 @property (weak, nonatomic) IBOutlet UIButton *buyerButton;
-    @property (weak, nonatomic) IBOutlet PFImageView *checkImageView;
+@property (weak, nonatomic) IBOutlet PFImageView *checkImageView;
 
 @property (nonatomic, strong) PFFile *firstImage;
 @property (nonatomic, strong) PFFile *secondImage;
@@ -97,6 +103,7 @@
 
 //search
 @property (nonatomic) BOOL fromSearch;
+@property (nonatomic) BOOL modalMode;
 
 //modes
 @property (nonatomic, strong) NSMutableArray *cellArray;
@@ -108,15 +115,17 @@
 //big button
 @property (nonatomic, strong) UIButton *longButton;
 @property (nonatomic) BOOL buttonShowing;
+@property (nonatomic) BOOL barButtonPressed;
 
 //carousel Cell
 @property (weak, nonatomic) IBOutlet iCarousel *carouselView;
 
-//new button cell
-@property (weak, nonatomic) IBOutlet UIButton *iwantButton;
+//buttons cell
 @property (weak, nonatomic) IBOutlet UIButton *sendButton;
-@property (weak, nonatomic) IBOutlet UIButton *iwantLabel;
 @property (nonatomic) BOOL wantMode;
+@property (weak, nonatomic) IBOutlet UIButton *sendButtonLabel;
+@property (weak, nonatomic) IBOutlet UIButton *reportButton;
+@property (weak, nonatomic) IBOutlet UIButton *reportLabel;
 
 //send dialog box
 @property (nonatomic, strong) SendDialogBox *sendBox;
@@ -133,6 +142,9 @@
 //tab bar
 @property (nonatomic, strong) NSNumber *tabBarHeight;
 @property (nonatomic) int tabBarHeightInt;
+@property (nonatomic) BOOL searchTabsObserverOn;
+@property (nonatomic) BOOL justSwitchedTabs;
+
 
 //confirmation dialogue box
 @property (nonatomic, strong) customAlertViewClass *customAlert;
@@ -153,6 +165,8 @@
 @property (nonatomic) BOOL completionShowing;
 @property (nonatomic) BOOL shouldShowSuccess;
 @property (nonatomic) BOOL createdListing;
+@property (nonatomic) BOOL iwantDone;
+
 
 //invite pop up
 @property (nonatomic, strong, nullable) inviteViewClass *inviteView;
@@ -160,4 +174,18 @@
 @property (nonatomic, strong, nullable) UIView *inviteBgView;
 @property (nonatomic, strong) UITapGestureRecognizer *inviteTap;
 
+//boosts
+@property (nonatomic) BOOL highlightBoost;
+@property (nonatomic) BOOL searchBoost;
+@property (nonatomic) BOOL featureBoost;
+@property (nonatomic) BOOL fromSearchBoost;
+
+//success view mode
+@property (nonatomic) BOOL showCancelButton;
+
+//screenshot & other drop down tracking
+@property (nonatomic) BOOL dropShowing;
+
+//user push preferences
+@property (nonatomic) BOOL dontLikePush;
 @end

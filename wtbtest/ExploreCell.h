@@ -24,7 +24,11 @@
 @property (weak, nonatomic) IBOutlet UILabel *sizeLabel;
 @property (weak, nonatomic) IBOutlet UIButton *bumpButton;
 @property (weak, nonatomic) IBOutlet UIView *transView;
+@property (weak, nonatomic) IBOutlet UIImageView *boostImageView;
 
 @property (nonatomic, weak) id <ExploreCellDelegate> delegate;
+
+//for searchBoost results
+@property (nonatomic) int indexInt;
 
 @end

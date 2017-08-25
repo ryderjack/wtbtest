@@ -94,12 +94,18 @@
         NSArray *infoArray = [selectedItem objectForKey:@"info"];
         int tabNumber = [infoArray[0] intValue];
         [self.delegate tabHeaderItemSelected:tabNumber];
-        
     }
     else if ([type isEqualToString:@"web"]) {
         NSArray *infoArray = [selectedItem objectForKey:@"info"];
         NSString *site = infoArray[0];
         [self.delegate webHeaderItemSelected:site];
+    }
+    else if ([type isEqualToString:@"cc"]) {
+        //CC header tapped
+        NSArray *infoArray = [selectedItem objectForKey:@"info"];
+        NSString *eventLink = infoArray[0];
+        NSString *eventCopy = infoArray[1];
+        [self.delegate ccHeaderSelectedWithLink:eventLink andText:eventCopy];
     }
 //    else if ([type isEqualToString:@"blog"]) {
 //

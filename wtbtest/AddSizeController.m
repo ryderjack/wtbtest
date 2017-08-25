@@ -189,7 +189,6 @@
                          }
                          completion:^(BOOL finished) {
                              self.longShowing = YES;
-                             NSLog(@"showing");
                          }];
     }
 }
@@ -353,6 +352,62 @@
         }
     }
     return view;
+}
+
+-(void)swipeView:(SwipeView *)swipeView didSelectItemAtIndex:(NSInteger)index{
+
+    NSInteger selectedIndex;
+
+    //check what collection view
+    if (swipeView == self.sneakerSwipeView) {
+        
+        selectedIndex = self.sneakerSwipeView.currentItemIndex;
+        
+        if (index == selectedIndex || index == selectedIndex+1 || index == selectedIndex-1) {
+//            NSLog(@"don't scroll, selected an already highlighted index");
+        }
+        else{
+//            NSLog(@"selected an index outside the selection bounds!");
+            if (index > selectedIndex) {
+                //scroll right by 1
+                [self.sneakerSwipeView scrollByNumberOfItems:1 duration:0.2];
+            }
+            else{
+                //scroll left by 1
+                [self.sneakerSwipeView scrollByNumberOfItems:-1 duration:0.2];
+            }
+        }
+    }
+    else{
+        selectedIndex = self.clothingSwipeView.currentItemIndex;
+        
+        if (index == selectedIndex+1 || index == selectedIndex+2) {
+//            NSLog(@"don't scroll, selected an already highlighted index");
+        }
+        else{
+//            NSLog(@"selected an index outside the selection bounds!");
+            
+            //need to do a final check here for clothing swipe view to ensure 2 sizes remain selected
+            if (index > selectedIndex) {
+                if (self.clothingSizesArray.count-1 == index) {
+//                    NSLog(@"don't scroll");
+                }
+                else{
+                    //scroll right by 1
+                    [self.clothingSwipeView scrollByNumberOfItems:1 duration:0.2];
+                }
+            }
+            else{
+                if (index == 0) {
+//                    NSLog(@"don't scroll");
+                }
+                else{
+                    //scroll left by 1
+                    [self.clothingSwipeView scrollByNumberOfItems:-1 duration:0.2];
+                }
+            }
+        }
+    }
 }
 
 -(void)didChangeCountry{
@@ -554,7 +609,7 @@
     NSArray *EUArray = @[EUsneakerSizeOne,EUsneakerSizeTwo,EUsneakerSizeThree];
     current[@"EUShoeSizeArray"] = EUArray;
     
-    NSLog(@"UK: %@    US:%@     EU:%@",UKArray, USArray, EUArray);
+//    NSLog(@"UK: %@    US:%@     EU:%@",UKArray, USArray, EUArray);
     
     //clothing
     
@@ -564,7 +619,7 @@
     NSArray *clothingArray = @[clothingSizeOne,clothingSizeTwo];
     current[@"clothingSizeArray"] = clothingArray;
     
-    NSLog(@"clothing: %@",clothingArray);
+//    NSLog(@"clothing: %@",clothingArray);
     
     [current saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {

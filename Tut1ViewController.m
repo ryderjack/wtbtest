@@ -64,7 +64,7 @@
         [self.bottomLeftImageView addGestureRecognizer:tap2];
         [self.bottomRightImageView addGestureRecognizer:tap3];
         
-        self.pushText = [NSString stringWithFormat:@"%@ just bumped your listing 👊", [PFUser currentUser].username];
+        self.pushText = [NSString stringWithFormat:@"%@ just liked your listing 👊", [PFUser currentUser].username];
         self.listings = [NSMutableArray array];
         PFQuery *latestQuery = [PFQuery queryWithClassName:@"wantobuys"];
         [latestQuery whereKey:@"status" equalTo:@"live"];

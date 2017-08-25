@@ -153,6 +153,12 @@
             else if (index == 3){
                 [((PFImageView *)view)setFile:[self.listing objectForKey:@"image4"]];
             }
+            else if (index == 4){
+                [((PFImageView *)view)setFile:[self.listing objectForKey:@"image5"]];
+            }
+            else if (index == 5){
+                [((PFImageView *)view)setFile:[self.listing objectForKey:@"image6"]];
+            }
         }
     }
 

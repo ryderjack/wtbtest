@@ -17,14 +17,17 @@
 #import "TOJRWebView.h"
 #import "CameraController.h"
 #import "CategoryDropDown.h"
+#import "boostController.h"
+#import "CreateTab.h"
 
 @class simpleCreateVC;
 
 @protocol simpleCreateVCDelegate <NSObject>
 - (void)dismissSimpleCreateVC:(simpleCreateVC *)controller;
+- (void)showWantedSuccessForListing:(PFObject *)listing;
 @end
 
-@interface simpleCreateVC : UIViewController <UITextFieldDelegate,BASSquareCropperDelegate,successDelegate,UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate,JRWebViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,CameraControllerDelegate,categoryDelegate>
+@interface simpleCreateVC : UIViewController <UITextFieldDelegate,BASSquareCropperDelegate,successDelegate,UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate,JRWebViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,CameraControllerDelegate,categoryDelegate,boostDelegate>
 
 //UI
 @property (weak, nonatomic) IBOutlet UITextField *titleTextLabel;
@@ -39,6 +42,9 @@
 @property (nonatomic) BOOL shouldSave;
 @property (nonatomic) int photostotal;
 @property (nonatomic, strong) NSString *imageSource;
+
+//tut img view
+@property (weak, nonatomic) IBOutlet UIImageView *tutorialImageView;
 
 //success view
 @property (nonatomic, strong) CreateSuccessView *successView;
@@ -75,7 +81,7 @@
 @property (nonatomic, strong) UIImage *firstImage;
 @property (nonatomic, strong) NSArray *profanityList;
 @property (nonatomic) int tapNumber;
-
+@property (nonatomic) BOOL savingListing;
 
 //HUD
 @property (nonatomic, strong) RTSpinKitView *spinner;
@@ -97,5 +103,16 @@
 @property (weak, nonatomic) IBOutlet UIImageView *orImageView;
 @property (weak, nonatomic) IBOutlet UIButton *sellButton;
 @property (nonatomic) BOOL isSeller;
+
+//listing as label (sam only)
+@property (weak, nonatomic) IBOutlet UILabel *listingAsLabel;
+@property (nonatomic) BOOL listingAsMode;
+@property (nonatomic, strong) PFUser *listAsUser;
+
+//be specific drop down
+@property (nonatomic, strong) UIView *specificView;
+@property (nonatomic) BOOL alreadyPromptedSpecific;
+@property (nonatomic) BOOL toggleKeyboardHit;
+@property (nonatomic) BOOL isSpecificViewShowing;
 
 @end

@@ -23,9 +23,6 @@
     
     self.backgroundColor = [UIColor clearColor];
     
-    [self.firstButton setHidden:YES];
-    [self.secondButton setHidden:YES];
-    
     self.insideView.layer.cornerRadius = 10;
     
     //setup collectionView
@@ -36,7 +33,7 @@
     
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
     layout.sectionInset = UIEdgeInsetsMake(10, 10, 10, 10);
-    layout.itemSize = CGSizeMake(70, 70);
+    layout.itemSize = CGSizeMake(50, 50);
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
     [self.collectionView setCollectionViewLayout:layout];
     self.collectionView.showsHorizontalScrollIndicator = NO;
@@ -54,27 +51,28 @@
 - (IBAction)doneButtonPressed:(id)sender {
     [self.delegate successDonePressed];
 }
-- (IBAction)sharePressed:(id)sender {
-    [self.delegate sharePressed];
-}
+
 - (IBAction)editPressed:(id)sender {
-    [self.delegate editPressed];
+    [self.delegate addMorePressed];
 }
 - (IBAction)createPressed:(id)sender {
     [self.delegate createPressed];
 }
-- (IBAction)addMorePressed:(id)sender {
-    [self.delegate addMorePressed];
-}
-- (IBAction)addSizePressed:(id)sender {
+
+- (IBAction)boostPressed:(id)sender {
+    [Answers logCustomEventWithName:@"Boost Pressed"
+                   customAttributes:@{
+                                      @"pageName":@"Success View"
+                                      }];
     
-    [Answers logCustomEventWithName:@"Add Size Pressed"
-                   customAttributes:@{}];
-    
-    [self.delegate editPressed];
+    [self.delegate boostPressed];
 }
-- (IBAction)firstPressed:(id)sender {
-    [self.delegate successDonePressed];
+
+- (IBAction)invitePressed:(id)sender {
+    [self.delegate invitePressed];
+}
+- (IBAction)browseLatestPressed:(id)sender {
+    [self.delegate blueButtonPressed];
 }
 
 @end

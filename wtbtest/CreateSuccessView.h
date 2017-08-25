@@ -14,14 +14,17 @@
 - (void)editPressed;
 - (void)createPressed;
 - (void)sharePressed;
+- (void)boostPressed;
 - (void)successDonePressed;
 - (void)addMorePressed;
+- (void)blueButtonPressed;
+- (void)invitePressed;
+
 
 @end
 
 @interface CreateSuccessView : UIView
 
-@property (weak, nonatomic) IBOutlet UIButton *shareButton;
 @property (weak, nonatomic) IBOutlet UIButton *editButton;
 @property (weak, nonatomic) IBOutlet UIButton *createButton;
 @property (weak, nonatomic) IBOutlet UIView *insideView;
@@ -30,9 +33,11 @@
 @property (weak, nonatomic) IBOutlet UILabel *mainLabel;
 
 //buttons
-@property (weak, nonatomic) IBOutlet UIButton *secondButton;
-@property (weak, nonatomic) IBOutlet UIButton *firstButton;
 @property (weak, nonatomic) IBOutlet UIButton *doneButton;
+@property (weak, nonatomic) IBOutlet UIButton *blueButton;
+
+//edit/add detail button label
+@property (weak, nonatomic) IBOutlet UILabel *addDetailLabel;
 
 
 - (void)setCollectionViewDataSourceDelegate:(id<UICollectionViewDataSource, UICollectionViewDelegate>)dataSourceDelegate indexPath:(NSIndexPath *)indexPath;

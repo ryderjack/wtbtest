@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.3.0</string>
+	<string>2.0.18</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -33,7 +33,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1174</string>
+	<string>1223</string>
 	<key>Fabric</key>
 	<dict>
 		<key>APIKey</key>
@@ -54,6 +54,8 @@
 		<string>whatsapp</string>
 		<string>fb-messenger</string>
 		<string>snapchat</string>
+		<string>fb</string>
+		<string>instagram</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
@@ -65,7 +67,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Bump needs the camera for photos!</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Bump uses your location to find buyers and sellers around you</string>
+	<string>Bump uses your location to find listings around you!</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Bump needs access to change your profile pictures and so you can send photos to buyers/sellers!</string>
 	<key>UILaunchStoryboardName</key>

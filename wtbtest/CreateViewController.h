@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "SelectViewController.h"
 #import "LocationView.h"
-#import "ListingCompleteView.h"
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
 #import "CameraController.h"
@@ -20,6 +19,8 @@
 #import "CreateSuccessView.h"
 #import "customAlertViewClass.h"
 #import <QBImagePickerController/QBImagePickerController.h>
+#import "AddImageCell.h"
+#import <LXReorderableCollectionViewFlowLayout.h>
 
 @class CreateViewController;
 
@@ -27,7 +28,7 @@
 - (void)dismissCreateController:(CreateViewController *)controller;
 @end
 
-@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate>
+@interface CreateViewController : UITableViewController <UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, LocationViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate, UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *titleCell;
@@ -38,6 +39,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *locCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *payCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *imageCell;
 
 //delegate
 @property (nonatomic, weak) id <CreateViewControllerDelegate> delegate;
@@ -82,6 +84,8 @@
 @property (weak, nonatomic) IBOutlet PFImageView *thirdImageView;
 @property (weak, nonatomic) IBOutlet PFImageView *fourthImageView;
 
+@property (nonatomic, strong) NSMutableArray *placeholderAssetArray;
+
 @property (nonatomic, strong) NSString *selection;
 @property (weak, nonatomic) IBOutlet UILabel *warningLabel;
 @property (nonatomic, strong) NSString *status;
@@ -106,6 +110,12 @@
 @property (nonatomic) BOOL hudShowing;
 @property (nonatomic) BOOL shouldShowHUD;
 
+//new image cell w/ CV
+@property (weak, nonatomic) IBOutlet UICollectionView *imgCollectionView;
+@property (nonatomic, strong) NSIndexPath *selectedIndexPath;
+@property (nonatomic, strong) NSMutableArray *filesArray;
+@property (nonatomic) int cellWidth;
+
 //listing
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
@@ -115,7 +125,11 @@
 @property (nonatomic) BOOL somethingChanged;
 @property (nonatomic) BOOL shouldSave;
 @property (nonatomic, strong) NSDate *todayDate;
+
+//location
 @property (strong, nonatomic) PFGeoPoint *geopoint;
+@property (nonatomic, strong) NSString *locationString;
+
 @property (nonatomic) int tapNumber;
 
 //add details
@@ -125,5 +139,9 @@
 //update button
 @property (nonatomic, strong) UIButton *longButton;
 @property (nonatomic) BOOL buttonShowing;
+
+//sam's listing as X mode
+@property (nonatomic) BOOL listingAsMode;
+@property (nonatomic, strong) PFUser *listAsUser;
 
 @end

@@ -9,6 +9,8 @@
 #import "SettingsController.h"
 #import <Crashlytics/Crashlytics.h>
 #import "UIImage+Resize.h"
+#import "AppConstant.h"
+#import "UIImageView+Letters.h"
 
 @interface SettingsController ()
 
@@ -21,6 +23,8 @@
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+    
     self.navigationItem.title = @"S E T T I N G S";
     
     self.nameCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -31,14 +35,20 @@
     self.depopCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.contactEmailCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.cmoCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    
+    self.listAsCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.sellerModeCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.notificationsCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.locationLabelCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.bioCell.selectionStyle = UITableViewCellSelectionStyleNone;
+
     self.emailFields.delegate = self;
     self.depopField.delegate = self;
     self.contactEmailField.delegate = self;
     self.firstNameField.delegate = self;
     self.lastNameField.delegate = self;
-
-    self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
+    self.bioField.delegate = self;
+    
+    self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"bump", @"terrible", @"bad", @"depop", @"grailed", @"ebay"];
     
     [self setImageBorder:self.testingView];
     
@@ -47,37 +57,48 @@
     self.currentPaypal = [self.currentUser objectForKey:@"paypal"];
     self.currentContact = [self.currentUser objectForKey:@"email"];
     
-    self.usernameLabel.text = [NSString stringWithFormat:@"Username: %@",self.currentUser.username];
+    self.usernameLabel.text = [NSString stringWithFormat:@"@%@",self.currentUser.username];
     
     if ([self.currentUser objectForKey:@"firstName"]) {
-        self.firstNameField.placeholder = [NSString stringWithFormat:@"First: %@",[self.currentUser objectForKey:@"firstName"]];
+        self.firstNameField.text = [NSString stringWithFormat:@"%@",[self.currentUser objectForKey:@"firstName"]];
     }
     else{
-        self.firstNameField.placeholder = [NSString stringWithFormat:@"First: %@",[self.currentUser objectForKey:@"fullname"]];
+        self.firstNameField.text = [NSString stringWithFormat:@"%@",[self.currentUser objectForKey:@"fullname"]];
     }
     
     if ([self.currentUser objectForKey:@"lastName"]) {
-        self.lastNameField.placeholder = [NSString stringWithFormat:@"Last: %@",[self.currentUser objectForKey:@"lastName"]];
+        self.lastNameField.text = [NSString stringWithFormat:@"%@",[self.currentUser objectForKey:@"lastName"]];
     }
     
     
     //check if got paypal email
     if ([self.currentUser objectForKey:@"paypal"]) {
-        self.emailFields.placeholder = [NSString stringWithFormat:@"PayPal: %@",self.currentPaypal];
+        self.emailFields.text = [NSString stringWithFormat:@"%@",self.currentPaypal];
     }
     else{
-        self.emailFields.placeholder = @"Enter your PayPal email";
+        self.emailFields.placeholder = @"Enter";
     }
     
-    self.contactEmailField.placeholder = [NSString stringWithFormat:@"Contact: %@",self.currentContact];
+    //check if got a bio
+    if ([self.currentUser objectForKey:@"bio"]) {
+        if (![[self.currentUser objectForKey:@"bio"] isEqualToString:@""]) {
+            self.bioField.text = [NSString stringWithFormat:@"%@",[self.currentUser objectForKey:@"bio"]];
+        }
+    }
+    else{
+        self.bioField.placeholder = @"Enter";
+    }
     
-//    if ([self.currentUser objectForKey:@"building"]) {
-//        //address been set before
-//        self.addLabel.text = [NSString stringWithFormat:@"Address: %@ %@ %@ %@ %@",[self.currentUser objectForKey:@"building"], [self.currentUser objectForKey:@"street"], [self.currentUser objectForKey:@"city"], [self.currentUser objectForKey:@"postcode"], [self.currentUser objectForKey:@"phonenumber"]];
-//    }
-//    else{
-//        self.addLabel.text = @"Enter address";
-//    }
+    //check if got profile location
+    
+    if ([self.currentUser objectForKey:@"profileLocation"]) {
+        self.locLabel.text = [NSString stringWithFormat:@"%@",[self.currentUser objectForKey:@"profileLocation"]];
+    }
+    else{
+        self.locLabel.text = @"Enter";
+    }
+    
+    self.contactEmailField.text = [NSString stringWithFormat:@"%@",self.currentContact];
     
     NSString *currency = [self.currentUser objectForKey:@"currency"];
     if ([currency isEqualToString:@"GBP"]) {
@@ -91,15 +112,6 @@
     }
     self.selectedCurrency = @"";
     
-    NSString *depopHan = [self.currentUser objectForKey:@"depopHandle"];
-    
-    if ([self.currentUser objectForKey:@"depopHandle"]) {
-        self.depopField.placeholder = [NSString stringWithFormat:@"Depop: %@", depopHan];
-    }
-    else{
-        self.depopField.placeholder = @"Enter Depop username";
-    }
-    
     if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
         //CMO switch setup
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"CMOModeOn"]==YES) {
@@ -108,24 +120,110 @@
         else{
             [self.cmoSwitch setOn:NO];
         }
-    
+        
+        //list as X setup
+        if ([[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
+            [self.listAsSwitch setOn:YES];
+        }
+        else{
+            [self.listAsSwitch setOn:NO];
+        }
+        
+        //seller mode setup
+        PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
+        [trustedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+        [trustedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+            if (number >= 1) {
+                
+                if ([[NSUserDefaults standardUserDefaults]boolForKey:@"notSellerMode"]==YES) {
+                    [self.sellerModeSwitch setOn:NO];
+                }
+                else{
+                    [self.sellerModeSwitch setOn:YES];
+                }
+            }
+        }];
     }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+    [self.navigationController.navigationBar setHidden:NO];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    [self.testingView setFile:[self.currentUser objectForKey:@"picture"]];
-    [self.testingView loadInBackground];
+    if (![self.currentUser objectForKey:@"picture"]) {
+        self.changePictureLabel.text = @"Add a profile picture";
+        
+        NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
+                                        NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+        
+        [self.testingView setImageWithString:self.currentUser.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
+    }
+    else{
+        self.changePictureLabel.text = @"Change profile picture";
+
+        [self.testingView setFile:[self.currentUser objectForKey:@"picture"]];
+        [self.testingView loadInBackground];
+    }
+
+    //setup notifications
+    
+    //check if any push on
+    if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications]) {
+        [self.pushStatusButton setEnabled:NO];
+        [self.pushStatusButton setTitle:@"Push enabled" forState:UIControlStateNormal];
+
+        //push is on
+        //check if already ignoring like pushes
+        if ([[self.currentUser objectForKey:@"ignoreLikePushes"]isEqualToString:@"YES"]) {
+            [self.likeSwitch setOn:NO];
+        }
+        else{
+            [self.likeSwitch setOn:YES];
+        }
+        
+        //check if have facebookId
+        if ([self.currentUser objectForKey:@"facebookId"]) {
+            if ([[self.currentUser objectForKey:@"ignoreFacebookPushes"]isEqualToString:@"YES"]) {
+                [self.fbFriendSwitch setOn:NO];
+            }
+            else{
+                [self.fbFriendSwitch setOn:YES];
+            }
+        }
+        else{
+            [self.fbFriendSwitch setOn:NO];
+            [self.fbFriendSwitch setEnabled:NO];
+        }
+        
+    }
+    else{
+        //push is off
+        [self.pushStatusButton setEnabled:YES];
+        [self.pushStatusButton setTitle:@"Tap to enable Push" forState:UIControlStateNormal];
+        
+        [self.likeSwitch setEnabled:NO];
+        [self.fbFriendSwitch setEnabled:NO];
+    }
+
     
     [Answers logCustomEventWithName:@"Viewed page"
                    customAttributes:@{
                                       @"pageName":@"Settings",
                                       }];
+}
+
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+    
+    if (self.bioMode) {
+        self.bioMode = NO;
+        [self.bioField becomeFirstResponder];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -146,7 +244,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return 3;
+        return 5;
     }
     else if (section == 1){
         return 3;
@@ -158,7 +256,7 @@
         return 1;
     }
     else if (section == 4){
-        return 1;
+        return 3;
     }
     else{
        return 0;
@@ -175,6 +273,12 @@
         }
         else if (indexPath.row == 2) {
             return self.lastNameCell;
+        }
+        else if (indexPath.row == 3) {
+            return self.locationLabelCell;
+        }
+        else if (indexPath.row == 4) {
+            return self.bioCell;
         }
     }
     else if (indexPath.section == 1){
@@ -193,14 +297,25 @@
             return self.currencyCell;
         }
     }
+//    else if (indexPath.section == 3){
+//        if (indexPath.row == 0) {
+//            return self.locationCell;
+//        }
+//    }
     else if (indexPath.section == 3){
         if (indexPath.row == 0) {
-            return self.depopCell;
+            return self.notificationsCell;
         }
     }
     else if (indexPath.section == 4){
         if (indexPath.row == 0) {
             return self.cmoCell;
+        }
+        else if (indexPath.row == 1) {
+            return self.listAsCell;
+        }
+        else if (indexPath.row == 2) {
+            return self.sellerModeCell;
         }
     }
     return nil;
@@ -227,23 +342,29 @@
             [self presentViewController:self.picker animated:YES completion:nil];
         }
     }
+    else if (indexPath.section == 0){
+        if (indexPath.row == 3){
+            //goto location
+            
+            LocationView *vc = [[LocationView alloc]init];
+            vc.delegate = self;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+    }
 }
 
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
-    NSLog(@"INFO: %@", info);
-    
     self.profileImage = info[UIImagePickerControllerOriginalImage];
     [self showHUD];
 //    UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
-    UIImage *imageToSave = [self.profileImage scaleImageToSize:CGSizeMake(750, 750)];
-
+    UIImage *imageToSave = [self.profileImage scaleImageToSize:CGSizeMake(400, 400)];
     
     NSData* data = UIImageJPEGRepresentation(imageToSave, 0.7f);
     if (data == nil) {
         NSLog(@"error with data");
         [self hideHUD];
         [picker dismissViewControllerAnimated:YES completion:nil];
-        [self showAlertWithTitle:@"Image Error" andMsg:@"Woops, something went wrong. Please try again! If this keeps happening please message Team Bump from your profile"];
+        [self showAlertWithTitle:@"Image Error" andMsg:@"Woops, something went wrong. Please try again! If this keeps happening please message Team Bump from Settings"];
         [Answers logCustomEventWithName:@"PFFile Nil Data"
                        customAttributes:@{
                                           @"pageName":@"settings"
@@ -283,6 +404,8 @@
 }
 
 -(void)textFieldDidEndEditing:(UITextField *)textField{
+
+    //paypal
     if (textField == self.emailFields && ![textField.text isEqualToString:@""]) {
         if ([self NSStringIsValidEmail:self.emailFields.text] == YES) {
             [self.currentUser setObject:self.emailFields.text forKey:@"paypal"];
@@ -298,11 +421,9 @@
                     }]];
                     
                     [self presentViewController:alertView animated:YES completion:^{
-                       self.navigationItem.hidesBackButton = NO;
                     }];
                 }
                 else{
-                    self.navigationItem.hidesBackButton = NO;
                 }
             }];
         }
@@ -312,9 +433,7 @@
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
             }]];
-            [self presentViewController:alertView animated:YES completion:^{
-                self.navigationItem.hidesBackButton = NO;
-            }];
+            [self presentViewController:alertView animated:YES completion:nil];
         }
     }
     
@@ -331,12 +450,7 @@
                     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
                     }]];
                     
-                    [self presentViewController:alertView animated:YES completion:^{
-                        self.navigationItem.hidesBackButton = NO;
-                    }];
-                }
-                else{
-                    self.navigationItem.hidesBackButton = NO;
+                    [self presentViewController:alertView animated:YES completion:nil];
                 }
             }];
         }
@@ -347,39 +461,57 @@
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
             }]];
-            [self presentViewController:alertView animated:YES completion:^{
-                self.navigationItem.hidesBackButton = NO;
-            }];
+            [self presentViewController:alertView animated:YES completion:nil];
         }
     }
     else if (textField == self.firstNameField){
         NSString *stringCheck = [self.firstNameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
         
-        if (![stringCheck isEqualToString:@""]) {
-            NSArray *names = [self.firstNameField.text componentsSeparatedByString:@" "];
+        if (![stringCheck isEqualToString:@""] && ![[stringCheck lowercaseString] isEqualToString:@"team"] && ![[stringCheck lowercaseString] isEqualToString:@"bump"]) {
             
-            if (![names containsObject:self.profanityList]) {
+            for (NSString *profan in self.profanityList) {
+                if ([[self.firstNameField.text lowercaseString] containsString:profan]) {
+                    self.firstNameField.text = @"";
+                }
+            }
+            
+            if (![self.firstNameField.text isEqualToString:@""]) {
+                self.changedName = YES;
                 [self.currentUser setObject:[self.firstNameField.text capitalizedString] forKey:@"firstName"];
                 [self.currentUser saveInBackground];
             }
+            
         }
-        self.navigationItem.hidesBackButton = NO;
     }
     else if (textField == self.lastNameField){
         NSString *stringCheck = [self.lastNameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
         
-        if (![stringCheck isEqualToString:@""]) {
-            NSArray *names = [self.lastNameField.text componentsSeparatedByString:@" "];
+        if (![stringCheck isEqualToString:@""] && ![[stringCheck lowercaseString] isEqualToString:@"bump"]) {
+
+            for (NSString *profan in self.profanityList) {
+                if ([[self.lastNameField.text lowercaseString] containsString:profan]) {
+                    self.lastNameField.text = @"";
+                }
+            }
             
-            if (![names containsObject:self.profanityList]) {
+            if (![self.lastNameField.text isEqualToString:@""]) {
+                self.changedName = YES;
                 [self.currentUser setObject:[self.lastNameField.text capitalizedString] forKey:@"lastName"];
                 [self.currentUser saveInBackground];
             }
         }
-        self.navigationItem.hidesBackButton = NO;
     }
-    else{
-        self.navigationItem.hidesBackButton = NO;
+    else if (textField == self.bioField){
+        [Answers logCustomEventWithName:@"Updated bio in Settings"
+                       customAttributes:@{}];
+        
+        for (NSString *profan in self.profanityList) {
+            if ([[self.bioField.text lowercaseString] containsString:profan]) {
+                self.bioField.text = @"";
+            }
+        }
+        [self.currentUser setObject:self.bioField.text forKey:@"bio"];
+        [self.currentUser saveInBackground];
     }
 }
 
@@ -388,46 +520,74 @@
     return YES;
 }
 
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+    
+    //limit chars
+    if ([self.profanityList containsObject:string]) {
+        return  NO;
+    }
+    
+    if(range.length + range.location > textField.text.length)
+    {
+        return NO;
+    }
+    NSUInteger newLength = [textField.text length] + [string length] - range.length;
+    return newLength <= 30;
+}
+
 -(void)viewWillDisappear:(BOOL)animated{
+    //fail safe
+    [self hideHUD];
+
     if (![self.selectedCurrency isEqualToString:@""]) {
         [self.currentUser  setObject:self.selectedCurrency forKey:@"currency"];
     }
     
-    NSString *depopString = [self.depopField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
-    
-    if (![depopString isEqualToString:@""]) {
-        [Answers logCustomEventWithName:@"Entered Depop handle"
-                       customAttributes:@{}];
-        //entered a depop account
-        NSString *depopHandle = [self.depopField.text stringByReplacingOccurrencesOfString:@"@" withString:@""];
-        depopHandle = [depopHandle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        self.currentUser [@"depopHandle"] = depopHandle;
+    if (self.changedName) {
         
-        PFQuery *depopQuery = [PFQuery queryWithClassName:@"Depop"];
-        [depopQuery whereKey:@"user" equalTo:self.currentUser ];
-        [depopQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-//                NSLog(@"already entered their depop handle at some point, update it here");
-                object[@"handle"] = depopHandle;
-                [object saveInBackground];
-            }
-            else{
-//                NSLog(@"no depop handle currently saved so create a new one");
-                PFObject *depopObj = [PFObject objectWithClassName:@"Depop"];
-                depopObj[@"user"] = self.currentUser ;
-                depopObj[@"handle"] = depopHandle;
-                NSLog(@"saving");
-                [depopObj saveInBackground];
+        //check for profanity
+        //concatonate first & last names for fullname and fullnameLower
+        NSString *fullnameString = @"";
+        
+        if ([self.firstNameField.text isEqualToString:@""]) {
+            //only changed last name
+            fullnameString = [NSString stringWithFormat:@"%@ %@",[[self.firstNameField.placeholder capitalizedString]stringByReplacingOccurrencesOfString:@"First: " withString:@""],[self.lastNameField.text capitalizedString]];
+        }
+        else if ([self.lastNameField.text isEqualToString:@""]) {
+            //only changed first name
+            fullnameString = [NSString stringWithFormat:@"%@ %@",[self.firstNameField.text capitalizedString],[[self.lastNameField.placeholder capitalizedString]stringByReplacingOccurrencesOfString:@"Last: " withString:@""]];
+        }
+        else{
+            //changed full name
+            fullnameString = [NSString stringWithFormat:@"%@ %@",[self.firstNameField.text capitalizedString],[self.lastNameField.text capitalizedString]];
+        }
+        
+        [PFUser currentUser][PF_USER_FULLNAME] = fullnameString;
+        [PFUser currentUser][@"fullnameLower"] = [fullnameString lowercaseString];
+        [[PFUser currentUser]saveInBackground];
+    }
+    
+    if (self.changedFbPush) {
+        //query for bumped object and turn off / on
+        PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
+        [bumpedQuery whereKey:@"user" equalTo:self.currentUser];
+        [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            if(objects.count > 0){
+                
+                for (PFObject *bumped in objects) {
+                    if (self.fbFriendSwitch.isOn == YES) {
+                        //set to on
+                        [bumped setObject:@"live" forKey:@"status"];
+                    }
+                    else{
+                        //set to ignore
+                        [bumped setObject:@"ignore" forKey:@"status"];
+                    }
+                    [bumped saveInBackground];
+                }
             }
         }];
     }
-    else{
-        //entered blank depop handle
-    }
-    
-    [self.currentUser setObject:@"YES" forKey:@"paypalUpdated"];
-    [self.currentUser saveInBackground];
-    [self hideHUD];
 }
 
 - (IBAction)GBPPressed:(id)sender {
@@ -475,8 +635,14 @@
     else if (section == 1){
         header.textLabel.text = @"  Account";
     }
-    else if (section == 3){
+    else if (section == 4){
         header.textLabel.text = @"  Other";
+    }
+//    else if (section == 3){
+//        header.textLabel.text = @"  Location";
+//    }
+    else if (section == 3){
+        header.textLabel.text = @"  Notifications";
     }
     else if (section == 0){
         header.textLabel.text = @"  Me";
@@ -494,7 +660,13 @@
     else if (section == 1){
         return @"  Account";
     }
+//    else if (section == 3){
+//        return @"  Location";
+//    }
     else if (section == 3){
+        return @"  Notifications";
+    }
+    else if (section == 4){
         return @"  Other";
     }
     
@@ -514,10 +686,6 @@
     NSString *emailRegex = stricterFilter ? stricterFilterString : laxString;
     NSPredicate *emailTest = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", emailRegex];
     return [emailTest evaluateWithObject:checkString];
-}
-
--(void)textFieldDidBeginEditing:(UITextField *)textField{
-    self.navigationItem.hidesBackButton = YES;
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{
@@ -566,4 +734,299 @@
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"CMOModeOn"];
     }
 }
+- (IBAction)listAsSwitchChanged:(id)sender {
+    if (self.listAsSwitch.on == YES) {
+        NSLog(@"ON");
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"listMode"];
+        
+        //prompt for user ID to retrieve
+        [self userPrompt];
+    }
+    else{
+        NSLog(@"OFF");
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"listMode"];
+    }
+}
+- (IBAction)sellerModeSwitchChanged:(id)sender {
+    if (self.sellerModeSwitch.on == YES) {
+        NSLog(@"ON");
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"notSellerMode"];
+    }
+    else{
+        NSLog(@"OFF");
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"notSellerMode"];
+    }
+}
+
+-(void)userPrompt{
+    UIAlertController *alertController = [UIAlertController
+                                          alertControllerWithTitle:@"List items as?"
+                                          message:@"Enter username (no spaces)"
+                                          preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+     {
+         textField.placeholder = @"username";
+     }];
+    
+    UIAlertAction *okAction = [UIAlertAction
+                               actionWithTitle:@"DONE"
+                               style:UIAlertActionStyleDefault
+                               handler:^(UIAlertAction *action)
+                               {
+                                   UITextField *usernameField = alertController.textFields.firstObject;
+                                   [self retrieveUser:usernameField.text];
+                               }];
+    
+    [alertController addAction:okAction];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+-(void)retrieveUser:(NSString*)username{
+    PFQuery *userQuery = [PFUser query];
+    [userQuery whereKey:@"username" equalTo:username];
+    [userQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            [[NSUserDefaults standardUserDefaults] setObject:object.objectId forKey:@"listUser"];
+        }
+        else{
+            [self.listAsSwitch setOn:NO];
+            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"listMode"];
+            [self showAlertWithTitle:@"NO USER" andMsg:[NSString stringWithFormat:@"ERROR %@", error]];
+        }
+    }];
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (indexPath.section == 3) {
+        return 130;
+    }
+    else{
+        return 44;
+    }
+}
+- (IBAction)likeSwitchPressed:(id)sender {
+    self.changedPush = YES;
+    
+    if (self.likeSwitch.isOn == YES) {
+        //switched on
+        [self.currentUser setObject:@"NO" forKey:@"ignoreLikePushes"];
+        
+        [Answers logCustomEventWithName:@"Turned on Specific Push"
+                       customAttributes:@{
+                                          @"type":@"Likes",
+                                          }];
+    }
+    else{
+        //switched off
+        [self.currentUser setObject:@"YES" forKey:@"ignoreLikePushes"];
+        
+        [Answers logCustomEventWithName:@"Turned off Specific Push"
+                       customAttributes:@{
+                                          @"type":@"Likes",
+                                          }];
+    }
+}
+
+- (IBAction)fbFriendSwitchPressed:(id)sender {
+    self.changedPush = YES;
+    
+    if (self.fbFriendSwitch.isOn == YES) {
+        //switched on
+        [self.currentUser setObject:@"NO" forKey:@"ignoreFacebookPushes"];
+        
+        [Answers logCustomEventWithName:@"Turned on Specific Push"
+                       customAttributes:@{
+                                          @"type":@"Facebook",
+                                          }];
+    }
+    else{
+        //switched off
+        [self.currentUser setObject:@"YES" forKey:@"ignoreFacebookPushes"];
+        
+        [Answers logCustomEventWithName:@"Turned off Specific Push"
+                       customAttributes:@{
+                                          @"type":@"Facebook",
+                                          }];
+    }
+}
+- (IBAction)pushEnablePressed:(id)sender {
+    //if user has declined then show normal dialog, or take to settings
+    [Answers logCustomEventWithName:@"Enable Push Pressed"
+                   customAttributes:@{
+                                      @"where":@"Settings",
+                                      }];
+    [self showPushPrompt];
+}
+
+#pragma push prompt methods
+
+-(void)showPushPrompt{
+    self.shownPushAlert = YES;
+    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.searchBgView.alpha = 0.0;
+    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
+    self.pushAlert = (customAlertViewClass *)[nib objectAtIndex:0];
+    self.pushAlert.delegate = self;
+    self.pushAlert.titleLabel.text = @"Enable Push";
+    
+    if ([[NSUserDefaults standardUserDefaults]boolForKey:@"declinedPushPermissions"]) {
+        //show normal prompt
+        self.pushAlert.messageLabel.text = @"Get notified when buyers message you on Bump";
+        [self.pushAlert.secondButton setTitle:@"E N A B L E" forState:UIControlStateNormal];
+        self.settingsMode = NO;
+    }
+    else{
+        //show prompt to goto settings and turn push back on
+        self.pushAlert.messageLabel.text = @"Get notified when buyers message you - Goto Settings now to enable Push";
+        [self.pushAlert.secondButton setTitle:@"S E T T I N G S" forState:UIControlStateNormal];
+        self.settingsMode = YES;
+    }
+    
+    self.pushAlert.numberOfButtons = 2;
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.pushAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
+    }
+    else{
+        [self.pushAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
+    }
+    
+    self.pushAlert.layer.cornerRadius = 10;
+    self.pushAlert.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.pushAlert];
+    
+    [UIView animateWithDuration:0.5
+                          delay:0.2
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.pushAlert setFrame:CGRectMake(0, 0, 250, 157)];
+                            }
+                            else{
+                                [self.pushAlert setFrame:CGRectMake(0, 0, 300, 188)]; //iPhone 6/7 specific
+                            }
+                            self.pushAlert.center = self.view.center;
+                            
+                        }
+                     completion:nil];
+}
+
+-(void)donePressed{
+    //check push status
+//    double delayInSeconds = 5.0;
+//    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+//    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+//        [self checkPushStatus];
+//    });
+//    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.searchBgView = nil;
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.pushAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                            }
+                            else{
+                                [self.pushAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                            }
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.pushAlert setAlpha:0.0];
+                         [self.pushAlert removeFromSuperview];
+                         self.pushAlert = nil;
+                     }];
+}
+
+#pragma custom alert delegates
+
+-(void)firstPressed{
+    //cancelled
+    [self donePressed];
+}
+-(void)secondPressed{
+    
+    if (self.settingsMode == YES) {
+        //take user to settings
+        NSString *settings = UIApplicationOpenSettingsURLString;
+        NSURL *settingsURL = [NSURL URLWithString:settings];
+        [[UIApplication sharedApplication]openURL:settingsURL];
+    }
+    else{
+        //push reminder
+        [Answers logCustomEventWithName:@"Accepted Push Permissions"
+                       customAttributes:@{
+                                          @"mode":@"seller application",
+                                          @"username":[PFUser currentUser].username
+                                          }];
+        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForPushPermission"];
+        [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"declinedPushPermissions"];
+        
+        UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
+                                                        UIUserNotificationTypeBadge |
+                                                        UIUserNotificationTypeSound);
+        UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:userNotificationTypes
+                                                                                 categories:nil];
+        [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+        [[UIApplication sharedApplication] registerForRemoteNotifications];
+    }
+    [self donePressed];
+}
+
+#pragma mark - location delegates
+
+-(void)selectedPlacemark:(CLPlacemark *)placemark{
+    
+    NSString *titleString;
+    
+    if (!placemark.locality) {
+        titleString = [NSString stringWithFormat:@"%@",placemark.country];
+    }
+    else{
+        titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.ISOcountryCode];
+    }
+    
+    NSLog(@"title string %@", titleString);
+    
+    if (![titleString containsString:@"(null)"]) { //protect against saving erroneous location
+        
+        self.locLabel.text = [NSString stringWithFormat:@"Location: %@", titleString];
+        
+        [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
+        [[PFUser currentUser]saveInBackground];
+    }
+}
+
+
 @end

@@ -1,0 +1,267 @@
+//
+//  loginEmailController.m
+//  wtbtest
+//
+//  Created by Jack Ryder on 31/07/2017.
+//  Copyright © 2017 Jack Ryder. All rights reserved.
+//
+
+#import "loginEmailController.h"
+#import <Parse/Parse.h>
+#import "resetPassController.h"
+#import <Crashlytics/Crashlytics.h>
+#import "AppDelegate.h"
+
+@interface loginEmailController ()
+
+@end
+
+@implementation loginEmailController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view from its nib.
+    
+    self.emailField.delegate = self;
+    self.passwordField.delegate = self;
+    
+    self.warningLabel.adjustsFontSizeToFitWidth = YES;
+    self.warningLabel.minimumScaleFactor=0.5;
+    
+    self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    [self.navigationController.navigationBar setHidden:YES];
+}
+
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+    
+    [self.emailField becomeFirstResponder];
+    
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Login"
+                                      }];
+}
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+- (IBAction)loginPressed:(id)sender {
+    self.warningLabel.text = @"";
+    [self showHUD];
+    [self.logInButton setEnabled:NO];
+    [self.facebookLoginButton setEnabled:NO];
+    [self.resetButton setEnabled:NO];
+    
+    //remove @ if included
+    NSString *username = [[[self.emailField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] stringByReplacingOccurrencesOfString:@"@" withString:@""]lowercaseString];
+    
+    NSString *pass = [self.passwordField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    
+    if ([username length] == 0 || [pass length] == 0) {
+        self.warningLabel.text = @"Enter your username & password";
+        [self hideHUD];
+        [self.logInButton setEnabled:YES];
+        [self.facebookLoginButton setEnabled:YES];
+        [self.resetButton setEnabled:YES];
+    }
+    else{
+        [PFUser logInWithUsernameInBackground:username password:pass block:^(PFUser * _Nullable user, NSError * _Nullable error) {
+            if (user) {
+                
+                //check if user is banned
+                PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+                [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+                
+                //also check if device is banned to prevent creating new accounts
+                PFInstallation *installation = [PFInstallation currentInstallation];
+                PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+                if (installation.deviceToken) {
+                    [bannedInstallsQuery whereKey:@"deviceToken" equalTo:installation.deviceToken];
+                }
+                else{
+                    //to prevent simulator returning loads of results and fucking up banning logic
+                    [bannedInstallsQuery whereKey:@"deviceToken" equalTo:@"thisISNothing"];
+                }
+                
+                PFQuery *megaBanQuery = [PFQuery orQueryWithSubqueries:@[bannedQuery]];
+                [megaBanQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+                    if (number >= 1) {
+                        //user is banned - log them out
+                        
+                        [Answers logCustomEventWithName:@"Banned user attempted login"
+                                       customAttributes:@{}];
+                        [self hideHUD];
+                        
+                        [self.logInButton setEnabled:YES];
+                        [self.facebookLoginButton setEnabled:YES];
+                        [self.resetButton setEnabled:YES];
+                        
+                        [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
+
+                    }
+                    else{
+                        //everything okay
+                        NSLog(@"success logging in");
+
+                        [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshHome" object:nil];
+                        
+                        //set user as tabUser
+                        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                        appDelegate.profileView.user = user;
+                        
+                        [Answers logCustomEventWithName:@"Logged in"
+                                       customAttributes:@{
+                                                          @"via":@"email"
+                                                          }];
+                        
+                        //update installation object w/ current user
+                        PFInstallation *installation = [PFInstallation currentInstallation];
+                        [installation setObject:[PFUser currentUser] forKey:@"user"];
+                        [installation setObject:[PFUser currentUser].objectId forKey:@"userId"];
+                        [installation saveInBackground];
+                        
+                        if (installation.deviceToken) {
+                            //add device token to user obj so simple to track and ban
+                            [[PFUser currentUser]setObject:installation.deviceToken forKey:@"deviceToken"];
+                            [[PFUser currentUser] saveInBackground];
+                        }
+                        
+                        [self hideHUD];
+                        [self dismissViewControllerAnimated:YES completion:nil];
+                        
+                    }
+                }];
+            }
+            else{
+                NSLog(@"error logging in %@", error);
+                [self showAlertWithTitle:@"Error Logging In" andMsg:[NSString stringWithFormat:@"%@", error]];
+                [self hideHUD];
+                [self.logInButton setEnabled:YES];
+                [self.facebookLoginButton setEnabled:YES];
+                [self.resetButton setEnabled:YES];
+                
+                [Answers logCustomEventWithName:@"Log in error"
+                               customAttributes:@{
+                                                  @"via":@"email"
+                                                  }];
+            }
+        }];
+    }
+}
+- (IBAction)crossPressed:(id)sender {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+-(void)showHUD{
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    if (!self.spinner) {
+        self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    }
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+}
+
+-(void)hideHUD{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
+    });
+}
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+- (IBAction)facebookLoginPressed:(id)sender {
+    [self.delegate loginVCFacebookPressed];
+}
+
+-(void)checkUsernameExists:(NSString *)username{
+    
+    PFQuery *checkUsernameQuery = [PFUser query];
+    [checkUsernameQuery whereKey:@"username" equalTo:username];
+    [checkUsernameQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            NSLog(@"check username %@,",objects);
+            
+            if (objects.count == 0) {
+                //wrong username
+                self.warningLabel.text = @"That username does not exist";
+                
+                [Answers logCustomEventWithName:@"Username does not exist in login"
+                               customAttributes:@{}];
+                
+                [self.emailField becomeFirstResponder];
+            }
+            else{
+                //user exists with that username
+                self.warningLabel.text = @"";
+            }
+        }
+        else{
+            NSLog(@"error checking username %@", error);
+        }
+    }];
+}
+
+#pragma mark - text field delegates
+
+-(void)textFieldDidEndEditing:(UITextField *)textField{
+    if (textField == self.emailField) {
+        NSString *username = [[self.emailField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] stringByReplacingOccurrencesOfString:@"@" withString:@""];
+
+        if (![username isEqualToString:@""]) {
+            [self checkUsernameExists:username];
+        }
+    }
+}
+
+-(BOOL)textFieldShouldReturn:(UITextField*)textField
+{
+    NSInteger nextTag = textField.tag + 1;
+    // Try to find next responder
+    UIResponder* nextResponder = [textField.superview viewWithTag:nextTag];
+    if (nextResponder) {
+        // Found next responder, so set it.
+        [nextResponder becomeFirstResponder];
+    } else {
+        // Not found, so remove keyboard.
+        [textField resignFirstResponder];
+        [self loginPressed:self];
+    }
+    return YES;
+}
+- (IBAction)resetPressed:(id)sender {
+    [Answers logCustomEventWithName:@"Reset on Login Pressed"
+                   customAttributes:@{}];
+//    
+//    //show email composer in the app
+//    if ([MFMailComposeViewController canSendMail]) {
+//        MFMailComposeViewController *composeViewController = [[MFMailComposeViewController alloc] initWithNibName:nil bundle:nil];
+//        [composeViewController setMailComposeDelegate:self];
+//        [composeViewController setToRecipients:@[@"hello@sobump.com"]];
+//        [composeViewController setSubject:@"Bump Password Reset"];
+//        [composeViewController setMessageBody:@"Hi,\n\nTo reset your Bump password just tell us a few things first\n\nName:ENTER\n\nUsername:ENTER\n\nOld password:ENTER\n\nNew password:ENTER\n\nWe'll send you an email when that's been changed!\n\n🙌" isHTML:NO];
+//        [self presentViewController:composeViewController animated:YES completion:nil];
+//    }
+    resetPassController *vc = [[resetPassController alloc]init];
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+- (void)mailComposeController:(MFMailComposeViewController*)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError*)error
+{
+    //Add an alert in case of failure
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+@end

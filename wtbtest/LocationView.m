@@ -24,61 +24,29 @@
     self.searchController.searchResultsUpdater = self;
     self.searchController.dimsBackgroundDuringPresentation = NO;
     self.searchController.searchBar.delegate = self;
-    self.tableView.tableHeaderView = self.searchController.searchBar;
+    self.searchController.delegate = self;
+    
+    self.navigationItem.titleView = self.searchController.searchBar;
     self.searchController.searchBar.searchBarStyle = UISearchBarStyleMinimal;
     [self.searchController.searchBar sizeToFit];
-    self.definesPresentationContext = YES;
-    self.searchController.searchBar.tintColor = [UIColor colorWithRed:0.525 green:0.745 blue:1 alpha:1];
     
+    self.searchController.definesPresentationContext = NO;
+    self.definesPresentationContext = YES;
+    self.searchController.hidesNavigationBarDuringPresentation = NO;
+    self.extendedLayoutIncludesOpaqueBars = !self.navigationController.navigationBar.translucent;
+
+    self.searchController.searchBar.tintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
     self.searchResults = [[NSMutableArray alloc] init];
     
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-        //iphone5
-        self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, (self.view.frame.size.height/2)+(self.view.frame.size.height/6), 204, 50)];
-    }
-    else if([ [ UIScreen mainScreen ] bounds ].size.height == 736){
-        //iphone 6 plus
-        self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-80, (self.view.frame.size.height/2)+(self.view.frame.size.height/4), 204, 50)];
-    }
-    else{
-        self.button = [[UIButton alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-102, (self.view.frame.size.height/2)+(self.view.frame.size.height/4), 204, 50)]; //iPhone 6 specific
-    }
-    
-    // current location button
-    [self.button setImage:[UIImage imageNamed:@"currentButton"] forState:UIControlStateNormal];
-    [self.button addTarget:self action:@selector(useCurrentLoc) forControlEvents:UIControlEventTouchUpInside];
-    
-    self.button.alpha = 0.0f;
-    [[UIApplication sharedApplication].keyWindow addSubview:self.button];
-    
-    [UIView animateWithDuration:0.3
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         self.button.alpha = 1.0f;
-                     }
-                     completion:nil];
-    
-    self.buttonShowing = YES;
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
 }
 
--(void)viewWillDisappear:(BOOL)animated{
-    [super viewWillDisappear:animated];
-    [self.button removeFromSuperview];
-    self.buttonShowing = NO;
-}
-
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-//    [self.searchController setActive:YES];
-    
-    if (self.buttonShowing == NO) {
-        [[UIApplication sharedApplication].keyWindow addSubview:self.button];
-    }
+    [self.searchController setActive:YES];
 }
 
 #pragma mark - Table view data source
@@ -95,9 +63,6 @@
 {
     NSString *searchString = searchController.searchBar.text;
     [self searchForText:searchString];
-    
-    //update table view
-    [self.tableView reloadData];
 }
 
 - (void)searchForText:(NSString*)searchText
@@ -107,12 +72,16 @@
                                                                    completion:^(NSArray *places, NSError *error)  {
                                                                        if (error) {
                                                                            NSLog(@"ERROR: %@", error);
+                                                                           //update table view
+                                                                           [self.tableView reloadData];
                                                                        } else {
                                                                            for (HNKGooglePlacesAutocompletePlace *place in places) {
-                                                                               //NSLog(@"%@", place.name);
+//                                                                               NSLog(@"%@", place);
                                                                                [searchResults addObject:place];
                                                                                 self.searchResults = searchResults;
                                                                            }
+                                                                           //update table view
+                                                                           [self.tableView reloadData];
                                                                        }
                                                                    }
      ];
@@ -149,7 +118,7 @@
     self.tableView.userInteractionEnabled = NO;
     
     if (self.searchResults.count >0) {
-        NSString *selectionString = [self.tableView cellForRowAtIndexPath:indexPath].textLabel.text;
+        NSLog(@"SEARCH: %@",[self.searchResults objectAtIndex:indexPath.row]);
         
         [CLPlacemark hnk_placemarkFromGooglePlace:[self.searchResults objectAtIndex:indexPath.row]
                                            apiKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"
@@ -159,10 +128,9 @@
                                                [self showError];
                                                self.tableView.userInteractionEnabled = YES;
                                            } else {
-                                               //NSLog(@"PLACEMARK: %@", placemark);
-                                               CLLocationCoordinate2D selectedItem = [[placemark location]coordinate];
+                                               NSLog(@"PLACEMARK %@", placemark);
                                                
-                                               [self.delegate addLocation:self didFinishEnteringItem:selectionString longi:selectedItem.longitude lati:selectedItem.latitude];
+                                               [self.delegate selectedPlacemark:placemark];
                                                self.tableView.userInteractionEnabled = YES;
                                                [self.navigationController popViewControllerAnimated:YES];
                                            }
@@ -208,12 +176,22 @@
 
 -(void)showError{
     UIAlertController * alert=   [UIAlertController
-                                  alertControllerWithTitle:@"Error getting location"
-                                  message:@"Make sure you're connected to the internet!"
+                                  alertControllerWithTitle:@"Location error"
+                                  message:@"Make sure you're being specific, search for your nearest city!"
                                   preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction* ok = [UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:nil];
     [alert addAction:ok];
     [self presentViewController:alert animated:YES completion:nil];
 }
 
+- (void)didPresentSearchController:(UISearchController *)searchController
+{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        [searchController.searchBar becomeFirstResponder];
+    });
+}
+
+-(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
+    [self.navigationController popViewControllerAnimated:YES];
+}
 @end

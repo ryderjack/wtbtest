@@ -13,10 +13,13 @@
 #import <ParseFacebookUtilsV4/PFFacebookUtils.h>
 #import <Fabric/Fabric.h>
 #import <Crashlytics/Crashlytics.h>
-#import "iRate.h"
 #import <HNKGooglePlacesAutocomplete/HNKGooglePlacesAutocomplete.h>
 #import "BumpVC.h"
 #import <ChimpKit.h>
+#import "mainApprovedSellerController.h"
+#include <CommonCrypto/CommonCrypto.h>
+#import "resetPassController.h"
+#import "MBFingerTipWindow.h"
 
 @interface AppDelegate ()
 
@@ -27,10 +30,11 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     
     //initial Parse & Fb set up
-    
+
     [Parse initializeWithConfiguration:[ParseClientConfiguration configurationWithBlock:^(id<ParseMutableClientConfiguration> configuration) {
 
         // checks prior to distributing, search for //CHANGE to see major dev changes
+        ////////////////////CHANGE
         
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
@@ -41,10 +45,13 @@
         configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
         
         //preproduction
-//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; ////////////////////CHANGE
+//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE
+        
+        //s3 file adapter testing
+//        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
     }]];
 
-    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
     [[ChimpKit sharedKit] setApiKey:@"5cbba863ff961ff8c60266185defc785-us14"];
@@ -61,59 +68,73 @@
     //set up tab bar
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.welcomeView = [[WelcomeViewController alloc] init];
-    self.createView = [[CreateViewController alloc]init];
     self.simpleCreateView = [[simpleCreateVC alloc]init];
     self.exploreView = [[ExploreVC alloc]init];
+    self.createTabView = [[CreateTab alloc]init];
     
     self.profileView = [[UserProfileController alloc]init];
     self.profileView.user = [PFUser currentUser];
     self.profileView.tabMode = YES;
     
     self.inboxView = [[InboxViewController alloc]init];
-    self.buyView = [[BuyNowController alloc]init];
     self.purchaseView = [[PurchaseTab alloc]init];
     
     [self.window setBackgroundColor:[UIColor whiteColor]];
     
-    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:self.exploreView];
-    NavigationController *navController1 = [[NavigationController alloc] initWithRootViewController:self.createView];
-    NavigationController *navController6 = [[NavigationController alloc] initWithRootViewController:self.simpleCreateView];
+//    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:self.exploreView];
+    NavigationController *navController6 = [[NavigationController alloc] initWithRootViewController:self.createTabView];
     NavigationController *navController2 = [[NavigationController alloc] initWithRootViewController:self.profileView];
 //    NavigationController *navController3 = [[NavigationController alloc] initWithRootViewController:self.welcomeView];
     NavigationController *navController4 = [[NavigationController alloc] initWithRootViewController:self.inboxView];
-    NavigationController *navController5 = [[NavigationController alloc] initWithRootViewController:self.buyView];
     NavigationController *navController7 = [[NavigationController alloc] initWithRootViewController:self.purchaseView];
     
     self.tabBarController = [[UITabBarController alloc] init];
-    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController,navController7,navController6,navController4, navController2, nil];
+    self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController7,navController6,navController4, navController2, nil];
     self.tabBarController.tabBar.translucent = NO;
     self.tabBarController.selectedIndex = 0;
-    [self.tabBarController.tabBar setTintColor:[UIColor whiteColor]];
-
-    [self.tabBarController.tabBar setBarTintColor:[UIColor blackColor]];
+    [self.tabBarController.tabBar setTintColor:[UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0]];
+    
+    //check if user has iOS 10 or later as this is only for then
+    NSString *reqSysVer = @"10.0";
+    NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+    if ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending) {
+        //iOS 10 or later
+        self.tabBarController.tabBar.unselectedItemTintColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0];
+    }
+    
+    [self.tabBarController.tabBar setBarTintColor:[UIColor whiteColor]];
     
     UITabBarItem *tabBarItem1 = [self.tabBarController.tabBar.items objectAtIndex:0];
     tabBarItem1.image = [UIImage imageNamed:@"homeIconNEW"];
     tabBarItem1.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
+    tabBarItem1.selectedImage = [UIImage imageNamed:@"homeIconFilled"];
+
+//    UITabBarItem *tabBarItem5 = [self.tabBarController.tabBar.items objectAtIndex:1];
+//    tabBarItem5.image = [UIImage imageNamed:@"buyNowIcon"];
+//    tabBarItem5.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
     
-    UITabBarItem *tabBarItem5 = [self.tabBarController.tabBar.items objectAtIndex:1];
-    tabBarItem5.image = [UIImage imageNamed:@"buyNowIcon"];
-    tabBarItem5.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
-    
-    UITabBarItem *tabBarItem2 = [self.tabBarController.tabBar.items objectAtIndex:2];
-    tabBarItem2.image = [UIImage imageNamed:@"createIconNEW"];
+    UITabBarItem *tabBarItem2 = [self.tabBarController.tabBar.items objectAtIndex:1];
+    tabBarItem2.image = [UIImage imageNamed:@"CreateIconTag"];
     tabBarItem2.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
+    tabBarItem2.selectedImage = [UIImage imageNamed:@"CreateIconTagFill"];
     
-    UITabBarItem *tabBarItem3 = [self.tabBarController.tabBar.items objectAtIndex:3];
-    tabBarItem3.image = [UIImage imageNamed:@"messageIconNEW"];
+    UITabBarItem *tabBarItem3 = [self.tabBarController.tabBar.items objectAtIndex:2];
+    tabBarItem3.image = [UIImage imageNamed:@"messageTabIconGrey"];
     tabBarItem3.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
+    tabBarItem3.selectedImage = [UIImage imageNamed:@"messageTabIconFilled"];
+
     
-    UITabBarItem *tabBarItem4 = [self.tabBarController.tabBar.items objectAtIndex:4];
+    UITabBarItem *tabBarItem4 = [self.tabBarController.tabBar.items objectAtIndex:3];
     tabBarItem4.image = [UIImage imageNamed:@"userIconNEW"];
     tabBarItem4.imageInsets = UIEdgeInsetsMake(6, 0, -6, 0);
+    tabBarItem4.selectedImage = [UIImage imageNamed:@"userIconFilled"];
     
     [self.tabBarController setDelegate:self];
     
+//    MBFingerTipWindow *finger = [[MBFingerTipWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+//    finger.alwaysShowTouches = YES;
+//    self.window = finger;
+
     self.window.rootViewController = self.tabBarController;
     [self.window makeKeyAndVisible];
     
@@ -158,9 +179,6 @@
         [timer2 fire];
     }
     
-//    [iRate sharedInstance].previewMode = NO;
-//    [iRate sharedInstance].message = @"Enjoying Bump? Please leave us a review or send us some feedback!";
-    
     //check if there's a local 'sneaker release' push
     UILocalNotification *localNotif = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
     NSDictionary *localUserInfo = localNotif.userInfo;
@@ -169,10 +187,6 @@
     
     if (localNotif && itemTitle)
     {
-        [Answers logCustomEventWithName:@"Opened Release Push"
-                       customAttributes:@{
-                                          @"itemTitle":itemTitle
-                                          }];
         //query for link then open web view
         PFQuery *linkQuery = [PFQuery queryWithClassName:@"Releases"];
         [linkQuery whereKey:@"status" equalTo:@"live"];
@@ -184,6 +198,13 @@
                 NSString *link = [object objectForKey:@"itemLink"];
                 
                 if (![link isEqualToString:@"soon"]) {
+                    
+                    [Answers logCustomEventWithName:@"Opened Release Push"
+                                   customAttributes:@{
+                                                      @"itemTitle":itemTitle,
+                                                      @"mode":@"didFinishLaunch"
+                                                      }];
+                    
                     self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:link]];
                     self.web.showUrlWhileLoading = YES;
                     self.web.showPageTitles = YES;
@@ -193,7 +214,26 @@
                     self.web.delegate = self;
                     
                     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
-                    [self.window.rootViewController presentViewController:navigationController animated:YES completion:nil];
+                    [self.window.rootViewController presentViewController:navigationController animated:YES completion:^{                        
+                        //update reminders array to keep it accurate
+                        NSMutableArray *remindersArray = [NSMutableArray array];
+                        
+                        if ([[PFUser currentUser]objectForKey:@"remindersArray"]) {
+                            [remindersArray addObjectsFromArray:[[PFUser currentUser]objectForKey:@"remindersArray"]];
+                        }
+                        
+                        NSMutableArray *discardedItems = [NSMutableArray array];
+                        
+                        for (NSString *itemTitle in remindersArray) {
+                            if ([itemTitle isEqualToString:itemTitle]){
+                                [discardedItems addObject:itemTitle];
+                            }
+                        }
+                        [remindersArray removeObjectsInArray:discardedItems];
+                        
+                        [[PFUser currentUser]setObject:remindersArray forKey:@"remindersArray"];
+                        [[PFUser currentUser] saveInBackground];
+                    }];
                 }
             }
             else{
@@ -207,19 +247,19 @@
             }
         }];
     }
-    else if ([localNotif.alertBody isEqualToString:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"]){
+    else if ([localNotif.alertBody isEqualToString:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on Bump 🏎💨"]){
         [Answers logCustomEventWithName:@"Opened First Reminder Push"
+                       customAttributes:@{}];
+        
+        self.tabBarController.selectedIndex = 0;
+    }
+    else if ([localNotif.alertBody isEqualToString:@"What are you selling? List your first item for sale on Bump now! 🤑"]){
+        [Answers logCustomEventWithName:@"Opened First Listing Post Reminder Push"
                        customAttributes:@{}];
         
         self.tabBarController.selectedIndex = 1;
     }
-    else if ([localNotif.alertBody isEqualToString:@"What do you want to buy? Create your first wanted listing on Bump now!"]){
-        [Answers logCustomEventWithName:@"Opened First Listing Post Reminder Push"
-                       customAttributes:@{}];
-        
-        self.tabBarController.selectedIndex = 2;
-    }
-    else if ([localNotif.alertBody isEqualToString:@"What's your next cop? Get inspired and create a wanted listing for it on Bump now"]){
+    else if ([localNotif.alertBody isEqualToString:@"What's your next cop? Find it on Bump 👊"]){
         [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
                        customAttributes:@{}];
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
@@ -245,8 +285,8 @@
         NSDictionary *dic = [userInfo objectForKey:@"aps"];
         NSString *strMsg = [dic objectForKey:@"alert"];
         
-        if([strMsg containsString:@"bumped your listing"]){
-            //open listing
+        if([strMsg containsString:@"liked your wanted listing"]){
+            //open wanted listing
             [Answers logCustomEventWithName:@"Opened listing after receiving Bump Push"
                            customAttributes:@{}];
             
@@ -258,16 +298,52 @@
             [nav pushViewController:vc animated:YES];
             
         }
-        else if([bumpedStatus isEqualToString:@"YES"]){
-            //open BumpedVC
-            [Answers logCustomEventWithName:@"Opened BumpVC after receiving FB Friend Push"
+        else if([strMsg containsString:@"liked your listing"]){
+            //open for sale listing
+            [Answers logCustomEventWithName:@"Opened listing after receiving Bump Push"
                            customAttributes:@{}];
             
-            BumpVC *vc = [[BumpVC alloc]init];
-            vc.listingID = listing;
-            [self.window.rootViewController presentViewController:vc animated:YES completion:nil];
+            PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"forSaleItems" objectId:listing];
+            
+            ForSaleListing *vc = [[ForSaleListing alloc]init];
+            vc.listingObject = listingObject;
+            vc.source = @"bump";
+            vc.fromBuyNow = YES;
+            vc.pureWTS = YES;
+            vc.fromPush = YES;
+
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+            
+        }
+        else if([bumpedStatus isEqualToString:@"YES"]){
+            //Facebook friend has posted a for sale listing, take them to it
+            [Answers logCustomEventWithName:@"Opened Listing after receiving FB Friend Push"
+                           customAttributes:@{}];
+            
+//            BumpVC *vc = [[BumpVC alloc]init];
+//            vc.listingID = listing;
+            
+            PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"forSaleItems" objectId:listing];
+
+            ForSaleListing *vc = [[ForSaleListing alloc]init];
+            vc.listingObject = listingObject;
+            vc.source = @"push";
+            vc.fromBuyNow = YES;
+            vc.pureWTS = YES;
+            vc.fromPush = YES;
+
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
         }
     }
+    
+    //app store observer
+    
+//    [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
+
+    //reset BOOL which limits like drop downs to once per session
+    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"seenLikeDrop"];
     
     return YES;
 }
@@ -279,12 +355,27 @@
 
 //call to check messages if installation badge value doesnt work for ppl who havent enabled push
 -(void)checkMesages{
-    PFQuery *convosQuery = [PFQuery queryWithClassName:@"convos"];
-    [convosQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
-    [convosQuery whereKey:@"totalMessages" notEqualTo:@0];
-    [convosQuery orderByDescending:@"createdAt"];
-    [convosQuery includeKey:@"lastSent"];
-    [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+    if (![PFUser currentUser]) {
+        return;
+    }
+    //query for convos we know this user hasn't seen
+    PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"convos"];
+    [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+    [buyingUnseenQuery whereKey:@"buyerUnseen" greaterThan:@0];
+    
+    PFQuery *sellingUnseenQuery = [PFQuery queryWithClassName:@"convos"];
+    [sellingUnseenQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+    [sellingUnseenQuery whereKey:@"sellerUnseen" greaterThan:@0];
+    
+    PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
+    [unseenQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
+    [unseenQuery whereKey:@"totalMessages" notEqualTo:@0];
+    [unseenQuery orderByDescending:@"createdAt"];
+    //to stop user seeing an unread badge for a convo they can no longer see since its been deleted
+    [unseenQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] notEqualTo:@"YES"];
+    [unseenQuery includeKey:@"lastSent"];
+    
+    [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects) {
                 //check if last msg sent is seen
@@ -321,11 +412,9 @@
 
                         totalUnseen = totalUnseen + unseen;
                         
-//                        NSLog(@"delegate: running total unseen: %d", totalUnseen);
+                        NSLog(@"TOTAL UNSEEN %d", totalUnseen);
                     }
                 }
-                
-//                NSLog(@"unseen convo's count %lu", (unsigned long)self.unseenMessages.count);
                 
                 if (self.unseenMessages.count != 0) {
                     [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:self.unseenMessages];
@@ -337,20 +426,18 @@
                         }
                     }
                     
-//                    NSLog(@"unseen messages %lu and unseentotal %d and selected convo %@", (unsigned long)self.unseenMessages.count, totalUnseen, self.inboxView.selectedConvo);
-                    
                     if (totalUnseen > 0) {
-                        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
+                        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
                         self.installation.badge = totalUnseen;
                     }
                     else{
-                        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
                         self.installation.badge = 0;
                     }
                     [self.installation saveEventually];
                 }
                 else{
-                    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
                     self.installation.badge = 0;
                     [self.installation saveEventually];
                 }
@@ -367,7 +454,9 @@
 }
 
 -(void)checkForTBMessages{
-//    NSLog(@"checking TB messages");
+    if (![PFUser currentUser]) {
+        return;
+    }
     PFQuery *convosQuery = [PFQuery queryWithClassName:@"teamConvos"];
     [convosQuery whereKey:@"convoId" equalTo: [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId]];
     [convosQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -377,27 +466,30 @@
             self.profileView.messagesUnseen = userUnseen;
 
             if (userUnseen > 0) {
-                [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:[NSString stringWithFormat:@"%d", userUnseen]];
+                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"1"]]; //even if have multiple unseen keep badge @ 1
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"NewTBMessage" object:nil];
             }
             else{
-                [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:nil];
+                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
             }
-            
             
             //check if seen snap, if not add badge to user tab
-            if (![[PFUser currentUser]objectForKey:@"snapSeen"]) {
-                UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[4];
-                int currentTabValue = [itemToBadge.badgeValue intValue];
-                int newTabValue = currentTabValue + 1;
-                itemToBadge.badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
-                
-                //to trigger the dot in settings
-                self.profileView.showSnap = YES;
-            }
+//            if (![[PFUser currentUser]objectForKey:@"snapSeen"]) {
+//                UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[4];
+//                int currentTabValue = [itemToBadge.badgeValue intValue];
+//                int newTabValue = currentTabValue + 1;
+//                itemToBadge.badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
+//                
+//                //to trigger the dot in settings
+//                self.profileView.showSnap = YES;
+//            }
         }
         else{
-            NSLog(@"error finding %@", error);
+            if (error.code == 209) {
+                NSLog(@"invalid so logout");
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"invalidSessionNotification" object:nil];
+            }
+            NSLog(@"error finding team bump messages %@", error);
         }
     }];
 }
@@ -419,33 +511,34 @@
 //    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
     NSString *itemTitle = [localUserInfo valueForKey:@"itemTitle"];
     
-    if ([notification.alertBody isEqualToString:@"What's your next cop? Get inspired and create a wanted listing for it on Bump now"]){
+    if ([notification.alertBody isEqualToString:@"What's your next cop? Find it on Bump 👊"]){
         [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
                        customAttributes:@{}];
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
     }
-    else if([notification.alertBody containsString:@"Reminder: the"] && itemTitle){
-        [Answers logCustomEventWithName:@"Opened Release Push"
-                       customAttributes:@{
-                                          @"itemTitle":itemTitle
-                                          }];
-        
-        //open Web
-        NSLog(@"open web view! did receive");
-        self.tabBarController.selectedIndex = 0;
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"showRelease" object:itemTitle];
-    }
-    else if ([notification.alertBody isEqualToString:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"]){
+//    else if([notification.alertBody containsString:@"Reminder: the"] && itemTitle){
+//        [Answers logCustomEventWithName:@"Opened Release Push"
+//                       customAttributes:@{
+//                                          @"itemTitle":itemTitle,
+//                                          @"mode":@"didReceive"
+//                                          }];
+//        
+//        //open Web
+//        NSLog(@"open web view! did receive");
+//        self.tabBarController.selectedIndex = 0;
+//        [[NSNotificationCenter defaultCenter] postNotificationName:@"showRelease" object:itemTitle];
+//    }
+    else if ([notification.alertBody isEqualToString:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on Bump 🏎💨"]){
         [Answers logCustomEventWithName:@"Opened First Reminder Push"
                        customAttributes:@{}];
         
-        self.tabBarController.selectedIndex = 1;
+        self.tabBarController.selectedIndex = 0;
     }
-    else if ([notification.alertBody isEqualToString:@"What do you want to buy? Create your first wanted listing on Bump now!"]){
+    else if ([notification.alertBody isEqualToString:@"What are you selling? List your first item for sale on Bump now! 🤑"]){
         [Answers logCustomEventWithName:@"Opened First Listing Post Reminder Push"
                        customAttributes:@{}];
         
-        self.tabBarController.selectedIndex = 2;
+        self.tabBarController.selectedIndex = 1;
     }
     else{
         //fail safe
@@ -467,43 +560,214 @@
         
        // NSLog(@"dic: %@    and strMsg: %@", dic, strMsg);
         
-        NSLog(@"userinfo: %@", userInfo);
+//        NSLog(@"userinfo: %@", userInfo);
         
         if ([strMsg hasPrefix:@"Team Bump"]) {
             [self checkForTBMessages];
-            self.tabBarController.selectedIndex = 4;
+            self.tabBarController.selectedIndex = 3;
         }
-        else if([strMsg containsString:@"bumped your listing"]){
-            //open listing
+        else if([strMsg containsString:@"liked your wanted listing"]){
+            //open wanted listing
             self.tabBarController.selectedIndex = 0;
             [[NSNotificationCenter defaultCenter] postNotificationName:@"listingBumped" object:listing];
         }
+        else if([strMsg containsString:@"liked your listing"]){
+            //open WTS listing
+            self.tabBarController.selectedIndex = 0;
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"saleListingBumped" object:listing];
+        }
         else if([bumpedStatus isEqualToString:@"YES"]){
-            //open BumpedVC
+            //take user to mate's WTS to Bump it
             NSLog(@"listing and bumped status %@ %@", bumpedStatus, listing);
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"showBumpedVC" object:listing];
+            
+            PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"forSaleItems" objectId:listing];
+            
+            ForSaleListing *vc = [[ForSaleListing alloc]init];
+            vc.listingObject = listingObject;
+            vc.source = @"push";
+            vc.fromBuyNow = YES;
+            vc.pureWTS = YES;
+            vc.fromPush = YES;
+
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+//            [nav pushViewController:vc animated:YES];
+            
+            if (nav.visibleViewController.presentedViewController) {
+                
+                //nav bar is showing something
+                if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                    
+                    //2nd nav is showing so push from there instead of tab bar nav
+                    NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                    [presenter pushViewController:vc animated:YES];
+                }
+            }
+            else{
+                //no other VC showing so push!
+                [nav pushViewController:vc animated:YES];
+            }
+            
+//            [[NSNotificationCenter defaultCenter] postNotificationName:@"showBumpedVC" object:listing];
         }
         else{
-            self.tabBarController.selectedIndex = 3;
+            //force refresh of inbox
+            self.tabBarController.selectedIndex = 2;
+
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
         }
     }
     else{
-        //app is active
+        //app is active and got push
         
-        if([strMsg containsString:@"bumped your listing"]){
+        if([strMsg containsString:@"liked your listing"]){
             //show just Bumped drop down
-            NSLog(@"show drop down");
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"showBumpedDropDown" object:@[listing, strMsg]];
+//            NSLog(@"show drop down %@   %@",listing,strMsg);
+            
+            //now check if seen a drop down this session - if not then show
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenLikeDrop"] != YES){
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenLikeDrop"];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"showBumpedDropDown" object:@[listing, strMsg]];
+            }
         }
         else if([bumpedStatus isEqualToString:@"YES"]){
-            //open BumpedVC
-            NSLog(@"show drop down from delegate");
+            //show drop down of mate who's listed an item for sale
+//            NSLog(@"show fb drop down from delegate");
             [[NSNotificationCenter defaultCenter] postNotificationName:@"showDropDown" object:listing];
         }
     }
 }
 
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+
+    NSLog(@"url %@", url);
+    
+    //for profile share links e.g. bump://profile/USERNAME
+
+    if ([[url host] isEqualToString:@"profile"]) {
+        NSLog(@"got a profile url for this profile:%@", [url path]);
+        
+        NSString *username = [[url path] stringByReplacingOccurrencesOfString:@"/" withString:@""];
+        
+        PFQuery *profileQuery = [PFUser query];
+        [profileQuery whereKey:@"username" containedIn:@[username]];
+        [profileQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                [Answers logCustomEventWithName:@"Link Opened"
+                               customAttributes:@{
+                                                  @"type":@"profile"
+                                                  }];
+                
+                UserProfileController *vc = [[UserProfileController alloc]init];
+                vc.user = (PFUser *)object;
+                NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+                
+                if (nav.visibleViewController.presentedViewController) {
+                    
+                    //nav bar is showing something
+                    if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                        
+                        //2nd nav is showing so push from there instead of tab bar nav
+                        NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                        [presenter pushViewController:vc animated:YES];
+                    }
+                }
+                else{
+                    //no other VC showing so push!
+                    [nav pushViewController:vc animated:YES];
+                }
+            }
+            else{
+                NSLog(@"error finding user object %@", error);
+            }
+        }];
+    }
+    
+    //for listing share links e.g. bump://selling/LISTINGID
+    
+    else if ([[url host] isEqualToString:@"selling"]){
+        NSString *listingId = [[url path] stringByReplacingOccurrencesOfString:@"/" withString:@""];
+        
+        [Answers logCustomEventWithName:@"Link Opened"
+                       customAttributes:@{
+                                          @"type":@"for sale"
+                                          }];
+        
+        PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"forSaleItems" objectId:listingId];
+        
+        ForSaleListing *vc = [[ForSaleListing alloc]init];
+        vc.listingObject = listingObject;
+        vc.source = @"link";
+        vc.fromBuyNow = YES;
+        vc.pureWTS = YES;
+        vc.fromPush = YES;
+
+        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+        
+        if (nav.visibleViewController.presentedViewController) {
+            
+            //nav bar is showing something
+            if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+        }
+        else{
+            //no other VC showing so push!
+            [nav pushViewController:vc animated:YES];
+        }
+    }
+    
+    //for wanted listing share links e.g. bump://wanted/LISTINGID
+    
+    else if ([[url host] isEqualToString:@"wanted"]){
+        NSString *listingId = [[url path] stringByReplacingOccurrencesOfString:@"/" withString:@""];
+        
+        [Answers logCustomEventWithName:@"Link Opened"
+                       customAttributes:@{
+                                          @"type":@"wanted"
+                                          }];
+        
+        PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listingId];
+        
+        ListingController *vc = [[ListingController alloc]init];
+        vc.listingObject = listingObject;
+        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+        
+        if (nav.visibleViewController.presentedViewController) {
+
+            //nav bar is showing something
+            if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+        }
+        else{
+            //no other VC showing so push!
+            [nav pushViewController:vc animated:YES];
+        }
+    }
+    
+    //for verifying emails upon signup e.g. bump://verifyEmail/
+    
+    else if ([[url host] isEqualToString:@"verifyEmailSignUp"]){
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"verifyEmail" object:nil];
+    }
+    
+    //when user taps a password reset link in email e.g. bump://resetPassword/
+    else if ([[url host] isEqualToString:@"resetPassword"]){
+        NSString *userId = [[[url path] stringByReplacingOccurrencesOfString:@"/" withString:@""]stringByReplacingOccurrencesOfString:@"-" withString:@""];
+
+        resetPassController *vc = [[resetPassController alloc]init];
+        vc.resetMode = YES;
+        vc.userId = userId;
+        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+        [nav.visibleViewController.navigationController pushViewController:vc animated:YES];
+    }
+    
     return [[FBSDKApplicationDelegate sharedInstance] application:application
                                                           openURL:url
                                                 sourceApplication:sourceApplication
@@ -517,16 +781,30 @@
     
     if ([[NSUserDefaults standardUserDefaults]boolForKey:@"longTermLocalSeen"] != YES){
         
-        //schedule 5 day inactivity local notification
+        //schedule 6 day inactivity local notification
         NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
         dayComponent.day = 6;
-        [dayComponent setHour: 20];
         NSCalendar *theCalendar = [NSCalendar currentCalendar];
         NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
         
+        // Create new date
+        NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
+                                                       fromDate:dateToFire];
+        
+        NSDateComponents *components3 = [[NSDateComponents alloc] init];
+        
+        [components3 setYear:components1.year];
+        [components3 setMonth:components1.month];
+        [components3 setDay:components1.day];
+        
+        [components3 setHour:20];
+        
+        // Generate a new NSDate from components3.
+        NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+        
         UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-        [localNotification setAlertBody:@"What's your next cop? Get inspired and create a wanted listing for it on Bump now"];
-        [localNotification setFireDate: dateToFire];
+        [localNotification setAlertBody:@"What's your next cop? Find it on Bump 👊"];
+        [localNotification setFireDate: combinedDate];
         [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
         [localNotification setRepeatInterval: 0];
         [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
@@ -534,12 +812,16 @@
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
+    //reset so can see like drop downs again
+    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"seenLikeDrop"];
+
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+    
     [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshHome" object:nil];
     [self checkMesages];
     [self checkForTBMessages];
@@ -549,13 +831,20 @@
     [FBSDKAppEvents activateApp];
     if ([PFUser currentUser]) {
         [[PFUser currentUser]setObject:[NSDate date] forKey:@"lastActive"];
+        [[PFUser currentUser]addObject:[NSDate date] forKey:@"activeSessions"];
+
         [[PFUser currentUser]saveInBackground];
+        
+        [Answers logCustomEventWithName:@"User began session"
+                       customAttributes:@{
+                                          @"username":[PFUser currentUser].username
+                                          }];
     }
     
     //cancel long term local push
     NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
     for(UILocalNotification *notification in notificationArray){
-        if ([notification.alertBody isEqualToString:@"What's your next cop? Get inspired and create a wanted listing for it on Bump now"]) {
+        if ([notification.alertBody isEqualToString:@"What's your next cop? Find it on Bump 👊"]) {
             // delete this notification
             [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
         }
@@ -566,12 +855,6 @@
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
 
-//prevent user going back on create VC by tapping tab bar
-//- (BOOL)tabBarController:(UITabBarController *)theTabBarController shouldSelectViewController:(UIViewController *)viewController
-//{
-//    return (theTabBarController.selectedViewController != viewController);
-//}
-
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
     // handler code here
     
@@ -580,30 +863,63 @@
     return YES;
 }
 
+-(BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController{
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"switchingTabs" object:viewController];
+
+    return YES;
+}
+
 - (void)tabBarController:(UITabBarController *)tabBarController
  didSelectViewController:(UIViewController *)viewController
 {
     //notification used to disimss bar button when tabs switched on a modal VC that doesn't responds to VWDis
     [[NSNotificationCenter defaultCenter] postNotificationName:@"switchedTabs" object:viewController];
-    
+
     static UIViewController *previousController = nil;
+    static int previousTab = 0;
+        
+    if (previousTab == tabBarController.selectedIndex && tabBarController.selectedIndex == 0) {
+        NavigationController *nav = (NavigationController*)tabBarController.selectedViewController;
+        
+        if (nav.visibleViewController.presentedViewController) {
+            
+            //nav bar is showing something
+            if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                
+                //2nd nav is showing something
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+//                NSLog(@"presenter's nav bar visible %@", [presenter.visibleViewController class]);
+                
+                //check if its a for sale  listing VC - if it is, pop the nav bar
+                if (![presenter.visibleViewController  isKindOfClass:[searchedViewC class]]) {
+                    [presenter popViewControllerAnimated:YES];
+                }
+            }
+        }
+        else{
+            //no other VC showing
+            NSLog(@"no vc being presented");
+        }
+    }
+
+    
     if (previousController == viewController) {
         // the same tab was tapped a second time
-        
         if ([viewController isKindOfClass:[NavigationController class]]) {
             NavigationController *vc = (NavigationController *)viewController;
-            if ([vc.visibleViewController isKindOfClass:[ExploreVC class]]){
-                [self.exploreView doubleTapScroll];
-            }
-            else if ([vc.visibleViewController isKindOfClass:[InboxViewController class]]){
+//            if ([vc.visibleViewController isKindOfClass:[ExploreVC class]]){
+//                [self.exploreView doubleTapScroll];
+//            }
+            if ([vc.visibleViewController isKindOfClass:[InboxViewController class]]){
                 [self.inboxView doubleTapScroll];
             }
             else if ([vc.visibleViewController isKindOfClass:[PurchaseTab class]]){
                 [self.purchaseView doubleTapScroll];
             }
         }
-        
     }
+    
+    previousTab = (int)tabBarController.selectedIndex;
     previousController = viewController;
 }
 
@@ -622,5 +938,107 @@
 
 -(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
     //do nothing
+}
+
+#pragma mark - app store observer delegates
+
+-(void)paymentQueue:(SKPaymentQueue *)queue updatedTransactions:(NSArray<SKPaymentTransaction *> *)transactions{
+    for (SKPaymentTransaction *transaction in transactions) {
+        switch (transaction.transactionState) {
+                // Call the appropriate custom method for the transaction state.
+            case SKPaymentTransactionStatePurchasing:
+                NSLog(@"In progress");
+                
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseStarted" object:nil];
+                [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"processingPurchase"];
+                break;
+            case SKPaymentTransactionStateDeferred:
+                //pending
+                NSLog(@"Deferred");
+                
+                [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"processingPurchase"];
+                [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseDeferred" object:nil];
+                break;
+            case SKPaymentTransactionStateFailed:
+                NSLog(@"Failed");
+                
+                [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"processingPurchase"];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseFailed" object:transaction];
+                break;
+            case SKPaymentTransactionStatePurchased:
+                NSLog(@"Purchased");
+
+                [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"processingPurchase"];
+                [self validateReceiptForTransaction:transaction];
+                break;
+            case SKPaymentTransactionStateRestored:
+                //called when user switches phones or something similar and transfers the previous purchases across
+                //doesn't apply
+                NSLog(@"Restored");
+                
+                [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"processingPurchase"];
+                [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseDeferred" object:nil];
+
+//                [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseRestored" object:nil];
+                break;
+            default:
+                // For debugging
+                [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"processingPurchase"];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseFailed" object:transaction];
+
+                NSLog(@"Unexpected transaction state %@", @(transaction.transactionState));
+                break;
+        }
+    }
+}
+
+-(void)validateReceiptForTransaction:(SKPaymentTransaction *)transaction{
+    
+    //validate receipt
+    // Load the receipt from the app bundle.
+    NSURL *receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
+    NSData *receipt = [NSData dataWithContentsOfURL:receiptURL];
+    if (!receipt) {
+        /* No local receipt -- handle the error. */
+        NSLog(@"no receipt error!");
+        
+        [Answers logCustomEventWithName:@"Boost Purchase Failed"
+                       customAttributes:@{
+                                          @"error":@"no receipt"
+                                          }];
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseFailed" object:transaction];
+    }
+    
+    /* ... Send the receipt data to your server ... */
+    
+    NSString *dataString = [receipt base64EncodedStringWithOptions:0];
+    NSDictionary *params = @{@"receipt": dataString};
+    
+    [PFCloud callFunctionInBackground:@"verifyPurchase" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            NSLog(@"verification response %@", response);
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseComplete" object:transaction];
+        }
+        else{
+            NSLog(@"verification error %@", error);
+            
+            [Answers logCustomEventWithName:@"Boost Purchase Failed"
+                           customAttributes:@{
+                                              @"error":@"failed verification"
+                                              }];
+            
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseFailed" object:transaction];
+
+        }
+    }];
+    
+}
+
+-(BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray * _Nullable))restorationHandler{
+    NSLog(@"continue user activity %@", userActivity);
+    return YES;
 }
 @end

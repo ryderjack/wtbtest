@@ -9,6 +9,7 @@
 #import "FeedbackController.h"
 #import <Crashlytics/Crashlytics.h>
 #import "NavigationController.h"
+#import "AppDelegate.h"
 
 @interface FeedbackController ()
 
@@ -32,7 +33,7 @@
     [self.fifthStar setSelected:YES];
     
     self.navigationItem.title = @"R E V I E W";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
@@ -49,7 +50,7 @@
     
     self.profanityList = @[@"fuck",@"fucking",@"cunt", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
     
-    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(dismissFeedback)];
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissFeedback)];
     [self.navigationItem setLeftBarButtonItem:cancelButton];
 
     UIBarButtonItem *reportButton = [[UIBarButtonItem alloc] initWithTitle:@"Report" style:UIBarButtonItemStylePlain target:self action:@selector(reportPressed)];
@@ -69,7 +70,6 @@
                    customAttributes:@{
                                       @"pageName":@"Leave Review",
                                       }];
-    
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -105,6 +105,40 @@
             NSLog(@"error %@", error);
         }
     }];
+    
+    if (self.editMode) {
+        
+        [self.editFBObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                NSLog(@"FB OBJ: %@", object);
+                
+                //preset rating and comment
+                self.convoObject = [object objectForKey:@"convo"];
+                self.previousReview = [[object objectForKey:@"rating"]intValue];
+                
+                if ([object objectForKey:@"comment"]) {
+                    self.commentField.text = [object objectForKey:@"comment"];
+                }
+                
+                if (self.previousReview == 1) {
+                    [self firstStarPressed:self];
+                }
+                else if (self.previousReview == 2) {
+                    [self secondStarPressed:self];
+                }
+                else if (self.previousReview == 3) {
+                    [self thirdStarPressed:self];
+                }
+                else if (self.previousReview == 4) {
+                    [self fourthStarPressed:self];
+                }
+                else if (self.previousReview == 5) {
+                    [self fifthStarPressed:self];
+                }
+                
+            }
+        }];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -346,7 +380,15 @@
     else{
         [self showHUD];
         
-        PFObject *feedbackObject = [PFObject objectWithClassName:@"feedback"];
+        PFObject *feedbackObject;
+        
+        if (self.editMode) {
+            feedbackObject = self.editFBObject;
+        }
+        else{
+            feedbackObject = [PFObject objectWithClassName:@"feedback"];
+        }
+        
         [feedbackObject setObject:self.convoObject forKey:@"convo"];
         [feedbackObject setObject:[NSNumber numberWithInt:self.starNumber] forKey:@"rating"];
         [feedbackObject setObject:[PFUser currentUser] forKey:@"gaveFeedback"];
@@ -376,12 +418,24 @@
         
         [feedbackObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (!error) {
-                
+
+                //call delegate early to remove review banner in convo
+                [self.delegate leftReview];
+
                 //update user's deals data
                 PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
                 [dealsQuery whereKey:@"User" equalTo:self.user];
                 [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                     if (object) {
+                        
+                        if (self.editMode) {
+                            //remove previous rating first & don't increment total
+                            [object incrementKey:[NSString stringWithFormat:@"star%d", self.previousReview] byAmount:@-1];
+                        }
+                        else{                            
+                            [object incrementKey:@"dealsTotal"]; //deals total is now the total number of reviews a user has
+                        }
+                        
                         
                         if (self.starNumber == 1) {
                             [object incrementKey:@"star1"];
@@ -398,23 +452,23 @@
                         else if (self.starNumber == 5){
                             [object incrementKey:@"star5"];
                         }
-                        
-                        [object incrementKey:@"dealsTotal"]; //deals total is now the total number of reviews a user has
+
+                        int totalReviews = [[object objectForKey:@"dealsTotal"]intValue];
                         
                         // weight the different stars
-                        int star1 = [[object objectForKey:@"star1"]intValue]*5;
-                        int star2 = [[object objectForKey:@"star2"]intValue]*4;
+                        int star1 = [[object objectForKey:@"star1"]intValue]*1;
+                        int star2 = [[object objectForKey:@"star2"]intValue]*2;
                         int star3 = [[object objectForKey:@"star3"]intValue]*3;
-                        int star4 = [[object objectForKey:@"star4"]intValue]*2;
-                        int star5 = [[object objectForKey:@"star5"]intValue]*1;
+                        int star4 = [[object objectForKey:@"star4"]intValue]*4;
+                        int star5 = [[object objectForKey:@"star5"]intValue]*5;
                         
-                        NSArray *ratings = [NSArray arrayWithObjects:@(star1), @(star2), @(star3), @(star4), @(star5), nil];
-                        int max = [[ratings valueForKeyPath:@"@max.intValue"] intValue];
-                        int star = (int) [ratings indexOfObject:@(max)]+1;
-                        [object setObject:[NSNumber numberWithInt:star] forKey:@"currentRating"];
+                        int total = (star1 + star2 + star3 + star4 + star5);
+                        int rating = total / totalReviews;
+                       
+                        [object setObject:[NSNumber numberWithInt:rating] forKey:@"currentRating"];
                         [object saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                             if (succeeded) {
-                                NSLog(@"saved user's deal data %@", object);
+//                                NSLog(@"saved user's deal data %@", object);
                                 
                                 if (self.isBuyer == YES) {
                                     [self.convoObject setObject:@"YES" forKey:@"buyerHasReviewed"];
@@ -427,7 +481,6 @@
                                         
                                         NSLog(@"saved convo");
                                         
-                                        [self.delegate leftReview];
                                         [self hideHUD];
                                         
                                         if (self.starNumber >= 4 ) {
@@ -455,10 +508,12 @@
                                                     double secondsInADay = 86400;
                                                     NSInteger daysBetweenDates = distanceBetweenDates / secondsInADay;
                                                     
-                                                    if (daysBetweenDates >= 14) {
-                                                        //prompt again
-                                                        [Answers logCustomEventWithName:@"Asked to review after leaving Feedback"
-                                                                       customAttributes:@{}];
+                                                    if (daysBetweenDates >= 21) {
+                                                        //prompt again if > 3 weeks later
+                                                        [Answers logCustomEventWithName:@"Show Rate"
+                                                                       customAttributes:@{
+                                                                                          @"where": @"feedbackVC"
+                                                                                          }];
                                                         [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.messageNav];
                                                         [self dismissFeedback];
                                                     }
@@ -471,14 +526,19 @@
                                             }
                                             else{
                                                 //never been asked to review so prompt
-                                                [Answers logCustomEventWithName:@"Asked to review after leaving Feedback"
-                                                               customAttributes:@{}];
+                                                [Answers logCustomEventWithName:@"Show Rate"
+                                                               customAttributes:@{
+                                                                                  @"where": @"feedbackVC"
+                                                                                  }];
                                                 [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.messageNav];
                                                 [self dismissFeedback];
                                             }
                                         }
                                         else{
                                             //didn't give a 4+ star rating
+                                            if (self.starNumber < 3) {
+                                                [self sendPoorFeedbackMessage];
+                                            }
                                             [self dismissFeedback];
                                         }
                                     }
@@ -486,41 +546,46 @@
                                         NSLog(@"error saving convo %@", error);
                                         [self hideHUD];
                                         [self.longButton setEnabled:YES];
-                                        [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet"];
+                                        [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet code:4"];
                                     }
                                 }];
                                 
-                                NSString *pushString = [NSString stringWithFormat:@"%@ just left you a review ✅", [PFUser currentUser].username];
-                                
-                                NSDictionary *params = @{@"userId": self.IDUser, @"message": pushString, @"sender": [PFUser currentUser].username};
-                                [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                                    if (!error) {
-                                        NSLog(@"response sending feedback push %@", response);
-                                    }
-                                    else{
-                                        NSLog(@"image push error %@", error);
-                                    }
-                                }];
+                                if (!self.editMode) {
+                                    NSString *pushString = [NSString stringWithFormat:@"%@ just left you a review ✅", [PFUser currentUser].username];
+                                    
+                                    NSDictionary *params = @{@"userId": self.IDUser, @"message": pushString, @"sender": [PFUser currentUser].username};
+                                    [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                                        if (!error) {
+                                            NSLog(@"response sending feedback push %@", response);
+                                        }
+                                        else{
+                                            NSLog(@"image push error %@", error);
+                                        }
+                                    }];
+                                }
+
                             }
                             else{
                                 NSLog(@"error saving deal data %@", error);
                                 [self hideHUD];
                                 [self.longButton setEnabled:YES];
-                                [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet"];
+                                [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet code:1"];
                             }
                         }];
                     }
                     else{
+                        //no deals object
                         NSLog(@"error %@", error);
-                        [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet"];
+                        [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet code:2"];
                         [self.longButton setEnabled:YES];
                         [self hideHUD];
                     }
                 }];
             }
             else{
+                [self hideHUD];
                 NSLog(@"error saving feedback obj %@", error);
-                [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet"];
+                [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet code:3"]; //error on bump leaving feedback with guy - check cause
             }
         }];
     }
@@ -536,47 +601,76 @@
 }
 
 -(void)invitePrompt{
-    PFUser *current = [PFUser currentUser];
-    
     [self triggerInvite];
-
-    
-//    NSDate *lastReviewDate = [current objectForKey:@"reviewDate"];
-//    NSTimeInterval distanceBetweenReviewDates = [[NSDate date] timeIntervalSinceDate:lastReviewDate];
-//    double secondsInADay = 86400;
-//    NSInteger daysBetweenReviewDates = distanceBetweenReviewDates / secondsInADay;
-//    
-//    if ([current objectForKey:@"inviteDate"]) {
-//        //has seen invite dialog before
-//        //check when last shown
-//        
-//        //check if last invite prompt was later than 14 days ago
-//        NSDate *lastInviteDate = [current objectForKey:@"inviteDate"];
-//        
-//        //check difference between 2 dates
-//        NSTimeInterval distanceBetweenInviteDates = [[NSDate date] timeIntervalSinceDate:lastInviteDate];
-//        NSInteger daysBetweenInviteDates = distanceBetweenInviteDates / secondsInADay;
-//        
-//        //also check if user was prompted to review more than a day ago, don't want to bombard them
-//        if (daysBetweenInviteDates >= 14 && daysBetweenReviewDates > 1) {
-//            //prompt again
-//            [self triggerInvite];
-//        }
-//        else{
-//            //invite seen in past 14 days already or review was shown in past day too - so don't show
-//        }
-//    }
-//    else{
-//        if (daysBetweenReviewDates > 1) {
-//            //never been asked to review so prompt (only if haven't been asked to review recently)
-//            [self triggerInvite];
-//        }
-//    }
 }
 
 -(void)triggerInvite{
     [Answers logCustomEventWithName:@"Asked to invite in messages"
                    customAttributes:@{}];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"showInvite" object:nil];
+}
+
+-(void)sendPoorFeedbackMessage{
+    //save message first
+    NSString *messageString = @"";
+    
+    if ([[PFUser currentUser]objectForKey:@"firstName"]) {
+        messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for leaving a review on Bump and helping the community!\n\nWe noticed you left a poor review for user @%@, is there anything you'd like us to help with?\n\nThanks\nSophie @ Team Bump",[[PFUser currentUser]objectForKey:@"firstName"],self.user.username];
+    }
+    else{
+        messageString = [NSString stringWithFormat:@"Hey\n\nThanks for leaving a review on Bump and helping the community!\n\nWe noticed you left a poor review for user @%@, is there anything you'd like us to help with?\n\nThanks\nSophie @ Team Bump",self.user.username];
+    }
+    
+    //now save report message
+    PFObject *messageObject1 = [PFObject objectWithClassName:@"teamBumpMsgs"];
+    messageObject1[@"message"] = messageString;
+    messageObject1[@"sender"] = [PFUser currentUser];
+    messageObject1[@"senderId"] = @"BUMP";
+    messageObject1[@"senderName"] = @"Team Bump";
+    messageObject1[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+    messageObject1[@"status"] = @"sent";
+    [messageObject1 saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            
+            //update profile tab bar badge
+            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+            [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
+            
+            //update convo
+            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
+            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+            [convoQuery whereKey:@"convoId" equalTo:convoId];
+            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    
+                    //got the convo
+                    [object incrementKey:@"totalMessages"];
+                    [object setObject:messageObject1 forKey:@"lastSent"];
+                    [object setObject:[NSDate date] forKey:@"lastSentDate"];
+                    [object incrementKey:@"userUnseen"];
+                    [object saveInBackground];
+                    
+                    [Answers logCustomEventWithName:@"Sent Poor Feedback Message"
+                                   customAttributes:@{
+                                                      @"status":@"SENT"
+                                                      }];
+                }
+                else{
+                    [Answers logCustomEventWithName:@"Sent Poor Feedback Message"
+                                   customAttributes:@{
+                                                      @"status":@"Failed getting convo"
+                                                      }];
+                }
+            }];
+        }
+        else{
+            NSLog(@"error saving report message %@", error);
+            [Answers logCustomEventWithName:@"Sent Poor Feedback Message"
+                           customAttributes:@{
+                                              @"status":@"Failed saving message"
+                                              }];
+        }
+    }];
 }
 @end

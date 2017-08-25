@@ -7,21 +7,21 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "brandObject.h"
+#import <SwipeView/SwipeView.h>
 
 @class FilterVC;
 
 @protocol FilterDelegate <NSObject>
-- (void)filtersReturned:(NSMutableArray *)filters;
+- (void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours;
 - (void)noChange;
 
 @end
 
-@interface FilterVC : UITableViewController
+@interface FilterVC : UITableViewController <SwipeViewDelegate, SwipeViewDataSource>
 
 @property (nonatomic, weak) id <FilterDelegate> delegate;
 
-@property (strong, nonatomic) NSMutableArray *chosenSizesArray;
+//general
 @property (strong, nonatomic) NSMutableArray *filtersArray;
 @property (strong, nonatomic) NSMutableArray *sendArray;
 
@@ -32,9 +32,10 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *categoryCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *sizeCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *applyCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *brandCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *distanceCell;
-
+@property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *brandCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *colourCell;
 
 //price buttons
 @property (weak, nonatomic) IBOutlet UIButton *hightolowButton;
@@ -42,53 +43,48 @@
 
 //condition buttons
 @property (weak, nonatomic) IBOutlet UIButton *usedButton;
-@property (weak, nonatomic) IBOutlet UIButton *BNWTconditionButton;
-@property (weak, nonatomic) IBOutlet UIButton *BNWOTButton;
+@property (weak, nonatomic) IBOutlet UIButton *deadstockButton;
+@property (weak, nonatomic) IBOutlet UIButton *conditionNewButton;
 
 //category buttons
 @property (weak, nonatomic) IBOutlet UIButton *clothingButton;
 @property (weak, nonatomic) IBOutlet UIButton *footButton;
 @property (weak, nonatomic) IBOutlet UIButton *accessoryButton;
 
-//size
-@property (weak, nonatomic) IBOutlet UIScrollView *sizeScrollButton;
-@property (weak, nonatomic) IBOutlet UIScrollView *brandScrollView;
-@property (weak, nonatomic) IBOutlet UIButton *menButton;
-@property (weak, nonatomic) IBOutlet UIButton *womenButton;
-@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
-
-@property (strong, nonatomic) UIButton *lasttapped;
-@property (strong, nonatomic) UIButton *lastBrandButtonTapped;
-@property (strong, nonatomic) NSString *lastBrandTapped;
-@property (strong, nonatomic) UIImageView *lastBrandImageView;
-@property (strong, nonatomic) UILabel *lastLabelTapped;
-
-@property (nonatomic) BOOL clothingEnabled;
-
-@property (nonatomic, strong) NSArray *sizeLabels;
-@property (nonatomic, strong) NSArray *shoesArray;
-@property (nonatomic, strong) NSArray *brandImageArray;
-@property (nonatomic, strong) NSArray *brandNamesArray;
-
-//brand Img Views
-@property (strong, nonatomic) UIImageView *adidasImageView;
-@property (strong, nonatomic) UIImageView *nikeImageView;
-@property (strong, nonatomic) UIImageView *palaceImageView;
-@property (strong, nonatomic) UIImageView *stoneyImageView;
-@property (strong, nonatomic) UIImageView *supremeImageView;
-@property (strong, nonatomic) UIImageView *ralphImageView;
-
-@property (nonatomic, strong) brandObject *adidas;
-@property (nonatomic, strong) brandObject *nike;
-@property (nonatomic, strong) brandObject *palace;
-@property (nonatomic, strong) brandObject *stoney;
-@property (nonatomic, strong) brandObject *supreme;
-@property (nonatomic, strong) brandObject *ralph;
-
-//distance buttons
+//location buttons
 @property (weak, nonatomic) IBOutlet UIButton *distanceButton;
 
 //applyButton
 @property (nonatomic, strong) UIButton *applyButton;
+
+//size swipe view
+@property (weak, nonatomic) IBOutlet SwipeView *swipeView;
+@property (nonatomic, strong) NSString *sizeMode;
+@property (nonatomic, strong) NSString *lastSelected;
+
+//brand swipe view
+@property (weak, nonatomic) IBOutlet SwipeView *brandSwipeView;
+@property (nonatomic, strong) NSArray *brandArray;
+@property (nonatomic, strong) NSArray *brandAcronymArray;
+
+@property (strong, nonatomic) NSMutableArray *chosenBrandsArray;
+
+//size buttons
+@property (weak, nonatomic) IBOutlet UIButton *menButton;
+@property (weak, nonatomic) IBOutlet UIButton *womenButton;
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (nonatomic, strong) NSArray *sizeLabels;
+@property (nonatomic, strong) NSArray *shoesArray;
+@property (strong, nonatomic) NSMutableArray *chosenSizesArray;
+
+//colour filter
+@property (weak, nonatomic) IBOutlet SwipeView *colourSwipeView;
+@property (nonatomic, strong) NSArray *coloursArray;
+@property (nonatomic, strong) NSArray *colourValuesArray;
+@property (nonatomic, strong) NSMutableArray *chosenColourArray;
+
+//mode
+@property (nonatomic) BOOL sellingSearch;
+@property (nonatomic) BOOL profileSearch;
 
 @end

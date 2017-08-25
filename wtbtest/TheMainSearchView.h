@@ -21,8 +21,11 @@
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 
 @property (nonatomic, strong) NSArray *userResults;
-@property (nonatomic, strong) NSArray *listingResults;
+@property (nonatomic, strong) NSArray *wantedSearchResults;
+@property (nonatomic, strong) NSArray *sellingSearchResults;
+
 @property (nonatomic) BOOL userSearch;
+@property (nonatomic) BOOL sellingSearch;
 
 @property (nonatomic, strong) NSString *searchString;
 
@@ -44,5 +47,5 @@
 @property (nonatomic, strong) HMSegmentedControl *segmentedControl;
 @property (weak, nonatomic) IBOutlet UIView *placeholderView;
 
-
+-(void)cancelPressed;
 @end

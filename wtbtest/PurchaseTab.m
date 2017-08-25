@@ -19,26 +19,46 @@
 #import "FeaturedItems.h"
 #import "ChatWithBump.h"
 #import "CreateForSaleListing.h"
+#import "mainApprovedSellerController.h"
+#import "ExploreVC.h"
+#import "detailSellingCell.h"
+#import <ParseFacebookUtilsV4/PFFacebookUtils.h>
+#import <FBSDKCoreKit/FBSDKCoreKit.h>
+#import "AppConstant.h"
+#import "AddSizeController.h"
+#import "ExplainView.h"
 
 @interface PurchaseTab ()
 
 @end
 
-@implementation PurchaseTab 
+@implementation PurchaseTab
+
+@synthesize locationManager = _locationManager;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"B U Y  N O W";
+    [self.noResultsLabel setHidden:YES];
     
+    //setup search bar
+    self.navSearchbar = [[UISearchBar alloc]init];
+    self.navSearchbar.placeholder = @"Search";
+    self.navSearchbar.delegate = self;
+    UITextField *txfSearchField = [self.navSearchbar valueForKey:@"searchField"];
+    txfSearchField.backgroundColor =[UIColor colorWithRed:0.18 green:0.17 blue:0.18 alpha:1.0];
+    [txfSearchField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:@"Search" attributes:@{NSForegroundColorAttributeName: [UIColor whiteColor]}]];
+    UIImageView *imgView = (UIImageView*)txfSearchField.leftView;
+    imgView.image = [imgView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    imgView.tintColor = [UIColor whiteColor];
+    self.navigationItem.titleView = self.navSearchbar;
+
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
-    
-    UIBarButtonItem *sellingButton = [[UIBarButtonItem alloc] initWithTitle:@"Sell" style:UIBarButtonItemStylePlain target:self action:@selector(sellPressed)];
     
     //collection view setup
     // Register cell classes
-    [self.collectionView registerClass:[ProfileItemCell class] forCellWithReuseIdentifier:@"Cell"];
-    UINib *cellNib = [UINib nibWithNibName:@"ProfileItemCell" bundle:nil];
+    [self.collectionView registerClass:[detailSellingCell class] forCellWithReuseIdentifier:@"Cell"];
+    UINib *cellNib = [UINib nibWithNibName:@"detailSellingCell" bundle:nil];
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"Cell"];
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
     
@@ -46,96 +66,350 @@
     
     if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
         //iPhone6/7
-        [flowLayout setItemSize:CGSizeMake(124,124)];
+        [flowLayout setItemSize:CGSizeMake(175,222)];
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
         //iPhone 6 plus
-        [flowLayout setItemSize:CGSizeMake(137, 137)];
+        [flowLayout setItemSize:CGSizeMake(195, 247)];
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
         //iPhone 4/5
-        [flowLayout setItemSize:CGSizeMake(106, 106)];
+        [flowLayout setItemSize:CGSizeMake(148, 188)];
     }
     else{
         //fall back
-        [flowLayout setItemSize:CGSizeMake(124,124)];
+        [flowLayout setItemSize:CGSizeMake(175,222)];
     }
     
-    [flowLayout setMinimumInteritemSpacing:1.0];
-    [flowLayout setMinimumLineSpacing:1.0];
+    [flowLayout setMinimumInteritemSpacing:8.0];
+    [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
-    flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 125);
+    flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 40);
     flowLayout.sectionHeadersPinToVisibleBounds = NO;
     
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.dataSource = self;
     self.collectionView.alwaysBounceVertical = YES;
+    self.collectionView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     
     //setup header
-    [self.collectionView registerClass:[PurchaseTabHeader class]
-            forSupplementaryViewOfKind: UICollectionElementKindSectionHeader
-                   withReuseIdentifier:@"Header"];
+    [self.collectionView registerNib:[UINib nibWithNibName:@"simpleBannerHeader" bundle:nil]
+          forSupplementaryViewOfKind:UICollectionElementKindSectionHeader
+                 withReuseIdentifier:@"Header"];
     
     self.products = [NSMutableArray array];
-    self.addedIDs = [NSMutableArray array];
-    self.WTBMatches = [NSMutableArray array];
-    self.featured = [NSMutableArray array];
-    self.infinMatches = [NSMutableArray array];
-    self.scheduledArray = [NSMutableArray array];
-    self.listingIndexesArray = [NSMutableArray array];
-    self.addedIndexes = [NSMutableArray array];
-    self.affiliatesSeen = [NSMutableArray array];
+    self.productIds = [NSMutableArray array];
+    
+    self.skipped = 0;
     
     self.pullFinished = YES;
-    self.featuredFinished = YES;
     self.infinFinished = YES;
     
-    self.showAffiliates = YES;
-    self.retrieveLimit = 28;
-    //28 for YES and 30 for NO ^
-    
     [self.anotherPromptButton setHidden:YES];
-
-    [self getAffiliateData];
-    [self loadWTBsAndMatches];
-
-    //day of the week formatter
-    self.dayOfWeekFormatter = [[NSDateFormatter alloc] init];
-    NSTimeZone *inputTimeZone = [NSTimeZone localTimeZone];
-    [self.dayOfWeekFormatter setTimeZone:inputTimeZone];
-    [self.dayOfWeekFormatter setDateFormat:@"EEE"];
-    
-    self.yeezySeenArray = [NSMutableArray array];
-    self.supSeenArray = [NSMutableArray array];
-    self.palaceSeenArray = [NSMutableArray array];
-    
-    self.selectedShop = @"sup";
-
-    if ([[PFUser currentUser]objectForKey:@"yeezySeenArray"]) {
-        self.yeezySeenArray = [[PFUser currentUser]objectForKey:@"yeezySeenArray"];
-    }
-    if ([[PFUser currentUser]objectForKey:@"supSeenArray"]) {
-        self.supSeenArray = [[PFUser currentUser]objectForKey:@"supSeenArray"];
-    }
-    if ([[PFUser currentUser]objectForKey:@"palaceSeenArray"]) {
-        self.palaceSeenArray = [[PFUser currentUser]objectForKey:@"palaceSeenArray"];
-    }
     
     self.spinnerHUD = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
-    PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
-    [trustedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
-    [trustedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-        if (number >= 1) {
-            self.isSeller = YES;
+    
+//    self.navigationController.hidesBarsOnSwipe = YES;
+    
+    //OBSERVERS
+    //navigation
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ensureNavShowing) name:@"ensureNavShowing" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBump:) name:@"showBumpedVC" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showListing:) name:@"listingBumped" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showSaleListing:) name:@"saleListingBumped" object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(bigLogOut) name:@"invalidSessionNotification" object:nil];
+    
+    //update data
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetHome) name:@"refreshHome" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(insertLatestListing:) name:@"justPostedSaleListing" object:nil];
+    
+    //drop down
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBumpDrop:) name:@"showBumpedDropDown" object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(messageSentDrop:) name:@"messageSentDropDown" object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showScreenShot:) name:@"screenshotDropDown" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dismissDrop) name:@"removeDrop" object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDrop:) name:@"showDropDown" object:nil];
+    
+    //pop up triggers
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setUpRateViewWithNav:) name:@"showRate" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showInviteView) name:@"showInvite" object:nil];
+    
+    //verify email
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(verifyEmailInHome) name:@"verifyEmail" object:nil];
+    
+    //location stuff
+    if ([[NSUserDefaults standardUserDefaults]boolForKey:@"askedForLocationPermission"] || [[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"]) {
+        
+        //for users that have already seen the location diaglog before this update - use the completedReg BOOL to check
+        if ([[NSUserDefaults standardUserDefaults]boolForKey:@"askedForLocationPermission"]==NO) {
+            [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForLocationPermission"];
+        }
+        self.locationAllowed = [CLLocationManager locationServicesEnabled];
+        [self startLocationManager];
+    }
+    
+    PFUser *currentUser = [PFUser currentUser];
+    
+    if (currentUser) {
+        NSLog(@"got a current user");
+        if (![FBSDKAccessToken currentAccessToken] && [currentUser objectForKey:@"facebookId"]) {
+            NSLog(@"invalid fb token in VDL");
+            
+            //invalid access token
+            [PFUser logOut];
+            WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+            vc.delegate = self;
+            NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+            [self presentViewController:navController animated:YES completion:nil];
+        }
+        
+        else if (![[currentUser objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
+            [Answers logCustomEventWithName:@"Registration error"
+                           customAttributes:@{
+                                              @"error":@"hasn't completed reg",
+                                              @"user":currentUser.username
+                                              }];
+            [PFUser logOut];
+            WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+            vc.delegate = self;
+            NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+            [self presentViewController:navController animated:NO completion:nil];
+        }
+        
+        //check if all essential info saved from reg - if not then let them do it again
+        
+        else if (![currentUser objectForKey:PF_USER_FULLNAME] || ![currentUser objectForKey:PF_USER_EMAIL] || ![currentUser objectForKey:@"currency"] || currentUser.username.length >20) { //CHECK
+            
+            //been an error on sign up as user doesn't have all info saved / error with username
+            NSLog(@"lack of info after signing up");
+            
+            [Answers logCustomEventWithName:@"Registration error"
+                           customAttributes:@{
+                                              @"error":@"lack of info",
+                                              @"user":currentUser.username
+                                              }];
+            
+            currentUser[@"completedReg"] = @"NO";
+            [currentUser saveInBackground];
+            [PFUser logOut];
+            
+            WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+            vc.delegate = self;
+            NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+            [self presentViewController:navController animated:NO completion:nil];
         }
         else{
-            self.isSeller = NO;
-            [self.navigationItem setLeftBarButtonItem:sellingButton];
+            [self getLatestForSale];
+            
+            //convert old style emailVerified key to new one so we can update it on the client
+            if ([[currentUser objectForKey:@"emailVerified"]boolValue] == YES && [[currentUser objectForKey:@"emailIsVerified"]boolValue] != YES){
+                [currentUser setObject:[NSNumber numberWithBool:YES] forKey:@"emailIsVerified"];
+                [currentUser saveInBackground];
+            }
+
+            //user has signed up fine, do final checks & loading
+            //get updated friends list if connected with FB
+            if ([[PFUser currentUser]objectForKey:@"facebookId"]) {
+                FBSDKGraphRequest *request = [[FBSDKGraphRequest alloc]
+                                              initWithGraphPath:@"me/friends/?limit=5000"
+                                              parameters:@{@"fields": @"id, name"}
+                                              HTTPMethod:@"GET"];
+                [request startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection,
+                                                      id result,
+                                                      NSError *error) {
+                    // Handle the result
+                    if (!error) {
+                        NSArray* friends = [result objectForKey:@"data"];
+                        NSLog(@"Found: %lu friends with bump installed", (unsigned long)friends.count);
+                        NSMutableArray *friendsHoldingArray = [NSMutableArray array];
+                        
+                        for (NSDictionary *friend in friends) {
+                            [friendsHoldingArray addObject:[friend objectForKey:@"id"]];
+                        }
+                        
+                        [[PFUser currentUser]setObject:friendsHoldingArray forKey:@"friends"];
+                        [[PFUser currentUser] saveInBackground];
+                    }
+                    else{
+                        NSLog(@"error on friends %li", (long)error.code);
+                        if (error.code == 8) {
+                            //invalid access token
+                            [PFUser logOut];
+                            WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+                            vc.delegate = self;
+                            NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+                            [self presentViewController:navController animated:YES completion:nil];
+                        }
+                        else{
+                            [self showError];
+                        }
+                    }
+                }];
+            }
+            
+            //check if need to see new explain VC (if signed up earlier than that update)
+            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+            NSDateComponents *components3 = [[NSDateComponents alloc] init];
+            [components3 setYear:2017];
+            [components3 setMonth:7];
+            [components3 setDay:24];
+            NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+            
+            if( [[PFUser currentUser].createdAt timeIntervalSinceDate:combinedDate] < 0 && ![[PFUser currentUser]objectForKey:@"seenChangeVC"]) {
+                ExplainView *vc = [[ExplainView alloc]init];
+                vc.changedMode = YES;
+                [self presentViewController:vc animated:YES completion:nil];
+            }
+            
+            //check if user has deviceToken set for tracking / banning purposes
+            if (![[PFUser currentUser]objectForKey:@"deviceToken"]) {
+                NSLog(@"no device token!");
+
+                PFInstallation *installation = [PFInstallation currentInstallation];
+                
+                //protect agains
+                if (installation.deviceToken) {
+                    NSLog(@"installation %@", installation);
+                    
+//                    [[PFUser currentUser] setObject:installation.deviceToken forKey:@"deviceToken"];
+//                    [[PFUser currentUser]saveInBackground];
+                }
+            }
+            
+            //check if declined push permissions and if need to ask again
+            if ([[NSUserDefaults standardUserDefaults]boolForKey:@"declinedPushPermissions"]== YES && [[currentUser objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
+                [self checkPushStatus];
+            }
+            
+            //check if deals data has saved, otherwise create & save
+            if (![currentUser objectForKey:@"dealsSaved"]) {
+                PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+                [dealsQuery whereKey:@"User" equalTo:currentUser];
+                [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                    if (object) {
+                        //already have deals info saved
+                        currentUser[@"dealsSaved"] = @"YES";
+                        [currentUser saveInBackground];
+                    }
+                    else{
+                        NSLog(@"no deals info");
+                        //no deals info
+                        PFObject *dealsData = [PFObject objectWithClassName:@"deals"];
+                        [dealsData setObject:[PFUser currentUser] forKey:@"User"];
+                        [dealsData setObject:@0 forKey:@"star1"];
+                        [dealsData setObject:@0 forKey:@"star2"];
+                        [dealsData setObject:@0 forKey:@"star3"];
+                        [dealsData setObject:@0 forKey:@"star4"];
+                        [dealsData setObject:@0 forKey:@"star5"];
+                        
+                        [dealsData setObject:@0 forKey:@"dealsTotal"];
+                        [dealsData setObject:@0 forKey:@"currentRating"];
+                        [dealsData saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                            if (succeeded) {
+                                currentUser[@"dealsSaved"] = @"YES";
+                                [currentUser saveInBackground];
+                            }
+                        }];
+                    }
+                }];
+            }
+            
+            //check if have lowercase fullname
+            if (![currentUser objectForKey:@"fullnameLower"]) {
+                //for search purposes so can search by name!
+                currentUser[@"fullnameLower"] = [[[PFUser currentUser]objectForKey:@"fullname"]lowercaseString];
+                [currentUser saveInBackground];
+            }
+            
+            //check if they have wanted words
+            if (![currentUser objectForKey:@"wantedWords"]) {
+                PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
+                [myPosts whereKey:@"postUser" equalTo:currentUser];
+                [myPosts orderByDescending:@"lastUpdated"];
+                myPosts.limit = 10;
+                [myPosts findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                    if (objects) {
+                        NSMutableArray *wantedWords = [NSMutableArray array];
+                        
+                        for (PFObject *listing in objects) {
+                            NSArray *keywords = [listing objectForKey:@"searchKeywords"];
+                            
+                            for (NSString *word in keywords) {
+                                if (![wantedWords containsObject:word]) {
+                                    [wantedWords addObject:word];
+                                }
+                            }
+                        }
+                        //                        NSLog(@"wanted words: %@", wantedWords);
+                        [currentUser setObject:wantedWords forKey:@"wantedWords"];
+                        [currentUser saveInBackground];
+                    }
+                    else{
+                        NSLog(@"nee posts pet");
+                    }
+                }];
+            }
+            
+            // finally check if they've been banned - put it last because otherwise if logout user from a previous user check this will still run and throw error 'can't do a comparison query for type (null)
+            [self checkIfBanned];
+        }
+    }
+    
+    NSString *appVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+    PFQuery *versionQuery = [PFQuery queryWithClassName:@"versions"];
+    [versionQuery orderByDescending:@"createdAt"];
+    [versionQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            NSString *latest = [object objectForKey:@"number"];
+            
+            //add in a check if user was created in past 2 days
+            //only show update prompt if created later than that
+            //to protect against the update crossover period
+            
+            NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:currentUser.createdAt];
+            double secondsInADay = 86400;
+            NSInteger daysSinceSigningUp = distanceBetweenDates / secondsInADay;
+            
+            if (daysSinceSigningUp > 2) {
+                //can prompt now
+                if (![appVersion isEqualToString:latest]) {
+                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:nil preferredStyle:UIAlertControllerStyleAlert];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                        [Answers logCustomEventWithName:@"Cancel Update pressed"
+                                       customAttributes:@{}];
+                    }]];
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                        [Answers logCustomEventWithName:@"Update pressed"
+                                       customAttributes:@{}];
+                        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
+                                                                    @"itms-apps://itunes.apple.com/app/id1096047233"]];
+                    }]];
+//                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
+                }
+            }
+        }
+        else{
+            NSLog(@"error getting latest version %@", error);
         }
     }];
     
-    self.navigationController.hidesBarsOnSwipe = YES;
+    //dismiss Invite gesture
+    self.tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
+    self.tap.numberOfTapsRequired = 1;
+    
+    //filter setup
+    self.filtersArray = [NSMutableArray array];
+    self.filterSizesArray = [NSMutableArray array];
+    self.filterBrandsArray = [NSMutableArray array];
+    self.filterColoursArray = [NSMutableArray array];
+    
+//    [PFUser logOut]; //CHECK
 }
 
 - (void)didReceiveMemoryWarning {
@@ -148,7 +422,7 @@
     //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
     [self.collectionView addPullToRefreshWithActionHandler:^{
         if (self.pullFinished == YES) {
-            [self loadWTBsAndMatches];
+            [self getLatestForSale];
         }
     }];
     
@@ -159,449 +433,254 @@
     [self.collectionView addInfiniteScrollingWithActionHandler:^{
         if (self.infinFinished == YES) {
             //infinity query
-            [self loadMoreWTBsAndMatches];
+            [self infinLatestForSale];
         }
     }];
+}
+
+- (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
+    return UIEdgeInsetsMake(8, 8, 8, 8); // top, left, bottom, right
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+    self.navigationController.navigationBar.barStyle = UIBarStyleBlack;
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:12],
                                     NSFontAttributeName, [UIColor blackColor], NSForegroundColorAttributeName,  nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    self.navigationController.navigationBar.translucent = NO;
+    [self.navigationController.navigationBar setBarTintColor: [UIColor colorWithRed:0.11 green:0.11 blue:0.11 alpha:1.0]];
     
     [Answers logCustomEventWithName:@"Viewed page"
                    customAttributes:@{
-                                      @"pageName":@"Buy Now"
+                                      @"pageName":@"Home"
                                       }];
     
-    [self updateDates];
-    [self scheduleTimer];
+    if (![PFUser currentUser]) {
+        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+        vc.delegate = self;
+        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+        [self presentViewController:navController animated:NO completion:nil];
+    }
+    else{
 
+        self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+        if ([self.currency isEqualToString:@"GBP"]) {
+            self.currencySymbol = @"£";
+        }
+        else if ([self.currency isEqualToString:@"EUR"]) {
+            self.currencySymbol = @"€";
+        }
+        else if ([self.currency isEqualToString:@"USD"]) {
+            self.currencySymbol = @"$";
+        }
+    }
+    
     if (self.tappedItem == YES) {
         self.tappedItem = NO;
     }
-    else{
-//        [self loadShopDrop];
-    }
     
-    //check if should show affiliate items
-    PFQuery *versionQuery = [PFQuery queryWithClassName:@"versions"];
-    [versionQuery orderByDescending:@"createdAt"];
-    [versionQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            if ([[object objectForKey:@"showAfilliates"]isEqualToString:@"NO"]) {
-                self.showAffiliates = NO;
-                self.retrieveLimit = 30;
-            }
-            else{
-                self.showAffiliates = YES;
-                self.retrieveLimit = 28;
-            }
-        }
-        else{
-            NSLog(@"error getting latest version %@", error);
-            self.showAffiliates = NO;
-            self.retrieveLimit = 30;
-        }
-    }];
+    //to make sure infin not always spinning
+    [self.infiniteQuery cancel];
+    [self.collectionView.infiniteScrollingView stopAnimating];
+    self.infinFinished = YES;
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    self.navigationController.navigationBar.barStyle = UIBarStyleDefault;
 }
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
-    self.navigationController.hidesBarsOnSwipe = YES;
-
-    
-    //user has pressed view more from intro WTB, set this to NO so search Intro is triggered next time they're in explore
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"viewMorePressed"] == YES) {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"viewMorePressed"];
+    BOOL modalPresent = (self.presentedViewController);
+    if ([PFUser currentUser] && modalPresent != YES) {
+        
+        //if user redownloaded - ask for push/location permissions again
+        if ([[NSUserDefaults standardUserDefaults]boolForKey:@"askedForPushPermission"] == NO && [[[PFUser currentUser] objectForKey:@"completedReg"]isEqualToString:@"YES"] && [[NSUserDefaults standardUserDefaults]boolForKey:@"declinedPushPermissions"] != YES && modalPresent != YES) {
+            
+            [self parseLocation];
+            [self showPushReminder]; //this is showing when user redownloads and opens app - before they've logged in
+        }
+        //check if user has entered sizes
+        else if (![[PFUser currentUser]objectForKey:@"sizeCountry"] && modalPresent != YES) {
+            AddSizeController *vc = [[AddSizeController alloc]init];
+            [self.navigationController presentViewController:vc animated:YES completion:nil];
+        }
+        else{
+            [self checkIfBanned];
+            [self parseLocation];
+        }
     }
-    
-    //seen scheduling reminder?
-    if ([[NSUserDefaults standardUserDefaults]boolForKey:@"dropIntro"]!=YES) {
-        //show
-        self.dropIntro = YES;
-        [self pauseTimer];
-        [self showCustomAlert];
-    }
-    
 }
 
 #pragma mark <UICollectionViewDataSource>
-
--(void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
-    [self pauseTimer];
-}
-
--(void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate{
-//    NSLog(@"did end dragging");
-    [self scheduleTimer];
-}
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
     return 1;
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    
-    if ([collectionView isKindOfClass:[AFCollectionView class]]) {
-        
-        if (self.carousel.currentItemIndex == 0) {
-            //drops
-            return self.scheduledArray.count;
-        }
-        else{
-            //shop the drop
-            if ([self.selectedShop isEqualToString:@"sup"]){
-                return self.supArray.count;
-            }
-            else if ([self.selectedShop isEqualToString:@"yeezy"]){
-                return self.yeezyArray.count;
-            }
-            else if ([self.selectedShop isEqualToString:@"palace"]){
-                return self.palaceArray.count;
-            }
-            else{
-                NSLog(@"fail safe in number of items");
-                return 0;
-            }
-        }
-    }
-    else{
-        return self.products.count;
-    }
+    return self.products.count;
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+
+    detailSellingCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     
-    if ([collectionView isKindOfClass:[AFCollectionView class]]) {
-        //header's collection View
-        droppingCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
-        
-        //border
-        [self setImageBorder:cell.dropImageView];
-        [self clearOuterColour:cell.outerView];
-        
-        cell.dropImageView.image = nil;
-        
-        if (self.carousel.currentItemIndex == 0) {
-            
-            //future releases
-            [cell.dropLabel setHidden:NO];
-            
-            PFObject *releaseItem = [self.scheduledArray objectAtIndex:indexPath.row];
-            
-            //set image
-            NSString *imageURL = [releaseItem valueForKey:@"imageURL"];
-            [cell.dropImageView sd_setImageWithURL:[NSURL URLWithString:imageURL]];
-            
-            if ([[PFUser currentUser]objectForKey:@"remindersArray"]) {
-                
-                if ([[[PFUser currentUser]objectForKey:@"remindersArray"] containsObject:[releaseItem objectForKey:@"itemTitle"]]) {
-                    //already scheduled
-                    [self setAvailabilityImageViewBorder:cell.dropImageView];
-                    [self setReminderViewBorder:cell.outerView];
-                }
-                else{
-                    //no reminder for this item
-                }
-            }
-            
-            //set release date label
-            if([self isDateToday:[releaseItem objectForKey:@"releaseDate"]]) {
-                //drops today
-                
-                NSLog(@"RELEASE TIME AND DATE %@",[releaseItem objectForKey:@"releaseDateWithTime"]);
-                NSLog(@"RELEASED AGO INTERVAL %f",[[NSDate date]timeIntervalSinceDate:[releaseItem objectForKey:@"releaseDateWithTime"]]/60);
-                
-                if( [[NSDate date]timeIntervalSinceDate:[releaseItem objectForKey:@"releaseDateWithTime"]] > 0 ) {
-                    
-                    [self setAvailabilityImageViewBorder:cell.dropImageView];
-                    
-                    //check if sold out
-                    if ([[releaseItem objectForKey:@"status"]isEqualToString:@"soldout"]) {
-                        cell.dropLabel.text = @"S O L D  O U T";
-                        [cell.dropLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:6.0]];
-                        [self setSoldOutViewBorder:cell.outerView];
-                        [cell.dropLabel setTextColor:[UIColor lightGrayColor]];
-                    }
-                    else{
-                        //if not sold out & already live change the colour to green
-                        cell.dropLabel.text = @"L I V E";
-                        [cell.dropLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:6.0]];
-                        [self setAvailableViewBorder:cell.outerView];
-                        [cell.dropLabel setTextColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
-                    }
-                }
-                else{
-                    //time hasn't happened yet so use time & black color
-                    cell.dropLabel.text = [releaseItem objectForKey:@"releaseTimeString"];
-                    [cell.dropLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:8.0]];
-                    [cell.dropLabel setTextColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
-                }
-            }
-            else{
-                //check if drops tomorrow
-                if ([self isDateTomorrow:[releaseItem objectForKey:@"releaseDate"]]) {
-                    
-                    NSString *tomorrowDay = [self.dayOfWeekFormatter stringFromDate:[releaseItem objectForKey:@"releaseDate"]];
-                    cell.dropLabel.text = tomorrowDay;
-                }
-                else{
-                    cell.dropLabel.text = [releaseItem objectForKey:@"releaseDateString"];
-                }
-                [cell.dropLabel setTextColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
-            }
-        }
-        else{
-            
-            //shop
-            [cell.dropLabel setHidden:YES];
-            PFObject *shopItem;
-            
-            if ([self.selectedShop isEqualToString:@"sup"]){
-                shopItem = [self.supArray objectAtIndex:indexPath.row];
-            }
-            else if ([self.selectedShop isEqualToString:@"yeezy"]){
-                shopItem = [self.yeezyArray objectAtIndex:indexPath.row];
-            }
-            else if ([self.selectedShop isEqualToString:@"palace"]){
-                shopItem = [self.palaceArray objectAtIndex:indexPath.row];
-            }
-            else{
-                NSLog(@"fail safe");
-//                shopItem = [self.supArray objectAtIndex:indexPath.row];
-                //this may have been causing an issue //CHECK
-            }
-            
-            //img
-            [cell.dropImageView setFile:[shopItem objectForKey:@"image1"]];
-            [cell.dropImageView loadInBackground];
-            
-            //add to seen array
-            if ([shopItem objectForKey:@"index"]) {
-                if ([self.selectedShop isEqualToString:@"sup"]){
-                    if (![self.supSeenArray containsObject:[shopItem objectForKey:@"index"]]) {
-                        [self.supSeenArray addObject:[shopItem objectForKey:@"index"]];
-                    }
-                }
-                else if ([self.selectedShop isEqualToString:@"yeezy"]){
-                    if (![self.yeezySeenArray containsObject:[shopItem objectForKey:@"index"]]) {
-                        [self.yeezySeenArray addObject:[shopItem objectForKey:@"index"]];
-                    }
-                }
-                else if ([self.selectedShop isEqualToString:@"palace"]){
-                    if (![self.palaceSeenArray containsObject:[shopItem objectForKey:@"index"]]) {
-                        [self.palaceSeenArray addObject:[shopItem objectForKey:@"index"]];
-                    }
-                }
-            }
-        }
-        return cell;
+    cell.itemImageView.image = nil;
+    [cell.itemImageView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
+    
+    PFObject *forSaleItem = [self.products objectAtIndex:indexPath.row];
+    
+    //set image
+    [cell.itemImageView setFile:[forSaleItem objectForKey:@"thumbnail"]]; //was image1
+    [cell.itemImageView loadInBackground];
+
+    //so first image in listing is loaded faster
+    PFFile *image = [forSaleItem objectForKey:@"image1"];
+    [image getDataInBackground];
+    
+    //set title
+    if ([forSaleItem objectForKey:@"itemTitle"]) {
+        cell.itemTitleLabel.text = [forSaleItem objectForKey:@"itemTitle"];
     }
     else{
-        ProfileItemCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
-        [cell.purchasedImageView setHidden:YES];
-        cell.itemImageView.image = nil;
-        [cell.itemImageView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
-        
-        NSDictionary *itemDict = [self.products objectAtIndex:indexPath.row];
-        NSString *dictionaryType = [itemDict valueForKey:@"itemType"];
-        
-        if ([dictionaryType isEqualToString:@"normal"]) { //fetch before adding to dictionary?
-            //normal for sale item from a match or featured
-            PFObject *itemObject = [itemDict valueForKey:@"item"];
-            
-            if (![self.addedIDs containsObject:itemObject.objectId]) {
-                [self.addedIDs addObject:itemObject.objectId];
-            }
-            
-            [itemObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                
-                if (object) {
-                    cell.itemImageView.contentMode = UIViewContentModeScaleAspectFill;
-                    [cell.itemImageView setFile:[itemObject objectForKey:@"image1"]];
-                    [cell.itemImageView loadInBackground];
-                }
-            }];
+        cell.itemTitleLabel.text = [forSaleItem objectForKey:@"description"];
+    }
+    
+    //set price label if exists
+    float price = [[forSaleItem objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
+    
+    if (price != 0.00 && price > 0.99) {
+        cell.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
+    }
+    else{
+        cell.itemPriceLabel.text = @"";
+    }
+    
+    NSString *condition = @"";
+    
+    //check if has condition
+    if ([forSaleItem objectForKey:@"condition"]) {
+        NSString *conditionString = [forSaleItem objectForKey:@"condition"];
+        if ([conditionString isEqualToString:@"BNWT"] || [conditionString isEqualToString:@"BNWOT"]|| [conditionString isEqualToString:@"Deadstock"]) {
+            condition = @"New";
+        }
+        else if([conditionString isEqualToString:@"Other"]){
+            condition = @"Used";
         }
         else{
-
-            [Answers logCustomEventWithName:@"Affiliate item seen in Buy Now"
-                           customAttributes:@{}];
-            
-            cell.itemImageView.image = nil;
-            [cell.itemImageView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
-            
-            //access image
-            NSDictionary *itemD = [self.products objectAtIndex:indexPath.row];
-            PFObject *itemObj = [itemD valueForKey:@"item"];
-            
-            if (![[[PFUser currentUser]objectForKey:@"affiliateSeen"]containsObject:[itemObj objectForKey:@"itemTitle"]]) {
-                [[PFUser currentUser]addObject:[itemObj objectForKey:@"itemTitle"] forKey:@"affiliateSeen"];
-                [[PFUser currentUser]saveEventually];
-                self.remainingAffiliates--;
-            }
-            
-            [cell.itemImageView sd_setImageWithURL:[NSURL URLWithString:[itemObj objectForKey:@"imageURL"]]];
-            cell.itemImageView.contentMode = UIViewContentModeScaleAspectFill;
+            condition = conditionString;
         }
-        return cell;
     }
+    
+    //check if has size
+    NSString *size = @"";
+
+    if (![[forSaleItem objectForKey:@"category"]isEqualToString:@"Accessories"]) {
+        NSString *sizeLabel = [forSaleItem objectForKey:@"sizeLabel"];
+        
+        if ([sizeLabel isEqualToString:@"Multiple"]) {
+            size = sizeLabel;
+        }
+        else if ([sizeLabel isEqualToString:@"UK XXL"]){
+            size = @"XXLarge";
+        }
+        else if ([sizeLabel isEqualToString:@"UK XL"]){
+            size = @"XLarge";
+        }
+        else if ([sizeLabel isEqualToString:@"UK L"]){
+            size = @"Large";
+        }
+        else if ([sizeLabel isEqualToString:@"UK M"]){
+            size = @"Medium";
+        }
+        else if ([sizeLabel isEqualToString:@"UK S"]){
+            size = @"Small";
+        }
+        else if ([sizeLabel isEqualToString:@"UK XS"]){
+            size = @"XSmall";
+        }
+        else if ([sizeLabel isEqualToString:@"UK XXS"]){
+            size = @"XXSmall";
+        }
+        else if ([sizeLabel isEqualToString:@"XXL"]){
+            size = @"XXLarge";
+        }
+        else if ([sizeLabel isEqualToString:@"XL"]){
+            size = @"XLarge";
+        }
+        else if ([sizeLabel isEqualToString:@"L"]){
+            size = @"Large";
+        }
+        else if ([sizeLabel isEqualToString:@"M"]){
+            size = @"Medium";
+        }
+        else if ([sizeLabel isEqualToString:@"S"]){
+            size = @"Small";
+        }
+        else if ([sizeLabel isEqualToString:@"XS"]){
+            size = @"XSmall";
+        }
+        else if ([sizeLabel isEqualToString:@"XXS"]){
+            size = @"XXSmall";
+        }
+        else{
+            size = sizeLabel;
+        }
+    }
+    
+    //set info label
+    if (![condition isEqualToString:@""] && ![size isEqualToString:@""]) {
+        cell.itemInfoLabel.text = [NSString stringWithFormat:@"%@ | %@", condition, size];
+    }
+    else if([condition isEqualToString:@""] && ![size isEqualToString:@""]){
+        cell.itemInfoLabel.text = size;
+    }
+    else if(![condition isEqualToString:@""] && [size isEqualToString:@""]){
+        cell.itemInfoLabel.text = condition;
+    }
+    else{
+        cell.itemInfoLabel.text = @"";
+    }
+    
+//    //nslog item title and distance
+//    PFGeoPoint *location = [forSaleItem objectForKey:@"geopoint"];
+//    if (self.currentLocation && location) {
+//        int distance = [location distanceInKilometersTo:self.currentLocation];
+//        NSLog(@"TITLE %@   DISTANCE: %@", [forSaleItem objectForKey:@"itemTitle"] ,[NSString stringWithFormat:@"%dkm", distance]);
+//    }
+//    else{
+//        NSLog(@"no location data %@ %@", self.currentLocation, location);
+//    }
+    
+        return cell;
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+
+    self.tappedItem = YES;
+
+    [Answers logCustomEventWithName:@"Tapped Buy Now Item"
+                   customAttributes:@{
+                                      @"type":@"for sale"
+                                      }];
     
-    if ([collectionView isKindOfClass:[AFCollectionView class]]) {
-        //header's collection View
-        
-        
-        if (self.carousel.currentItemIndex == 0) {
-            //drop reminders
-            
-            if (self.alertShowing == YES) {
-                //checks if drop intro is showing - if so dismiss alert first
-                [self donePressed];
-            }
-            
-            PFObject *itemObject = [self.scheduledArray objectAtIndex:indexPath.row];
-            
-            if ([[itemObject objectForKey:@"status"]isEqualToString:@"TBC"]) {
-                //check if release is TBC - if so don't show reminder/drop page
-                self.showDropPageToo = NO;
-                self.TBCMode = YES;
-                [self pauseTimer];
-                [self showAlertViewForItem:itemObject atIndexPath:indexPath];
-                
-            }
-            else if([self isDateToday:[itemObject objectForKey:@"releaseDate"]]) {
-                //drops today
-                
-                //check if releaseTimeDate is  in the next 10 mins
-                NSDate *exactReleaseTime = [itemObject objectForKey:@"releaseDateWithTime"];
-                NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:exactReleaseTime];
-                double secondsInAMin = 60;
-                NSInteger minsBetweenDates = distanceBetweenDates / secondsInAMin;
-                
-                //check if item drops in next 10 mins
-                if (minsBetweenDates <= -10) {
-                    //drop is > 10 mins away so show both options
-                    self.showDropPageToo = YES;
-                    [self pauseTimer];
-                    [self showAlertViewForItem:itemObject atIndexPath:indexPath];
-                }
-                else{
-                    //drop is in next 10 mins, just show product page
-                    
-                    NSString *releaseLink = [itemObject objectForKey:@"itemLink"];
-                    
-                    self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:releaseLink]];
-                    self.web.showUrlWhileLoading = NO;
-                    self.web.showPageTitles = NO;
-                    self.web.title = [NSString stringWithFormat:@"%@",[itemObject objectForKey:@"itemTitle"]];
-                    self.web.doneButtonTitle = @"";
-                    self.web.infoMode = NO;
-                    self.web.delegate = self;
-                    self.web.dropMode = YES;
-                    
-                    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
-                    [self presentViewController:navigationController animated:YES completion:nil];
-                }
-            }
-            else{
-                //not today so allow scheduling
-                self.showDropPageToo = NO;
-                [self pauseTimer];
-                [self showAlertViewForItem:itemObject atIndexPath:indexPath];
-            }
-        }
-        else{
-            //shop
-            [Answers logCustomEventWithName:@"Tapped Shop Item"
-                           customAttributes:@{
-                                              @"shop":self.selectedShop
-                                              }];
-            [self pauseTimer];
-            self.tappedItem = YES;
-            
-            PFObject *itemObject;
-            
-            if ([self.selectedShop isEqualToString:@"sup"]){
-                itemObject = [self.supArray objectAtIndex:indexPath.row];
-            }
-            else if ([self.selectedShop isEqualToString:@"yeezy"]){
-                itemObject = [self.yeezyArray objectAtIndex:indexPath.row];
-            }
-            else if ([self.selectedShop isEqualToString:@"palace"]){
-                itemObject = [self.palaceArray objectAtIndex:indexPath.row];
-            }
-            else{
-                NSLog(@"fail safe in did select");
-            }
-            
-            ForSaleListing *vc = [[ForSaleListing alloc]init];
-            vc.listingObject = itemObject;
-            vc.source = @"shop";
-            vc.fromBuyNow = YES;
-            vc.pureWTS = YES;
-            
-            //switch off hiding nav bar
-            self.navigationController.navigationBarHidden = NO;
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-    }
-    else{
-        self.tappedItem = YES;
-
-        NSDictionary *itemDict = [self.products objectAtIndex:indexPath.row];
-        NSString *dictionaryType = [itemDict valueForKey:@"itemType"];
-        
-        if ([dictionaryType isEqualToString:@"normal"]) {
-            //normal for sale item from a match or featured
-            
-            [Answers logCustomEventWithName:@"Tapped Buy Now Item"
-                           customAttributes:@{
-                                              @"type":@"seller network"
-                                              }];
-            
-            PFObject *itemObject = [itemDict valueForKey:@"item"];
-            
-            ForSaleListing *vc = [[ForSaleListing alloc]init];
-            vc.listingObject = itemObject;
-            vc.source = @"buy now";
-            vc.fromBuyNow = YES;
-            vc.pureWTS = YES;
-            
-            //switch off hiding nav bar
-            self.navigationController.navigationBarHidden = NO;
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-        else{
-            NSDictionary *itemDict = [self.products objectAtIndex:indexPath.row];
-            
-            [Answers logCustomEventWithName:@"Tapped Buy Now Item"
-                           customAttributes:@{
-                                              @"type":@"affiliate"
-                                              }];
-            
-//            NSLog(@"ITEM DICT BEFORE FORSALE %@", itemDict);
-            
-            //affiliate item
-            ForSaleListing *vc = [[ForSaleListing alloc]init];
-            vc.listingObject = nil;
-            vc.source = @"buy now";
-            vc.fromBuyNow = YES;
-            vc.pureWTS = YES;
-            vc.affiliateMode = YES;
-            vc.affiliateObject = [itemDict valueForKey:@"item"];
-
-            //switch off hiding nav bar
-            self.navigationController.navigationBarHidden = NO;
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-    }
+    PFObject *itemObject = [self.products objectAtIndex:indexPath.row];
+    
+    ForSaleListing *vc = [[ForSaleListing alloc]init];
+    vc.listingObject = itemObject;
+    vc.source = @"latest";
+    vc.fromBuyNow = YES;
+    vc.pureWTS = YES;
+    //switch off hiding nav bar
+    self.navigationController.navigationBarHidden = NO;
+    [self.navigationController pushViewController:vc animated:YES];
+    
 }
 
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
@@ -609,144 +688,24 @@
     self.headerView = nil;
     if (kind == UICollectionElementKindSectionHeader) {
         self.headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"Header" forIndexPath:indexPath];
-        
-        //carousel setup
-        if (!self.carousel) {
-            self.carousel = [[iCarousel alloc]initWithFrame:CGRectMake(0, 0, [UIApplication sharedApplication].keyWindow.frame.size.width, self.headerView.frame.size.height)];
-                        
-            self.carousel.type = iCarouselTypeLinear;
-            self.carousel.delegate = self;
-            self.carousel.dataSource = self;
-            self.carousel.pagingEnabled = YES;
-            self.carousel.bounceDistance = 0.6;
-            self.carousel.scrollEnabled = NO;
-            self.carousel.clipsToBounds = YES;
-            [self.carousel setBackgroundColor:[UIColor whiteColor]];
-            [self.carousel reloadData];
-            
-            [self.headerView addSubview:self.carousel];
-            
-            [self scheduleTimer];
+        [self.headerView setBackgroundColor:[UIColor colorWithRed:0.42 green:0.42 blue:0.84 alpha:1.0]];
+
+        if ([PFUser currentUser]) {
+            if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser]objectForKey:@"facebookId"]) {
+                //user isn't verified at all, show a prompt
+                [self.headerView setBackgroundColor:[UIColor colorWithRed:1.00 green:0.75 blue:0.33 alpha:1.0]];
+                self.headerView.simpleHeaderLabel.text = @"Verify your email to list items for sale";
+            }
+            else{
+                //all good
+                [self.headerView setBackgroundColor:[UIColor colorWithRed:0.42 green:0.42 blue:0.84 alpha:1.0]];
+                self.headerView.simpleHeaderLabel.text = @"Latest items for sale";
+            }
         }
     }
     return self.headerView;
 }
 
-#pragma mark - carousel delegates
-
--(CGFloat)carousel:(iCarousel *)carousel valueForOption:(iCarouselOption)option withDefault:(CGFloat)value{
-    if (option == iCarouselOptionWrap) {
-        return YES;
-    }
-    return value;
-}
-
--(void)carouselWillBeginDragging:(iCarousel *)carousel{
-    [self pauseTimer];
-    
-    if (self.carousel.currentItemIndex == 0) {
-        [self.scheduledView.collectionView.collectionViewLayout invalidateLayout];
-        [self.scheduledView.collectionView reloadData];
-    }
-    else{
-//        [self.shopView.collectionView.collectionViewLayout invalidateLayout];
-//        [self.shopView.collectionView reloadData];
-    }
-}
-
--(void)carouselDidEndScrollingAnimation:(iCarousel *)carousel{
-    [self scheduleTimer];
-    
-    if (self.carousel.currentItemIndex == 0) {
-        [self.scheduledView.collectionView.collectionViewLayout invalidateLayout];
-        [self.scheduledView.collectionView reloadData];
-//        
-//        if (self.supremeSeen == NO){
-//            self.selectedShop = @"sup";
-//            [self.shopView.shopButton setTitle:@"S H O P  S U P R E M E" forState:UIControlStateNormal];
-//            self.supremeSeen = YES;
-//        }
-//        else if (self.yeezySeen == NO) {
-//            self.selectedShop = @"yeezy";
-//            [self.shopView.shopButton setTitle:@"S H O P  Y E E Z Y" forState:UIControlStateNormal];
-//            self.yeezySeen = YES;
-//        }
-//        else if (self.palaceSeen == NO){
-//            self.selectedShop = @"palace";
-//            [self.shopView.shopButton setTitle:@"S H O P  P A L A C E" forState:UIControlStateNormal];
-//            self.yeezySeen = NO;
-//            self.supremeSeen = NO;
-//        }
-//        
-//        [self.shopView.collectionView.collectionViewLayout invalidateLayout];
-//        [self.shopView.collectionView reloadData];
-    }
-    else{
-        //shifted setup to index 0 so is faster loading the shop
-//        [self.shopView.collectionView.collectionViewLayout invalidateLayout];
-//        [self.shopView.collectionView reloadData];
-        
-        //only change the shop if carousel is auto scrolling
-//        if (self.autoScroll == YES) {
-//            self.autoScroll = NO;
-        
-        
-//        }
-//        else{
-//            //user has scrolled so dont change anything, may have seen something they like
-//        }
-
-
-    }
-}
-
-- (NSInteger)numberOfItemsInCarousel:(__unused iCarousel *)carousel
-{
-    return 1;
-}
-
-- (UIView *)carousel:(__unused iCarousel *)carousel viewForItemAtIndex:(NSInteger)index reusingView:(UIView *)view
-{
-    if (view == nil) {
-        //load from nib
-        view = [[[NSBundle mainBundle] loadNibNamed:@"DroppingToday" owner:self options:nil] lastObject];
-        [view setFrame:CGRectMake(0, 0, self.carousel.frame.size.width, self.carousel.frame.size.height)];
-        [((droppingTodayView *)view).shopButton addTarget:self action:@selector(shopPressed) forControlEvents:UIControlEventTouchUpInside];
-        
-        //setup collection view delegate
-        [((droppingTodayView *)view) setCollectionViewDataSourceDelegate:self indexPath:nil];
-
-    }
-    
-    if (index == 0) {
-        ((droppingTodayView *)view).titleLabel.text = @"R E L E A S E S";
-        ((droppingTodayView *)view).titleLabel.textColor = [UIColor blackColor];
-        [((droppingTodayView *)view).shopButton setHidden:YES];
-        self.scheduledView = ((droppingTodayView *)view);
-        
-        [view setBackgroundColor:[UIColor whiteColor]];
-        [((droppingTodayView *)view).collectionView setBackgroundColor:[UIColor whiteColor]];
-    }
-    else if (index == 1){
-        //shop the drop
-        ((droppingTodayView *)view).titleLabel.text = @"";
-        [((droppingTodayView *)view).shopButton setHidden:NO];
-        ((droppingTodayView *)view).titleLabel.textColor = [UIColor blackColor];
-        self.shopView = ((droppingTodayView *)view);
-        
-        [view setBackgroundColor:[UIColor whiteColor]];
-        [((droppingTodayView *)view).collectionView setBackgroundColor:[UIColor whiteColor]];
-        
-    }
-    
-
-    return view;
-
-}
-
-- (void)carousel:(iCarousel *)carousel didSelectItemAtIndex:(NSInteger)index{
-    //do nothing
-}
 -(NSMutableArray *)randomObjectsFromArray: (NSMutableArray *)sourceArray{
     NSMutableArray* pickedIndexes = [NSMutableArray new];
     
@@ -766,1104 +725,25 @@
     return pickedIndexes;
 }
 
--(void)loadWTBsAndMatches{
-    if (self.pullFinished == NO) {
-        return;
-    }
-    
-    [self.anotherPromptButton setHidden:YES];
-    self.pullFinished = NO;
-    
-    [self.collectionView.infiniteScrollingView stopAnimating];
-    
-    self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
-    [self.pullQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
-//    [self.pullQuery whereKey:@"status" equalTo:@"live"]; //does a WTB need to be live to inform products? also affects indexes searched
-    
-    if ([[PFUser currentUser]objectForKey:@"indexedListings"] &&[[PFUser currentUser]objectForKey:@"postNumber"] ) {
-        
-        int postNumber = [[[PFUser currentUser]objectForKey:@"postNumber"]intValue];
-        
-        //add indexes of all WTBs to an array so can track whats been loaded
-        [self.listingIndexesArray removeAllObjects];
-        [self.addedIndexes removeAllObjects];
-        
-        for (int i=0; i< postNumber; i++) {
-            [self.listingIndexesArray addObject:[NSNumber numberWithInt:i]];
-        }
-        
-        //shuffle indexes
-        [self shuffle:self.listingIndexesArray];
-
-        if (self.listingIndexesArray.count > 10) {
-            //get 10 random indexes
-            NSMutableArray *randomIndexes = [self randomObjectsFromArray:self.listingIndexesArray];
-//            NSLog(@"indexes to get %@", randomIndexes);
-            
-            //keep track of what indexes have been fetched
-            [self.addedIndexes addObjectsFromArray:randomIndexes];
-            
-            //remove from master index tracker array
-            [self.listingIndexesArray removeObjectsInArray:randomIndexes];
-            [self.pullQuery whereKey:@"index" containedIn:randomIndexes];
-        }
-        else{
-            //have less than 10 WTBs so just shuffle the order
-            [self.pullQuery whereKey:@"index" containedIn:self.listingIndexesArray];
-            [self.addedIndexes addObjectsFromArray:self.listingIndexesArray];
-            [self.listingIndexesArray removeAllObjects];
-        }
-    }
-    
-    self.pullQuery.limit = 10;
-    [self.pullQuery cancel];
-    [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            
-            if (objects.count == 0 ) {
-                [self.collectionView.pullToRefreshView stopAnimating];
-                self.pullFinished = YES;
-                self.infinFinished = YES;
-                
-                //fill with some for sale items
-                [self loadFeatured];
-                
-                [self.anotherPromptButton setTitle:@"C R E A T E  A  L I S T I N G" forState:UIControlStateNormal];
-                self.anotherPromptButton.alpha = 0.0f;
-                [self.anotherPromptButton setHidden:NO];
-                
-                [UIView animateWithDuration:0.5
-                                      delay:0.5
-                                    options:UIViewAnimationOptionCurveEaseIn
-                                 animations:^{
-                                     self.anotherPromptButton.alpha = 1.0f;
-                                 }
-                                 completion:nil];
-
-                return;
-            }
-
-            [self.anotherPromptButton setHidden:YES];
-            
-            NSLog(@"got WTBs: %lu", objects.count);
-            
-            __block int productCount = 0;
-            self.skipped = 0;
-            [self.addedIDs removeAllObjects];
-            
-            NSMutableArray *holdingArray = [NSMutableArray array];
-            
-            for (PFObject *WTB in objects) {
-                
-                NSArray *wantWords = [WTB objectForKey:@"keywords"];
-                int wantNum = (int)wantWords.count;
-                
-                //call server & pass the number bcoz of array counting bug with cloud code
-                NSDictionary *params = @{@"wantedKeywords":wantWords, @"wantNumber":[NSNumber numberWithInt:wantNum]};
-                
-                [PFCloud callFunctionInBackground:@"productSearch" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                    if (!error) {
-                        
-                        NSDictionary *matchesDictionary = response;
-                        
-//                        NSLog(@"PRODUCT SEARCH RESP %@", matchesDictionary);
-                        
-                        if (holdingArray.count == self.retrieveLimit) { //was 30
-                            return;
-                        }
-                        
-                        //increment self.skipped when we actually use it's matches (i.e when the
-                        productCount++;
-                        self.skipped++;
-
-                        //check if any for sale items returned
-                        if ([[matchesDictionary valueForKey:@"matches"]count]==0){
-                            //do nothing as have no matches from our sellers network
-                        }
-                        else{
-                            //for each match item add to its own dictionary
-                            NSArray *matches = [matchesDictionary valueForKey:@"matches"];
-                            
-                            for (PFObject *forSaleItem in matches) {
-                                
-                                if (![self.addedIDs containsObject:forSaleItem.objectId]) {
-                                    
-                                    //to prevent duplicates
-                                    [self.addedIDs addObject:forSaleItem.objectId];
-                                    
-                                    //put each for sale item in a dictionary
-                                    NSMutableDictionary *forSaleDictionary = [[NSMutableDictionary alloc]init];
-                                    [forSaleDictionary setValue:forSaleItem forKey:@"item"];
-                                    
-                                    //set the 'itemType' to 'normal'
-                                    [forSaleDictionary setValue:@"normal" forKey:@"itemType"];
-                                    
-                                    //add to holding array
-                                    [holdingArray addObject:forSaleDictionary];
-                                    
-                                    if (holdingArray.count == self.retrieveLimit) {
-                                        //once we have 30 break out
-                                        NSLog(@"break");
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        //check if its the last WTB received & if so reload
-                        if (productCount == objects.count || holdingArray.count == self.retrieveLimit) {
-                            
-                            NSLog(@"COUNT OF MATCHES %ld", holdingArray.count);
-                            
-                            [self.WTBMatches removeAllObjects];
-                            [self.WTBMatches addObjectsFromArray:holdingArray];
-                            
-                            self.pullFinished = YES;
-                            self.infinFinished = YES;
-                            
-                            self.infinFinalMode = NO;
-                            
-                            if (holdingArray.count < self.retrieveLimit) {
-                                //need some buffer items from featured/normal for sale
-                                [self loadFeatured];
-                            }
-                            else{
-                                //only goto finalload if not calling loadFeatured
-                                if (self.featuredFinished == YES) {
-                                    [self finalLoad:nil];
-                                }
-                            }
-                        }
-                    }
-                    else{
-                        productCount++;
-                        self.skipped++;
-                        NSLog(@"error finding matches %@", error);
-                    }
-                }];
-            }
-        }
-        else{
-            [self.collectionView.pullToRefreshView stopAnimating];
-            self.pullFinished = YES;
-            NSLog(@"error in pull %@", error);
-        }
-    }];
-}
-- (IBAction)promptPressed:(id)sender {
-    [Answers logCustomEventWithName:@"Create another listing"
-                   customAttributes:@{
-                                      @"From":@"Buy Now"
-                                      }];
-    self.tabBarController.selectedIndex = 2;
-}
-
--(NSMutableArray *)get: (int)thismany RandomsLessThan:(int)total {  /////////////////////CHECK - ennsure number of for sale listings is bigger than 30
-    NSMutableArray *listOfNumbers = [[NSMutableArray alloc] init];
-    for (int i=0 ; i<total ; ++i) {
-        [listOfNumbers addObject:[NSNumber numberWithInt:i]]; // ADD 1 TO GET NUMBERS BETWEEN 1 AND M RATHER THAN 0 and M-1
-    }
-    NSMutableArray *uniqueNumbers = [[NSMutableArray alloc] init];
-    int r;
-    while ([uniqueNumbers count] < thismany) { //up it to 40 because an item at one of those indexes may have been seen before
-        r = arc4random() % [listOfNumbers count];
-        if (![uniqueNumbers containsObject:[listOfNumbers objectAtIndex:r]]) {
-            [uniqueNumbers addObject:[listOfNumbers objectAtIndex:r]];
-        }
-    }
-    return uniqueNumbers;
-}
-
-//fills the gaps basically with random for sale items
--(void)loadFeatured{
-    
-    if (self.featuredFinished == NO) {
-        return;
-    }
-    
-//    NSLog(@"addedIDS count: %ld", self.addedIDs.count);
-    
-    NSMutableArray *featuredHolding = [[NSMutableArray alloc]init];
-    
-    PFQuery *forSaleQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-    [forSaleQuery whereKey:@"status" equalTo:@"live"];
-    [forSaleQuery whereKey:@"objectId" notContainedIn:self.addedIDs];
-    [forSaleQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-        if (number) {
-            
-//            NSLog(@"number is %d", number);
-            
-            NSArray *indexesToGet = [self get:40 RandomsLessThan:number];
-            PFQuery *forSaleQuery1 = [PFQuery queryWithClassName:@"forSaleItems"];
-            [forSaleQuery1 whereKey:@"status" equalTo:@"live"];
-            [forSaleQuery1 whereKey:@"index" containedIn:indexesToGet];
-            forSaleQuery1.limit = 40; //think this limit was sometinmes causing less than 30 random for sale items to appear
-            [forSaleQuery1 whereKey:@"objectId" notContainedIn:self.addedIDs];
-            [forSaleQuery1 findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                if (objects) {
-                    
-                    NSLog(@"featured count %lu", objects.count);
-                    
-                    NSMutableArray *holdingIDs = [NSMutableArray array];
-                    [holdingIDs addObjectsFromArray:self.addedIDs];
-                    
-//                    NSLog(@"holding ID COUNT %ld", holdingIDs.count);
-                    
-                    for (PFObject *featuredItem2 in objects) {
-                        if (![holdingIDs containsObject:featuredItem2.objectId]) {
-                            //avoid duplicates
-                            [featuredHolding addObject:featuredItem2];
-                            [holdingIDs addObject:featuredItem2.objectId];
-                        }
-                    }
-                    
-//                    NSLog(@"unique featured count %lu", holdingIDs.count);
-                    
-                    NSMutableArray *finalHoldingArray = [NSMutableArray array];
-                    
-                    for (PFObject *forSaleItem in featuredHolding) {
-                        
-                        //put each for sale item in a dictionary
-                        NSMutableDictionary *forSaleDictionary = [[NSMutableDictionary alloc]init];
-                        [forSaleDictionary setValue:forSaleItem forKey:@"item"];
-                        
-                        //set the 'itemType' to 'normal'
-                        [forSaleDictionary setValue:@"normal" forKey:@"itemType"];
-                        
-                        //add to holding array
-                        [finalHoldingArray addObject:forSaleDictionary];
-                        
-                        if (finalHoldingArray.count == self.retrieveLimit) {
-                            //exit when hit 30, thats the max we'll need
-                            break;
-                        }
-                        
-                    }
-                    
-                    [self.featured removeAllObjects];
-                    [self.featured addObjectsFromArray:finalHoldingArray];
-                    
-                    self.featuredFinished = YES;
-                    
-                    //pass infin matches all the time but its only used for infinity loading
-                    [self finalLoad:self.infinMatches];
-                    
-//                    if (self.pullFinished == YES) {
-//                        [self finalLoad];
-//                    }
-                    
-                }
-                else{
-                    NSLog(@"error getting for sale listings %@", error);
-                    self.featuredFinished = YES;
-                    [self.featured removeAllObjects];
-                    [self finalLoad:self.infinMatches];
-
-                }
-            }];
-            
-        }
-        else{
-            NSLog(@"error counting %@", error);
-            self.featuredFinished = YES;
-            [self.featured removeAllObjects];
-            [self finalLoad:self.infinMatches];
-        }
-    }];
-}
-
--(void)finalLoad:(NSMutableArray *)array{
-    NSLog(@"FINAL LOAD CALLED");
-    if (self.finalLoading == YES) {
-        return;
-    }
-    
-    self.finalLoading = YES;
-    
-    if (self.infinFinalMode != YES) {
-        
-        NSLog(@"FINAL LOAD IN PULL MODE");
-        
-        if (self.WTBMatches.count == self.retrieveLimit) {
-            //just have WTB matches as products surfaced
-            [self.products removeAllObjects];
-            [self.products addObjectsFromArray:self.WTBMatches];
-            [self shuffle:self.products];
-            
-            if (self.showAffiliates == YES && self.affiliateProducts.count > 0) {
-                //add an affiliate product every 11 items so 2 per 30 items
-                for (int i=1; i<self.products.count; i++) {
-                    if (i % 11 == 0) {
-                        NSLog(@"INSERTING AFF");
-                        //divisible by 11 so add an affiliate item
-                        
-                        //hasn't finished loading yet
-                        [self.products insertObject:[self.affiliateProducts objectAtIndex:self.indexToAdd] atIndex:i-1];
-                        NSLog(@"INSERTED AFF");
-                        self.indexToAdd++;
-                    }
-                }
-            }
-        }
-        
-        else if (self.WTBMatches.count < self.retrieveLimit){
-            //add this many featured -> 30-count (that haven't been seen before)
-            int numberToAdd = self.retrieveLimit-(int)self.WTBMatches.count;
-            
-//            NSLog(@"number to add %d", numberToAdd);
-            
-            //create array from featured which is correct size
-            NSArray *extraItems = [NSArray array];
-            
-            if (self.featured.count >= numberToAdd) {
-//                NSLog(@"can top up exactly");
-                
-                extraItems = [self.featured subarrayWithRange: NSMakeRange(0,numberToAdd)];
-                
-                //add featured array to wtbmatches
-                [self.WTBMatches addObjectsFromArray:extraItems];
-                
-            }
-            else{
-//                NSLog(@"use whole array");
-                
-                //just use wholefeatured array
-                [self.WTBMatches addObjectsFromArray:self.featured];
-            }
-            
-            if (self.showAffiliates == YES && self.affiliateProducts.count > 0) {
-                for (int i=1; i<self.WTBMatches.count; i++) {
-                    if (i % 11 == 0) {
-                        //divisible by 11 so add an affiliate item
-                        [self.WTBMatches insertObject:[self.affiliateProducts objectAtIndex:self.indexToAdd] atIndex:i-1];
-                        self.indexToAdd++;
-                    }
-                }
-            }
-            
-            //add to self.products
-            [self.products removeAllObjects];
-            [self.products addObjectsFromArray:self.WTBMatches];
-        }
-    }
-    else{
-        
-        NSLog(@"FINAL LOAD IN INFIN MODE w/ INFIN MATCHES COUNT %ld", self.infinMatches.count);
-
-        if (self.infinMatches.count == self.retrieveLimit) {
-            //just have WTB matches as products surfaced
-            
-            if (self.showAffiliates == YES && self.affiliateProducts.count > 0) {
-                for (int i=1; i<self.infinMatches.count; i++) {
-                    if (i % 11 == 0) {
-                        //divisible by 11 so add an affiliate item
-                        [self.infinMatches insertObject:[self.affiliateProducts objectAtIndex:self.indexToAdd] atIndex:i-1];
-                        self.indexToAdd++;
-                    }
-                }
-            }
-            
-            [self.products addObjectsFromArray:self.infinMatches];
-        }
-        
-        else if (self.infinMatches.count < self.retrieveLimit){
-            //add this many featured -> 30-count (that haven't been seen before)
-            int numberToAdd = self.retrieveLimit-(int)self.infinMatches.count;
-            
-            NSLog(@"INFIN number to add %d", numberToAdd);
-            
-            //create array from featured which is correct size
-            NSArray *extraItems = [NSArray array];
-            
-            if (self.featured.count >= numberToAdd) {
-                NSLog(@"INFIN can top up exactly");
-                
-                extraItems = [self.featured subarrayWithRange: NSMakeRange(0,numberToAdd)];
-                
-                //add featured array to wtbmatches
-                [self.infinMatches addObjectsFromArray:extraItems];
-                
-            }
-            else{
-                NSLog(@"INFIN use whole array");
-                
-                //just use wholefeatured array
-                [self.infinMatches addObjectsFromArray:self.featured];
-            }
-            
-            if (self.showAffiliates == YES && self.affiliateProducts.count > 0) {
-                for (int i=1; i<self.infinMatches.count; i++) {
-                    if (i % 11 == 0) {
-                        //divisible by 11 so add an affiliate item
-                        [self.infinMatches insertObject:[self.affiliateProducts objectAtIndex:self.indexToAdd] atIndex:i-1];
-                        self.indexToAdd++;
-                    }
-                }
-            }
-            
-            //add to self.products
-            [self.products addObjectsFromArray:self.infinMatches];
-        }
-    }
-    
-
-    //stop spinner spinning
-    [self.collectionView.infiniteScrollingView stopAnimating];
-    [self.collectionView.pullToRefreshView stopAnimating];
-    [self.collectionView reloadData];
-    self.finalLoading = NO;
-}
-
--(void)loadMoreWTBsAndMatches{
-    if (self.infinFinished == NO || self.pullFinished == NO) {
-        NSLog(@"returning from infin");
-        return;
-    }
-    
-    if (self.remainingAffiliates < 2 && self.showAffiliates == YES) {
-        NSLog(@"TURNING OFF AFFILIATES COZ NOT ENOUGH TO SHOW");
-        self.showAffiliates = NO;
-        self.retrieveLimit = 30;
-    }
-    
-    [self.anotherPromptButton setHidden:YES];
-    self.infinFinished = NO;
-    
-    NSLog(@"INFIN LOADING");
-    
-    self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
-    
-    
-    if (self.listingIndexesArray.count > 0) {
-        //we have some indexes to fetch
-        
-        NSLog(@"got some indexes to fetch in infin %@", self.listingIndexesArray);
-        
-        if (self.listingIndexesArray.count > 10) {
-            //get 10 random indexes
-            NSMutableArray *randomIndexes = [self randomObjectsFromArray:self.listingIndexesArray];
-            NSLog(@"INFIN: indexes to get %@", randomIndexes);
-            
-            //keep track of indexes already fetched
-            [self.addedIndexes addObjectsFromArray:randomIndexes];
-            
-            //remove from master index tracker array
-            [self.listingIndexesArray removeObjectsInArray:randomIndexes];
-            [self.infiniteQuery whereKey:@"index" containedIn:randomIndexes];
-        }
-        else{
-            //have less than 10 WTBs so just shuffle the order
-            [self.infiniteQuery whereKey:@"index" containedIn:self.listingIndexesArray];
-            
-            [self.addedIndexes addObjectsFromArray:self.listingIndexesArray];
-            [self.listingIndexesArray removeAllObjects];
-        }
-    }
-    else if([[PFUser currentUser]objectForKey:@"indexedListings"]){
-        //ran out of listings so ensure we get zero returned
-        [self.infiniteQuery whereKey:@"index" notContainedIn:self.addedIndexes];
-    }
-    
-    [self.infiniteQuery whereKey:@"postUser" equalTo:[PFUser currentUser]];
-//    [self.infiniteQuery whereKey:@"status" equalTo:@"live"]; //see pull comments
-    self.infiniteQuery.limit = 10;
-    self.infiniteQuery.skip = self.skipped;
-    [self.infiniteQuery orderByDescending:@"lastUpdated"];
-    [self.infiniteQuery cancel];
-    [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            
-            if (objects.count == 0 ) {
-                
-                NSLog(@"nothing from INFIN");
-                
-                self.infinFinished = YES;
-                
-                [self.infinMatches removeAllObjects];
-                
-                //fill with some for sale items
-                self.infinFinalMode = YES;
-                [self loadFeatured];
-                
-                [self.anotherPromptButton setTitle:@"C R E A T E  A  L I S T I N G" forState:UIControlStateNormal];
-                self.anotherPromptButton.alpha = 0.0f;
-                [self.anotherPromptButton setHidden:NO];
-
-                [UIView animateWithDuration:0.5
-                                      delay:0.5
-                                    options:UIViewAnimationOptionCurveEaseIn
-                                 animations:^{
-                                     self.anotherPromptButton.alpha = 1.0f;
-                                 }
-                                 completion:nil];
-                
-                return;
-            }
-            
-            [self.anotherPromptButton setHidden:YES];
-            
-            NSLog(@"INFIN WTBs: %lu", objects.count);
-            
-            __block int productCount = 0;
-            
-            NSMutableArray *holdingArray = [NSMutableArray array];
-            
-            for (PFObject *WTB in objects) {
-                
-                NSArray *wantWords = [WTB objectForKey:@"keywords"];
-                int wantNum = (int)wantWords.count;
-                
-                //call server & pass the number bcoz of array counting bug with cloud code
-                NSDictionary *params = @{@"wantedKeywords":wantWords, @"wantNumber":[NSNumber numberWithInt:wantNum]};
-                
-                [PFCloud callFunctionInBackground:@"productSearch" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                    if (!error) {
-                        
-                        NSDictionary *matchesDictionary = response;
-                        
-//                        NSLog(@"PRODUCT SEARCH RESP %@", matchesDictionary);
-                        
-                        if (holdingArray.count == self.retrieveLimit) {
-                            return;
-                        }
-                        
-                        //increment self.skipped when we actually use it's matches (i.e when the
-                        productCount++;
-                        self.skipped++;
-                        
-                        //check if any for sale items returned
-                        if ([[matchesDictionary valueForKey:@"matches"]count]==0){
-                            //do nothing as have no matches from our sellers network
-                        }
-                        else{
-                            //for each match item add to its own dictionary
-                            NSArray *matches = [matchesDictionary valueForKey:@"matches"];
-                            
-                            for (PFObject *forSaleItem in matches) {
-                                
-                                if (![self.addedIDs containsObject:forSaleItem.objectId]) {
-                                    
-                                    //to prevent duplicates
-                                    [self.addedIDs addObject:forSaleItem.objectId];
-                                    
-                                    //put each for sale item in a dictionary
-                                    NSMutableDictionary *forSaleDictionary = [[NSMutableDictionary alloc]init];
-                                    [forSaleDictionary setValue:forSaleItem forKey:@"item"];
-                                    
-                                    //set the 'itemType' to 'normal'
-                                    [forSaleDictionary setValue:@"normal" forKey:@"itemType"];
-                                    
-                                    //add to holding array
-                                    [holdingArray addObject:forSaleDictionary];
-                                    
-                                    if (holdingArray.count == self.retrieveLimit) {
-                                        //once we have the limit, break out
-                                        NSLog(@"break");
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        //check if its the last WTB received & if so reload
-                        if (productCount == objects.count || holdingArray.count == self.retrieveLimit) {
-                            
-                            [self.infinMatches removeAllObjects];
-                            [self.infinMatches addObjectsFromArray:holdingArray];
-                            
-                            NSLog(@"INFIN MATCHES %ld", holdingArray.count);
-                            
-                            self.infinFinished = YES;
-                            self.infinFinalMode = YES;
-                            
-                            if (holdingArray.count < self.retrieveLimit) {
-                                //need some buffer items from featured/normal for sale
-                                [self loadFeatured];
-                            }
-                            else{
-                                //only goto finalload if not calling loadFeatured
-                                if (self.featuredFinished == YES) {
-                                    [self finalLoad:self.infinMatches];
-                                }
-                            }
-                        }
-                    }
-                    else{
-                        productCount++;
-                        self.skipped++;
-                        NSLog(@"infin error finding matches %@", error);
-                    }
-                }];
-            }
-        }
-        else{
-            [self.collectionView.infiniteScrollingView stopAnimating];
-            self.infinFinished = YES;
-            NSLog(@"error in infin %@", error);
-        }
-    }];
-}
-
-- (void)shuffle:(NSMutableArray *)array
-{
-    NSUInteger count = [array count];
-    if (count <= 1) return;
-    for (NSUInteger i = 0; i < count - 1; ++i) {
-        NSInteger remainingCount = count - i;
-        NSInteger exchangeIndex = i + arc4random_uniform((u_int32_t )remainingCount);
-        [array exchangeObjectAtIndex:i withObjectAtIndex:exchangeIndex];
-    }
-}
-
--(void)getScheduledReleases{
-    
-    if (self.thisMorning) {
-        PFQuery *releases = [PFQuery queryWithClassName:@"Releases"];
-        [releases whereKey:@"status" notEqualTo:@"deleted"];
-        [releases whereKey:@"releaseDateWithTime" greaterThanOrEqualTo:self.thisMorning];
-        [releases orderByAscending:@"releaseDateWithTime"];
-        [releases findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-            if (objects) {
-                NSLog(@"FOUND %lu RELEASES", objects.count);
-                
-                [self.scheduledArray removeAllObjects];
-                [self.scheduledArray addObjectsFromArray:objects];
-                
-                [self.scheduledView.collectionView.collectionViewLayout invalidateLayout];
-                [self.scheduledView.collectionView reloadData];
-                
-            }
-            else{
-                NSLog(@"error getting releases %@", error);
-            }
-        }];
-    }
-    else{
-        [Answers logCustomEventWithName:@"Caught thisMorning date error"
-                       customAttributes:@{}];
-    }
-
-}
-
--(void)setImageBorder:(UIImageView *)imageView{
-    imageView.layer.cornerRadius = imageView.frame.size.width/2;
-    imageView.layer.masksToBounds = YES;
-    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-    imageView.contentMode = UIViewContentModeScaleAspectFit;
-    [imageView.layer setBorderWidth: 0.0];
-}
-
--(void)setAvailableViewBorder:(UIView *)view{
-    view.layer.cornerRadius = view.frame.size.width/2;
-    view.layer.masksToBounds = YES;
-    view.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-    view.contentMode = UIViewContentModeScaleAspectFit;
-    [view.layer setBorderColor: [[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0] CGColor]];
-    [view.layer setBorderWidth: 1.0];
-}
-
--(void)setReminderViewBorder:(UIView *)view{
-    view.layer.cornerRadius = view.frame.size.width/2;
-    view.layer.masksToBounds = YES;
-    view.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-    view.contentMode = UIViewContentModeScaleAspectFit;
-    [view.layer setBorderColor: [[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0] CGColor]];
-    [view.layer setBorderWidth: 1.0];
-}
-
--(void)setSoldOutViewBorder:(UIView *)view{
-    view.layer.cornerRadius = view.frame.size.width/2;
-    view.layer.masksToBounds = YES;
-    view.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-    view.contentMode = UIViewContentModeScaleAspectFit;
-    [view.layer setBorderColor: [[UIColor colorWithRed:1.00 green:0.41 blue:0.49 alpha:1.0] CGColor]];
-    [view.layer setBorderWidth: 1.0];
-}
-
--(void)setAvailabilityImageViewBorder:(UIImageView *)imageView{
-    [imageView.layer setBorderColor: [[UIColor whiteColor] CGColor]];
-    [imageView.layer setBorderWidth: 1.5];
-}
-
--(void)clearOuterColour:(UIView *)view{
-    [view.layer setBorderWidth: 0.0];
-}
-
-
-
-- (BOOL) isDateToday: (NSDate *) aDate
-{
-    NSCalendar *cal = [NSCalendar currentCalendar];
-    NSDateComponents *components = [cal components:(NSCalendarUnitEra | NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay) fromDate:[NSDate date]];
-    NSDate *today = [cal dateFromComponents:components];
-    
-    components = [cal components:(NSCalendarUnitEra | NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay) fromDate:aDate];
-    
-    NSDate *otherDate = [cal dateFromComponents:components];
-    
-    if([today isEqualToDate:otherDate]) {
-        return YES;
-    }
-    else{
-        return NO;
-    }
-}
-
-- (BOOL) isDateTomorrow: (NSDate *) aDate
-{
-    NSCalendar *cal = [NSCalendar currentCalendar];
-    NSDateComponents *components = [cal components:(NSCalendarUnitEra | NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay) fromDate:[NSDate date]];
-    NSDate *today = [cal dateFromComponents:components];
-    
-    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-    dayComponent.day = 1;
-    NSDate *tomor = [cal dateByAddingComponents:dayComponent toDate:today options:0];
-    
-    components = [cal components:(NSCalendarUnitEra | NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay) fromDate:aDate];
-    
-    NSDate *otherDate = [cal dateFromComponents:components];
-    
-    if([tomor isEqualToDate:otherDate]) {
-        return YES;
-    }
-    else{
-        return NO;
-    }
-}
-
--(void)loadShopDrop{
-    
-    [self loadSup];
-    [self loadPalace];
-    [self loadYeezy];
-}
-
--(void)loadSup{
-    //supreme shop
-    PFQuery *supQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-    [supQuery whereKey:@"status" equalTo:@"live"];
-    [supQuery whereKey:@"index" notContainedIn:self.supSeenArray];
-    supQuery.limit = 5;
-    NSLog(@"load sup");
-    [supQuery orderByDescending:@"lastUpdated"];
-    [supQuery whereKey:@"keywords" containedIn:@[@"supreme", @"sup", @"bogo", @"box logo", @"preme"]];
-    [supQuery whereKey:@"keywords" notContainedIn:@[@"yeezy", @"palace"]];
-    [supQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            if (objects.count == 0 && self.supSeenArray.count > 0) {
-                [self.supSeenArray removeAllObjects];
-                [self loadSup];
-                return;
-            }
-            else if (objects.count == 0 && self.supSeenArray.count == 0){
-                return;
-            }
-            self.supArray = objects;
-            
-            //this reload okay?
-            [self.shopView.collectionView.collectionViewLayout invalidateLayout];
-            [self.shopView.collectionView reloadData];
-        }
-    }];
-}
-
--(void)loadYeezy{
-    //yeezy shop
-    PFQuery *yeezyQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-    [yeezyQuery whereKey:@"status" equalTo:@"live"];
-    [yeezyQuery whereKey:@"index" notContainedIn:self.yeezySeenArray];
-    yeezyQuery.limit = 5;
-    NSLog(@"load yeezy");
-
-    [yeezyQuery orderByDescending:@"lastUpdated"];
-    [yeezyQuery whereKey:@"keywords" containedIn:@[@"yeezy", @"350", @"750", @"yeezys", @"pirates", @"moonrock", @"V2", @"kanye"]];
-    [yeezyQuery whereKey:@"keywords" notContainedIn:@[@"supreme", @"palace"]];
-    [yeezyQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            if (objects.count == 0 && self.yeezySeenArray.count > 0) {
-                [self.yeezySeenArray removeAllObjects];
-                [self loadYeezy];
-                return;
-            }
-            else if (objects.count == 0 && self.yeezySeenArray.count == 0){
-                return;
-            }
-            
-            self.yeezyArray = objects;
-        }
-    }];
-}
-
--(void)loadPalace{
-    //palace shop
-    PFQuery *palaceQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-    [palaceQuery whereKey:@"status" equalTo:@"live"];
-    [palaceQuery whereKey:@"index" notContainedIn:self.palaceSeenArray];
-    palaceQuery.limit = 5;
-    NSLog(@"load palace");
-
-    [palaceQuery orderByDescending:@"lastUpdated"];
-    [palaceQuery whereKey:@"keywords" containedIn:@[@"palace", @"palidas", @"triferg"]];
-    [palaceQuery whereKey:@"keywords" notContainedIn:@[@"supreme", @"yeezy"]];
-    [palaceQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            if (objects.count == 0 && self.palaceSeenArray.count > 0) {
-                [self.palaceSeenArray removeAllObjects];
-                [self loadPalace];
-                return;
-            }
-            else if (objects.count == 0 && self.palaceSeenArray.count == 0){
-                return;
-            }
-            
-            self.palaceArray = objects;
-        }
-    }];
-}
-
--(void)shopPressed{
-    
-    self.tappedItem = YES;
-    
-    [Answers logCustomEventWithName:@"Viewed page"
-                   customAttributes:@{
-                                      @"pageName":@"Shop Now",
-                                      @"shop":self.selectedShop
-                                      }];
-    
-    FeaturedItems *vc = [[FeaturedItems alloc]init];
-    vc.mode = @"shop";
-    vc.shop = self.selectedShop;
-    [self.navigationController pushViewController:vc animated:YES];
-}
-
 -(void)doubleTapScroll{
-    //switch off hiding nav bar
-    self.navigationController.navigationBarHidden = NO;
+//    NSLog(@"double tap scroll");
     
-    if (self.products.count != 0 && self.tappedItem == NO) {
-        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
-                                    atScrollPosition:UICollectionViewScrollPositionTop
-                                            animated:YES];
+    BOOL modalPresent = (self.presentedViewController);
+    
+    if (self.products.count != 0 && self.tappedItem == NO && modalPresent != YES) {
+        //prevents crash when header is not visible, thereofre has no layout attributes // if still seeing crash, layoutifneeded also meant to work
+        [self.collectionView.collectionViewLayout prepareLayout];
+        
+        //scroll to top of header
+        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
+        
+        CGFloat offsetY = [self.collectionView layoutAttributesForSupplementaryElementOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath].frame.origin.y;
+        
+        CGFloat contentInsetY = self.collectionView.contentInset.top;
+        CGFloat sectionInsetY = ((UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout).sectionInset.top;
+        
+        [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
     }
-}
-
--(void)viewWillDisappear:(BOOL)animated{
-    [super viewWillDisappear:animated];
-    
-    self.navigationController.hidesBarsOnSwipe = NO;
-    
-    [self pauseTimer];
-    
-//    [[PFUser currentUser] setObject:self.yeezySeenArray forKey:@"yeezySeenArray"];
-//    [[PFUser currentUser] setObject:self.supSeenArray forKey:@"supSeenArray"];
-//    [[PFUser currentUser] setObject:self.palaceSeenArray forKey:@"palaceSeenArray"];
-//    [[PFUser currentUser] saveInBackground];
-}
-
--(void)scrollPlease{
-    self.autoScroll = YES;
-    [self.carousel scrollToItemAtIndex:self.carousel.currentItemIndex+1 animated:YES];
-}
-
-//commented out to keep just releases at the top
--(void)pauseTimer{
-//    if (self.pausedInProgress == YES) {
-//        return;
-//    }
-//    self.pausedInProgress = YES;
-//    
-//    [self.scrollTimer invalidate];
-//    self.scrollTimer = nil;
-//    
-//    
-//    self.pausedInProgress = NO;
-}
-
--(void)scheduleTimer{
-//    if ([[NSUserDefaults standardUserDefaults]boolForKey:@"dropIntro"]!=YES) {
-//        return;
-//    }
-//    [self.scrollTimer invalidate];
-//     self.scrollTimer = nil;
-//     
-//    self.scrollTimer = [NSTimer scheduledTimerWithTimeInterval:5.0
-//                                                        target:self
-//                                                      selector:@selector(scrollPlease)
-//                                                      userInfo:nil
-//                                                       repeats:YES];
-}
-
--(void)showAlertViewForItem: (PFObject *) scheduledItem atIndexPath:(NSIndexPath *)indexPath {
-    
-    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-
-    if (self.TBCMode == YES) {
-        self.TBCMode = NO;
-        //don't show anything else, just the title and maybe price
-        if ([scheduledItem objectForKey:@"priceString"] && [scheduledItem objectForKey:@"releaseTimeString"]) {
-            actionSheet.title = [NSString stringWithFormat:@"%@ %@\n%@ %@",[scheduledItem objectForKey:@"itemTitle"],[scheduledItem objectForKey:@"priceString"],[scheduledItem objectForKey:@"releaseDateString"],[scheduledItem objectForKey:@"releaseTimeString"]];
-        }
-        else if ([scheduledItem objectForKey:@"priceString"]){
-            actionSheet.title = [NSString stringWithFormat:@"%@ %@\n%@",[scheduledItem objectForKey:@"itemTitle"],[scheduledItem objectForKey:@"priceString"],[scheduledItem objectForKey:@"releaseDateString"]];
-        }
-        else{
-            actionSheet.title = [NSString stringWithFormat:@"%@\n%@",[scheduledItem objectForKey:@"itemTitle"], [scheduledItem objectForKey:@"releaseDateString"]];
-        }
-    }
-    else{
-        if ([scheduledItem objectForKey:@"priceString"]) {
-            actionSheet.title = [NSString stringWithFormat:@"%@ %@\n%@ %@",[scheduledItem objectForKey:@"itemTitle"],[scheduledItem objectForKey:@"priceString"],[scheduledItem objectForKey:@"releaseDateString"],[scheduledItem objectForKey:@"releaseTimeString"]];
-        }
-        else{
-            actionSheet.title = [NSString stringWithFormat:@"%@\n%@ %@",[scheduledItem objectForKey:@"itemTitle"],[scheduledItem objectForKey:@"releaseDateString"],[scheduledItem objectForKey:@"releaseTimeString"]];
-        }
-        
-        if (self.showDropPageToo == YES && [scheduledItem objectForKey:@"itemLink"]) {
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Visit Drop Page" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                
-                [Answers logCustomEventWithName:@"Visit Drop Page Tapped"
-                               customAttributes:@{}];
-                
-                NSString *releaseLink = [scheduledItem objectForKey:@"itemLink"];
-                
-                self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:releaseLink]];
-                self.web.showUrlWhileLoading = NO;
-                self.web.showPageTitles = NO;
-                self.web.title = [NSString stringWithFormat:@"%@",[scheduledItem objectForKey:@"itemTitle"]];
-                self.web.doneButtonTitle = @"";
-                self.web.infoMode = NO;
-                self.web.delegate = self;
-                self.web.dropMode = YES;
-                
-                NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
-                [self presentViewController:navigationController animated:YES completion:nil];
-            }]];
-        }
-        
-        NSMutableArray *remindersArray = [NSMutableArray array];
-        
-        if ([[PFUser currentUser]objectForKey:@"remindersArray"]) {
-            [remindersArray addObjectsFromArray:[[PFUser currentUser]objectForKey:@"remindersArray"]];
-        }
-        
-        if ([remindersArray containsObject:[scheduledItem objectForKey:@"itemTitle"]]) {
-            //cancel notification
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel Reminder" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-                [self showHUD];
-                self.hud.labelText = @"Cancelled";
-                
-                [Answers logCustomEventWithName:@"Cancel Reminder"
-                               customAttributes:@{}];
-                
-                //update user array
-                NSMutableArray *discardedItems = [NSMutableArray array];
-                
-                for (NSString *itemTitle in remindersArray) {
-                    
-                    if ([itemTitle isEqualToString:[scheduledItem objectForKey:@"itemTitle"]]){
-                        [discardedItems addObject:itemTitle];
-                        NSLog(@"found an item to delete");
-                    }
-                    
-                }
-                [remindersArray removeObjectsInArray:discardedItems];
-                
-                [[PFUser currentUser]setObject:remindersArray forKey:@"remindersArray"];
-                [[PFUser currentUser] saveInBackground];
-                
-                //remove border by reloading cell
-                [self.scheduledView.collectionView reloadData];
-
-                //cancel local notification
-                NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
-                
-                for(UILocalNotification *notification in notificationArray){
-                    
-                    if ([notification.alertBody containsString:[scheduledItem objectForKey:@"itemTitle"]]) {
-                        
-                        // delete this notification
-                        NSLog(@"delete this notification");
-                        [[UIApplication sharedApplication] cancelLocalNotification:notification];
-                    }
-                }
-                
-                double delayInSeconds = 1.5; // number of seconds to wait
-                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-                dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-                    [self hideHUD];
-                });
-                
-                [self scheduleTimer];
-                
-            }]];
-        }
-        else{
-            //schedule notification
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Remind me when this drops" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                
-                [Answers logCustomEventWithName:@"Remind me pressed"
-                               customAttributes:@{
-                                                  @"sneaker":[scheduledItem objectForKey:@"itemTitle"]
-                                                  }];
-                
-                [self showHUD];
-                self.hud.labelText = @"Scheduled";
-                
-                //schedule local notification
-                
-                NSString *reminderString = @"";
-                NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                
-                UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-                
-                //set alert string
-                NSString *releaseTime = [scheduledItem objectForKey:@"releaseTimeString"];
-                
-                reminderString = [NSString stringWithFormat:@"Reminder: the '%@' drops at %@ - Swipe to cop!", [scheduledItem objectForKey:@"itemTitle"],releaseTime];
-                
-                //attach the title to the notification so can be queried and link added to web view when swiped
-                NSDictionary *userDict = [NSDictionary dictionaryWithObjectsAndKeys:[scheduledItem objectForKey:@"itemTitle"],@"itemTitle",nil];
-                localNotification.userInfo = userDict;
-                
-                //set alert 10 mins before
-                NSDate *dropDate = [scheduledItem objectForKey:@"releaseDateWithTime"];
-                dayComponent.minute = -10;
-                NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:dropDate options:0];
-                [localNotification setFireDate: dateToFire];
-                [localNotification setAlertBody:reminderString];
-                [localNotification setTimeZone: [NSTimeZone localTimeZone]];
-                [localNotification setRepeatInterval: 0];
-                [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
-                
-                [remindersArray addObject:[scheduledItem objectForKey:@"itemTitle"]];
-                
-                [[PFUser currentUser]setObject:remindersArray forKey:@"remindersArray"];
-                [[PFUser currentUser] saveInBackground];
-                
-                //add border by reloading cell
-                [self.scheduledView.collectionView reloadData];
-                
-                double delayInSeconds = 1.0; // number of seconds to wait
-                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-                dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-                    [self hideHUD];
-                });
-                
-                if ([[NSUserDefaults standardUserDefaults]boolForKey:@"reminderIntroSeen"] == YES) {
-                    //only schedule if alert not showing
-                    [self scheduleTimer];
-                }
-            }]];
-        }
-    }
-    
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        [self scheduleTimer];
-    }]];
-    
-    [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
 -(void)showHUD{
@@ -1880,138 +760,485 @@
     });
 }
 
--(void)updateDates{
-    
-    if (self.updatingDates == YES) {
-        return;
-    }
-    
-    self.updatingDates = YES;
-    
-    //get correct dates for querying releases
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc]init];
-    [dateFormatter setDateFormat:@"dd/MM/YYYY"];
-    NSString *dateString=[dateFormatter stringFromDate:[NSDate date]];
-    
-    //does user have 12 hour clock - impacts on formatter used
-    NSString *formatStringForHours = [NSDateFormatter dateFormatFromTemplate:@"j" options:0 locale:[NSLocale currentLocale]];
-    NSRange containsA = [formatStringForHours rangeOfString:@"a"];
-    BOOL is12HourClock = containsA.location != NSNotFound;
-    
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    NSString *dawn;
+#pragma mark - search bar delegates
 
-    if (is12HourClock == YES) {
-        [formatter setDateFormat:@"dd/MM/yyyy hh:mm aa"];
-        dawn = [NSString stringWithFormat:@"%@ 12:00 am", dateString];
-    }
-    else{
-        [formatter setDateFormat:@"dd/MM/yyyy HH:mm"];
-        dawn = [NSString stringWithFormat:@"%@ 00:00", dateString];
-    }
-    
-    [formatter setTimeZone:[NSTimeZone localTimeZone]];
-    
-    self.thisMorning = [formatter dateFromString:dawn];
-    
-    [self getScheduledReleases];
-    
-    self.updatingDates = NO;
+-(BOOL)searchBarShouldBeginEditing:(UISearchBar *)searchBar{
+    NSLog(@"should begin ending!");
+    [self searchPressed];
+    return NO;
 }
 
-#pragma mark - web view delegates
--(void)paidPressed{
-    //do nothing
-}
-
--(void)cancelWebPressed{
-    [self.web dismissViewControllerAnimated:YES completion:nil];
-}
-
--(void)cameraPressed{
-    //do nothing
-}
-
--(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
-    //do nothing
-}
-
-#pragma mark - custom alert delegates
-
--(void)sellPressed{
-    if (self.isSeller == YES) {
-        //let seller list an item
-        [self addForSalePressed];
-    }
-    else{
-        [self showCustomAlert];
-    }
-}
-
--(void)addForSalePressed{
+-(void)searchPressed{
     
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]) {
-        //sam's upload stock code
-        UIAlertController *alertController = [UIAlertController
-                                              alertControllerWithTitle:@"Post as User"
-                                              message:@"Enter username"
-                                              preferredStyle:UIAlertControllerStyleAlert];
-        
-        [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
-         {
-             textField.placeholder = @"username";
-         }];
-        
-        UIAlertAction *okAction = [UIAlertAction
-                                   actionWithTitle:@"DONE"
-                                   style:UIAlertActionStyleDefault
-                                   handler:^(UIAlertAction *action)
-                                   {
-                                       UITextField *usernameField = alertController.textFields.firstObject;
-                                       self.usernameToList = usernameField.text;
-                                       [self SetupListing];
-                                   }];
-        
-        [alertController addAction:okAction];
-        
-        [self presentViewController:alertController animated:YES completion:nil];
-        
-    }
-    else{
-        CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-        [self pauseTimer];
-        [self presentViewController:nav animated:YES completion:nil];
-    }
-}
-
--(void)SetupListing{
-    [Answers logCustomEventWithName:@"Sell prompt pressed in buyNow"
-                   customAttributes:@{
-                                      @"seller":@"YES"
-                                      }];
+    self.navigationController.hidesBarsOnSwipe = NO;
     
-    CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-    vc.usernameToCheck = self.usernameToList;
+    TheMainSearchView *vc = [[TheMainSearchView alloc]init];
+    vc.currency = self.currency;
+    vc.delegate = self;
+    vc.currencySymbol = self.currencySymbol;
+    vc.geoPoint = self.currentLocation;
+    vc.tabBarHeight = [NSNumber numberWithFloat:self.tabBarController.tabBar.frame.size.height];
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    self.definesPresentationContext = YES;
+    nav.modalPresentationStyle = UIModalPresentationOverCurrentContext;
+    [self.navigationController setNavigationBarHidden:YES animated:YES];
     [self presentViewController:nav animated:YES completion:nil];
 }
 
--(void)showCustomAlert{
-    if (self.alertShowing == YES) {
+-(void)cancellingMainSearch{
+    [self.navigationController setNavigationBarHidden:NO animated:YES];
+    
+//    self.navigationController.hidesBarsOnSwipe = YES;
+}
+
+#pragma mark - load objects
+
+-(void)getLatestForSale{
+    if (self.pullFinished != YES) {
         return;
     }
     
-    self.alertShowing = YES;
-   
-    if (self.dropIntro != YES) {
-        self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    //make sure infin is cancelled before loading pull
+    [self.collectionView.infiniteScrollingView stopAnimating];
+    [self.infiniteQuery cancel];
+    
+    self.pullFinished = NO;
+    [self showFilter];
+    
+    self.pullQuery = nil;
+    self.pullQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    
+    [self setupPullQuery];
 
+    [self.pullQuery whereKey:@"status" equalTo:@"live"];
+    [self.pullQuery whereKey:@"banned" notEqualTo:@"YES"];
+
+    self.pullQuery.limit = 20;
+    
+    //brand filter
+    if (self.filterBrandsArray.count > 0) {
+        [self.pullQuery whereKey:@"keywords" containedIn:self.filterBrandsArray];
+    }
+    
+    [self.pullQuery cancel];
+    [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (error) {
+            NSLog(@"error getting for sale items");
+            
+            if (error.code == 209) {
+                //invalid token so log out
+                [Answers logCustomEventWithName:@"invalid token on pullquery (error 209)"
+                               customAttributes:@{}];
+                
+                [self bigLogOut];
+            }
+            else{
+                [self showAlertWithTitle:@"Bad Connection" andMsg:@"Make sure you're connected to the internet"];
+            }
+            
+            [self.collectionView.pullToRefreshView stopAnimating];
+            self.pullFinished = YES;
+            
+        }
+        else{
+            if (objects.count == 0) {
+                //show no results label
+                [self.noResultsLabel setHidden:NO];
+            }
+            else{
+                //hide no results label
+                [self.noResultsLabel setHidden:YES];
+            }
+            
+            self.skipped = (int)objects.count;
+
+            [self.products removeAllObjects];
+            [self.products addObjectsFromArray:objects];
+            [self.collectionView reloadData];
+            
+            //track which objectIds have been added to avoid duplication in infin
+            [self.productIds removeAllObjects];
+            for (PFObject *listing in objects) {
+                [self.productIds addObject:listing.objectId];
+            }
+            
+            [self.collectionView.pullToRefreshView stopAnimating];
+            self.pullFinished = YES;
+        }
+    }];
+}
+
+-(void)infinLatestForSale{
+    if (self.infinFinished != YES || self.pullFinished != YES) {
+        
+        return;
+    }
+    [self hideFilter];
+
+    self.infinFinished = NO;
+    
+    self.infiniteQuery = nil;
+    self.infiniteQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    
+    [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
+    [self.infiniteQuery whereKey:@"banned" notEqualTo:@"YES"];
+    [self.infiniteQuery whereKey:@"objectId" notContainedIn:self.productIds];
+
+    [self.infiniteQuery orderByDescending:@"lastUpdated"];
+    self.infiniteQuery.limit = 20;
+    self.infiniteQuery.skip = self.skipped;
+    
+    [self setupInfinQuery];
+    
+    //brand filter
+    if (self.filterBrandsArray.count > 0) {
+        [self.infiniteQuery whereKey:@"keywords" containedIn:self.filterBrandsArray];
+    }
+
+    [self.infiniteQuery cancel];
+    [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (error) {
+            NSLog(@"error getting for sale items infin %@", error);
+            [self showFilter];
+            
+            [self.collectionView.infiniteScrollingView stopAnimating];
+            self.infinFinished = YES;
+        }
+        else{
+            [self showFilter];
+
+            self.skipped = self.skipped + (int)objects.count;
+
+            [self.products addObjectsFromArray:objects];
+            [self.collectionView reloadData];
+            
+            [self.collectionView.infiniteScrollingView stopAnimating];
+            self.infinFinished = YES;
+            
+            //update tracking of objectIds to avoid duplication
+            for (PFObject *listing in objects) {
+                [self.productIds addObject:listing.objectId];
+            }
+        }
+    }];
+}
+
+-(void)setupPullQuery{
+    if (self.filtersArray.count > 0) {
+        
+        //price
+        if ([self.filtersArray containsObject:@"hightolow"]) {
+            [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.pullQuery orderByDescending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
+        }
+        else if ([self.filtersArray containsObject:@"lowtohigh"]){
+            [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.pullQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
+        }
+        else{
+            [self.pullQuery orderByDescending:@"lastUpdated"];
+        }
+        
+        //location
+        if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
+//            [self.pullQuery whereKeyExists:@"geopoint"];
+            [self.pullQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:400];
+        }
+        
+        //condition
+        if ([self.filtersArray containsObject:@"new"]){
+            [self.pullQuery whereKey:@"condition" containedIn:@[@"New", @"Any", @"BNWT", @"BNWOT",@"Deadstock"]];  //updated as we removed Deastock as an option
+        }
+        else if ([self.filtersArray containsObject:@"used"]){
+            [self.pullQuery whereKey:@"condition" containedIn:@[@"Used", @"Any"]];
+        }
+        else if ([self.filtersArray containsObject:@"deadstock"]){
+            [self.pullQuery whereKey:@"condition" containedIn:@[@"Deadstock", @"Any"]];
+        }
+        
+        //category
+        if ([self.filtersArray containsObject:@"clothing"]){
+            [self.pullQuery whereKey:@"category" equalTo:@"Clothing"];
+        }
+        else if ([self.filtersArray containsObject:@"footwear"]){
+            [self.pullQuery whereKey:@"category" equalTo:@"Footwear"];
+        }
+        else if ([self.filtersArray containsObject:@"accessory"]){
+            [self.pullQuery whereKey:@"category" equalTo:@"Accessories"];
+        }
+        
+        //gender
+        if ([self.filtersArray containsObject:@"male"]){
+            [self.pullQuery whereKey:@"sizeGender" equalTo:@"Mens"];
+        }
+        else if ([self.filtersArray containsObject:@"female"]){
+            [self.pullQuery whereKey:@"sizeGender" equalTo:@"Womens"];
+        }
+        
+        //all sizes filters
+        if (self.filterSizesArray.count > 0) {
+            [self.pullQuery whereKey:@"sizeArray" containedIn:self.filterSizesArray];
+        }
+        
+        //colour filters
+        if (self.filterColoursArray.count > 0) {
+            [self.pullQuery whereKey:@"coloursArray" containedIn:self.filterColoursArray]; //was mainColour
+        }
+        
     }
     else{
-        //show bg over collection view only so user can see releases
-        self.searchBgView = [[UIView alloc]initWithFrame:CGRectMake(0,(self.navigationController.navigationBar.frame.size.height + self.headerView.frame.size.height+[UIApplication sharedApplication].statusBarFrame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, [UIApplication sharedApplication].keyWindow.frame.size.height-(self.navigationController.navigationBar.frame.size.height+self.headerView.frame.size.height+[UIApplication sharedApplication].statusBarFrame.size.height))];
+        [self.pullQuery orderByDescending:@"lastUpdated"];
     }
+}
+
+-(void)setupInfinQuery{
+    if (self.filtersArray.count > 0) {
+        
+        //price
+        if ([self.filtersArray containsObject:@"hightolow"]) {
+            [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.infiniteQuery orderByDescending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
+        }
+        else if ([self.filtersArray containsObject:@"lowtohigh"]){
+            [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
+        }
+        
+        //location
+        if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
+//            [self.infiniteQuery whereKeyExists:@"geopoint"];
+            [self.infiniteQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:400];
+        }
+        
+        //condition
+        if ([self.filtersArray containsObject:@"new"]){
+            [self.infiniteQuery whereKey:@"condition" containedIn:@[@"New", @"Any", @"BNWT", @"BNWOT", @"Deadstock"]];
+        }
+        else if ([self.filtersArray containsObject:@"used"]){
+            [self.infiniteQuery whereKey:@"condition" containedIn:@[@"Used", @"Any"]];
+        }
+        else if ([self.filtersArray containsObject:@"deadstock"]){
+            [self.infiniteQuery whereKey:@"condition" containedIn:@[@"Deadstock", @"Any"]];
+        }
+        
+        //category
+        if ([self.filtersArray containsObject:@"clothing"]){
+            [self.infiniteQuery whereKey:@"category" equalTo:@"Clothing"];
+        }
+        else if ([self.filtersArray containsObject:@"footwear"]){
+            [self.infiniteQuery whereKey:@"category" equalTo:@"Footwear"];
+        }
+        else if ([self.filtersArray containsObject:@"accessory"]){
+            [self.infiniteQuery whereKey:@"category" equalTo:@"Accessories"];
+        }
+        
+        //gender
+        if ([self.filtersArray containsObject:@"male"]){
+            [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Mens"];
+        }
+        else if ([self.filtersArray containsObject:@"female"]){
+            [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Womens"];
+        }
+        
+        //all sizes filters
+        if (self.filterSizesArray.count > 0) {
+            [self.infiniteQuery whereKey:@"sizeArray" containedIn:self.filterSizesArray];
+        }
+        
+        //colour filters
+        if (self.filterColoursArray.count > 0) {
+//            NSLog(@"filters colour array %@", self.filterBrandsArray);
+            [self.infiniteQuery whereKey:@"coloursArray" containedIn:self.filterColoursArray]; //was mainColour
+        }
+        
+    }
+    else{
+        [self.infiniteQuery orderByDescending:@"lastUpdated"];
+    }
+}
+
+#pragma mark helper methods
+
+-(void)bigLogOut{
+    
+    [Answers logCustomEventWithName:@"BIG LOG OUT"
+                   customAttributes:@{}];
+    
+    [PFUser logOut];
+    WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+    vc.delegate = self;
+    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+    [self presentViewController:navController animated:NO completion:nil];
+}
+
+-(void)showError{
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Error"
+                                  message:@"Make sure you're connected to the internet!"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+-(void)setImageBorder:(UIImageView *)imageView{
+    imageView.layer.cornerRadius = 30;
+    imageView.layer.masksToBounds = YES;
+    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    imageView.contentMode = UIViewContentModeScaleAspectFill;
+}
+
+-(void)checkIfBanned{
+    
+    //check if user is banned
+    PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+    [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+    
+    //also check if device is banned to prevent creating new accounts
+    PFInstallation *installation = [PFInstallation currentInstallation];
+    PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+    
+    if (installation.deviceToken) {
+        [bannedInstallsQuery whereKey:@"deviceToken" equalTo:installation.deviceToken];
+    }
+    else{
+        //to prevent simulator returning loads of results and fucking up banning logic
+        [bannedInstallsQuery whereKey:@"deviceToken" equalTo:@"thisISNothing"];
+    }
+    
+    PFQuery *megaBanQuery = [PFQuery orQueryWithSubqueries:@[bannedQuery]];
+    [megaBanQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+        if (number >= 1) {
+            //user is banned - log them out
+            
+            [Answers logCustomEventWithName:@"Logging Banned User Out"
+                           customAttributes:@{
+                                              @"from":@"Home"
+                                              }];
+            
+            
+            [PFUser logOut];
+            WelcomeViewController *vc = [[WelcomeViewController alloc]init];
+            vc.delegate = self;
+            NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
+            [self presentViewController:navController animated:NO completion:nil];
+        }
+        else if (error){
+            NSLog(@"error checking if banned %@", error);
+        }
+    }];
+}
+
+- (void)shuffle:(NSMutableArray *)array
+{
+    NSUInteger count = [array count];
+    if (count <= 1) return;
+    for (NSUInteger i = 0; i < count - 1; ++i) {
+        NSInteger remainingCount = count - i;
+        NSInteger exchangeIndex = i + arc4random_uniform((u_int32_t )remainingCount);
+        [array exchangeObjectAtIndex:i withObjectAtIndex:exchangeIndex];
+    }
+}
+
+- (NSString *)urlencode:(NSString *)stringToEncode{
+    NSMutableString *output = [NSMutableString string];
+    const unsigned char *source = (const unsigned char *)[stringToEncode UTF8String];
+    int sourceLen = (int)strlen((const char *)source);
+    for (int i = 0; i < sourceLen; ++i) {
+        const unsigned char thisChar = source[i];
+        if (thisChar == ' '){
+            [output appendString:@"+"];
+        } else if (thisChar == '.' || thisChar == '-' || thisChar == '_' || thisChar == '~' ||
+                   (thisChar >= 'a' && thisChar <= 'z') ||
+                   (thisChar >= 'A' && thisChar <= 'Z') ||
+                   (thisChar >= '0' && thisChar <= '9')) {
+            [output appendFormat:@"%c", thisChar];
+        } else {
+            [output appendFormat:@"%%%02X", thisChar];
+        }
+    }
+    return output;
+}
+
+- (void) startLocationManager {
+    
+    if (!_locationManager) {
+        _locationManager = [[CLLocationManager alloc] init];
+        _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
+        _locationManager.distanceFilter = 5;
+        _locationManager.delegate = self;
+        if ([self.locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
+            [self.locationManager requestWhenInUseAuthorization];
+        }
+        [_locationManager startUpdatingLocation];
+        [self parseLocation];
+    }
+}
+
+
+-(void)parseLocation{
+    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
+        if (geoPoint) {
+            self.currentLocation = geoPoint;
+            
+            double latitude = geoPoint.latitude;
+            double longitude = geoPoint.longitude;
+            
+            CLLocation *loc = [[CLLocation alloc]initWithLatitude:latitude longitude:longitude];
+            CLGeocoder *geocoder = [[CLGeocoder alloc]init];
+            [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
+                if (placemarks) {
+                    CLPlacemark *placemark = [placemarks lastObject];
+                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.ISOcountryCode];
+                    
+                    if (![titleString containsString:@"(null)"]) { //protect against saving when user hasn't granted location permission
+                        
+                        //only save if user doesn't have a profile location set
+                        if (![[PFUser currentUser]objectForKey:@"profileLocation"]) {
+                            [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
+                            [[PFUser currentUser]saveInBackground];
+                        }
+                    }
+                }
+                else{
+                    NSLog(@"placemark error %@", error);
+                }
+            }];
+        }
+        else{
+            NSLog(@"no geopoint %@", error);
+        }
+    }];
+}
+
+-(void)checkPushStatus{
+    if ([[NSUserDefaults standardUserDefaults]valueForKey:@"declinedDate"]) {
+        
+        NSDate *declinedDate = [[NSUserDefaults standardUserDefaults]valueForKey:@"declinedDate"];
+        
+        //check if declined over a week ago
+        NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:declinedDate];
+        double secondsInADay = 86400;
+        NSInteger daysSinceDeclined = distanceBetweenDates / secondsInADay;
+        
+        if (daysSinceDeclined > 6) {
+            //reprompt after a week
+            [Answers logCustomEventWithName:@"Reask Push Permissions"
+                           customAttributes:@{}];
+            
+            [self showPushReminder];
+        }
+        
+    }
+    else{
+        //no decline date so create one now
+        [[NSUserDefaults standardUserDefaults]setValue:[NSDate date] forKey:@"declinedDate"];
+    }
+}
+
+-(void)showPushReminder{
+    self.shownPushAlert = YES;
+    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
     self.searchBgView.alpha = 0.0;
     [self.searchBgView setBackgroundColor:[UIColor blackColor]];
     [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
@@ -2025,42 +1252,27 @@
                      completion:nil];
     
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
-    self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
-    self.customAlert.delegate = self;
-    
-    if (self.dropIntro == YES){
-        [Answers logCustomEventWithName:@"Drop Intro showing"
-                       customAttributes:@{}];
-        
-        self.customAlert.titleLabel.text = @"Drop Reminders";
-        self.customAlert.messageLabel.text = @"Tap on a sneaker to view drop info & schedule a reminder to secure your pair";
-        self.customAlert.numberOfButtons = 1;
-    }
-    else{
-        [Answers logCustomEventWithName:@"Sell prompt pressed in buyNow"
-                       customAttributes:@{
-                                          @"seller":@"NO"
-                                          }];
-        
-        self.customAlert.titleLabel.text = @"Sale Listings";
-        self.customAlert.messageLabel.text = @"Currently, only approved sellers can list items for sale. If you're an active seller send us a message to get selling on Bump. Remember you can still sell by messaging buyers on Bump";
-        self.customAlert.numberOfButtons = 2;
-    }
+    self.pushAlert = (customAlertViewClass *)[nib objectAtIndex:0];
+    self.pushAlert.delegate = self;
+    self.pushAlert.titleLabel.text = @"Enable Push";
+    self.pushAlert.messageLabel.text = @"Tap to be notified when sellers & potential buyers send you a message on Bump";
+    self.pushAlert.numberOfButtons = 2;
+    [self.pushAlert.secondButton setTitle:@"E N A B L E" forState:UIControlStateNormal];
     
     if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
         //iphone5
-        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
+        [self.pushAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
     }
     else{
-        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
+        [self.pushAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
     }
     
-    self.customAlert.layer.cornerRadius = 10;
-    self.customAlert.layer.masksToBounds = YES;
+    self.pushAlert.layer.cornerRadius = 10;
+    self.pushAlert.layer.masksToBounds = YES;
     
-    [[UIApplication sharedApplication].keyWindow addSubview:self.customAlert];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.pushAlert];
     
-    [UIView animateWithDuration:1.5
+    [UIView animateWithDuration:0.5
                           delay:0.2
          usingSpringWithDamping:0.5
           initialSpringVelocity:0.5
@@ -2068,12 +1280,236 @@
                             //Animations
                             if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
                                 //iphone5
-                                [self.customAlert setFrame:CGRectMake(0, 0, 250, 157)];
+                                [self.pushAlert setFrame:CGRectMake(0, 0, 250, 157)];
                             }
                             else{
-                                [self.customAlert setFrame:CGRectMake(0, 0, 300, 188)]; //iPhone 6/7 specific
+                                [self.pushAlert setFrame:CGRectMake(0, 0, 300, 188)]; //iPhone 6/7 specific
                             }
-                            self.customAlert.center = self.view.center;
+                            self.pushAlert.center = self.view.center;
+                            
+                        }
+                     completion:nil];
+}
+
+-(void)donePressed{
+    if (self.shownPushAlert == YES) {
+        //push re-reminder
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.searchBgView.alpha = 0.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.searchBgView = nil;
+                         }];
+        
+        [UIView animateWithDuration:1.0
+                              delay:0.0
+             usingSpringWithDamping:0.1
+              initialSpringVelocity:0.5
+                            options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                //Animations
+                                if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                    //iphone5
+                                    [self.pushAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                                }
+                                else{
+                                    [self.pushAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                                }
+                            }
+                         completion:^(BOOL finished) {
+                             //Completion Block
+                             [self.pushAlert setAlpha:0.0];
+                             [self.pushAlert removeFromSuperview];
+                             self.pushAlert = nil;
+                         }];
+    }
+    else{
+        if (self.lowRating == YES) {
+            self.lowRating = NO;
+        }
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.searchBgView.alpha = 0.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.searchBgView = nil;
+                         }];
+        
+        [UIView animateWithDuration:1.0
+                              delay:0.0
+             usingSpringWithDamping:0.1
+              initialSpringVelocity:0.5
+                            options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                //Animations
+                                if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                    //iphone5
+                                    [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                                }
+                                else{
+                                    [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                                }
+                            }
+                         completion:^(BOOL finished) {
+                             //Completion Block
+                             [self.customAlert setAlpha:0.0];
+                             self.customAlert = nil;
+                         }];
+    }
+}
+
+-(void)firstPressed{
+    
+    if (self.lowRating == YES) {
+        [Answers logCustomEventWithName:@"Dismissed Feedback Ask Prompt"
+                       customAttributes:@{}];
+        
+    }
+    else{
+        //push reminder
+        if ([PFUser currentUser]) {
+            [Answers logCustomEventWithName:@"Denied Push Permissions"
+                           customAttributes:@{
+                                              @"mode":@"reprompt",
+                                              @"username":[PFUser currentUser].username
+                                              }];
+            [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"declinedPushPermissions"];
+            [[NSUserDefaults standardUserDefaults]setValue:[NSDate date] forKey:@"declinedDate"];
+        }
+    }
+    
+    [self donePressed];
+}
+-(void)secondPressed{
+    
+    if (self.lowRating == YES) {
+        [Answers logCustomEventWithName:@"Message Team Bump pressed from Rate prompt"
+                       customAttributes:@{}];
+        
+        //goto Team Bump messages
+        PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
+        NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+        [convoQuery whereKey:@"convoId" equalTo:convoId];
+        [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                //convo exists, go there
+                ChatWithBump *vc = [[ChatWithBump alloc]init];
+                vc.convoId = [object objectForKey:@"convoId"];
+                vc.convoObject = object;
+                vc.otherUser = [PFUser currentUser];
+                NavigationController *nav = (NavigationController*)self.messageNav;
+                
+                //unhide nav bar
+                //                self.navigationController.navigationBarHidden = NO;
+                [nav pushViewController:vc animated:YES];
+            }
+            else{
+                //create a new one
+                PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
+                convoObject[@"otherUser"] = [PFUser currentUser];
+                convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+                convoObject[@"totalMessages"] = @0;
+                [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        //saved, goto VC
+                        ChatWithBump *vc = [[ChatWithBump alloc]init];
+                        vc.convoId = [convoObject objectForKey:@"convoId"];
+                        vc.convoObject = convoObject;
+                        vc.otherUser = [PFUser currentUser];
+                        NavigationController *nav = (NavigationController*)self.messageNav;
+                        
+                        //unhide nav bar
+                        //                        self.navigationController.navigationBarHidden = NO;
+                        [nav pushViewController:vc animated:YES];
+                    }
+                    else{
+                        NSLog(@"error saving convo");
+                    }
+                }];
+            }
+        }];
+    }
+    else{
+        //push reminder
+        
+        if ([PFUser currentUser]) {
+            [Answers logCustomEventWithName:@"Accepted Push Permissions"
+                           customAttributes:@{
+                                              @"mode":@"reprompt",
+                                              @"username":[PFUser currentUser].username
+                                              }];
+            [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForPushPermission"];
+            [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"declinedPushPermissions"];
+            
+            UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
+                                                            UIUserNotificationTypeBadge |
+                                                            UIUserNotificationTypeSound);
+            UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:userNotificationTypes
+                                                                                     categories:nil];
+            [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+            [[UIApplication sharedApplication] registerForRemoteNotifications];
+        }
+    }
+    [self donePressed];
+}
+
+#pragma mark - rate delegates
+
+-(void)setUpRateViewWithNav:(NSNotification*)note {
+    
+    UINavigationController *nav = [note object];
+    
+    self.messageNav = nav;
+    
+    self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.searchBgView.alpha = 0.0;
+    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"RateView" owner:self options:nil];
+    self.rateView = (RateCustomView *)[nib objectAtIndex:0];
+    self.rateView.delegate = self;
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.rateView setFrame:CGRectMake((self.view.frame.size.width/2)-135, -220, 270, 220)];
+    }
+    else{
+        [self.rateView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -210, 300, 210)]; //iPhone 6/7 specific
+    }
+    
+    self.rateView.layer.cornerRadius = 10;
+    self.rateView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.rateView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:1.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+                                //iphone5
+                                [self.rateView setFrame:CGRectMake(0, 0, 270,220)];
+                            }
+                            else{
+                                [self.rateView setFrame:CGRectMake(0, 0, 300, 210)]; //iPhone 6/7 specific
+                            }
+                            
+                            self.rateView.center = self.view.center;
                             
                         }
                      completion:^(BOOL finished) {
@@ -2081,13 +1517,16 @@
                      }];
 }
 
--(void)donePressed{
+-(void)dismissRatePressed{
     
-    if (self.dropIntro == YES){
-        self.dropIntro = NO;
-        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"dropIntro"];
-        [self scheduleTimer];
-    }
+    [Answers logCustomEventWithName:@"User Dismissed Rate Dialog"
+                   customAttributes:@{}];
+    
+    //save info
+    [[PFUser currentUser]setObject:[NSDate date] forKey:@"reviewDate"];
+    NSString *currentVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+    [[PFUser currentUser]setObject:currentVersion forKey:@"versionReviewed"];
+    [[PFUser currentUser]saveInBackground];
     
     [UIView animateWithDuration:0.3
                           delay:0
@@ -2105,166 +1544,1096 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
+                            [self.rateView setFrame:CGRectMake((self.view.frame.size.width/2)-187.5, 1000, 375, 235)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.rateView setAlpha:0.0];
+                         self.rateView = nil;
+                         
+                         if (self.lowRating == YES) {
+                             //show prompt
+                             [self setupRateMessagePrompt];
+                         }
+                     }];
+    
+}
+
+-(void)setupRateMessagePrompt{
+    
+    if (self.lowRating == YES) {
+        self.searchBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    }
+    
+    [self.searchBgView setBackgroundColor:[UIColor blackColor]];
+    self.searchBgView.alpha = 0.0;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.searchBgView];
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.searchBgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"customAlertView" owner:self options:nil];
+    self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
+    self.customAlert.delegate = self;
+    
+    if (self.lowRating == YES) {
+        self.customAlert.titleLabel.text = @"Your Feedback";
+        self.customAlert.messageLabel.text = @"Hit 'Message' to send Team Bump some quick feedback 💬";
+        self.customAlert.numberOfButtons = 2;
+    }
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+        //iphone5
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, -157, 250, 157)];
+    }
+    else{
+        [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, -188, 300, 188)]; //iPhone 6/7 specific
+    }
+    
+    self.customAlert.layer.cornerRadius = 10;
+    self.customAlert.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.customAlert];
+    
+    [UIView animateWithDuration:1.0
+                          delay:1.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
                             if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
                                 //iphone5
-                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 1000, 250, 157)];
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-125, 100, 250, 157)];
                             }
                             else{
-                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 188)]; //iPhone 6/7 specific
+                                [self.customAlert setFrame:CGRectMake((self.view.frame.size.width/2)-150, 100, 300, 188)]; //iPhone 6/7 specific
                             }
+                            
+                            if (self.lowRating == YES) {
+                                self.customAlert.center = self.view.center;
+                            }
+                        }
+                     completion:^(BOOL finished) {
+                         
+                     }];
+}
+-(void)ratePressedWithNumber:(int)starNumber{
+    
+    if (starNumber == 0) {
+        return;
+    }
+    
+    [Answers logCustomEventWithName:@"User Rated App"
+                   customAttributes:@{
+                                      @"Rating":[NSString stringWithFormat:@"%d", starNumber]
+                                      }];
+    
+    if (starNumber >= 4) {
+        
+        NSString *reqSysVer = @"10.3";
+        NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+        if ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending) {
+            NSLog(@"10.3 or later");
+            [SKStoreReviewController requestReview];
+            
+            [Answers logCustomEventWithName:@"In-app 10.3 rating triggered"
+                           customAttributes:@{
+                                              @"Rating":[NSString stringWithFormat:@"%d", starNumber]
+                                              }];
+        }
+        else{
+            NSLog(@"current version is %@", currSysVer);
+            
+            NSURL *storeURL = [NSURL URLWithString:@"itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=1096047233&onlyLatestVersion=true&pageNumber=0&sortOrdering=1&type=Purple+Software&action=write-review"];
+            if ([[UIApplication sharedApplication] canOpenURL: storeURL]) {
+                [[UIApplication sharedApplication] openURL: storeURL];
+            }
+            
+            [Answers logCustomEventWithName:@"Out-of-app rating triggered"
+                           customAttributes:@{
+                                              @"Rating":[NSString stringWithFormat:@"%d", starNumber]
+                                              }];
+        }
+        
+        [self dismissRatePressed];
+        
+    }
+    else{
+        //prompt for team bump message
+        self.lowRating = YES;
+        [self dismissRatePressed];
+    }
+    
+    //save info
+    [[PFUser currentUser]setObject:[NSNumber numberWithInt:starNumber] forKey:@"lastRating"];
+    [[PFUser currentUser]setObject:[NSDate date] forKey:@"reviewDate"];
+    NSString *currentVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+    [[PFUser currentUser]setObject:currentVersion forKey:@"versionReviewed"];
+    [[PFUser currentUser]saveInBackground];
+}
+
+#pragma mark - invite view delegates
+
+-(void)showInviteView{
+    
+    if (self.alertShowing == YES) {
+        return;
+    }
+    
+    self.alertShowing = YES;
+    self.bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.bgView.alpha = 0.0;
+    [self.bgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.bgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"inviteView" owner:self options:nil];
+    self.inviteView = (inviteViewClass *)[nib objectAtIndex:0];
+    self.inviteView.delegate = self;
+    
+    //setup images
+    NSMutableArray *friendsArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"friends"]];
+    
+    //manage friends count label
+    if (friendsArray.count > 5) {
+        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friendsArray.count];
+    }
+    else{
+        self.inviteView.friendsLabel.text = @"Help us grow 🚀";
+    }
+    
+    if (friendsArray.count > 0) {
+        [self shuffle:friendsArray];
+        if (friendsArray.count >2) {
+            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+            
+            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
+            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+            
+            NSURL *picUrl3 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[2]]];
+            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+        }
+        else if (friendsArray.count == 2){
+            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+            
+            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
+            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+            
+            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/781237282045226/picture?type=large"]; //use viv's image to fill gap
+            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+        }
+        else if (friendsArray.count == 1){
+            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+            
+            NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/781237282045226/picture?type=large"]; //use viv's image
+            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+            
+            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
+            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+        }
+    }
+    else{
+        NSURL *picUrl = [NSURL URLWithString:@"https://graph.facebook.com/10207070036095375/picture?type=large"]; //use matsisland's image
+        [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+        
+        NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/781237282045226/picture?type=large"]; //use viv's image
+        [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+        NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
+        [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+    }
+    
+    [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -300, 300, 300)];
+    self.inviteView.layer.cornerRadius = 10;
+    self.inviteView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.inviteView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.inviteView setFrame:CGRectMake(0, 0, 300, 300)];
+                            self.inviteView.center = self.view.center;
+                        }
+                     completion:^(BOOL finished) {
+                         [self.bgView addGestureRecognizer:self.tap];
+                     }];
+    
+    //save info
+    [[PFUser currentUser]setObject:[NSDate date] forKey:@"inviteDate"];
+    [[PFUser currentUser]saveInBackground];
+}
+
+-(void)hideInviteView{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.bgView = nil;
+                         [self.bgView removeGestureRecognizer:self.tap];
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 300)];
                         }
                      completion:^(BOOL finished) {
                          //Completion Block
                          self.alertShowing = NO;
-                         [self.customAlert setAlpha:0.0];
-                         self.customAlert = nil;
+                         [self.inviteView setAlpha:0.0];
+                         self.inviteView = nil;
                      }];
 }
 
--(void)firstPressed{
-    [self donePressed];
+-(void)whatsappPressed{
+    [Answers logCustomEventWithName:@"Share Pressed"
+                   customAttributes:@{
+                                      @"type":@"whatsapp"
+                                      }];
+    NSString *shareString = @"Check out Bump for iOS - buy & sell streetwear quickly and with ZERO fees 👟\n\nAvailable here: http://sobump.com";
+    NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
+    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+        [[UIApplication sharedApplication] openURL: whatsappURL];
+    }
 }
--(void)secondPressed{
-    [Answers logCustomEventWithName:@"Message Team Bump pressed from buyNow Sell prompt"
-                   customAttributes:@{}];
+
+-(void)messengerPressed{
+    [Answers logCustomEventWithName:@"Share Pressed"
+                   customAttributes:@{
+                                      @"type":@"messenger"
+                                      }];
+    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=http://sobump.com"];
+    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+        [[UIApplication sharedApplication] openURL: messengerURL];
+    }
+}
+
+-(void)textPressed{
+    [self hideInviteView];
+    [Answers logCustomEventWithName:@"Share Pressed"
+                   customAttributes:@{
+                                      @"type":@"share sheet"
+                                      }];
+    NSMutableArray *items = [NSMutableArray new];
+    [items addObject:@"Check out Bump for iOS - buy & sell streetwear quickly and with ZERO fees 👟\n\nAvailable here: http://sobump.com"];
+    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+    [self presentViewController:activityController animated:YES completion:nil];
+}
+
+#pragma mark - observer callbacks
+
+-(void)bumpTappedForListing:(NSString *)listing{
     
-    [self donePressed];
-    //goto Team Bump messages
-    PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
-    NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-    [convoQuery whereKey:@"convoId" equalTo:convoId];
-    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            //convo exists, go there
-            self.tappedItem = YES;
-            ChatWithBump *vc = [[ChatWithBump alloc]init];
-            vc.convoId = [object objectForKey:@"convoId"];
-            vc.convoObject = object;
-            vc.otherUser = [PFUser currentUser];
+    //all purpose 'drop down' pressed method - not just for bump drop down
+    
+    //animate up
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.dropDown setFrame:CGRectMake(0, -300, self.view.frame.size.width, 119)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.dropDown removeFromSuperview];
+                     }];
+    
+    //screenshotted
+    if (self.justAMessage == YES && self.sendMode == YES){
+        [Answers logCustomEventWithName:@"Tapped in app Push"
+                       customAttributes:@{
+                                          @"type":@"screenshot"
+                                          }];
+        //trigger send box
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"showSendBox" object:nil];
+    }
+    else if (self.justAMessage == YES){
+        //do nothing
+    }
+    //fb friend posted
+    else if (self.justABump == NO) {
+        [Answers logCustomEventWithName:@"Tapped in app Push"
+                       customAttributes:@{
+                                          @"type":@"fb friend posted"
+                                          }];
+        
+        PFObject *listingObj = [PFObject objectWithoutDataWithClassName:@"forSaleItems" objectId:listing];
+        
+        ForSaleListing *vc = [[ForSaleListing alloc]init];
+        vc.listingObject = listingObj;
+        vc.source = @"bump";
+        vc.fromBuyNow = YES;
+        vc.pureWTS = YES;
+        vc.fromPush = YES;
+        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+        //            [nav pushViewController:vc animated:YES];
+        
+        if (nav.visibleViewController.presentedViewController) {
             
-            //switch off hiding nav bar
-            self.navigationController.navigationBarHidden = NO;
-            [self.navigationController pushViewController:vc animated:YES];
+            //nav bar is showing something
+            if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
         }
         else{
-            //create a new one
-            PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
-            convoObject[@"otherUser"] = [PFUser currentUser];
-            convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-            convoObject[@"totalMessages"] = @0;
-            [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                if (succeeded) {
-                    //saved, goto VC
-                    self.tappedItem = YES;
-                    ChatWithBump *vc = [[ChatWithBump alloc]init];
-                    vc.convoId = [convoObject objectForKey:@"convoId"];
-                    vc.convoObject = convoObject;
-                    vc.otherUser = [PFUser currentUser];
+            //no other VC showing so push!
+            [nav pushViewController:vc animated:YES];
+        }
+        
+//        BumpVC *vc = [[BumpVC alloc]init];
+//        vc.listingID = listing;
+//        [self presentViewController:vc animated:YES completion:nil];
+        
+    }
+    //my listing got bumped
+    else{
+        //goto that listing
+        [Answers logCustomEventWithName:@"Tapped in app Push"
+                       customAttributes:@{
+                                          @"type":@"Bump"
+                                          }];
+        if (self.wantedListing) {
+            PFObject *listingObj = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listing];
+            ListingController *vc = [[ListingController alloc]init];
+            vc.listingObject = listingObj;
+            //make sure drop down is gone
+            self.dropDown = nil;
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+//            [nav pushViewController:vc animated:YES];
+            
+            if (nav.visibleViewController.presentedViewController) {
+                
+                //nav bar is showing something
+                if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
                     
-                    //switch off hiding nav bar
-                    self.navigationController.navigationBarHidden = NO;
-                    [self.navigationController pushViewController:vc animated:YES];
+                    //2nd nav is showing so push from there instead of tab bar nav
+                    NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                    [presenter pushViewController:vc animated:YES];
                 }
-                else{
-                    NSLog(@"error saving convo");
+            }
+            else{
+                //no other VC showing so push!
+                [nav pushViewController:vc animated:YES];
+            }
+        }
+        else{
+            PFObject *listingObj = [PFObject objectWithoutDataWithClassName:@"forSaleItems" objectId:listing];
+            
+            ForSaleListing *vc = [[ForSaleListing alloc]init];
+            vc.listingObject = listingObj;
+            vc.source = @"bump";
+            vc.fromBuyNow = YES;
+            vc.pureWTS = YES;
+            vc.fromPush = YES;
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+//            [nav pushViewController:vc animated:YES];
+            
+            if (nav.visibleViewController.presentedViewController) {
+                
+                //nav bar is showing something
+                if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                    
+                    //2nd nav is showing so push from there instead of tab bar nav
+                    NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                    [presenter pushViewController:vc animated:YES];
+                }
+            }
+            else{
+                //no other VC showing so push!
+                [nav pushViewController:vc animated:YES];
+            }
+        }
+
+    }
+}
+
+- (void)handleBump:(NSNotification*)note {
+    NSString *listingID = [note object];
+    
+    [Answers logCustomEventWithName:@"Opened Listing after receiving FB Friend Push"
+                   customAttributes:@{}];
+    
+//    BumpVC *vc = [[BumpVC alloc]init];
+//    vc.listingID = listingID;
+//    [self presentViewController:vc animated:YES completion:nil];
+    
+    PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"forSaleItems" objectId:listingID];
+    
+    ForSaleListing *vc = [[ForSaleListing alloc]init];
+    vc.listingObject = listingObject;
+    vc.source = @"push";
+    vc.fromBuyNow = YES;
+    vc.pureWTS = YES;
+    vc.fromPush = YES;
+
+    NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+//    [nav pushViewController:vc animated:YES];
+    if (nav.visibleViewController.presentedViewController) {
+        
+        //nav bar is showing something
+        if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+            
+            //2nd nav is showing so push from there instead of tab bar nav
+            NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+            [presenter pushViewController:vc animated:YES];
+        }
+    }
+    else{
+        //no other VC showing so push!
+        [nav pushViewController:vc animated:YES];
+    }
+}
+
+- (void)showListing:(NSNotification*)note {
+    NSString *listingID = [note object];
+    
+    [Answers logCustomEventWithName:@"Opened wanted listing after receiving Bump Push"
+                   customAttributes:@{}];
+    
+    PFObject *listing = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listingID];
+    ListingController *vc = [[ListingController alloc]init];
+    vc.listingObject = listing;
+    NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+    
+    //unhide nav bar
+    //    self.navigationController.navigationBarHidden = NO;
+//    [nav pushViewController:vc animated:YES];
+    if (nav.visibleViewController.presentedViewController) {
+        
+        //nav bar is showing something
+        if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+            
+            //2nd nav is showing so push from there instead of tab bar nav
+            NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+            [presenter pushViewController:vc animated:YES];
+        }
+    }
+    else{
+        //no other VC showing so push!
+        [nav pushViewController:vc animated:YES];
+    }
+}
+
+- (void)showSaleListing:(NSNotification*)note {
+    NSString *listingID = [note object];
+    
+    PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"forSaleItems" objectId:listingID];
+    
+    ForSaleListing *vc = [[ForSaleListing alloc]init];
+    vc.listingObject = listingObject;
+    vc.source = @"bump";
+    vc.fromBuyNow = YES;
+    vc.pureWTS = YES;
+    vc.fromPush = YES;
+
+    NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+//    [nav pushViewController:vc animated:YES];
+    if (nav.visibleViewController.presentedViewController) {
+        
+        //nav bar is showing something
+        if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+            
+            //2nd nav is showing so push from there instead of tab bar nav
+            NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+            [presenter pushViewController:vc animated:YES];
+        }
+    }
+    else{
+        //no other VC showing so push!
+        [nav pushViewController:vc animated:YES];
+    }
+}
+
+- (void)handleDrop:(NSNotification*)note {
+    NSString *listingID = [note object];
+    
+    [Answers logCustomEventWithName:@"Received in app push"
+                   customAttributes:@{
+                                      @"type":@"FB Friend just posted"
+                                      }];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
+    self.dropDown = (notificatView *)[nib objectAtIndex:0];
+    self.dropDown.delegate = self;
+    self.dropDown.listingID = listingID;
+    
+    UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.dropDown addGestureRecognizer:swipeGesture];
+    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+    
+    PFQuery *listingQ = [PFQuery queryWithClassName:@"forSaleItems"];
+    [listingQ whereKey:@"objectId" equalTo:listingID];
+    [listingQ includeKey:@"sellerUser"];
+    [listingQ getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            PFObject *listing = object;
+            self.dropDown.listing = listing;
+            [self.dropDown.imageView setFile:[object objectForKey:@"thumbnail"]];
+            [self.dropDown.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
+                if (image) {
+                    PFUser *postUser = [listing objectForKey:@"sellerUser"];
+                    self.dropDown.mainLabel.text = [NSString stringWithFormat:@"Your Facebook friend %@ just listed an item for sale - Tap to like it", [postUser objectForKey:@"fullname"]];
+                    self.justABump = NO;
+                    self.justAMessage = NO;
+                    self.sendMode = NO;
+                    
+                    //animate down
+                    [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+                    
+                    [UIView animateWithDuration:1.0
+                                          delay:0.0
+                         usingSpringWithDamping:0.5
+                          initialSpringVelocity:0.5
+                                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                            //Animations
+                                            [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
+                                        }
+                                     completion:^(BOOL finished) {
+                                         //schedule auto dismiss
+                                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                             [self dismissDrop];
+                                         });
+                                     }];
                 }
             }];
         }
+        else{
+            NSLog(@"error finding listing");
+        }
     }];
 }
 
--(void)getAffiliateData{
-    NSLog(@"get affiliate data");
-    
-    self.affiliateProducts = [NSMutableArray array];
-    [self.affiliateProducts removeAllObjects];
-    self.remainingAffiliates = 0;
-    self.indexToAdd = 0;
+-(void)dismissDrop{
+    //animate up
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.dropDown setFrame:CGRectMake(0, -300, self.view.frame.size.width, 119)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         [self.dropDown removeFromSuperview];
+                         self.dropDown = nil;
+                     }];
+}
 
-    NSArray *seenAffiliates;
+-(void)resetHome{
+    //only reset if they're looking at home tab
+    if (self.tabBarController.selectedIndex == 0) {
+        NSLog(@"reset home");
+        if (self.products.count != 0) {
+            //prevents crash when header is not visible, thereofre has no layout attributes // if still seeing crash, layoutifneeded also meant to work
+            [self.collectionView.collectionViewLayout prepareLayout];
+            NSLog(@"scroll!");
+
+            //scroll to top of header
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
+
+            CGFloat offsetY = [self.collectionView layoutAttributesForSupplementaryElementOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath].frame.origin.y;
+
+            CGFloat contentInsetY = self.collectionView.contentInset.top;
+            CGFloat sectionInsetY = ((UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout).sectionInset.top;
+
+            [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
+        }
+
+        self.pullFinished = YES;
+        [self getLatestForSale];
+    }
+}
+
+-(void)insertLatestListing:(NSNotification*)note {
+    PFObject *listing = [note object];
+//    NSLog(@"insert %@", listing);
+    if (self.products.count > 0) {
+        [self.products insertObject:listing atIndex:0];
+        [self.collectionView reloadData];
+    }
+}
+
+-(void)handleBumpDrop:(NSNotification*)note {
+    NSArray *info = [note object];
     
-    if ([[PFUser currentUser]objectForKey:@"affiliateSeen"]) {
-         seenAffiliates = [[PFUser currentUser]objectForKey:@"affiliateSeen"];
+    NSLog(@"info %@", info);
+    
+    //prevent crashes with wrongly formatted pushes
+    if (info.count <2) {
+        return;
+    }
+    
+    NSLog(@"lez go");
+    
+    NSString *listingID = info[0];
+    NSString *message = info[1];
+    
+    [Answers logCustomEventWithName:@"Received in app push"
+                   customAttributes:@{
+                                      @"type":@"Received a Bump"
+                                      }];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
+    self.dropDown = nil;
+    self.dropDown = (notificatView *)[nib objectAtIndex:0];
+    self.dropDown.delegate = self;
+    self.dropDown.listingID = listingID;
+    
+    UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.dropDown addGestureRecognizer:swipeGesture];
+    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+    
+    if ([message containsString:@"wanted listing"]) {
+        PFQuery *listingQ = [PFQuery queryWithClassName:@"wantobuys"];
+        [listingQ whereKey:@"objectId" equalTo:listingID];
+        [listingQ getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                PFObject *listing = object;
+                self.dropDown.listing = listing;
+                [self.dropDown.imageView setFile:[object objectForKey:@"image1"]];
+                [self.dropDown.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
+                    if (image) {
+                        self.dropDown.mainLabel.text = message;
+                        self.justABump = YES;
+                        self.justAMessage = NO;
+                        self.sendMode = NO;
+                        self.wantedListing = YES;
+
+                        //animate down
+                        [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+                        
+                        [UIView animateWithDuration:1.0
+                                              delay:0.0
+                             usingSpringWithDamping:0.5
+                              initialSpringVelocity:0.5
+                                            options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                                //Animations
+                                                [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
+                                            }
+                                         completion:^(BOOL finished) {
+                                             //schedule auto dismiss
+                                             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                                 [self dismissDrop];
+                                             });
+                                         }];
+                    }
+                }];
+            }
+            else{
+                NSLog(@"error finding listing");
+            }
+        }];
     }
     else{
-        seenAffiliates = @[];
+        //sale listing bumped
+        NSLog(@"sale listing bumped");
+        
+        PFQuery *listingQ = [PFQuery queryWithClassName:@"forSaleItems"];
+        [listingQ whereKey:@"objectId" equalTo:listingID];
+        [listingQ getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                PFObject *listing = object;
+                self.dropDown.listing = listing;
+                [self.dropDown.imageView setFile:[object objectForKey:@"image1"]];
+                [self.dropDown.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
+                    if (image) {
+                        self.dropDown.mainLabel.text = message;
+                        self.justABump = YES;
+                        self.justAMessage = NO;
+                        self.sendMode = NO;
+                        self.wantedListing = NO;
+                        
+                        //animate down
+                        [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+                        
+                        [UIView animateWithDuration:1.0
+                                              delay:0.0
+                             usingSpringWithDamping:0.5
+                              initialSpringVelocity:0.5
+                                            options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                                //Animations
+                                                [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
+                                            }
+                                         completion:^(BOOL finished) {
+                                             //schedule auto dismiss
+                                             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                                 [self dismissDrop];
+                                             });
+                                         }];
+                    }
+                }];
+            }
+            else{
+                NSLog(@"error finding listing");
+            }
+        }];
     }
+}
+
+-(void)messageSentDrop:(NSNotification*)note {
+    PFUser *friend = [note object];
     
-    PFQuery *affQuery = [PFQuery queryWithClassName:@"Affiliates"];
-    affQuery.limit = 200;
-    [affQuery whereKey:@"itemTitle" notContainedIn:seenAffiliates];
+    [Answers logCustomEventWithName:@"Showing Message Sent Drop"
+                   customAttributes:@{}];
     
-    if (self.cleverMode == YES) {
-        NSArray *calcdKeywords = [NSArray array];
-        
-        //use previous searches/wants to inform what affiliates people see
-        NSArray *searchWords = [[PFUser currentUser]objectForKey:@"searches"];
-        NSArray *wantedw = [NSArray array];
-        if ([[PFUser currentUser]objectForKey:@"wantedWords"]) {
-            wantedw = [[PFUser currentUser]objectForKey:@"wantedWords"];
-        }
-        
-        //check if got any words to inform search
-        if (searchWords.count > 0 || wantedw.count > 0) {
-            NSMutableArray *allSearchWords = [NSMutableArray array];
-            //seaprate the searches into search words
-            for (NSString *searchTerm in searchWords) {
-                NSArray *searchTermWords = [[searchTerm lowercaseString] componentsSeparatedByString:@" "];
-                
-                //then add all search words to an array in lower case
-                [allSearchWords addObjectsFromArray:searchTermWords];
-            }
-            if (wantedw.count >0) {
-                [allSearchWords addObjectsFromArray:wantedw];
-            }
-            calcdKeywords = [[allSearchWords reverseObjectEnumerator] allObjects];
-        }
-        
-        [affQuery whereKey:@"keywords" containedIn:calcdKeywords];
-    }
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
+    self.dropDown = (notificatView *)[nib objectAtIndex:0];
+    self.dropDown.delegate = self;
+    self.dropDown.sentMode = YES;
+    [self setImageBorder:self.dropDown.imageView];
     
-    [affQuery orderByDescending:@"createdAt"];
-    [affQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            
-            if (self.cleverMode == YES && objects.count == 0) {
-                self.cleverMode = NO;
-                [self getAffiliateData];
-                return;
-            }
-            else if (self.cleverMode == NO && objects.count == 0){
-                self.showAffiliates = NO;
-                self.retrieveLimit = 30;
-                [self.collectionView reloadData];
-                return;
-            }
-        
-            for (PFObject *affItem in objects) {
-                self.remainingAffiliates++;
-                
-                //put each for sale item in a dictionary
-                NSMutableDictionary *affDic = [[NSMutableDictionary alloc]init];
-                [affDic setValue:affItem forKey:@"item"];
-                
-                //set the 'itemType' to 'normal'
-                [affDic setValue:@"affiliate" forKey:@"itemType"];
-                
-                //add to holding array
-                [self.affiliateProducts addObject:affDic];
-            }
-            
-            [self shuffle:self.affiliateProducts];
-            
-            NSLog(@"added all to affiliates with count %lu", self.affiliateProducts.count);
-        
+    [friend fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            [self.dropDown.imageView setFile:[friend objectForKey:@"picture"]];
+            [self.dropDown.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
+                if (image) {
+                    self.dropDown.mainLabel.text = [NSString stringWithFormat:@"Message sent to %@", friend.username];
+                    
+                    //setup what happens when user taps notification
+                    self.justAMessage = YES;
+                    
+                    //animate down
+                    [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+                    
+                    [UIView animateWithDuration:1.0
+                                          delay:0.0
+                         usingSpringWithDamping:0.5
+                          initialSpringVelocity:0.5
+                                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                            //Animations
+                                            [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
+                                        }
+                                     completion:^(BOOL finished) {
+                                         //schedule auto dismiss
+                                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                             [self dismissDrop];
+                                         });
+                                     }];
+                }
+            }];
         }
         else{
-            NSLog(@"error fetching affiliate objects %@", error);
-            self.showAffiliates = NO;
-            self.retrieveLimit = 30;
-            [self.collectionView reloadData];
+            NSLog(@"error fetching user %@", error);
         }
     }];
-
+    
+    UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.dropDown addGestureRecognizer:swipeGesture];
+    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
 }
+
+-(void)showScreenShot:(NSNotification*)note {
+    
+    if (self.screenshotShowing) {
+        return;
+    }
+    
+    self.screenshotShowing = YES;
+    
+    [Answers logCustomEventWithName:@"Showing Screenshot Notification"
+                   customAttributes:@{}];
+    
+    self.dropDown = nil;
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
+    self.dropDown = (notificatView *)[nib objectAtIndex:0];
+    self.dropDown.delegate = self;
+    self.dropDown.sentMode = YES;
+    [self.dropDown.imageView setImage:[UIImage imageNamed:@"envelopeSend"]];
+    [self setImageBorder:self.dropDown.imageView];
+    
+    self.dropDown.mainLabel.text = @"Tap Send to share this listing with friends on Bump!";
+    
+    //setup what happens when user taps notification
+    self.justAMessage = YES;
+    self.sendMode = YES;
+    
+    //animate down
+    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
+                        }
+                     completion:^(BOOL finished) {
+                         //schedule auto dismiss
+                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                             self.screenshotShowing = NO;
+                             [self dismissDrop];
+                         });
+                     }];
+    
+    UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.dropDown addGestureRecognizer:swipeGesture];
+}
+
+-(void)welcomeDismissed{
+    self.pullFinished = YES;
+    [self resetHome];
+}
+
+-(void)ensureNavShowing{
+    
+    BOOL modalPresent = (self.presentedViewController);
+        
+    if (modalPresent != YES && self.tabBarController.selectedIndex == 0) {
+        [self.navigationController.navigationBar setHidden:NO];
+    }
+}
+
+-(void)verifyEmailInHome{
+    
+    if ([PFUser currentUser]) {
+        
+        NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+        
+        for(UILocalNotification *notification in notificationArray){
+            
+            if ([notification.alertBody containsString:@"Verify your Bump email address now!"]) {
+                // delete this notification
+                [[UIApplication sharedApplication] cancelLocalNotification:notification];
+            }
+        }
+        
+        //check if already verified
+        if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES) {
+            
+            [[PFUser currentUser]setObject:[NSNumber numberWithBool:YES] forKey:@"emailIsVerified"];
+            [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    
+                    //refresh header in home
+                    self.pullFinished = YES;
+                    [self getLatestForSale];
+                    
+                    //refresh verified with image in profile if selected tab is 4
+                    if (self.tabBarController.selectedIndex == 3) {
+                        [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshVeri" object:nil];
+                    }
+                    
+                    [Answers logCustomEventWithName:@"Email Verified"
+                                   customAttributes:@{
+                                                      @"status":@"Success"
+                                                      }];
+                    
+                    [self showAlertWithTitle:@"Email Verified ✅" andMsg:@"Congrats, you just verified your email! If you haven't already, connect your Facebook to share listings with friends on Bump"];
+                    
+                    //send welcome email if haven't already signed up with fb & received it that way
+                    if (![[PFUser currentUser]objectForKey:@"facebookId"]) {
+                        
+                        NSDictionary *params = @{@"toEmail": [[PFUser currentUser] objectForKey:@"email"]};
+                        [PFCloud callFunctionInBackground:@"sendWelcomeEmail" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                            if (!error) {
+                                
+                                [Answers logCustomEventWithName:@"Sent Welcome Email"
+                                               customAttributes:@{
+                                                                  @"where":@"after email verified"
+                                                                  }];
+                                
+                            }
+                            else{
+                                NSLog(@"email error %@", error);
+                                
+                                [Answers logCustomEventWithName:@"Error sending Welcome Email"
+                                               customAttributes:@{
+                                                                  @"where":@"after email verified"
+                                                                  }];
+                            }
+                        }];
+                    }
+                }
+                else{
+                    NSLog(@"error saving user %@", error);
+                    [Answers logCustomEventWithName:@"Email Verified"
+                                   customAttributes:@{
+                                                      @"status":@"error"
+                                                      }];
+                    [self showAlertWithTitle:@"Email Error" andMsg:@"Make sure you're connected to the internet then try tapping the verification in the email we sent again!"];
+                }
+            }];
+        }
+    }
+}
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+#pragma mark - filters delegates
+
+- (IBAction)filterPressed:(id)sender {
+    [Answers logCustomEventWithName:@"Filters pressed"
+                   customAttributes:@{
+                                      @"page":@"Home"
+                                      }];
+    FilterVC *vc = [[FilterVC alloc]init];
+    vc.delegate = self;
+    vc.sellingSearch = YES;
+    if (self.filtersArray.count > 0) {
+        vc.sendArray = [NSMutableArray arrayWithArray:self.filtersArray];
+    }
+    vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+-(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours{
+    //reset collection view
+    [self.products removeAllObjects];
+    [self.productIds removeAllObjects];
+    
+    [self.collectionView reloadData];
+    
+    self.filtersArray = filters;
+    if (self.filtersArray.count > 0) {
+        self.filterSizesArray = sizes;
+        self.filterBrandsArray = brands;
+        self.filterColoursArray = colours;
+        
+        //change colour of filter number
+        NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"F I L T E R  %lu",self.filtersArray.count]];
+        [self modifyString:filterString setColorForText:[NSString stringWithFormat:@"%lu",self.filtersArray.count] withColor:[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0]];
+        [self.filterButton setAttributedTitle:filterString forState:UIControlStateNormal];
+        
+    }
+    else{
+        //no filters
+        NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:@"F I L T E R"];
+        [self.filterButton setAttributedTitle:filterString forState:UIControlStateNormal];
+        
+        [self.filterSizesArray removeAllObjects];
+        [self.filterBrandsArray removeAllObjects];
+        [self.filterColoursArray removeAllObjects];
+    }
+    
+    //reset skip
+    self.skipped = 0;
+    
+    NSLog(@"filters array in home tab %@", self.filtersArray);
+    
+    if (self.products.count != 0) {
+        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
+                                    atScrollPosition:UICollectionViewScrollPositionTop
+                                            animated:NO];
+    }
+    [self getLatestForSale];
+}
+
+-(void)noChange{
+    if (self.filtersArray.count > 0) {
+        NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"F I L T E R  %lu",self.filtersArray.count]];
+        [self modifyString:filterString setColorForText:[NSString stringWithFormat:@"%lu",self.filtersArray.count] withColor:[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0]];
+        [self.filterButton setAttributedTitle:filterString forState:UIControlStateNormal];
+    }
+    else{
+        //no filters
+        NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:@"F I L T E R"];
+        [self.filterButton setAttributedTitle:filterString forState:UIControlStateNormal];
+        
+        [self.filterSizesArray removeAllObjects];
+        [self.filterBrandsArray removeAllObjects];
+        [self.filterColoursArray removeAllObjects];
+    }
+}
+
+#pragma mark - colour part of label
+
+-(NSMutableAttributedString *)modifyString: (NSMutableAttributedString *)mainString setColorForText:(NSString*) textToFind withColor:(UIColor*) color
+{
+    NSRange range = [mainString.mutableString rangeOfString:textToFind options:NSCaseInsensitiveSearch];
+    
+    if (range.location != NSNotFound) {
+        [mainString addAttribute:NSForegroundColorAttributeName value:color range:range];
+    }
+    
+    return mainString;
+}
+
+-(void)hideFilter{
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.filterButton.alpha = 0.0;
+                     }
+                     completion:nil];
+}
+
+-(void)showFilter{
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.filterButton.alpha = 1.0;
+                     }
+                     completion:nil];
+}
+
+//for a floating button sitting below the CV header
+//- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+//    
+//    float scrollOffset = scrollView.contentOffset.y;
+//    NSLog(@"offset: %f", scrollOffset);
+//    
+//    //scroll button up as user scrolls down
+//    if(scrollView.contentOffset.y >= 0 && scrollView.contentOffset.y <= 40.0) {
+//        self.floatingLocationButton.transform = CGAffineTransformMakeTranslation(0, -scrollOffset);
+//    }
+////    //scroll button down as user scrolls up
+////    else if(scrollView.contentOffset.y == 40.0) {
+////        self.floatingLocationButton.transform = CGAffineTransformMakeTranslation(0, +scrollOffset);
+////    }
+//    else if (scrollView.contentOffset.y == 0.0){
+//        //reset to zero as user passes zero to keep gaps consistent
+//        self.floatingLocationButton.transform = CGAffineTransformMakeTranslation(0,0);
+//    }
+//    else if (scrollView.contentOffset.y < 0) {
+//        //scroll the button down as user goes beyong offset 0 to make it look like its in the same place
+//        self.floatingLocationButton.transform = CGAffineTransformMakeTranslation(0, -scrollOffset);
+//    }
+//}
+
 @end

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -45,7 +45,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="383"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="eso-hQ-SDD" id="0Ug-Tw-A12">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="382"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="382.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Rate your experience" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ibT-0n-GaT">
@@ -58,10 +58,10 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="e7V-7d-Bh7">
-                        <rect key="frame" x="66" y="251" width="30" height="30"/>
+                        <rect key="frame" x="64" y="251" width="32" height="32"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="30" id="RZp-hh-srE"/>
-                            <constraint firstAttribute="height" constant="30" id="cjU-5S-fAb"/>
+                            <constraint firstAttribute="width" constant="32" id="RZp-hh-srE"/>
+                            <constraint firstAttribute="height" constant="32" id="cjU-5S-fAb"/>
                         </constraints>
                         <state key="normal" image="starBlkIcon.png"/>
                         <state key="selected" image="starIcon.png"/>
@@ -71,6 +71,10 @@
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jlm-bU-luc">
                         <rect key="frame" x="104" y="251" width="32" height="32"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="32" id="FvD-Mm-Hts"/>
+                            <constraint firstAttribute="height" constant="32" id="eK0-w2-ITv"/>
+                        </constraints>
                         <state key="normal" image="starBlkIcon.png"/>
                         <state key="selected" image="starIcon.png"/>
                         <connections>
@@ -79,6 +83,10 @@
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ks2-Km-hxM">
                         <rect key="frame" x="144" y="251" width="32" height="32"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="32" id="0P6-D9-SsF"/>
+                            <constraint firstAttribute="width" constant="32" id="tuP-Se-6WA"/>
+                        </constraints>
                         <state key="normal" image="starBlkIcon.png"/>
                         <state key="selected" image="starIcon.png"/>
                         <connections>
@@ -87,6 +95,10 @@
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="xNq-MB-hqf">
                         <rect key="frame" x="184" y="251" width="32" height="32"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="32" id="PHC-uy-iug"/>
+                            <constraint firstAttribute="width" constant="32" id="Uis-0v-Ivq"/>
+                        </constraints>
                         <state key="normal" image="starBlkIcon.png"/>
                         <state key="selected" image="starIcon.png"/>
                         <connections>
@@ -95,6 +107,10 @@
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tIS-Ce-xH0">
                         <rect key="frame" x="224" y="251" width="32" height="32"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="32" id="ERL-QP-aK1"/>
+                            <constraint firstAttribute="width" constant="32" id="dUo-fq-vBD"/>
+                        </constraints>
                         <state key="normal" image="starBlkIcon.png"/>
                         <state key="selected" image="starIcon.png"/>
                         <connections>
@@ -119,7 +135,7 @@
                     </label>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Write a comment (optional)" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Ydx-uW-AZw">
                         <rect key="frame" x="8" y="311" width="304" height="63"/>
-                        <color key="tintColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="tintColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="63" id="ghs-hZ-fcv"/>
                         </constraints>

@@ -34,6 +34,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) BOOL isBuyer;
 
+//edit mode
+@property (nonatomic) BOOL editMode;
+@property (nonatomic, strong) PFObject *editFBObject;
+@property (nonatomic) int previousReview;
+
+
 @property (nonatomic, strong) PFUser *user;
 @property (nonnull, strong) NSString *IDUser;
 @property (nonatomic) BOOL purchased;

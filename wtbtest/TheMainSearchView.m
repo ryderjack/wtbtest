@@ -11,6 +11,7 @@
 #import "NavigationController.h"
 #import <Crashlytics/Crashlytics.h>
 #import "SearchCell.h"
+#import "UIImageView+Letters.h"
 
 @interface TheMainSearchView ()
 
@@ -27,12 +28,14 @@
     self.searchString = @"";
     
     self.userSearch = NO;
+    self.sellingSearch = YES;
+    
     self.searchBar = [[UISearchBar alloc] init];
     self.searchBar.searchBarStyle = UISearchBarStyleMinimal;
     self.searchBar.delegate = self;
     self.navigationItem.titleView = self.searchBar;
     [self.searchBar sizeToFit];
-    self.searchBar.placeholder = @"Search for stuff you're selling";
+    self.searchBar.placeholder = @"Search through items for sale";
     
     //segment control
     self.segmentedControl = [[HMSegmentedControl alloc] init];
@@ -40,10 +43,11 @@
     self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
     self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
     self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
-    self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10]};
+    self.segmentedControl.selectionIndicatorHeight = 2;
+    self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:9]};
     self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]};
     [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
-    [self.segmentedControl setSectionTitles:@[@"W A N T E D", @"P E O P L E"]];
+    [self.segmentedControl setSectionTitles:@[@"F O R  S A L E",@"W A N T E D",@"P E O P L E"]];
     [self.view addSubview:self.segmentedControl];
     
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
@@ -51,7 +55,9 @@
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
-    self.listingResults = [[[[PFUser currentUser]objectForKey:@"searches"] reverseObjectEnumerator] allObjects];
+    self.wantedSearchResults = [[[[PFUser currentUser]objectForKey:@"searches"] reverseObjectEnumerator] allObjects];
+    self.sellingSearchResults = [[[[PFUser currentUser]objectForKey:@"sellingSearches"] reverseObjectEnumerator] allObjects];
+
     self.userResults = [NSArray array];
     
     [self addDoneButton];
@@ -77,7 +83,20 @@
 -(void)segmentControlChanged{
     if (self.segmentedControl.selectedSegmentIndex == 0) {
         self.userSearch = NO;
-        self.searchBar.placeholder = @"Search for stuff you're selling";
+        self.sellingSearch = YES;
+        
+        self.searchBar.placeholder = @"Search through items for sale";
+        
+        if (self.noUserLabel) {
+            [self.noUserLabel removeFromSuperview];
+            self.noUserLabel = nil;
+        }
+    }
+    else if (self.segmentedControl.selectedSegmentIndex == 1) {
+        self.userSearch = NO;
+        self.sellingSearch = NO;
+       
+        self.searchBar.placeholder = @"Search through items people want";
         
         if (self.noUserLabel) {
             [self.noUserLabel removeFromSuperview];
@@ -86,6 +105,8 @@
     }
     else{
         self.userSearch = YES;
+        self.sellingSearch = NO;
+        
         self.searchBar.placeholder = @"Search for users";
     }
     
@@ -100,8 +121,11 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (self.userSearch == NO) {
-        return self.listingResults.count;
+    if (self.userSearch == NO && self.sellingSearch == NO) {
+        return self.wantedSearchResults.count;
+    }
+    else if (self.userSearch == NO && self.sellingSearch == YES) {
+        return self.sellingSearchResults.count;
     }
     else{
         return self.userResults.count;
@@ -123,13 +147,27 @@
             
             cell.usernameLabel.text = user.username;
             cell.nameLabel.text = [user objectForKey:@"fullname"];
-            [cell.userImageView setFile:[user objectForKey:@"picture"]];
-            [cell.userImageView loadInBackground];
+            
+            if(![user objectForKey:@"picture"]){
+                
+                NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
+                                                NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+                
+                [cell.userImageView setImageWithString:user.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
+            }
+            else{
+                [cell.userImageView setFile:[user objectForKey:@"picture"]];
+                [cell.userImageView loadInBackground];
+            }
         }
     }
-    else{
+    else if (self.sellingSearch == NO && self.userSearch == NO){
         [cell.userImageView setHidden:YES];
-        cell.usernameLabel.text = self.listingResults[indexPath.row];
+        cell.usernameLabel.text = self.wantedSearchResults[indexPath.row];
+    }
+    else if (self.sellingSearch == YES && self.userSearch == NO){
+        [cell.userImageView setHidden:YES];
+        cell.usernameLabel.text = self.sellingSearchResults[indexPath.row];
     }
     return cell;
 }
@@ -145,33 +183,53 @@
         PFUser *user = [self.userResults objectAtIndex:indexPath.row];
         
         if ([user.objectId isEqualToString:[PFUser currentUser].objectId]) {
-            
+            //do something? //CHECK
         }
         UserProfileController *vc = [[UserProfileController alloc]init];
         vc.user = user;
         vc.fromSearch = YES;
         [self.navigationController pushViewController:vc animated:YES];
     }
-    else{
-        self.searchString = [NSString stringWithFormat:@"%@",[self.listingResults objectAtIndex:indexPath.row]];
+    else if(self.userSearch == NO && self.sellingSearch == NO){
+        //wanted selected
+        self.searchString = [NSString stringWithFormat:@"%@",[self.wantedSearchResults objectAtIndex:indexPath.row]];
         
         [self.searchBar resignFirstResponder];
         searchedViewC *vc = [[searchedViewC alloc]init];
-        vc.searchString = [NSString stringWithFormat:@"%@",[self.listingResults objectAtIndex:indexPath.row]];
+        vc.searchString = [NSString stringWithFormat:@"%@",[self.wantedSearchResults objectAtIndex:indexPath.row]];
         vc.currencySymbol = self.currencySymbol;
         vc.currency = self.currency;
         vc.delegate = self;
         vc.currentLocation = self.geoPoint;
         vc.tabBarHeight = self.tabBarHeight;
+        vc.sellingSearch = self.sellingSearch;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else if(self.userSearch == NO && self.sellingSearch == YES){
+        //selling selected
+        self.searchString = [NSString stringWithFormat:@"%@",[self.sellingSearchResults objectAtIndex:indexPath.row]];
+        
+        [self.searchBar resignFirstResponder];
+        searchedViewC *vc = [[searchedViewC alloc]init];
+        vc.searchString = [NSString stringWithFormat:@"%@",[self.sellingSearchResults objectAtIndex:indexPath.row]];
+        vc.currencySymbol = self.currencySymbol;
+        vc.currency = self.currency;
+        vc.delegate = self;
+        vc.currentLocation = self.geoPoint;
+        vc.tabBarHeight = self.tabBarHeight;
+        vc.sellingSearch = self.sellingSearch;
         [self.navigationController pushViewController:vc animated:YES];
     }
 }
 
 -(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
+    NSLog(@"cancel button clicked");
     [self cancelPressed];
 }
 
 -(void)cancelPressed{
+    NSLog(@"cancel pressed");
+
     [self.searchBar resignFirstResponder];
     [self.delegate cancellingMainSearch];
     [self.noUserLabel removeFromSuperview];
@@ -180,11 +238,13 @@
 }
 
 -(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
+    NSLog(@"did end editing");
+    
     self.searchString = searchBar.text;
     NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
     
-    if (self.userSearch == NO){
-        
+    if (self.userSearch == NO && self.sellingSearch == NO){
+        //wanted selected
         NSMutableArray *history = [NSMutableArray array];
         
         //save the search term and if there's 10 or more items in the search array delete the oldest and add the latest term
@@ -217,7 +277,7 @@
         }
         
         //update results controller UI since only updated via query every time search button pressed
-        NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.listingResults];
+        NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.wantedSearchResults];
         
         if (searchesList.count > 0) {
             if ([searchesList containsObject:self.searchString] && ![searchesList[0] isEqualToString:self.searchString]) {
@@ -235,35 +295,85 @@
             [searchesList insertObject:self.searchString atIndex:0];
         }
         
-        self.listingResults = searchesList;
+        self.wantedSearchResults = searchesList;
+        [self.tableView reloadData];
+    }
+    else if (self.userSearch == NO && self.sellingSearch == YES){
+        //selling selected
+        NSMutableArray *history = [NSMutableArray array];
+        
+        //save the search term and if there's 10 or more items in the search array delete the oldest and add the latest term
+        if (![stringCheck isEqualToString:@""]) {
+            
+            // if haven't searched before create empty array to avoid crashing
+            if ([[PFUser currentUser] objectForKey:@"sellingSearches"]) {
+                NSMutableArray *searchHistory = [NSMutableArray array];
+                [searchHistory addObjectsFromArray:[[PFUser currentUser] objectForKey:@"sellingSearches"]];
+                
+                if (searchHistory.count >= 15) {
+                    [searchHistory removeObjectAtIndex:0];
+                }
+                
+                if (![[searchHistory lastObject] isEqualToString:self.searchString] && [history containsObject:self.searchString]) {
+                    [searchHistory removeObject:self.searchString];
+                    [searchHistory addObject:self.searchString];
+                }
+                else if (![searchHistory containsObject:self.searchString]) {
+                    [searchHistory addObject:self.searchString];
+                }
+                [[PFUser currentUser] setObject:searchHistory forKey:@"sellingSearches"];
+            }
+            else{
+                NSLog(@"no history as new user so add first object");
+                [history addObject:self.searchString];
+                [[PFUser currentUser] setObject:history forKey:@"sellingSearches"];
+            }
+            [[PFUser currentUser] saveInBackground];
+        }
+        
+        //update results controller UI since only updated via query every time search button pressed
+        NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.sellingSearchResults];
+        
+        if (searchesList.count > 0) {
+            if ([searchesList containsObject:self.searchString] && ![searchesList[0] isEqualToString:self.searchString]) {
+                [searchesList removeObject:self.searchString];
+            }
+            
+            if (![searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
+                [searchesList insertObject:self.searchString atIndex:0];
+            }
+            else if ([searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
+                //do nothing as already last entry
+            }
+        }
+        else if (![stringCheck isEqualToString:@""]){
+            [searchesList insertObject:self.searchString atIndex:0];
+        }
+        
+        self.sellingSearchResults = searchesList;
         [self.tableView reloadData];
     }
     else{
-        //user entered
+        //user selected
 //        NSLog(@"entered username");
     }
 }
 
 -(void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
+    BOOL createdToday = NO;
+    if ([self isDateToday:[PFUser currentUser].createdAt]) {
+        createdToday = YES;
+    }
+    else{
+        createdToday = NO;
+    }
     if (self.userSearch == YES){
         
-        //check if user created today for analytics
-        
-        if ([self isDateToday:[PFUser currentUser].createdAt]) {
-            [Answers logCustomEventWithName:@"Search"
-                           customAttributes:@{
-                                              @"type":@"User search",
-                                              @"newUser": @"YES"
-                                              }];
-        }
-        else{
-            [Answers logCustomEventWithName:@"Search"
-                           customAttributes:@{
-                                              @"type":@"User search",
-                                              @"newUser": @"NO"
-                                              }];
-        }
-        
+        [Answers logCustomEventWithName:@"Search"
+                       customAttributes:@{
+                                          @"type":@"User search",
+                                          @"newUser": [NSNumber numberWithBool:createdToday]
+                                          }];
         NSString *searchCheck = [self.searchBar.text stringByReplacingOccurrencesOfString:@" " withString:@""];
         
         PFQuery *userQueryForRand = [PFUser query];
@@ -309,13 +419,28 @@
             }
         }];
     }
-    else{
+    else if(self.userSearch == NO && self.sellingSearch == NO){
+        [Answers logCustomEventWithName:@"Search"
+                       customAttributes:@{
+                                          @"type":@"Wanted search",
+                                          @"newUser": [NSNumber numberWithBool:createdToday]
+                                          }];
+        
         self.searchString = self.searchBar.text;
-        [self gotoListings];
+        [self gotoListingsInSellingMode:NO];
+    }
+    else if(self.userSearch == NO && self.sellingSearch == YES){
+        [Answers logCustomEventWithName:@"Search"
+                       customAttributes:@{
+                                          @"type":@"For Sale search",
+                                          @"newUser": [NSNumber numberWithBool:createdToday]
+                                          }];
+        self.searchString = self.searchBar.text;
+        [self gotoListingsInSellingMode:YES];
     }
 }
 
--(void)gotoListings{
+-(void)gotoListingsInSellingMode:(BOOL)sellingSearch{
     [Answers logCustomEventWithName:@"Search"
                    customAttributes:@{
                                       @"type":@"Listing search"
@@ -330,6 +455,7 @@
     vc.currencySymbol = self.currencySymbol;
     vc.currency = self.currency;
     vc.delegate = self;
+    vc.sellingSearch = sellingSearch;
     vc.currentLocation = self.geoPoint;
     [self.navigationController pushViewController:vc animated:YES];
 }
@@ -338,59 +464,119 @@
     [self.delegate cancellingMainSearch];
 }
 
--(void)enteredSearchTerm:(NSString *)term{
-    NSMutableArray *history = [[NSMutableArray alloc]init];
-    self.searchString = term;
-    NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
-    
-    if (![stringCheck isEqualToString:@""]) {
-       
-        if ([[PFUser currentUser] objectForKey:@"searches"]) {
-            NSMutableArray *searches = [NSMutableArray array];
-            [searches addObjectsFromArray:[[PFUser currentUser] objectForKey:@"searches"]];
+-(void)enteredSearchTerm:(NSString *)term inSellingSearch:(BOOL)mode{
+    if (mode == NO) {
+        //wanted search
+        NSMutableArray *history = [[NSMutableArray alloc]init];
+        self.searchString = term;
+        NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
+        
+        if (![stringCheck isEqualToString:@""]) {
             
-            if (searches.count >= 15) {
-                [searches removeObjectAtIndex:0];
+            if ([[PFUser currentUser] objectForKey:@"searches"]) {
+                NSMutableArray *searches = [NSMutableArray array];
+                [searches addObjectsFromArray:[[PFUser currentUser] objectForKey:@"searches"]];
+                
+                if (searches.count >= 15) {
+                    [searches removeObjectAtIndex:0];
+                }
+                
+                if (![[searches lastObject] isEqualToString:self.searchString] && [history containsObject:self.searchString]) {
+                    [searches removeObject:self.searchString];
+                    [searches addObject:self.searchString];
+                }
+                else if (![searches containsObject:self.searchString]) {
+                    [searches addObject:self.searchString];
+                }
+                [[PFUser currentUser]addObject:[NSDate date] forKey:@"searchDates"];
+                [[PFUser currentUser] setObject:searches forKey:@"searches"];
             }
-            
-            if (![[searches lastObject] isEqualToString:self.searchString] && [history containsObject:self.searchString]) {
-                [searches removeObject:self.searchString];
-                [searches addObject:self.searchString];
+            else{
+                NSLog(@"no history as new user so add first object");
+                [history addObject:self.searchString];
+                [[PFUser currentUser] setObject:history forKey:@"searches"];
             }
-            else if (![searches containsObject:self.searchString]) {
-                [searches addObject:self.searchString];
-            }
-            [[PFUser currentUser] setObject:searches forKey:@"searches"];
-        }
-        else{
-            NSLog(@"no history as new user so add first object");
-            [history addObject:self.searchString];
-            [[PFUser currentUser] setObject:history forKey:@"searches"];
-        }
-        [[PFUser currentUser] saveInBackground];
-    }
-    
-    //update results controller UI since only updated via query every time search button pressed
-    NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.listingResults];
-    
-    if (searchesList.count > 0) {
-        if ([searchesList containsObject:self.searchString] && ![searchesList[0] isEqualToString:self.searchString]) {
-            [searchesList removeObject:self.searchString];
+            [[PFUser currentUser] saveInBackground];
         }
         
-        if (![searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
+        //update results controller UI since only updated via query every time search button pressed
+        NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.wantedSearchResults];
+        
+        if (searchesList.count > 0) {
+            if ([searchesList containsObject:self.searchString] && ![searchesList[0] isEqualToString:self.searchString]) {
+                [searchesList removeObject:self.searchString];
+            }
+            
+            if (![searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
+                [searchesList insertObject:self.searchString atIndex:0];
+            }
+            else if ([searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
+                //do nothing as already last entry
+            }
+        }
+        else if (![stringCheck isEqualToString:@""]){
             [searchesList insertObject:self.searchString atIndex:0];
         }
-        else if ([searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
-            //do nothing as already last entry
+        
+        self.wantedSearchResults = searchesList;
+        [self.tableView reloadData];
+    }
+    else{
+        //selling search
+        NSMutableArray *history = [[NSMutableArray alloc]init];
+        self.searchString = term;
+        NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
+        
+        if (![stringCheck isEqualToString:@""]) {
+            
+            if ([[PFUser currentUser] objectForKey:@"sellingSearches"]) {
+                NSMutableArray *searches = [NSMutableArray array];
+                [searches addObjectsFromArray:[[PFUser currentUser] objectForKey:@"sellingSearches"]];
+                
+                if (searches.count >= 15) {
+                    [searches removeObjectAtIndex:0];
+                }
+                
+                if (![[searches lastObject] isEqualToString:self.searchString] && [history containsObject:self.searchString]) {
+                    [searches removeObject:self.searchString];
+                    [searches addObject:self.searchString];
+                }
+                else if (![searches containsObject:self.searchString]) {
+                    [searches addObject:self.searchString];
+                }
+                [[PFUser currentUser]addObject:[NSDate date] forKey:@"searchDates"];
+                [[PFUser currentUser] setObject:searches forKey:@"sellingSearches"];
+            }
+            else{
+                NSLog(@"no history as new user so add first object");
+                [history addObject:self.searchString];
+                [[PFUser currentUser] setObject:history forKey:@"sellingSearches"];
+            }
+            [[PFUser currentUser] saveInBackground];
         }
+        
+        //update results controller UI since only updated via query every time search button pressed
+        NSMutableArray *searchesList = [NSMutableArray arrayWithArray:self.sellingSearchResults];
+        
+        if (searchesList.count > 0) {
+            if ([searchesList containsObject:self.searchString] && ![searchesList[0] isEqualToString:self.searchString]) {
+                [searchesList removeObject:self.searchString];
+            }
+            
+            if (![searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
+                [searchesList insertObject:self.searchString atIndex:0];
+            }
+            else if ([searchesList[0] isEqualToString:self.searchString] && ![stringCheck isEqualToString:@""]) {
+                //do nothing as already last entry
+            }
+        }
+        else if (![stringCheck isEqualToString:@""]){
+            [searchesList insertObject:self.searchString atIndex:0];
+        }
+        
+        self.sellingSearchResults = searchesList;
+        [self.tableView reloadData];
     }
-    else if (![stringCheck isEqualToString:@""]){
-        [searchesList insertObject:self.searchString atIndex:0];
-    }
-    
-    self.listingResults = searchesList;
-    [self.tableView reloadData];
 }
 
 - (void)addDoneButton {
@@ -402,7 +588,12 @@
     UIBarButtonItem *doneBarButton = [[UIBarButtonItem alloc]
                                       initWithBarButtonSystemItem:UIBarButtonSystemItemDone
                                       target:self action:@selector(hideKeyb)];
+    
+    [doneBarButton setTintColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
+    keyboardToolbar.barTintColor = [UIColor colorWithRed:1.00 green:1.00 blue:1.00 alpha:1.0];
+
     keyboardToolbar.items = @[flexBarButton, doneBarButton];
+
     self.searchBar.inputAccessoryView = keyboardToolbar;
 }
 
@@ -434,4 +625,5 @@
         return NO;
     }
 }
+
 @end

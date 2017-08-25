@@ -10,6 +10,8 @@
 #import <Crashlytics/Crashlytics.h>
 #import "UIImage+Resize.h"
 #import "DetailImageController.h"
+#import <SVPullToRefresh/SVPullToRefresh.h>
+#import "NavigationController.h"
 
 @interface ChatWithBump ()
 
@@ -26,7 +28,7 @@
     UIButton *btn =  [UIButton buttonWithType:UIButtonTypeCustom];
     btn.frame = CGRectMake(0,0,25,25);
     PFImageView *buttonView = [[PFImageView alloc]initWithFrame:btn.frame];
-    [buttonView setImage:[UIImage imageNamed:@"29"]];
+    [buttonView setImage:[UIImage imageNamed:@"35"]];
     [self setImageBorder:buttonView];
     [btn addSubview:buttonView];
     UIBarButtonItem *imageButton = [[UIBarButtonItem alloc] initWithCustomView:btn];
@@ -37,7 +39,6 @@
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
     
     self.inputToolbar.contentView.textView.pasteDelegate = self;
-    self.inputToolbar.contentView.textView.placeHolder = @"Ask us anything!";
 //    self.inputToolbar.contentView.leftBarButtonItem = nil;
     
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"sendPicBlk"] forState:UIControlStateNormal];
@@ -51,7 +52,7 @@
     self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeMake(35, 35);
     self.collectionView.collectionViewLayout.outgoingAvatarViewSize = CGSizeZero;
     
-    UIImage *image = [JSQMessagesAvatarImageFactory circularAvatarImage:[UIImage imageNamed:@"29"] withDiameter:35];
+    UIImage *image = [JSQMessagesAvatarImageFactory circularAvatarImage:[UIImage imageNamed:@"35"] withDiameter:35];
     UIImage *placeholder = [JSQMessagesAvatarImageFactory circularAvatarImage:[UIImage imageNamed:@"empty"] withDiameter:35];
     self.avaImage = [[JSQMessagesAvatarImage alloc]initWithAvatarImage:image highlightedImage:image placeholderImage:placeholder];
     
@@ -66,6 +67,9 @@
     self.sentMessagesParseArray = [[NSMutableArray alloc]init];
     self.convoImagesArray = [[NSMutableArray alloc]init];
     
+    self.placeholderAssetArray = [NSMutableArray array];
+    self.imagesToProcess = [NSMutableArray array];
+    
     //hide by default
     self.showLoadEarlierMessagesHeader = NO;
     
@@ -73,23 +77,101 @@
     [self loadMessages];
     
     self.bubbleFactory = [[JSQMessagesBubbleImageFactory alloc] initWithBubbleImage:[UIImage jsq_bubbleRegularTaillessImage] capInsets:UIEdgeInsetsZero];
-    
     JSQMessagesBubbleImageFactory *bubbleFactoryOutline = [[JSQMessagesBubbleImageFactory alloc] initWithBubbleImage:[UIImage jsq_bubbleRegularStrokedTaillessImage] capInsets:UIEdgeInsetsZero];
-    
     self.outgoingBubbleImageData = [self.bubbleFactory outgoingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.957 green:0.957 blue:0.957 alpha:1]];
-    
     self.incomingBubbleImageData = [bubbleFactoryOutline incomingMessagesBubbleImageWithColor:[UIColor colorWithRed:0.957 green:0.957 blue:0.957 alpha:1]];
-    
     self.masker = [[JSQMessagesMediaViewBubbleImageMasker alloc]initWithBubbleImageFactory:self.bubbleFactory];
+    
+    self.skipped = 0;
+    
+    self.inputToolbar.contentView.textView.placeHolder = @"Ask us anything";
+
+    if (self.showSuggested) {
+
+        self.suggestedMessagesArray = [NSMutableArray arrayWithObjects:@"Tap for more info ➡️",@"Authenticity", @"Payment",@"Email Verification",@"Location",@"Username Change",@"Password Change", nil];
+        self.actualMessagesToSend = [NSMutableArray arrayWithObjects:@"placeholder",[NSString stringWithFormat:@"Hey %@,\n\nHere's our fraud prevention policy. We've found this to be an effective way of ensuring authenticity on Bump:\n\n1️⃣ 📸 We encourage tagged photos on Bump so buyers can be sure items exist\n\n2️⃣ 👟 Our team of moderators are monitoring listings for fakes / suspicious behaviour\n\n3️⃣ 🔑 We make it really easy for anyone to report a listing to us\n\n4️⃣ 🤑 We encourage users to pay each other using PayPal Goods & Services so if something does go wrong, you're protected!\n\nIf however, you were to get sent a fake then you would be able to take up a claim with PayPal and get a full refund. And of course, we would be here to help you through the process 👊\n\nAny other questions please let me know!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     
+                            [NSString stringWithFormat:@"Hey %@,\n\nWhen you see something you like, send the seller a message to let them know you’re interested. Make sure you agree on specifics like price, postage and condition before you pay.\n\nWhen the deal is agreed, the seller can send their PayPal details within the chat on Bump. You can then pay the seller through PayPal without leaving Bump.\n\nWe encourage paying via Goods & Services to ensure you receive full buyer protection 💪\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                             
+                                     [NSString stringWithFormat:@"Hey %@,\n\nIf you don't think you've received your email confirmation from us then please check your Junk Folder! In most cases it will be here, from Team Bump (hello@sobump.com).\n\nIf you still can't find it, just tap the envelope icon on your profile to resend it - make sure your email address in Settings on Bump is correct first 📫 \n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     
+                                     [NSString stringWithFormat:@"Hey %@,\n\nWhen you first signup Bump automatically displays the nearest city and country to your current location on your profile.\n\nWant to change this? Just goto Settings (tap the cog icon from your profile) and you can select a different location to display on your profile.\n\nYour profile location does NOT impact on the products you see on Bump. If you would like to filter by location when browsing just tap the filters button and scroll down to filter by products 'Around me' 📍\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     
+                                     [NSString stringWithFormat:@"Hey %@,\n\nFancy a change of username? Send us a message in chat here and we'll sort you out 🙌\n\nOnce it's changed just log out then back in!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     
+                                     [NSString stringWithFormat:@"Hey %@,\n\nForgot your password? Simply log out and then hit log in on the welcome screen. Then you can hit Reset in the top right corner of the screen!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     nil];
+
+
+        self.carousel = [[SwipeView alloc]initWithFrame:CGRectMake(0, self.inputToolbar.frame.origin.y-50, [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+        
+        self.carousel.delegate = self;
+        self.carousel.dataSource = self;
+        self.carousel.clipsToBounds = YES;
+        self.carousel.pagingEnabled = NO;
+        self.carousel.truncateFinalPage = YES;
+        [self.carousel setBackgroundColor:[UIColor whiteColor]];
+        [self.carousel reloadData];
+        [self.view addSubview:self.carousel];
+        
+        //scroll to fix bug which populates swipeview with 1 item
+        [self.carousel scrollToOffset:0.0 duration:0.1];
+
+    }
+
+}
+
+-(void)didMoveToParentViewController:(UIViewController *)parent {
+    [super didMoveToParentViewController:parent];
+    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
+    [self.collectionView addPullToRefreshWithActionHandler:^{
+        if (self.infiniteLoading != YES && self.moreToLoad == YES) {
+            
+            self.infiniteLoading = YES;
+            self.earlierPressed = YES;
+            [self loadMessages];
+        }
+        else{
+            [self.collectionView.pullToRefreshView stopAnimating];
+        }
+    }];
+    
+    //we need the spinner so init
+    if (!self.spinner) {
+        self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+        [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
+        [self.spinner startAnimating];
+    }
 }
 
 -(void)loadMessages{
     PFQuery *messageQuery = [PFQuery queryWithClassName:@"teamBumpMsgs"];
     [messageQuery whereKey:@"convoId" equalTo:self.convoId];
     [messageQuery orderByDescending :@"createdAt"];
+    messageQuery.limit = 10;
+    messageQuery.skip = self.skipped;
     [messageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
             if (objects) {
+                
+                if (objects.count < 10) {
+                    NSLog(@"HIDE IT");
+
+                    self.moreToLoad = NO;
+                    self.collectionView.showsPullToRefresh = NO;
+                    
+                    //save memory
+                    [self.spinner stopAnimating];
+                    self.spinner = nil;
+                }
+                else{
+                    NSLog(@"SHOW IT");
+                    self.moreToLoad = YES;
+                    self.collectionView.showsPullToRefresh = YES;
+                }
+                
+                int count = (int)[objects count];
+                self.skipped = count + self.skipped;
                 
                 for (PFObject *messageOb in objects) {
                     
@@ -192,7 +274,22 @@
                 [self.collectionView.collectionViewLayout invalidateLayoutWithContext:[JSQMessagesCollectionViewFlowLayoutInvalidationContext context]];
                 [self.collectionView reloadData];
                 
-                [self scrollToBottomAnimated:NO];
+                if (self.earlierPressed == NO) {
+                    [self scrollToBottomAnimated:NO];
+
+                }
+                else{
+                    [self.collectionView.pullToRefreshView stopAnimating];
+
+                    self.earlierPressed = NO;
+                    //NB: the last object in the messages array is the msg at the top of the CV
+                    //However, this means it is also the first indexPath
+                    //So, to calc. correct scroll we just take first indexPath and add the number of new objects just loaded so we end up at our OG position
+                    NSIndexPath *firstItemPath = [NSIndexPath indexPathForRow:0 inSection:0];
+                    NSIndexPath *lastSeenPath = [NSIndexPath indexPathForRow:firstItemPath.row+objects.count inSection:0];
+                    [self.collectionView scrollToItemAtIndexPath:lastSeenPath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:NO];
+                    self.infiniteLoading = NO;
+                }
             }
             else{
                 NSLog(@"no messages");
@@ -208,15 +305,49 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
+    
+    [self.navigationController.navigationBar setHidden:NO];
+
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    //clear observers
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+    [center removeObserver:self name:UIKeyboardWillChangeFrameNotification object:nil];
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
     self.collectionView.collectionViewLayout.springinessEnabled = NO;
+    self.automaticallyScrollsToMostRecentMessage = YES;
+    
+    //add keyboard observers for suggested message bubbles
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+    
+    [center addObserver:self selector:@selector(keyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
+    [center addObserver:self selector:@selector(keyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+    
+    //reset carousel here when inputtoolbar actually as a frame
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //animate carousel up
+                            [self.carousel setFrame:CGRectMake(0, self.inputToolbar.frame.origin.y-50, [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+                        }
+                     completion:^(BOOL finished) {
+                     }];
 }
 
 #pragma mark - Custom menu actions for cells
@@ -274,7 +405,12 @@
     [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded == YES) {
             
-            NSLog(@"saved message, here it is: %@", messageObject);
+//            NSLog(@"saved message, here it is: %@", messageObject);
+            
+            [Answers logCustomEventWithName:@"Sent Message to Team Bump"
+                           customAttributes:@{
+                                              @"type":@"text"
+                                              }];
             
             NSDictionary *params = @{@"userId": @"IIEf7cUvrO", @"message": [NSString stringWithFormat:@"TO TEAM BUMP FROM %@: %@",[PFUser currentUser].username ,messageString], @"sender": [PFUser currentUser].username};
             [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
@@ -297,6 +433,17 @@
     
     [self finishSendingMessageAnimated:YES];
     
+    //reset carousel origin
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            [self.carousel setFrame:CGRectMake(0, self.inputToolbar.frame.origin.y-50, [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+                        }
+                     completion:^(BOOL finished) {
+                     }];
+    
     // add new message object to relevant arrays
     [self.sentMessagesParseArray insertObject:messageObject atIndex:0];
     [self.messagesParseArray insertObject:messageObject atIndex:0];
@@ -318,23 +465,47 @@
     }];
 }
 
--(void)textViewDidChange:(UITextView *)textView{
-    if (textView == self.inputToolbar.contentView.textView) {
-        [self.inputToolbar toggleSendButtonEnabled];
-        NSString *blankString = [textView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        if ([blankString isEqualToString:@""]) {
-            [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
-        }
-        else{
-            [self.inputToolbar.contentView.rightBarButtonItem setHidden:NO];
-        }
-    }
-}
-
 - (void)didPressAccessoryButton:(UIButton *)sender
 {
     [self.inputToolbar.contentView.textView resignFirstResponder];
-    [self alertSheet];
+//    [self alertSheet];
+    
+    [Answers logCustomEventWithName:@"Choose pictures tapped"
+                   customAttributes:@{
+                                      @"where":@"Team Bump"
+                                      }];
+    
+    [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+        switch (status) {
+            case PHAuthorizationStatusAuthorized:{
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    QBImagePickerController *imagePickerController = [QBImagePickerController new];
+                    imagePickerController.delegate = self;
+                    imagePickerController.allowsMultipleSelection = YES;
+                    imagePickerController.maximumNumberOfSelection = 4;
+                    imagePickerController.mediaType = QBImagePickerMediaTypeImage;
+                    imagePickerController.numberOfColumnsInPortrait = 2;
+                    imagePickerController.showsNumberOfSelectedAssets = YES;
+                    [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
+                });
+            }
+                break;
+            case PHAuthorizationStatusRestricted:{
+                NSLog(@"restricted");
+            }
+                break;
+            case PHAuthorizationStatusDenied:
+            {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self showAlertWithTitle:@"Photos Permission" andMsg:@"Bump needs access to your photos so we can send one 📷"];
+                });
+                NSLog(@"denied");
+            }
+                break;
+            default:
+                break;
+        }
+    }];
 }
 
 -(void)alertSheet{
@@ -386,7 +557,8 @@
 }
 
 - (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingAssets:(NSArray *)assets {
-    [self dismissViewControllerAnimated:YES completion:^{
+    [imagePickerController dismissViewControllerAnimated:YES completion:^{
+        
         PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
         requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
         requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
@@ -394,21 +566,66 @@
 
         PHImageManager *manager = [PHImageManager defaultManager];
         
+        [self.placeholderAssetArray removeAllObjects];
+        [self.imagesToProcess removeAllObjects];
+        
         for (PHAsset *asset in assets) {
             [manager requestImageForAsset:asset
                                targetSize:PHImageManagerMaximumSize
                               contentMode:PHImageContentModeDefault
                                   options:requestOptions
                             resultHandler:^void(UIImage *image, NSDictionary *info) {
-                                //new policy: all resizing done in finalImage, instead of scattered
-                                [self finalImage:image];
+                                
+                                [self.imagesToProcess addObject:image];
+                                [self.placeholderAssetArray addObject:asset];
+                                
+                                if (image.CGImage == nil) {
+                                    [Answers logCustomEventWithName:@"Image Error: CGImage is nil from Asset"
+                                                   customAttributes:@{
+                                                                      @"pageName":@"TeamBumpChat"
+                                                                      }];
+                                }
+                                
+                                //wait until we have all the assets as UIImages
+                                //reorder
+                                //call final image on each one
+                                
+                                if (self.imagesToProcess.count == assets.count) {
+                                    
+                                    //to keep track of reorder
+                                    NSMutableArray *placeholder = [NSMutableArray array];
+                                    NSMutableArray *imagesPlaceholder = [NSMutableArray array];
+                                    
+                                    //reorder
+                                    for (PHAsset *orderedAsset in assets) {
+                                        
+                                        for (PHAsset *asset in self.placeholderAssetArray) {
+                                            
+                                            if ([asset.localIdentifier isEqualToString:orderedAsset.localIdentifier]) {
+                                                
+                                                [placeholder addObject:asset];
+                                                
+                                                NSUInteger indexOfAsset = [self.placeholderAssetArray indexOfObject:asset];
+                                                [imagesPlaceholder addObject:self.imagesToProcess[indexOfAsset]];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    
+                                    //update ordered images array
+                                    self.imagesToProcess = imagesPlaceholder;
+                                    
+                                    for (UIImage *img in self.imagesToProcess) {
+                                        [self finalImage:img];
+                                    }
+                                }
                             }];
         }
     }];
 }
 
 - (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController {
-    [self dismissViewControllerAnimated:YES completion:NULL];
+    [imagePickerController dismissViewControllerAnimated:YES completion:NULL];
 }
 
 -(void)finalImage:(UIImage *)image{
@@ -477,12 +694,17 @@
             [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
             [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
+//                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
                 }
                 else{
                     NSLog(@"error saving convo in final image %@", error);
                 }
             }];
+            
+            [Answers logCustomEventWithName:@"Sent Message to Team Bump"
+                           customAttributes:@{
+                                              @"type":@"image"
+                                              }];
             
             // add new message object to relevant arrays
             [self.sentMessagesParseArray insertObject:picObject atIndex:0];
@@ -514,7 +736,6 @@
         }
     }];
 }
-
 
 #pragma mark - JSQMessages CollectionView DataSource
 
@@ -552,39 +773,6 @@
 
 - (id<JSQMessageAvatarImageDataSource>)collectionView:(JSQMessagesCollectionView *)collectionView avatarImageDataForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    /**
-     *  Return `nil` here if you do not want avatars.
-     *  If you do return `nil`, be sure to do the following in `viewDidLoad`:
-     *
-     *  self.collectionView.collectionViewLayout.incomingAvatarViewSize = CGSizeZero;
-     *  self.collectionView.collectionViewLayout.outgoingAvatarViewSize = CGSizeZero;
-     *
-     *  It is possible to have only outgoing avatars or only incoming avatars, too.
-     */
-    
-    /**
-     *  Return your previously created avatar image data objects.
-     *
-     *  Note: these the avatars will be sized according to these values:
-     *
-     *  self.collectionView.collectionViewLayout.incomingAvatarViewSize
-     *  self.collectionView.collectionViewLayout.outgoingAvatarViewSize
-     *
-     *  Override the defaults in `viewDidLoad`
-     */
-    //    JSQMessage *message = [self.demoData.messages objectAtIndex:indexPath.item];
-    //
-    //    if ([message.senderId isEqualToString:self.senderId]) {
-    //        if (![NSUserDefaults outgoingAvatarSetting]) {
-    //            return nil;
-    //        }
-    //    }
-    //    else {
-    //        if (![NSUserDefaults incomingAvatarSetting]) {
-    //            return nil;
-    //        }
-    //    }
-    
     JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
     
     if ([message.senderId isEqualToString:self.senderId]) {
@@ -624,7 +812,7 @@
      *  Show a timestamp for every 3rd message
      */
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:12],
                                     NSFontAttributeName,[UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
     
     
@@ -671,6 +859,17 @@
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
     return [self.messages count];
+}
+
+
+- (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
+    
+    if (self.showSuggested == YES ){
+        return UIEdgeInsetsMake(0, 0, 50, 0);
+    }
+    else{
+        return self.collectionView.layoutMargins;
+    }
 }
 
 - (UICollectionViewCell *)collectionView:(JSQMessagesCollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
@@ -834,7 +1033,7 @@
         vc.numberOfPics = (int)self.convoImagesArray.count;
         
         //calculate the index of the image tapped so correct selectedIndex shown in DetailImageVC
-        int selectedIndex;
+        int selectedIndex = 0;
         PFObject *msgObject = tappedMessage.msgObject;
         NSString *messageString = [msgObject objectForKey:@"message"];
         
@@ -854,6 +1053,9 @@
         
         JSQPhotoMediaItem *photoItem = (JSQPhotoMediaItem *)mediaItem;
         vc.messagePicture = photoItem.image;
+        
+        //to prevent CV scrolling to bottom when detailVC is dismissed, reenabled when MVC reappears
+        self.automaticallyScrollsToMostRecentMessage = NO;
         
         [self presentViewController:vc animated:YES completion:nil];
     }
@@ -915,6 +1117,171 @@
         }
     }];
 }
+
+#pragma keyboard observer methods
+
+-(void)keyboardOnScreen:(NSNotification *)notification
+{
+    NSLog(@"KEYBOARD WILL SHOW");
+    //reset carousel origin
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            [self.carousel setFrame:CGRectMake(0, self.inputToolbar.frame.origin.y-50, [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+                        }
+                     completion:^(BOOL finished) {
+                     }];
+}
+
+-(void)keyboardOFFScreen:(NSNotification *)notification
+{
+    NSLog(@"KEYBOARD WILL HIDE");
+    
+    //reset carousel origin
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            [self.carousel setFrame:CGRectMake(0, self.inputToolbar.frame.origin.y-50, [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+                        }
+                     completion:^(BOOL finished) {
+                     }];
+}
+
+-(void)textViewDidChange:(UITextView *)textView{
+    if (textView == self.inputToolbar.contentView.textView) {
+        [self.inputToolbar toggleSendButtonEnabled];
+        NSString *blankString = [textView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if ([blankString isEqualToString:@""]) {
+            [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
+        }
+        else{
+            [self.inputToolbar.contentView.rightBarButtonItem setHidden:NO];
+        }
+        
+        //reset carousel origin
+        [UIView animateWithDuration:0.5
+                              delay:0.0
+             usingSpringWithDamping:0.7
+              initialSpringVelocity:0.5
+                            options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                [self.carousel setFrame:CGRectMake(0, self.inputToolbar.frame.origin.y-50, [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+                            }
+                         completion:^(BOOL finished) {
+                         }];
+    }
+}
+
+#pragma mark - swipe view delegates
+
+-(UIView *)swipeView:(SwipeView *)swipeView viewForItemAtIndex:(NSInteger)index reusingView:(UIView *)view{
+    
+    UILabel *messageLabel = nil;
+    
+    if (view == nil)
+    {
+        view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 165,35)];
+        messageLabel = [[UILabel alloc]initWithFrame:CGRectMake(5,0, 155, 35)];
+        messageLabel.layer.cornerRadius = 15;
+        messageLabel.layer.masksToBounds = YES;
+        messageLabel.textAlignment = NSTextAlignmentCenter;
+        [messageLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:13]];
+        [view addSubview:messageLabel];
+        
+    }
+    else
+    {
+        messageLabel = [[view subviews] lastObject];
+    }
+    
+    messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
+    
+    //check if first in the array
+    if (index == 0) {
+        messageLabel.textColor = [UIColor grayColor];
+        messageLabel.backgroundColor = [UIColor whiteColor];
+    }
+    else{
+        messageLabel.textColor = [UIColor whiteColor];
+        messageLabel.backgroundColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+    }
+    
+    return view;
+}
+
+-(NSInteger)numberOfItemsInSwipeView:(SwipeView *)swipeView{
+    return self.suggestedMessagesArray.count;
+}
+
+-(void)swipeView:(SwipeView *)swipeView didSelectItemAtIndex:(NSInteger)index{
+    
+    NSString *messageString = [self.actualMessagesToSend objectAtIndex:index];
+    
+    [Answers logCustomEventWithName:@"Tapped FAQ Auto Message"
+                   customAttributes:@{
+                                      @"msg":messageString
+                                      }];
+    if (index == 0) {
+        //do nothing
+    }
+    else{
+        [self sendAutoMessageWithText:messageString];
+    }
+}
+
+-(void)sendAutoMessageWithText:(NSString *)message{
+    
+    //now save report message
+    PFObject *messageObject1 = [PFObject objectWithClassName:@"teamBumpMsgs"];
+    messageObject1[@"message"] = message;
+    messageObject1[@"sender"] = [PFUser currentUser];
+    messageObject1[@"senderId"] = @"BUMP";
+    messageObject1[@"senderName"] = @"Team Bump";
+    messageObject1[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+    messageObject1[@"status"] = @"seen";
+    messageObject1[@"offer"] = @"NO";
+    messageObject1[@"mediaMessage"] = @"NO";
+    [messageObject1 saveInBackground];
+    
+    //update convo
+    [self.convoObject incrementKey:@"totalMessages"];
+    [self.convoObject setObject:messageObject1 forKey:@"lastSent"];
+    [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
+    [self.convoObject saveInBackground];
+    
+    //Add to UI
+    if (![self.messagesParseArray containsObject:messageObject1]) {
+        // insets new messages at beginning of array (bottom of CV) so status labels are correct
+        [self.messagesParseArray insertObject:messageObject1 atIndex:0];
+    }
+
+    
+    JSQMessage *JSmessage = [[JSQMessage alloc] initWithSenderId:@"BUMP" senderDisplayName:@"Team Bump" date:[NSDate date] text:message];
+    
+    if (![self.messages containsObject:JSmessage]) {
+        [self.messages addObject:JSmessage];
+    }
+    
+    //update CV
+    //call attributedString method to update labels
+    NSInteger lastSectionIndex = [self.collectionView numberOfSections] - 1;
+    NSInteger lastItemIndex = [self.collectionView numberOfItemsInSection:lastSectionIndex] - 1;
+    NSIndexPath *pathToLastItem = [NSIndexPath indexPathForItem:lastItemIndex inSection:lastSectionIndex];
+    
+    [self collectionView:self.collectionView attributedTextForCellBottomLabelAtIndexPath:pathToLastItem];
+    [self collectionView:self.collectionView layout:self.collectionView.collectionViewLayout heightForCellBottomLabelAtIndexPath:pathToLastItem];
+    
+    [self.collectionView.collectionViewLayout invalidateLayoutWithContext:[JSQMessagesCollectionViewFlowLayoutInvalidationContext context]];
+    [self.collectionView reloadData];
+    
+    //scroll to bottom
+    [self scrollToBottomAnimated:YES];
+
+}
+
 
 @end
 

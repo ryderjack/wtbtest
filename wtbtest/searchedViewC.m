@@ -10,6 +10,7 @@
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "NavigationController.h"
 #import <Crashlytics/Crashlytics.h>
+#import "detailSellingCell.h"
 
 @interface searchedViewC ()
 
@@ -20,14 +21,13 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    [self.noresultsLabel setHidden:YES];
-    
-    self.filterButton.titleLabel.adjustsFontSizeToFitWidth = YES;
-    self.filterButton.titleLabel.minimumScaleFactor=0.5;
+    [self.noWantedResultsLabel setHidden:YES];
 
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
     self.navigationItem.rightBarButtonItem = cancelButton;
     
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+
     self.searchBar = [[UISearchBar alloc] init];
     self.searchBar.searchBarStyle = UISearchBarStyleMinimal;
     self.searchBar.delegate = self;
@@ -35,44 +35,107 @@
     [self.searchBar sizeToFit];
     self.searchBar.text = self.searchString;
     
-    //collection view/cell setup
-    [self.collectionView registerClass:[ExploreCell class] forCellWithReuseIdentifier:@"Cell"];
+    //prompt to dismiss keyboard
+    [self addDoneButton];
     
-    UINib *cellNib = [UINib nibWithNibName:@"ExploreCell" bundle:nil];
-    [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"Cell"];
+    //collection view/cell setup
     
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
-    
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-        //iphone5
-        [flowLayout setItemSize:CGSizeMake(148, 215)];
-    }
-    else if([ [ UIScreen mainScreen ] bounds ].size.height == 736){
-        //iphone 6 plus
-        [flowLayout setItemSize:CGSizeMake(196, 285)];
-    }
-    else if([ [ UIScreen mainScreen ] bounds ].size.height == 480){
-        //iphone 4
-        [flowLayout setItemSize:CGSizeMake(124, 180)];
+
+    if (self.sellingSearch) {
+        //selling search ON
+        
+        [self.collectionView registerClass:[detailSellingCell class] forCellWithReuseIdentifier:@"Cell"];
+        UINib *cellNib = [UINib nibWithNibName:@"detailSellingCell" bundle:nil];
+        [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"Cell"];
+        
+        if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+            //iPhone6/7
+            [flowLayout setItemSize:CGSizeMake(175,222)];
+        }
+        else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
+            //iPhone 6 plus
+            [flowLayout setItemSize:CGSizeMake(195, 247)];
+        }
+        else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
+            //iPhone SE
+            [flowLayout setItemSize:CGSizeMake(148, 188)];
+        }
+        else{
+            //fall back
+            [flowLayout setItemSize:CGSizeMake(175,222)];
+        }
+        
+        [flowLayout setMinimumInteritemSpacing:8.0];
+        
+        if (self.sellingSearch) {
+            flowLayout.footerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 152);
+            flowLayout.sectionFootersPinToVisibleBounds = NO;
+            [self.collectionView registerNib:[UINib nibWithNibName:@"CreateWTBPromptFooter" bundle:nil]
+                  forSupplementaryViewOfKind:UICollectionElementKindSectionFooter
+                         withReuseIdentifier:@"Footer"];
+        }
+
+
     }
     else{
-        [flowLayout setItemSize:CGSizeMake(175, 254)]; //iPhone 6 specific
+        //wanted search
+        [self.collectionView registerClass:[ExploreCell class] forCellWithReuseIdentifier:@"Cell"];
+        
+        UINib *cellNib = [UINib nibWithNibName:@"ExploreCell" bundle:nil];
+        [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"Cell"];
+        
+//        [self.collectionView registerNib:[UINib nibWithNibName:@"searchBoostedHeader" bundle:nil]
+//              forSupplementaryViewOfKind:UICollectionElementKindSectionHeader
+//                     withReuseIdentifier:@"search"];
+        
+        
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
+            //iphone5
+            [flowLayout setItemSize:CGSizeMake(148, 215)];
+            self.headerSize = 280;
+        }
+        else if([ [ UIScreen mainScreen ] bounds ].size.height == 736){
+            //iphone 6 plus
+            [flowLayout setItemSize:CGSizeMake(196, 285)];
+            self.headerSize = 350;
+        }
+        else if([ [ UIScreen mainScreen ] bounds ].size.height == 480){
+            //iphone 4
+            [flowLayout setItemSize:CGSizeMake(124, 180)];
+        }
+        else{
+            [flowLayout setItemSize:CGSizeMake(175, 254)]; //iPhone 6 specific
+            self.headerSize = 330;
+        }
+        
+        [flowLayout setMinimumInteritemSpacing:0];
     }
-    [flowLayout setMinimumInteritemSpacing:0];
+
+    flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 40);
+    flowLayout.sectionHeadersPinToVisibleBounds = NO;
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
+
+    //setup header
+    [self.collectionView registerNib:[UINib nibWithNibName:@"simpleBannerHeader" bundle:nil]
+          forSupplementaryViewOfKind:UICollectionElementKindSectionHeader
+                 withReuseIdentifier:@"Header"];
     
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.delegate = self;
     self.collectionView.alwaysBounceVertical = YES;
     self.collectionView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     
-    self.results = [[NSMutableArray alloc]init];
+    self.results = [NSMutableArray array];
     
     [self.collectionView setScrollsToTop:YES];
     self.filtersArray = [NSMutableArray array];
+    self.filterSizesArray = [NSMutableArray array];
+    self.filterBrandsArray = [NSMutableArray array];
+    self.filterColoursArray = [NSMutableArray array];
     
-    self.uselessWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"", nil];
+    self.uselessWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"",@",", nil];
 
     //refresh setup
     self.pullFinished = YES;
@@ -81,12 +144,89 @@
     self.viewedListing = NO;
 }
 
+#pragma mark - custom header
+
+//search boost header setup
+//- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
+//{
+//    
+//    if (!self.headerView) {
+//        self.headerView = [collectionView dequeueReusableSupplementaryViewOfKind:kind
+//                                                             withReuseIdentifier:@"search"
+//                                                                    forIndexPath:indexPath];
+//        self.headerView.currentLocation = self.currentLocation;
+//        self.headerView.delegate = self;
+//    }
+//    
+//    return self.headerView;
+//    
+//}
+
+- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
+{
+    self.bannerHeaderView = nil;
+    if (kind == UICollectionElementKindSectionHeader) {
+        self.bannerHeaderView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"Header" forIndexPath:indexPath];
+        if (self.sellingSearch) {
+            [self.bannerHeaderView setBackgroundColor:[UIColor colorWithRed:0.42 green:0.42 blue:0.84 alpha:1.0]];
+            self.bannerHeaderView.simpleHeaderLabel.text = @"For sale results";
+        }
+        else{
+            [self.bannerHeaderView setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+            self.bannerHeaderView.simpleHeaderLabel.text = @"Wanted item results";
+        }
+        return self.bannerHeaderView;
+    }
+    else if (kind == UICollectionElementKindSectionFooter){
+        self.promptFooterView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"Footer" forIndexPath:indexPath];
+        if (self.results.count > 0) {
+            self.promptFooterView.footerLabel.text = @"Can't find what you're looking for?\n\nCreate a wanted listing on Bump so sellers can find you and send you a message!";
+        }
+        else{
+            self.promptFooterView.footerLabel.text = @"No results\n\nCreate a wanted listing on Bump so sellers can find you and send you a message!";
+        }
+        
+        [self.promptFooterView.footerButton addTarget:self action:@selector(createWantedListingPressed) forControlEvents:UIControlEventTouchUpInside];
+        
+        return self.promptFooterView;
+        
+    }
+    //this can't be nil remember
+    return self.bannerHeaderView;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForFooterInSection:(NSInteger)section{
+    if (self.sellingSearch) {
+        if (self.showFooter) {
+            self.initialHeaderSizeSetup = YES;
+            return CGSizeMake(CGRectGetWidth(collectionView.bounds),152);
+        }
+        else{
+            return CGSizeZero;
+        }
+    }
+    return CGSizeZero;
+}
+
+//- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section
+//{
+////    if (self.showBoostHeader == YES|| self.initialHeaderSizeSetup != YES) {
+////        self.initialHeaderSizeSetup = YES;
+////        return CGSizeMake(CGRectGetWidth(collectionView.bounds), self.headerSize);
+////    }
+////    else{
+////        return CGSizeZero;
+////    }
+//    
+//
+//}
+
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     if (self.viewedListing != YES) {
         [self queryParsePull];
+//        [self getBoostedSearchListings];
     }
-    NSLog(@"FRAME IN SEARCHED %@", self.tabBarHeight);
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
@@ -95,6 +235,7 @@
     [self.collectionView addPullToRefreshWithActionHandler:^{
         if (self.pullFinished == YES) {
             [self queryParsePull];
+//            [self getBoostedSearchListings];
         }
     }];
     
@@ -118,12 +259,21 @@
 -(void)queryParsePull{
     NSLog(@"pulling in search!");
     
-    //reset the query to remove the home screen constraints
+    //reset the query to remove old constraints
     self.pullQuery = nil;
-    self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
+    
+    if (self.sellingSearch) {
+        self.pullQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    }
+    else{
+        self.pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
+        [self.pullQuery orderByDescending:@"lastUpdated,bumpCount"];
+    }
     
     self.pullFinished = NO;
-    self.pullQuery.limit = 12;
+    self.showFooter = NO;
+
+    self.pullQuery.limit = 20;
     [self setupPullQuery];
     __block NSMutableArray *wordsToSearch = [NSMutableArray array];
     
@@ -132,21 +282,44 @@
     
     //remove useless words
     [wordsToSearch removeObjectsInArray:self.uselessWords];
-    [self.pullQuery whereKey:@"searchKeywords" containsAllObjectsInArray:wordsToSearch];
+    
+    if (self.sellingSearch) {
+        [self.pullQuery whereKey:@"keywords" containsAllObjectsInArray:wordsToSearch];
+    }
+    else{
+        [self.pullQuery whereKey:@"searchKeywords" containsAllObjectsInArray:wordsToSearch];
+    }
+    
+    //brand filter
+    if (self.filterBrandsArray.count > 0) {
+        [self.pullQuery whereKey:@"keywords" containedIn:self.filterBrandsArray];
+    }
+    
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
+    [self.pullQuery whereKey:@"banned" notEqualTo:@"YES"];
+    
     [self.pullQuery cancel];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            int count = (int)[objects count];
-            NSLog(@"count of objects %d", count);
-            self.lastInfinSkipped = count;
             
-            if (count == 0) {
-                [self.noresultsLabel setHidden:NO];
+            int count = (int)[objects count];
+            NSLog(@"search results %d", count);
+            
+            if (!self.sellingSearch && count == 0) {
+                [self.noWantedResultsLabel setHidden:NO];
             }
             else{
-                [self.noresultsLabel setHidden:YES];
+                [self.noWantedResultsLabel setHidden:YES];
             }
+            
+            if (count < 20) {
+                self.showFooter = YES;
+            }
+            else{
+                self.showFooter = NO;
+            }
+            
+            self.lastInfinSkipped = count;
             
             [self.results removeAllObjects];
             [self.results addObjectsFromArray:objects];
@@ -164,16 +337,30 @@
 }
 
 -(void)queryParseInfinite{
-    if (self.pullFinished == NO) {
+    if (self.pullFinished == NO || self.infinFinished == NO) {
         return;
     }
+    self.infinFinished = NO;
+    self.showFooter = NO;
+
     NSLog(@"infinity in search");
     self.infiniteQuery = nil;
-    self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
-    self.infinFinished = NO;
-    self.infiniteQuery.limit = 12;
+    
+    if (self.sellingSearch) {
+        self.infiniteQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+        [self.infiniteQuery orderByDescending:@"lastUpdated"];
+    }
+    else{
+        self.infiniteQuery = [PFQuery queryWithClassName:@"wantobuys"];
+        [self.infiniteQuery orderByDescending:@"lastUpdated,bumpCount"];
+    }
+    
+    self.infiniteQuery.limit = 20;
     self.infiniteQuery.skip = self.lastInfinSkipped;
+
     [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
+    [self.infiniteQuery whereKey:@"banned" notEqualTo:@"YES"];
+
     [self setupInfinQuery];
     __block NSMutableArray *wordsToSearch = [NSMutableArray array];
     
@@ -182,12 +369,32 @@
     
     //remove useless words
     [wordsToSearch removeObjectsInArray:self.uselessWords];
-    [self.infiniteQuery whereKey:@"searchKeywords" containsAllObjectsInArray:wordsToSearch];
+    
+    if (self.sellingSearch) {
+        [self.infiniteQuery whereKey:@"keywords" containsAllObjectsInArray:wordsToSearch];
+    }
+    else{
+        [self.infiniteQuery whereKey:@"searchKeywords" containsAllObjectsInArray:wordsToSearch];
+    }
+    
+    //brand filter
+    if (self.filterBrandsArray.count > 0) {
+        [self.infiniteQuery whereKey:@"keywords" containedIn:self.filterBrandsArray];
+    }
+    
     [self.infiniteQuery cancel];
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
-            NSLog(@"infin count %d", count);
+            NSLog(@"search infin count %d", count);
+            
+            if (count < 20) {
+                self.showFooter = YES;
+            }
+            else{
+                self.showFooter = NO;
+            }
+            
             self.lastInfinSkipped = self.lastInfinSkipped + count;
             [self.results addObjectsFromArray:objects];
             [self.collectionView reloadData];
@@ -214,99 +421,328 @@
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     
-    
-    self.cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
-    self.cell.delegate = self;
-    
-    PFObject *listing = [self.results objectAtIndex:indexPath.row];
-    
-    self.cell.imageView.image = nil;
-    
-    NSArray *bumpArray = [listing objectForKey:@"bumpArray"];
-    if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
-        //already bumped
-        [self.cell.bumpButton setSelected:YES];
+    if (self.sellingSearch) {
+        //for sale items search
+        detailSellingCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
+        cell.itemImageView.image = nil;
+        [cell.itemImageView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
         
-        //set bg colour
-        [self.cell.transView setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
-        self.cell.transView.alpha = 0.9;
-    }
-    else{
-        //haven't bumped
-        [self.cell.bumpButton setSelected:NO];
+        PFObject *forSaleItem = [self.results objectAtIndex:indexPath.row];
         
-        //set bg colour
-        [self.cell.transView setBackgroundColor:[UIColor blackColor]];
-        self.cell.transView.alpha = 0.5;
-    }
-    
-    if (bumpArray.count > 0) {
-        int count = (int)[bumpArray count];
-        [self.cell.bumpButton setTitle:[NSString stringWithFormat:@"%@",[self abbreviateNumber:count]] forState:UIControlStateNormal];
-    }
-    else{
-        [self.cell.bumpButton setTitle:@" " forState:UIControlStateNormal];
-    }
-    
-    [self.cell.imageView setFile:[listing objectForKey:@"image1"]];
-    [self.cell.imageView loadInBackground];
-    
-    self.cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
-    
-//    if ([listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]) {
-//        int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
-//        self.cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
-//    }
-//    else{
-        self.cell.priceLabel.text = @"";
-//    }
-    
-    if ([listing objectForKey:@"sizeLabel"]) {
-        NSString *sizeNoUK = [[listing objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
-        sizeNoUK = [sizeNoUK stringByReplacingOccurrencesOfString:@" " withString:@""];
+        //set image
+        [cell.itemImageView setFile:[forSaleItem objectForKey:@"thumbnail"]];
+        [cell.itemImageView loadInBackground];
         
-        if ([sizeNoUK isEqualToString:@"One size"]) {
-            self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
-        }
-        else if ([sizeNoUK isEqualToString:@"S"]){
-            self.cell.sizeLabel.text = @"Small";
-        }
-        else if ([sizeNoUK isEqualToString:@"M"]){
-            self.cell.sizeLabel.text = @"Medium";
-        }
-        else if ([sizeNoUK isEqualToString:@"L"]){
-            self.cell.sizeLabel.text = @"Large";
-        }
-        else if ([[listing objectForKey:@"category"]isEqualToString:@"Clothing"]){
-            self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
+        //so first image in listing is loaded faster when tapped
+        PFFile *image = [forSaleItem objectForKey:@"image1"];
+        [image getDataInBackground];
+        
+        //set title
+        if ([forSaleItem objectForKey:@"itemTitle"]) {
+            cell.itemTitleLabel.text = [forSaleItem objectForKey:@"itemTitle"];
         }
         else{
-            self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"sizeLabel"]];
+            cell.itemTitleLabel.text = [forSaleItem objectForKey:@"description"];
         }
+        
+        //set price label if exists
+        float price = [[forSaleItem objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
+        
+        if (price != 0.00 && price > 0.99) {
+            cell.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
+        }
+        else{
+            cell.itemPriceLabel.text = @"";
+        }
+        
+        NSString *condition = @"";
+        
+        //check if has condition
+        if ([forSaleItem objectForKey:@"condition"]) {
+            NSString *conditionString = [forSaleItem objectForKey:@"condition"];
+            if ([conditionString isEqualToString:@"BNWT"] || [conditionString isEqualToString:@"BNWOT"] || [conditionString isEqualToString:@"Deadstock"]) {
+                condition = @"New";
+            }
+            else if([conditionString isEqualToString:@"Other"]){
+                condition = @"Used";
+            }
+            else{
+                condition = conditionString;
+            }
+        }
+        
+        //check if has size
+        NSString *size = @"";
+        
+        if (![[forSaleItem objectForKey:@"category"]isEqualToString:@"Accessories"]) {
+            NSString *sizeLabel = [forSaleItem objectForKey:@"sizeLabel"];
+            
+            if ([sizeLabel isEqualToString:@"Multiple"]) {
+                size = sizeLabel;
+            }
+            else if ([sizeLabel isEqualToString:@"UK XXL"]){
+                size = @"XXLarge";
+            }
+            else if ([sizeLabel isEqualToString:@"UK XL"]){
+                size = @"XLarge";
+            }
+            else if ([sizeLabel isEqualToString:@"UK L"]){
+                size = @"Large";
+            }
+            else if ([sizeLabel isEqualToString:@"UK M"]){
+                size = @"Medium";
+            }
+            else if ([sizeLabel isEqualToString:@"UK S"]){
+                size = @"Small";
+            }
+            else if ([sizeLabel isEqualToString:@"UK XS"]){
+                size = @"XSmall";
+            }
+            else if ([sizeLabel isEqualToString:@"UK XXS"]){
+                size = @"XXSmall";
+            }
+            else if ([sizeLabel isEqualToString:@"XXL"]){
+                size = @"XXLarge";
+            }
+            else if ([sizeLabel isEqualToString:@"XL"]){
+                size = @"XLarge";
+            }
+            else if ([sizeLabel isEqualToString:@"L"]){
+                size = @"Large";
+            }
+            else if ([sizeLabel isEqualToString:@"M"]){
+                size = @"Medium";
+            }
+            else if ([sizeLabel isEqualToString:@"S"]){
+                size = @"Small";
+            }
+            else if ([sizeLabel isEqualToString:@"XS"]){
+                size = @"XSmall";
+            }
+            else if ([sizeLabel isEqualToString:@"XXS"]){
+                size = @"XXSmall";
+            }
+            else if ([sizeLabel isEqualToString:@"XXL"]){
+                size = @"XXLarge";
+            }
+            else if ([sizeLabel isEqualToString:@"XL"]){
+                size = @"XLarge";
+            }
+            else if ([sizeLabel isEqualToString:@"L"]){
+                size = @"Large";
+            }
+            else if ([sizeLabel isEqualToString:@"M"]){
+                size = @"Medium";
+            }
+            else if ([sizeLabel isEqualToString:@"S"]){
+                size = @"Small";
+            }
+            else if ([sizeLabel isEqualToString:@"XS"]){
+                size = @"XSmall";
+            }
+            else if ([sizeLabel isEqualToString:@"XXS"]){
+                size = @"XXSmall";
+            }
+            else{
+                size = sizeLabel;
+            }
+        }
+        
+        //set info label
+        if (![condition isEqualToString:@""] && ![size isEqualToString:@""]) {
+            cell.itemInfoLabel.text = [NSString stringWithFormat:@"%@ | %@", condition, size];
+        }
+        else if([condition isEqualToString:@""] && ![size isEqualToString:@""]){
+            cell.itemInfoLabel.text = size;
+        }
+        else if(![condition isEqualToString:@""] && [size isEqualToString:@""]){
+            cell.itemInfoLabel.text = condition;
+        }
+        else{
+            cell.itemInfoLabel.text = @"";
+        }
+        return cell;
     }
     else{
-        self.cell.sizeLabel.text = @"";
-    }
-    
-    PFGeoPoint *location = [listing objectForKey:@"geopoint"];
-    if (self.currentLocation && location) {
-        int distance = [location distanceInKilometersTo:self.currentLocation];
-        if (![listing objectForKey:@"sizeLabel"]) {
-            self.cell.sizeLabel.text = [NSString stringWithFormat:@"%dkm", distance];
+        //wanted items search
+        self.cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
+        self.cell.delegate = self;
+        
+        self.cell.layer.cornerRadius = 4;
+        self.cell.layer.masksToBounds = YES;
+        
+        PFObject *listing = [self.results objectAtIndex:indexPath.row];
+        
+        self.cell.imageView.image = nil;
+        
+        NSArray *bumpArray = [listing objectForKey:@"bumpArray"];
+        if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
+            //already bumped
+            [self.cell.bumpButton setSelected:YES];
+            
+            //set bg colour
+            [self.cell.transView setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+            self.cell.transView.alpha = 0.9;
+        }
+        else{
+            //haven't bumped
+            [self.cell.bumpButton setSelected:NO];
+            
+            //set bg colour
+            [self.cell.transView setBackgroundColor:[UIColor blackColor]];
+            self.cell.transView.alpha = 0.5;
+        }
+        
+        if (bumpArray.count > 0) {
+            int count = (int)[bumpArray count];
+            [self.cell.bumpButton setTitle:[NSString stringWithFormat:@"%@",[self abbreviateNumber:count]] forState:UIControlStateNormal];
+        }
+        else{
+            [self.cell.bumpButton setTitle:@" " forState:UIControlStateNormal];
+        }
+        
+        if ([listing objectForKey:@"thumbnail"]) {
+            [self.cell.imageView setFile:[listing objectForKey:@"thumbnail"]];
+        }
+        else{
+            [self.cell.imageView setFile:[listing objectForKey:@"image1"]];
+        }
+        
+        [self.cell.imageView loadInBackground];
+        
+        self.cell.titleLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"title"]];
+        
+        //    if ([listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]) {
+        //        int price = [[listing objectForKey:[NSString stringWithFormat:@"listingPrice%@", self.currency]]intValue];
+        //        self.cell.priceLabel.text = [NSString stringWithFormat:@"%@%d", self.currencySymbol,price];
+        //    }
+        //    else{
+        self.cell.priceLabel.text = @"";
+        //    }
+        
+        if ([listing objectForKey:@"sizeLabel"]) {
+            NSString *sizeNoUK = [[listing objectForKey:@"sizeLabel"] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
+            sizeNoUK = [sizeNoUK stringByReplacingOccurrencesOfString:@" " withString:@""];
+            
+            if ([sizeNoUK isEqualToString:@"One size"]) {
+                self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
+            }
+            else if ([sizeNoUK isEqualToString:@"S"]){
+                self.cell.sizeLabel.text = @"Small";
+            }
+            else if ([sizeNoUK isEqualToString:@"M"]){
+                self.cell.sizeLabel.text = @"Medium";
+            }
+            else if ([sizeNoUK isEqualToString:@"L"]){
+                self.cell.sizeLabel.text = @"Large";
+            }
+            else if ([[listing objectForKey:@"category"]isEqualToString:@"Clothing"]){
+                self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", sizeNoUK];
+            }
+            else{
+                self.cell.sizeLabel.text = [NSString stringWithFormat:@"%@", [listing objectForKey:@"sizeLabel"]];
+            }
+        }
+        else{
+            self.cell.sizeLabel.text = @"";
+        }
+        
+        PFGeoPoint *location = [listing objectForKey:@"geopoint"];
+        if (self.currentLocation && location) {
+            int distance = [location distanceInKilometersTo:self.currentLocation];
+            if (![listing objectForKey:@"sizeLabel"]) {
+                self.cell.sizeLabel.text = [NSString stringWithFormat:@"%dkm", distance];
+                self.cell.distanceLabel.text = @"";
+            }
+            else{
+                self.cell.distanceLabel.text = [NSString stringWithFormat:@"%dkm", distance];
+            }
+        }
+        else{
+            NSLog(@"no location data %@ %@", self.currentLocation, location);
             self.cell.distanceLabel.text = @"";
         }
-        else{
-            self.cell.distanceLabel.text = [NSString stringWithFormat:@"%dkm", distance];
-        }
+//        
+//        BOOL highlightBoost = NO;
+//        BOOL searchBoost = NO;
+//        BOOL featureBoost = NO;
+//        
+//        //check what boosts are enabled then display the correct summary boost icon
+//        if ([listing objectForKey:@"highlighted"]) {
+//            
+//            NSDate *expiryDate = [listing objectForKey:@"highlightExpiry"];
+//            
+//            if ([[listing objectForKey:@"highlighted"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
+//                
+//                highlightBoost = YES;
+//                
+//            }
+//            else if ([[listing objectForKey:@"highlighted"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
+//                [listing removeObjectForKey:@"highlighted"];
+//                [listing saveInBackground];
+//            }
+//            
+//        }
+//        
+//        if ([listing objectForKey:@"searchBoost"]) {
+//            
+//            NSDate *expiryDate = [listing objectForKey:@"searchBoostExpiry"];
+//            
+//            if ([[listing objectForKey:@"searchBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
+//                
+//                searchBoost = YES;
+//                
+//            }
+//            else if ([[listing objectForKey:@"searchBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
+//                [listing removeObjectForKey:@"searchBoost"];
+//                [listing saveInBackground];
+//            }
+//        }
+//        
+//        if ([listing objectForKey:@"featuredBoost"]) {
+//            
+//            NSDate *expiryDate = [listing objectForKey:@"featuredBoostExpiry"];
+//            
+//            if ([[listing objectForKey:@"featuredBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
+//                
+//                featureBoost = YES;
+//                
+//                [[PFUser currentUser]addObject:listing.objectId forKey:@"seenFeatured"];
+//                [[PFUser currentUser]saveEventually];
+//            }
+//            else if ([[listing objectForKey:@"featuredBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
+//                [listing removeObjectForKey:@"featuredBoost"];
+//                [listing saveInBackground];
+//            }
+//        }
+//        
+//        // check which boost to display
+//        if (highlightBoost == YES && featureBoost != YES) {
+//            [self.cell.boostImageView setImage:[UIImage imageNamed:@"blueBoost"]];
+//            [self.cell.boostImageView setHidden:NO];
+//            
+//            [self.cell.layer setBorderColor: [[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0] CGColor]];
+//            [self.cell.layer setBorderWidth: 2.0];
+//            
+//            [self.cell.distanceLabel setHidden:YES];
+//        }
+//        else if (featureBoost == YES) {
+//            [self.cell.boostImageView setImage:[UIImage imageNamed:@"purpleBoost"]];
+//            [self.cell.boostImageView setHidden:NO];
+//            
+//            [self.cell.layer setBorderWidth: 0.0];
+//            [self.cell.distanceLabel setHidden:YES];
+//        }
+//        else{
+//            [self.cell.layer setBorderWidth: 0.0];
+//            [self.cell.distanceLabel setHidden:NO];
+//            [self.cell.boostImageView setHidden:YES];
+//        }
+        
+        self.cell.backgroundColor = [UIColor whiteColor];
+        
+        return self.cell;
     }
-    else{
-        NSLog(@"no location data %@ %@", self.currentLocation, location);
-        self.cell.distanceLabel.text = @"";
-    }
-    
-    self.cell.backgroundColor = [UIColor whiteColor];
-    
-    return self.cell;
 }
 
 
@@ -321,21 +757,48 @@
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
     self.viewedListing = YES;
-    if (!self.lastSelected) {
-        self.lastSelected = [[NSIndexPath alloc]init];
+    
+    if (self.sellingSearch) {
+        //for sale item search
+        
+        [Answers logCustomEventWithName:@"Tapped search item"
+                       customAttributes:@{
+                                          @"type":@"for sale"
+                                          }];
+        
+        PFObject *itemObject = [self.results objectAtIndex:indexPath.row];
+        
+        ForSaleListing *vc = [[ForSaleListing alloc]init];
+        vc.listingObject = itemObject;
+        vc.source = @"search";
+        vc.fromBuyNow = YES;
+        vc.pureWTS = YES;
+        
+        //switch off hiding nav bar
+        self.navigationController.navigationBarHidden = NO;
+        [self.navigationController pushViewController:vc animated:YES];
     }
-    self.lastSelected = indexPath;
-    PFObject *selected;
-
-    selected = [self.results objectAtIndex:indexPath.item];
-    
-    NSLog(@"TAB BAR HEIGHT %@", self.tabBarHeight);
-    
-    ListingController *vc = [[ListingController alloc]init];
-    vc.listingObject = selected;
-    vc.fromSearch = YES;
-    vc.tabBarHeight = self.tabBarHeight;
-    [self.navigationController pushViewController:vc animated:YES];
+    else{
+        [Answers logCustomEventWithName:@"Tapped search item"
+                       customAttributes:@{
+                                          @"type":@"wanted"
+                                          }];
+        
+        //wanted item search
+        if (!self.lastSelected) {
+            self.lastSelected = [[NSIndexPath alloc]init];
+        }
+        self.lastSelected = indexPath;
+        PFObject *listing;
+        
+        listing = [self.results objectAtIndex:indexPath.item];
+        
+        ListingController *vc = [[ListingController alloc]init];
+        vc.listingObject = listing;
+        vc.fromSearch = YES;
+        vc.tabBarHeight = self.tabBarHeight;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
 }
 
 -(void)showError{
@@ -348,134 +811,39 @@
     [self presentViewController:alert animated:YES completion:nil];
 }
 
--(void)cellTapped:(id)sender{
-    
-    NSIndexPath *indexPath = [self.collectionView indexPathForCell:(ExploreCell*)sender];
-    PFObject *listingObject = [self.results objectAtIndex:indexPath.item];
-    ExploreCell *cell = sender;
-    
-    [Answers logCustomEventWithName:@"Bumped a listing"
-                   customAttributes:@{
-                                      @"where":@"Search"
-                                      }];
-    
-    NSMutableArray *bumpArray = [NSMutableArray array];
-    if ([listingObject objectForKey:@"bumpArray"]) {
-        [bumpArray addObjectsFromArray:[listingObject objectForKey:@"bumpArray"]];
-    }
-    
-    NSMutableArray *personalBumpArray = [NSMutableArray array];
-    if ([[PFUser currentUser] objectForKey:@"bumpArray"]) {
-        [personalBumpArray addObjectsFromArray:[[PFUser currentUser] objectForKey:@"bumpArray"]];
-    }
-
-    if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
-        NSLog(@"already bumped it m8");
-        [cell.bumpButton setSelected:NO];
-        [cell.transView setBackgroundColor:[UIColor blackColor]];
-        cell.transView.alpha = 0.5;
-        [bumpArray removeObject:[PFUser currentUser].objectId];
-        [listingObject setObject:bumpArray forKey:@"bumpArray"];
-        [listingObject incrementKey:@"bumpCount" byAmount:@-1];
-        
-        if ([personalBumpArray containsObject:listingObject.objectId]) {
-            [personalBumpArray removeObject:listingObject.objectId];
-        }
-        
-        //update bump object
-        PFQuery *bumpQ = [PFQuery queryWithClassName:@"BumpedListings"];
-        [bumpQ whereKey:@"bumpUser" equalTo:[PFUser currentUser]];
-        [bumpQ whereKey:@"listing" equalTo:listingObject];
-        [bumpQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-            if (objects) {
-                for (PFObject *bump in objects) {
-                    [bump setObject:@"deleted" forKey:@"status"];
-                    [bump saveInBackground];
-                }
-            }
-        }];
-    }
-    else{
-        NSLog(@"bumped");
-        [cell.bumpButton setSelected:YES];
-        [cell.transView setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
-        cell.transView.alpha = 0.9;
-        
-        [bumpArray addObject:[PFUser currentUser].objectId];
-        [listingObject addObject:[PFUser currentUser].objectId forKey:@"bumpArray"];
-        [listingObject incrementKey:@"bumpCount"];
-        
-        if (![personalBumpArray containsObject:listingObject.objectId]) {
-            [personalBumpArray addObject:listingObject.objectId];
-        }
-        NSString *pushText = [NSString stringWithFormat:@"%@ just bumped your listing 👊", [PFUser currentUser].username];
-        
-        if (![[[listingObject objectForKey:@"postUser"]objectId] isEqualToString:[[PFUser currentUser]objectId]]) {
-            NSDictionary *params = @{@"userId": [[listingObject objectForKey:@"postUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": listingObject.objectId};
-            
-            [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                if (!error) {
-                    NSLog(@"push response %@", response);
-                    [Answers logCustomEventWithName:@"Push Sent"
-                                   customAttributes:@{
-                                                      @"Type":@"Bump"
-                                                      }];
-                }
-                else{
-                    NSLog(@"push error %@", error);
-                }
-            }];
-        }
-        else{
-            [Answers logCustomEventWithName:@"Bumped own listing"
-                           customAttributes:@{
-                                              @"where":@"Search"
-                                              }];
-        }
-        
-        PFObject *bumpObj = [PFObject objectWithClassName:@"BumpedListings"];
-        [bumpObj setObject:listingObject forKey:@"listing"];
-        [bumpObj setObject:@"live" forKey:@"status"];
-        [bumpObj setObject:[PFUser currentUser] forKey:@"bumpUser"];
-        [bumpObj saveInBackground];
-    }
-    
-    [listingObject saveInBackground];
-    [[PFUser currentUser]setObject:personalBumpArray forKey:@"bumpArray"];
-    [[PFUser currentUser]saveInBackground];
-    
-    if (bumpArray.count > 0) {
-        int count = (int)[bumpArray count];
-        [cell.bumpButton setTitle:[NSString stringWithFormat:@"%@",[self abbreviateNumber:count]] forState:UIControlStateNormal];
-    }
-    else{
-        [cell.bumpButton setTitle:@" " forState:UIControlStateNormal];
-    }
-}
-
 -(void)setupPullQuery{
     if (self.filtersArray.count > 0) {
+        
+        //price
         if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.pullQuery orderByDescending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
+            [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.pullQuery orderByDescending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.pullQuery orderByAscending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
+            [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.pullQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
-        
+        else{
+            [self.pullQuery orderByDescending:@"lastUpdated"];
+        }
+
+        //location
         if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
-            [self.pullQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation];
+            [self.pullQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:400];
         }
         
-        if ([self.filtersArray containsObject:@"BNWT"]){
-            [self.pullQuery whereKey:@"condition" containedIn:@[@"BNWT", @"Any"]];
+        //condition
+        if ([self.filtersArray containsObject:@"new"]){
+            [self.pullQuery whereKey:@"condition" containedIn:@[@"New", @"Any", @"BNWT", @"BNWOT",@"Deadstock"]];  //updated as we removed Deastock as an option
         }
         else if ([self.filtersArray containsObject:@"used"]){
             [self.pullQuery whereKey:@"condition" containedIn:@[@"Used", @"Any"]];
         }
-        else if ([self.filtersArray containsObject:@"BNWOT"]){
-            [self.pullQuery whereKey:@"condition" containedIn:@[@"BNWOT", @"Any"]];
+        else if ([self.filtersArray containsObject:@"deadstock"]){
+            [self.pullQuery whereKey:@"condition" containedIn:@[@"Deadstock", @"Any"]];
         }
         
+        //category
         if ([self.filtersArray containsObject:@"clothing"]){
             [self.pullQuery whereKey:@"category" equalTo:@"Clothing"];
         }
@@ -486,6 +854,7 @@
             [self.pullQuery whereKey:@"category" equalTo:@"Accessories"];
         }
         
+        //gender
         if ([self.filtersArray containsObject:@"male"]){
             [self.pullQuery whereKey:@"sizeGender" equalTo:@"Mens"];
         }
@@ -493,131 +862,58 @@
             [self.pullQuery whereKey:@"sizeGender" equalTo:@"Womens"];
         }
         
-        //footwear sizes
-        if ([self.filtersArray containsObject:@"3"]){
-            [self.pullQuery whereKey:@"size3" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"3.5"]){
-            [self.pullQuery whereKey:@"size3dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"4"]){
-            [self.pullQuery whereKey:@"size4" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"4.5"]){
-            [self.pullQuery whereKey:@"size4dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"5"]){
-            [self.pullQuery whereKey:@"size5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"5.5"]){
-            [self.pullQuery whereKey:@"size5dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"6"]){
-            [self.pullQuery whereKey:@"size6" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"6.5"]){
-            [self.pullQuery whereKey:@"size6dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"7"]){
-            [self.pullQuery whereKey:@"size7" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"7.5"]){
-            [self.pullQuery whereKey:@"size7dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"8"]){
-            [self.pullQuery whereKey:@"size8" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"8.5"]){
-            [self.pullQuery whereKey:@"size8dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"9"]){
-            [self.pullQuery whereKey:@"size9" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"9.5"]){
-            [self.pullQuery whereKey:@"size9dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"10"]){
-            [self.pullQuery whereKey:@"size10" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"10.5"]){
-            [self.pullQuery whereKey:@"size10dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"11"]){
-            [self.pullQuery whereKey:@"size11" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"11.5"]){
-            [self.pullQuery whereKey:@"size11dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"12"]){
-            [self.pullQuery whereKey:@"size12" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"12.5"]){
-            [self.pullQuery whereKey:@"size12dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"13"]){
-            [self.pullQuery whereKey:@"size13" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"13.5"]){
-            [self.pullQuery whereKey:@"size13dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"14"]){
-            [self.pullQuery whereKey:@"size14" equalTo:@"YES"];
+        //all sizes filters
+        if (self.filterSizesArray.count > 0) {
+            [self.pullQuery whereKey:@"sizeArray" containedIn:self.filterSizesArray];
         }
         
-        //clothing sizes
-        if ([self.filtersArray containsObject:@"XXS"]){
-            [self.pullQuery whereKey:@"sizeXXS" equalTo:@"YES"];
+        //colour filters
+        if (self.filterColoursArray.count > 0) {
+            [self.pullQuery whereKey:@"coloursArray" containedIn:self.filterColoursArray]; //was mainColour
         }
-        else if ([self.filtersArray containsObject:@"XS"]){
-            [self.pullQuery whereKey:@"sizeXS" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"S"]){
-            [self.pullQuery whereKey:@"sizeS" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"M"]){
-            [self.pullQuery whereKey:@"sizeM" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"L"]){
-            [self.pullQuery whereKey:@"sizeL" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"XL"]){
-            [self.pullQuery whereKey:@"sizeXL" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"XXL"]){
-            [self.pullQuery whereKey:@"sizeXXL" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"OS"]){
-            [self.pullQuery whereKey:@"sizeOS" equalTo:@"YES"];
-        }
+
     }
     else{
-        [self.pullQuery orderByDescending:@"createdAt"];
+        [self.pullQuery orderByDescending:@"lastUpdated"];
     }
+}
+
+-(void)callSizeQuery{
+    self.sizeQuery = nil;
+    self.sizeQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    [self.sizeQuery whereKey:@"sizeArray" containedIn:self.filterSizesArray];
 }
 
 -(void)setupInfinQuery{
     if (self.filtersArray.count > 0) {
+        
+        //price
         if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.infiniteQuery orderByDescending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
+            [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.infiniteQuery orderByDescending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"listingPrice%@", self.currency]];
+            [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
         
+        //location
         if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
-            [self.infiniteQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation];
+            [self.infiniteQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:400];
         }
         
-        if ([self.filtersArray containsObject:@"BNWT"]){
-            [self.infiniteQuery whereKey:@"condition" containedIn:@[@"BNWT", @"Any"]];
+        //condition
+        if ([self.filtersArray containsObject:@"new"]){
+            [self.infiniteQuery whereKey:@"condition" containedIn:@[@"New", @"Any", @"BNWT", @"BNWOT", @"Deadstock"]];
         }
         else if ([self.filtersArray containsObject:@"used"]){
             [self.infiniteQuery whereKey:@"condition" containedIn:@[@"Used", @"Any"]];
         }
-        else if ([self.filtersArray containsObject:@"BNWOT"]){
-            [self.infiniteQuery whereKey:@"condition" containedIn:@[@"BNWOT", @"Any"]];
+        else if ([self.filtersArray containsObject:@"deadstock"]){
+            [self.infiniteQuery whereKey:@"condition" containedIn:@[@"Deadstock", @"Any"]];
         }
         
+        //category
         if ([self.filtersArray containsObject:@"clothing"]){
             [self.infiniteQuery whereKey:@"category" equalTo:@"Clothing"];
         }
@@ -628,6 +924,7 @@
             [self.infiniteQuery whereKey:@"category" equalTo:@"Accessories"];
         }
         
+        //gender
         if ([self.filtersArray containsObject:@"male"]){
             [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Mens"];
         }
@@ -635,119 +932,48 @@
             [self.infiniteQuery whereKey:@"sizeGender" equalTo:@"Womens"];
         }
         
-        //footwear sizes
-        if ([self.filtersArray containsObject:@"3"]){
-            [self.infiniteQuery whereKey:@"size3" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"3.5"]){
-            [self.infiniteQuery whereKey:@"size3dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"4"]){
-            [self.infiniteQuery whereKey:@"size4" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"4.5"]){
-            [self.infiniteQuery whereKey:@"size4dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"5"]){
-            [self.infiniteQuery whereKey:@"size5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"5.5"]){
-            [self.infiniteQuery whereKey:@"size5dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"6"]){
-            [self.infiniteQuery whereKey:@"size6" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"6.5"]){
-            [self.infiniteQuery whereKey:@"size6dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"7"]){
-            [self.infiniteQuery whereKey:@"size7" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"7.5"]){
-            [self.infiniteQuery whereKey:@"size7dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"8"]){
-            [self.infiniteQuery whereKey:@"size8" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"8.5"]){
-            [self.infiniteQuery whereKey:@"size8dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"9"]){
-            [self.infiniteQuery whereKey:@"size9" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"9.5"]){
-            [self.infiniteQuery whereKey:@"size9dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"10"]){
-            [self.infiniteQuery whereKey:@"size10" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"10.5"]){
-            [self.infiniteQuery whereKey:@"size10dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"11"]){
-            [self.infiniteQuery whereKey:@"size11" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"11.5"]){
-            [self.infiniteQuery whereKey:@"size11dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"12"]){
-            [self.infiniteQuery whereKey:@"size12" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"12.5"]){
-            [self.infiniteQuery whereKey:@"size12dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"13"]){
-            [self.infiniteQuery whereKey:@"size13" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"13.5"]){
-            [self.infiniteQuery whereKey:@"size13dot5" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"14"]){
-            [self.infiniteQuery whereKey:@"size14" equalTo:@"YES"];
+        //all sizes filters
+        if (self.filterSizesArray.count > 0) {
+            [self.infiniteQuery whereKey:@"sizeArray" containedIn:self.filterSizesArray];
         }
         
-        //clothing sizes
-        if ([self.filtersArray containsObject:@"XXS"]){
-            [self.infiniteQuery whereKey:@"XXS" equalTo:@"YES"];
+        //colour filters
+        if (self.filterColoursArray.count > 0) {
+            NSLog(@"filters brand array %@", self.filterBrandsArray);
+            [self.infiniteQuery whereKey:@"coloursArray" containedIn:self.filterColoursArray]; //was mainColour
         }
-        else if ([self.filtersArray containsObject:@"XS"]){
-            [self.infiniteQuery whereKey:@"XS" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"S"]){
-            [self.infiniteQuery whereKey:@"S" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"M"]){
-            [self.infiniteQuery whereKey:@"M" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"L"]){
-            [self.infiniteQuery whereKey:@"L" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"XL"]){
-            [self.infiniteQuery whereKey:@"XL" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"XXL"]){
-            [self.infiniteQuery whereKey:@"XXL" equalTo:@"YES"];
-        }
-        else if ([self.filtersArray containsObject:@"OS"]){
-            [self.infiniteQuery whereKey:@"OS" equalTo:@"YES"];
-        }
+        
     }
     else{
-        [self.infiniteQuery orderByDescending:@"createdAt"];
+        [self.infiniteQuery orderByDescending:@"lastUpdated"];
     }
 }
 
 -(void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
+    if (self.sellingSearch) {
+        [Answers logCustomEventWithName:@"Search"
+                       customAttributes:@{
+                                          @"type":@"For Sale search"
+                                          }];
+    }
+    else{
+        [Answers logCustomEventWithName:@"Search"
+                       customAttributes:@{
+                                          @"type":@"Wanted search"
+                                          }];
+    }
+    
     [self.searchBar resignFirstResponder];
     self.searchString = searchBar.text;
     NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
-    [self.delegate enteredSearchTerm:self.searchString];
+    [self.delegate enteredSearchTerm:self.searchString inSellingSearch:self.sellingSearch];
 
     if (![stringCheck isEqualToString:@""]) {
         [self.results removeAllObjects];
         [self.collectionView reloadData];
         self.searchString = self.searchBar.text;
         [self queryParsePull];
+//        [self getBoostedSearchListings];
     }
 }
 
@@ -757,7 +983,7 @@
     NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     if (![stringCheck isEqualToString:@""]) {
-        [self.delegate enteredSearchTerm:self.searchString];
+        [self.delegate enteredSearchTerm:self.searchString inSellingSearch:self.sellingSearch];
     }
 }
 
@@ -768,6 +994,7 @@
                                       }];
     FilterVC *vc = [[FilterVC alloc]init];
     vc.delegate = self;
+    vc.sellingSearch = self.sellingSearch;
     if (self.filtersArray.count > 0) {
         vc.sendArray = [NSMutableArray arrayWithArray:self.filtersArray];
     }
@@ -775,18 +1002,30 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 
--(void)filtersReturned:(NSMutableArray *)filters{
+-(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours{
     [self.results removeAllObjects];
     [self.collectionView reloadData];
     
     self.filtersArray = filters;
     if (self.filtersArray.count > 0) {
-        NSLog(@"got some filters brah %lu", self.filtersArray.count);
-        self.filterButton.titleLabel.text = [NSString stringWithFormat:@"F I L T E R S  %lu",self.filtersArray.count];
+        self.filterSizesArray = sizes;
+        self.filterBrandsArray = brands;
+        self.filterColoursArray = colours;
+        
+        //update filter button title and colour
+        NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"F I L T E R  %lu",self.filtersArray.count]];
+        [self modifyString:filterString setColorForText:[NSString stringWithFormat:@"%lu",self.filtersArray.count] withColor:[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0]];
+        [self.filterButton setAttributedTitle:filterString forState:UIControlStateNormal];
+    
     }
     else{
         //no filters
-        self.filterButton.titleLabel.text = [NSString stringWithFormat:@"F I L T E R S  OFF"];
+        NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:@"F I L T E R"];
+        [self.filterButton setAttributedTitle:filterString forState:UIControlStateNormal];
+        
+        [self.filterSizesArray removeAllObjects];
+        [self.filterBrandsArray removeAllObjects];
+        [self.filterColoursArray removeAllObjects];
     }
     self.lastInfinSkipped = 0;
     
@@ -801,8 +1040,19 @@
 }
 
 -(void)noChange{
-    if (self.filtersArray > 0) {
-        self.filterButton.titleLabel.text = [NSString stringWithFormat:@"F I L T E R S  %lu",self.filtersArray.count];
+    if (self.filtersArray.count > 0) {
+        NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"F I L T E R  %lu",self.filtersArray.count]];
+        [self modifyString:filterString setColorForText:[NSString stringWithFormat:@"%lu",self.filtersArray.count] withColor:[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0]];
+        [self.filterButton setAttributedTitle:filterString forState:UIControlStateNormal];
+    }
+    else{
+        //no filters
+        NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:@"F I L T E R"];
+        [self.filterButton setAttributedTitle:filterString forState:UIControlStateNormal];
+        
+        [self.filterSizesArray removeAllObjects];
+        [self.filterBrandsArray removeAllObjects];
+        [self.filterColoursArray removeAllObjects];
     }
 }
 
@@ -852,5 +1102,183 @@
         }
     }
     return ret;
+}
+
+#pragma mark - search boost header methods / delegates
+
+-(void)getBoostedSearchListings{
+    //reset the query to remove the home screen constraints
+    PFQuery *boostQuery = [PFQuery queryWithClassName:@"wantobuys"];
+    boostQuery.limit = 20;
+    __block NSMutableArray *wordsToSearch = [NSMutableArray array];
+    
+    NSArray *searchWords = [[self.searchString lowercaseString] componentsSeparatedByString:@" "];
+    [wordsToSearch addObjectsFromArray:searchWords];
+    
+    //remove useless words
+    [wordsToSearch removeObjectsInArray:self.uselessWords];
+    [boostQuery whereKey:@"searchKeywords" containsAllObjectsInArray:wordsToSearch];
+    [boostQuery whereKey:@"status" equalTo:@"live"];
+    [boostQuery whereKey:@"searchBoost" equalTo:@"YES"];
+//    [boostQuery whereKey:@"searchBoostExpiry" greaterThanOrEqualTo:[NSDate date]];
+    [boostQuery orderByAscending:@"boostViews,searchBoostExpiry"];
+    [boostQuery cancel];
+    [boostQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            
+//            NSLog(@"count of objects %@", objects);
+            
+//            self.headerView.boostedListings = objects;
+//            [self.headerView.seenBoosts removeAllObjects];
+//            [self.headerView.swipeView reloadData];
+
+            
+            if (objects.count > 0) {
+                self.showBoostHeader = YES;
+                
+                [Answers logCustomEventWithName:@"search boost items returned"
+                               customAttributes:@{
+                                                  @"count":[NSString stringWithFormat:@"%lu",objects.count]
+                                                  }];
+            }
+            else{
+                self.showBoostHeader = NO;
+            }
+            [self.collectionView reloadData];
+        }
+        else{
+            NSLog(@"error on boosted %@", error);
+            [self showError];
+        }
+    }];
+    
+}
+
+-(void)selectedBoostListing:(PFObject *)listing{
+    
+    self.viewedListing = YES;
+    
+    ListingController *vc = [[ListingController alloc]init];
+    vc.listingObject = listing;
+    vc.fromSearch = YES;
+    vc.tabBarHeight = self.tabBarHeight;
+    vc.fromSearchBoost = YES;
+    [self.navigationController pushViewController:vc animated:YES];
+    
+    BOOL highlightBoost = NO;
+    BOOL searchBoost = NO;
+    BOOL featureBoost = NO;
+    
+    //check what boosts are enabled then display the correct summary boost icon
+    if ([listing objectForKey:@"highlighted"]) {
+        
+        NSDate *expiryDate = [listing objectForKey:@"highlightExpiry"];
+        
+        if ([[listing objectForKey:@"highlighted"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
+            
+            highlightBoost = YES;
+            
+        }
+        else if ([[listing objectForKey:@"highlighted"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
+            [listing removeObjectForKey:@"highlighted"];
+            [listing saveInBackground];
+        }
+        
+    }
+    
+    if ([listing objectForKey:@"searchBoost"]) {
+        
+        NSDate *expiryDate = [listing objectForKey:@"searchBoostExpiry"];
+        
+        if ([[listing objectForKey:@"searchBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
+            
+            searchBoost = YES;
+            
+        }
+        else if ([[listing objectForKey:@"searchBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
+            [listing removeObjectForKey:@"searchBoost"];
+            [listing saveInBackground];
+        }
+    }
+    
+    if ([listing objectForKey:@"featuredBoost"]) {
+        
+        NSDate *expiryDate = [listing objectForKey:@"featuredBoostExpiry"];
+        
+        if ([[listing objectForKey:@"featuredBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
+            
+            featureBoost = YES;
+            
+            [[PFUser currentUser]addObject:listing.objectId forKey:@"seenFeatured"];
+            [[PFUser currentUser]saveEventually];
+        }
+        else if ([[listing objectForKey:@"featuredBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
+            [listing removeObjectForKey:@"featuredBoost"];
+            [listing saveInBackground];
+        }
+    }
+    
+    [Answers logCustomEventWithName:@"Tapped search WTB"
+                   customAttributes:@{
+                                      @"type":@"Boosted",
+                                      @"featured":[NSNumber numberWithBool:featureBoost],
+                                      @"highlighted":[NSNumber numberWithBool:highlightBoost],
+                                      @"searchBoost":@"YES"
+                                      }];
+    
+}
+
+- (void)createWantedListingPressed{
+    [self cancelPressed];
+    //send notification to createTab to open WTB creater
+    [self.presentingViewController.tabBarController setSelectedIndex:1];
+    double delayInSeconds = 0.5;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"openWTB" object:nil];
+    });
+}
+
+-(void)hideFilterButton{
+    [self.filterButton setHidden:YES];
+}
+
+-(void)showFilterButton{
+    [self.filterButton setHidden:NO];
+}
+
+- (void)addDoneButton {
+    UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
+    [keyboardToolbar sizeToFit];
+    UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                      target:nil action:nil];
+    UIBarButtonItem *doneBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                      target:self action:@selector(dismissKeyboard)];
+    
+    [doneBarButton setTintColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
+    keyboardToolbar.barTintColor = [UIColor colorWithRed:1.00 green:1.00 blue:1.00 alpha:1.0];
+    
+    keyboardToolbar.items = @[flexBarButton, doneBarButton];
+    
+    self.searchBar.inputAccessoryView = keyboardToolbar;
+}
+
+-(void)dismissKeyboard{
+    [self.searchBar resignFirstResponder];
+}
+
+#pragma mark - colour part of label
+
+-(NSMutableAttributedString *)modifyString: (NSMutableAttributedString *)mainString setColorForText:(NSString*) textToFind withColor:(UIColor*) color
+{
+    NSRange range = [mainString.mutableString rangeOfString:textToFind options:NSCaseInsensitiveSearch];
+    
+    if (range.location != NSNotFound) {
+        [mainString addAttribute:NSForegroundColorAttributeName value:color range:range];
+    }
+    
+    return mainString;
 }
 @end

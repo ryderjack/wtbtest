@@ -12,5 +12,7 @@
 @interface ProfileItemCell : UICollectionViewCell
 @property (weak, nonatomic) IBOutlet PFImageView *itemImageView;
 @property (weak, nonatomic) IBOutlet UIImageView *purchasedImageView;
+@property (weak, nonatomic) IBOutlet UIImageView *boostImageView;
+@property (weak, nonatomic) IBOutlet UIImageView *boost2ImageView;
 
 @end

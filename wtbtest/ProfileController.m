@@ -8,7 +8,6 @@
 
 #import "ProfileController.h"
 #import <Parse/Parse.h>
-#import "OffersController.h"
 #import "FBGroupShareViewController.h"
 #import "UserProfileController.h"
 #import "SettingsController.h"
@@ -18,6 +17,8 @@
 #import "NavigationController.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 #import "AddSizeController.h"
+#import "ExplainView.h"
+#import "AppDelegate.h"
 
 @interface ProfileController ()
 
@@ -52,7 +53,7 @@
     self.tableView.tableFooterView = footerView;
     
     if (self.modal == YES) {
-        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
+        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
         self.navigationItem.leftBarButtonItem = cancelButton;
     }
     
@@ -68,15 +69,23 @@
     self.tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
     self.tap.numberOfTapsRequired = 1;
     
-    //user will have seen the add prompt now so disable them seeing it
-    if (![[PFUser currentUser]objectForKey:@"snapSeen"]) {
-        [PFUser currentUser][@"snapSeen"] = @"YES";
-        [[PFUser currentUser]saveInBackground];
-    }
+//    //user will have seen the add prompt now so disable them seeing it
+//    if (![[PFUser currentUser]objectForKey:@"snapSeen"]) {
+//        [PFUser currentUser][@"snapSeen"] = @"YES";
+//        [[PFUser currentUser]saveInBackground];
+//    }
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
+}
+
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+    
+    if (self.tappedTB) {
+        self.tappedTB = NO;
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -84,11 +93,11 @@
     
     [self.navigationController.navigationBar setHidden:NO];
     
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:17],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    self.navigationItem.title = [NSString stringWithFormat:@"%@", [PFUser currentUser].username];
+    self.navigationItem.title = [NSString stringWithFormat:@"@%@", [PFUser currentUser].username];
     
     [Answers logCustomEventWithName:@"Viewed page"
                    customAttributes:@{
@@ -99,7 +108,7 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 3;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -111,7 +120,10 @@
         return 2;
     }
     else if (section == 2){
-        return 4;
+        return 5;
+    }
+    else if (section == 3){
+        return 1;
     }
     else{
         return 1;
@@ -130,7 +142,7 @@
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
-            return self.snapchatCell;
+            return self.instaCell;
         }
         else if (indexPath.row == 1) {
             return self.feedbackCell;
@@ -147,7 +159,15 @@
             return self.howItWorks;
         }
         else if (indexPath.row == 3) {
+            return self.FAQCell;
+        }
+        else if (indexPath.row == 4) {
             return self.termsCell;
+        }
+    }
+    else if (indexPath.section == 3){
+        if (indexPath.row == 0) {
+            return self.logOutCell;
         }
     }
     return nil;
@@ -167,29 +187,35 @@
             [self showInviteView];
         }
         else if (indexPath.row == 1) {
+            [Answers logCustomEventWithName:@"Show Rate"
+                           customAttributes:@{
+                                              @"where": @"settings"
+                                              }];
             [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.navigationController];
         }
 
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
-            
-            //snapchat pressed
-            
-            if (self.snapSeen.isHidden != YES) {
-                [self.snapSeen setHidden:YES];
-            }
-            
-            [Answers logCustomEventWithName:@"Snapchat Add Pressed"
+
+            [Answers logCustomEventWithName:@"Insta Follow Pressed"
                            customAttributes:@{}];
             
-            NSURL *whatsappURL = [NSURL URLWithString:@"snapchat://add/teambump"];
-            if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
-                [[UIApplication sharedApplication] openURL: whatsappURL];
+            NSURL *instaURL = [NSURL URLWithString:@"instagram://user?username=bump_official"];
+            if ([[UIApplication sharedApplication] canOpenURL: instaURL]) {
+                [[UIApplication sharedApplication] openURL: instaURL];
             }
         }
         else if (indexPath.row == 1) {
             //chat w/ Bump
+            if (self.tappedTB) {
+                return;
+            }
+            
+            self.tappedTB = YES;
+            
+            [Answers logCustomEventWithName:@"Chat with Bump pressed"
+                           customAttributes:@{}];
             
             //reset profile badges
             [self.delegate TeamBumpInboxTapped];
@@ -204,6 +230,7 @@
                     vc.convoId = [object objectForKey:@"convoId"];
                     vc.convoObject = object;
                     vc.otherUser = [PFUser currentUser];
+                    vc.showSuggested = YES;
                     [self.unreadView setHidden:YES];
                     [self.navigationController tabBarItem].badgeValue = nil;
                     [self.navigationController pushViewController:vc animated:YES];
@@ -221,6 +248,7 @@
                             vc.convoId = [convoObject objectForKey:@"convoId"];
                             vc.convoObject = convoObject;
                             vc.otherUser = [PFUser currentUser];
+                            vc.showSuggested = YES;
                             [self.unreadView setHidden:YES];
                             [self.navigationController tabBarItem].badgeValue = nil;
                             [self.navigationController pushViewController:vc animated:YES];
@@ -236,11 +264,17 @@
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
             //settings pressed
+            [Answers logCustomEventWithName:@"Settings pressed"
+                           customAttributes:@{}];
+            
             SettingsController *vc = [[SettingsController alloc]init];
             [self.navigationController pushViewController:vc animated:YES];
         }
         else if (indexPath.row == 1) {
             //change sizes pressed
+            [Answers logCustomEventWithName:@"Change default sizes pressed"
+                           customAttributes:@{}];
+            
             AddSizeController *vc = [[AddSizeController alloc]init];
             vc.editMode = YES;
             [self presentViewController:vc animated:YES
@@ -248,14 +282,39 @@
         }
         else if (indexPath.row == 2) {
             //how it works pressed
-            ContainerViewController *vc = [[ContainerViewController alloc]init];
-            vc.explainMode = YES;
+//            ContainerViewController *vc = [[ContainerViewController alloc]init];
+//            vc.explainMode = YES;
+            [Answers logCustomEventWithName:@"How works pressed"
+                           customAttributes:@{}];
+            
+            ExplainView *vc = [[ExplainView alloc]init];
+            vc.introMode = NO;
             [self presentViewController:vc animated:YES
                              completion:nil];
         }
         else if (indexPath.row == 3) {
+            //FAQs pressed
+            [Answers logCustomEventWithName:@"FAQs pressed"
+                           customAttributes:@{}];
+            
+            NSString *URLString = @"http://sobump.com/FAQ/FAQ";
+            self.webView = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
+            self.webView.showUrlWhileLoading = YES;
+            self.webView.showPageTitles = YES;
+            self.webView.doneButtonTitle = @"";
+            self.webView.payMode = NO;
+            self.webView.infoMode = NO;
+            self.webView.delegate = self;
+            
+            NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];
+            [self presentViewController:navigationController animated:YES completion:nil];
+        }
+        else if (indexPath.row == 4) {
             //terms pressed
-            NSString *URLString = @"http://www.sobump.com/terms.html";
+            [Answers logCustomEventWithName:@"Terms pressed"
+                           customAttributes:@{}];
+            
+            NSString *URLString = @"http://www.sobump.com/terms";
             self.webView = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
             self.webView.title = @"Terms & Conditions";
             self.webView.showUrlWhileLoading = YES;
@@ -266,6 +325,22 @@
             self.webView.delegate = self;
             NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];
             [self presentViewController:navigationController animated:YES completion:nil];
+        }
+    }
+    else if (indexPath.section == 3){
+        if (indexPath.row == 0) {
+            //log out pressed
+            [Answers logCustomEventWithName:@"Log Out Pressed"
+                           customAttributes:@{}];
+            [self dismissViewControllerAnimated:YES completion:^{
+                
+                AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                appDelegate.tabBarController.selectedIndex = 0;
+                
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"invalidSessionNotification" object:nil];
+                });
+            }];
         }
     }
 }
@@ -289,7 +364,7 @@
 - (void)showEmail{
     NSString *emailTitle = @"Help us make Bump better!";
     NSString *messageBody = @"Yo\n\n Tell us how we can make Bump even better or any problems you've faced! We promise to reply within an hour.\nPS send us screenshots of anything not working properly!";
-    NSArray *toRecipents = [NSArray arrayWithObject:@"hello@supbump.com"];
+    NSArray *toRecipents = [NSArray arrayWithObject:@"hello@sobump.com"];
     MFMailComposeViewController *mc = [[MFMailComposeViewController alloc] init];
     if (!mc) {
         //no email accounts setup so return
@@ -384,27 +459,26 @@
             NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
             [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
             
-            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
+            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/781237282045226/picture?type=large"]; //use viv's image to fill gap
             [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
         }
         else if (friendsArray.count == 1){
             NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
             [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
             
-            NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
+            NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/781237282045226/picture?type=large"]; //use viv's image
             [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
             
-            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
+            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
             [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
         }
     }
     else{
-        NSURL *picUrl = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image
+        NSURL *picUrl = [NSURL URLWithString:@"https://graph.facebook.com/10207070036095375/picture?type=large"]; //use matsisland's image
         [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
         
-        NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
+        NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/781237282045226/picture?type=large"]; //use viv's image
         [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-        
         NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
         [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
     }
@@ -458,10 +532,13 @@
                      }];
 }
 
+
 -(void)whatsappPressed{
-    [Answers logCustomEventWithName:@"Whatsapp share pressed"
-                   customAttributes:@{}];
-    NSString *shareString = @"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com";
+    [Answers logCustomEventWithName:@"Share Pressed"
+                   customAttributes:@{
+                                      @"type":@"whatsapp"
+                                      }];
+    NSString *shareString = @"Check out Bump for iOS - buy & sell streetwear quickly and with ZERO fees 👟\n\nAvailable here: http://sobump.com";
     NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
     if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
         [[UIApplication sharedApplication] openURL: whatsappURL];
@@ -469,8 +546,10 @@
 }
 
 -(void)messengerPressed{
-    [Answers logCustomEventWithName:@"Messenger share pressed"
-                   customAttributes:@{}];
+    [Answers logCustomEventWithName:@"Share Pressed"
+                   customAttributes:@{
+                                      @"type":@"messenger"
+                                      }];
     NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=http://sobump.com"];
     if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
         [[UIApplication sharedApplication] openURL: messengerURL];
@@ -478,10 +557,13 @@
 }
 
 -(void)textPressed{
-    [Answers logCustomEventWithName:@"More share pressed"
-                   customAttributes:@{}];
+    [self hideInviteView];
+    [Answers logCustomEventWithName:@"Share Pressed"
+                   customAttributes:@{
+                                      @"type":@"share sheet"
+                                      }];
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com"];
+    [items addObject:@"Check out Bump for iOS - buy & sell streetwear quickly and with ZERO fees 👟\n\nAvailable here: http://sobump.com"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
 }

@@ -9,13 +9,16 @@
 #import <UIKit/UIKit.h>
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
+#import "FeedbackController.h"
 
-@interface ReviewsVC : UITableViewController
+@interface ReviewsVC : UITableViewController <feedbackDelegate>
 
 @property (nonatomic, strong) NSMutableArray *feedbackArray;
+@property (nonatomic, strong) NSArray *totalFeedback;
+
 @property (nonatomic, strong) PFUser *user;
 
 @property (nonatomic, strong) NSDateFormatter *dateFormatter;
-
+@property (nonatomic, strong) PFObject *selectedFbObject;
 
 @end

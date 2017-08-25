@@ -18,6 +18,8 @@
 - (void)tabHeaderItemSelected:(int)tabNumber;
 - (void)webHeaderItemSelected:(NSString *)site;
 - (void)searchHeaderSelected;
+- (void)ccHeaderSelectedWithLink:(NSString *)link andText: (NSString *)text;
+
 @end
 
 @interface HomeHeaderView : UICollectionReusableView <iCarouselDataSource,iCarouselDelegate>

@@ -23,7 +23,7 @@
     
     [self fastttAddChildViewController:self.fastCamera];
     self.fastCamera.view.frame = self.camView.frame;
-    self.fastCamera.cameraFlashMode = FastttCameraFlashModeOn;
+    self.fastCamera.cameraFlashMode = FastttCameraFlashModeOff;
     
     if (self.offerMode == YES) {
         // add tag label as camera overlay

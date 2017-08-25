@@ -9,6 +9,9 @@
 #import <UIKit/UIKit.h>
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
+#import <SwipeView/SwipeView.h>
+#import "loginEmailController.h"
+#import "RegisterViewController.h"
 
 @class WelcomeViewController;
 
@@ -16,7 +19,7 @@
 - (void)welcomeDismissed;
 @end
 
-@interface WelcomeViewController : UIViewController
+@interface WelcomeViewController : UIViewController <SwipeViewDelegate, SwipeViewDataSource,LoginVCDelegate,RegVCDelegate>
 @property (weak, nonatomic) IBOutlet UIButton *tutorialTestButton;
 @property (weak, nonatomic) IBOutlet UILabel *descriptionLabel;
 
@@ -25,4 +28,9 @@
 
 //delegate
 @property (nonatomic, weak) id <WelcomeDelegate> delegate;
+
+//brand swipe view
+@property (weak, nonatomic) IBOutlet SwipeView *brandSwipeView;
+@property (nonatomic, strong) NSArray *brandArray;
+
 @end

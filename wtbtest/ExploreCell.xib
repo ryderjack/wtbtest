@@ -1,19 +1,17 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1217" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
-        <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <customFonts key="customFonts">
         <array key="PingFang.ttc">
-            <string>PingFangSC-Medium</string>
             <string>PingFangSC-Regular</string>
         </array>
     </customFonts>
@@ -34,10 +32,6 @@
                             <constraint firstAttribute="width" secondItem="4AD-vX-nRN" secondAttribute="height" multiplier="1:1" id="bro-gJ-Uje"/>
                         </constraints>
                     </imageView>
-                    <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="E8w-iA-Awe">
-                        <rect key="frame" x="0.0" y="0.0" width="175" height="23"/>
-                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
-                    </view>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Item title" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8Dp-d2-LSo">
                         <rect key="frame" x="8" y="180" width="159" height="44"/>
                         <constraints>
@@ -62,72 +56,31 @@
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Price" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="kHw-t2-lsA">
-                        <rect key="frame" x="108" y="1" width="67" height="21"/>
-                        <constraints>
-                            <constraint firstAttribute="height" constant="21" id="pHN-GR-sx9"/>
-                            <constraint firstAttribute="width" constant="67" id="rHq-XU-R68"/>
-                        </constraints>
-                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="14"/>
-                        <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                        <nil key="highlightedColor"/>
-                    </label>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="mzw-pp-kQK">
-                        <rect key="frame" x="8" y="1" width="41" height="22"/>
-                        <constraints>
-                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="41" id="aoX-B4-kV2"/>
-                        </constraints>
-                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="10"/>
-                        <inset key="titleEdgeInsets" minX="6" minY="0.0" maxX="0.0" maxY="0.0"/>
-                        <inset key="imageEdgeInsets" minX="-10" minY="0.0" maxX="0.0" maxY="0.0"/>
-                        <state key="normal" title="44" image="bumpArrowGrey.png"/>
-                        <state key="selected" image="bumpArrowWhite.png"/>
-                        <connections>
-                            <action selector="bumpButtonPressed:" destination="gTV-IL-0wX" eventType="touchUpInside" id="d0T-CM-bNW"/>
-                        </connections>
-                    </button>
                 </subviews>
             </view>
             <constraints>
-                <constraint firstItem="mzw-pp-kQK" firstAttribute="firstBaseline" secondItem="kHw-t2-lsA" secondAttribute="firstBaseline" constant="-1" id="BlB-q4-XG9"/>
                 <constraint firstItem="4AD-vX-nRN" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="GQq-74-jU5"/>
                 <constraint firstAttribute="trailing" secondItem="4AD-vX-nRN" secondAttribute="trailing" id="HBg-fP-mT3"/>
                 <constraint firstItem="gcs-of-dV6" firstAttribute="top" secondItem="8Dp-d2-LSo" secondAttribute="bottom" id="IJ0-EB-EJH"/>
                 <constraint firstItem="4AD-vX-nRN" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="Jwo-Gr-b1z"/>
                 <constraint firstItem="8Dp-d2-LSo" firstAttribute="leading" secondItem="gcs-of-dV6" secondAttribute="leading" id="QSS-xb-m6a"/>
-                <constraint firstItem="mzw-pp-kQK" firstAttribute="leading" secondItem="8Dp-d2-LSo" secondAttribute="leading" id="TNW-H9-feY"/>
                 <constraint firstItem="8Dp-d2-LSo" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leadingMargin" id="Tdq-e9-HAb"/>
-                <constraint firstItem="E8w-iA-Awe" firstAttribute="top" secondItem="4AD-vX-nRN" secondAttribute="top" id="Wv9-1i-U80"/>
-                <constraint firstItem="mzw-pp-kQK" firstAttribute="bottom" secondItem="kHw-t2-lsA" secondAttribute="bottom" constant="1" id="Xd8-U6-jB1"/>
                 <constraint firstAttribute="bottom" secondItem="gcs-of-dV6" secondAttribute="bottom" constant="5" id="YTI-xU-ShT"/>
                 <constraint firstItem="UHy-1o-roN" firstAttribute="top" secondItem="8Dp-d2-LSo" secondAttribute="bottom" id="asW-Ew-vUD"/>
                 <constraint firstItem="UHy-1o-roN" firstAttribute="centerY" secondItem="gcs-of-dV6" secondAttribute="centerY" id="c9L-IE-LYG"/>
-                <constraint firstItem="E8w-iA-Awe" firstAttribute="bottom" secondItem="mzw-pp-kQK" secondAttribute="bottom" id="cbj-Tq-bzS"/>
                 <constraint firstItem="4AD-vX-nRN" firstAttribute="centerX" secondItem="8Dp-d2-LSo" secondAttribute="centerX" id="dTr-AC-jUl"/>
                 <constraint firstItem="UHy-1o-roN" firstAttribute="trailing" secondItem="8Dp-d2-LSo" secondAttribute="trailing" id="ddc-z1-4fj"/>
-                <constraint firstItem="E8w-iA-Awe" firstAttribute="trailing" secondItem="kHw-t2-lsA" secondAttribute="trailing" id="gQ2-md-dua"/>
-                <constraint firstItem="mzw-pp-kQK" firstAttribute="top" secondItem="kHw-t2-lsA" secondAttribute="top" id="i9e-Vo-oFF"/>
                 <constraint firstItem="8Dp-d2-LSo" firstAttribute="top" secondItem="4AD-vX-nRN" secondAttribute="bottom" constant="5" id="kt1-IG-vcG"/>
-                <constraint firstItem="kHw-t2-lsA" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="1" id="kyy-tm-u98"/>
                 <constraint firstAttribute="trailing" secondItem="gcs-of-dV6" secondAttribute="trailing" constant="63" id="sz1-cQ-fNx"/>
-                <constraint firstItem="E8w-iA-Awe" firstAttribute="leading" secondItem="4AD-vX-nRN" secondAttribute="leading" id="wAf-2l-GgE"/>
-                <constraint firstAttribute="trailing" secondItem="kHw-t2-lsA" secondAttribute="trailing" id="zj2-gw-a0F"/>
             </constraints>
             <size key="customSize" width="230" height="233"/>
             <connections>
-                <outlet property="bumpButton" destination="mzw-pp-kQK" id="g8D-vE-2mJ"/>
                 <outlet property="distanceLabel" destination="UHy-1o-roN" id="KRg-az-rCP"/>
                 <outlet property="imageView" destination="4AD-vX-nRN" id="dHl-rW-6ya"/>
-                <outlet property="priceLabel" destination="kHw-t2-lsA" id="XO2-gQ-tJz"/>
                 <outlet property="sizeLabel" destination="gcs-of-dV6" id="j2C-a9-ior"/>
                 <outlet property="titleLabel" destination="8Dp-d2-LSo" id="jza-QC-0ig"/>
-                <outlet property="transView" destination="E8w-iA-Awe" id="YeV-dh-2sN"/>
             </connections>
             <point key="canvasLocation" x="358.5" y="350"/>
         </collectionViewCell>
     </objects>
-    <resources>
-        <image name="bumpArrowGrey.png" width="7" height="8"/>
-        <image name="bumpArrowWhite.png" width="7" height="8"/>
-    </resources>
 </document>

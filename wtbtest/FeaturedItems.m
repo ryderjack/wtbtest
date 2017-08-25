@@ -86,7 +86,7 @@
         }
     }];
 }
--(NSMutableArray *)getRandomsLessThan:(int)M {  /////////////////////CHECK - ennsure number of for sale listings is bigger than 30
+-(NSMutableArray *)getRandomsLessThan:(int)M {  /////////////////////CHECK - ensure number of for sale listings is bigger than 30
     NSMutableArray *listOfNumbers = [[NSMutableArray alloc] init];
     for (int i=0 ; i<M ; ++i) {
         [listOfNumbers addObject:[NSNumber numberWithInt:i]]; // ADD 1 TO GET NUMBERS BETWEEN 1 AND M RATHER THAN 0 and M-1

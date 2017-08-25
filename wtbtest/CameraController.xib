@@ -1,21 +1,25 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11761" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
+    <customFonts key="customFonts">
+        <array key="PingFang.ttc">
+            <string>PingFangSC-Regular</string>
+        </array>
+    </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CameraController">
             <connections>
                 <outlet property="camView" destination="R2B-xG-3vZ" id="8yO-mc-V1Z"/>
                 <outlet property="flashButton" destination="eOf-7j-TyT" id="AVu-7d-NqZ"/>
                 <outlet property="switchButton" destination="cqQ-ho-GfP" id="PdD-d6-sUm"/>
-                <outlet property="tageLabel" destination="mpn-H3-crI" id="mGs-Fj-bzK"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -26,30 +30,14 @@
             <subviews>
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="R2B-xG-3vZ">
                     <rect key="frame" x="0.0" y="66" width="375" height="375"/>
-                    <subviews>
-                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="mpn-H3-crI">
-                            <rect key="frame" x="0.0" y="0.0" width="375" height="62"/>
-                            <constraints>
-                                <constraint firstAttribute="height" constant="62" id="qUW-XL-7k0"/>
-                            </constraints>
-                            <fontDescription key="fontDescription" name="AvenirNext-Regular" family="Avenir Next" pointSize="17"/>
-                            <color key="textColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                            <nil key="highlightedColor"/>
-                        </label>
-                    </subviews>
                     <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                    <constraints>
-                        <constraint firstAttribute="trailing" secondItem="mpn-H3-crI" secondAttribute="trailing" id="FKj-hO-rMr"/>
-                        <constraint firstItem="mpn-H3-crI" firstAttribute="leading" secondItem="R2B-xG-3vZ" secondAttribute="leading" id="i7T-Hv-eZC"/>
-                        <constraint firstItem="mpn-H3-crI" firstAttribute="top" secondItem="R2B-xG-3vZ" secondAttribute="top" id="zHZ-f7-FUB"/>
-                    </constraints>
                 </view>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eOf-7j-TyT">
                     <rect key="frame" x="319" y="451" width="40" height="40"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="Kl0-6h-L15"/>
                     </constraints>
-                    <state key="normal" image="flashOn.png"/>
+                    <state key="normal" image="FlashOff.png"/>
                     <state key="selected" image="FlashOff.png"/>
                     <connections>
                         <action selector="flashPressed:" destination="-1" eventType="touchUpInside" id="X1a-9A-yYs"/>
@@ -82,14 +70,13 @@
                     <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7hA-2P-aPG">
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7hA-2P-aPG">
                     <rect key="frame" x="16" y="20" width="40" height="40"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="eDS-l8-4dH"/>
                         <constraint firstAttribute="height" constant="40" id="yKk-W5-8iD"/>
                     </constraints>
-                    <fontDescription key="fontDescription" name="AvenirNext-Bold" family="Avenir Next" pointSize="16"/>
-                    <state key="normal" title="X">
+                    <state key="normal" image="whiteCross.png">
                         <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </state>
                     <connections>
@@ -125,7 +112,7 @@
     <resources>
         <image name="FlashOff.png" width="17" height="20"/>
         <image name="cameraIcon.png" width="98" height="98"/>
-        <image name="flashOn.png" width="14" height="20"/>
         <image name="switchIcon.png" width="20" height="20"/>
+        <image name="whiteCross.png" width="50" height="50"/>
     </resources>
 </document>

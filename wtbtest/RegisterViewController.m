@@ -17,6 +17,8 @@
 #import "UIImage+Resize.h"
 #import <QuartzCore/QuartzCore.h>
 #import <SDWebImage/UIImageView+WebCache.h>
+#import "ExplainView.h"
+#import "AppDelegate.h"
 
 @interface RegisterViewController ()
 @end
@@ -35,6 +37,8 @@
     self.emailField.delegate = self;
     self.usernameField.delegate = self;
     self.depopField.delegate = self;
+    self.lastNameField.delegate = self;
+    self.passwordField.delegate = self;
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -47,6 +51,8 @@
     
     self.selectedCurrency = @"GBP";
     [self.GBPButton setSelected:YES];
+    
+    [self setImageBorder];
     
     self.profanityList = @[@"fuck", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"#", @"?", @"!", @"£", @"/", @"(", @")", @":", @",", @"'", @"$", @" ",@"<", @">", @"+", @"=", @"%", @"[", @"]", @"{", @"}", @"^", @"..fuckfuck"];
     
@@ -69,9 +75,48 @@
                          NSLog(@"showing");
                      }];
     
-    //get friends list
+    if (self.emailMode != YES) {
+        //get friends list
+        [self getFriends];
+        
+        //setup deals data
+        [self setupFeedback];
+        
+        self.nameField.placeholder = @"Name";
+    }
+    else{
+        self.nameField.placeholder = @"First name";
+        [self addDoneButton];
+    }
+    
+    //check if device banned and trying to create a new account
+    PFInstallation *installation = [PFInstallation currentInstallation];
+    PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+    
+    if (installation.deviceToken) {
+        [bannedInstallsQuery whereKey:@"deviceToken" equalTo:installation.deviceToken];
+    }
+    else{
+        //to prevent simulator returning loads of results and fucking up banning logic
+        [bannedInstallsQuery whereKey:@"deviceToken" equalTo:@"thisISNothing"];
+    }
+    
+    [bannedInstallsQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
+        if (number >= 1) {
+            //user is banned - log them out
+            
+            [Answers logCustomEventWithName:@"Preventing Banned User Signing Up"
+                           customAttributes:@{}];
+            
+            self.banMode = YES;
+            [self showAlertWithTitle:@"Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
+        }
+    }];
+}
+
+-(void)getFriends{
     FBSDKGraphRequest *request = [[FBSDKGraphRequest alloc]
-                                  initWithGraphPath:@"me/friends"
+                                  initWithGraphPath:@"me/friends/?limit=5000"
                                   parameters:@{@"fields": @"id, name"}
                                   HTTPMethod:@"GET"];
     [request startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection,
@@ -96,7 +141,7 @@
                 [self setImageBorder:self.friendTwoImageView];
                 [self setImageBorder:self.friendThreeImageView];
                 
-                self.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", friends.count];
+                self.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friends.count];
                 self.showFriendsCell = YES;
                 
                 int rowIndex = 0;//your row index where you want to add cell
@@ -121,11 +166,16 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [self startLocationManager];
+    
+    if (self.emailMode && self.pressedCam != YES) {
+        [self.nameField becomeFirstResponder];
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    if (self.pressedCam != YES) {
+    
+    if (self.pressedCam != YES && self.emailMode != YES) {
         [self requestFacebook:self.user];
     }
     if (self.regShowing == NO) {
@@ -168,6 +218,10 @@
 {
     if ([userData objectForKey:@"email"]) {
         self.emailField.text = [userData objectForKey:@"email"];
+        
+        if (self.checkedEmail != YES) {
+            [self checkEmailExists];
+        }
     }
     if ([userData objectForKey:@"name"]) {
         self.nameField.text = [userData objectForKey:@"name"];
@@ -189,31 +243,54 @@
     if ([userData objectForKey:@"picture"]) {
         NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", userData[@"id"]];
         NSURL *picUrl = [NSURL URLWithString:userImageURL];
-        NSData *pic = [NSData dataWithContentsOfURL:picUrl];
-        [self.profilePicture setImage:[UIImage imageWithData:pic]];
-        [self setImageBorder];
+        NSData *picData = [NSData dataWithContentsOfURL:picUrl]; //cast as a jpeg //CHANGE
         
-        // setup feedback
-        PFObject *dealsData = [PFObject objectWithClassName:@"deals"];
-        [dealsData setObject:[PFUser currentUser] forKey:@"User"];
-        [dealsData setObject:@0 forKey:@"star1"];
-        [dealsData setObject:@0 forKey:@"star2"];
-        [dealsData setObject:@0 forKey:@"star3"];
-        [dealsData setObject:@0 forKey:@"star4"];
-        [dealsData setObject:@0 forKey:@"star5"];
-        
-        [dealsData setObject:@0 forKey:@"dealsTotal"];
-        [dealsData setObject:@0 forKey:@"sold"];
-        [dealsData setObject:@0 forKey:@"purchased"];
-        [dealsData setObject:@0 forKey:@"currentRating"];
-        [dealsData saveInBackground];
+//        [self.profilePicture sd_setImageWithURL:picUrl];
         
         //save image
-        PFFile *picFile = [PFFile fileWithData:pic];
-        self.user[PF_USER_PICTURE] = picFile;
+        if (picData == nil) {
+            
+            [self showAlertWithTitle:@"Facebook Image Error" andMsg:@"Woops, we couldn't retrieve your profile picture. Please add one from your camera roll!"];
+            [Answers logCustomEventWithName:@"PFFile Nil Data"
+                           customAttributes:@{
+                                              @"pageName":@"Reg FB"
+                                              }];
+        }
+        else{
+            PFFile *picFile = [PFFile fileWithData:picData];
+            [picFile saveInBackground]; //speed up reg save
+            
+            self.user[PF_USER_PICTURE] = picFile;
+        }
     }
 }
 
+-(void)setupFeedback{
+    // setup feedback
+    NSLog(@"setting up feedback");
+    
+    PFObject *dealsData = [PFObject objectWithClassName:@"deals"];
+    [dealsData setObject:self.user forKey:@"User"];
+    [dealsData setObject:@0 forKey:@"star1"];
+    [dealsData setObject:@0 forKey:@"star2"];
+    [dealsData setObject:@0 forKey:@"star3"];
+    [dealsData setObject:@0 forKey:@"star4"];
+    [dealsData setObject:@0 forKey:@"star5"];
+    
+    [dealsData setObject:@0 forKey:@"dealsTotal"];
+    [dealsData setObject:@0 forKey:@"currentRating"];
+    
+
+    [dealsData saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            NSLog(@"saved feedback");
+
+            //already have deals info saved
+            self.user[@"dealsSaved"] = @"YES";
+            [self.user saveInBackground];
+        }
+    }];
+}
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
 }
@@ -226,85 +303,177 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
-    if (section == 0){
-        return 6;
-    }
-    else if (section == 1){
-        if (self.showFriendsCell == YES) {
+    if (self.emailMode == YES) {
+        //sign up with email
+        if (section == 0){
+            return 7;
+        }
+        else if (section == 1){
             return 2;
         }
         else{
-            return 1;
+            return 0;
         }
     }
     else{
-      return 0;
+        //sign up with fb
+        if (section == 0){
+            return 5;
+        }
+        else if (section == 1){
+            if (self.showFriendsCell == YES) {
+                return 3;
+            }
+            else{
+                return 2;
+            }
+        }
+        else{
+            return 0;
+        }
     }
+
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (indexPath.section == 0){
-        if (indexPath.row == 0) {
-            return self.titleCell;
-        }
-        else if(indexPath.row == 1){
-            return self.nameCell;
-        }
-        else if(indexPath.row == 2){
-            return self.emailCell;
-        }
-        else if(indexPath.row == 3){
-            return self.usernameCell;
-        }
-        else if(indexPath.row == 4){
-            return self.currencyCell;
-        }
-        else if(indexPath.row == 5){
-            return self.pictureCell;
-        }
-    }
-    else if (indexPath.section ==1){
-        if (self.showFriendsCell == YES) {
-            if (indexPath.row == 0) {
-                return self.friendsCell;
+    if (self.emailMode == YES) {
+        if (indexPath.section == 0){
+            if(indexPath.row == 0){
+                return self.titleCell;
             }
+//            else if (indexPath.row == 1) {
+//                return self.pictureCell;
+//            }
             else if(indexPath.row == 1){
+                return self.nameCell;
+            }
+            else if(indexPath.row == 2){
+                return self.secondNameCell;
+            }
+            else if(indexPath.row == 3){
+                return self.emailCell;
+            }
+            else if(indexPath.row == 4){
+                return self.usernameCell;
+            }
+            else if(indexPath.row == 5){
+                return self.passwordCell;
+            }
+            else if(indexPath.row == 6){
+                return self.currencyCell;
+            }
+        }
+        else if (indexPath.section ==1){
+            if (indexPath.row == 0) {
                 return self.regCell;
             }
+            else{
+                return self.spaceCell;
+            }
         }
-        else{
-            return self.regCell;
-        }
+        return nil;
     }
-    return nil;
+    else{
+        if (indexPath.section == 0){
+            if (indexPath.row == 0) {
+                return self.titleCell;
+            }
+            else if(indexPath.row == 1){
+                return self.nameCell;
+            }
+            else if(indexPath.row == 2){
+                return self.emailCell;
+            }
+            else if(indexPath.row == 3){
+                return self.usernameCell;
+            }
+            else if(indexPath.row == 4){
+                return self.currencyCell;
+            }
+//            else if(indexPath.row == 5){
+//                return self.pictureCell;
+//            }
+
+        }
+        else if (indexPath.section ==1){
+            if (self.showFriendsCell == YES) {
+                if (indexPath.row == 0) {
+                    return self.friendsCell;
+                }
+                else if(indexPath.row == 1){
+                    return self.regCell;
+                }
+                else if(indexPath.row == 2){
+                    return self.spaceCell;
+                }
+            }
+            else{
+                if(indexPath.row == 0){
+                    return self.regCell;
+                }
+                else if(indexPath.row == 1){
+                    return self.spaceCell;
+                }
+            }
+        }
+        return nil;
+    }
+
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     
-    if (indexPath.section == 0){
-        if (indexPath.row == 0) {
-            return 58;
-        }
-        else if(indexPath.row == 1 ||indexPath.row == 2 ||indexPath.row == 3 ||indexPath.row == 4){
-            return 44;
-        }
-        else if(indexPath.row == 5){
-            return 156;
-        }
-    }
-    else if (indexPath.section ==1){
-        if (self.showFriendsCell == YES) {
+    if (self.emailMode == YES) {
+        if (indexPath.section == 0){
             if (indexPath.row == 0) {
-                return 80;
+                return 58;
+            }
+            else if(indexPath.row == 1 ||indexPath.row == 2 ||indexPath.row == 3 ||indexPath.row == 4 ||indexPath.row == 5||indexPath.row == 6){
+                return 44;
+            }
+//            else if(indexPath.row == 1){
+//                return 156;
+//            }
+        }
+        else if (indexPath.section ==1){
+            if (indexPath.row == 0) {
+                return 88;
             }
             else if(indexPath.row == 1){
+                return 60;
+            }
+        }
+        return 44;
+    }
+    else{
+        if (indexPath.section == 0){
+            if (indexPath.row == 0) {
+                return 58;
+            }
+            else if(indexPath.row == 1 ||indexPath.row == 2 ||indexPath.row == 3 ||indexPath.row == 4){
+                return 44;
+            }
+//            else if(indexPath.row == 5){
+//                return 156;
+//            }
+        }
+        else if (indexPath.section ==1){
+            if (self.showFriendsCell == YES) {
+                if (indexPath.row == 0) {
+                    return 80;
+                }
+                else if(indexPath.row == 1){
+                    return 88;
+                }
+                else if(indexPath.row == 2){
+                    return 60;
+                }
+            }
+            else{
                 return 88;
             }
         }
-        else{
-            return 88;
-        }
+        return 44;
     }
-    return 44;
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
@@ -359,13 +528,47 @@
     imageView.contentMode = UIViewContentModeScaleAspectFill;
 }
 
+-(void)textFieldDidBeginEditing:(UITextField *)textField{
+    //reset colour to black
+    textField.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
+    
+    if (textField != self.nameField) {
+        self.somethingChanged = YES;
+    }
+}
+
 -(void)textFieldDidEndEditing:(UITextField *)textField{
+    self.warningLabel.text = @"";
+    
     if (textField == self.usernameField) {
         if ([self.profanityList containsObject:textField.text.lowercaseString]) {
             textField.text = @"";
         }
         if ([textField.text containsString:@" "]) {
             textField.text = @"";
+        }
+    }
+    else if (textField == self.emailField && self.emailMode){
+        
+        if ([self.emailField.text isEqualToString:@""]) {
+            self.warningLabel.text = @"";
+        }
+        else if ([self NSStringIsValidEmail:self.emailField.text] == NO) {
+            self.warningLabel.text = @"Enter a valid email";
+            self.emailField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
+        }
+        else{
+            self.warningLabel.text = @"";
+            self.emailField.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
+            [self checkEmailExists];
+        }
+    }
+    else if (textField == self.passwordField){
+        if (self.passwordField) {
+            NSString *pass = [self.passwordField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            if ([pass length] < 8 && [pass length] != 0) {
+                [self showAlertWithTitle:@"Password Length" andMsg:@"Passwords must be at least 8 characters with no spaces"];
+            }
         }
     }
 }
@@ -393,38 +596,78 @@
         NSUInteger newLength = [textField.text length] + [string length] - range.length;
         return newLength <= 20;
     }
+    else if (textField == self.passwordField){
+        //no spaces or emoji's
+        if ([string isEqualToString:@" "]) {
+            return NO;
+        }
+        
+        if (![string canBeConvertedToEncoding:NSASCIIStringEncoding]){
+            return NO;
+        }
+    }
     return string;
 }
 
 - (IBAction)regPressed:(id)sender {
     
     [self.regButton setEnabled:NO];
+    [self.cancelCrossButton setEnabled:NO];
+    [self.helpButton setEnabled:NO];
     
     if ([self.profanityList containsObject:self.usernameField.text.lowercaseString]) {
         self.usernameField.text = @"";
-        self.warningLabel.text = @"Choose a username";
+        self.warningLabel.text = @"Invalid username";
         [self.regButton setEnabled:YES];
+        [self.helpButton setEnabled:YES];
+        [self.cancelCrossButton setEnabled:YES];
         return;
     }
     
     //check values entered
     NSString *name = [self.nameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    NSString *email = [self.emailField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSString *email = [[self.emailField.text lowercaseString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSString *username = [self.usernameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
-    if ([name length] == 0 || [email length] == 0 || [username length] == 0 || [self.selectedCurrency isEqualToString:@""])  {
+    NSString *lastName = @"";
+    NSString *pass = @"";
+
+    if (self.emailMode == YES) {
+        lastName = [self.lastNameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        pass = [self.passwordField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    }
+    else{
+        //fill this with random word to pass the checks as facebook will have prefilled this
+        lastName = @"yo";
+        pass = @"12345678";
+    }
+    
+    if ([name length] == 0 || [email length] == 0 || [username length] == 0 || [lastName length] == 0 ||[pass length] < 8 || [self.selectedCurrency isEqualToString:@""])  {
         self.warningLabel.text = @"Complete all the fields";
         [self.regButton setEnabled:YES];
+        [self.cancelCrossButton setEnabled:YES];
+        [self.helpButton setEnabled:YES];
     }
+//    else if (self.profilePicture.image == nil && self.emailMode != YES){
+//        //haven't added a picture (only required
+//        self.warningLabel.text = @"Add a profile picture";
+//        [self.regButton setEnabled:YES];
+//        [self.cancelCrossButton setEnabled:YES];
+//        [self.helpButton setEnabled:YES];
+//    }
     else{
         if ([self NSStringIsValidEmail:self.emailField.text] == NO) {
             self.warningLabel.text = @"Enter a valid email";
             self.emailField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
             [self.regButton setEnabled:YES];
+            [self.cancelCrossButton setEnabled:YES];
+            [self.helpButton setEnabled:YES];
+            return;
         }
         else{
             [self showHUD];
             [self.spinner startAnimating];
+            
             [Answers logCustomEventWithName:@"Selected currency"
                            customAttributes:@{
                                               @"currency":self.selectedCurrency,
@@ -437,170 +680,311 @@
                 if (!error) {
                     if (number == 0) {
                         NSLog(@"username is available!");
-                        self.user[PF_USER_FULLNAME] = name;
-                        self.user[@"fullnameLower"] = [name lowercaseString];
-                        self.user[PF_USER_EMAIL] = email;
-                        self.user[@"paypal"] = email;
-                        self.user[PF_USER_USERNAME] = [username lowercaseString];
-                        self.user[@"currency"] = self.selectedCurrency;
-                        self.user[@"completedReg"] = @"YES";
-                        self.user[@"indexedListings"] = @"YES";
-                        self.user[@"bumpArray"] = @[];
-                        self.user[@"snapSeen"] = @"YES";
-                        [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
-                         {
-                             if (succeeded)
-                             {
-                                 //opt in for the welcome email
-                                 NSDictionary *params = @{@"id": @"a9803761de",@"double_optin":@NO,@"email": @{@"email":email}, @"merge_vars": @{@"FNAME": [self.user objectForKey:@"firstName"], @"LName":[self.user objectForKey:@"lastName"]}};
-                                 
-                                 [[ChimpKit sharedKit] callApiMethod:@"lists/subscribe" withParams:params andCompletionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
-                                     //        NSLog(@"HTTP Status Code: %d", response.statusCode);
-                                     NSLog(@"Response String: %@", response);
-                                     //
-                                     if (error) {
-                                         //Handle connection error
-                                         NSLog(@"Chimp Error, %@", error);
-                                         [Answers logCustomEventWithName:@"welcome email error"
-                                                        customAttributes:@{
-                                                                           @"error":error
-                                                                           }];
-                                         dispatch_async(dispatch_get_main_queue(), ^{
-                                             //Update UI here
-                                         });
-                                     } else {
-                                         NSError *parseError = nil;
-                                         id response = [NSJSONSerialization JSONObjectWithData:data
-                                                                                       options:0
-                                                                                         error:&parseError];
-                                         if ([response isKindOfClass:[NSDictionary class]]) {
-                                             id email = [response objectForKey:@"email"];
-                                             if ([email isKindOfClass:[NSString class]]) {
-                                                 //Successfully subscribed email address
-                                                 NSLog(@"success with the chimp!");
-                                                 
-                                                 [Answers logCustomEventWithName:@"Sent welcome email"
-                                                                customAttributes:@{}];
-                                                 
-                                                 dispatch_async(dispatch_get_main_queue(), ^{
-                                                     //Update UI here
-                                                 });
-                                             }
-                                         }
-                                     }
-                                 }];
-                                 NSLog(@"saved new user! %@", [PFUser currentUser]);
-                                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"showHowWorks"];
-                                 
-                                 //update installation object w/ current user
-                                 PFInstallation *installation = [PFInstallation currentInstallation];
-                                 [installation setObject:[PFUser currentUser] forKey:@"user"];
-                                 [installation setObject:[PFUser currentUser].objectId forKey:@"userId"];
-                                 [installation saveInBackground];
-                                 
-                                 //create team bump convo
-                                 PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
-                                 convoObject[@"otherUser"] = [PFUser currentUser];
-                                 convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-                                 convoObject[@"totalMessages"] = @0;
-                                 [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                                     if (succeeded) {
-                                         NSString *messageString = @"🙌 Welcome to Bump 🙌\n\n👟 Want to buy streetwear?\nCreate wanted listings in seconds that tell sellers what you're looking for, then check out items you can buy straight away on Bump.\n\n🤑 Selling something?\nUse the search tools to find people that want what you're selling and send them a message!\n\n💥 Discover\nTap the shopping cart icon to browse items for sale as well as the latest sneaker releases & schedule reminders too.\n\nGot any questions? Just send us a message 👊\n\nSophie @ Team Bump";
-                                         
-                                         //saved, create intro message
-                                         PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
-                                         messageObject[@"message"] = messageString;
-                                         messageObject[@"sender"] = [PFUser currentUser];
-                                         messageObject[@"senderId"] = @"BUMP";
-                                         messageObject[@"senderName"] = @"Team Bump";
-                                         messageObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-                                         messageObject[@"status"] = @"sent";
-                                         messageObject[@"offer"] = @"NO";
-                                         messageObject[@"mediaMessage"] = @"NO";
-                                         [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                                             if (succeeded == YES) {
-                                                 
-//                                                 NSLog(@"saved message, here it is: %@", messageObject);
-                                                 
-                                                 //update convo
-                                                 [convoObject incrementKey:@"totalMessages"];
-                                                 [convoObject setObject:messageObject forKey:@"lastSent"];
-                                                 [convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
-                                                 [convoObject incrementKey:@"userUnseen"];
-                                                 [convoObject saveInBackground];
+                        
+                        //now do saving
+                        if (self.emailMode) {
+                            self.user.password = pass;
+                            self.user.username = [username lowercaseString];
+                            
+                            //sign user up first then save stuff
+                            
+                            [self.user signUpInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                if (succeeded) {
+                                    NSLog(@"signed up!");
+                                    [self saveUser];
+                                }
+                                else{
+                                    NSLog(@"signup failed %@", error);
+                                    
+                                    [Answers logCustomEventWithName:@"Email Signup error"
+                                                   customAttributes:@{
+                                                                      @"error":error
+                                                                      }];
+                                    
+                                    [self hideHUD];
+                                    [self.regButton setEnabled:YES];
+                                    [self.helpButton setEnabled:YES];
+                                    [self.cancelCrossButton setEnabled:YES];
+                                    [self showAlertWithTitle:@"Sign up Error" andMsg:[NSString stringWithFormat:@"%@", error]];
+                                }
+                            }];
+                            
+                        }
+                        else{
+                            //just save, signed up via fb
+                            [self saveUser];
+                        }
 
-                                             }
-                                             else{
-                                                 NSLog(@"error sending message %@", error);
-                                             }
-                                         }];
-                                         
-
-                                     }
-                                     else{
-                                         NSLog(@"error saving convo");
-                                     }
-                                 }];
-
-                                 //save Bumped Obj
-                                 PFObject *bumpedObj = [PFObject objectWithClassName:@"Bumped"];
-                                 [bumpedObj setObject:[self.user objectForKey:@"facebookId"] forKey:@"facebookId"];
-                                 [bumpedObj setObject:self.user forKey:@"user"];
-                                 [bumpedObj setObject:[NSDate date] forKey:@"safeDate"];
-                                 [bumpedObj setObject:@0 forKey:@"timesBumped"];
-                                 [bumpedObj saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                                     if (succeeded) {
-                                         NSLog(@"saved bumped obj");
-                                     }
-                                 }];
-                                 
-                                 [self hideHUD];
-                                 
-                                 //show add size modal first
-                                 AddSizeController *vc = [[AddSizeController alloc]init];
-                                 vc.delegate = self;
-                                 [self.navigationController presentViewController:vc animated:YES completion:nil];
-
-                                 //progress to tutorial
-//                                 Tut1ViewController *vc = [[Tut1ViewController alloc]init];
-//                                 vc.clickMode = YES;
-//                                 [self.navigationController pushViewController:vc animated:YES];
-                             }
-                             else
-                             {
-                                 [self.regButton setEnabled:YES];
-                                 [self hideHUD];
-                                 NSLog(@"error %@", error);
-                                 UIAlertController * alert=   [UIAlertController
-                                                               alertControllerWithTitle:@"Error"
-                                                               message:@"Make sure you're connected to the internet!"
-                                                               preferredStyle:UIAlertControllerStyleAlert];
-                                 UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
-                                 [alert addAction:ok];
-                                 [self presentViewController:alert animated:YES completion:nil];
-                             }
-                         }];
                     }
                     else{
                         NSLog(@"username taken");
                         [self hideHUD];
                         [self.regButton setEnabled:YES];
+                        [self.helpButton setEnabled:YES];
+                        [self.cancelCrossButton setEnabled:YES];
                         self.warningLabel.text = @"Username taken";
                         self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
                     }
                 }
                 else{
                     NSLog(@"error checking username");
+                    [self hideHUD];
                     self.warningLabel.text = @"Error with username";
                     [self.regButton setEnabled:YES];
+                    [self.cancelCrossButton setEnabled:YES];
+                    [self.helpButton setEnabled:YES];
                 }
             }];
         }
     }
 }
 
--(BOOL)textFieldShouldReturn:(UITextField *)textField{
-    [textField resignFirstResponder];
+-(void)saveUser{
+    
+    //check values entered
+    NSString *name = [self.nameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSString *email = [[self.emailField.text lowercaseString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSString *username = [self.usernameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
+    NSString *lastName = @"";
+    NSString *pass = @"";
+    
+    if (self.emailMode == YES) {
+        lastName = [self.lastNameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        pass = [self.passwordField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    }
+    
+    if (self.emailMode) {
+        
+        //need to set first and last names and full name / full name lower
+        self.user[PF_USER_FULLNAME] = [NSString stringWithFormat:@"%@ %@", [name capitalizedString],[lastName capitalizedString]];
+        self.user[@"fullnameLower"] = [[NSString stringWithFormat:@"%@ %@", name,lastName] lowercaseString];
+        
+        self.user[@"firstName"] = [name capitalizedString];
+        self.user[@"firstNameLower"] = [name lowercaseString];
+        
+        self.user[@"lastName"] = [lastName capitalizedString];
+        self.user[@"lastNameLower"] = [lastName lowercaseString];
+                
+        //save password
+        self.user.password = pass;
+        
+    }
+    else{
+        //just need to set fullname since its fb mode
+        self.user[PF_USER_FULLNAME] = [name capitalizedString];
+        self.user[@"fullnameLower"] = [name lowercaseString];
+    }
+    
+    self.user[PF_USER_EMAIL] = email;
+    self.user[@"paypal"] = email;
+    self.user[PF_USER_USERNAME] = [username lowercaseString];
+    self.user[@"currency"] = self.selectedCurrency;
+    self.user[@"completedReg"] = @"YES";
+    self.user[@"indexedListings"] = @"YES";
+    self.user[@"bumpArray"] = @[];
+    
+    
+    //add device token to user obj so simple to track and ban
+    PFInstallation *installation = [PFInstallation currentInstallation];
+    if (installation.deviceToken) {
+        [self.user setObject:installation.deviceToken forKey:@"deviceToken"];
+    }
+    
+    [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
+     {
+         if (succeeded)
+         {
+             
+             NSLog(@"saved user: %@", [PFUser currentUser]);
+             
+             //set user as tabUser
+             AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+             appDelegate.profileView.user = self.user;
+             
+             //tracking & deals data setup
+             if (self.emailMode) {
+                 //setup deals data
+                 [self setupFeedback];
+                 
+                 [Answers logSignUpWithMethod:@"Email"
+                                      success:@YES
+                             customAttributes:@{}];
+                 
+                 //send confirmation email
+                 [self sendConfirmationEmail];
+                 
+             }
+             else{
+                 [Answers logSignUpWithMethod:@"Facebook"
+                                      success:@YES
+                             customAttributes:@{}];
+                 
+                 NSDictionary *params = @{@"toEmail": email};
+                 [PFCloud callFunctionInBackground:@"sendWelcomeEmail" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                     if (!error) {
+                         
+                         [Answers logCustomEventWithName:@"Sent Welcome Email"
+                                        customAttributes:@{}];
+
+                     }
+                     else{
+                         NSLog(@"email error %@", error);
+                         
+                         [Answers logCustomEventWithName:@"Error sending Welcome Email"
+                                        customAttributes:@{}];
+                     }
+                 }];
+                 
+//                 NSDictionary *params = @{@"id": @"a9803761de",@"double_optin":@NO,@"email": @{@"email":email}, @"merge_vars": @{@"FNAME": [self.user objectForKey:@"firstName"], @"LName":[self.user objectForKey:@"lastName"]}};
+//                 
+//                 [[ChimpKit sharedKit] callApiMethod:@"lists/subscribe" withParams:params andCompletionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
+//                     //        NSLog(@"HTTP Status Code: %d", response.statusCode);
+////                     NSLog(@"Response String: %@", response);
+//                     //
+//                     if (error) {
+//                         //Handle connection error
+//                         NSLog(@"Chimp Error, %@", error);
+//                         
+//                         dispatch_async(dispatch_get_main_queue(), ^{
+//                             //Update UI here
+//                             [Answers logCustomEventWithName:@"welcome email error"
+//                                            customAttributes:@{
+//                                                               @"error":error
+//                                                               }];
+//                         });
+//                     } else {
+//                         NSError *parseError = nil;
+//                         id response = [NSJSONSerialization JSONObjectWithData:data
+//                                                                       options:0
+//                                                                         error:&parseError];
+//                         if ([response isKindOfClass:[NSDictionary class]]) {
+//                             id email = [response objectForKey:@"email"];
+//                             if ([email isKindOfClass:[NSString class]]) {
+//                                 //Successfully subscribed email address
+//                                 NSLog(@"success with the chimp!");
+//                                 
+//                                 [Answers logCustomEventWithName:@"Sent welcome email"
+//                                                customAttributes:@{}];
+//                                 
+//                                 dispatch_async(dispatch_get_main_queue(), ^{
+//                                     //Update UI here
+//                                 });
+//                             }
+//                         }
+//                     }
+//                 }];
+             }
+
+             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"showHowWorks"];
+             
+             PFInstallation *installation = [PFInstallation currentInstallation];
+             [installation setObject:[PFUser currentUser] forKey:@"user"];
+             [installation setObject:[PFUser currentUser].objectId forKey:@"userId"];
+             [installation saveInBackground];
+             
+             //create team bump convo
+             PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
+             convoObject[@"otherUser"] = [PFUser currentUser];
+             convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+             convoObject[@"totalMessages"] = @0;
+             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                 if (succeeded) {
+                     NSString *messageString = @"🙌 Welcome to Bump 🙌\n\n👟 Buying\nBrowse the latest items for sale, search through items by tapping the search bar at the top of the home tab, and create wanted listings so sellers can see what you want\n\n🤑 Selling\nList an item by tapping the tag icon or search through wanted listings to sell even faster\n\n💥 Got any questions? Just send us a message 👊\n\nSophie @ Team Bump";
+                     
+                     //saved, create intro message
+                     PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
+                     messageObject[@"message"] = messageString;
+                     messageObject[@"sender"] = [PFUser currentUser];
+                     messageObject[@"senderId"] = @"BUMP";
+                     messageObject[@"senderName"] = @"Team Bump";
+                     messageObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+                     messageObject[@"status"] = @"sent";
+                     messageObject[@"offer"] = @"NO";
+                     messageObject[@"mediaMessage"] = @"NO";
+                     [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                         if (succeeded == YES) {
+                             
+                             //                                                 NSLog(@"saved message, here it is: %@", messageObject);
+                             
+                             //post notification to display tab bar badge and unseen TB icon
+                             AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                             [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
+                             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
+                             
+                             //update convo
+                             [convoObject incrementKey:@"totalMessages"];
+                             [convoObject setObject:messageObject forKey:@"lastSent"];
+                             [convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
+                             [convoObject incrementKey:@"userUnseen"];
+                             [convoObject saveInBackground];
+                         }
+                         else{
+                             NSLog(@"error sending message %@", error);
+                         }
+                     }];
+                 }
+                 else{
+                     NSLog(@"error saving convo");
+                 }
+             }];
+             
+             if (self.emailMode != YES) {
+                 //save Bumped Obj
+                 PFObject *bumpedObj = [PFObject objectWithClassName:@"Bumped"];
+                 [bumpedObj setObject:[self.user objectForKey:@"facebookId"] forKey:@"facebookId"];
+                 [bumpedObj setObject:self.user forKey:@"user"];
+                 [bumpedObj setObject:[NSDate date] forKey:@"safeDate"];
+                 [bumpedObj setObject:@0 forKey:@"timesBumped"];
+                 [bumpedObj saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                     if (succeeded) {
+                         NSLog(@"saved bumped obj");
+                     }
+                 }];
+             }
+             
+             [self hideHUD];
+             
+             //show add size modal first
+             AddSizeController *vc = [[AddSizeController alloc]init];
+             vc.delegate = self;
+             [self.navigationController presentViewController:vc animated:YES completion:nil];
+         }
+         else
+         {
+             [self.regButton setEnabled:YES];
+             [self hideHUD];
+             NSLog(@"reg error %@", error);
+             
+             [self showAlertWithTitle:@"Registration Error" andMsg:@"Make sure you're connected to the internet and try again!"];
+         }
+     }];
+}
+
+-(BOOL)textFieldShouldReturn:(UITextField*)textField
+{
+    if (self.emailMode) {
+        if (textField == self.nameField) {
+            [self.lastNameField becomeFirstResponder];
+        }
+        else if (textField == self.lastNameField) {
+            [self.emailField becomeFirstResponder];
+        }
+        else if (textField == self.emailField) {
+            [self.usernameField becomeFirstResponder];
+        }
+        else if (textField == self.usernameField) {
+            [self.passwordField becomeFirstResponder];
+        }
+        else{
+            [textField resignFirstResponder];
+        }
+
+    }
+    else{
+        [textField resignFirstResponder];
+    }
+
     return YES;
 }
 -(void)removeKeyboard{
@@ -651,7 +1035,7 @@
     }
 }
 - (IBAction)termsPressed:(id)sender {
-    NSString *URLString = @"http://www.sobump.com/terms.html";
+    NSString *URLString = @"http://www.sobump.com/terms";
     self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
     self.webViewController.title = @"Terms & Conditions";
     self.webViewController.showUrlWhileLoading = YES;
@@ -681,6 +1065,8 @@
 }
 
 - (IBAction)pressedChoose:(id)sender {
+    self.somethingChanged = YES;
+    
     if (!self.picker) {
         self.picker = [[UIImagePickerController alloc] init];
         self.picker.delegate = self;
@@ -691,21 +1077,30 @@
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(nonnull NSDictionary<NSString *,id> *)info{
+
+    self.warningLabel.text = @"";
+    
+    [picker dismissViewControllerAnimated:YES completion:nil];
     
     self.pressedCam = YES;
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
     
-    [self showHUD];
 //    UIImage *imageToSave = [chosenImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
     
-    UIImage *imageToSave = [chosenImage scaleImageToSize:CGSizeMake(750, 750)];
+    [self showHUD];
+    
+    UIImage *imageToSave = [chosenImage scaleImageToSize:CGSizeMake(400, 400)]; //was 750
+    [self.profilePicture setImage:imageToSave];
 
     NSData* data = UIImageJPEGRepresentation(imageToSave, 0.7f);
     if (data == nil) {
-        NSLog(@"error with data");
+        
+        NSLog(@"error with image data");
+        self.imageSaved = NO;
+        self.profilePicture.image = nil;
         [self hideHUD];
-        [picker dismissViewControllerAnimated:YES completion:nil];
         [self showAlertWithTitle:@"Image Error" andMsg:@"Woops, something went wrong. Please try again!"];
+
         [Answers logCustomEventWithName:@"PFFile Nil Data"
                        customAttributes:@{
                                           @"pageName":@"Reg"
@@ -716,19 +1111,33 @@
         
         [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
-                self.profilePicture.image = nil;
-                [self.profilePicture setFile:filePicture];
-                [self.profilePicture loadInBackground];
                 [self hideHUD];
+
+                NSLog(@"SAVED IMAGE FILE");
+                
+                self.imageSaved = YES;
+                self.imageFile = filePicture;
                 
                 self.user[PF_USER_PICTURE] = filePicture;
             }
             else{
-                NSLog(@"error saving file %@", error);
                 [self hideHUD];
+
+                NSLog(@"ERROR SAVING IMAGE FILE");
+
+                if (self.imageFile) {
+                    //there's been a previous image so remove this from user object
+                    [self.user removeObjectForKey:PF_USER_PICTURE];
+                }
+                self.imageFile = nil;
+                self.imageSaved = NO;
+                
+                self.profilePicture.image = nil;
+                
+                NSLog(@"error saving file %@", error);
+                [self showAlertWithTitle:@"Connection Error" andMsg:@"Woops, something went wrong. Please check your interner connection and try again!"];
             }
         }];
-        [picker dismissViewControllerAnimated:YES completion:nil];
     }
 }
 
@@ -779,7 +1188,7 @@
 
 -(void)hideHUD{
     dispatch_async(dispatch_get_main_queue(), ^{
-        [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
+        [MBProgressHUD hideAllHUDsForView:[UIApplication sharedApplication].keyWindow animated:YES];
     });
 }
 
@@ -788,6 +1197,10 @@
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        if (self.banMode == YES) {
+            self.banMode = NO;
+            [self.navigationController popViewControllerAnimated:YES];
+        }
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -816,8 +1229,221 @@
 
 -(void)addSizeDismissed{
     //progress to tutorial
-     Tut1ViewController *vc = [[Tut1ViewController alloc]init];
-     vc.clickMode = YES;
-     [self.navigationController pushViewController:vc animated:YES];
+//     Tut1ViewController *vc = [[Tut1ViewController alloc]init];
+//     vc.clickMode = YES;
+    ExplainView *vc = [[ExplainView alloc]init];
+    vc.introMode = YES;
+    vc.emailIntro = self.emailMode;
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+- (IBAction)cancelPressed:(id)sender {
+    if (self.somethingChanged == YES) {
+        //ask if sure
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Cancel signup?" message:@"Are you sure you want to cancel? Your changes won't be saved!" preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Stay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }]];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self.navigationController popViewControllerAnimated:YES];
+        }]];
+        [self presentViewController:alertView animated:YES completion:nil];
+    }
+    else{
+        [self.navigationController popViewControllerAnimated:YES];
+    }
+}
+-(void)checkEmailExists{
+    PFQuery *checkEmailQuery = [PFUser query];
+    [checkEmailQuery whereKey:@"email" equalTo:[self.emailField.text lowercaseString]];
+    [checkEmailQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            self.checkedEmail = YES;
+
+            if (objects.count == 0) {
+//                NSLog(@"email is free");
+            }
+            else{
+                //show alert that an account with that email already exists
+                //may have logged in with Facebook previously, would they like to log in with facebook?
+                //may be logging in with facebook but signed up with email previously
+                
+                NSLog(@"someone else using it");
+                if (self.emailMode) {
+                    [self previousEmailAlert];
+                }
+                else{
+                    //prompt user to connect accounts once logged in
+                    [self previousEmailAlertFacebook];
+                }
+            }
+        }
+        else{
+            NSLog(@"error checking email %@", error);
+            [self showAlertWithTitle:@"Error: 451" andMsg:@"Make sure you're connected to the internet!"];
+        }
+    }];
+}
+
+-(void)previousEmailAlert{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Email Already in Use" message:@"Someone is already using that email on Bump! You may have previously logged in via Facebook - try logging in via Facebook now?" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Try different email" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        self.emailField.text = @"";
+        [self.emailField becomeFirstResponder];
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Log in with Facebook" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self callLoginWithFacebook];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)previousEmailAlertFacebook{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Email Already in Use" message:@"Someone is already using that email on Bump! You may have previously signed up to Bump with a password - Log in with your password and link your accounts!" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Try different email" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        self.emailField.text = @"";
+        [self.emailField becomeFirstResponder];
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Log in with password" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self callLoginWithUsername];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)callLoginWithFacebook{
+    [self.delegate RegVCFacebookPressed];
+}
+
+-(void)callLoginWithUsername{
+    [self.navigationController popViewControllerAnimated:YES];
+    [self.delegate RegVCLoginPressed];
+}
+
+-(void)sendConfirmationEmail{
+    
+    NSDictionary *params = @{@"toEmail": [self.user objectForKey:@"email"]};
+    [PFCloud callFunctionInBackground:@"sendConfirmEmail" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            
+            [Answers logCustomEventWithName:@"Sent Reg Confirmation Email"
+                           customAttributes:@{}];
+            
+            //increment confirmation email number count (max. = 3)
+            [self.user incrementKey:@"emailsCount"];
+            
+            //next safe date to send email
+            NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+            dayComponent.minute = 30;
+            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+            NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+            [self.user setObject:safeDate forKey:@"nextEmailSafeDate"];
+            [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    NSLog(@"saved email send date");
+                    
+                    //schedule local push reminder for 3 days time (8pm) to verify their email
+                    [self scheduleVerifyReminder];
+                }
+                else{
+                    NSLog(@"error saving email send date %@", error);
+                }
+            }];
+        }
+        else{
+            NSLog(@"email error %@", error);
+            
+            [Answers logCustomEventWithName:@"Error sending Reg Confirmation Email"
+                           customAttributes:@{}];
+        }
+    }];
+}
+
+- (void)addDoneButton {
+    UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
+    [keyboardToolbar sizeToFit];
+    UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                      target:nil action:nil];
+    UIBarButtonItem *doneBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
+                                      target:self action:@selector(hideTextfieldNow)];
+    
+    [doneBarButton setTintColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
+    keyboardToolbar.barTintColor = [UIColor colorWithRed:1.00 green:1.00 blue:1.00 alpha:1.0];
+    
+    keyboardToolbar.items = @[flexBarButton, doneBarButton];
+    
+    self.nameField.inputAccessoryView = keyboardToolbar;
+    self.lastNameField.inputAccessoryView = keyboardToolbar;
+    self.emailField.inputAccessoryView = keyboardToolbar;
+    self.usernameField.inputAccessoryView = keyboardToolbar;
+    self.passwordField.inputAccessoryView = keyboardToolbar;
+
+}
+
+-(void)hideTextfieldNow{
+    [Answers logCustomEventWithName:@"Reg Cancel Textfield Pressed"
+                   customAttributes:@{}];
+    
+    [self.nameField resignFirstResponder];
+    [self.lastNameField resignFirstResponder];
+    [self.emailField resignFirstResponder];
+    [self.usernameField resignFirstResponder];
+    [self.passwordField resignFirstResponder];
+
+}
+- (IBAction)helpPressed:(id)sender {
+    [Answers logCustomEventWithName:@"Reg Help Pressed"
+                   customAttributes:@{}];
+    
+    //show email composer in the app
+    if ([MFMailComposeViewController canSendMail]) {
+        self.pressedCam = YES; //to stop text fields triggering upon return
+        
+        MFMailComposeViewController *composeViewController = [[MFMailComposeViewController alloc] initWithNibName:nil bundle:nil];
+        [composeViewController setMailComposeDelegate:self];
+        [composeViewController setToRecipients:@[@"hello@sobump.com"]];
+        [composeViewController setSubject:@"Bump Registration Help"];
+        [self presentViewController:composeViewController animated:YES completion:nil];
+    }
+}
+
+- (void)mailComposeController:(MFMailComposeViewController*)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError*)error
+{
+    //Add an alert in case of failure
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)scheduleVerifyReminder{
+    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+    dayComponent.day = 3;
+    NSCalendar *theCalendar = [NSCalendar currentCalendar];
+    NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+    
+    // Create new date
+    NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
+                                                   fromDate:dateToFire];
+    
+    NSDateComponents *components3 = [[NSDateComponents alloc] init];
+    
+    [components3 setYear:components1.year];
+    [components3 setMonth:components1.month];
+    [components3 setDay:components1.day];
+    
+    [components3 setHour:20];
+    
+    // Generate a new NSDate from components3.
+    NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+    
+    UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+    [localNotification setAlertBody:@"Verify your Bump email address now! Remember to check your Junk Folder 📬"];
+    [localNotification setFireDate: combinedDate];
+    [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+    [localNotification setRepeatInterval: 0];
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
 }
 @end

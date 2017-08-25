@@ -14,12 +14,19 @@
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
 #import <ParseUI/ParseUI.h>
-#import <ChimpKit.h>
 #import <CoreLocation/CoreLocation.h>
 #import "TOJRWebView.h"
 #import "AddSizeController.h"
+#import <MessageUI/MessageUI.h>
 
-@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ChimpKitRequestDelegate,CLLocationManagerDelegate, JRWebViewDelegate,sizeDelegate>
+@class RegisterViewController;
+
+@protocol RegVCDelegate <NSObject>
+- (void)RegVCFacebookPressed;
+- (void)RegVCLoginPressed;
+@end
+
+@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,CLLocationManagerDelegate, JRWebViewDelegate,sizeDelegate,MFMailComposeViewControllerDelegate>
 NS_ASSUME_NONNULL_BEGIN
 
 //cells
@@ -31,11 +38,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *regCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *currencyCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *friendsCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *secondNameCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *passwordCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *nameField;
 @property (weak, nonatomic) IBOutlet UITextField *emailField;
 @property (weak, nonatomic) IBOutlet UITextField *usernameField;
+@property (weak, nonatomic) IBOutlet UITextField *lastNameField;
+@property (weak, nonatomic) IBOutlet UITextField *passwordField;
 
 //picture cell
 @property (weak, nonatomic) IBOutlet PFImageView *profilePicture;
@@ -62,12 +74,15 @@ NS_ASSUME_NONNULL_BEGIN
 //depop
 @property (weak, nonatomic) IBOutlet UITextField *depopField;
 
+//image
 @property (nonatomic) BOOL pressedCam;
-
 @property (nonatomic, strong) UIImagePickerController *picker;
+@property (nonatomic) BOOL imageSaved;
 
+//reg button
 @property (nonatomic, strong) UIButton *longRegButton;
 @property (nonatomic) BOOL regShowing;
+@property (nonatomic) BOOL regPressedWithoutSave;
 
 //friends
 @property (weak, nonatomic) IBOutlet UILabel *friendsLabel;
@@ -82,6 +97,24 @@ NS_ASSUME_NONNULL_BEGIN
 //web
 @property (nonatomic, strong) TOJRWebView *webViewController;
 
+//reg mode (email vs facebook)
+@property (nonatomic) BOOL emailMode;
+@property (nonatomic) BOOL checkedEmail;
+@property (nonatomic) BOOL somethingChanged;
+
+//title buttons
+@property (weak, nonatomic) IBOutlet UIButton *helpButton;
+@property (weak, nonatomic) IBOutlet UIButton *cancelCrossButton;
+
+//delegate
+@property (nonatomic, weak) id <RegVCDelegate> delegate;
+
+//ban mode
+@property (nonatomic) BOOL banMode;
+
+
 NS_ASSUME_NONNULL_END
+
+@property (nonatomic, strong) PFFile * _Nullable imageFile;
 
 @end

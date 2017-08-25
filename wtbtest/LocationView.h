@@ -15,6 +15,7 @@
 
 @protocol LocationViewControllerDelegate <NSObject>
 - (void)addLocation:(LocationView *)controller didFinishEnteringItem:(NSString *)item longi:(CLLocationDegrees )item1 lati:(CLLocationDegrees )item2;
+- (void)selectedPlacemark:(CLPlacemark *)placemark;
 - (void)addCurrentLocation:(LocationView *)controller didPress:(PFGeoPoint *)geoPoint title: (NSString *)placemark;
 @end
 

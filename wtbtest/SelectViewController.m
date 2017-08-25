@@ -43,31 +43,31 @@
         }
     }
     
-//    NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
+    NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
     
     self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear",@"Accessories", nil];
     
     if (self.sellListing == YES) {
-        self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3 | US 3.5", @"UK 3.5 | US 4",@"UK 4 | US 4.5", @"UK 4.5 | US 5", @"UK 5 | US 5.5", @"UK 5.5 | US 6", @"UK 6 | US 6.5",@"UK 6.5 | US 7",@"UK 7 | US 7.5", @"UK 7.5 | US 8", @"UK 8 | US 8.5",@"UK 8.5 | US 9",@"UK 9 | US 9.5", @"UK 9.5 | US 10", @"UK 10 | US 10.5",@"UK 10.5 | US 11",@"UK 11 | US 11.5", @"UK 11.5 | US 12", @"UK 12 | US 12.5",@"UK 12.5 | US 13",@"UK 13 | US 13.5", @"UK 13.5 | US 14", @"UK 14 | US 14.5",@"Other", nil];
+        self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Other", nil];
         
         self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14",@"Other", nil];
         
         self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9",@"Other", nil];
         
-        self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1 | US 3", @"UK 1.5 | US 3.5",@"UK 2 | US 4", @"UK 2.5 | US 4.5", @"UK 3 | US 5", @"UK 3.5 | US 5.5", @"UK 4 | US 6",@"UK 4.5 | US 6.5",@"UK 5 | US 7", @"UK 5.5 | US 7.5", @"UK 6 | US 8",@"UK 6.5 | US 8.5",@"UK 7 | US 9", @"UK 7.5 | US 9.5", @"UK 8 | US 10",@"UK 9 | US 11",@"Other", nil];
+        self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Other", nil];
         
         self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL",@"Other", nil];
         
         self.conditionArray = [NSArray arrayWithObjects:@"Brand New With Tags",@"Brand New Without Tags", @"Used", @"Other",nil];
     }
     else{
-        self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3 | US 3.5", @"UK 3.5 | US 4",@"UK 4 | US 4.5", @"UK 4.5 | US 5", @"UK 5 | US 5.5", @"UK 5.5 | US 6", @"UK 6 | US 6.5",@"UK 6.5 | US 7",@"UK 7 | US 7.5", @"UK 7.5 | US 8", @"UK 8 | US 8.5",@"UK 8.5 | US 9",@"UK 9 | US 9.5", @"UK 9.5 | US 10", @"UK 10 | US 10.5",@"UK 10.5 | US 11",@"UK 11 | US 11.5", @"UK 11.5 | US 12", @"UK 12 | US 12.5",@"UK 12.5 | US 13",@"UK 13 | US 13.5", @"UK 13.5 | US 14", @"UK 14 | US 14.5", @"Any", nil];
+        self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Any", nil];
         
         self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", @"Any", nil];
         
         self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9", @"Any", nil];
         
-        self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1 | US 3", @"UK 1.5 | US 3.5",@"UK 2 | US 4", @"UK 2.5 | US 4.5", @"UK 3 | US 5", @"UK 3.5 | US 5.5", @"UK 4 | US 6",@"UK 4.5 | US 6.5",@"UK 5 | US 7", @"UK 5.5 | US 7.5", @"UK 6 | US 8",@"UK 6.5 | US 8.5",@"UK 7 | US 9", @"UK 7.5 | US 9.5", @"UK 8 | US 10",@"UK 9 | US 11", @"Any", nil];
+        self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Any", nil];
         
         self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"Any", nil];
         self.deliveryArray = [NSArray arrayWithObjects:@"Meetup",@"Courier", @"Any", nil];
@@ -95,7 +95,7 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:13],
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, [UIColor blackColor], NSForegroundColorAttributeName,  nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
 }
@@ -103,7 +103,7 @@
 -(void)viewDidAppear:(BOOL)animated{
     if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]){
         if (self.sellListing == YES) {
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenMultipleSellPrompt"] != YES) {
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenMultipleSellPrompt1"] != YES) {
                 [self showMultipleALert];
             }
         }
@@ -582,12 +582,12 @@
     self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.customAlert.delegate = self;
     
-    self.customAlert.titleLabel.text = @"Multiple Sizes";
+    self.customAlert.titleLabel.text = @"UK Sizes";
     
     //prompt user that multiple sizes can be selected
     if (self.sellListing == YES) {
-        self.customAlert.messageLabel.text = @"Tap all the sizes you're selling!";
-        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"seenMultipleSellPrompt"];
+        self.customAlert.messageLabel.text = @"We use UK sizing as standard on Bump so more buyers can easily find your listing\n\nTap all the UK sizes you're selling!";
+        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"seenMultipleSellPrompt1"];
     }
     else{
         self.customAlert.messageLabel.text = @"Tap all the sizes you're interested in buying!";

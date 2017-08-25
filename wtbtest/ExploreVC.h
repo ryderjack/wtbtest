@@ -25,15 +25,10 @@
 #import "RateCustomView.h"
 #import "inviteViewClass.h"
 #import "HomeHeaderView.h"
+#import "engageTracker.h"
+#import <SwipeView/SwipeView.h>
 
-@interface ExploreVC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate, customAlertDelegate, WelcomeDelegate, JRWebViewDelegate,rateDelegate,inviteDelegate,UISearchBarDelegate,HeaderDelegate>
-
-@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
-@property (nonatomic, strong) NSMutableArray *results;
-@property (nonatomic, strong) NSMutableArray *resultIDs;
-@property (weak, nonatomic) IBOutlet UILabel *noresultsLabel;
-@property (strong, nonatomic) UILabel *noUserLabel;
-@property (weak, nonatomic) IBOutlet UIImageView *noResultsImageView;
+@interface ExploreVC : UIViewController <UITableViewDelegate, UITableViewDataSource, CLLocationManagerDelegate, FilterDelegate, ExploreCellDelegate, dropDelegate, TheMainSearchViewDelegate, customAlertDelegate, WelcomeDelegate, JRWebViewDelegate,rateDelegate,inviteDelegate,UISearchBarDelegate,HeaderDelegate, engageDelegate,SwipeViewDelegate, SwipeViewDataSource>
 
 //location
 @property (nonatomic, strong) CLLocationManager *locationManager;
@@ -50,17 +45,26 @@
 
 @property (nonatomic, strong) NSMutableArray *filtersArray;
 
+//currency
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
 
 @property (nonatomic, strong) DGActivityIndicatorView *spinner;
 
+@property (nonatomic) BOOL featuredMode;
 @property (nonatomic) BOOL filtersON;
 @property (nonatomic) BOOL listingTapped;
 @property (nonatomic) BOOL cleverMode;
 @property (nonatomic) BOOL ignoreShownTo;
 @property (nonatomic) BOOL ignoreShownToLatest;
 @property (nonatomic) BOOL triedAlready;
+
+@property (nonatomic) int pullLimit;
+@property (nonatomic) int infinLimit;
+
+@property (nonatomic) BOOL incompletePreviousPull;
+@property (nonatomic) BOOL infinIncompletePreviousPull;
+@property (nonatomic) BOOL recallMode;
 
 @property (nonatomic, strong) NSArray *uselessWords;
 
@@ -103,25 +107,35 @@
 @property (nonatomic) BOOL lowRating;
 @property (nonatomic, strong) UINavigationController *messageNav;
 
+//engagement question pop up
+@property (nonatomic, strong) engageTracker *engageView;
+@property (nonatomic, strong) UINavigationController *engageQNav;
+
 //invite pop up
 @property (nonatomic, strong, nullable) inviteViewClass *inviteView;
 @property (nonatomic, strong, nullable) UIView *bgView;
 @property (nonatomic) BOOL alertShowing;
 @property (nonatomic, strong) UITapGestureRecognizer *tap;
 
-//search bar
-@property (nonatomic, strong) UISearchBar *navSearchbar;
-
-//trending emoji array
-@property (nonatomic, strong) NSArray *trendingEmojis;
-@property (nonatomic, strong) NSString *randEmoji;
-@property (nonatomic) BOOL setTitle;
-
 //header
 @property (nonatomic, strong) NSArray *homeItems;
 @property (nonatomic, strong) HomeHeaderView *headerView;
+@property (nonatomic) BOOL gotCarousel;
 
+//table view stuff
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (weak, nonatomic) IBOutlet SwipeView *wantedSwipeView;
+@property (weak, nonatomic) IBOutlet SwipeView *sellingSwipeView;
 
+@property (nonatomic, strong) NSMutableArray *wantedMatches;
+@property (nonatomic, strong) NSMutableArray *sellingMatches;
+
+@property (weak, nonatomic) IBOutlet UILabel *noForSaleItemLabel;
+@property (weak, nonatomic) IBOutlet UILabel *noWantedListingLabel;
+
+//cells
+@property (strong, nonatomic) IBOutlet UITableViewCell *wantedCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *sellingCell;
 
 -(void)doubleTapScroll;
 @end

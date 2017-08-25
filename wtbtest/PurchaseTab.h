@@ -13,21 +13,33 @@
 #import <iCarousel.h>
 #import "PurchaseTabHeader.h"
 #import "droppingTodayView.h"
+#import "simpleBannerHeader.h"
 #import <SpinKit/RTSpinKitView.h>
 #import "TOJRWebView.h"
 #import "customAlertViewClass.h"
+#import "TheMainSearchView.h"
+#import <CoreLocation/CoreLocation.h>
+#import "WelcomeViewController.h"
+#import "RateCustomView.h"
+#import "notificatView.h"
+#import "FilterVC.h"
 
-@interface PurchaseTab : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout,iCarouselDataSource, iCarouselDelegate, JRWebViewDelegate,customAlertDelegate>
+@interface PurchaseTab : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout,customAlertDelegate,UISearchBarDelegate,TheMainSearchViewDelegate,CLLocationManagerDelegate,dropDelegate,WelcomeDelegate,rateDelegate,FilterDelegate,inviteDelegate>
 
 //cv
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 
+//search bar
+@property (nonatomic, strong) UISearchBar *navSearchbar;
+
+//currency
+@property (nonatomic, strong) NSString *currency;
+@property (nonatomic, strong) NSString *currencySymbol;
+
 //products
 @property (nonatomic, strong) NSMutableArray *products;
-@property (nonatomic, strong) NSMutableArray *addedIDs;
-@property (nonatomic, strong) NSMutableArray *WTBMatches;
-@property (nonatomic, strong) NSMutableArray *featured;
-@property (nonatomic, strong) NSMutableArray *infinMatches;
+@property (nonatomic, strong) NSMutableArray *productIds;
+
 
 //spinner
 @property (nonatomic, strong) DGActivityIndicatorView *spinner;
@@ -36,14 +48,12 @@
 @property (nonatomic, strong) RTSpinKitView *spinnerHUD;
 @property (nonatomic, strong) MBProgressHUD *hud;
 
-//get related for-sale items
+//get latest for-sale items
 @property (nonatomic) BOOL pullFinished;
 @property (nonatomic) BOOL infinFinished;
-@property (nonatomic) BOOL finalLoading;
 @property (nonatomic, strong) PFQuery *infiniteQuery;
 @property (nonatomic, strong) PFQuery *pullQuery;
 @property (nonatomic) int skipped;
-@property (nonatomic) int infinFinalMode;
 
 //prompt button
 @property (weak, nonatomic) IBOutlet UIButton *anotherPromptButton;
@@ -52,46 +62,7 @@
 @property (nonatomic) BOOL featuredFinished;
 
 //header
-@property (nonatomic, strong) PurchaseTabHeader *headerView;
-@property (nonatomic, strong) iCarousel *carousel;
-@property (nonatomic, strong) droppingTodayView *scheduledView;
-@property (nonatomic, strong) droppingTodayView *shopView;
-@property (nonatomic, strong) NSTimer *scrollTimer;
-@property (nonatomic) BOOL pausedInProgress;
-@property (nonatomic) BOOL autoScroll;
-
-//shop
-@property (nonatomic, strong) NSArray *shopArray;
-@property (nonatomic, strong) NSArray *supArray;
-@property (nonatomic, strong) NSArray *yeezyArray;
-@property (nonatomic, strong) NSArray *palaceArray;
-
-@property (nonatomic) BOOL yeezySeen;
-@property (nonatomic) BOOL supremeSeen;
-@property (nonatomic) BOOL palaceSeen;
-
-@property (nonatomic) BOOL tappedItem;
-@property (nonatomic, strong) NSString *selectedShop;
-
-@property (nonatomic, strong) NSMutableArray *supSeenArray;
-@property (nonatomic, strong) NSMutableArray *yeezySeenArray;
-@property (nonatomic, strong) NSMutableArray *palaceSeenArray;
-
-@property (nonatomic) BOOL shopLoadAgain;
-@property (nonatomic) BOOL supLoadAgain;
-@property (nonatomic) BOOL yeezyLoadAgain;
-@property (nonatomic) BOOL palaceLoadAgain;
-
-//scheduled releases
-@property (nonatomic, strong) NSMutableArray *scheduledArray;
-@property (nonatomic, strong) NSDate *thisMorning;
-@property (nonatomic) BOOL showDropPageToo;
-@property (nonatomic) BOOL TBCMode;
-@property (nonatomic) BOOL updatingDates;
-@property (nonatomic, strong) NSDateFormatter *dayOfWeekFormatter;
-
-//web
-@property (nonatomic, strong) TOJRWebView *web;
+@property (nonatomic, strong) simpleBannerHeader *headerView;
 
 //array of WTB indexes
 @property (nonatomic, strong) NSMutableArray *listingIndexesArray;
@@ -100,28 +71,57 @@
 //custom alert view
 @property (nonatomic, strong) customAlertViewClass *customAlert;
 @property (nonatomic, strong) UIView *searchBgView;
-@property (nonatomic, strong) NSMutableArray *results;
 @property (nonatomic) BOOL alertShowing;
 @property (nonatomic) BOOL dropIntro;
 
-//seller
-@property (nonatomic) BOOL isSeller;
-@property (nonatomic, strong) NSString *usernameToList;
+@property (nonatomic) BOOL tappedItem;
+@property (nonatomic) BOOL wantedListing;
 
-//affiliate products
-@property (nonatomic, strong) NSMutableArray *affiliateProducts;
-@property (nonatomic) int affiliateIndex;
-@property (nonatomic) int indexToAdd;
-@property (nonatomic) BOOL showAffiliates;
-@property (nonatomic, strong) NSMutableArray *affiliatesSeen;
-@property (nonatomic) BOOL cleverMode;
 
-//if affiliates is on then this is 26, else 30
-@property (nonatomic) int retrieveLimit;
-@property (nonatomic) int remainingAffiliates;
+//location
+@property (nonatomic, strong) CLLocationManager *locationManager;
+@property (nonatomic) BOOL locationAllowed;
+@property (nonatomic, strong) PFGeoPoint *currentLocation;
+
+//invite pop up
+@property (nonatomic, strong, nullable) inviteViewClass *inviteView;
+@property (nonatomic, strong, nullable) UIView *bgView;
+@property (nonatomic, strong) UITapGestureRecognizer *tap;
+
+//push alert #2 (1st is upon signup)
+@property (nonatomic, strong) customAlertViewClass *pushAlert;
+@property (nonatomic) BOOL shownPushAlert;
+
+//custom rate
+@property (nonatomic, strong) RateCustomView *rateView;
+@property (nonatomic) BOOL lowRating;
+@property (nonatomic, strong) UINavigationController *messageNav;
+
+//bump in app notification
+@property (nonatomic, strong) notificatView *dropDown;
+@property (nonatomic, strong) NSIndexPath *lastSelected;
+@property (nonatomic) BOOL screenshotShowing;
+
+@property (nonatomic) BOOL justABump;
+@property (nonatomic) BOOL justAMessage;
+
+@property (nonatomic) NSArray *wantedWords;
+@property (nonatomic) NSArray *searchWords;
+@property (nonatomic) BOOL sendMode;
+
+//filter button
+@property (weak, nonatomic) IBOutlet UIButton *filterButton;
+@property (nonatomic, strong) NSMutableArray *filtersArray;
+@property (nonatomic, strong) NSMutableArray *filterSizesArray;
+@property (nonatomic, strong) NSMutableArray *filterBrandsArray;
+@property (nonatomic, strong) NSMutableArray *filterColoursArray;
+@property (weak, nonatomic) IBOutlet UILabel *noResultsLabel;
+
+//floating location
+@property (weak, nonatomic) IBOutlet UIButton *floatingLocationButton;
+@property (nonatomic) float lastLocButtonY;
 
 //scroll to top
 -(void)doubleTapScroll;
--(void)getAffiliateData;
 
 @end

@@ -97,7 +97,7 @@
     }
     
     //send push
-    NSString *pushText = [NSString stringWithFormat:@"%@ just bumped your listing 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
+    NSString *pushText = [NSString stringWithFormat:@"%@ just liked your listing 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
     if (![[[self.listing objectForKey:@"postUser"]objectId] isEqualToString:[[PFUser currentUser]objectId]]) {
         NSDictionary *params = @{@"userId": [[self.listing objectForKey:@"postUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.listing.objectId};
         
@@ -130,6 +130,10 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    
+    if (![PFUser currentUser]) {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
     
     //bouncing animation
     [UIView animateKeyframesWithDuration:0.5 delay:0.0 options:UIViewAnimationOptionAutoreverse | UIViewAnimationOptionRepeat animations:^{

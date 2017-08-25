@@ -15,9 +15,9 @@
 #import "ForSaleCell.h"
 #import "CreateViewController.h"
 #import "CreateForSaleListing.h"
+#import "mainApprovedSellerController.h"
 
 @interface simpleCreateVC ()
-
 @end
 
 @implementation simpleCreateVC
@@ -25,8 +25,10 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    [self.listingAsLabel setHidden:YES];
     [self.orImageView setHidden:YES];
     [self.sellButton setHidden:YES];
+    [self.tutorialImageView setHidden:YES];
 
     self.titleTextLabel.delegate = self;
     self.photostotal = 0;
@@ -41,6 +43,8 @@
     
     self.profanityList = @[@"fucking",@"shitting", @"cunt", @"wanker", @"nigger", @"penis", @"cock", @"dick", @"bastard"];
     
+    self.titleTextLabel.placeholder = @"What do you want to buy?";
+    
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(toggleKeyboard)];
     tap.numberOfTapsRequired = 1;
     [self.view addGestureRecognizer:tap];
@@ -48,39 +52,10 @@
     self.catTap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideCatTap)];
     self.catTap.numberOfTapsRequired = 1;
     
-    if (self.introMode != YES) {
-        //uncomment these to enable the bouncing button
-//        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-//        [center addObserver:self selector:@selector(keyboardOnScreen:) name:UIKeyboardDidShowNotification object:nil];
-//        [center addObserver:self selector:@selector(keyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
-        
-        PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
-        [trustedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
-        [trustedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-            if (number >= 1) {
-                self.isSeller = YES;
-                
-                self.orImageView.alpha = 0.0f;
-                self.sellButton.alpha = 0.0f;
-
-                [self.orImageView setHidden:NO];
-                [self.sellButton setHidden:NO];
-                
-                [UIView animateWithDuration:0.5
-                                      delay:0
-                                    options:UIViewAnimationOptionCurveEaseIn
-                                 animations:^{
-                                     [self.orImageView setAlpha:1.0];
-                                     [self.sellButton setAlpha:1.0];
-                                 }
-                                 completion:nil];
-            }
-            else{
-                self.isSeller = NO;
-                [self.orImageView setHidden:YES];
-                [self.sellButton setHidden:YES];
-            }
-        }];
+    //check if verified by facebook or email, if neither then show verify email flow
+    if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser]objectForKey:@"facebookId"] && self.introMode != YES) {
+        //user isn't verified
+        [self showVerifyAlert];
     }
 }
 
@@ -92,22 +67,44 @@
 -(void)viewWillAppear:(BOOL)animated{
     [self.navigationController.navigationBar setHidden:YES];
     
-//    if (self.createdListing == YES) {
-//        if ([self.listing objectForKey:@"sizeLabel"]) {
-//            [self.successView.firstButton setHidden:YES];
-//            [self.successView.secondButton setHidden:YES];
-//        }
-//    }
+    //sam and me only code for posting as someone else
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+        
+        if ([[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
+            NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:@"listUser"];
+            
+            PFQuery *userQ = [PFUser query];
+            [userQ whereKey:@"objectId" equalTo:userID];
+            [userQ getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    [self.listingAsLabel setHidden:NO];
+                    self.listingAsLabel.text = [NSString stringWithFormat:@"Listing as %@", [object objectForKey:@"username"]];
+                    
+                    self.listAsUser = (PFUser *)object;
+                    self.listingAsMode = YES;
+                }
+                else{
+                    NSLog(@"error getting user %@", error);
+                }
+            }];
+        }
+        else{
+            self.listingAsMode = NO;
+            [self.listingAsLabel setHidden:YES];
+        }
+
+    }
     
     if (self.introMode == YES) {
         [self.orImageView setHidden:YES];
         [self.sellButton setHidden:YES];
+        [self.tutorialImageView setHidden:YES];
         
         self.skipButton.alpha = 0.0f;
         [self.skipButton setHidden:NO];
         
-        //unhide after 5 seconds
-        double delayInSeconds = 5.0;
+        //unhide after 10 seconds
+        double delayInSeconds = 10.0;
         dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
         dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
             [UIView animateWithDuration:1.0
@@ -123,36 +120,18 @@
         [self.skipButton setHidden:YES];
     }
     
-    if (![PFUser currentUser]) {
-        WelcomeViewController *vc = [[WelcomeViewController alloc]init];
-        NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
-        [self presentViewController:navController animated:YES completion:nil];
-    }
-    else{
-        self.currency = [[PFUser currentUser]objectForKey:@"currency"];
-        if ([self.currency isEqualToString:@"GBP"]) {
-            self.currencySymbol = @"£";
-        }
-        else if ([self.currency isEqualToString:@"EUR"]) {
-            self.currencySymbol = @"€";
-        }
-        else if ([self.currency isEqualToString:@"USD"]) {
-            self.currencySymbol = @"$";
-        }
-    }
-    
     self.imageSource = @"";
     
     [Answers logCustomEventWithName:@"Viewed page"
                    customAttributes:@{
-                                      @"pageName":@"Create Listing"
+                                      @"pageName":@"Simple Create Wanted"
                                       }];
 }
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
-    if (self.introMode != YES && self.finishedListing == YES) {
+    if (self.introMode != YES && self.finishedListing == YES && self.savingListing != YES && self.completionShowing != YES) {
         [self.titleTextLabel becomeFirstResponder];
     }
     
@@ -178,7 +157,18 @@
 }
 
 -(BOOL)textFieldShouldReturn:(UITextField *)textField{
-    [textField resignFirstResponder];
+    NSString *stringCheck = [textField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSArray *wordsCheck = [stringCheck componentsSeparatedByString:@" "];
+
+    if ([stringCheck isEqualToString:@""]) {
+        [textField resignFirstResponder];
+    }
+    else if (([[textField.text lowercaseString] isEqualToString:@"supreme clothing"] || [[textField.text lowercaseString] isEqualToString:@"palace clothing"] || wordsCheck.count == 1) && self.alreadyPromptedSpecific == NO) {
+        [self showSpecificPrompt];
+    }
+    else{
+        [textField resignFirstResponder];
+    }
     return YES;
 }
 
@@ -188,16 +178,17 @@
         {
             return NO;
         }
-        
         NSUInteger newLength = [textField.text length] + [string length] - range.length;
         return newLength <= 50;
     }
+    
     return YES;
 }
 
 -(void)textFieldDidEndEditing:(UITextField *)textField{
+    NSArray *words = [textField.text componentsSeparatedByString:@" "];
+
     if (textField == self.titleTextLabel) {
-        NSArray *words = [textField.text componentsSeparatedByString:@" "];
         for (NSString *string in words) {
             if ([self.profanityList containsObject:string.lowercaseString]) {
                 textField.text = @"";
@@ -207,10 +198,101 @@
     }
     
     NSString *stringCheck = [textField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    if (![stringCheck isEqualToString:@""]) {
+    NSArray *wordsCheck = [stringCheck componentsSeparatedByString:@" "];
+
+    if (self.toggleKeyboardHit == YES) {
+        self.toggleKeyboardHit = NO;
+    }
+    else if ([stringCheck isEqualToString:@""]) {
+        textField.text = @"";
+    }
+    else if ((wordsCheck.count == 1 || [[textField.text lowercaseString] isEqualToString:@"supreme clothing"] || [[textField.text lowercaseString] isEqualToString:@"palace clothing"]) && self.alreadyPromptedSpecific == YES) {
         self.finishedListing = NO;
         [self showCategories];
     }
+    else if(![stringCheck isEqualToString:@""]){
+        self.finishedListing = NO;
+        [self showCategories];
+    }
+}
+
+-(void)showSpecificPrompt{
+    
+    [Answers logCustomEventWithName:@"Showing 'Be Specific' Prompt in create"
+                   customAttributes:@{}];
+    
+    //shake text view
+    CABasicAnimation *animation =
+    [CABasicAnimation animationWithKeyPath:@"position"];
+    [animation setDuration:0.06];
+    [animation setRepeatCount:6];
+    [animation setAutoreverses:YES];
+    [animation setFromValue:[NSValue valueWithCGPoint:
+                             CGPointMake([self.titleTextLabel center].x - 10.0f, [self.titleTextLabel center].y)]];
+    [animation setToValue:[NSValue valueWithCGPoint:
+                           CGPointMake([self.titleTextLabel center].x + 10.0f, [self.titleTextLabel center].y)]];
+    [[self.titleTextLabel layer] addAnimation:animation forKey:@"position"];
+    
+    if (self.isSpecificViewShowing == YES) {
+        return;
+    }
+    
+    self.isSpecificViewShowing = YES;
+    
+    //setup drop down
+    self.specificView = nil;
+    self.specificView = [[UIView alloc]initWithFrame:CGRectMake(0, -70, [UIApplication sharedApplication].keyWindow.frame.size.width, 70)];
+    [self.specificView setBackgroundColor:[UIColor colorWithRed:0.92 green:0.50 blue:1.00 alpha:1.0]];
+    
+    UILabel *specificLabel = [[UILabel alloc]initWithFrame:self.specificView.frame];
+    [specificLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:15]];
+    specificLabel.text = @"Pro tip: Be specific!";
+    specificLabel.textColor = [UIColor whiteColor];
+    specificLabel.textAlignment = NSTextAlignmentCenter;
+    
+    [self.specificView addSubview:specificLabel];
+    specificLabel.center = self.specificView.center;
+    
+    [self.view addSubview:self.specificView];
+    
+    //now animate down
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.specificView setFrame:CGRectMake(0, 0, [UIApplication sharedApplication].keyWindow.frame.size.width, 70)];
+                            specificLabel.center = self.specificView.center;
+                        }
+                     completion:^(BOOL finished) {
+//                         self.alreadyPromptedSpecific = YES; //clamping down on shit WTBs
+                         
+                         //schedule auto dismiss
+                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                             [self dismissSpecificPrompt];
+                         });
+                     }];
+    
+}
+
+-(void)dismissSpecificPrompt{
+    //animate up
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.specificView setFrame:CGRectMake(0, -500, [UIApplication sharedApplication].keyWindow.frame.size.width, 70)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.isSpecificViewShowing = NO;
+
+                         [self.specificView removeFromSuperview];
+                         self.specificView = nil;
+                     }];
 }
 
 -(void)showGoogle{
@@ -256,6 +338,8 @@
                    customAttributes:@{
                                       @"where":@"create"
                                       }];
+    
+    self.savingListing = YES;
     self.tapNumber = taps;
     
 //    if (taps == 1 || taps == 2) {
@@ -284,6 +368,7 @@
             vc.delegate = self;
             vc.offerMode = NO;
             self.shouldSave = YES;
+            self.savingListing = YES;
             [self presentViewController:vc animated:YES completion:nil];
         }];
     }]];
@@ -313,12 +398,14 @@
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(nonnull NSDictionary<NSString *,id> *)info{
     UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
     //display crop picker
+    self.savingListing = YES;
     [picker dismissViewControllerAnimated:YES completion:^{
         [self displayCropperWithImage:chosenImage];
     }];
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    self.savingListing = NO;
     [picker dismissViewControllerAnimated:YES completion:NULL];
 }
 
@@ -331,8 +418,8 @@
     squareCropperViewController.cancelFont = [UIFont fontWithName:@"PingFangSC-Regular" size:15.0f];
     squareCropperViewController.excludedBackgroundColor = [UIColor blackColor];
     squareCropperViewController.tapNumber = self.tapNumber;
-    NSLog(@"TAP NUMBER %d", self.tapNumber);
-    squareCropperViewController.doneText = @"C O N F I R M";
+//    NSLog(@"TAP NUMBER %d", self.tapNumber);
+    squareCropperViewController.doneText = @"Confirm";
     
     [self.JRWebView presentViewController:squareCropperViewController animated:YES completion:nil];
 }
@@ -346,11 +433,13 @@
 }
 
 - (void)squareCropperDidCancelCropInCropper:(BASSquareCropperViewController *)cropper{
+    self.savingListing = NO;
     [cropper dismissViewControllerAnimated:YES completion:NULL];
 }
 
 -(void)dismissPressed:(BOOL)yesorno{
     //camera dismissed
+    self.savingListing = NO;
     self.titleTextLabel.text = @"";
     [self.titleTextLabel becomeFirstResponder];
 }
@@ -390,7 +479,7 @@
     
     if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
         //iphone5
-        [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -460, 300, 460)];
+        [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -480, 300, 480)];
     }
     else{
         [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170, -480, 340, 480)]; //iPhone 6/7 specific
@@ -399,19 +488,35 @@
     self.successView.layer.cornerRadius = 10;
     self.successView.layer.masksToBounds = YES;
     
-    [self.successView.firstButton setHidden:NO];
-    [self.successView.secondButton setHidden:NO];
-    
     self.bgView = [[UIView alloc]initWithFrame:self.view.frame];
     self.bgView.backgroundColor = [UIColor blackColor];
     self.bgView.alpha = 0.0;
     [self.navigationController.view insertSubview:self.bgView belowSubview:self.successView];
+    
+    //show NEW label
+//    if ([[NSUserDefaults standardUserDefaults] valueForKey:@"newBoostCount"]){
+//        NSInteger count = [[NSUserDefaults standardUserDefaults] integerForKey:@"newBoostCount"];
+//        if (count >= 5) {
+//            [self.successView.unseendNewLabel setHidden:YES];
+//        }
+//        else{
+//            [self.successView.unseendNewLabel setHidden:NO];
+//            count++;
+//            [[NSUserDefaults standardUserDefaults] setInteger:count forKey:@"newBoostCount"];
+//        }
+//    }
+//    else{
+//        //first time with new boost button
+//        [[NSUserDefaults standardUserDefaults] setInteger:1 forKey:@"newBoostCount"];
+//    }
 }
 
 -(void)showSuccess{
+    self.completionShowing = YES;
     self.bgView.alpha = 0.8;
     [self.successView setAlpha:1.0];
-    [UIView animateWithDuration:1.5
+    
+    [UIView animateWithDuration:1.0
                           delay:0.0
          usingSpringWithDamping:0.5
           initialSpringVelocity:0.5
@@ -419,7 +524,7 @@
                             //Animations
                             if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
                                 //iphone5
-                                [self.successView setFrame:CGRectMake(0, 0, 300, 460)];
+                                [self.successView setFrame:CGRectMake(0, 0, 300, 480)];
                             }
                             else{
                                 [self.successView setFrame:CGRectMake(0, 0, 340, 480)];
@@ -442,7 +547,7 @@
                             //Animations
                             if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
                                 //iphone5
-                                [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150,1000, 300, 460)];
+                                [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150,1000, 300, 480)];
                             }
                             else{
                                 [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170,1000, 340, 480)]; //iPhone 6/7 specific
@@ -456,15 +561,11 @@
                          
                          if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
                              //iphone5
-                             [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -460, 300, 460)];
+                             [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -480, 300, 480)];
                          }
                          else{
                              [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170, -480, 340, 480)]; //iPhone 6/7 specific
                          }
-                         
-                         //reset buttons
-                         [self.successView.firstButton setHidden:NO];
-                         [self.successView.secondButton setHidden:NO];
                      }];
 }
 
@@ -495,6 +596,21 @@
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
+-(void)boostPressed{
+    [Answers logCustomEventWithName:@"Boost pressed"
+                   customAttributes:@{
+                                      @"pageName":@"Success"
+                                      }];
+    
+    boostController *vc = [[boostController alloc]init];
+    vc.listing = self.listing;
+    vc.delegate = self;
+    if (self.introMode == YES) {
+        vc.introMode = YES;
+    }
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
 -(void)successDonePressed{
     [Answers logCustomEventWithName:@"Success Done pressed"
                    customAttributes:@{
@@ -507,7 +623,7 @@
     }
     else{
         [self resetAll];
-        self.tabBarController.selectedIndex = 1;
+        [self cancelCrossPresse:self];
     }
 }
 
@@ -589,6 +705,7 @@
         vc.WTBObject = self.listing;
         vc.source = @"create";
         vc.pureWTS = NO;
+        vc.fromCreate = YES;
         NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
         [self presentViewController:nav animated:YES completion:nil];
     }
@@ -625,6 +742,7 @@
     self.photostotal = 0;
     self.geopoint = nil;
     self.listing = nil;
+    self.alreadyPromptedSpecific = NO;
 }
 
 -(void)useCurrentLoc{
@@ -691,10 +809,10 @@
     
     PFUser *current = [PFUser currentUser];
     
-    //check if have sizeCountry
+    //check if have default size info
     if ([current objectForKey:@"sizeCountry"]) {
         
-        if ([self.categorySelected isEqualToString:@"Clothing"]) {
+        if ([self.categorySelected isEqualToString:@"Clothing"] && [current objectForKey:@"clothingSizeArray"]) {
             NSArray *clothingSizeArray = [current objectForKey:@"clothingSizeArray"];
             
             NSString *sizeLabel = [NSString stringWithFormat:@"%@/%@",clothingSizeArray[0],clothingSizeArray[1]];
@@ -706,10 +824,14 @@
             [self.listing setObject:clothingSizeArray[1] forKey:@"secondSize"];
             [self.listing setObject:@"YES"forKey:[NSString stringWithFormat:@"size%@", clothingSizeArray[1]]];
             
+            [self.listing setObject:clothingSizeArray forKey:@"sizeArray"];
+            
         }
         else if ([self.categorySelected isEqualToString:@"Footwear"] && [current objectForKey:@"UKShoeSizeArray"]){
             
             NSArray *ukSizeArray = [current objectForKey:@"UKShoeSizeArray"];
+            [self.listing setObject:ukSizeArray forKey:@"sizeArray"];
+
             
             //set size label
             NSString *sizeLabel = [NSString stringWithFormat:@"UK %@/%@/%@",ukSizeArray[0],ukSizeArray[1],ukSizeArray[2]];
@@ -756,45 +878,19 @@
 //            NSLog(@"can't be converted %@", string);
         }
         else{
-            [finalKeywordArray addObject:string];
+            //trim . or , etc. from string if not got a space inbetween
+            NSString* cleanedString = [string stringByTrimmingCharactersInSet: [NSCharacterSet punctuationCharacterSet]];
+            [finalKeywordArray addObject:cleanedString];
         }
     }
     [self.listing setObject:finalKeywordArray forKey:@"keywords"];
     
-    if ([mutableStrings containsObject:@"bogo"]) {
-        [mutableStrings addObject:@"box"];
-        [mutableStrings addObject:@"logo"];
-    }
-    
-    if ([mutableStrings containsObject:@"tee"]) {
-        [mutableStrings addObject:@"t"];
-        [mutableStrings addObject:@"t-shirt"];
-    }
-    
-    if ([mutableStrings containsObject:@"camo"]) {
-        [mutableStrings addObject:@"camouflage"];
-    }
-    
-    if ([mutableStrings containsObject:@"hoodie"]) {
-        [mutableStrings addObject:@"hoody"];
-    }
-    
-    if ([mutableStrings containsObject:@"crew"]) {
-        [mutableStrings addObject:@"crewneck"];
-        [mutableStrings addObject:@"sweatshirt"];
-        [mutableStrings addObject:@"sweater"];
-        [mutableStrings addObject:@"sweat"];
-    }
-    
-    [self.listing setObject:mutableStrings forKey:@"searchKeywords"];
+    finalKeywordArray = [self addAlternativeKeywordsFromArray:finalKeywordArray];
+    [self.listing setObject:finalKeywordArray forKey:@"searchKeywords"];
     [self.listing setObject:@"live" forKey:@"status"];
     
-    //expiration in 2 weeks
-//    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-//    dayComponent.day = 14;
-//    NSCalendar *theCalendar = [NSCalendar currentCalendar];
-//    NSDate *expirationDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-//    [self.listing setObject:expirationDate forKey:@"expiration"];
+    //set default condition wanted to any
+    [self.listing setObject:@"Any" forKey:@"condition"];
 
     if (self.geopoint != nil) {
         [self.listing setObject:self.locationString forKey:@"location"];
@@ -805,7 +901,13 @@
     [self.listing setObject:@0 forKey:@"views"];
     [self.listing setObject:@0 forKey:@"bumpCount"];
     [self.listing setObject:self.currency forKey:@"currency"];
-    [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
+    
+    if (self.listingAsMode != YES) {
+        [self.listing setObject:[PFUser currentUser] forKey:@"postUser"];
+    }
+    else{
+        [self.listing setObject:self.listAsUser forKey:@"postUser"];
+    }
     
     NSData* data = UIImageJPEGRepresentation(self.firstImage, 0.7f);
     
@@ -824,13 +926,30 @@
     PFFile *imageFile1 = [PFFile fileWithName:@"Image1.jpg" data:data];
     [self.listing setObject:imageFile1 forKey:@"image1"];
     
+    //save a smaller thumbnail image from first cell's image    
+    UIImage *imageOne = [self.firstImage scaleImageToSize:CGSizeMake(200, 200)];
+    NSData* dataOne = UIImageJPEGRepresentation(imageOne, 0.8f);
+    PFFile *thumbFile = [PFFile fileWithName:@"thumb1.jpg" data:dataOne];
+    [self.listing setObject:thumbFile forKey:@"thumbnail"];
+    
     //set index on WTB
-    if ([[PFUser currentUser]objectForKey:@"postNumber"]) {
-        int index = [[[PFUser currentUser]objectForKey:@"postNumber"]intValue]+1;
-        [self.listing setObject:[NSNumber numberWithInt:index] forKey:@"index"];
+    if (self.listingAsMode != YES) {
+        if ([[PFUser currentUser]objectForKey:@"postNumber"]) {
+            int index = [[[PFUser currentUser]objectForKey:@"postNumber"]intValue]+1;
+            [self.listing setObject:[NSNumber numberWithInt:index] forKey:@"index"];
+        }
+        else{
+            [self.listing setObject:@0 forKey:@"index"];
+        }
     }
     else{
-        [self.listing setObject:@0 forKey:@"index"];
+        if ([self.listAsUser objectForKey:@"postNumber"]) {
+            int index = [[self.listAsUser objectForKey:@"postNumber"]intValue]+1;
+            [self.listing setObject:[NSNumber numberWithInt:index] forKey:@"index"];
+        }
+        else{
+            [self.listing setObject:@0 forKey:@"index"];
+        }
     }
     
     [self.listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
@@ -839,8 +958,15 @@
             NSLog(@"listing saved! %@", self.listing.objectId);
             
             self.createdListing = YES;
+            self.savingListing = NO;
             
             [self findRelevantItems];
+            
+            if (self.listingAsMode == YES) {
+                [self hidHUD];
+                [self showSuccess];
+                return;
+            }
             
             //analytics
             if (self.introMode == YES) {
@@ -861,89 +987,62 @@
             //add listing to home page via notif.
             [[NSNotificationCenter defaultCenter] postNotificationName:@"justPostedListing" object:self.listing];
             
-            //schedule local notif. for first listing
-            if (![[PFUser currentUser] objectForKey:@"postNumber"]) {
-                
-                //cancel first listing local push
-                NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
-                for(UILocalNotification *notification in notificationArray){
-                    if ([notification.alertBody isEqualToString:@"What do you want to buy? Create your first wanted listing on Bump now!"]) {
-                        // delete this notification
-                        [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
-                    }
-                }
-                
-                //local notifications set up
-                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                dayComponent.day = 1;
-                [dayComponent setHour: 20];
-                NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-                
-                UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-                [localNotification setAlertBody:@"Congrats on your first wanted listing! Swipe to browse recommended items that you can purchase on Bump"]; //make sure this matches the app delegate local notifications handler method
-                [localNotification setFireDate: dateToFire];
-                [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
-                [localNotification setRepeatInterval: 0];
-                [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
-            }
-            
             [[PFUser currentUser]incrementKey:@"postNumber"];
             [[PFUser currentUser] saveInBackground];
             
-            //send FB friends a push asking them to Bump listing!
-            NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just posted a listing - Tap to Bump it 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
-            
-            PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
-            [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
-            [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
-            [bumpedQuery whereKeyExists:@"user"];
-            [bumpedQuery includeKey:@"user"];
-            bumpedQuery.limit = 10;
-            [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                if (objects) {
-                    NSLog(@"these objects can be pushed to %@", objects);
-                    if (objects.count > 0) {
-                        //create safe date which is 3 days from now
-                        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                        dayComponent.day = 3;
-                        NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                        NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-                        
-                        for (PFObject *bumpObj in objects) {
-                            [bumpObj setObject:safeDate forKey:@"safeDate"];
-                            [bumpObj incrementKey:@"timesBumped"];
-                            [bumpObj saveInBackground];
-                            PFUser *friendUser = [bumpObj objectForKey:@"user"];
-                            
-                            NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.listing.objectId};
-                            
-                            [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                                if (!error) {
-                                    NSLog(@"push response %@", response);
-                                    [Answers logCustomEventWithName:@"Sent FB Friend a Bump Push"
-                                                   customAttributes:@{}];
-                                    [Answers logCustomEventWithName:@"Push Sent"
-                                                   customAttributes:@{
-                                                                      @"Type":@"FB Friend"
-                                                                      }];
-                                }
-                                else{
-                                    NSLog(@"push error %@", error);
-                                }
-                            }];
-                        }
-                    }
-                }
-                else{
-                    NSLog(@"error finding relevant bumped obj's %@", error);
-                }
-            }];
+            //send FB friends a push asking them to Bump listing! //CHECK just for WTS atm
+//            NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just posted a listing - Tap to Bump it 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
+//            
+//            PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
+//            [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
+//            [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
+//            [bumpedQuery whereKeyExists:@"user"];
+//            [bumpedQuery includeKey:@"user"];
+//            bumpedQuery.limit = 10;
+//            [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//                if (objects) {
+//                    NSLog(@"these objects can be pushed to %@", objects);
+//                    if (objects.count > 0) {
+//                        //create safe date which is 3 days from now
+//                        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+//                        dayComponent.day = 3;
+//                        NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//                        NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+//                        
+//                        for (PFObject *bumpObj in objects) {
+//                            [bumpObj setObject:safeDate forKey:@"safeDate"];
+//                            [bumpObj incrementKey:@"timesBumped"];
+//                            [bumpObj saveInBackground];
+//                            PFUser *friendUser = [bumpObj objectForKey:@"user"];
+//                            
+//                            NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.listing.objectId};
+//                            
+////                            [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+////                                if (!error) {
+////                                    NSLog(@"push response %@", response);
+////                                    [Answers logCustomEventWithName:@"Sent FB Friend a Bump Push"
+////                                                   customAttributes:@{}];
+////                                    [Answers logCustomEventWithName:@"Push Sent"
+////                                                   customAttributes:@{
+////                                                                      @"Type":@"FB Friend"
+////                                                                      }];
+////                                }
+////                                else{
+////                                    NSLog(@"push error %@", error);
+////                                }
+////                            }];
+//                        }
+//                    }
+//                }
+//                else{
+//                    NSLog(@"error finding relevant bumped obj's %@", error);
+//                }
+//            }];
             
             //update wanted words from previous 10 listings
             PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
             [myPosts whereKey:@"postUser" equalTo:[PFUser currentUser]];
-            [myPosts orderByDescending:@"createdAt"];
+            [myPosts orderByDescending:@"lastUpdated"];
             myPosts.limit = 10;
             [myPosts findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                 if (objects) {
@@ -967,8 +1066,25 @@
             }];
             
             [self hidHUD];
-            [self showSuccess];
-        
+            [self dismissViewControllerAnimated:YES completion:^{
+                [self.delegate showWantedSuccessForListing:self.listing];
+            }];
+            
+//            [self showSuccess];
+            
+            //show boost VC automatically just once
+//            if (![[NSUserDefaults standardUserDefaults] valueForKey:@"autoShowBoost"]){
+//                [[NSUserDefaults standardUserDefaults] setInteger:1 forKey:@"autoShowBoost"];
+//                
+//                //first time so auto show boost VC
+//                boostController *vc = [[boostController alloc]init];
+//                vc.listing = self.listing;
+//                vc.delegate = self;
+//                if (self.introMode == YES) {
+//                    vc.introMode = YES;
+//                }
+//                [self presentViewController:vc animated:YES completion:nil];
+//            }
         }
         else{
             //error saving listing
@@ -999,30 +1115,28 @@
         if (objects) {
             [self.buyNowArray addObjectsFromArray:objects];
             
-            NSLog(@"yo count %lu", objects.count);
-            
             for (PFObject *forSale in objects) {
                 [self.buyNowIDs addObject:forSale.objectId];
             }
             
-            NSLog(@"count first time %lu", objects.count);
+//            NSLog(@"count first time %lu", objects.count);
             
             if (objects.count < 10) {
                 PFQuery *salesQuery2 = [PFQuery queryWithClassName:@"forSaleItems"];
                 [salesQuery2 whereKey:@"status" equalTo:@"live"];
-                [salesQuery2 orderByDescending:@"createdAt"];
+                [salesQuery2 orderByDescending:@"lastUpdated"];
                 [salesQuery whereKey:@"objectId" notContainedIn:self.buyNowIDs];
                 salesQuery2.limit = 10-self.buyNowArray.count;
                 [salesQuery2 findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
                     if (objects) {
-                        NSLog(@"objects second time %lu", objects.count);
+//                        NSLog(@"objects second time %lu", objects.count);
                         for (PFObject *forSale in objects) {
                             if (![self.buyNowIDs containsObject:forSale.objectId]) {
                                 [self.buyNowArray addObject:forSale];
                                 [self.buyNowIDs addObject:forSale.objectId];
                             }
                         }
-                        NSLog(@"count second time %lu", self.buyNowArray.count);
+//                        NSLog(@"count second time %lu", self.buyNowArray.count);
                         [self.successView.collectionView reloadData];
                     }
                     else{
@@ -1059,7 +1173,7 @@
     self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.customAlert.delegate = self;
     self.customAlert.titleLabel.text = @"Enable Push";
-    self.customAlert.messageLabel.text = @"Tap to be notified when sellers/potential buyers send you a message on Bump";
+    self.customAlert.messageLabel.text = @"Tap to be notified when sellers & potential buyers send you a message on Bump";
     self.customAlert.numberOfButtons = 2;
     [self.customAlert.secondButton setTitle:@"E N A B L E" forState:UIControlStateNormal];
     
@@ -1131,15 +1245,21 @@
 
 -(void)firstPressed{
     [Answers logCustomEventWithName:@"Denied Push Permissions"
-                   customAttributes:@{}];
+                   customAttributes:@{
+                                      @"username":[PFUser currentUser].username
+                                      }];
     [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"declinedPushPermissions"];
+    [[NSUserDefaults standardUserDefaults]setValue:[NSDate date] forKey:@"declinedDate"];
+
     [self donePressed];
 }
 
 -(void)secondPressed{
     //present push dialog
     [Answers logCustomEventWithName:@"Accepted Push Permissions"
-                   customAttributes:@{}];
+                   customAttributes:@{
+                                      @"username":[PFUser currentUser].username
+                                      }];
     [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForPushPermission"];
     [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"declinedPushPermissions"];
 
@@ -1166,7 +1286,9 @@
 -(void)toggleKeyboard{
     if (self.finishedListing == YES) {
         if ([self.titleTextLabel isFirstResponder]) {
+            self.toggleKeyboardHit = YES;
             [self.titleTextLabel resignFirstResponder];
+            [self dismissViewControllerAnimated:YES completion:nil];
         }
         else{
             [self.titleTextLabel becomeFirstResponder];
@@ -1181,14 +1303,27 @@
     //local notifications set up
     NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
     dayComponent.day = 1;
-    [dayComponent setHour: 20];
     
     NSCalendar *theCalendar = [NSCalendar currentCalendar];
     NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
     
+    // Create new date
+    NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
+                                                   fromDate:dateToFire];
+    
+    NSDateComponents *components3 = [[NSDateComponents alloc] init];
+    
+    [components3 setYear:components1.year];
+    [components3 setMonth:components1.month];
+    [components3 setDay:components1.day];
+    [components3 setHour:20];
+    
+    // Generate a new NSDate from components3.
+    NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+    
     UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-    [localNotification setAlertBody:@"What do you want to buy? Create your first wanted listing on Bump now!"]; //make sure this matches the app delegate local notifications handler method
-    [localNotification setFireDate: dateToFire];
+    [localNotification setAlertBody:@"What are you selling? List your first item for sale on Bump now! 🤑"]; //make sure this matches the app delegate local notifications handler method
+    [localNotification setFireDate: combinedDate];
     [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
     [localNotification setRepeatInterval: 0];
     [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
@@ -1203,80 +1338,27 @@
 //    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
-
-#pragma keyboard observer methods
-
--(void)keyboardOnScreen:(NSNotification *)notification
-{
-    if (self.settingUp == YES) {
-        return;
-    }
-    
-    self.settingUp = YES;
-    
-    NSDictionary *info  = notification.userInfo;
-    NSValue      *value = info[UIKeyboardFrameEndUserInfoKey];
-    
-    CGRect rawFrame      = [value CGRectValue];
-    CGRect keyboardFrame = [self.view convertRect:rawFrame fromView:nil];
-        
-    [self.bouncingButton removeFromSuperview];
-    self.bouncingButton = nil;
-    
-    self.bouncingButton = [[UIButton alloc]initWithFrame:CGRectMake(30, keyboardFrame.origin.y-70, 50, 50)];
-    [self.bouncingButton setImage:[UIImage imageNamed:@"bouncingButton"] forState:UIControlStateNormal];
-    [self.bouncingButton addTarget:self action:@selector(toggleKeyboard) forControlEvents:UIControlEventTouchUpInside];
-        
-    self.bouncingButton.frame = CGRectMake(30, keyboardFrame.origin.y-70, 50, 50);
-    [self.bouncingButton setAlpha:0.0];
-    [self.bouncingButton.layer removeAllAnimations];
-    
-    [self.view.layer removeAllAnimations];
-    [self.view addSubview:self.bouncingButton];
-
-    [UIView animateWithDuration:0.3
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         [self.bouncingButton setAlpha:1.0];
-                     }
-                     completion:^(BOOL finished) {
-                     }];
-    
-    
-    [UIView animateKeyframesWithDuration:0.5 delay:0.0 options:UIViewAnimationOptionAutoreverse | UIViewAnimationOptionRepeat animations:^{
-        [UIView setAnimationRepeatAutoreverses:YES]; //This ensures the animation not only animations forwards but back to its original position
-        [UIView setAnimationRepeatCount:INFINITY]; //Set the number of times you want the animation to repeat
-        self.bouncingButton.imageView.transform = CGAffineTransformMakeTranslation(0, 20);
-    } completion:^(BOOL finished) {
-        
-    }];
-}
-
--(void)keyboardOFFScreen:(NSNotification *)notification
-{
-    //animate down
-    [UIView animateWithDuration:1.0
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         self.bouncingButton.frame = CGRectMake(self.bouncingButton.frame.origin.x, self.bouncingButton.frame.origin.y+200, 50, 50);
-                         [self.bouncingButton setAlpha:0.0];
-                     }
-                     completion:^(BOOL finished) {
-                         [self.bouncingButton removeFromSuperview];
-                         self.settingUp = NO;
-
-                     }];
-}
 - (IBAction)sellPressed:(id)sender {
-    [Answers logCustomEventWithName:@"Sell Pressed in Create"
-                   customAttributes:@{}];
     
-    self.titleTextLabel.text = @"";
-    CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-    [self presentViewController:nav animated:YES completion:nil];
+    if (self.isSeller != YES) {
+        [Answers logCustomEventWithName:@"Apply to sell pressed"
+                       customAttributes:@{
+                                          @"where": @"create"
+                                          }];
+        
+        //take to seller application
+        mainApprovedSellerController *vc = [[mainApprovedSellerController alloc]init];
+        [self presentViewController:vc animated:YES completion:nil];
+    }
+    else{
+        [Answers logCustomEventWithName:@"Sell Pressed in Create"
+                       customAttributes:@{}];
+        
+        self.titleTextLabel.text = @"";
+        CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+        [self presentViewController:nav animated:YES completion:nil];
+    }
 }
 
 #pragma mark - categories drop down
@@ -1350,6 +1432,7 @@
                         }
                      completion:^(BOOL finished) {
                          //Completion Block
+                         self.finishedListing = YES;
                          [self.catView setAlpha:0.0];
                          [self.bgView removeGestureRecognizer:self.catTap];
                          
@@ -1379,6 +1462,532 @@
     self.categorySelected = @"Accessories";
     [self hideCategories];
     [self showGoogle];
+}
+
+#pragma mark - boost controller delegate
+-(void)dismissedWithPurchase:(NSString *)purchase{
+    
+    //fetchupdated listing so it has correct boost info
+    //then pass to explore
+    
+    [self.listing fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"latestListingBoosted" object:object];
+        }
+    }];
+}
+- (IBAction)cancelCrossPresse:(id)sender {
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(NSMutableArray *)addAlternativeKeywordsFromArray:(NSMutableArray *)finalKeywordArray{
+    //t shirt variations
+    if ([finalKeywordArray containsObject:@"tee"]) {
+        [finalKeywordArray addObject:@"shirt"];
+        [finalKeywordArray addObject:@"t"];
+        [finalKeywordArray addObject:@"t-shirt"];
+        [finalKeywordArray addObject:@"tshirt"];
+        [finalKeywordArray addObject:@"top"];
+        [finalKeywordArray addObject:@"tees"];
+    }
+    else if ([finalKeywordArray containsObject:@"tshirt"]) {
+        [finalKeywordArray addObject:@"shirt"];
+        [finalKeywordArray addObject:@"t"];
+        [finalKeywordArray addObject:@"t-shirt"];
+        [finalKeywordArray addObject:@"tee"];
+        [finalKeywordArray addObject:@"top"];
+        [finalKeywordArray addObject:@"tees"];
+    }
+    else if ([finalKeywordArray containsObject:@"t-shirt"]) {
+        [finalKeywordArray addObject:@"shirt"];
+        [finalKeywordArray addObject:@"t"];
+        [finalKeywordArray addObject:@"tshirt"];
+        [finalKeywordArray addObject:@"tee"];
+        [finalKeywordArray addObject:@"top"];
+        [finalKeywordArray addObject:@"tees"];
+    }
+    else if ([finalKeywordArray containsObject:@"t"] && [finalKeywordArray containsObject:@"shirt"]) {
+        [finalKeywordArray addObject:@"t-shirt"];
+        [finalKeywordArray addObject:@"tshirt"];
+        [finalKeywordArray addObject:@"tee"];
+        [finalKeywordArray addObject:@"top"];
+        [finalKeywordArray addObject:@"tees"];
+    }
+    
+    //bogo variations
+    if ([finalKeywordArray containsObject:@"bogo"]) {
+        [finalKeywordArray addObject:@"box"];
+        [finalKeywordArray addObject:@"logo"];
+        [finalKeywordArray addObject:@"boxlogo"];
+        [finalKeywordArray addObject:@"bogos"];
+    }
+    else if ([finalKeywordArray containsObject:@"box logo"]) {
+        [finalKeywordArray addObject:@"bogo"];
+        [finalKeywordArray addObject:@"boxlogo"];
+        [finalKeywordArray addObject:@"bogos"];
+    }
+    
+    //triferg variations
+    if ([finalKeywordArray containsObject:@"triferg"]) {
+        [finalKeywordArray addObject:@"tri-ferg"];
+        [finalKeywordArray addObject:@"tri"];
+        [finalKeywordArray addObject:@"ferg"];
+    }
+    else if ([finalKeywordArray containsObject:@"tri-ferg"]) {
+        [finalKeywordArray addObject:@"triferg"];
+        [finalKeywordArray addObject:@"tri"];
+        [finalKeywordArray addObject:@"ferg"];
+    }
+    else if ([finalKeywordArray containsObject:@"tri"] && [finalKeywordArray containsObject:@"ferg"]) {
+        [finalKeywordArray addObject:@"triferg"];
+        [finalKeywordArray addObject:@"tri-ferg"];
+    }
+    
+    //numbers
+    if ([finalKeywordArray containsObject:@"1"] || [finalKeywordArray containsObject:@"one"]) {
+        [finalKeywordArray addObject:@"1"];
+        [finalKeywordArray addObject:@"one"];
+    }
+    if ([finalKeywordArray containsObject:@"2"] || [finalKeywordArray containsObject:@"two"]) {
+        [finalKeywordArray addObject:@"2"];
+        [finalKeywordArray addObject:@"two"];
+    }
+    if ([finalKeywordArray containsObject:@"3"] || [finalKeywordArray containsObject:@"three"]) {
+        [finalKeywordArray addObject:@"3"];
+        [finalKeywordArray addObject:@"three"];
+    }
+    if ([finalKeywordArray containsObject:@"4"] || [finalKeywordArray containsObject:@"four"]) {
+        [finalKeywordArray addObject:@"4"];
+        [finalKeywordArray addObject:@"four"];
+    }
+    if ([finalKeywordArray containsObject:@"5"] || [finalKeywordArray containsObject:@"five"]) {
+        [finalKeywordArray addObject:@"five"];
+        [finalKeywordArray addObject:@"5"];
+    }
+    if ([finalKeywordArray containsObject:@"6"] || [finalKeywordArray containsObject:@"six"]) {
+        [finalKeywordArray addObject:@"6"];
+        [finalKeywordArray addObject:@"six"];
+    }
+    if ([finalKeywordArray containsObject:@"7"] || [finalKeywordArray containsObject:@"seven"]) {
+        [finalKeywordArray addObject:@"seven"];
+        [finalKeywordArray addObject:@"7"];
+    }
+    if ([finalKeywordArray containsObject:@"8"] || [finalKeywordArray containsObject:@"eight"]) {
+        [finalKeywordArray addObject:@"8"];
+        [finalKeywordArray addObject:@"eight"];
+    }
+    if ([finalKeywordArray containsObject:@"9"] || [finalKeywordArray containsObject:@"nine"]) {
+        [finalKeywordArray addObject:@"9"];
+        [finalKeywordArray addObject:@"nine"];
+    }
+    if ([finalKeywordArray containsObject:@"10"] || [finalKeywordArray containsObject:@"ten"]) {
+        [finalKeywordArray addObject:@"10"];
+        [finalKeywordArray addObject:@"ten"];
+    }
+    
+    //pullover/anorak
+    if ([finalKeywordArray containsObject:@"pullover"]) {
+        [finalKeywordArray addObject:@"anorak"];
+        [finalKeywordArray addObject:@"pull"];
+        [finalKeywordArray addObject:@"over"];
+        [finalKeywordArray addObject:@"anarak"];
+    }
+    else if ([finalKeywordArray containsObject:@"anorak"]) {
+        [finalKeywordArray addObject:@"pullover"];
+        [finalKeywordArray addObject:@"pull"];
+        [finalKeywordArray addObject:@"over"];
+        [finalKeywordArray addObject:@"anarak"];
+    }
+    else if ([finalKeywordArray containsObject:@"anarak"]) {
+        [finalKeywordArray addObject:@"pullover"];
+        [finalKeywordArray addObject:@"pull"];
+        [finalKeywordArray addObject:@"over"];
+        [finalKeywordArray addObject:@"anorak"];
+    }
+    //quarter zip
+    if ([finalKeywordArray containsObject:@"quarter"] && [finalKeywordArray containsObject:@"zip"] ) {
+        [finalKeywordArray addObject:@"1/4"];
+        [finalKeywordArray addObject:@"zip"];
+        [finalKeywordArray addObject:@"quarterzip"];
+    }
+    else if ([finalKeywordArray containsObject:@"1/4"] && [finalKeywordArray containsObject:@"zip"] ) {
+        [finalKeywordArray addObject:@"1/4"];
+        [finalKeywordArray addObject:@"zip"];
+        [finalKeywordArray addObject:@"quarterzip"];
+    }
+    else if ([finalKeywordArray containsObject:@"quarterzip"]) {
+        [finalKeywordArray addObject:@"1/4"];
+        [finalKeywordArray addObject:@"zip"];
+        [finalKeywordArray addObject:@"quarter"];
+    }
+    
+    //half zip
+    if ([finalKeywordArray containsObject:@"half"] && [finalKeywordArray containsObject:@"zip"] ) {
+        [finalKeywordArray addObject:@"1/2"];
+        [finalKeywordArray addObject:@"quarterzip"];
+        [finalKeywordArray addObject:@"quarter"];
+    }
+    else if ([finalKeywordArray containsObject:@"1/2"] && [finalKeywordArray containsObject:@"zip"] ) {
+        [finalKeywordArray addObject:@"halfzip"];
+        [finalKeywordArray addObject:@"half"];
+    }
+    else if ([finalKeywordArray containsObject:@"halfzip"]) {
+        [finalKeywordArray addObject:@"1/2"];
+        [finalKeywordArray addObject:@"zip"];
+        [finalKeywordArray addObject:@"half"];
+    }
+    
+    //overshirt
+    if ([finalKeywordArray containsObject:@"over"] && [finalKeywordArray containsObject:@"shirt"] ) {
+        [finalKeywordArray addObject:@"overshirt"];
+    }
+    else if ([finalKeywordArray containsObject:@"overshirt"]) {
+        [finalKeywordArray addObject:@"over"];
+        [finalKeywordArray addObject:@"shirt"];
+    }
+    
+    //hoodie/jumper/hood jumper
+    if ([finalKeywordArray containsObject:@"hooded"] && [finalKeywordArray containsObject:@"jumper"] ) {
+        [finalKeywordArray addObject:@"hoodie"];
+        [finalKeywordArray addObject:@"hoody"];
+    }
+    else if ([finalKeywordArray containsObject:@"hoodie"]) {
+        [finalKeywordArray addObject:@"hooded"];
+        [finalKeywordArray addObject:@"hoody"];
+        [finalKeywordArray addObject:@"jumper"];
+    }
+    else if ([finalKeywordArray containsObject:@"hoody"]) {
+        [finalKeywordArray addObject:@"hoodie"];
+        [finalKeywordArray addObject:@"hoody"];
+        [finalKeywordArray addObject:@"jumper"];
+        [finalKeywordArray addObject:@"hooded"];
+    }
+    
+    //ultraboost
+    if ([finalKeywordArray containsObject:@"ultra"] && [finalKeywordArray containsObject:@"boost"] ) {
+        [finalKeywordArray addObject:@"ultraboost"];
+        [finalKeywordArray addObject:@"UB"];
+    }
+    else if ([finalKeywordArray containsObject:@"ultraboost"]) {
+        [finalKeywordArray addObject:@"ultra"];
+        [finalKeywordArray addObject:@"boost"];
+        [finalKeywordArray addObject:@"UB"];
+    }
+    //primeknit
+    if ([finalKeywordArray containsObject:@"prime"] && [finalKeywordArray containsObject:@"knit"] ) {
+        [finalKeywordArray addObject:@"primeknit"];
+        [finalKeywordArray addObject:@"pk"];
+    }
+    else if ([finalKeywordArray containsObject:@"primeknit"]) {
+        [finalKeywordArray addObject:@"prime"];
+        [finalKeywordArray addObject:@"knit"];
+        [finalKeywordArray addObject:@"pk"];
+    }
+    
+    //parker
+    if ([finalKeywordArray containsObject:@"parker"]) {
+        [finalKeywordArray addObject:@"parka"];
+    }
+    else if ([finalKeywordArray containsObject:@"parka"]) {
+        [finalKeywordArray addObject:@"parker"];
+    }
+    
+    //cap/hat
+    if ([finalKeywordArray containsObject:@"cap"]) {
+        [finalKeywordArray addObject:@"hat"];
+    }
+    else if ([finalKeywordArray containsObject:@"hat"]) {
+        [finalKeywordArray addObject:@"cap"];
+    }
+    
+    //assc
+    if ([finalKeywordArray containsObject:@"assc"]) {
+        [finalKeywordArray addObject:@"antisocialsocialclub"];
+        [finalKeywordArray addObject:@"anti"];
+        [finalKeywordArray addObject:@"social"];
+        [finalKeywordArray addObject:@"club"];
+    }
+    else if ([finalKeywordArray containsObject:@"anti"] && [finalKeywordArray containsObject:@"social"] && [finalKeywordArray containsObject:@"club"]) {
+        [finalKeywordArray addObject:@"assc"];
+        [finalKeywordArray addObject:@"antisocialsocialclub"];
+    }
+    
+    //gosha
+    if ([finalKeywordArray containsObject:@"gosha"]) {
+        [finalKeywordArray addObject:@"rubchinskiy"];
+        [finalKeywordArray addObject:@"gosharubchinskiy"];
+        [finalKeywordArray addObject:@"rubchinsky"];
+        [finalKeywordArray addObject:@"ruchinskiy"];
+    }
+    else if ([finalKeywordArray containsObject:@"rubchinskiy"]) {
+        [finalKeywordArray addObject:@"gosha"];
+        [finalKeywordArray addObject:@"gosharubchinskiy"];
+        [finalKeywordArray addObject:@"rubchinsky"];
+        [finalKeywordArray addObject:@"ruchinskiy"];
+    }
+    
+    //raf simons
+    if ([finalKeywordArray containsObject:@"simons"]) {
+        [finalKeywordArray addObject:@"raf"];
+        [finalKeywordArray addObject:@"raph"];
+        [finalKeywordArray addObject:@"rafsimons"];
+        [finalKeywordArray addObject:@"raphsimons"];
+        [finalKeywordArray addObject:@"simmons"];
+    }
+    else if ([finalKeywordArray containsObject:@"simmons"]) {
+        [finalKeywordArray addObject:@"raf"];
+        [finalKeywordArray addObject:@"raph"];
+        [finalKeywordArray addObject:@"rafsimons"];
+        [finalKeywordArray addObject:@"raphsimons"];
+        [finalKeywordArray addObject:@"simons"];
+    }
+    
+    //yeezy
+    if ([finalKeywordArray containsObject:@"yeezy"]) {
+        [finalKeywordArray addObject:@"yeezys"];
+        [finalKeywordArray addObject:@"kanye"];
+        [finalKeywordArray addObject:@"yeezus"];
+    }
+    else if ([finalKeywordArray containsObject:@"yeezys"]) {
+        [finalKeywordArray addObject:@"yeezy"];
+        [finalKeywordArray addObject:@"kanye"];
+        [finalKeywordArray addObject:@"yeezus"];
+    }
+    else if ([finalKeywordArray containsObject:@"kanye"]) {
+        [finalKeywordArray addObject:@"yeezy"];
+        [finalKeywordArray addObject:@"yeezys"];
+        [finalKeywordArray addObject:@"yeezus"];
+    }
+    
+    //palidas
+    if ([finalKeywordArray containsObject:@"palace"] && [finalKeywordArray containsObject:@"adidas"]) {
+        [finalKeywordArray addObject:@"palidas"];
+    }
+    
+    //crew
+    if ([finalKeywordArray containsObject:@"crew"]) {
+        [finalKeywordArray addObject:@"crewneck"];
+        [finalKeywordArray addObject:@"sweatshirt"];
+        [finalKeywordArray addObject:@"sweat"];
+        [finalKeywordArray addObject:@"jumper"];
+        [finalKeywordArray addObject:@"sweater"];
+        [finalKeywordArray addObject:@"top"];
+    }
+    else if ([finalKeywordArray containsObject:@"crewneck"]) {
+        [finalKeywordArray addObject:@"crew"];
+        [finalKeywordArray addObject:@"sweatshirt"];
+        [finalKeywordArray addObject:@"sweat"];
+        [finalKeywordArray addObject:@"jumper"];
+        [finalKeywordArray addObject:@"sweater"];
+        [finalKeywordArray addObject:@"top"];
+    }
+    
+    //bred/black&red
+    if ([finalKeywordArray containsObject:@"bred"]) {
+        [finalKeywordArray addObject:@"black"];
+        [finalKeywordArray addObject:@"red"];
+    }
+    else if ([finalKeywordArray containsObject:@"black"] && [finalKeywordArray containsObject:@"red"]) {
+        [finalKeywordArray addObject:@"bred"];
+    }
+    
+    //stone island
+    if ([finalKeywordArray containsObject:@"stoney"]) {
+        [finalKeywordArray addObject:@"stone"];
+        [finalKeywordArray addObject:@"island"];
+    }
+    else if ([finalKeywordArray containsObject:@"stone"] && [finalKeywordArray containsObject:@"island"]) {
+        [finalKeywordArray addObject:@"stoney"];
+    }
+    
+    //bape
+    if ([finalKeywordArray containsObject:@"bape"]) {
+        [finalKeywordArray addObject:@"bathing"];
+        [finalKeywordArray addObject:@"ape"];
+    }
+    else if ([finalKeywordArray containsObject:@"bathing"] && [finalKeywordArray containsObject:@"ape"]) {
+        [finalKeywordArray addObject:@"bape"];
+    }
+    
+    //off white
+    if ([finalKeywordArray containsObject:@"offwhite"]) {
+        [finalKeywordArray addObject:@"off"];
+        [finalKeywordArray addObject:@"white"];
+        [finalKeywordArray addObject:@"off-white"];
+        [finalKeywordArray addObject:@"ofwhite"];
+    }
+    else if ([finalKeywordArray containsObject:@"off-white"]) {
+        [finalKeywordArray addObject:@"off"];
+        [finalKeywordArray addObject:@"white"];
+        [finalKeywordArray addObject:@"offwhite"];
+        [finalKeywordArray addObject:@"ofwhite"];
+    }
+    else if ([finalKeywordArray containsObject:@"of"] && [finalKeywordArray containsObject:@"white"]) {
+        [finalKeywordArray addObject:@"off"];
+        [finalKeywordArray addObject:@"white"];
+        [finalKeywordArray addObject:@"off-white"];
+        [finalKeywordArray addObject:@"offwhite"];
+        [finalKeywordArray addObject:@"ofwhite"];
+    }
+    
+    //pants
+    if ([finalKeywordArray containsObject:@"joggers"]) {
+        [finalKeywordArray addObject:@"sweatpants"];
+        [finalKeywordArray addObject:@"trackpants"];
+        [finalKeywordArray addObject:@"tracksuit"];
+        [finalKeywordArray addObject:@"bottoms"];
+        [finalKeywordArray addObject:@"tracksuits"];
+    }
+    else if ([finalKeywordArray containsObject:@"sweatpants"]) {
+        [finalKeywordArray addObject:@"trackpants"];
+        [finalKeywordArray addObject:@"tracksuit"];
+        [finalKeywordArray addObject:@"bottoms"];
+        [finalKeywordArray addObject:@"tracksuits"];
+        [finalKeywordArray addObject:@"joggers"];
+    }
+    else if ([finalKeywordArray containsObject:@"trackpants"]) {
+        [finalKeywordArray addObject:@"joggers"];
+        [finalKeywordArray addObject:@"tracksuit"];
+        [finalKeywordArray addObject:@"bottoms"];
+        [finalKeywordArray addObject:@"tracksuits"];
+        [finalKeywordArray addObject:@"sweatpants"];
+    }
+    else if ([finalKeywordArray containsObject:@"tracksuit"] && [finalKeywordArray containsObject:@"bottoms"]) {
+        [finalKeywordArray addObject:@"joggers"];
+        [finalKeywordArray addObject:@"tracksuits"];
+        [finalKeywordArray addObject:@"sweatpants"];
+        [finalKeywordArray addObject:@"trackpants"];
+    }
+    
+    //longsleeve
+    if ([finalKeywordArray containsObject:@"longsleeve"]) {
+        [finalKeywordArray addObject:@"long-sleeve"];
+        [finalKeywordArray addObject:@"long"];
+        [finalKeywordArray addObject:@"sleeve"];
+        [finalKeywordArray addObject:@"l/s"];
+        [finalKeywordArray addObject:@"ls"];
+    }
+    else if ([finalKeywordArray containsObject:@"long-sleeve"]) {
+        [finalKeywordArray addObject:@"longsleeve"];
+        [finalKeywordArray addObject:@"long"];
+        [finalKeywordArray addObject:@"sleeve"];
+        [finalKeywordArray addObject:@"l/s"];
+        [finalKeywordArray addObject:@"ls"];
+    }
+    else if ([finalKeywordArray containsObject:@"ls"]) {
+        [finalKeywordArray addObject:@"longsleeve"];
+        [finalKeywordArray addObject:@"long"];
+        [finalKeywordArray addObject:@"sleeve"];
+        [finalKeywordArray addObject:@"l/s"];
+        [finalKeywordArray addObject:@"long-sleeve"];
+    }
+    else if ([finalKeywordArray containsObject:@"l/s"]) {
+        [finalKeywordArray addObject:@"longsleeve"];
+        [finalKeywordArray addObject:@"long"];
+        [finalKeywordArray addObject:@"sleeve"];
+        [finalKeywordArray addObject:@"ls"];
+        [finalKeywordArray addObject:@"long-sleeve"];
+    }
+    
+    //shortsleeve
+    if ([finalKeywordArray containsObject:@"shortsleeve"]) {
+        [finalKeywordArray addObject:@"short-sleeve"];
+        [finalKeywordArray addObject:@"short"];
+        [finalKeywordArray addObject:@"sleeve"];
+    }
+    else if ([finalKeywordArray containsObject:@"short-sleeve"]) {
+        [finalKeywordArray addObject:@"shortsleeve"];
+        [finalKeywordArray addObject:@"short"];
+        [finalKeywordArray addObject:@"sleeve"];
+    }
+    
+    //shortsleeve
+    if ([finalKeywordArray containsObject:@"jacket"]) {
+        [finalKeywordArray addObject:@"coat"];
+    }
+    else if ([finalKeywordArray containsObject:@"coat"]) {
+        [finalKeywordArray addObject:@"jacket"];
+    }
+    
+    //puffa
+    if ([finalKeywordArray containsObject:@"puffa"]) {
+        [finalKeywordArray addObject:@"puffer"];
+    }
+    else if ([finalKeywordArray containsObject:@"puffer"]) {
+        [finalKeywordArray addObject:@"puffa"];
+    }
+    
+    //supreme
+    if ([finalKeywordArray containsObject:@"supreme"]) {
+        [finalKeywordArray addObject:@"preme"];
+    }
+    else if ([finalKeywordArray containsObject:@"preme"]) {
+        [finalKeywordArray addObject:@"supreme"];
+    }
+    
+    //camo
+    if ([finalKeywordArray containsObject:@"camo"]) {
+        [finalKeywordArray addObject:@"camouflage"];
+        [finalKeywordArray addObject:@"camaflage"];
+        [finalKeywordArray addObject:@"camauflage"];
+    }
+    else if ([finalKeywordArray containsObject:@"camouflage"]) {
+        [finalKeywordArray addObject:@"camo"];
+        [finalKeywordArray addObject:@"camaflage"];
+        [finalKeywordArray addObject:@"camauflage"];
+    }
+    else if ([finalKeywordArray containsObject:@"camaflage"]) {
+        [finalKeywordArray addObject:@"camo"];
+        [finalKeywordArray addObject:@"camouflage"];
+        [finalKeywordArray addObject:@"camauflage"];
+    }
+    else if ([finalKeywordArray containsObject:@"camauflage"]) {
+        [finalKeywordArray addObject:@"camo"];
+        [finalKeywordArray addObject:@"camouflage"];
+        [finalKeywordArray addObject:@"camaflage"];
+    }
+    
+    //LV
+    if ([finalKeywordArray containsObject:@"louisvuitton"]) {
+        [finalKeywordArray addObject:@"louis"];
+        [finalKeywordArray addObject:@"vuitton"];
+        [finalKeywordArray addObject:@"lv"];
+    }
+    else if ([finalKeywordArray containsObject:@"louis"] && [finalKeywordArray containsObject:@"vuitton"]) {
+        [finalKeywordArray addObject:@"lv"];
+        [finalKeywordArray addObject:@"louisvuitton"];
+    }
+    
+    //TNF
+    if ([finalKeywordArray containsObject:@"tnf"]) {
+        [finalKeywordArray addObject:@"northface"];
+        [finalKeywordArray addObject:@"north"];
+        [finalKeywordArray addObject:@"face"];
+    }
+    else if ([finalKeywordArray containsObject:@"north"] && [finalKeywordArray containsObject:@"face"]) {
+        [finalKeywordArray addObject:@"tnf"];
+        [finalKeywordArray addObject:@"northface"];
+    }
+    
+    
+    //remove duplications
+    NSOrderedSet *orderedSet = [NSOrderedSet orderedSetWithArray:finalKeywordArray];
+    NSArray *arrayWithoutDuplicates = [orderedSet array];
+    
+    [finalKeywordArray removeAllObjects];
+    [finalKeywordArray addObjectsFromArray:arrayWithoutDuplicates];
+    
+    return finalKeywordArray;
+}
+
+-(void)showVerifyAlert{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:@"To keep Bump safe we authenticate users via Facebook or Email.\n\nTo create your listing either tap the link in the verification email we sent you or connect your Facebook account\n\nDon't forget to check your Junk Folder" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        //dismiss VC
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 
 @end

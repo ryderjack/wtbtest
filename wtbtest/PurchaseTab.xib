@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <customFonts key="customFonts">
         <array key="PingFang.ttc">
-            <string>PingFangSC-Medium</string>
+            <string>PingFangSC-Semibold</string>
         </array>
     </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="PurchaseTab">
             <connections>
-                <outlet property="anotherPromptButton" destination="amS-I4-9zP" id="WG4-1i-Nx2"/>
                 <outlet property="collectionView" destination="19f-K1-nyg" id="LM7-ED-JsQ"/>
+                <outlet property="filterButton" destination="amS-I4-9zP" id="OHO-Us-w8J"/>
+                <outlet property="noResultsLabel" destination="Pkp-9m-ggJ" id="co6-4n-rTf"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -41,29 +42,45 @@
                     </connections>
                 </collectionView>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="amS-I4-9zP">
-                    <rect key="frame" x="88" y="617" width="199" height="30"/>
-                    <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="8"/>
-                    <state key="normal" title="C R E A T E  A N O T H E R  L I S T I N G" backgroundImage="listingPromptBG.png">
+                    <rect key="frame" x="139" y="615" width="96" height="32"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="32" id="eUL-OX-9iS"/>
+                        <constraint firstAttribute="width" constant="96" id="rzi-5K-z3c"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="9"/>
+                    <state key="normal" title="F I L T E R" backgroundImage="filterBG2.png">
                         <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </state>
                     <connections>
-                        <action selector="promptPressed:" destination="-1" eventType="touchUpInside" id="q0w-6b-A2o"/>
+                        <action selector="filterPressed:" destination="-1" eventType="touchUpInside" id="3a9-SO-UhE"/>
                     </connections>
                 </button>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No results Try different filters ⬇️" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Pkp-9m-ggJ">
+                    <rect key="frame" x="121" y="303" width="133" height="61"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="133" id="AQ1-16-xkl"/>
+                        <constraint firstAttribute="height" constant="61" id="nIb-Ri-XYT"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="13"/>
+                    <color key="textColor" red="0.60784313729999995" green="0.60784313729999995" blue="0.60784313729999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
-                <constraint firstAttribute="bottom" secondItem="19f-K1-nyg" secondAttribute="bottom" id="2Xd-Y3-dyi"/>
-                <constraint firstItem="19f-K1-nyg" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="MpA-5V-N7k"/>
-                <constraint firstAttribute="bottom" secondItem="amS-I4-9zP" secondAttribute="bottom" constant="20" id="OS7-dW-x9x"/>
-                <constraint firstItem="19f-K1-nyg" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="Pn2-zC-ExM"/>
-                <constraint firstItem="amS-I4-9zP" firstAttribute="centerX" secondItem="19f-K1-nyg" secondAttribute="centerX" id="gUt-xI-jbB"/>
-                <constraint firstAttribute="trailing" secondItem="19f-K1-nyg" secondAttribute="trailing" id="uuy-9N-wyw"/>
+                <constraint firstItem="amS-I4-9zP" firstAttribute="centerX" secondItem="19f-K1-nyg" secondAttribute="centerX" id="6nK-7d-47D"/>
+                <constraint firstItem="Pkp-9m-ggJ" firstAttribute="centerX" secondItem="amS-I4-9zP" secondAttribute="centerX" id="HAG-AA-Rxd"/>
+                <constraint firstItem="Pkp-9m-ggJ" firstAttribute="centerY" secondItem="19f-K1-nyg" secondAttribute="centerY" id="ODc-5M-oHh"/>
+                <constraint firstAttribute="trailing" secondItem="19f-K1-nyg" secondAttribute="trailing" id="PGE-Ij-ebE"/>
+                <constraint firstAttribute="bottom" secondItem="amS-I4-9zP" secondAttribute="bottom" constant="20" id="PSV-W3-hZk"/>
+                <constraint firstItem="19f-K1-nyg" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="Qgk-KM-e7Y"/>
+                <constraint firstAttribute="bottom" secondItem="19f-K1-nyg" secondAttribute="bottom" id="V5J-m0-ozI"/>
+                <constraint firstItem="19f-K1-nyg" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="ueI-uX-fQX"/>
             </constraints>
             <point key="canvasLocation" x="33.5" y="53.5"/>
         </view>
     </objects>
     <resources>
-        <image name="listingPromptBG.png" width="199" height="30"/>
+        <image name="filterBG2.png" width="96" height="32"/>
     </resources>
 </document>

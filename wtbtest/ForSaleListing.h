@@ -18,11 +18,25 @@
 #import "inviteViewClass.h"
 #import "TOJRWebView.h"
 #import "DetailImageController.h"
+#import "BumpingIntroVC.h"
 
-@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate>
+@class ForSaleListing;
+
+@protocol ForSaleListingDelegate <NSObject>
+- (void)dismissForSaleListing;
+- (void)changedSoldStatus; //could mark as sold or unsold
+- (void)deletedItem;
+- (void)likedItem;
+
+@end
+
+@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
 @property (nonatomic, strong) PFObject *WTBObject;
+
+//delegate
+@property (nonatomic, weak) id <ForSaleListingDelegate> delegate;
 
 //cells
 
@@ -39,10 +53,15 @@
 @property (weak, nonatomic) IBOutlet UILabel *IDLabel;
 @property (weak, nonatomic) IBOutlet UILabel *sizeLabel;
 @property (weak, nonatomic) IBOutlet UILabel *descriptionLabel;
+@property (weak, nonatomic) IBOutlet UILabel *conditionLabel;
+@property (weak, nonatomic) IBOutlet UIButton *usernameButton;
+@property (weak, nonatomic) IBOutlet UILabel *itemTitle;
+@property (weak, nonatomic) IBOutlet UILabel *sellerTextLabel;
 
 //icons
 @property (weak, nonatomic) IBOutlet UIImageView *sizeIcon;
 @property (weak, nonatomic) IBOutlet UIImageView *timeIcon;
+@property (weak, nonatomic) IBOutlet UIImageView *priceIcon;
 
 //multiple sizes
 @property (weak, nonatomic) IBOutlet UIButton *multipleButton;
@@ -50,10 +69,11 @@
 @property (nonatomic, strong) customAlertViewClass *customAlert;
 @property (nonatomic, strong) UIView *searchBgView;
 
-@property (weak, nonatomic) IBOutlet PFImageView *imageViewTwo;
+//@property (weak, nonatomic) IBOutlet PFImageView *imageViewTwo;
 //seller info
 @property (nonatomic, strong) PFUser *seller;
 @property (weak, nonatomic) IBOutlet PFImageView *sellerImgView;
+@property (nonatomic) BOOL fetchedListing;
 
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
@@ -67,6 +87,9 @@
 @property (nonatomic, strong) PFFile *secondImage;
 @property (nonatomic, strong) PFFile *thirdImage;
 @property (nonatomic, strong) PFFile *fourthImage;
+@property (nonatomic, strong) PFFile *fifthImage;
+@property (nonatomic, strong) PFFile *sixthImage;
+
 @property (nonatomic) int numberOfPics;
 
 @property (weak, nonatomic) IBOutlet UILabel *soldLabel;
@@ -80,20 +103,28 @@
 @property (nonatomic) BOOL pureWTS;
 @property (nonatomic) BOOL relatedProduct;
 @property (nonatomic) BOOL affiliateMode;
-@property (weak, nonatomic) IBOutlet PFImageView *trustedCheck;
+@property (nonatomic) BOOL fromCreate;
+@property (nonatomic) BOOL markAsSoldMode;
 
 //big button
 @property (nonatomic, strong) UIButton *longButton;
 @property (nonatomic) BOOL buttonShowing;
+@property (nonatomic) BOOL barButtonPressed;
 
 //carousel
 @property (weak, nonatomic) IBOutlet iCarousel *carouselView;
 @property (nonatomic, strong) NSMutableArray *imageArray;
 
-//send cell
+//buttons cell
 @property (strong, nonatomic) IBOutlet UITableViewCell *sendCell;
 @property (weak, nonatomic) IBOutlet UIButton *sendButton;
 @property (weak, nonatomic) IBOutlet UIButton *sendLabel;
+@property (weak, nonatomic) IBOutlet UIButton *upVoteButton;
+@property (weak, nonatomic) IBOutlet UIButton *reportButton;
+@property (weak, nonatomic) IBOutlet UIButton *upVoteLabel;
+@property (weak, nonatomic) IBOutlet UIButton *reportLabel;
+
+
 
 //send dialog box
 @property (nonatomic, strong) SendDialogBox *sendBox;
@@ -119,6 +150,18 @@
 
 //web
 @property (nonatomic, strong) TOJRWebView *web;
+
+//screenshot & other drop down tracking
+@property (nonatomic) BOOL dropShowing;
+
+//blur view
+@property (strong, nonatomic) FXBlurView *blurView;
+
+//from push
+@property (nonatomic) BOOL fromPush;
+
+//user push preferences
+@property (nonatomic) BOOL dontLikePush;
 
 
 @end

@@ -1,24 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12118" systemVersion="16E195" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12086"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
         <collectionReusableView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="Home" id="U6b-Vx-4bR" customClass="HomeHeaderView">
-            <rect key="frame" x="0.0" y="0.0" width="350" height="275"/>
+            <rect key="frame" x="0.0" y="0.0" width="350" height="225"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
-                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Tdy-MD-j6Z" customClass="HMSegmentedControl">
-                    <rect key="frame" x="0.0" y="225" width="350" height="50"/>
-                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                </view>
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="msi-pe-vex" customClass="iCarousel">
                     <rect key="frame" x="0.0" y="0.0" width="350" height="225"/>
                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -26,20 +22,15 @@
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
             <constraints>
-                <constraint firstItem="msi-pe-vex" firstAttribute="top" secondItem="U6b-Vx-4bR" secondAttribute="top" id="78t-Z2-Rft"/>
-                <constraint firstItem="Tdy-MD-j6Z" firstAttribute="top" secondItem="U6b-Vx-4bR" secondAttribute="top" constant="225" id="Gh1-WY-MUo"/>
-                <constraint firstItem="msi-pe-vex" firstAttribute="leading" secondItem="Tdy-MD-j6Z" secondAttribute="leading" id="N31-zs-ocL"/>
-                <constraint firstItem="Tdy-MD-j6Z" firstAttribute="top" secondItem="msi-pe-vex" secondAttribute="bottom" id="Qhb-R5-R39"/>
-                <constraint firstAttribute="trailing" secondItem="msi-pe-vex" secondAttribute="trailing" id="YSS-54-Di0"/>
-                <constraint firstItem="msi-pe-vex" firstAttribute="trailing" secondItem="Tdy-MD-j6Z" secondAttribute="trailing" id="gdq-ow-Syu"/>
-                <constraint firstAttribute="bottom" secondItem="Tdy-MD-j6Z" secondAttribute="bottom" id="lw0-5a-WdT"/>
-                <constraint firstItem="msi-pe-vex" firstAttribute="leading" secondItem="U6b-Vx-4bR" secondAttribute="leading" id="vDi-VZ-2VX"/>
+                <constraint firstItem="msi-pe-vex" firstAttribute="leading" secondItem="U6b-Vx-4bR" secondAttribute="leading" id="4hf-jB-CEd"/>
+                <constraint firstItem="msi-pe-vex" firstAttribute="top" secondItem="U6b-Vx-4bR" secondAttribute="top" id="VdK-E7-fI8"/>
+                <constraint firstAttribute="bottom" secondItem="msi-pe-vex" secondAttribute="bottom" id="dPL-xo-JuK"/>
+                <constraint firstAttribute="trailing" secondItem="msi-pe-vex" secondAttribute="trailing" id="fIk-Ec-vg7"/>
             </constraints>
             <connections>
                 <outlet property="carousel" destination="msi-pe-vex" id="1Bu-BJ-xsw"/>
-                <outlet property="headerSegmentControl" destination="Tdy-MD-j6Z" id="lu6-vh-deJ"/>
             </connections>
-            <point key="canvasLocation" x="34" y="104.5"/>
+            <point key="canvasLocation" x="34" y="79.5"/>
         </collectionReusableView>
     </objects>
 </document>

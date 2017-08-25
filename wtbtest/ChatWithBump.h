@@ -11,8 +11,10 @@
 #import "JSQMessages.h"
 #import <ParseUI/ParseUI.h>
 #import <QBImagePickerController/QBImagePickerController.h>
+#import <DGActivityIndicatorView.h>
+#import <SwipeView/SwipeView.h>
 
-@interface ChatWithBump : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, UICollectionViewDelegate, UINavigationControllerDelegate,QBImagePickerControllerDelegate>
+@interface ChatWithBump : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, UICollectionViewDelegate, UINavigationControllerDelegate,QBImagePickerControllerDelegate,SwipeViewDelegate,SwipeViewDataSource>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -30,8 +32,6 @@
 @property (nonatomic, strong) NSMutableArray *messagesParseArray;
 @property (nonatomic, strong) NSMutableArray *sentMessagesParseArray;
 
-@property (nonatomic) BOOL fromForeGround;
-
 @property (nonatomic, strong) PFObject *messageObject;
 @property (nonatomic, strong) PFObject *lastMessage;
 
@@ -40,5 +40,24 @@
 
 //convo images
 @property (nonatomic, strong) NSMutableArray *convoImagesArray;
+
+//addImages
+@property (nonatomic, strong) NSMutableArray *placeholderAssetArray;
+@property (nonatomic, strong) NSMutableArray *imagesToProcess;
+
+//load earlier messages
+@property (nonatomic) BOOL infiniteLoading;
+@property (nonatomic) BOOL moreToLoad;
+@property (nonatomic) int skipped;
+@property (nonatomic) BOOL earlierPressed;
+
+//spinner
+@property (nonatomic, strong) DGActivityIndicatorView *spinner;
+
+//suggested message topics
+@property (nonatomic) BOOL showSuggested;
+@property (nonatomic, strong) SwipeView *carousel;
+@property (nonatomic, strong) NSMutableArray *suggestedMessagesArray;
+@property (nonatomic, strong) NSMutableArray *actualMessagesToSend;
 
 @end

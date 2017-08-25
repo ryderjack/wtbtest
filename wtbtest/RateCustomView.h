@@ -13,7 +13,6 @@
 @protocol rateDelegate <NSObject>
 - (void)dismissRatePressed;
 - (void)ratePressedWithNumber:(int)starNumber;
-
 @end
 
 @interface RateCustomView : UIView

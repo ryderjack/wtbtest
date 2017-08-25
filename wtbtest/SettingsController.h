@@ -12,8 +12,11 @@
 #import <ParseUI/ParseUI.h>
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
+#import "customAlertViewClass.h"
+#import "LocationView.h"
 
-@interface SettingsController : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate>
+@interface SettingsController : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,customAlertDelegate,LocationViewControllerDelegate>
+
 NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *addressCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *emailCell;
@@ -25,6 +28,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *lastNameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *usernameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *cmoCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *listAsCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *sellerModeCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *locationLabelCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *bioCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *emailFields;
@@ -39,6 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonnull, strong) NSString *currentContact;
 @property (weak, nonatomic) IBOutlet UILabel *usernameLabel;
 
+@property (nonatomic) BOOL changePayPal;
 
 //buttons
 @property (weak, nonatomic) IBOutlet UIButton *GBPButton;
@@ -57,9 +65,43 @@ NS_ASSUME_NONNULL_BEGIN
 
 //other
 @property (nonatomic, strong) NSArray *profanityList;
+@property (nonatomic) BOOL changedName;
+
+//picture cell
+@property (weak, nonatomic) IBOutlet UILabel *changePictureLabel;
 
 //Sam's CMO mode
 @property (weak, nonatomic) IBOutlet UISwitch *cmoSwitch;
+
+//Sam's List as mode
+@property (weak, nonatomic) IBOutlet UISwitch *listAsSwitch;
+
+//seller mode
+@property (weak, nonatomic) IBOutlet UISwitch *sellerModeSwitch;
+
+//notifications
+@property (nonatomic) BOOL changedPush;
+@property (nonatomic) BOOL changedFbPush;
+
+@property (weak, nonatomic) IBOutlet UIButton *pushStatusButton;
+
+@property (weak, nonatomic) IBOutlet UISwitch *likeSwitch;
+@property (strong, nonatomic) IBOutlet UITableViewCell *notificationsCell;
+@property (weak, nonatomic) IBOutlet UISwitch *fbFriendSwitch;
+
+//push prompt
+@property (nonatomic, strong, nullable) customAlertViewClass *pushAlert;
+@property (nonatomic) BOOL shownPushAlert;
+@property (nonatomic, strong, nullable) UIView *searchBgView;
+@property (nonatomic) BOOL settingsMode;
+
+//location cell
+@property (weak, nonatomic) IBOutlet UILabel *locLabel;
+
+//bio cell
+@property (weak, nonatomic) IBOutlet UITextField *bioField;
+@property (nonatomic) BOOL bioMode;
+
 
 NS_ASSUME_NONNULL_END
 @end
