@@ -23,6 +23,7 @@
 #import "RateCustomView.h"
 #import "notificatView.h"
 #import "FilterVC.h"
+#import <YLProgressBar/YLProgressBar.h>
 
 @interface PurchaseTab : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout,customAlertDelegate,UISearchBarDelegate,TheMainSearchViewDelegate,CLLocationManagerDelegate,dropDelegate,WelcomeDelegate,rateDelegate,FilterDelegate,inviteDelegate>
 
@@ -64,7 +65,15 @@
 //header
 @property (nonatomic, strong) simpleBannerHeader *headerView;
 @property (nonatomic) BOOL postingMode;
+@property (nonatomic) BOOL failedPosting;
+
+@property (nonatomic) BOOL showEmailReminder;
+
 @property (nonatomic, strong) UIImage *bannerImage;
+@property (nonatomic, strong) PFObject *postingItem;
+
+@property (nonatomic, strong) YLProgressBar *progressBar;
+
 
 //array of WTB indexes
 @property (nonatomic, strong) NSMutableArray *listingIndexesArray;

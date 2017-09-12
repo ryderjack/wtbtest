@@ -29,6 +29,9 @@
 @property (nonatomic) BOOL completionShowing;
 @property (nonatomic, strong) PFObject *justPostedListing;
 
+@property (nonatomic) BOOL listingInProgress;
+@property (nonatomic) BOOL listingDidFail;
+
 //success view products
 @property (nonatomic, strong) NSArray *WTBArray;
 @property (nonatomic, strong) NSArray *buyNowArray;

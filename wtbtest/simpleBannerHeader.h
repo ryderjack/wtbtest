@@ -12,5 +12,8 @@
 @interface simpleBannerHeader : UICollectionReusableView
 @property (weak, nonatomic) IBOutlet UILabel *simpleHeaderLabel;
 @property (weak, nonatomic) IBOutlet PFImageView *headerImageView;
+@property (weak, nonatomic) IBOutlet UIButton *headerRetryButton;
+@property (weak, nonatomic) IBOutlet UIButton *headerCancelButton;
+@property (weak, nonatomic) IBOutlet UIView *progressView;
 
 @end

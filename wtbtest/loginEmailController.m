@@ -205,10 +205,9 @@
 -(void)checkUsernameExists:(NSString *)username{
     
     PFQuery *checkUsernameQuery = [PFUser query];
-    [checkUsernameQuery whereKey:@"username" equalTo:username];
+    [checkUsernameQuery whereKey:@"username" equalTo:[username lowercaseString]];
     [checkUsernameQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            NSLog(@"check username %@,",objects);
             
             if (objects.count == 0) {
                 //wrong username

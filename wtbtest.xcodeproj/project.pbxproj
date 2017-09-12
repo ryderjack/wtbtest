@@ -513,6 +513,12 @@
 		04593B011F6328600088DE14 /* topsSelected@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04593AEF1F6328600088DE14 /* topsSelected@3x.png */; };
 		04593B331F65ECE70088DE14 /* CategoryDetailCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04593B311F65ECE70088DE14 /* CategoryDetailCell.m */; };
 		04593B341F65ECE70088DE14 /* CategoryDetailCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04593B321F65ECE70088DE14 /* CategoryDetailCell.xib */; };
+		04593B381F67F5FC0088DE14 /* postingCancel.png in Resources */ = {isa = PBXBuildFile; fileRef = 04593B351F67F5FB0088DE14 /* postingCancel.png */; };
+		04593B391F67F5FC0088DE14 /* postingCancel@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04593B361F67F5FB0088DE14 /* postingCancel@2x.png */; };
+		04593B3A1F67F5FC0088DE14 /* postingCancel@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04593B371F67F5FB0088DE14 /* postingCancel@3x.png */; };
+		04593B3E1F67F6860088DE14 /* postingRetry@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04593B3B1F67F6860088DE14 /* postingRetry@2x.png */; };
+		04593B3F1F67F6860088DE14 /* postingRetry@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04593B3C1F67F6860088DE14 /* postingRetry@3x.png */; };
+		04593B401F67F6860088DE14 /* postingRetry.png in Resources */ = {isa = PBXBuildFile; fileRef = 04593B3D1F67F6860088DE14 /* postingRetry.png */; };
 		04679A8D1E0303E5003AF8EA /* notView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04679A8C1E0303E5003AF8EA /* notView.xib */; };
 		04679A901E030412003AF8EA /* notificatView.m in Sources */ = {isa = PBXBuildFile; fileRef = 04679A8F1E030412003AF8EA /* notificatView.m */; };
 		046987C21E6C1F3B00E11AC5 /* inviteView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 046987C11E6C1F3B00E11AC5 /* inviteView.xib */; };
@@ -2049,6 +2055,12 @@
 		04593B301F65ECE70088DE14 /* CategoryDetailCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CategoryDetailCell.h; sourceTree = "<group>"; };
 		04593B311F65ECE70088DE14 /* CategoryDetailCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CategoryDetailCell.m; sourceTree = "<group>"; };
 		04593B321F65ECE70088DE14 /* CategoryDetailCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CategoryDetailCell.xib; sourceTree = "<group>"; };
+		04593B351F67F5FB0088DE14 /* postingCancel.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = postingCancel.png; sourceTree = "<group>"; };
+		04593B361F67F5FB0088DE14 /* postingCancel@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "postingCancel@2x.png"; sourceTree = "<group>"; };
+		04593B371F67F5FB0088DE14 /* postingCancel@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "postingCancel@3x.png"; sourceTree = "<group>"; };
+		04593B3B1F67F6860088DE14 /* postingRetry@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "postingRetry@2x.png"; sourceTree = "<group>"; };
+		04593B3C1F67F6860088DE14 /* postingRetry@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "postingRetry@3x.png"; sourceTree = "<group>"; };
+		04593B3D1F67F6860088DE14 /* postingRetry.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = postingRetry.png; sourceTree = "<group>"; };
 		04679A8A1E02BC93003AF8EA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		04679A8C1E0303E5003AF8EA /* notView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = notView.xib; sourceTree = "<group>"; };
 		04679A8E1E030412003AF8EA /* notificatView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = notificatView.h; sourceTree = "<group>"; };
@@ -3314,6 +3326,12 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				04593B3B1F67F6860088DE14 /* postingRetry@2x.png */,
+				04593B3C1F67F6860088DE14 /* postingRetry@3x.png */,
+				04593B3D1F67F6860088DE14 /* postingRetry.png */,
+				04593B351F67F5FB0088DE14 /* postingCancel.png */,
+				04593B361F67F5FB0088DE14 /* postingCancel@2x.png */,
+				04593B371F67F5FB0088DE14 /* postingCancel@3x.png */,
 				04593ADD1F6328600088DE14 /* CategoryIcons */,
 				04BCBFD81F63176D000ACC85 /* accIcon@3x.png */,
 				04BCBFF01F631843000ACC85 /* footIcon@2x.png */,
@@ -5466,6 +5484,7 @@
 				04BCBF8B1F5D6A0F000ACC85 /* jordanNormal@2x.png in Resources */,
 				044C49301E421EBF0021B447 /* facebookProfile.png in Resources */,
 				04F09AE51CB526DD00686D3B /* searchBarIcon@2x.png in Resources */,
+				04593B401F67F6860088DE14 /* postingRetry.png in Resources */,
 				04BEE5621DD76F22004CD8D1 /* offer_2.png in Resources */,
 				04CD31151D23028D00E2850D /* dotsIcon@2x.png in Resources */,
 				04FAF9E11F2F7C9C00EC1904 /* yeezyWelcome.png in Resources */,
@@ -5725,6 +5744,7 @@
 				04477E561E4E0EA30054DFB9 /* bouncingButton@2x.png in Resources */,
 				0400529F1D2A6C79002D8E1E /* exploreImg@2x.png in Resources */,
 				0492A60E1E7ADFFC0062C28D /* tutorialButtonBg@2x.png in Resources */,
+				04593B381F67F5FC0088DE14 /* postingCancel.png in Resources */,
 				04C6EFBE1F1FD8E4007875EB /* 35.png in Resources */,
 				04FAF9C91F2F7C7E00EC1904 /* stoneyWelcome@2x.png in Resources */,
 				04BCBFE81F63176D000ACC85 /* bottomsIcon@2x.png in Resources */,
@@ -5756,6 +5776,7 @@
 				04FD43E31F348D7D0068F89D /* rafWelcome@3x.png in Resources */,
 				04C080451C8469DE00B8682C /* tag.png in Resources */,
 				048D7A1C1E4A06EA00277D44 /* otherSend@2x.png in Resources */,
+				04593B3F1F67F6860088DE14 /* postingRetry@3x.png in Resources */,
 				04CD307B1D1050D400E2850D /* wtbtoo@1x.png in Resources */,
 				04A99E6F1F28952A00A698DD /* sendPayPalIcon@3x.png in Resources */,
 				04DEAE6B1DDE642C00449DEC /* cartBlue@3x.png in Resources */,
@@ -5901,6 +5922,7 @@
 				041FF2311E01DDD100A5E7EE /* bumpArrowGrey.png in Resources */,
 				044C49241E4209F80021B447 /* FBFillIcon@2x.png in Resources */,
 				040D59321CA8453C0091E6F1 /* sellthisButton@3x.png in Resources */,
+				04593B3A1F67F5FC0088DE14 /* postingCancel@3x.png in Resources */,
 				044F823F1DA4EDA20092B1F8 /* msgTutorial@2x.png in Resources */,
 				046987FA1E6C461F00E11AC5 /* regGlobe.png in Resources */,
 				049448A71ED6FC00000B4147 /* boostPaid@2x.png in Resources */,
@@ -6083,6 +6105,7 @@
 				046987D01E6C2CF000E11AC5 /* textButton.png in Resources */,
 				0400475B1DFAF11900A54A36 /* sendOfferTutorial.png in Resources */,
 				046987E91E6C449E00E11AC5 /* choosePic.png in Resources */,
+				04593B391F67F5FC0088DE14 /* postingCancel@2x.png in Resources */,
 				041FF2131DFF1E7500A5E7EE /* AccUnselected.png in Resources */,
 				04D9B9DD1C8B82A9004AF0F2 /* sendOffer@2x.png in Resources */,
 				04D9B9D01C8B8219004AF0F2 /* cartIcon@2x.png in Resources */,
@@ -6556,6 +6579,7 @@
 				043533CB1F1528E500BC6F56 /* ExplainView.xib in Resources */,
 				048B6F561C90718F00F0894A /* paypalicons@2x.png in Resources */,
 				04BEE5611DD76F22004CD8D1 /* offer_1@2x.png in Resources */,
+				04593B3E1F67F6860088DE14 /* postingRetry@2x.png in Resources */,
 				044F82821DA8E7CC0092B1F8 /* camHolder@2x.png in Resources */,
 				049879EA1DACF127002FCC48 /* starBlkIcon.png in Resources */,
 				0472B6431C7CD85200529B2E /* RegisterViewController.xib in Resources */,

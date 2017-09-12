@@ -146,33 +146,22 @@
 
 #pragma mark - custom header
 
-//search boost header setup
-//- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
-//{
-//    
-//    if (!self.headerView) {
-//        self.headerView = [collectionView dequeueReusableSupplementaryViewOfKind:kind
-//                                                             withReuseIdentifier:@"search"
-//                                                                    forIndexPath:indexPath];
-//        self.headerView.currentLocation = self.currentLocation;
-//        self.headerView.delegate = self;
-//    }
-//    
-//    return self.headerView;
-//    
-//}
-
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
 {
     self.bannerHeaderView = nil;
     if (kind == UICollectionElementKindSectionHeader) {
         self.bannerHeaderView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"Header" forIndexPath:indexPath];
+        
+        [self.bannerHeaderView.simpleHeaderLabel setTextAlignment:NSTextAlignmentCenter];
+        [self.bannerHeaderView.simpleHeaderLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
+
         if (self.sellingSearch) {
-            [self.bannerHeaderView setBackgroundColor:[UIColor colorWithRed:0.42 green:0.42 blue:0.84 alpha:1.0]];
+            [self.bannerHeaderView setBackgroundColor:[UIColor clearColor]];
             self.bannerHeaderView.simpleHeaderLabel.text = @"For sale results";
         }
         else{
             [self.bannerHeaderView setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+            [self.bannerHeaderView.simpleHeaderLabel setTextColor:[UIColor whiteColor]];
             self.bannerHeaderView.simpleHeaderLabel.text = @"Wanted item results";
         }
         return self.bannerHeaderView;

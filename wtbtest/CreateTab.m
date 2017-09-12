@@ -38,6 +38,10 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(wantedPressed:) name:@"openWTB" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sellPressed:) name:@"openSell" object:nil];
     
+    //listed an item
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(listingStarted) name:@"postingItem" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(listingFinished) name:@"justPostedSaleListing" object:nil];
+    
     if (self.introMode) {
         self.skipButton.alpha = 0.0;
         [self.skipButton setHidden:NO];
@@ -104,7 +108,21 @@
     // Dispose of any resources that can be recreated.
 }
 
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
 - (IBAction)wantedPressed:(id)sender {
+    [Answers logCustomEventWithName:@"Create listing pressed"
+                   customAttributes:@{
+                                      @"type":@"wanted"
+                                      }];
+    
     simpleCreateVC *vc = [[simpleCreateVC alloc]init];
     vc.currency = self.currency;
     vc.currencySymbol = self.currencySymbol;
@@ -114,6 +132,21 @@
     [self presentViewController:navController animated:YES completion:nil];
 }
 - (IBAction)sellPressed:(id)sender {
+    
+    if (self.listingInProgress == YES) {
+        [Answers logCustomEventWithName:@"Wait for listing save alert shown"
+                       customAttributes:@{}];
+        
+        [self showAlertWithTitle:@"Save in progress" andMsg:@"Once your latest listing is done saving you'll be able to create another listing.\n\nCheck out the progress at the top of the home tab"];
+        
+        return;
+    }
+    
+    [Answers logCustomEventWithName:@"Create listing pressed"
+                   customAttributes:@{
+                                      @"type":@"sale"
+                                      }];
+    
     CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
     vc.delegate = self;
     vc.fromSuccess = YES;
@@ -733,4 +766,15 @@
     
     [self donePressed];
 }
+
+-(void)listingStarted{
+    self.listingInProgress = YES;
+    self.listingDidFail = NO;
+}
+
+-(void)listingFinished{
+    self.listingInProgress = NO;
+    self.listingDidFail = NO;
+}
+
 @end

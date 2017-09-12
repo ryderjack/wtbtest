@@ -1857,16 +1857,8 @@
         [self.longButton setEnabled:YES];
     }
     else{
-
-//        //trigger header in home tab
-//        [[NSNotificationCenter defaultCenter] postNotificationName:@"hitListItem" object:imageOne];
-//        
-//        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-//        appDelegate.tabBarController.selectedIndex = 0;
-//        
-//        [self dismissViewControllerAnimated:YES completion:nil];
         
-        [self showHUD];
+//        [self showHUD];
         NSLog(@"good to save");
         
         PFObject *forSaleItem;
@@ -2273,156 +2265,92 @@
         
         [forSaleItem setObject:@(quantInt) forKey:@"quantity"];
         
-        [forSaleItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            if (succeeded) {
-                NSLog(@"saved listing");
-                [Answers logCustomEventWithName:@"Created for sale listing"
-                               customAttributes:@{}];
-                
-                if (self.editMode != YES) {
-                    //insert in purchase tab
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"justPostedSaleListing" object:forSaleItem];
-                }
-                
-                if (self.listingAsMode == YES) {
-                    [self.cabin incrementKey:@"forSalePostNumber"];
-                    [self.cabin saveInBackground];
-                }
-                else{
+        if (self.editMode || self.listingAsMode) {
+            [self showHUD];
+            [forSaleItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    NSLog(@"saved listing");
+                    [Answers logCustomEventWithName:@"Created for sale listing"
+                                   customAttributes:@{}];
                     
-                    //schedule local notif. for first listing
-                    if (![[PFUser currentUser] objectForKey:@"forSalePostNumber"]) {
-                        
-                        //cancel first listing local push
-                        NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
-                        for(UILocalNotification *notification in notificationArray){
-                            if ([notification.alertBody isEqualToString:@"What are you selling? List your first item for sale on Bump now! 🤑"]) {
-                                // delete this notification
-                                [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
-                            }
-                        }
-                        
-                        //local notifications set up
-                        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                        dayComponent.day = 1;
-                        NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                        NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-                        
-                        // Create new date
-                        NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
-                                                                       fromDate:dateToFire];
-                        
-                        NSDateComponents *components3 = [[NSDateComponents alloc] init];
-                        
-                        [components3 setYear:components1.year];
-                        [components3 setMonth:components1.month];
-                        [components3 setDay:components1.day];
-                        
-                        [components3 setHour:20];
-                        
-                        // Generate a new NSDate from components3.
-                        NSDate * combinedDate = [theCalendar dateFromComponents:components3];
-                        
-                        UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-                        [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on Bump 🏎💨"]; //make sure this matches the app delegate local notifications handler method
-                        [localNotification setFireDate: combinedDate];
-                        [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
-                        [localNotification setRepeatInterval: 0];
-                        [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
-                    }
-                    
-                    if (!self.editMode) {
-                        [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
-                        [[PFUser currentUser] saveInBackground];
-                    }
-                }
-                
-                [self.longButton setEnabled:YES];
-                
-                if (self.editMode == YES) {
-                    [self dismissViewControllerAnimated:YES completion:nil];
-                }
-                else{
-                    if ([[PFUser currentUser] objectForKey:@"facebookId"]) {
-                        //send FB friends a push asking them to Bump listing!
-                        NSLog(@"send fb push");
-
-                        NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just listed an item for sale - Like it now 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
-                        
-                        PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
-                        [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
-                        [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
-                        [bumpedQuery whereKey:@"status" equalTo:@"live"]; //SET make sure update all bump objects (using dash) to have a live property so not using not equal to
-                        [bumpedQuery whereKeyExists:@"user"];
-                        [bumpedQuery includeKey:@"user"];
-                        bumpedQuery.limit = 10;
-                        [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                            if (objects) {
-//                                NSLog(@"these objects can be pushed to %@", objects);
-                                if (objects.count > 0) {
-                                    //create safe date which is 3 days from now
-                                    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                                    dayComponent.day = 3;
-                                    NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                                    NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-                                    
-                                    for (PFObject *bumpObj in objects) {
-                                        [bumpObj setObject:safeDate forKey:@"safeDate"];
-                                        [bumpObj incrementKey:@"timesBumped"];
-                                        [bumpObj saveInBackground];
-                                        PFUser *friendUser = [bumpObj objectForKey:@"user"];
-                                        
-                                        NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.listing.objectId};
-                                        
-                                        [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                                            if (!error) {
-//                                                NSLog(@"push response %@", response);
-                                                [Answers logCustomEventWithName:@"Sent FB Friend a Bump Push"
-                                                               customAttributes:@{}];
-                                                [Answers logCustomEventWithName:@"Push Sent"
-                                                               customAttributes:@{
-                                                                                  @"Type":@"FB Friend",
-                                                                                  @"mode":@"WTS"
-                                                                                  }];
-                                            }
-                                            else{
-                                                NSLog(@"push error %@", error);
-                                            }
-                                        }];
-                                    }
-                                }
-                            }
-                            else{
-                                NSLog(@"error finding relevant bumped obj's %@", error);
-                            }
-                        }];
-                        
-                        [self dismissViewControllerAnimated:YES completion:^{
-                            [self.delegate showForSaleSuccessForListing:forSaleItem];
-                        }];
+                    if (self.listingAsMode == YES) {
+                        [self.cabin incrementKey:@"forSalePostNumber"];
+                        [self.cabin saveInBackground];
                     }
                     else{
-                        //just dismiss and show success if only using email to sell
-                        [self dismissViewControllerAnimated:YES completion:^{
-                            [self.delegate showForSaleSuccessForListing:forSaleItem];
-                        }];
+                        
+                        //schedule local notif. for first listing
+                        if (![[PFUser currentUser] objectForKey:@"forSalePostNumber"]) {
+                            
+                            //cancel first listing local push
+                            NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+                            for(UILocalNotification *notification in notificationArray){
+                                if ([notification.alertBody isEqualToString:@"What are you selling? List your first item for sale on Bump now! 🤑"]) {
+                                    // delete this notification
+                                    [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
+                                }
+                            }
+                            
+                            //local notifications set up
+                            NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                            dayComponent.day = 1;
+                            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                            NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                            
+                            // Create new date
+                            NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
+                                                                           fromDate:dateToFire];
+                            
+                            NSDateComponents *components3 = [[NSDateComponents alloc] init];
+                            
+                            [components3 setYear:components1.year];
+                            [components3 setMonth:components1.month];
+                            [components3 setDay:components1.day];
+                            
+                            [components3 setHour:20];
+                            
+                            // Generate a new NSDate from components3.
+                            NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+                            
+                            UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+                            [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on Bump 🏎💨"]; //make sure this matches the app delegate local notifications handler method
+                            [localNotification setFireDate: combinedDate];
+                            [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+                            [localNotification setRepeatInterval: 0];
+                            [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+                        }
+
                     }
+                    
+                    [self.longButton setEnabled:YES];
+                    [self dismissViewControllerAnimated:YES completion:nil];
+
                 }
-            }
-            else{
-                //error saving listing
-                [Answers logCustomEventWithName:@"Error Saving Sale Listing"
-                               customAttributes:@{
-                                                  @"error":[NSString stringWithFormat:@"%@", error]
-                                                  }];
-                
-                [self hidHUD];
-                [self.longButton setEnabled:YES];
-                [self showAlertWithTitle:@"Save Error 477" andMsg:@"We couln't save your item! Make sure you have a strong connection\n\nYour listing images may be too big. Try screenshotting the original images and adding the screenshots to the listing instead\n\nSend Team Bump a message from Settings if you need more help"];
-                
-                NSLog(@"error saving listing %@", error);
-            }
-        }];
+                else{
+                    //error saving listing
+                    [Answers logCustomEventWithName:@"Error Saving Sale Listing"
+                                   customAttributes:@{
+                                                      @"error":[NSString stringWithFormat:@"%@", error]
+                                                      }];
+                    
+                    [self hidHUD];
+                    [self.longButton setEnabled:YES];
+                    [self showAlertWithTitle:@"Save Error 477" andMsg:@"We couln't save your item! Make sure you have a strong connection\n\nYour listing images may be too big. Try screenshotting the original images and adding the screenshots to the listing instead\n\nSend Team Bump a message from Settings if you need more help"];
+                    
+                    NSLog(@"error saving listing %@", error);
+                }
+            }];
+
+        }
+        else{
+            //pass the saving onto the purchase tab
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne]];
+            
+            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+            appDelegate.tabBarController.selectedIndex = 0;
+            
+            [self dismissViewControllerAnimated:YES completion:nil];
+        }
     }
 }
 

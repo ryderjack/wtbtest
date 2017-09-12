@@ -436,7 +436,7 @@
                 return self.usernameCell;
             }
             else if(indexPath.row == 4){
-                return self.currencyCell;
+                return self.currencySwipeCell;
             }
 //            else if(indexPath.row == 5){
 //                return self.pictureCell;

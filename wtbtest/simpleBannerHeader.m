@@ -14,8 +14,13 @@
     [super awakeFromNib];
     // Initialization code
     [self.headerImageView setHidden:YES];
+    [self.headerRetryButton setHidden:YES];
+    [self.headerCancelButton setHidden:YES];
+
     self.simpleHeaderLabel.adjustsFontSizeToFitWidth = YES;
     self.simpleHeaderLabel.minimumScaleFactor=0.5;
+    [self.progressView setHidden:YES];
+
 }
 
 @end

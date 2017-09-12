@@ -86,8 +86,8 @@
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
     
-    flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 40);
-    flowLayout.sectionHeadersPinToVisibleBounds = NO;
+//    flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 40);
+//    flowLayout.sectionHeadersPinToVisibleBounds = NO;
     
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.dataSource = self;
@@ -126,8 +126,8 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetHome) name:@"refreshHome" object:nil];
     
     //listed an item
-//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showPostingHeader:) name:@"hitListItem" object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(insertLatestListing:) name:@"justPostedSaleListing" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showPostingHeader:) name:@"postingItem" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(finishListing) name:@"justPostedSaleListing" object:nil];
     
     //drop down
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBumpDrop:) name:@"showBumpedDropDown" object:nil];
@@ -216,6 +216,11 @@
             if ([[currentUser objectForKey:@"emailVerified"]boolValue] == YES && [[currentUser objectForKey:@"emailIsVerified"]boolValue] != YES){
                 [currentUser setObject:[NSNumber numberWithBool:YES] forKey:@"emailIsVerified"];
                 [currentUser saveInBackground];
+            }
+            
+            //decide whether to show email reminder header
+            if ([[currentUser objectForKey:@"emailIsVerified"]boolValue] != YES && ![currentUser objectForKey:@"facebookId"]) {
+                [self setupEmailHeader];
             }
 
             //user has signed up fine, do final checks & loading
@@ -396,7 +401,7 @@
                         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
                                                                     @"itms-apps://itunes.apple.com/app/id1096047233"]];
                     }]];
-                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
+//                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
                 }
             }
         }
@@ -512,6 +517,11 @@
             if (modalPresent != YES) {
                 self.filterIntro = YES;
                 [self showPushReminder];
+            }
+            
+            //decide whether to show email reminder header
+            if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser] objectForKey:@"facebookId"]) {
+                [self setupEmailHeader];
             }
         }
         //if user redownloaded - ask for push/location permissions again
@@ -707,34 +717,65 @@
 {
     self.headerView = nil;
     if (kind == UICollectionElementKindSectionHeader) {
+        NSLog(@"setup dat header");
+        
         self.headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"Header" forIndexPath:indexPath];
         
-        [self.headerView.headerImageView setHidden:YES];
-        [self.headerView.simpleHeaderLabel setTextAlignment:NSTextAlignmentCenter];
-        [self.headerView.simpleHeaderLabel setTextColor:[UIColor whiteColor]];
-        
-        if ([PFUser currentUser]) {
-            if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser]objectForKey:@"facebookId"]) {
+        if (!self.postingMode) {
+            if (self.showEmailReminder) {
                 //user isn't verified at all, show a prompt
                 [self.headerView setBackgroundColor:[UIColor colorWithRed:1.00 green:0.75 blue:0.33 alpha:1.0]];
                 self.headerView.simpleHeaderLabel.text = @"Verify your email to list items for sale";
-            }
-            else{
-                //all good
-                [self.headerView setBackgroundColor:[UIColor colorWithRed:0.42 green:0.42 blue:0.84 alpha:1.0]];
-                self.headerView.simpleHeaderLabel.text = @"Latest items for sale";
+                [self.headerView.simpleHeaderLabel setTextColor:[UIColor whiteColor]];
             }
         }
-        
-        if (self.postingMode == YES) {
+        else{
             [self.headerView.headerImageView setImage:self.bannerImage];
             [self.headerView.headerImageView setHidden:NO];
             [self.headerView.simpleHeaderLabel setTextAlignment:NSTextAlignmentLeft];
             [self.headerView setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
-            self.headerView.simpleHeaderLabel.text = @"Posting";
             [self.headerView.simpleHeaderLabel setTextColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
+            [self.headerView.progressView setHidden:NO];
+            
+            if (!self.progressBar) {
+                self.progressBar = [[YLProgressBar alloc]initWithFrame:self.headerView.progressView.frame];
+                self.progressBar.type               = YLProgressBarTypeFlat;
+                self.progressBar.progressTintColor  = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+                self.progressBar.hideStripes        = YES;
+                self.progressBar.uniformTintColor = YES;
+                [self.progressBar setProgress:0.25];
+                
+                //give impression of saving progress
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                    [self.progressBar setProgress:0.6 animated:YES];
+                });
+            }
+            
+            [self.headerView addSubview:self.progressBar];
+            
+            if (self.failedPosting) {
+                self.progressBar.trackTintColor = [UIColor colorWithRed:1.00 green:0.38 blue:0.46 alpha:1.0];
+                
+                self.headerView.simpleHeaderLabel.text = @"Failed";
+                [self.headerView.headerRetryButton setHidden:NO];
+                [self.headerView.headerCancelButton setHidden:NO];
+                
+                [self.headerView.headerRetryButton addTarget:self action:@selector(retryListingPressed) forControlEvents:UIControlEventTouchUpInside];
+                [self.headerView.headerCancelButton addTarget:self action:@selector(cancelListingPressed) forControlEvents:UIControlEventTouchUpInside];
+                
+            }
+            else{
+                self.progressBar.trackTintColor = self.headerView.progressView.backgroundColor;
+                
+                self.headerView.simpleHeaderLabel.text = @"Posting";
+                
+                [self.headerView.headerRetryButton setHidden:YES];
+                [self.headerView.headerCancelButton setHidden:YES];
+                
+            }
         }
 
+    
     }
     return self.headerView;
 }
@@ -763,19 +804,26 @@
     
     BOOL modalPresent = (self.presentedViewController);
     
-    if (self.products.count != 0 && self.tappedItem == NO && modalPresent != YES) {
-        //prevents crash when header is not visible, thereofre has no layout attributes // if still seeing crash, layoutifneeded also meant to work
-        [self.collectionView.collectionViewLayout prepareLayout];
-        
-        //scroll to top of header
-        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
-        
-        CGFloat offsetY = [self.collectionView layoutAttributesForSupplementaryElementOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath].frame.origin.y;
-        
-        CGFloat contentInsetY = self.collectionView.contentInset.top;
-        CGFloat sectionInsetY = ((UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout).sectionInset.top;
-        
-        [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
+    if (self.postingMode == YES || self.showEmailReminder == YES) {
+        if (self.products.count != 0 && self.tappedItem == NO && modalPresent != YES) {
+            //prevents crash when header is not visible, thereofre has no layout attributes // if still seeing crash, layoutifneeded also meant to work
+            [self.collectionView.collectionViewLayout prepareLayout];
+            
+            //scroll to top of header
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
+            
+            CGFloat offsetY = [self.collectionView layoutAttributesForSupplementaryElementOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath].frame.origin.y;
+            
+            CGFloat contentInsetY = self.collectionView.contentInset.top;
+            CGFloat sectionInsetY = ((UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout).sectionInset.top;
+            
+            [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
+        }
+    }
+    else{
+        if (self.products.count != 0) {
+            [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
+        }
     }
 }
 
@@ -2265,19 +2313,27 @@
 -(void)resetHome{
     //only reset if they're looking at home tab
     if (self.tabBarController.selectedIndex == 0) {
-        if (self.products.count != 0) {
-            //prevents crash when header is not visible, thereofre has no layout attributes // if still seeing crash, layoutifneeded also meant to work
-            [self.collectionView.collectionViewLayout prepareLayout];
-
-            //scroll to top of header
-            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
-
-            CGFloat offsetY = [self.collectionView layoutAttributesForSupplementaryElementOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath].frame.origin.y;
-
-            CGFloat contentInsetY = self.collectionView.contentInset.top;
-            CGFloat sectionInsetY = ((UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout).sectionInset.top;
-
-            [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
+        
+        if (self.postingMode == YES || self.showEmailReminder == YES) {
+            if (self.products.count != 0) {
+                //prevents crash when header is not visible, thereofre has no layout attributes // if still seeing crash, layoutifneeded also meant to work
+                [self.collectionView.collectionViewLayout prepareLayout];
+                
+                //scroll to top of header
+                NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
+                
+                CGFloat offsetY = [self.collectionView layoutAttributesForSupplementaryElementOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath].frame.origin.y;
+                
+                CGFloat contentInsetY = self.collectionView.contentInset.top;
+                CGFloat sectionInsetY = ((UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout).sectionInset.top;
+                
+                [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
+            }
+        }
+        else{
+            if (self.products.count != 0) {
+                [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
+            }
         }
 
         self.pullFinished = YES;
@@ -2285,70 +2341,59 @@
     }
 }
 
--(void)insertLatestListing:(NSNotification*)note {
-    
-//    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-//        NSLog(@"posted!");
-//        
-//        //reset collection view header
-//        UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
-//        
-//        if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
-//            //iPhone6/7
-//            [flowLayout setItemSize:CGSizeMake(175,222)];
-//        }
-//        else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
-//            //iPhone 6 plus
-//            [flowLayout setItemSize:CGSizeMake(195, 247)];
-//        }
-//        else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
-//            //iPhone 4/5
-//            [flowLayout setItemSize:CGSizeMake(148, 188)];
-//        }
-//        else{
-//            //fall back
-//            [flowLayout setItemSize:CGSizeMake(175,222)];
-//        }
-//        
-//        [flowLayout setMinimumInteritemSpacing:8.0];
-//        [flowLayout setMinimumLineSpacing:8.0];
-//        [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
-//        
-//        flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width,40);
-//        flowLayout.sectionHeadersPinToVisibleBounds = NO;
-//        
-//        [self.collectionView setCollectionViewLayout:flowLayout];
-//        
-//        self.postingMode = NO;
-//        [self.collectionView.collectionViewLayout invalidateLayout];
-//        [self.headerView setNeedsDisplay];
-//        
-//        PFObject *listing = [note object];
-//        //    NSLog(@"insert %@", listing);
-//        if (self.products.count > 0) {
-//            [self.products insertObject:listing atIndex:0];
-//            [self.collectionView reloadData];
-//        }
-//    });
-    
-    PFObject *listing = [note object];
-    if (self.products.count > 0) {
-        [self.products insertObject:listing atIndex:0];
-        [self.collectionView reloadData];
+-(void)finishListing{
+    if (self.products.count > 0 && self.failedPosting != YES && self.postingItem) {
+        //if user has filters enabled don't add to start
+        if (self.filtersArray.count == 0) {
+            [self.products insertObject:self.postingItem atIndex:0];
+            [self.productIds addObject:self.postingItem.objectId];
+        }
     }
+    
+    //reset collection view header
+    UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+        //iPhone6/7
+        [flowLayout setItemSize:CGSizeMake(175,222)];
+    }
+    else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
+        //iPhone 6 plus
+        [flowLayout setItemSize:CGSizeMake(195, 247)];
+    }
+    else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
+        //iPhone 4/5
+        [flowLayout setItemSize:CGSizeMake(148, 188)];
+    }
+    else{
+        //fall back
+        [flowLayout setItemSize:CGSizeMake(175,222)];
+    }
+    
+    [flowLayout setMinimumInteritemSpacing:8.0];
+    [flowLayout setMinimumLineSpacing:8.0];
+    [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
+    
+    [self.collectionView setCollectionViewLayout:flowLayout];
+    
+    self.postingMode = NO;
+    self.failedPosting = NO;
+    
+    [self.collectionView.collectionViewLayout invalidateLayout];
+    [self.headerView setNeedsDisplay];
+    
+    [self.collectionView performBatchUpdates:^{
+        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+    } completion:^(BOOL finished) {}];
 }
 
 -(void)handleBumpDrop:(NSNotification*)note {
     NSArray *info = [note object];
     
-    NSLog(@"info %@", info);
-    
     //prevent crashes with wrongly formatted pushes
     if (info.count <2) {
         return;
     }
-    
-    NSLog(@"lez go");
     
     NSString *listingID = info[0];
     NSString *message = info[1];
@@ -2645,6 +2690,9 @@
                 }
             }];
         }
+        
+        [self removeEmailReminder];
+
     }
 }
 
@@ -2903,15 +2951,19 @@
 
 -(void)showPostingHeader:(NSNotification*)note{
     
-    UIImage *image = [note object];
-    self.bannerImage = image;
-    
     NSLog(@"posting header");
     
+    //retrieve listing object and image
+    NSArray *postingItems = [note object];
+    self.postingItem = postingItems[0];
+    self.bannerImage = postingItems[1];
+    
+    //save listing
+    [self saveListing];
+    
+    //setup header
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
-    
-    //calc screen width to avoid hard coding but bug with collection view so width always = 1000
-    
+
     if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
         //iPhone6/7
         [flowLayout setItemSize:CGSizeMake(175,222)];
@@ -2934,7 +2986,7 @@
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
     
     flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 60);
-    flowLayout.sectionHeadersPinToVisibleBounds = NO;
+    flowLayout.sectionHeadersPinToVisibleBounds = YES;
     
     [self.collectionView setCollectionViewLayout:flowLayout];
     
@@ -2942,10 +2994,291 @@
     [self.collectionView.collectionViewLayout invalidateLayout];
     [self.headerView setNeedsDisplay];
     
+    //scroll collection view to the top
     if (self.products.count != 0) {
         //prevents crash when header is not visible, thereofre has no layout attributes // if still seeing crash, layoutifneeded also meant to work
         [self.collectionView.collectionViewLayout prepareLayout];
-        NSLog(@"scroll!");
+        
+        //scroll to top of header
+        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
+        
+        CGFloat offsetY = [self.collectionView layoutAttributesForSupplementaryElementOfKind:UICollectionElementKindSectionHeader atIndexPath:indexPath].frame.origin.y;
+        
+        CGFloat contentInsetY = self.collectionView.contentInset.top;
+        CGFloat sectionInsetY = ((UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout).sectionInset.top;
+        
+        [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
+    }
+
+}
+
+-(void)saveListing{
+    if (!self.postingItem) {
+        return;
+    }
+    
+    NSLog(@"posting item!");
+    
+    [self.postingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            [self.progressBar setProgress:1.0 animated:YES];
+            
+            //give impression of saving
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"justPostedSaleListing" object:self.postingItem];
+            });
+
+            self.postingMode = NO;
+            
+            [Answers logCustomEventWithName:@"Created for sale listing"
+                           customAttributes:@{}];
+            
+
+            //schedule local notif. for first listing
+            if (![[PFUser currentUser] objectForKey:@"forSalePostNumber"]) {
+                
+                //cancel first listing local push
+                NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+                for(UILocalNotification *notification in notificationArray){
+                    if ([notification.alertBody isEqualToString:@"What are you selling? List your first item for sale on Bump now! 🤑"]) {
+                        // delete this notification
+                        [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
+                    }
+                }
+                
+                //local notifications set up
+                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                dayComponent.day = 1;
+                NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                
+                // Create new date
+                NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
+                                                               fromDate:dateToFire];
+                
+                NSDateComponents *components3 = [[NSDateComponents alloc] init];
+                
+                [components3 setYear:components1.year];
+                [components3 setMonth:components1.month];
+                [components3 setDay:components1.day];
+                
+                [components3 setHour:20];
+                
+                // Generate a new NSDate from components3.
+                NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+                
+                UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+                [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on Bump 🏎💨"]; //make sure this matches the app delegate local notifications handler method
+                [localNotification setFireDate: combinedDate];
+                [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+                [localNotification setRepeatInterval: 0];
+                [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+            }
+            
+            [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
+            [[PFUser currentUser] saveInBackground];
+            
+            if ([[PFUser currentUser] objectForKey:@"facebookId"]) {
+                //send FB friends a push asking them to Bump listing!
+                NSLog(@"send fb push");
+                
+                NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just listed an item for sale - Like it now 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
+                
+                PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
+                [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
+                [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
+                [bumpedQuery whereKey:@"status" equalTo:@"live"]; //SET make sure update all bump objects (using dash) to have a live property so not using not equal to
+                [bumpedQuery whereKeyExists:@"user"];
+                [bumpedQuery includeKey:@"user"];
+                bumpedQuery.limit = 10;
+                [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                    if (objects) {
+                        //                                NSLog(@"these objects can be pushed to %@", objects);
+                        if (objects.count > 0) {
+                            //create safe date which is 3 days from now
+                            NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                            dayComponent.day = 3;
+                            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                            NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                            
+                            for (PFObject *bumpObj in objects) {
+                                [bumpObj setObject:safeDate forKey:@"safeDate"];
+                                [bumpObj incrementKey:@"timesBumped"];
+                                [bumpObj saveInBackground];
+                                PFUser *friendUser = [bumpObj objectForKey:@"user"];
+                                
+                                NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.postingItem.objectId};
+                                
+                                [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                                    if (!error) {
+                                        //                                                NSLog(@"push response %@", response);
+                                        [Answers logCustomEventWithName:@"Sent FB Friend a Bump Push"
+                                                       customAttributes:@{}];
+                                        [Answers logCustomEventWithName:@"Push Sent"
+                                                       customAttributes:@{
+                                                                          @"Type":@"FB Friend",
+                                                                          @"mode":@"WTS"
+                                                                          }];
+                                    }
+                                    else{
+                                        NSLog(@"push error %@", error);
+                                    }
+                                }];
+                            }
+                        }
+                    }
+                    else{
+                        NSLog(@"error finding relevant bumped obj's %@", error);
+                    }
+                }];
+            }
+        }
+        else{
+            //error saving listing
+            [Answers logCustomEventWithName:@"Error Saving Sale Listing"
+                           customAttributes:@{
+                                              @"error":[NSString stringWithFormat:@"%@", error]
+                                              }];
+            
+            [self.progressBar setProgress:0.0 animated:YES];
+            
+            
+            self.failedPosting = YES;
+
+            [self.headerView setNeedsDisplay];
+            
+            [self.collectionView performBatchUpdates:^{
+                [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+            } completion:^(BOOL finished) {}];
+            
+            NSLog(@"error saving listing %@", error);
+        }
+    }];
+}
+
+-(void)retryListingPressed{
+    if (!self.postingMode) {
+        return;
+    }
+    
+    self.failedPosting = NO;
+    [self.headerView setNeedsDisplay];
+    
+    [self.collectionView performBatchUpdates:^{
+        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+    } completion:^(BOOL finished) {}];
+    
+    //setup progress again as it was zero from the failure
+    [self.progressBar setProgress:0.25];
+    
+    //give impression of saving progress
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        [self.progressBar setProgress:0.6 animated:YES];
+    });
+    
+    [self saveListing];
+}
+
+-(void)cancelListingPressed{
+    if (!self.postingMode) {
+        return;
+    }
+    
+    self.postingMode = NO;
+    [self finishListing];
+    
+}
+
+-(void)removeEmailReminder{
+    self.showEmailReminder = NO;
+    
+    //reset collection view header
+    UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+        //iPhone6/7
+        [flowLayout setItemSize:CGSizeMake(175,222)];
+    }
+    else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
+        //iPhone 6 plus
+        [flowLayout setItemSize:CGSizeMake(195, 247)];
+    }
+    else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
+        //iPhone 4/5
+        [flowLayout setItemSize:CGSizeMake(148, 188)];
+    }
+    else{
+        //fall back
+        [flowLayout setItemSize:CGSizeMake(175,222)];
+    }
+    
+    [flowLayout setMinimumInteritemSpacing:8.0];
+    [flowLayout setMinimumLineSpacing:8.0];
+    [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
+    
+    [self.collectionView setCollectionViewLayout:flowLayout];
+    
+    [self.collectionView.collectionViewLayout invalidateLayout];
+    [self.headerView setNeedsDisplay];
+    [self.headerView setNeedsLayout];
+    self.progressBar = nil;
+    
+    [self.collectionView performBatchUpdates:^{
+        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+    } completion:^(BOOL finished) {}];
+    
+    if (self.products.count != 0) {
+        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
+    }
+}
+
+-(void)setupEmailHeader{
+    if (self.showEmailReminder == YES) {
+        return;
+    }
+    
+    self.showEmailReminder = YES;
+    
+    //reset collection view header
+    UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
+    
+    if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+        //iPhone6/7
+        [flowLayout setItemSize:CGSizeMake(175,222)];
+    }
+    else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
+        //iPhone 6 plus
+        [flowLayout setItemSize:CGSizeMake(195, 247)];
+    }
+    else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
+        //iPhone 4/5
+        [flowLayout setItemSize:CGSizeMake(148, 188)];
+    }
+    else{
+        //fall back
+        [flowLayout setItemSize:CGSizeMake(175,222)];
+    }
+    
+    [flowLayout setMinimumInteritemSpacing:8.0];
+    [flowLayout setMinimumLineSpacing:8.0];
+    [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
+    
+    flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 40);
+    flowLayout.sectionHeadersPinToVisibleBounds = NO;
+    
+    [self.collectionView setCollectionViewLayout:flowLayout];
+    
+    [self.collectionView.collectionViewLayout invalidateLayout];
+    [self.headerView setNeedsDisplay];
+    
+    [self.collectionView performBatchUpdates:^{
+        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+    } completion:^(BOOL finished) {}];
+    
+    //scroll collection view to the top
+    if (self.products.count != 0) {
+        //prevents crash when header is not visible, thereofre has no layout attributes // if still seeing crash, layoutifneeded also meant to work
+        [self.collectionView.collectionViewLayout prepareLayout];
         
         //scroll to top of header
         NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
