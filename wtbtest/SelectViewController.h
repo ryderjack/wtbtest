@@ -17,7 +17,7 @@
 - (void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)selectionString withgender:(NSString *)genderString andsizes:(NSArray *)array;
 @end
 
-@interface SelectViewController : UITableViewController <selectCellDelegate, customAlertDelegate>
+@interface SelectViewController : UITableViewController <selectCellDelegate, customAlertDelegate, SelectViewControllerDelegate>
 
 @property (nonatomic, weak) id <SelectViewControllerDelegate> delegate;
 @property (nonatomic, strong) NSString *setting;
@@ -36,6 +36,8 @@
 @property (nonatomic, strong) NSArray *deliveryArray;
 @property (nonatomic, strong) NSArray *categoryArray;
 @property (nonatomic, strong) NSArray *clothingyArray;
+@property (nonatomic, strong) NSArray *clothingyDescriptionArray;
+@property (nonatomic, strong) NSArray *clothingCategoryArray;
 
 @property (nonatomic, strong) NSMutableArray *selectedSizes;
 @property (nonatomic, strong) NSArray *holdingArray;
@@ -45,6 +47,7 @@
 
 @property (nonatomic) BOOL sellListing;
 @property (nonatomic) BOOL multipleAllowed;
+@property (nonatomic) BOOL pushingClothing;
 
 //multiple reminder
 @property (nonatomic, strong) customAlertViewClass *customAlert;

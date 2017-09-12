@@ -12,11 +12,15 @@
 
 @protocol selectCellDelegate <NSObject>
 - (void)genderSelected:(NSString *)gender;
+- (void)proxyExplainPressed;
+
 @end
 
 @interface selectCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UISegmentedControl *segmentControl;
 @property (nonatomic) BOOL firstSelected;
 @property (nonatomic, weak) id <selectCellDelegate> delegate;
+@property (weak, nonatomic) IBOutlet UILabel *mainLabel;
+@property (weak, nonatomic) IBOutlet UIButton *proxyExplainButton;
 
 @end

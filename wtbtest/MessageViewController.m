@@ -47,6 +47,8 @@
         self.title = [NSString stringWithFormat:@"@%@",self.otherUserName];
     }
     
+    self.paypalSentCounter = 0;
+    
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     [self.otherUser fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -56,9 +58,8 @@
             //check if banned - if so show alert
             PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
             [bannedInstallsQuery whereKey:@"user" equalTo:self.otherUser];
-            [bannedInstallsQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-                if (number >= 1){
-                    //this user is banned
+            [bannedInstallsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
                     self.banMode = YES;
                     [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restrcited this user's account for violating our terms"];
                 }
@@ -283,13 +284,15 @@
 - (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
     
     if (self.showSuggested == YES && self.showingListingBanner == YES) {
-        NSLog(@"");
-        return UIEdgeInsetsMake(80, 0, 50, 0); // top, left, bottom, rightw
+        NSLog(@"banner showing so use correct insets");
+        return UIEdgeInsetsMake(80, 0, 50, 0); // top, left, bottom, right
     }
     else if (self.showSuggested == YES && self.showingListingBanner != YES){
         return UIEdgeInsetsMake(0, 0, 50, 0);
     }
     else if (self.showSuggested == NO && self.showingListingBanner == YES){
+        NSLog(@"banner showing so use correct insets 1");
+
           return UIEdgeInsetsMake(80, 0, 0, 0);
     }
     else{
@@ -560,6 +563,7 @@
 {
     [super viewWillAppear:animated];
     
+    [self.navigationController.navigationBar setTranslucent:YES]; //watch out, setting this to no throws the listing banner's constraints off!
     [self.navigationController.navigationBar setHidden:NO];
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
@@ -629,7 +633,7 @@
         else if ([self.currency isEqualToString:@"EUR"]) {
             self.currencySymbol = @"€";
         }
-        else if ([self.currency isEqualToString:@"USD"]) {
+        else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
             self.currencySymbol = @"$";
         }
         
@@ -775,14 +779,17 @@
                             [self.convoObject setObject:@0 forKey:@"sellerUnseen"];
                         }
                     }
-//                    else{
-//                        // only add current user's messages to parse array so last one's status can be displayed //don't need because this only called for loading incoming new messages
-////                        if (![self.sentMessagesParseArray containsObject:messageOb]) {
-////                            [self.sentMessagesParseArray addObject:messageOb];
-////                        }
-//                    }
+                    else{
+                        //don't need because this only called for loading incoming new messages, leave in just in case
+                        if (![self.sentMessagesParseArray containsObject:messageOb]) {
+                            [self.sentMessagesParseArray addObject:messageOb];
+                        }
+                    }
                     
                     if ([[messageOb objectForKey:@"mediaMessage"] isEqualToString:@"YES"]) {
+                        
+                        //update inbox VC
+                        [self.delegate lastMessageInConvo:[NSString stringWithFormat:@"%@ sent a photo 📷",[messageOb objectForKey:@"senderName"]] incomingMsg:YES];
                         
                         //media message
                         __block id<JSQMessageMediaData> newMediaData = nil;
@@ -793,7 +800,6 @@
                         message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
                         
                         message.msgObject = messageOb;
-
                         
                         if (![self.messages containsObject:message]) {
                             [self.messages addObject:message];
@@ -858,12 +864,18 @@
                             //add the listing info to the shared message
                             
                             if ([messageOb objectForKey:@"Sale"]) {
+                                //update inbox VC
+                                [self.delegate lastMessageInConvo:[NSString stringWithFormat:@"%@ shared a listing 📲",[messageOb objectForKey:@"senderName"]] incomingMsg:YES];
+
                                 //shared a for sale listing
                                 message.sharedListing = [messageOb objectForKey:@"sharedSaleListing"];
                                 message.saleShare = YES;
                             }
                             else{
                                 //shared a WTB
+                                //update inbox VC
+                                [self.delegate lastMessageInConvo:[NSString stringWithFormat:@"%@ shared a wanted listing 📲",[messageOb objectForKey:@"senderName"]] incomingMsg:YES];
+
                                 message.sharedListing = [messageOb objectForKey:@"sharedListing"];
                                 message.saleShare = NO;
                             }
@@ -875,13 +887,19 @@
                         
                         else if ([[messageOb objectForKey:@"paypalMessage"]isEqualToString:@"YES"]){
                             
+                            //update inbox VC
+                            [self.delegate lastMessageInConvo:[NSString stringWithFormat:@"%@ sent their PayPal 🛒",[messageOb objectForKey:@"senderName"]]incomingMsg:YES];
+                            
                             //it's a paypal message
                             message.isShared = NO;
                             message.isOfferMessage = NO;
                             message.isWaiting = NO;
                             message.isPurchased = NO;
-                            
                             message.isPayPal = YES;
+                        }
+                        else{
+                            //update inbox VC
+                            [self.delegate lastMessageInConvo:messageText incomingMsg:YES];
                         }
 
                         
@@ -897,8 +915,6 @@
                 
                 //received a message so move this convo to top of inbox
                 NSLog(@"got a new message so call last message in convo");
-                
-                [self.delegate lastMessageInConvo:nil];
                 
                 self.receivedNew = YES;
 
@@ -1255,8 +1271,13 @@
         }
     }
     
-    //for instant reload in inbox after tapping send
-    [self.delegate lastMessageInConvo:nil];
+    //for instant reload in inbox after tapping send, pass the sent message back to inboxVC
+    if (self.paypalMessage) {
+        [self.delegate lastMessageInConvo:@"You sent your PayPal 🤑" incomingMsg:NO];
+    }
+    else{
+        [self.delegate lastMessageInConvo:[NSString stringWithFormat:@"You: %@", text] incomingMsg:NO];
+    }
     
     //hide intro paypal view
     if (self.paypalView && self.messages.count == 0) {
@@ -1286,11 +1307,50 @@
         messageObject[@"paypalMessage"] = @"YES";
         message.isPayPal = YES;
         self.paypalMessage = NO;
+        
+        self.paypalSentCounter++;
+        if (self.paypalSentCounter >= 3) {
+            //prevent user tapping paypal button infinite times
+            [Answers logCustomEventWithName:@"PayPal Spamming Detected"
+                           customAttributes:@{
+                                              @"username":[PFUser currentUser].username
+                                              }];
+            return;
+        }
     }
     
     messageObject[@"mediaMessage"] = @"NO";
     [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded == YES) {
+            
+            //add last sent message string to nsuserdefaults (only if not a suggested message)
+            //then if all 5 in array are the same string ban this user from messaging
+            NSMutableArray *sentArray = [NSMutableArray arrayWithArray:[[NSUserDefaults standardUserDefaults] objectForKey:@"sentArray"]];
+            
+            //check if message string is a suggested message first
+            if (![self.suggestedMessagesArray containsObject:[messageString lowercaseString]]) {
+                [sentArray addObject:[messageString lowercaseString]];
+                
+                if (sentArray.count >= 10) {
+                    //check if the messages are the same
+                    [sentArray removeObject:[messageString lowercaseString]];
+                    
+                    if (sentArray.count == 0) {
+                        //user has sent 5 of the same message! Just track in Fabric for now
+                        [Answers logCustomEventWithName:@"Spam messages detected"
+                                       customAttributes:@{
+                                                          @"username":[PFUser currentUser].username
+                                                          }];
+                        //calc an expiry date
+                        //then add to restricted messaging list (via cloudcode)
+                    }
+                }
+                else{
+                    //save nsuser defaults with updated array
+                    [[NSUserDefaults standardUserDefaults] setObject:sentArray forKey:@"sentArray"];
+                }
+            }
+
             
             [Answers logCustomEventWithName:@"Message Sent"
                            customAttributes:@{
@@ -1447,7 +1507,7 @@
                          imagePickerController.allowsMultipleSelection = YES;
                          imagePickerController.maximumNumberOfSelection = 4;
                          imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                         imagePickerController.numberOfColumnsInPortrait = 2;
+                         imagePickerController.numberOfColumnsInPortrait = 4;
                          imagePickerController.showsNumberOfSelectedAssets = YES;
                          [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
                      });
@@ -1510,7 +1570,7 @@
                             imagePickerController.allowsMultipleSelection = YES;
                             imagePickerController.maximumNumberOfSelection = 4;
                             imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                            imagePickerController.numberOfColumnsInPortrait = 2;
+                            imagePickerController.numberOfColumnsInPortrait = 4;
                             imagePickerController.showsNumberOfSelectedAssets = YES;
                             [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
                         });
@@ -1755,6 +1815,9 @@
     
     [JSQSystemSoundPlayer jsq_playMessageSentSound];
     
+    [self.delegate lastMessageInConvo:@"You sent a photo 📷" incomingMsg:NO];
+
+    
     //some users still aren't able to send certain images
     //think its related to this SO answer:
     
@@ -1868,7 +1931,7 @@
                     [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
                     [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                         if (succeeded) {
-                            [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
+//                            [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
                         }
                         else{
                             NSLog(@"error saving convo in final image %@", error);
@@ -3046,7 +3109,7 @@
     
     //paypal message
     UILabel *introLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,imgView.frame.origin.y+20, 300, 180)];
-    introLabel.text = @"Once you're chatting to a buyer/seller, you’re free to complete the purchase on your terms - we suggest PayPal Goods & Services\n\nNote: you are NOT covered when sending a gift/friends & family payment on PayPal\n\nIf you're still unsure check out our FAQs in Settings";
+    introLabel.text = @"Once you're chatting to a buyer/seller, you’re free to complete the purchase on your terms - we suggest PayPal Goods & Services\n\nNote: you are NOT covered when trading or sending a gift/friends & family payment on PayPal\n\nIf you're still unsure check out our FAQs in Settings";
     introLabel.numberOfLines = 0;
     [introLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
     introLabel.textAlignment = NSTextAlignmentCenter;
@@ -3112,6 +3175,7 @@
         
         [self.listing fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
+
                 [self.listingView.itemImageView setFile:[self.listing objectForKey:@"thumbnail"]];
                 [self.listingView.itemImageView loadInBackground];
                 

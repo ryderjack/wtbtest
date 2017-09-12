@@ -22,9 +22,6 @@
 
 @property (nonatomic, strong) NSString *selectedConvo;
 
-@property (nonatomic, strong) NSString *currency;
-@property (nonatomic, strong) NSString *currencySymbol;
-
 @property (nonatomic, strong) NSDateFormatter *dateFormat;
 
 @property (nonatomic, strong) PFQuery *infiniteQuery;

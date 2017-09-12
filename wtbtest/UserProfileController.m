@@ -90,10 +90,12 @@
     self.collectionView.dataSource = self;
     self.collectionView.alwaysBounceVertical = YES;
     
-    self.WTBArray = [[NSArray alloc]init];
+    self.WTBArray = [[NSMutableArray alloc]init];
     self.bumpedArray = [[NSMutableArray alloc]init];
     self.forSaleArray = [[NSMutableArray alloc]init];
     self.bumpedIds = [[NSMutableArray alloc]init];
+    self.filterCategory = @"";
+
     
 //    NSLog(@"USER %@", self.user);
     
@@ -106,47 +108,9 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(newTBMessageReg) name:@"NewTBMessageReg" object:nil];
     }
     
-//    [self setupHeaderBar];
-    
     if (self.user) { //added in this check as saw a crash when querying a null user
     
         self.isSeller = YES;
-    
-        //segment control
-//        self.segmentedControl = [[HMSegmentedControl alloc] init];
-//        self.segmentedControl.frame = CGRectMake(0, self.myBar.frame.size.height-50,[UIApplication sharedApplication].keyWindow.frame.size.width, 50);
-//        self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
-//        self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
-//        self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
-//        self.segmentedControl.selectionIndicatorHeight = 2;
-//        self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10]};
-//        self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]};
-//        [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
-//        
-//        BLKFlexibleHeightBarSubviewLayoutAttributes *initialSegAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] init];
-//        initialSegAttributes.frame = CGRectMake(0, self.myBar.frame.size.height-50,[UIApplication sharedApplication].keyWindow.frame.size.width, 50);
-//        [self.segmentedControl addLayoutAttributes:initialSegAttributes forProgress:0];
-//        
-//        BLKFlexibleHeightBarSubviewLayoutAttributes *finalSegAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialSegAttributes];
-//        finalSegAttributes.transform = CGAffineTransformMakeTranslation(0, -226);
-//        [self.segmentedControl addLayoutAttributes:finalSegAttributes forProgress:1.0];
-//        [self.myBar addSubview:self.segmentedControl];
-//        
-//        //setup dots button
-//        [self.dotsButton setImage:[UIImage imageNamed:@"dotsFilled"] forState:UIControlStateNormal];
-//        [self.dotsButton addTarget:self action:@selector(showAlertView) forControlEvents:UIControlEventTouchUpInside];
-//        
-//        [self.segmentedControl setSectionTitles:@[@"S E L L I N G", @"W A N T E D", @"L I K E S"]];
-//        self.numberOfSegments = 3;
-//        
-//        self.WTBSelected = NO;
-//        self.WTSSelected = YES;
-//        self.bumpsSelected = NO;
-        
-//        [self loadWTSListings];
-//        [self loadWTBListings];
-//        [self loadBumpedListings];
-        
     }
     
     [self setAutomaticallyAdjustsScrollViewInsets:NO];
@@ -230,8 +194,16 @@
                     [self loadWTSListings];
                 }
             }
-            else if (self.lastSelected.row < [self.collectionView numberOfItemsInSection:0] && self.lastSelected.row < self.forSaleArray.count) {
-                [self.forSaleArray removeObjectAtIndex:self.lastSelected.row];
+            else if (self.lastSelected.row < [self.collectionView numberOfItemsInSection:0]) {
+                //check if for sale selected or wanted
+                if (self.segmentedControl.selectedSegmentIndex == 1 && self.lastSelected.row < self.WTBArray.count) {
+                    //remove item from wanted
+                    [self.WTBArray removeObjectAtIndex:self.lastSelected.row];
+                }
+                else if (self.segmentedControl.selectedSegmentIndex == 0 && self.lastSelected.row < self.forSaleArray.count) {
+                    //remove item from for sale
+                    [self.forSaleArray removeObjectAtIndex:self.lastSelected.row];
+                }
                 [self.collectionView deleteItemsAtIndexPaths:@[self.lastSelected]];
             }
         }
@@ -275,32 +247,11 @@
                 if (self.tabMode != YES) {
                     PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
                     [bannedInstallsQuery whereKey:@"user" equalTo:self.user];
-                    [bannedInstallsQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-                        if (number >= 1){
+                    [bannedInstallsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                        if (object){
                             //this user is banned
                             self.banMode = YES;
                             [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restrcited this user's account for violating our terms"];
-                        }
-                        else{
-                            //all good
-                            
-                            //now check if they've been blocked
-//                            PFQuery *blockQuery = [PFQuery queryWithClassName:@"blockedUsers"];
-//                            [blockQuery whereKey:@"blockedUser" equalTo:self.user];
-//                            [blockQuery whereKey:@"blocker" equalTo:[PFUser currentUser]];
-//                            [blockQuery whereKey:@"status" equalTo:@"live"];
-//                            [blockQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-//                                if (object) {
-//                                    NSLog(@"user is blocked");
-//                                    self.userBlocked = YES;
-//                                }
-//                                else{
-//                                    NSLog(@"user is not blocked");
-//                                    
-//                                    self.userBlocked = NO;
-//                                }
-//                            }];
-                            
                         }
                     }];
                     
@@ -499,7 +450,7 @@
         else if ([self.currency isEqualToString:@"EUR"]) {
             self.currencySymbol = @"€";
         }
-        else if ([self.currency isEqualToString:@"USD"]) {
+        else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
             self.currencySymbol = @"$";
         }
         
@@ -571,7 +522,7 @@
     
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [wtbQuery whereKey:@"postUser" equalTo:self.user];
-    [wtbQuery whereKey:@"status" notEqualTo:@"deleted"];
+    [wtbQuery whereKey:@"status" containedIn:@[@"live",@"purchased"]];
     [wtbQuery orderByDescending:@"lastUpdated"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
@@ -581,7 +532,8 @@
             NSSortDescriptor *sortDescriptorUpdated = [[NSSortDescriptor alloc] initWithKey:@"lastUpdated" ascending:NO];
             NSArray *sortedArray = [objects sortedArrayUsingDescriptors: [NSArray arrayWithObjects:sortDescriptorStatus,sortDescriptorUpdated,nil]];
             
-            self.WTBArray = sortedArray;
+            [self.WTBArray removeAllObjects];
+            [self.WTBArray addObjectsFromArray:sortedArray];
 
             if (objects.count == 0 && self.segmentedControl.selectedSegmentIndex == 1 && self.tabMode == YES) {
                 
@@ -634,7 +586,7 @@
     NSArray *wantedBumped = [self.user objectForKey:@"wantedBumpArray"];
 
     PFQuery *bumpedListings = [PFQuery queryWithClassName:@"wantobuys"];
-    [bumpedListings whereKey:@"status" notEqualTo:@"deleted"];
+    [bumpedListings whereKey:@"status" containedIn:@[@"live",@"purchased"]];
     [bumpedListings whereKey:@"objectId" containedIn:wantedBumped];
     
     [bumpedListings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -646,7 +598,7 @@
             NSArray *saleBumped = [self.user objectForKey:@"saleBumpArray"];
             
             PFQuery *bumpedSaleListings = [PFQuery queryWithClassName:@"forSaleItems"];
-            [bumpedSaleListings whereKey:@"status" notEqualTo:@"deleted"];
+            [bumpedSaleListings whereKey:@"status" containedIn:@[@"live",@"sold"]];
             [bumpedSaleListings whereKey:@"objectId" containedIn:saleBumped];
             
             [bumpedSaleListings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -754,7 +706,7 @@
     self.saleQuery = nil;
     self.saleQuery = [PFQuery queryWithClassName:@"forSaleItems"];
     [self.saleQuery whereKey:@"sellerUser" equalTo:self.user];
-    [self.saleQuery whereKey:@"status" notEqualTo:@"deleted"];
+    [self.saleQuery whereKey:@"status" containedIn:@[@"live",@"sold"]];
     
     if (self.filtersArray.count > 0) {
         [self setupPullQuery];
@@ -1238,15 +1190,23 @@
             self.bumpsSelected = NO;
             
             if (self.forSaleArray.count == 0) {
-                //show prompt to list an item
-                [self.createButton setTitle:@"Create" forState:UIControlStateNormal];
-                [self.createButton setHidden:NO];
-                
-                self.actionLabel.text = @"List an item for sale";
-                [self.actionLabel setHidden:NO];
-                
-                [self.bumpImageView setHidden:YES];
-                [self.bumpLabel setHidden:YES];
+                if (self.firstLoad) {
+                    //show prompt to list an item
+                    [self.createButton setTitle:@"Create" forState:UIControlStateNormal];
+                    [self.createButton setHidden:NO];
+                    
+                    self.actionLabel.text = @"List an item for sale";
+                    [self.actionLabel setHidden:NO];
+                    
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+                else{
+                    self.actionLabel.text = @"Loading";
+                    [self.actionLabel setHidden:NO];
+                    self.firstLoad = YES;
+                }
+
             }
         }
         else{
@@ -1307,12 +1267,19 @@
             self.bumpsSelected = NO;
             
             if (self.forSaleArray.count == 0) {
-                [self.actionLabel setHidden:NO];
-                self.actionLabel.text = @"nothing to show";
-                
-                [self.createButton setHidden:YES];
-                [self.bumpImageView setHidden:YES];
-                [self.bumpLabel setHidden:YES];
+                if (self.firstLoad) {
+                    [self.actionLabel setHidden:NO];
+                    self.actionLabel.text = @"nothing to show";
+                    
+                    [self.createButton setHidden:YES];
+                    [self.bumpImageView setHidden:YES];
+                    [self.bumpLabel setHidden:YES];
+                }
+                else{
+                    self.actionLabel.text = @"Loading";
+                    [self.actionLabel setHidden:NO];
+                    self.firstLoad = YES;
+                }
             }
         }
         else{
@@ -1428,19 +1395,21 @@
 
 -(void)setupMessages{
     [self showHUDForCopy:NO];
-    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     
     //possible convoIDs
     NSString *possID = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId, self.user.objectId];
     NSString *otherId = [NSString stringWithFormat:@"%@%@",self.user.objectId,[PFUser currentUser].objectId];
     
-    NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
+    //split into sub queries to avoid the contains parameter which can't be indexed
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
+    [convoQuery whereKey:@"convoId" equalTo:possID];
     
-    [convoQuery whereKey:@"convoId" containedIn:idArray];
-    [convoQuery includeKey:@"buyerUser"];
-    [convoQuery includeKey:@"sellerUser"];
+    PFQuery *otherPossConvo = [PFQuery queryWithClassName:@"convos"];
+    [otherPossConvo whereKey:@"convoId" equalTo:otherId];
     
-    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+    PFQuery *comboConvoQuery = [PFQuery orQueryWithSubqueries:@[convoQuery, otherPossConvo]];
+    [comboConvoQuery whereKey:@"profileConvo" equalTo:@"YES"];
+    [comboConvoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //convo exists, goto that one but pretype a message like "I'm interested in your Supreme bogo" etc.
             MessageViewController *vc = [[MessageViewController alloc]init];
@@ -2056,8 +2025,10 @@
                 [PFUser currentUser][@"picture"] = filePicture;
                 [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                     if (succeeded) {
-                        NSLog(@"saved!");
+//                        NSLog(@"saved!");
                         [self hideHUD];
+                        
+                        [self updateConvoImages];
                     }
                     else{
                         NSLog(@"error saving %@", error);
@@ -2068,6 +2039,10 @@
             else{
                 NSLog(@"error saving file %@", error);
                 [self hideHUD];
+                [Answers logCustomEventWithName:@"Error saving profile PFFile"
+                               customAttributes:@{
+                                                  @"where":@"Profile"
+                                                  }];
             }
         }];
         [picker dismissViewControllerAnimated:YES completion:nil];
@@ -2267,6 +2242,7 @@
                  PFObject *bumpedObj = [PFObject objectWithClassName:@"Bumped"];
                  [bumpedObj setObject:[self.user objectForKey:@"facebookId"] forKey:@"facebookId"];
                  [bumpedObj setObject:self.user forKey:@"user"];
+                 [bumpedObj setObject:@"live" forKey:@"status"];
                  [bumpedObj setObject:[NSDate date] forKey:@"safeDate"];
                  [bumpedObj setObject:@0 forKey:@"timesBumped"];
                  [bumpedObj saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
@@ -2384,7 +2360,7 @@
 }
 
 -(void)showEarlyAlert{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:@"We've just sent you a confirmation email! Be sure to check your Junk Folder for an email from Team Bump\n\nIf you still can't find it, make sure your email is correct in settings then try again here in 30 mins so we can send another!\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:@"We've just sent you a confirmation email! Be sure to check your Junk Folder for an email from Team Bump\n\nIf you still can't find it, make sure your email is correct in settings then try again here in 5 mins so we can send another!\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -2481,7 +2457,7 @@
                     
                     //next safe date to send email
                     NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                    dayComponent.minute = 30;
+                    dayComponent.minute = 5;
                     NSCalendar *theCalendar = [NSCalendar currentCalendar];
                     NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
                     [[PFUser currentUser]setObject:safeDate forKey:@"nextEmailSafeDate"];
@@ -2586,7 +2562,7 @@
     self.addPicView = (engageTracker *)[nib objectAtIndex:0];
     self.addPicView.delegate = self;
 
-    [self.addPicView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -300, 300, 290)];
+    [self.addPicView setFrame:CGRectMake(([UIApplication sharedApplication].keyWindow.frame.size.width/2)-150, -300, 300, 290)];
     
     self.addPicView.layer.cornerRadius = 10;
     self.addPicView.layer.masksToBounds = YES;
@@ -2599,8 +2575,8 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.addPicView setFrame:CGRectMake(0, 0, 300, 290)];
-                            self.addPicView.center = self.view.center;
+//                            [self.addPicView setFrame:CGRectMake(0, 0, 300, 290)];
+                            self.addPicView.center = [UIApplication sharedApplication].keyWindow.center;
                         }
                      completion:^(BOOL finished) {
                          [self.dropDownBgView addGestureRecognizer:self.tap];
@@ -2661,14 +2637,18 @@
     vc.delegate = self;
     vc.sellingSearch = NO;
     vc.profileSearch = YES;
+    vc.currencySymbol = self.currencySymbol;
     if (self.filtersArray.count > 0) {
         vc.sendArray = [NSMutableArray arrayWithArray:self.filtersArray];
+        
+        vc.filterLower = self.filterLower;
+        vc.filterUpper = self.filterUpper;
     }
     vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
     [self presentViewController:vc animated:YES completion:nil];
 }
 
--(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours{
+-(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper{
     [self.forSaleArray removeAllObjects];
     [self.collectionView reloadData];
     
@@ -2677,6 +2657,9 @@
         self.filterSizesArray = sizes;
         self.filterBrandsArray = brands;
         self.filterColoursArray = colours;
+        self.filterCategory = category;
+        self.filterUpper = upper;
+        self.filterLower = lower;
         
         //change colour of filter number
         NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"F I L T E R  %lu",self.filtersArray.count]];
@@ -2692,6 +2675,7 @@
         [self.filterSizesArray removeAllObjects];
         [self.filterBrandsArray removeAllObjects];
         [self.filterColoursArray removeAllObjects];
+        self.filterCategory = @"";
     }
     
     //(reset skip)
@@ -2720,6 +2704,7 @@
         [self.filterSizesArray removeAllObjects];
         [self.filterBrandsArray removeAllObjects];
         [self.filterColoursArray removeAllObjects];
+        self.filterCategory = @"";
     }
 }
 
@@ -2727,6 +2712,11 @@
     if (self.filtersArray.count > 0) {
         
         //price
+        if ([self.filtersArray containsObject:@"price"]) {
+            [self.saleQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThanOrEqualTo:@(self.filterLower)];
+            [self.saleQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] lessThanOrEqualTo:@(self.filterUpper)];
+        }
+        
         if ([self.filtersArray containsObject:@"hightolow"]) {
             [self.saleQuery orderByDescending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
@@ -2739,7 +2729,7 @@
 
         //condition
         if ([self.filtersArray containsObject:@"new"]){
-            [self.saleQuery whereKey:@"condition" containedIn:@[@"New", @"Any", @"BNWT", @"BNWOT",@"Deadstock"]];  //updated as we removed Deastock as an option
+            [self.saleQuery whereKey:@"condition" containedIn:@[@"New", @"Any", @"BNWT", @"BNWOT"]];
         }
         else if ([self.filtersArray containsObject:@"used"]){
             [self.saleQuery whereKey:@"condition" containedIn:@[@"Used", @"Any"]];
@@ -2748,15 +2738,9 @@
             [self.saleQuery whereKey:@"condition" containedIn:@[@"Deadstock", @"Any"]];
         }
         
-        //category
-        if ([self.filtersArray containsObject:@"clothing"]){
-            [self.saleQuery whereKey:@"category" equalTo:@"Clothing"];
-        }
-        else if ([self.filtersArray containsObject:@"footwear"]){
-            [self.saleQuery whereKey:@"category" equalTo:@"Footwear"];
-        }
-        else if ([self.filtersArray containsObject:@"accessory"]){
-            [self.saleQuery whereKey:@"category" equalTo:@"Accessories"];
+        //category filters
+        if (![self.filterCategory isEqualToString:@""]) {
+            [self.saleQuery whereKey:@"category" equalTo:self.filterCategory];
         }
         
         //gender
@@ -2946,5 +2930,56 @@
         vc.bioMode = YES;
         [self.navigationController pushViewController:vc animated:YES];
     }
+}
+
+-(void)updateConvoImages{
+    //update user's top 20 recent convos to include the user's profile picture
+    //query for convos where I'm the buyer then update buyerPicture & same for sellerPicture
+    
+    PFQuery *convoQ = [PFQuery queryWithClassName:@"convos"];
+    [convoQ whereKey:@"totalMessages" greaterThan:@0];
+    [convoQ whereKeyExists:@"buyerUser"];
+    [convoQ whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+    [convoQ orderByDescending:@"lastSentDate"];
+    convoQ.limit = 20;
+    [convoQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            
+            for (PFObject *convo in objects) {
+                convo[@"buyerPicture"] = [[PFUser currentUser] objectForKey:@"picture"];
+                [convo saveInBackground];
+            }
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"Error retrieving user's buyer convos to change pic"
+                           customAttributes:@{
+                                              @"where":@"Settings",
+                                              }];
+        }
+    }];
+    
+    PFQuery *sellingConvoQ = [PFQuery queryWithClassName:@"convos"];
+    [sellingConvoQ whereKey:@"totalMessages" greaterThan:@0];
+    [sellingConvoQ whereKeyExists:@"sellerUser"];
+    [sellingConvoQ whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+    [sellingConvoQ orderByDescending:@"lastSentDate"];
+    sellingConvoQ.limit = 20;
+    [sellingConvoQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            
+            for (PFObject *convo in objects) {
+                convo[@"sellerPicture"] = [[PFUser currentUser] objectForKey:@"picture"];
+                [convo saveInBackground];
+            }
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"Error retrieving user's seller convos to change pic"
+                           customAttributes:@{
+                                              @"where":@"Settings",
+                                              }];
+        }
+    }];
 }
 @end

@@ -16,11 +16,9 @@
 #import "DetailImageController.h"
 #import "SendDialogBox.h"
 #import <FBSDKShareKit/FBSDKShareKit.h>
-#import "customAlertViewClass.h"
 #import "CreateSuccessView.h"
 #import "CreateViewController.h"
 #import "inviteViewClass.h"
-#import "boostController.h"
 #import "ForSaleListing.h"
 #import "BumpingIntroVC.h"
 
@@ -33,7 +31,7 @@
 -(void)likedWantedItem;
 @end
 
-@interface ListingController : UITableViewController <iCarouselDataSource, iCarouselDelegate, DetailImageDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate, FBSDKAppInviteDialogDelegate, customAlertDelegate, successDelegate, CreateViewControllerDelegate,inviteDelegate,boostDelegate,UIViewControllerTransitioningDelegate, ForSaleListingDelegate,BumpingIntroDelegate>
+@interface ListingController : UITableViewController <iCarouselDataSource, iCarouselDelegate, DetailImageDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate, FBSDKAppInviteDialogDelegate, CreateViewControllerDelegate,inviteDelegate,UIViewControllerTransitioningDelegate, ForSaleListingDelegate,BumpingIntroDelegate>
 
 @property (nonatomic, weak) id <ListingControllerDelegate> delegate;
 @property (nonatomic, strong) PFObject *listingObject;
@@ -104,6 +102,7 @@
 //search
 @property (nonatomic) BOOL fromSearch;
 @property (nonatomic) BOOL modalMode;
+@property (nonatomic) BOOL showCancelButton;
 
 //modes
 @property (nonatomic, strong) NSMutableArray *cellArray;
@@ -145,47 +144,16 @@
 @property (nonatomic) BOOL searchTabsObserverOn;
 @property (nonatomic) BOOL justSwitchedTabs;
 
-
-//confirmation dialogue box
-@property (nonatomic, strong) customAlertViewClass *customAlert;
-@property (nonatomic, strong) UIView *searchBgView;
-@property (nonatomic, strong) NSMutableArray *results;
-@property (nonatomic) BOOL alertShowing;
-
-//create similar listing
-@property (nonatomic, strong) PFObject *similarListing;
-@property (nonatomic, strong) PFGeoPoint *similarGeopoint;
-@property (nonatomic, strong) NSString *similarLocationString;
-
-//success view
-@property (nonatomic, strong) CreateSuccessView *successView;
-@property (nonatomic, strong) NSMutableArray *buyNowArray;
-@property (nonatomic, strong) NSMutableArray *buyNowIDs;
-@property (nonatomic) BOOL setupYes;
-@property (nonatomic) BOOL completionShowing;
-@property (nonatomic) BOOL shouldShowSuccess;
-@property (nonatomic) BOOL createdListing;
-@property (nonatomic) BOOL iwantDone;
-
-
 //invite pop up
 @property (nonatomic, strong, nullable) inviteViewClass *inviteView;
 @property (nonatomic) BOOL inviteAlertShowing;
 @property (nonatomic, strong, nullable) UIView *inviteBgView;
 @property (nonatomic, strong) UITapGestureRecognizer *inviteTap;
 
-//boosts
-@property (nonatomic) BOOL highlightBoost;
-@property (nonatomic) BOOL searchBoost;
-@property (nonatomic) BOOL featureBoost;
-@property (nonatomic) BOOL fromSearchBoost;
-
-//success view mode
-@property (nonatomic) BOOL showCancelButton;
-
 //screenshot & other drop down tracking
 @property (nonatomic) BOOL dropShowing;
 
 //user push preferences
 @property (nonatomic) BOOL dontLikePush;
+@property (nonatomic) BOOL likedAlready;
 @end

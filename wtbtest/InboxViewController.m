@@ -101,6 +101,7 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
+    [self.navigationController.navigationBar setTranslucent:NO];
     [self.navigationController.navigationBar setHidden:NO];
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
@@ -119,26 +120,12 @@
     }
     else{
         self.justViewedMsg = NO;
-        [self updateUnseenCount]; //CHECK check this, it was in the else clause above?
+        [self updateUnseenCount];
     }
-    
-
-    
+        
     //reset last convo as only useful when we're not looking at the inbox
     self.lastConvo = nil;
 
-    
-    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
-    if ([self.currency isEqualToString:@"GBP"]) {
-        self.currencySymbol = @"£";
-    }
-    else if ([self.currency isEqualToString:@"EUR"]) {
-        self.currencySymbol = @"€";
-    }
-    else if ([self.currency isEqualToString:@"USD"]) {
-        self.currencySymbol = @"$";
-    }
-    
     [self.infiniteQuery cancel];
     [self.tableView.infiniteScrollingView stopAnimating];
     self.infinFinished = YES;
@@ -158,11 +145,11 @@
     if (!self.pullQuery) {
         self.pullQuery = [PFQuery queryWithClassName:@"convos"];
         [self.pullQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
-        [self.pullQuery whereKey:@"totalMessages" notEqualTo:@0];
+        [self.pullQuery whereKey:@"totalMessages" greaterThan:@0];
         [self.pullQuery includeKey:@"lastSent"];
         
         //don't retrieve deleted convos (each user has their own custom key on the convo object to track their deletes)
-        [self.pullQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] notEqualTo:@"YES"];
+        [self.pullQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] equalTo:@"NO"];
         
         [self.pullQuery orderByDescending:@"lastSentDate"];
         self.pullQuery.limit = 15;
@@ -248,7 +235,7 @@
                 }
             }
             else{
-                NSLog(@"no convo objects");
+//                NSLog(@"no convo objects");
                 
                 [self.tableView.pullToRefreshView stopAnimating];
                 [self.tableView.infiniteScrollingView stopAnimating];
@@ -268,7 +255,11 @@
     }];
 }
 
--(void)updateUnseenCount{    
+-(void)updateUnseenCount{
+    if (![PFUser currentUser]) {
+        return;
+    }
+    
     //query for convos we know this user hasn't seen
     PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"convos"];
     [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
@@ -280,11 +271,11 @@
     
     PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
     [unseenQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
-    [unseenQuery whereKey:@"totalMessages" notEqualTo:@0];
+    [unseenQuery whereKey:@"totalMessages" greaterThan:@0];
     [unseenQuery orderByDescending:@"createdAt"];
     
     //to stop user seeing an unread badge for a convo they can no longer see since its been deleted
-    [unseenQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] notEqualTo:@"YES"];
+    [unseenQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] equalTo:@"NO"];
     
     [unseenQuery includeKey:@"lastSent"];
     [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -319,8 +310,10 @@
                             //current user is buyer so other user is seller
                             unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
                             
-                            if (![convo objectForKey:@"profileConvo"]) {
-                                buyingUnseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                            if ([convo objectForKey:@"profileConvo"]) {
+                                if ([[convo objectForKey:@"profileConvo"] isEqualToString:@"NO"]) {
+                                    buyingUnseen = [[convo objectForKey:@"buyerUnseen"] intValue];
+                                }
                             }
 
                         }
@@ -328,8 +321,10 @@
                             //other user is buyer, current is seller
                             unseen = [[convo objectForKey:@"sellerUnseen"] intValue];
 
-                            if (![convo objectForKey:@"profileConvo"]) {
-                                sellingUnseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                            if ([convo objectForKey:@"profileConvo"]) {
+                                if ([[convo objectForKey:@"profileConvo"] isEqualToString:@"NO"]) {
+                                    sellingUnseen = [[convo objectForKey:@"sellerUnseen"] intValue];
+                                }
                             }
 
                         }
@@ -363,6 +358,8 @@
                     }
                 }
                 
+//                NSLog(@"TOTAL UNSEEN %d    BUYING UNSEEN: %d   SELLING UNSEEN: %d", totalUnseen, buyingUnseen, sellingUnseen);
+                
                 //update segment control badges
                 [self updateUnseenSegmentBadges:totalUnseen buyerUnseen:buyingUnseen sellerUnseen:sellingUnseen];
             }
@@ -378,15 +375,16 @@
     if (self.pullFinished == NO || self.infinFinished == NO) {
         return;
     }
+    
     self.infinFinished = NO;
     
     if(!self.infiniteQuery){
         self.infiniteQuery = [PFQuery queryWithClassName:@"convos"];
         [self.infiniteQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
-        [self.infiniteQuery whereKey:@"totalMessages" notEqualTo:@0];
+        [self.infiniteQuery whereKey:@"totalMessages" greaterThan:@0];
         [self.infiniteQuery includeKey:@"lastSent"];
         [self.infiniteQuery orderByDescending:@"lastSentDate"];
-        [self.infiniteQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] notEqualTo:@"YES"];
+        [self.infiniteQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] equalTo:@"NO"];
         self.infiniteQuery.limit = 15;
     }
 
@@ -491,7 +489,7 @@
         
         //update relevant convo
 
-        if (self.segmentedControl.selectedSegmentIndex == 0 && indexPath.row < self.convoObjects.count) { //CHECK
+        if (self.segmentedControl.selectedSegmentIndex == 0 && indexPath.row < self.convoObjects.count) {
             [self.convoObjects removeObjectAtIndex:indexPath.row];
             
             //because we're in the main messages segment, need to update sub-segments (if not a profile convo)
@@ -541,14 +539,14 @@
 
     PFObject *convoObject;
     
-    if (self.segmentedControl.selectedSegmentIndex == 0) {
+    if (self.segmentedControl.selectedSegmentIndex == 0 && self.convoObjects.count > indexPath.row) {
         convoObject = [self.convoObjects objectAtIndex:indexPath.row];
     }
-    else if (self.segmentedControl.selectedSegmentIndex == 1) {
+    else if (self.segmentedControl.selectedSegmentIndex == 1 && self.buyingConvos.count > indexPath.row) {
         //load buying messages only
         convoObject = [self.buyingConvos objectAtIndex:indexPath.row];
     }
-    else if (self.segmentedControl.selectedSegmentIndex == 2) {
+    else if (self.segmentedControl.selectedSegmentIndex == 2 && self.sellingConvos.count > indexPath.row) {
         //load selling messages only
         convoObject = [self.sellingConvos objectAtIndex:indexPath.row];
     }
@@ -596,7 +594,6 @@
     BOOL updatedToday = [calendar isDateInToday:convoDate];
     BOOL updatedInLastWeek = [self isInPastWeek:convoDate];
 
-    
     if (updatedToday == YES) {
         //format into the time
         [self.dateFormat setDateFormat:@"HH:mm"];
@@ -624,10 +621,10 @@
     if ([[msgObject objectForKey:@"mediaMessage"]isEqualToString:@"YES"]) {
         
         if ([[msgObject objectForKey:@"senderName"]isEqualToString:[PFUser currentUser].username]) {
-            self.cell.messageLabel.text = @"You sent a photo 💥";
+            self.cell.messageLabel.text = @"You sent a photo 📷";
         }
         else{
-            self.cell.messageLabel.text = [NSString stringWithFormat:@"@%@ sent a photo 💥", [msgObject objectForKey:@"senderName"]];
+            self.cell.messageLabel.text = [NSString stringWithFormat:@"@%@ sent a photo 📷", [msgObject objectForKey:@"senderName"]];
         }
     }
     else if ([[msgObject objectForKey:@"sharedMessage"]isEqualToString:@"YES"]){
@@ -637,7 +634,7 @@
                 self.cell.messageLabel.text = @"You shared a listing 📲";
             }
             else{
-                self.cell.messageLabel.text = [NSString stringWithFormat:@"@%@ shared a listing with you 📲", [msgObject objectForKey:@"senderName"]];
+                self.cell.messageLabel.text = [NSString stringWithFormat:@"@%@ shared a listing 📲", [msgObject objectForKey:@"senderName"]];
             }
         }
         else{
@@ -645,7 +642,7 @@
                 self.cell.messageLabel.text = @"You shared a wanted listing 📲";
             }
             else{
-                self.cell.messageLabel.text = [NSString stringWithFormat:@"@%@ shared a wanted listing with you 📲", [msgObject objectForKey:@"senderName"]];
+                self.cell.messageLabel.text = [NSString stringWithFormat:@"@%@ shared a wanted listing 📲", [msgObject objectForKey:@"senderName"]];
             }
         }
     }
@@ -730,7 +727,7 @@
     }
     else{
         //fail safe
-        NSLog(@"fail safe");
+        NSLog(@"fail safing");
         [self megaUnbold];
     }
     
@@ -745,17 +742,21 @@
     
     self.lastConvoIndex = indexPath;
 
-    if (self.segmentedControl.selectedSegmentIndex == 0) {
+    if (self.segmentedControl.selectedSegmentIndex == 0 && indexPath.row < self.convoObjects.count) {
         convoObject = [self.convoObjects objectAtIndex:indexPath.row];
     }
-    else if (self.segmentedControl.selectedSegmentIndex == 1) {
+    else if (self.segmentedControl.selectedSegmentIndex == 1 && indexPath.row < self.buyingConvos.count) {
         //load buying messages only
         convoObject = [self.buyingConvos objectAtIndex:indexPath.row];
-        
     }
-    else if (self.segmentedControl.selectedSegmentIndex == 2) {
+    else if (self.segmentedControl.selectedSegmentIndex == 2 && indexPath.row < self.sellingConvos.count) {
         //load selling messages only
         convoObject = [self.sellingConvos objectAtIndex:indexPath.row];
+    }
+    else{
+        //something went wrong so just reload everything
+        [self loadAllConvos];
+        return;
     }
     
     //reload the cell so we it unbolds quickly
@@ -786,9 +787,12 @@
         else if (self.segmentedControl.selectedSegmentIndex == 1 || self.segmentedControl.selectedSegmentIndex == 2 ) {
             //update all segment too
             
-            if ([self.allConvoIds containsObject:convoObject.objectId]) {
+//            NSLog(@"INDEX: %lu",(unsigned long)[self.allConvoIds indexOfObject:convoObject.objectId]);
+            
+            //added in the second check to prevent out of bounds errors
+            if ([self.allConvoIds containsObject:convoObject.objectId] && self.convoObjects.count > [self.allConvoIds indexOfObject:convoObject.objectId]) {
                 PFObject *allMsg = [self.convoObjects[[self.allConvoIds indexOfObject:convoObject.objectId]] objectForKey:@"lastSent"];
-                //mark selling convo as seen too
+                //mark convo in all tab as seen too //CHANGE if we have 2 unseen then tap the lower then read the upper (in selling tab) does the ALL tab change?
                 [allMsg setObject:@"seen" forKey:@"status"];
             }
         }
@@ -991,7 +995,7 @@
 
 #pragma mark - messageVC delegates
 
--(void)lastMessageInConvo:(PFObject *)message{
+-(void)lastMessageInConvo:(NSString *)message incomingMsg:(BOOL)incoming{
     
 //    NSLog(@"last msg reload with index: %ld    and convo: %@", (long)self.lastConvoIndex.row, self.lastConvo.objectId);
     
@@ -1111,8 +1115,7 @@
         }
 
     }
-    else if (self.segmentedControl.selectedSegmentIndex == 2 && self.lastConvoIndex.row < self.sellingConvos.count && self.sellingConvos.count == self.sellingConvoIds.count) { //CHANGE test this final condition
-        //crash when removing index 0?
+    else if (self.segmentedControl.selectedSegmentIndex == 2 && self.lastConvoIndex.row < self.sellingConvos.count && self.sellingConvos.count == self.sellingConvoIds.count) {
         
         //load selling messages only
         if (self.lastConvoIndex.row > 0 && [self.sellingConvoIds indexOfObject:self.lastConvo.objectId] < self.sellingConvoIds.count) {
@@ -1157,13 +1160,24 @@
                 
         //make sure top cell is unbolded because it's contents are 100% seen by this user since they've been in that convo
         InboxCell *cell = (InboxCell *)[self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
-        
+
         [self unboldFontForLabel:cell.usernameLabel];
         [self unboldFontForLabel:cell.messageLabel];
         [self unboldFontForLabel:cell.timeLabel];
         cell.messageLabel.textColor = [UIColor lightGrayColor];
         cell.timeLabel.textColor = [UIColor colorWithRed:0.81 green:0.81 blue:0.81 alpha:1.0];
         [cell.wtbTitleLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:13]];
+
+        //update top cell label
+        cell.messageLabel.text = [NSString stringWithFormat:@"%@", message];
+        
+        //update time label
+        [self.dateFormat setDateFormat:@"HH:mm"];
+        cell.timeLabel.text = [NSString stringWithFormat:@"%@", [self.dateFormat stringFromDate:[NSDate date]]];
+        
+        //hide seen icon
+        [cell.seenImageView setHidden:YES];
+
     });
 
     self.updatingLastMessage = NO;
@@ -1172,26 +1186,10 @@
 
 -(void)doubleTapScroll{
     if (self.justViewedMsg == NO) {
-        
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            if (self.convoObjects.count != 0) {
-                [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UITableViewScrollPositionTop animated:YES];
-            }
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 1) {
-            //load buying messages only
-            if (self.buyingConvos.count != 0) {
-                [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UITableViewScrollPositionTop animated:YES];
-            }
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 2) {
-            //load selling messages only
-            if (self.sellingConvos.count != 0) {
-                [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UITableViewScrollPositionTop animated:YES];
-            }
+        if ([self.tableView numberOfRowsInSection:0] > 0) {
+            [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UITableViewScrollPositionTop animated:YES];
         }
     }
-
 }
 
 -(void)checkIfBanned{
@@ -1210,8 +1208,8 @@
         [bannedInstallsQuery whereKey:@"deviceToken" equalTo:@"thisISNothing"];
     }
     PFQuery *megaBanQuery = [PFQuery orQueryWithSubqueries:@[bannedQuery]];
-    [megaBanQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-        if (number >= 1) {
+    [megaBanQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
             //user is banned - log them out
             
             [Answers logCustomEventWithName:@"Logging Banned User Out"
@@ -1219,11 +1217,13 @@
                                               @"from":@"Inbox"
                                               }];
             
-            
             [PFUser logOut];
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
             [self presentViewController:navController animated:NO completion:nil];
+
+            //to prevent user signing up again if they don't have a device token
+            [[NSUserDefaults standardUserDefaults] setObject:@"YES" forKey:@"banned"];
         }
     }];
 }
@@ -1424,13 +1424,13 @@
     if (!self.sellingPullQuery) {
         self.sellingPullQuery = [PFQuery queryWithClassName:@"convos"];
         [self.sellingPullQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
-        [self.sellingPullQuery whereKey:@"totalMessages" notEqualTo:@0];
+        [self.sellingPullQuery whereKey:@"totalMessages" greaterThan:@0];
         [self.sellingPullQuery includeKey:@"lastSent"];
         [self.sellingPullQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-        [self.sellingPullQuery whereKey:@"profileConvo" notEqualTo:@"YES"];
+        [self.sellingPullQuery whereKey:@"profileConvo" equalTo:@"NO"]; //SET set all convos that aren't profile convos to NO
         
         //don't retrieve deleted convos (each user has their own custom key on the convo object to track their deletes)
-        [self.sellingPullQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] notEqualTo:@"YES"];
+        [self.sellingPullQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] equalTo:@"NO"];
         
         [self.sellingPullQuery orderByDescending:@"lastSentDate"];
         
@@ -1533,13 +1533,13 @@
     if (!self.sellingInfiniteQuery) {
         self.sellingInfiniteQuery = [PFQuery queryWithClassName:@"convos"];
         [self.sellingInfiniteQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
-        [self.sellingInfiniteQuery whereKey:@"totalMessages" notEqualTo:@0];
+        [self.sellingInfiniteQuery whereKey:@"totalMessages" greaterThan:@0];
         [self.sellingInfiniteQuery includeKey:@"lastSent"];
         [self.sellingInfiniteQuery orderByDescending:@"lastSentDate"];
         self.sellingInfiniteQuery.limit = 15;
-        [self.sellingInfiniteQuery whereKey:@"profileConvo" notEqualTo:@"YES"];
+        [self.sellingInfiniteQuery whereKey:@"profileConvo" equalTo:@"NO"];
         [self.sellingInfiniteQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-        [self.sellingInfiniteQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] notEqualTo:@"YES"];
+        [self.sellingInfiniteQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] equalTo:@"NO"];
     }
     
     self.sellingInfiniteQuery.skip = self.sellingSkipped;
@@ -1583,13 +1583,13 @@
     if (!self.buyingPullQuery) {
         self.buyingPullQuery = [PFQuery queryWithClassName:@"convos"];
         [self.buyingPullQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
-        [self.buyingPullQuery whereKey:@"totalMessages" notEqualTo:@0];
+        [self.buyingPullQuery whereKey:@"totalMessages" greaterThan:@0];
         [self.buyingPullQuery includeKey:@"lastSent"];
         [self.buyingPullQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
-        [self.buyingPullQuery whereKey:@"profileConvo" notEqualTo:@"YES"];
+        [self.buyingPullQuery whereKey:@"profileConvo" equalTo:@"NO"];
         
         //don't retrieve deleted convos (each user has their own custom key on the convo object to track their deletes)
-        [self.buyingPullQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] notEqualTo:@"YES"];
+        [self.buyingPullQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] equalTo:@"NO"];
         
         [self.buyingPullQuery orderByDescending:@"lastSentDate"];
         self.buyingPullQuery.limit = 15;
@@ -1692,13 +1692,13 @@
     if (!self.buyingInfiniteQuery) {
         self.buyingInfiniteQuery = [PFQuery queryWithClassName:@"convos"];
         [self.buyingInfiniteQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
-        [self.buyingInfiniteQuery whereKey:@"totalMessages" notEqualTo:@0];
+        [self.buyingInfiniteQuery whereKey:@"totalMessages" greaterThan:@0];
         [self.buyingInfiniteQuery includeKey:@"lastSent"];
         [self.buyingInfiniteQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
         [self.buyingInfiniteQuery orderByDescending:@"lastSentDate"];
         self.buyingInfiniteQuery.limit = 15;
-        [self.buyingInfiniteQuery whereKey:@"profileConvo" notEqualTo:@"YES"];
-        [self.buyingInfiniteQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] notEqualTo:@"YES"];
+        [self.buyingInfiniteQuery whereKey:@"profileConvo" equalTo:@"NO"];
+        [self.buyingInfiniteQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] equalTo:@"NO"];
     }
     
     self.buyingInfiniteQuery.skip = self.buyingSkipped;

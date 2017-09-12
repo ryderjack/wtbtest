@@ -76,7 +76,6 @@
                          withReuseIdentifier:@"Footer"];
         }
 
-
     }
     else{
         //wanted search
@@ -134,7 +133,8 @@
     self.filterSizesArray = [NSMutableArray array];
     self.filterBrandsArray = [NSMutableArray array];
     self.filterColoursArray = [NSMutableArray array];
-    
+    self.filterCategory = @"";
+
     self.uselessWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"",@",", nil];
 
     //refresh setup
@@ -296,7 +296,6 @@
     }
     
     [self.pullQuery whereKey:@"status" equalTo:@"live"];
-    [self.pullQuery whereKey:@"banned" notEqualTo:@"YES"];
     
     [self.pullQuery cancel];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -340,6 +339,13 @@
     if (self.pullFinished == NO || self.infinFinished == NO) {
         return;
     }
+    
+    if (self.results.count < 20) {
+        //no point loading
+        [self.collectionView.infiniteScrollingView stopAnimating];
+        return;
+    }
+    
     self.infinFinished = NO;
     self.showFooter = NO;
 
@@ -358,8 +364,7 @@
     self.infiniteQuery.limit = 20;
     self.infiniteQuery.skip = self.lastInfinSkipped;
 
-    [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
-    [self.infiniteQuery whereKey:@"banned" notEqualTo:@"YES"];
+    [self.infiniteQuery whereKey:@"status" equalTo:@"live"]; //SET set all banned users' listings to a status of banned
 
     [self setupInfinQuery];
     __block NSMutableArray *wordsToSearch = [NSMutableArray array];
@@ -815,12 +820,17 @@
     if (self.filtersArray.count > 0) {
         
         //price
+        if ([self.filtersArray containsObject:@"price"]) {
+            [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThanOrEqualTo:@(self.filterLower)];
+            [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] lessThanOrEqualTo:@(self.filterUpper)];
+        }
+        
         if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThan:@(0.00)];
             [self.pullQuery orderByDescending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThan:@(0.00)];
             [self.pullQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
         else{
@@ -843,15 +853,9 @@
             [self.pullQuery whereKey:@"condition" containedIn:@[@"Deadstock", @"Any"]];
         }
         
-        //category
-        if ([self.filtersArray containsObject:@"clothing"]){
-            [self.pullQuery whereKey:@"category" equalTo:@"Clothing"];
-        }
-        else if ([self.filtersArray containsObject:@"footwear"]){
-            [self.pullQuery whereKey:@"category" equalTo:@"Footwear"];
-        }
-        else if ([self.filtersArray containsObject:@"accessory"]){
-            [self.pullQuery whereKey:@"category" equalTo:@"Accessories"];
+        //category filters
+        if (![self.filterCategory isEqualToString:@""]) {
+            [self.pullQuery whereKey:@"category" equalTo:self.filterCategory];
         }
         
         //gender
@@ -888,12 +892,17 @@
     if (self.filtersArray.count > 0) {
         
         //price
+        if ([self.filtersArray containsObject:@"price"]) {
+            [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThanOrEqualTo:@(self.filterLower)];
+            [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] lessThanOrEqualTo:@(self.filterUpper)];
+        }
+        
         if ([self.filtersArray containsObject:@"hightolow"]) {
-            [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThan:@(0.00)];
             [self.infiniteQuery orderByDescending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
-            [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] notEqualTo:@(0.00)];
+            [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThan:@(0.00)];
             [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
         
@@ -913,15 +922,9 @@
             [self.infiniteQuery whereKey:@"condition" containedIn:@[@"Deadstock", @"Any"]];
         }
         
-        //category
-        if ([self.filtersArray containsObject:@"clothing"]){
-            [self.infiniteQuery whereKey:@"category" equalTo:@"Clothing"];
-        }
-        else if ([self.filtersArray containsObject:@"footwear"]){
-            [self.infiniteQuery whereKey:@"category" equalTo:@"Footwear"];
-        }
-        else if ([self.filtersArray containsObject:@"accessory"]){
-            [self.infiniteQuery whereKey:@"category" equalTo:@"Accessories"];
+        //category filters
+        if (![self.filterCategory isEqualToString:@""]) {
+            [self.infiniteQuery whereKey:@"category" equalTo:self.filterCategory];
         }
         
         //gender
@@ -994,15 +997,20 @@
                                       }];
     FilterVC *vc = [[FilterVC alloc]init];
     vc.delegate = self;
+    vc.currencySymbol = self.currencySymbol;
     vc.sellingSearch = self.sellingSearch;
     if (self.filtersArray.count > 0) {
+        
         vc.sendArray = [NSMutableArray arrayWithArray:self.filtersArray];
+        
+        vc.filterLower = self.filterLower;
+        vc.filterUpper = self.filterUpper;
     }
     vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
     [self presentViewController:vc animated:YES completion:nil];
 }
 
--(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours{
+-(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper{
     [self.results removeAllObjects];
     [self.collectionView reloadData];
     
@@ -1011,6 +1019,9 @@
         self.filterSizesArray = sizes;
         self.filterBrandsArray = brands;
         self.filterColoursArray = colours;
+        self.filterCategory = category;
+        self.filterUpper = upper;
+        self.filterLower = lower;
         
         //update filter button title and colour
         NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"F I L T E R  %lu",self.filtersArray.count]];
@@ -1026,6 +1037,7 @@
         [self.filterSizesArray removeAllObjects];
         [self.filterBrandsArray removeAllObjects];
         [self.filterColoursArray removeAllObjects];
+        self.filterCategory = @"";
     }
     self.lastInfinSkipped = 0;
     
@@ -1053,6 +1065,7 @@
         [self.filterSizesArray removeAllObjects];
         [self.filterBrandsArray removeAllObjects];
         [self.filterColoursArray removeAllObjects];
+        self.filterCategory = @"";
     }
 }
 
@@ -1155,76 +1168,6 @@
 }
 
 -(void)selectedBoostListing:(PFObject *)listing{
-    
-    self.viewedListing = YES;
-    
-    ListingController *vc = [[ListingController alloc]init];
-    vc.listingObject = listing;
-    vc.fromSearch = YES;
-    vc.tabBarHeight = self.tabBarHeight;
-    vc.fromSearchBoost = YES;
-    [self.navigationController pushViewController:vc animated:YES];
-    
-    BOOL highlightBoost = NO;
-    BOOL searchBoost = NO;
-    BOOL featureBoost = NO;
-    
-    //check what boosts are enabled then display the correct summary boost icon
-    if ([listing objectForKey:@"highlighted"]) {
-        
-        NSDate *expiryDate = [listing objectForKey:@"highlightExpiry"];
-        
-        if ([[listing objectForKey:@"highlighted"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
-            
-            highlightBoost = YES;
-            
-        }
-        else if ([[listing objectForKey:@"highlighted"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
-            [listing removeObjectForKey:@"highlighted"];
-            [listing saveInBackground];
-        }
-        
-    }
-    
-    if ([listing objectForKey:@"searchBoost"]) {
-        
-        NSDate *expiryDate = [listing objectForKey:@"searchBoostExpiry"];
-        
-        if ([[listing objectForKey:@"searchBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
-            
-            searchBoost = YES;
-            
-        }
-        else if ([[listing objectForKey:@"searchBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
-            [listing removeObjectForKey:@"searchBoost"];
-            [listing saveInBackground];
-        }
-    }
-    
-    if ([listing objectForKey:@"featuredBoost"]) {
-        
-        NSDate *expiryDate = [listing objectForKey:@"featuredBoostExpiry"];
-        
-        if ([[listing objectForKey:@"featuredBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
-            
-            featureBoost = YES;
-            
-            [[PFUser currentUser]addObject:listing.objectId forKey:@"seenFeatured"];
-            [[PFUser currentUser]saveEventually];
-        }
-        else if ([[listing objectForKey:@"featuredBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
-            [listing removeObjectForKey:@"featuredBoost"];
-            [listing saveInBackground];
-        }
-    }
-    
-    [Answers logCustomEventWithName:@"Tapped search WTB"
-                   customAttributes:@{
-                                      @"type":@"Boosted",
-                                      @"featured":[NSNumber numberWithBool:featureBoost],
-                                      @"highlighted":[NSNumber numberWithBool:highlightBoost],
-                                      @"searchBoost":@"YES"
-                                      }];
     
 }
 

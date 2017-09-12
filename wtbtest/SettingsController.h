@@ -14,8 +14,9 @@
 #import <MBProgressHUD.h>
 #import "customAlertViewClass.h"
 #import "LocationView.h"
+#import <SwipeView/SwipeView.h>
 
-@interface SettingsController : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,customAlertDelegate,LocationViewControllerDelegate>
+@interface SettingsController : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,customAlertDelegate,LocationViewControllerDelegate,SwipeViewDataSource,SwipeViewDelegate>
 
 NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *addressCell;
@@ -32,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *sellerModeCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *locationLabelCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *bioCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *currencySwipeCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *emailFields;
@@ -102,6 +104,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UITextField *bioField;
 @property (nonatomic) BOOL bioMode;
 
+//currency cell
+@property (weak, nonatomic) IBOutlet SwipeView *currencySwipeView;
+@property (nonatomic, strong) NSArray *currencyArray;
+@property (nonatomic) BOOL currencyChanged;
 
 NS_ASSUME_NONNULL_END
 @end

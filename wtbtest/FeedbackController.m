@@ -392,14 +392,15 @@
         [feedbackObject setObject:self.convoObject forKey:@"convo"];
         [feedbackObject setObject:[NSNumber numberWithInt:self.starNumber] forKey:@"rating"];
         [feedbackObject setObject:[PFUser currentUser] forKey:@"gaveFeedback"];
+        [feedbackObject setObject:self.user forKey:@"gotFeedback"]; //SET set this object on all previous feedback objectds
+
+        [feedbackObject setObject:@"live" forKey:@"status"];
         
         if (self.purchased == YES) {
-            [feedbackObject setObject:self.user forKey:@"sellerUser"];
-            [feedbackObject setObject:[PFUser currentUser] forKey:@"buyerUser"];
+            [feedbackObject setObject:self.user.objectId forKey:@"sellerId"];
         }
         else{
-            [feedbackObject setObject:self.user forKey:@"buyerUser"];
-            [feedbackObject setObject:[PFUser currentUser] forKey:@"sellerUser"];
+            [feedbackObject setObject:self.user.objectId forKey:@"buyerId"];
         }
         
         if (![self.commentField.text isEqualToString:@""]) {

@@ -390,7 +390,7 @@
                     imagePickerController.allowsMultipleSelection = YES;
                     imagePickerController.maximumNumberOfSelection = 4-self.photostotal;
                     imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                    imagePickerController.numberOfColumnsInPortrait = 3;
+                    imagePickerController.numberOfColumnsInPortrait = 4;
                     imagePickerController.showsNumberOfSelectedAssets = YES;
                     
                     self.barButtonPressed = YES;

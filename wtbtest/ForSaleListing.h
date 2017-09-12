@@ -33,7 +33,6 @@
 @interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
-@property (nonatomic, strong) PFObject *WTBObject;
 
 //delegate
 @property (nonatomic, weak) id <ForSaleListingDelegate> delegate;
@@ -57,6 +56,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *usernameButton;
 @property (weak, nonatomic) IBOutlet UILabel *itemTitle;
 @property (weak, nonatomic) IBOutlet UILabel *sellerTextLabel;
+@property (nonatomic) BOOL hasMultiple;
 
 //icons
 @property (weak, nonatomic) IBOutlet UIImageView *sizeIcon;
@@ -82,14 +82,7 @@
 @property (nonatomic, strong) NSString *currency;
 @property (nonatomic, strong) NSString *currencySymbol;
 
-//image
-@property (nonatomic, strong) PFFile *firstImage;
-@property (nonatomic, strong) PFFile *secondImage;
-@property (nonatomic, strong) PFFile *thirdImage;
-@property (nonatomic, strong) PFFile *fourthImage;
-@property (nonatomic, strong) PFFile *fifthImage;
-@property (nonatomic, strong) PFFile *sixthImage;
-
+//images
 @property (nonatomic) int numberOfPics;
 
 @property (weak, nonatomic) IBOutlet UILabel *soldLabel;
@@ -123,8 +116,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *reportButton;
 @property (weak, nonatomic) IBOutlet UIButton *upVoteLabel;
 @property (weak, nonatomic) IBOutlet UIButton *reportLabel;
-
-
 
 //send dialog box
 @property (nonatomic, strong) SendDialogBox *sendBox;
@@ -162,6 +153,7 @@
 
 //user push preferences
 @property (nonatomic) BOOL dontLikePush;
+@property (nonatomic) BOOL likedAlready;
 
 
 @end

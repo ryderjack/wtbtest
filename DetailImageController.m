@@ -159,6 +159,12 @@
             else if (index == 5){
                 [((PFImageView *)view)setFile:[self.listing objectForKey:@"image6"]];
             }
+            else if (index == 6){
+                [((PFImageView *)view)setFile:[self.listing objectForKey:@"image7"]];
+            }
+            else if (index == 7){
+                [((PFImageView *)view)setFile:[self.listing objectForKey:@"image8"]];
+            }
         }
     }
 
@@ -188,7 +194,7 @@
     return view;
 }
 - (IBAction)crossPressed:(id)sender {
-    [self.delegate dismissedDetailImageView];
+    [self.delegate dismissedDetailImageViewWithIndex:self.pageControl.currentPage];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 

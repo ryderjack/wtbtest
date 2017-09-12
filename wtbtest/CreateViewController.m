@@ -215,7 +215,7 @@
             self.currencySymbol = @"€";
             self.payField.placeholder = @"€100";
         }
-        else if ([self.currency isEqualToString:@"USD"]) {
+        else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
             self.currencySymbol = @"$";
             self.payField.placeholder = @"$100";
         }
@@ -658,7 +658,7 @@
                         imagePickerController.allowsMultipleSelection = YES;
                         imagePickerController.maximumNumberOfSelection = 4-self.photostotal;
                         imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                        imagePickerController.numberOfColumnsInPortrait = 3;
+                        imagePickerController.numberOfColumnsInPortrait = 4;
                         imagePickerController.showsNumberOfSelectedAssets = YES;
                         [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
                     });

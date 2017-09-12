@@ -27,6 +27,8 @@
                 <outlet property="USDButton" destination="cEa-Yn-PfW" id="I6q-Sm-Q4E"/>
                 <outlet property="cancelCrossButton" destination="pbv-9D-tT8" id="ryK-8D-jM5"/>
                 <outlet property="currencyCell" destination="srK-IK-XBv" id="4ZB-Wz-LjM"/>
+                <outlet property="currencySwipeCell" destination="gcd-ub-f0c" id="3pZ-9K-fRm"/>
+                <outlet property="currencySwipeView" destination="dzs-RK-U7g" id="Yet-aE-WUN"/>
                 <outlet property="emailCell" destination="31R-2I-7WM" id="BEE-bT-C9t"/>
                 <outlet property="emailField" destination="daW-QA-8ze" id="vUi-QU-ivG"/>
                 <outlet property="friendOneImageView" destination="HDl-vx-7o4" id="GZF-rh-8I9"/>
@@ -66,7 +68,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="58"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Cj6-OJ-qkh" id="yMS-Hp-0gY">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="58"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="57.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="S I G N  U P" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yG8-HO-iiQ">
@@ -285,7 +287,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="156"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="X40-2w-7JG" id="zTO-I7-1Ra">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="156"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="155.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="TNt-d3-tiV" customClass="PFImageView">
@@ -543,6 +545,36 @@
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-56" y="919"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="gcd-ub-f0c">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="gcd-ub-f0c" id="HsR-OJ-Fdu">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="regDollar.png" translatesAutoresizingMaskIntoConstraints="NO" id="mMk-cJ-9PC">
+                        <rect key="frame" x="18" y="14" width="15" height="15"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="15" id="1dC-Nb-m0C"/>
+                        </constraints>
+                    </imageView>
+                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="dzs-RK-U7g" customClass="SwipeView">
+                        <rect key="frame" x="50" y="4" width="270" height="36"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </view>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="dzs-RK-U7g" firstAttribute="leading" secondItem="mMk-cJ-9PC" secondAttribute="trailing" constant="17" id="ER3-5Q-X7u"/>
+                    <constraint firstItem="mMk-cJ-9PC" firstAttribute="top" secondItem="HsR-OJ-Fdu" secondAttribute="topMargin" constant="6" id="FNV-0r-Xca"/>
+                    <constraint firstItem="dzs-RK-U7g" firstAttribute="top" secondItem="HsR-OJ-Fdu" secondAttribute="topMargin" constant="-4" id="Q5O-vK-M7S"/>
+                    <constraint firstItem="mMk-cJ-9PC" firstAttribute="leading" secondItem="HsR-OJ-Fdu" secondAttribute="leadingMargin" constant="10" id="Wqg-0r-KuZ"/>
+                    <constraint firstAttribute="trailing" secondItem="dzs-RK-U7g" secondAttribute="trailing" id="hPa-i2-a2Z"/>
+                    <constraint firstItem="mMk-cJ-9PC" firstAttribute="centerY" secondItem="dzs-RK-U7g" secondAttribute="centerY" id="prt-5G-HkP"/>
+                    <constraint firstItem="mMk-cJ-9PC" firstAttribute="centerY" secondItem="HsR-OJ-Fdu" secondAttribute="centerY" id="vef-gI-e2V"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-62" y="459"/>
         </tableViewCell>
     </objects>
     <resources>

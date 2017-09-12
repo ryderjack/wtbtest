@@ -24,6 +24,8 @@
                 <outlet property="brandCell" destination="pth-V4-lRA" id="ine-Ga-5YP"/>
                 <outlet property="brandSwipeView" destination="8UI-LK-f2G" id="dEE-5M-RP4"/>
                 <outlet property="categoryCell" destination="hZa-Zs-XNS" id="yJI-O0-j3T"/>
+                <outlet property="categoryIconCell" destination="kTg-df-svJ" id="uhA-1K-MZQ"/>
+                <outlet property="categorySwipeView" destination="UA5-yQ-bsH" id="7cI-qu-pdn"/>
                 <outlet property="clothingButton" destination="48g-v9-m5u" id="G4p-Yo-uaH"/>
                 <outlet property="colourCell" destination="G0j-gC-0Rr" id="ufR-H0-dLq"/>
                 <outlet property="colourSwipeView" destination="5M9-95-6lA" id="qSO-Dq-nTP"/>
@@ -31,12 +33,15 @@
                 <outlet property="conditionNewButton" destination="ycP-gR-WhC" id="LHJ-dT-xFQ"/>
                 <outlet property="distanceButton" destination="0V5-Yg-f4f" id="idj-Hb-ldh"/>
                 <outlet property="distanceCell" destination="9oS-Kf-oLz" id="Jkg-4r-0Aq"/>
+                <outlet property="doubleSlider" destination="Qp0-QG-jAh" id="Vvb-Un-KdW"/>
                 <outlet property="footButton" destination="d4J-KJ-BPQ" id="N3s-fu-RPi"/>
-                <outlet property="hightolowButton" destination="WYN-1p-MGm" id="t3x-IK-9uh"/>
-                <outlet property="lowtoHighButton" destination="Fpv-6w-bfP" id="dvG-hH-2iB"/>
+                <outlet property="hightolowButton" destination="uq7-Qx-iMv" id="A8b-Pw-G4f"/>
+                <outlet property="lowtoHighButton" destination="su8-pU-vtu" id="Fct-vQ-0IY"/>
                 <outlet property="menButton" destination="YJJ-aH-eS4" id="qsh-xg-g76"/>
                 <outlet property="priceCell" destination="YYe-Gz-39n" id="N8I-c9-F4J"/>
+                <outlet property="priceSliderCell" destination="nIC-Sj-IB1" id="Y8H-13-Pmk"/>
                 <outlet property="sizeCell" destination="Tyx-NG-nBY" id="IZh-OX-vr2"/>
+                <outlet property="sliderLabel" destination="DKS-rG-W4U" id="STQ-Lp-5Xm"/>
                 <outlet property="spaceCell" destination="FK5-QS-l9n" id="wHM-gy-aH3"/>
                 <outlet property="swipeView" destination="kUw-xF-gLP" id="Fc5-hQ-Nd6"/>
                 <outlet property="titleCell" destination="2Qb-lu-ryI" id="XFo-St-PNQ"/>
@@ -323,10 +328,10 @@
                             <constraint firstAttribute="width" secondItem="nOw-s2-9uD" secondAttribute="height" multiplier="15:4" id="Dyu-6C-Z1A"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="11"/>
-                        <state key="normal" title="Woman" backgroundImage="filterButtonBgGrey.png">
+                        <state key="normal" title="Women" backgroundImage="filterButtonBgGrey.png">
                             <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                         </state>
-                        <state key="selected" title="Woman" backgroundImage="filterButtonBgWhite.png"/>
+                        <state key="selected" title="Women" backgroundImage="filterButtonBgWhite.png"/>
                         <connections>
                             <action selector="womenPressed:" destination="-1" eventType="touchUpInside" id="2tR-IV-jMo"/>
                         </connections>
@@ -475,6 +480,122 @@
             </tableViewCellContentView>
             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
             <point key="canvasLocation" x="-65" y="1069"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="174" id="kTg-df-svJ">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="152"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="kTg-df-svJ" id="t9L-bc-O5x">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="151.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Category" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="C52-4S-yr7">
+                        <rect key="frame" x="112" y="23" width="96" height="31"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="31" id="04Z-St-fw2"/>
+                            <constraint firstAttribute="width" constant="96" id="Slr-Sg-0Lr"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="14"/>
+                        <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="UA5-yQ-bsH" customClass="SwipeView">
+                        <rect key="frame" x="0.0" y="61" width="320" height="67"/>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                    </view>
+                </subviews>
+                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                <constraints>
+                    <constraint firstItem="C52-4S-yr7" firstAttribute="centerX" secondItem="UA5-yQ-bsH" secondAttribute="centerX" id="7K9-3u-NLl"/>
+                    <constraint firstAttribute="trailing" secondItem="UA5-yQ-bsH" secondAttribute="trailing" id="Jon-Np-Uz0"/>
+                    <constraint firstItem="C52-4S-yr7" firstAttribute="top" secondItem="t9L-bc-O5x" secondAttribute="topMargin" constant="15" id="TVy-xV-M2D"/>
+                    <constraint firstItem="UA5-yQ-bsH" firstAttribute="top" secondItem="C52-4S-yr7" secondAttribute="bottom" constant="7" id="l0d-jD-X9P"/>
+                    <constraint firstItem="UA5-yQ-bsH" firstAttribute="leading" secondItem="t9L-bc-O5x" secondAttribute="leading" id="p6p-s9-H1t"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="UA5-yQ-bsH" secondAttribute="bottom" constant="15.5" id="pkk-sX-1W0"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+            <point key="canvasLocation" x="-463" y="834"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="222" id="nIC-Sj-IB1">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="215"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="nIC-Sj-IB1" id="S0U-G5-JOH">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="214.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Price" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="o0v-X3-9L6">
+                        <rect key="frame" x="130" y="23" width="60" height="30"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="30" id="5z7-iz-nDg"/>
+                            <constraint firstAttribute="width" constant="60" id="n7D-i6-Il4"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="14"/>
+                        <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Qp0-QG-jAh" customClass="NMRangeSlider">
+                        <rect key="frame" x="17" y="95" width="286" height="34"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="286" id="DRC-Sk-Qon"/>
+                        </constraints>
+                    </view>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uq7-Qx-iMv">
+                        <rect key="frame" x="32" y="157" width="90" height="24"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="24" id="4JQ-77-mnb"/>
+                            <constraint firstAttribute="width" constant="90" id="rVL-6u-X2f"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="11"/>
+                        <state key="normal" title="Highest First" backgroundImage="filterButtonBgGrey.png">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        </state>
+                        <state key="selected" title="Highest First" backgroundImage="filterButtonBgWhite.png"/>
+                        <connections>
+                            <action selector="hightolowPressed:" destination="-1" eventType="touchUpInside" id="Olf-db-phx"/>
+                        </connections>
+                    </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="su8-pU-vtu">
+                        <rect key="frame" x="201" y="157" width="90" height="24"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="24" id="agM-d8-tFr"/>
+                            <constraint firstAttribute="width" constant="90" id="fRi-y2-OMh"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="11"/>
+                        <state key="normal" title="Lowest First" backgroundImage="filterButtonBgGrey.png">
+                            <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        </state>
+                        <state key="selected" title="Lowest First" backgroundImage="filterButtonBgWhite.png"/>
+                        <connections>
+                            <action selector="lowtohighPressed:" destination="-1" eventType="touchUpInside" id="sCB-Fo-5R7"/>
+                        </connections>
+                    </button>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Any" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="DKS-rG-W4U">
+                        <rect key="frame" x="112" y="60" width="96" height="30"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="30" id="1Kn-vf-R7R"/>
+                            <constraint firstAttribute="width" constant="96" id="6xQ-W9-eM2"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
+                        <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="DKS-rG-W4U" firstAttribute="centerX" secondItem="Qp0-QG-jAh" secondAttribute="centerX" id="3Tp-be-FaW"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="uq7-Qx-iMv" secondAttribute="bottom" constant="25.5" id="3lp-am-Aqj"/>
+                    <constraint firstItem="Qp0-QG-jAh" firstAttribute="leading" secondItem="uq7-Qx-iMv" secondAttribute="trailing" constant="-105" id="7pw-0V-dCq"/>
+                    <constraint firstItem="su8-pU-vtu" firstAttribute="leading" secondItem="uq7-Qx-iMv" secondAttribute="trailing" constant="79" id="GMH-8Q-v3x"/>
+                    <constraint firstItem="Qp0-QG-jAh" firstAttribute="top" secondItem="DKS-rG-W4U" secondAttribute="bottom" constant="5" id="MFe-sZ-ozN"/>
+                    <constraint firstItem="DKS-rG-W4U" firstAttribute="top" secondItem="o0v-X3-9L6" secondAttribute="bottom" constant="7" id="Xqm-3A-6g7"/>
+                    <constraint firstItem="o0v-X3-9L6" firstAttribute="top" secondItem="S0U-G5-JOH" secondAttribute="topMargin" constant="15" id="YkZ-Aa-DOa"/>
+                    <constraint firstItem="uq7-Qx-iMv" firstAttribute="baseline" secondItem="su8-pU-vtu" secondAttribute="baseline" id="caH-Ft-UF2"/>
+                    <constraint firstItem="o0v-X3-9L6" firstAttribute="centerX" secondItem="DKS-rG-W4U" secondAttribute="centerX" id="e37-WE-xYT"/>
+                    <constraint firstItem="uq7-Qx-iMv" firstAttribute="top" secondItem="Qp0-QG-jAh" secondAttribute="bottom" constant="28" id="pzu-wN-qKT"/>
+                    <constraint firstItem="o0v-X3-9L6" firstAttribute="centerX" secondItem="S0U-G5-JOH" secondAttribute="centerX" id="v1O-Y1-6dX"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+            <point key="canvasLocation" x="-463" y="490"/>
         </tableViewCell>
     </objects>
     <resources>

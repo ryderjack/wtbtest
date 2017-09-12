@@ -23,6 +23,20 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    //key learnings for having 4+ images
+    //cant mix pffiles with images
+    //could maybe have 6 non-reusable cells, then wonder if the switching around is still easy? -- not possible with collection views
+    //need pffiles not images coz when editing listings we get back a pffile and don't want to wait for a fetch before loading
+    //resizing the images down to smaller size makes them look better in the CV
+    
+    //problem: coz we use pffiles, which take a while to save on a bad network, they may appear to disappear...
+
+    //THE PLAN
+    //use images when creating a listing. It's fast & reliable AND can use smaller thumbnails so looks better
+    //when editing though we only have pffiles.... is there a reliable/nice way of converting them to data->UIImage?
+    //what if we used getData and on success of each call we allocate that to the correctly UIImage property - self.firstImage
+    //then we do a check in each callback to see if we have the rest - if so, stop the spinner & load up the CV
+    
     self.navigationItem.title = @"S E L L";
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
@@ -30,6 +44,8 @@
     //hide swipe view to start (unless in edit mode)
     self.colourSwipeView.alpha = 0.0;
     self.coloursArray = @[@"Black", @"White", @"Grey",@"Blue", @"Orange", @"Green", @"Red", @"Camo",@"Peach", @"Yellow", @"Purple", @"Pink"];
+    self.categories = @[@"footwear", @"clothing", @"accessories",@"shirt", @"tshirt", @"shoes", @"shoe", @"trouser"];
+
     self.chosenColour = @"";
     
     self.chosenColourSArray = [NSMutableArray array];
@@ -61,15 +77,19 @@
     self.secondCam = [[UIButton alloc]init];
     self.thirdCam = [[UIButton alloc]init];
     self.fourthCam = [[UIButton alloc]init];
-//    self.fifthCam = [[UIButton alloc]init];
-//    self.sixthCam = [[UIButton alloc]init];
+    self.fifthCam = [[UIButton alloc]init];
+    self.sixthCam = [[UIButton alloc]init];
+    self.sevenCam = [[UIButton alloc]init];
+    self.eightCam = [[UIButton alloc]init];
     
     [self.firstCam setEnabled:YES];
     [self.secondCam setEnabled:NO];
     [self.thirdCam setEnabled:NO];
     [self.fourthCam setEnabled:NO];
-//    [self.fifthCam setEnabled:NO];
-//    [self.sixthCam setEnabled:NO];
+    [self.fifthCam setEnabled:NO];
+    [self.sixthCam setEnabled:NO];
+    [self.sevenCam setEnabled:NO];
+    [self.eightCam setEnabled:NO];
     
     //collection view setup
     [self.imgCollectionView registerClass:[AddImageCell class] forCellWithReuseIdentifier:@"Cell"];
@@ -101,11 +121,15 @@
     self.locationString = @"";
     
     self.photostotal = 0;
+    self.runningPhotosTotal = 0;
+
     self.descriptionField.delegate = self;
     self.payField.delegate = self;
     self.itemTitleTextField.delegate = self;
+    self.quantityField.delegate = self;
     
     [self saleaddDoneButton];
+    [self quantityAddDoneButton];
     
     self.descriptionCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.payCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -124,12 +148,15 @@
     self.profanityList = @[@"cunt", @"wanker", @"nigger", @"penis", @"cock", @"depop", @"grailed"];
     self.flagWords = @[@"fake", @"replica", @"ua", @"unauthentic"];
     
+    self.filesArray = [NSMutableArray array];
+    self.imagesArray = [NSMutableArray array];
+
     self.multipleSizeArray = [NSArray array];
     self.imagesToProcess = [NSMutableArray array];
     self.placeholderAssetArray = [NSMutableArray array];
-    self.filesArray = [NSMutableArray array];
     self.multipleSizeAcronymArray = [NSMutableArray array];
     self.finalSizeArray = [NSMutableArray array];
+    
     
     self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
     if (self.introMode != YES) {
@@ -201,9 +228,8 @@
         //check if user is banned
         PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
         [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
-        [bannedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-            if (number >= 1){
-                //this user is banned
+        [bannedQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
                 self.banMode = YES;
                 [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
             }
@@ -262,13 +288,12 @@
     else if ([self.currency isEqualToString:@"EUR"]) {
         self.currencySymbol = @"€";
     }
-    else if ([self.currency isEqualToString:@"USD"]) {
+    else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
         self.currencySymbol = @"$";
     }
     self.payField.placeholder = [NSString stringWithFormat:@"%@0.00", self.currencySymbol];
 
 }
-
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -447,7 +472,7 @@
                     self.selection = @"size";
                     [self.navigationController pushViewController:vc animated:YES];
                 }
-                else if ([self.chooseCategroy.text isEqualToString:@"Clothing"]){
+                else if ([self.chooseCategroy.text isEqualToString:@"Clothing"] || [self.chooseCategroy.text isEqualToString:@"Tops"] || [self.chooseCategroy.text isEqualToString:@"Bottoms"] || [self.chooseCategroy.text isEqualToString:@"Outerwear"]){
                     SelectViewController *vc = [[SelectViewController alloc]init];
                     vc.delegate = self;
                     vc.setting = @"sizeclothing";
@@ -473,8 +498,8 @@
                     self.selection = @"size";
                     [self.navigationController pushViewController:vc animated:YES];
                 }
-                else if ([self.chooseCategroy.text isEqualToString:@"Accessories"]){
-                    // can't select accessory sizing for now
+                else if ([self.chooseCategroy.text isEqualToString:@"Accessories"] || [self.chooseCategroy.text isEqualToString:@"Proxy"]){
+                    // can't select accessory sizing for now or for proxies either
                 }
                 else{
                     SelectViewController *vc = [[SelectViewController alloc]init];
@@ -492,9 +517,7 @@
                 }
             }
         }
-        else if(indexPath.row == 3){
-            [self.payField becomeFirstResponder];
-        }
+
     }
     else if(indexPath.section == 3){
         [self addColourPressed:self];
@@ -548,7 +571,7 @@
         [self dismissViewControllerAnimated:YES completion:nil];
     }
     else{
-        if ([self.descriptionField.text isEqualToString:@"Pro tip: a better description leads to more interest on your item!"] && [self.chooseCondition.text isEqualToString:@"Select"] && [self.chooseCategroy.text isEqualToString:@"Select"] && [self.chooseSize.text isEqualToString:@"Select"] && [self.payField.text isEqualToString:@""] && self.photostotal == 0){
+        if ([self.descriptionField.text isEqualToString:@"Describe the item's style, sizing, and any possible flaws"] && [self.chooseCondition.text isEqualToString:@"Select"] && [self.chooseCategroy.text isEqualToString:@"Select"] && [self.chooseSize.text isEqualToString:@"Select"] && [self.payField.text isEqualToString:@""] && self.photostotal == 0){
             [self dismissViewControllerAnimated:YES completion:nil];
         }
         else{
@@ -593,7 +616,7 @@
     self.somethingChanged = YES;
     [self dismissColour];
 
-    if ([textView.text isEqualToString:@"Pro tip: a better description leads to more interest on your item!"]) {
+    if ([textView.text isEqualToString:@"Describe the item's style, sizing, and any possible flaws"]) {
         textView.text = @"";
         textView.textColor = [UIColor colorWithRed:74/255.0f green:74/255.0f blue:74/255.0f alpha:1.0f];
     }
@@ -619,7 +642,7 @@
         
         priceArray = priceArrayMutable;
         
-        NSLog(@"price array %lu", (unsigned long)priceArray.count);
+//        NSLog(@"price array %lu", (unsigned long)priceArray.count);
         
         if (priceArray.count == 0) {
             //entered nothing
@@ -638,7 +661,7 @@
                 intAmount = @"0";
             }
             
-            NSLog(@"length of this int %@   int %lu",intAmount ,(unsigned long)intAmount.length);
+//            NSLog(@"length of this int %@   int %lu",intAmount ,(unsigned long)intAmount.length);
             priceString = [NSString stringWithFormat:@"%@.00", intAmount];
         }
         else if (priceArray.count > 1){
@@ -684,10 +707,10 @@
             NSLog(@"no decimal point so price is %@", priceString);
         }
         
-        NSLog(@"price string %@", priceString);
+//        NSLog(@"price string %@", priceString);
         
-        CGFloat strFloat = (CGFloat)[priceString floatValue];
-        NSLog(@"PRICE FLOAT %.2f", strFloat);
+//        CGFloat strFloat = (CGFloat)[priceString floatValue];
+//        NSLog(@"PRICE FLOAT %.2f", strFloat);
         
         if ([priceString isEqualToString:@"0.00"] || [priceString isEqualToString:@""] || [priceString isEqualToString:[NSString stringWithFormat:@".00"]] || [priceString isEqualToString:@"  "]) {
             //invalid price number
@@ -834,10 +857,18 @@
                              completion:nil];
         }
     }
+    else if (textField == self.quantityField){
+        NSString *check = [textField.text stringByReplacingOccurrencesOfString:@"0" withString:@""];
+        
+        if ([check isEqualToString:@""]) {
+            textField.text = @"";
+        }
+        
+    }
 }
 -(void)textViewDidEndEditing:(UITextView *)textView{
     if ([textView.text isEqualToString:@""]) {
-        textView.text = @"Pro tip: a better description leads to more interest on your item!";
+        textView.text = @"Describe the item's style, sizing, and any possible flaws";
         textView.textColor = [UIColor lightGrayColor];
     }
     else{
@@ -845,11 +876,11 @@
         NSArray *words = [textView.text componentsSeparatedByString:@" "];
         for (NSString *string in words) {
             if ([self.profanityList containsObject:string.lowercaseString]) {
-                textView.text = @"Pro tip: a better description leads to more interest on your item!";
+                textView.text = @"Describe the item's style, sizing, and any possible flaws";
                 textView.textColor = [UIColor lightGrayColor];
             }
             else if ([self.flagWords containsObject:string.lowercaseString]){
-                textView.text = @"Pro tip: a better description leads to more interest on your item!";
+                textView.text = @"Describe the item's style, sizing, and any possible flaws";
                 
                 [self showAlertWithTitle:@"Authenticity Warning" andMsg:@"Bump is for buying/selling authentic streetwear, if you're found to be selling fake or replica items we will be forced to ban your account to protect the community"];
                 return;
@@ -926,6 +957,15 @@
         NSUInteger newLength = [textField.text length] + [string length] - range.length;
         return newLength <= 50;
     }
+    else if(textField == self.quantityField){
+        //limit number of characters
+        if(range.length + range.location > textField.text.length)
+        {
+            return NO;
+        }
+        NSUInteger newLength = [textField.text length] + [string length] - range.length;
+        return newLength <= 3;
+    }
     
     return YES;
 }
@@ -980,9 +1020,9 @@
                         QBImagePickerController *imagePickerController = [QBImagePickerController new];
                         imagePickerController.delegate = self;
                         imagePickerController.allowsMultipleSelection = YES;
-                        imagePickerController.maximumNumberOfSelection = 4-self.photostotal;
+                        imagePickerController.maximumNumberOfSelection = 8-self.photostotal;
                         imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                        imagePickerController.numberOfColumnsInPortrait = 3;
+                        imagePickerController.numberOfColumnsInPortrait = 4;
                         imagePickerController.showsNumberOfSelectedAssets = YES;
                         [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
                     });
@@ -1167,59 +1207,11 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
--(void)resetForm{
-    //ask if sure
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Reset listing?" message:@"Are you sure you want to start your listing again?" preferredStyle:UIAlertControllerStyleAlert];
-    
-    [alertView addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }]];
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Reset" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
-        self.chooseCategroy.text = @"Select";
-        self.chooseCondition.text = @"Select";
-        self.chooseLocation.text = @"Select";
-        self.chooseSize.text = @"Select";
-        self.payField.text = @"";
-        self.descriptionField.text = @"Pro tip: a better description leads to more interest on your item!";
-        
-        [self.firstCam setEnabled:YES];
-        [self.secondCam setEnabled:NO];
-        [self.thirdCam setEnabled:NO];
-        [self.fourthCam setEnabled:NO];
-        [self.fifthCam setEnabled:NO];
-        [self.sixthCam setEnabled:NO];
-        
-        self.photostotal = 0;
-        self.camButtonTapped = 0;
-        
-        self.geopoint = nil;
-    }]];
-    [self presentViewController:alertView animated:YES completion:nil];
-}
-
 -(void)finalImage:(UIImage *)image{
     UIImage *newImage = [image scaleImageToSize:CGSizeMake(750, 750)]; //manipulate bytes for testing here
+    UIImage *smallImage = [image scaleImageToSize:CGSizeMake(200,200)];
+
     self.somethingChanged = YES;
-    
-    //cells to access their image views
-    NSIndexPath *firstIndexPath = [NSIndexPath indexPathForItem:0 inSection:0];
-    AddImageCell *firstCell = (AddImageCell *)[self.imgCollectionView cellForItemAtIndexPath:firstIndexPath];
-    
-    NSIndexPath *secondIndexPath = [NSIndexPath indexPathForItem:1 inSection:0];
-    AddImageCell *secondCell = (AddImageCell *)[self.imgCollectionView cellForItemAtIndexPath:secondIndexPath];
-    
-    NSIndexPath *thirdIndexPath = [NSIndexPath indexPathForItem:2 inSection:0];
-    AddImageCell *thirdCell = (AddImageCell *)[self.imgCollectionView cellForItemAtIndexPath:thirdIndexPath];
-    
-    NSIndexPath *fourthIndexPath = [NSIndexPath indexPathForItem:3 inSection:0];
-    AddImageCell *fourthCell = (AddImageCell *)[self.imgCollectionView cellForItemAtIndexPath:fourthIndexPath];
-    
-    //unndeeded atm
-    NSIndexPath *fifthIndexPath = [NSIndexPath indexPathForItem:4 inSection:0];
-    AddImageCell *fifthCell = (AddImageCell *)[self.imgCollectionView cellForItemAtIndexPath:fifthIndexPath];
-    
-    NSIndexPath *sixthIndexPath = [NSIndexPath indexPathForItem:5 inSection:0];
-    AddImageCell *sixthCell = (AddImageCell *)[self.imgCollectionView cellForItemAtIndexPath:sixthIndexPath];
     
     if (self.multipleMode == YES) {
         //add to CV array
@@ -1240,106 +1232,160 @@
             return;
         }
         
-        if (self.photostotal == 0) {
-            //add image to first image view
-            [firstCell.itemImageView setImage:newImage];
-            
-            [firstCell.deleteButton setHidden:NO];
-            [self.secondCam setEnabled:YES];
-            [self.firstCam setEnabled:NO];
-            
-            [secondCell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-            [thirdCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [fourthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [fifthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [sixthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        }
-        else if (self.photostotal == 1){
-            [secondCell.itemImageView setImage:newImage];
-            
-            [secondCell.deleteButton setHidden:NO];
-            [self.thirdCam setEnabled:YES];
-            [self.secondCam setEnabled:NO];
-            
-            [thirdCell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-            [fourthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [fifthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [sixthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        }
-        else if (self.photostotal == 2){
-            [thirdCell.itemImageView setImage:newImage];
-            
-            [thirdCell.deleteButton setHidden:NO];
-            [self.fourthCam setEnabled:YES];
-            [self.thirdCam setEnabled:NO];
-            
-            [fourthCell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-            [fifthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [sixthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        }
-        else if (self.photostotal == 3){
-            [fourthCell.itemImageView setImage:newImage];
-            
-            [fourthCell.deleteButton setHidden:NO];
-            [self.fourthCam setEnabled:NO];
-            [self.fifthCam setEnabled:YES];
+        self.photostotal ++;
 
-            [fifthCell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-            [sixthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        }
-        else if (self.photostotal == 4){
-            NSLog(@"setting fifth");
-            [fifthCell.itemImageView setImage:newImage];
-            
-            [fifthCell.deleteButton setHidden:NO];
-            [self.fifthCam setEnabled:NO];
-            [self.sixthCam setEnabled:YES];
-            
-            [sixthCell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-        }
-        else if (self.photostotal == 5){
-            [sixthCell.itemImageView setImage:newImage];
-            
-            [sixthCell.deleteButton setHidden:NO];
-            [self.sixthCam setEnabled:NO];
-        }
-        
         //add to CV array
         PFFile *imageFile = [PFFile fileWithName:@"Image1.jpg" data:data];
-        
-        NSLog(@"image file %@", imageFile);
-        
-        NSLog(@"IMAGE BYTES (bytes):%lu",(unsigned long)[data length]);
-
+        [imageFile saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            if (succeeded) {
+                NSLog(@"saved file");
+                
+                //add in check so only runs for first image
+//                if (self.calledImgAnalyzer) { //CHANGE add ! to enable
+//                    //now call img analyzer
+//                    NSDictionary *params = @{@"imageURL": imageFile.url};
+//                    
+//                    [PFCloud callFunctionInBackground:@"analyzeImage" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//                        if (!error) {
+//                            self.calledImgAnalyzer = YES;
+//                            
+//                            NSLog(@"analyzer response %@", response);
+//                            
+//                            //set category (depending on confidence)
+//                            if([response valueForKey:@"tags"] != nil) {
+//                                
+//                                NSArray *tagArray = [NSArray arrayWithArray:[response valueForKey:@"tags"]];
+//                                
+//                                for (NSDictionary *tag in tagArray) {
+//                                    
+//                                    NSString *tagString = [tag valueForKey:@"name"];
+//                                    float confidence = [[tag valueForKey:@"confidence"]floatValue];
+//                                    
+//                                    if ([self.categories containsObject:tagString] && confidence > 0.6) {
+//                                        NSLog(@"CATEGORY: %@",tagString);
+//                                        
+//                                        if ([[tagString lowercaseString] isEqualToString:@"clothing"] || [[tagString lowercaseString] isEqualToString:@"shirt"] || [[tagString lowercaseString] isEqualToString:@"jumper"]) {
+//                                            self.chooseCategroy.text = @"Clothing";
+//                                        }
+//                                        else if([[tagString lowercaseString] isEqualToString:@"footwear"] || [[tagString lowercaseString] isEqualToString:@"shoes"]){
+//                                            self.chooseCategroy.text = @"Footwear";
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                            
+//                            //set main colour
+//                            if([response valueForKey:@"color"] != nil) {
+//                                
+//                                NSDictionary *colorDic = [response valueForKey:@"color"];
+//                                NSString *color = [colorDic valueForKey:@"dominantColorForeground"];
+//                                
+//                                if ([self.coloursArray containsObject:[color capitalizedString]]) {
+//                                    NSLog(@"got this colour: %@", [color capitalizedString]);
+//                                    
+//                                    [self.chosenColourSArray addObject:[color capitalizedString]];
+//                                    
+//                                    self.chosenColourImageView.image = nil;
+//                                    [self.chosenColourImageView setBackgroundColor:[self.colourValuesArray objectAtIndex:[self.coloursArray indexOfObject:self.chosenColourSArray[0]]]];
+//                                    
+//                                    [self.colourSwipeView reloadData];
+//                                    
+//                                    [UIView animateWithDuration:0.3
+//                                                          delay:0
+//                                                        options:UIViewAnimationOptionCurveEaseIn
+//                                                     animations:^{
+//                                                         
+//                                                         if (self.chosenColourSArray.count == 2) {
+//                                                             self.chosenColourImageView.alpha = 1.0;
+//                                                             self.secondChosenColourImageView.alpha = 1.0;
+//                                                         }
+//                                                         else{
+//                                                             self.chosenColourImageView.alpha = 1.0;
+//                                                             self.secondChosenColourImageView.alpha = 0.0;
+//                                                         }
+//                                                         
+//                                                         self.colourLabel.alpha = 1.0;
+//                                                         self.chooseColourLabel.alpha = 0.0;
+//                                                         self.colourSwipeView.alpha = 0.0;
+//                                                     }
+//                                                     completion:nil];
+//                                }
+//                                
+//                            }
+//                            
+//                            //monitor adult rating
+//                            
+//                            
+//                        }
+//                        else{
+//                            NSLog(@"analyzer error %@", error);
+//                        }
+//                    }];
+//                }
+            }
+            else{
+                NSLog(@"error saving small file %@", error);
+            }
+        }];
         
         [self.filesArray addObject:imageFile];
-        [imageFile saveInBackground]; //speeds up save
+        [self.imagesArray addObject:smallImage];
         
-        self.photostotal ++;
+        //reload table view then after that scroll to the most recent image
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.imgCollectionView.alpha = 0.0;
+                         }
+                         completion:^(BOOL finished) {
+                             [self.imgCollectionView reloadData];
+                             [UIView animateWithDuration:0.3
+                                                   delay:0
+                                                 options:UIViewAnimationOptionCurveEaseIn
+                                              animations:^{
+                                                  self.imgCollectionView.alpha = 1.0;
+                                              }
+                                              completion:^(BOOL finished) {
+                                                  self.imgCollectionView.alpha = 1.0;
+                                                  
+                                                  NSIndexPath *lastItem = [NSIndexPath indexPathForRow:[self.imgCollectionView numberOfItemsInSection:0]-1 inSection:0];
+                                                  
+                                                  [self.imgCollectionView scrollToItemAtIndexPath:lastItem atScrollPosition:UICollectionViewScrollPositionRight animated:YES];
+
+                                              }];
+                         }];
         
+//        NSLog(@"image file %@", imageFile);
+//        NSLog(@"IMAGE BYTES (bytes):%lu",(unsigned long)[data length]);
+        [self.imagesToProcess removeObjectAtIndex:0];
+
         if (self.imagesToProcess.count > 0) {
-//            if (self.photostotal == 4) {
-//                NSLog(@"scroll");
-//                [self.imgCollectionView scrollToItemAtIndexPath:sixthIndexPath atScrollPosition:UICollectionViewScrollPositionLeft animated:YES];
-//            }
-            [self.imagesToProcess removeObjectAtIndex:0];
-            
+        
             //call process again
             [self processMultiple];
         }
+        else{
+            if (self.photostotal >= 2) {
+                self.imgFooterLabel.text = @"Pro tip: Hold down on images to rearrange";
+                [self.imgFooterView setNeedsDisplay];
+            }
+            else{
+                self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+                [self.imgFooterView setNeedsDisplay];
+            }
+        }
     }
     else{
-        //add to CV array
-        NSLog(@"FINAL IMAGING");
-        
+        //when user takes a photo they end up in here
         NSData *data = UIImageJPEGRepresentation(newImage, 0.8);
-        
         
         if (data == nil) {
             [Answers logCustomEventWithName:@"PFFile Nil Data"
                            customAttributes:@{
-                                              @"pageName":@"CreateVC",
-                                              @"photosTotal": [NSNumber numberWithInt:self.photostotal]
+                                              @"pageName":@"CreateForSale",
+                                              @"photosTotal": [NSNumber numberWithInt:self.photostotal],
+                                              @"tookPic": @"Yup"
                                               }];
             
             //prevent crash when creating a PFFile with nil data
@@ -1350,75 +1396,65 @@
             return;
         }
         
-        if (self.camButtonTapped == 1) {
-            //add image to first image view
-            [firstCell.itemImageView setImage:newImage];
-            
-            [firstCell.deleteButton setHidden:NO];
-            [self.secondCam setEnabled:YES];
-            [self.firstCam setEnabled:NO];
-            
-            [secondCell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-            [thirdCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [fourthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [fifthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [sixthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        }
-        else if (self.camButtonTapped == 2){
-            [secondCell.itemImageView setImage:newImage];
-            
-            [secondCell.deleteButton setHidden:NO];
-            [self.thirdCam setEnabled:YES];
-            [self.secondCam setEnabled:NO];
-            
-            [thirdCell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-            [fourthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [fifthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [sixthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        }
-        else if (self.camButtonTapped == 3){
-            [thirdCell.itemImageView setImage:newImage];
-            
-            [thirdCell.deleteButton setHidden:NO];
-            [self.fourthCam setEnabled:YES];
-            [self.thirdCam setEnabled:NO];
-            
-            [fourthCell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-            [fifthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            [sixthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        }
-        else if (self.camButtonTapped == 4){
-            [fourthCell.itemImageView setImage:newImage];
-            
-            [fourthCell.deleteButton setHidden:NO];
-            [self.fourthCam setEnabled:NO];
-            [self.fifthCam setEnabled:YES];
-            
-            [fifthCell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-            [sixthCell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-        }
-        else if (self.camButtonTapped == 5){
-            [fifthCell.itemImageView setImage:newImage];
-            
-            [fifthCell.deleteButton setHidden:NO];
-            [self.fifthCam setEnabled:NO];
-            [self.sixthCam setEnabled:YES];
-            
-            [sixthCell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-        }
-        else if (self.camButtonTapped == 6){
-            [sixthCell.itemImageView setImage:newImage];
-            
-            [sixthCell.deleteButton setHidden:NO];
-            [self.sixthCam setEnabled:NO];
-        }
-        
-        PFFile *imageFile = [PFFile fileWithName:@"Image1.jpg" data:data];
-        [self.filesArray addObject:imageFile];
-        [imageFile saveInBackground]; //speeds up save
-
         self.photostotal ++;
+        
+        //add to CV array
+        PFFile *imageFile = [PFFile fileWithName:@"Image1.jpg" data:data];
+        [imageFile saveInBackground]; //speeds up final save
+        
+        [self.filesArray addObject:imageFile];
+        [self.imagesArray addObject:smallImage];
+        
+        //reload table view then after that scroll to the most recent image
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.imgCollectionView.alpha = 0.0;
+                         }
+                         completion:^(BOOL finished) {
+                             [self.imgCollectionView reloadData];
+                             [UIView animateWithDuration:0.3
+                                                   delay:0
+                                                 options:UIViewAnimationOptionCurveEaseIn
+                                              animations:^{
+                                                  self.imgCollectionView.alpha = 1.0;
+                                              }
+                                              completion:^(BOOL finished) {
+                                                  self.imgCollectionView.alpha = 1.0;
+                                                  
+                                                  NSIndexPath *lastItem = [NSIndexPath indexPathForRow:[self.imgCollectionView numberOfItemsInSection:0]-1 inSection:0];
+                                                  
+                                                  [self.imgCollectionView scrollToItemAtIndexPath:lastItem atScrollPosition:UICollectionViewScrollPositionRight animated:YES];
+                                              }];
+                         }];
+        
+        if (self.photostotal >= 2) {
+            self.imgFooterLabel.text = @"Pro tip: Hold down on images to rearrange";
+            [self.imgFooterView setNeedsDisplay];
+        }
+        else{
+            self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+            [self.imgFooterView setNeedsDisplay];
+        }
     }
+}
+
+- (void)quantityAddDoneButton {
+    UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
+    [keyboardToolbar sizeToFit];
+    UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                      target:nil action:nil];
+    UIBarButtonItem *doneBarButton = [[UIBarButtonItem alloc]
+                                      initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                      target:self.view action:@selector(endEditing:)];
+    
+    [doneBarButton setTintColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
+    keyboardToolbar.barTintColor = [UIColor colorWithRed:1.00 green:1.00 blue:1.00 alpha:1.0];
+    
+    keyboardToolbar.items = @[flexBarButton, doneBarButton];
+    self.quantityField.inputAccessoryView = keyboardToolbar;
 }
 
 - (void)saleaddDoneButton {
@@ -1497,7 +1533,7 @@
     self.multipleSizeArray = @[];
     
     if ([self.selection isEqualToString:@"category"]){
-        if ([selectionString isEqualToString:@"Accessories"]) {
+        if ([selectionString isEqualToString:@"Accessories"] || [selectionString isEqualToString:@"Proxy"]) {
             self.chooseSize.text = @"";
         }
         else{
@@ -1583,6 +1619,11 @@
             NSLog(@"no array, been an error");
         }
     }
+    
+    //only change the quantity if it hasn't been entered already
+    if ((self.multipleSizeArray.count > 0 && [self.quantityField.text isEqualToString:@""]) || [self.quantityField.text intValue] < self.multipleSizeArray.count) {
+        self.quantityField.text = [NSString stringWithFormat:@"%lu", (unsigned long)self.multipleSizeArray.count];
+    }
 }
 
 - (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
@@ -1616,24 +1657,32 @@
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
     
     if (section == 1) {
-        UIView *containerView = [[UIView alloc]initWithFrame:CGRectMake(10, 0, self.view.frame.size.width-20, 32)];
-        containerView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
-//        containerView.backgroundColor = [UIColor redColor];
+        if (!self.imgFooterView) {
+            self.imgFooterView = [[UIView alloc]initWithFrame:CGRectMake(10, 0, self.view.frame.size.width-20, 32)];
+            self.imgFooterView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+            
+            self.imgFooterLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0,self.imgFooterView.frame.size.width, 32)];
+            self.imgFooterLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
+            self.imgFooterLabel.textColor = [UIColor lightGrayColor];
+            
+            if (self.photostotal >= 2) {
+                self.imgFooterLabel.text = @"Pro tip: Hold down on images to rearrange";
+            }
+            else{
+                self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+            }
+            
+            self.imgFooterLabel.numberOfLines = 1;
+            self.imgFooterLabel.textAlignment = NSTextAlignmentCenter;
+            self.imgFooterLabel.lineBreakMode = NSLineBreakByWordWrapping;
+            self.imgFooterLabel.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+            [self.imgFooterView addSubview:self.imgFooterLabel];
+            
+            self.imgFooterLabel.center = self.imgFooterView.center;
+        }
 
-        UILabel *lblSectionName = [[UILabel alloc] initWithFrame:CGRectMake(0, 0,containerView.frame.size.width, 32)];
-        lblSectionName.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
-        lblSectionName.textColor = [UIColor lightGrayColor];
-        lblSectionName.text = @"Minimum 2 photos";
-        lblSectionName.numberOfLines = 1;
-        lblSectionName.textAlignment = NSTextAlignmentCenter;
-        lblSectionName.lineBreakMode = NSLineBreakByWordWrapping;
-        lblSectionName.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
-        [lblSectionName sizeToFit];
-        [containerView addSubview:lblSectionName];
         
-        lblSectionName.center = containerView.center;
-        
-        return containerView;
+        return self.imgFooterView;
     }
     return nil;
 }
@@ -1671,26 +1720,30 @@
         return containerView;
     }
     else if (section == 4){
-        UIView *containerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 32)];
-        containerView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
         
-        if (!self.dismissColourButton) {
-//            NSLog(@"dismiss colour button");
-            self.dismissColourButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0,containerView.frame.size.width, 32)];
-            [self.dismissColourButton addTarget:self action:@selector(dismissColour) forControlEvents:UIControlEventTouchUpInside];
-            self.dismissColourButton.alpha = 0.0;
-
-            self.dismissColourButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
+        if (!self.colourContainerView) {
+            self.colourContainerView = [[UIView alloc]initWithFrame:CGRectMake(10, 0, self.view.frame.size.width-20, 32)];
+            self.colourContainerView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
             
-            [self.dismissColourButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
-
-            [self.dismissColourButton setTitle:@"Dismiss" forState:UIControlStateNormal];
-            self.dismissColourButton.titleLabel.numberOfLines = 1;
-            self.dismissColourButton.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
-            [containerView addSubview:self.dismissColourButton];
-            self.dismissColourButton.center = containerView.center;
+            if (!self.dismissColourButton) {
+                //            NSLog(@"dismiss colour button");
+                self.dismissColourButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0,self.colourContainerView.frame.size.width, 32)];
+                [self.dismissColourButton addTarget:self action:@selector(dismissColour) forControlEvents:UIControlEventTouchUpInside];
+                self.dismissColourButton.alpha = 0.0;
+                
+                self.dismissColourButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
+                
+                [self.dismissColourButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+                
+                [self.dismissColourButton setTitle:@"Dismiss" forState:UIControlStateNormal];
+                self.dismissColourButton.titleLabel.numberOfLines = 1;
+                self.dismissColourButton.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+                [self.colourContainerView addSubview:self.dismissColourButton];
+                self.dismissColourButton.center = self.colourContainerView.center;
+            }
         }
-        return containerView;
+
+        return self.colourContainerView;
     }
     return nil;
 }
@@ -1752,6 +1805,20 @@
         [self alertSheet];
     }
 }
+- (void)seventhCamPressed{
+    if (self.sevenCam.enabled == YES) {
+        //show action sheet for either picker, library or web (eventually)
+        self.camButtonTapped = 7;
+        [self alertSheet];
+    }
+}
+- (void)eightCamPressed{
+    if (self.eightCam.enabled == YES) {
+        //show action sheet for either picker, library or web (eventually)
+        self.camButtonTapped = 8;
+        [self alertSheet];
+    }
+}
 
 - (void)savePressed{
     if (self.editMode == YES && self.somethingChanged != YES) {
@@ -1773,13 +1840,13 @@
         [self showAlertWithTitle:@"2 Photos Needed 📸" andMsg:@"To help fight scammers and strengthen the community please add at least 2 tagged photos to your listing"];
         [self.longButton setEnabled:YES];
     }
-    else if([self.chooseCategroy.text isEqualToString:@"Accessories"] && ([self.chooseCondition.text isEqualToString:@"Select"] || [self.descriptionField.text isEqualToString:@"Pro tip: a better description leads to more interest on your item!"] || (self.photostotal < 2 && self.ignore2Pics != YES) || (self.photostotal == 0 && self.ignore2Pics == YES) || [titleCheck isEqualToString:@""] || [self.payField.text isEqualToString:@""] || [priceCheck isEqualToString:@"0.00"])){
+    else if(([self.chooseCategroy.text isEqualToString:@"Accessories"] || [self.chooseCategroy.text isEqualToString:@"Proxy"]) && ([self.chooseCondition.text isEqualToString:@"Select"] || [self.descriptionField.text isEqualToString:@"Describe the item's style, sizing, and any possible flaws"] || (self.photostotal < 2 && self.ignore2Pics != YES) || (self.photostotal == 0 && self.ignore2Pics == YES) || [titleCheck isEqualToString:@""] || [self.payField.text isEqualToString:@""] || [priceCheck isEqualToString:@"0.00"])){
 //        NSLog(@"accessories selected but haven't filled everything else in");
         
         [self showAlertWithTitle:@"Empty Fields" andMsg:@"Make sure you've added the item title, condition, description, price and 2 tagged photos!"];
         [self.longButton setEnabled:YES];
     }
-    else if ([self.chooseCategroy.text isEqualToString:@"Select"] || [self.chooseCondition.text isEqualToString:@"Select"] || [self.chooseSize.text isEqualToString:@"Select"] || [self.descriptionField.text isEqualToString:@"Pro tip: a better description leads to more interest on your item!"]|| [descriptionCheck isEqualToString:@""] || (self.photostotal < 2 && self.ignore2Pics != YES) || (self.photostotal == 0 && self.ignore2Pics == YES) || [titleCheck isEqualToString:@""] || [self.payField.text isEqualToString:@""] || [priceCheck isEqualToString:@"0.00"]) {
+    else if ([self.chooseCategroy.text isEqualToString:@"Select"] || [self.chooseCondition.text isEqualToString:@"Select"] || [self.chooseSize.text isEqualToString:@"Select"] || [self.descriptionField.text isEqualToString:@"Describe the item's style, sizing, and any possible flaws"]|| [descriptionCheck isEqualToString:@""] || (self.photostotal < 2 && self.ignore2Pics != YES) || (self.photostotal == 0 && self.ignore2Pics == YES) || [titleCheck isEqualToString:@""] || [self.payField.text isEqualToString:@""] || [priceCheck isEqualToString:@"0.00"]) {
         
         [self showAlertWithTitle:@"Empty Fields" andMsg:@"Make sure you've added the item title, condition, description, price and 2 tagged photos!"];
         [self.longButton setEnabled:YES];
@@ -1790,6 +1857,15 @@
         [self.longButton setEnabled:YES];
     }
     else{
+
+//        //trigger header in home tab
+//        [[NSNotificationCenter defaultCenter] postNotificationName:@"hitListItem" object:imageOne];
+//        
+//        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+//        appDelegate.tabBarController.selectedIndex = 0;
+//        
+//        [self dismissViewControllerAnimated:YES completion:nil];
+        
         [self showHUD];
         NSLog(@"good to save");
         
@@ -1819,10 +1895,16 @@
             
             if ([self.currency isEqualToString:@"GBP"]) {
                 forSaleItem[@"salePriceGBP"] = @(strFloat);
+                
                 float USD = strFloat*1.30;
                 forSaleItem[@"salePriceUSD"] = @(USD);
+                
                 float EUR = strFloat*1.11;
                 forSaleItem[@"salePriceEUR"] = @(EUR);
+                
+                float AUD = strFloat*1.62;
+                forSaleItem[@"salePriceAUD"] = @(AUD);
+                
             }
             else if ([self.currency isEqualToString:@"USD"]) {
                 forSaleItem[@"salePriceUSD"] = @(strFloat);
@@ -1830,6 +1912,9 @@
                 forSaleItem[@"salePriceGBP"] = @(GBP);
                 float EUR = strFloat*0.85;
                 forSaleItem[@"salePriceEUR"] = @(EUR);
+                
+                float AUD = strFloat*1.25;
+                forSaleItem[@"salePriceAUD"] = @(AUD);
             }
             else if ([self.currency isEqualToString:@"EUR"]) {
                 forSaleItem[@"salePriceEUR"] = @(strFloat);
@@ -1837,6 +1922,19 @@
                 forSaleItem[@"salePriceGBP"] = @(GBP);
                 float USD = strFloat*1.17;
                 forSaleItem[@"salePriceUSD"] = @(USD);
+                
+                float AUD = strFloat*1.49;
+                forSaleItem[@"salePriceAUD"] = @(AUD);
+            }
+            else if ([self.currency isEqualToString:@"AUD"]) {
+                float EUR = strFloat*0.67;
+                forSaleItem[@"salePriceEUR"] = @(EUR);
+                float GBP = strFloat*0.62;
+                forSaleItem[@"salePriceGBP"] = @(GBP);
+                float USD = strFloat*0.80;
+                forSaleItem[@"salePriceUSD"] = @(USD);
+                
+                forSaleItem[@"salePriceAUD"] = @(strFloat);
             }
             
             [Answers logCustomEventWithName:@"Created Sale Listing with Price"
@@ -1967,10 +2065,7 @@
         }
         
         //save a smaller thumbnail image from first cell's image
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-        AddImageCell *firstCell = (AddImageCell *)[self.imgCollectionView cellForItemAtIndexPath:indexPath];
-        
-        UIImage *imageOne = [firstCell.itemImageView.image scaleImageToSize:CGSizeMake(200, 200)];
+        UIImage *imageOne = [self.imagesArray[0] scaleImageToSize:CGSizeMake(200, 200)];
         NSData* dataOne = UIImageJPEGRepresentation(imageOne, 0.8f);
         
         if (dataOne == nil) {
@@ -1996,14 +2091,16 @@
         if (self.photostotal == 1) {
             
             PFFile *imageFile1 = self.filesArray[0];
-            [forSaleItem setObject:imageFile1 forKey:@"image1"]; //biggest time sink
+            [forSaleItem setObject:imageFile1 forKey:@"image1"];
             
             if (self.editMode == YES) {
                 [forSaleItem removeObjectForKey:@"image2"];
                 [forSaleItem removeObjectForKey:@"image3"];
                 [forSaleItem removeObjectForKey:@"image4"];
-//                [forSaleItem removeObjectForKey:@"image5"];
-//                [forSaleItem removeObjectForKey:@"image6"];
+                [forSaleItem removeObjectForKey:@"image5"];
+                [forSaleItem removeObjectForKey:@"image6"];
+                [forSaleItem removeObjectForKey:@"image7"];
+                [forSaleItem removeObjectForKey:@"image8"];
             }
         }
         else if (self.photostotal == 2){
@@ -2017,8 +2114,10 @@
             if (self.editMode == YES) {
                 [forSaleItem removeObjectForKey:@"image3"];
                 [forSaleItem removeObjectForKey:@"image4"];
-//                [forSaleItem removeObjectForKey:@"image5"];
-//                [forSaleItem removeObjectForKey:@"image6"];
+                [forSaleItem removeObjectForKey:@"image5"];
+                [forSaleItem removeObjectForKey:@"image6"];
+                [forSaleItem removeObjectForKey:@"image7"];
+                [forSaleItem removeObjectForKey:@"image8"];
             }
         }
         else if (self.photostotal == 3){
@@ -2034,8 +2133,10 @@
             
             if (self.editMode == YES) {
                 [forSaleItem removeObjectForKey:@"image4"];
-//                [forSaleItem removeObjectForKey:@"image5"];
-//                [forSaleItem removeObjectForKey:@"image6"];
+                [forSaleItem removeObjectForKey:@"image5"];
+                [forSaleItem removeObjectForKey:@"image6"];
+                [forSaleItem removeObjectForKey:@"image7"];
+                [forSaleItem removeObjectForKey:@"image8"];
             }
         }
         else if (self.photostotal == 4){
@@ -2052,55 +2153,126 @@
             PFFile *imageFile4 = self.filesArray[3];
             [forSaleItem setObject:imageFile4 forKey:@"image4"];
             
-//            if (self.editMode == YES) {
-//                [forSaleItem removeObjectForKey:@"image5"];
-//                [forSaleItem removeObjectForKey:@"image6"];
-//            }
+            if (self.editMode == YES) {
+                [forSaleItem removeObjectForKey:@"image5"];
+                [forSaleItem removeObjectForKey:@"image6"];
+                [forSaleItem removeObjectForKey:@"image7"];
+                [forSaleItem removeObjectForKey:@"image8"];
+            }
         }
-//        else if (self.photostotal == 5){
-//            
-//            PFFile *imageFile1 = self.filesArray[0];
-//            [forSaleItem setObject:imageFile1 forKey:@"image1"];
-//            
-//            PFFile *imageFile2 = self.filesArray[1];
-//            [forSaleItem setObject:imageFile2 forKey:@"image2"];
-//            
-//            PFFile *imageFile3 = self.filesArray[2];
-//            [forSaleItem setObject:imageFile3 forKey:@"image3"];
-//            
-//            PFFile *imageFile4 = self.filesArray[3];
-//            [forSaleItem setObject:imageFile4 forKey:@"image4"];
-//            
-//            PFFile *imageFile5 = self.filesArray[4];
-//            [forSaleItem setObject:imageFile5 forKey:@"image5"];
-//            
-//            if (self.editMode == YES) {
-//                [forSaleItem removeObjectForKey:@"image6"];
-//            }
-//        }
-//        else if (self.photostotal == 6){
-//            
-//            PFFile *imageFile1 = self.filesArray[0];
-//            [forSaleItem setObject:imageFile1 forKey:@"image1"];
-//            
-//            PFFile *imageFile2 = self.filesArray[1];
-//            [forSaleItem setObject:imageFile2 forKey:@"image2"];
-//            
-//            PFFile *imageFile3 = self.filesArray[2];
-//            [forSaleItem setObject:imageFile3 forKey:@"image3"];
-//            
-//            PFFile *imageFile4 = self.filesArray[3];
-//            [forSaleItem setObject:imageFile4 forKey:@"image4"];
-//            
-//            PFFile *imageFile5 = self.filesArray[4];
-//            [forSaleItem setObject:imageFile5 forKey:@"image5"];
-//            
-//            PFFile *imageFile6 = self.filesArray[5];
-//            [forSaleItem setObject:imageFile6 forKey:@"image6"];
-//        }
+        else if (self.photostotal == 5){
+            
+            PFFile *imageFile1 = self.filesArray[0];
+            [forSaleItem setObject:imageFile1 forKey:@"image1"];
+            
+            PFFile *imageFile2 = self.filesArray[1];
+            [forSaleItem setObject:imageFile2 forKey:@"image2"];
+            
+            PFFile *imageFile3 = self.filesArray[2];
+            [forSaleItem setObject:imageFile3 forKey:@"image3"];
+            
+            PFFile *imageFile4 = self.filesArray[3];
+            [forSaleItem setObject:imageFile4 forKey:@"image4"];
+            
+            PFFile *imageFile5 = self.filesArray[4];
+            [forSaleItem setObject:imageFile5 forKey:@"image5"];
+            
+            if (self.editMode == YES) {
+                [forSaleItem removeObjectForKey:@"image6"];
+                [forSaleItem removeObjectForKey:@"image7"];
+                [forSaleItem removeObjectForKey:@"image8"];
+            }
+        }
+        else if (self.photostotal == 6){
+            
+            PFFile *imageFile1 = self.filesArray[0];
+            [forSaleItem setObject:imageFile1 forKey:@"image1"];
+            
+            PFFile *imageFile2 = self.filesArray[1];
+            [forSaleItem setObject:imageFile2 forKey:@"image2"];
+            
+            PFFile *imageFile3 = self.filesArray[2];
+            [forSaleItem setObject:imageFile3 forKey:@"image3"];
+            
+            PFFile *imageFile4 = self.filesArray[3];
+            [forSaleItem setObject:imageFile4 forKey:@"image4"];
+            
+            PFFile *imageFile5 = self.filesArray[4];
+            [forSaleItem setObject:imageFile5 forKey:@"image5"];
+            
+            PFFile *imageFile6 = self.filesArray[5];
+            [forSaleItem setObject:imageFile6 forKey:@"image6"];
+            
+            if (self.editMode == YES) {
+                [forSaleItem removeObjectForKey:@"image7"];
+                [forSaleItem removeObjectForKey:@"image8"];
+            }
+        }
+        else if (self.photostotal == 7){
+            
+            PFFile *imageFile1 = self.filesArray[0];
+            [forSaleItem setObject:imageFile1 forKey:@"image1"];
+            
+            PFFile *imageFile2 = self.filesArray[1];
+            [forSaleItem setObject:imageFile2 forKey:@"image2"];
+            
+            PFFile *imageFile3 = self.filesArray[2];
+            [forSaleItem setObject:imageFile3 forKey:@"image3"];
+            
+            PFFile *imageFile4 = self.filesArray[3];
+            [forSaleItem setObject:imageFile4 forKey:@"image4"];
+            
+            PFFile *imageFile5 = self.filesArray[4];
+            [forSaleItem setObject:imageFile5 forKey:@"image5"];
+            
+            PFFile *imageFile6 = self.filesArray[5];
+            [forSaleItem setObject:imageFile6 forKey:@"image6"];
+            
+            PFFile *imageFile7 = self.filesArray[6];
+            [forSaleItem setObject:imageFile7 forKey:@"image7"];
+            
+            if (self.editMode == YES) {
+                [forSaleItem removeObjectForKey:@"image8"];
+            }
+        }
+        
+        else if (self.photostotal == 8){
+            
+            PFFile *imageFile1 = self.filesArray[0];
+            [forSaleItem setObject:imageFile1 forKey:@"image1"];
+            
+            PFFile *imageFile2 = self.filesArray[1];
+            [forSaleItem setObject:imageFile2 forKey:@"image2"];
+            
+            PFFile *imageFile3 = self.filesArray[2];
+            [forSaleItem setObject:imageFile3 forKey:@"image3"];
+            
+            PFFile *imageFile4 = self.filesArray[3];
+            [forSaleItem setObject:imageFile4 forKey:@"image4"];
+            
+            PFFile *imageFile5 = self.filesArray[4];
+            [forSaleItem setObject:imageFile5 forKey:@"image5"];
+            
+            PFFile *imageFile6 = self.filesArray[5];
+            [forSaleItem setObject:imageFile6 forKey:@"image6"];
+            
+            PFFile *imageFile7 = self.filesArray[6];
+            [forSaleItem setObject:imageFile7 forKey:@"image7"];
+            
+            PFFile *imageFile8 = self.filesArray[7];
+            [forSaleItem setObject:imageFile8 forKey:@"image8"];
+        }
         
         [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];
-
+        
+        int quantInt = 1;
+        
+        if (![self.quantityField.text isEqualToString:@""]) {
+            quantInt = (int)[self.quantityField.text intValue];
+        }
+        
+        [forSaleItem setObject:@(quantInt) forKey:@"quantity"];
+        
         [forSaleItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
                 NSLog(@"saved listing");
@@ -2159,8 +2331,10 @@
                         [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
                     }
                     
-                    [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
-                    [[PFUser currentUser] saveInBackground];
+                    if (!self.editMode) {
+                        [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
+                        [[PFUser currentUser] saveInBackground];
+                    }
                 }
                 
                 [self.longButton setEnabled:YES];
@@ -2178,7 +2352,7 @@
                         PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
                         [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
                         [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
-                        [bumpedQuery whereKey:@"status" notEqualTo:@"ignore"];
+                        [bumpedQuery whereKey:@"status" equalTo:@"live"]; //SET make sure update all bump objects (using dash) to have a live property so not using not equal to
                         [bumpedQuery whereKeyExists:@"user"];
                         [bumpedQuery includeKey:@"user"];
                         bumpedQuery.limit = 10;
@@ -2271,8 +2445,397 @@
     [self hideBarButton];
 }
 
+-(void)finishLoadingImages{
+    
+    //order the images array
+    if (self.photostotal == 1) {
+        [self.imagesArray addObject:self.firstImage];
+        [self.filesArray addObject:[self.listing objectForKey:@"image1"]];
+        
+    }
+    else if (self.photostotal == 2){
+        [self.imagesArray addObject:self.firstImage];
+        [self.imagesArray addObject:self.secondImage];
+        
+        [self.filesArray addObject:[self.listing objectForKey:@"image1"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image2"]];
+
+        
+    }
+    else if (self.photostotal == 3){
+        [self.imagesArray addObject:self.firstImage];
+        [self.imagesArray addObject:self.secondImage];
+        [self.imagesArray addObject:self.thirdImage];
+        
+        [self.filesArray addObject:[self.listing objectForKey:@"image1"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image2"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image3"]];
+        
+    }
+    else if (self.photostotal == 4){
+        [self.imagesArray addObject:self.firstImage];
+        [self.imagesArray addObject:self.secondImage];
+        [self.imagesArray addObject:self.thirdImage];
+        [self.imagesArray addObject:self.fourthImage];
+        
+        [self.filesArray addObject:[self.listing objectForKey:@"image1"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image2"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image3"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image4"]];
+
+    }
+    else if (self.photostotal == 5){
+        [self.imagesArray addObject:self.firstImage];
+        [self.imagesArray addObject:self.secondImage];
+        [self.imagesArray addObject:self.thirdImage];
+        [self.imagesArray addObject:self.fourthImage];
+        [self.imagesArray addObject:self.fifthImage];
+        
+        [self.filesArray addObject:[self.listing objectForKey:@"image1"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image2"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image3"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image4"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image5"]];
+
+
+    }
+    else if (self.photostotal == 6){
+        [self.imagesArray addObject:self.firstImage];
+        [self.imagesArray addObject:self.secondImage];
+        [self.imagesArray addObject:self.thirdImage];
+        [self.imagesArray addObject:self.fourthImage];
+        [self.imagesArray addObject:self.fifthImage];
+        [self.imagesArray addObject:self.sixthImage];
+        
+        [self.filesArray addObject:[self.listing objectForKey:@"image1"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image2"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image3"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image4"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image5"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image6"]];
+
+
+    }
+    else if (self.photostotal == 7){
+        [self.imagesArray addObject:self.firstImage];
+        [self.imagesArray addObject:self.secondImage];
+        [self.imagesArray addObject:self.thirdImage];
+        [self.imagesArray addObject:self.fourthImage];
+        [self.imagesArray addObject:self.fifthImage];
+        [self.imagesArray addObject:self.sixthImage];
+        [self.imagesArray addObject:self.seventhImage];
+        
+        [self.filesArray addObject:[self.listing objectForKey:@"image1"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image2"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image3"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image4"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image5"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image6"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image7"]];
+
+        
+    }
+    else if (self.photostotal == 8){
+        [self.imagesArray addObject:self.firstImage];
+        [self.imagesArray addObject:self.secondImage];
+        [self.imagesArray addObject:self.thirdImage];
+        [self.imagesArray addObject:self.fourthImage];
+        [self.imagesArray addObject:self.fifthImage];
+        [self.imagesArray addObject:self.sixthImage];
+        [self.imagesArray addObject:self.seventhImage];
+        [self.imagesArray addObject:self.eighthImage];
+        
+        [self.filesArray addObject:[self.listing objectForKey:@"image1"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image2"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image3"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image4"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image5"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image6"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image7"]];
+        [self.filesArray addObject:[self.listing objectForKey:@"image8"]];
+
+    }
+    [self hidHUD];
+
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.imgCollectionView.alpha = 0.0;
+                     }
+                     completion:^(BOOL finished) {
+                         [self.imgCollectionView reloadData];
+                         [UIView animateWithDuration:0.3
+                                               delay:0
+                                             options:UIViewAnimationOptionCurveEaseIn
+                                          animations:^{
+                                              self.imgCollectionView.alpha = 1.0;
+                                          }
+                                          completion:^(BOOL finished) {
+                                              self.imgCollectionView.alpha = 1.0;
+                                              
+                                              NSIndexPath *lastItem = [NSIndexPath indexPathForRow:[self.imgCollectionView numberOfItemsInSection:0]-1 inSection:0];
+                                              
+                                              [self.imgCollectionView scrollToItemAtIndexPath:lastItem atScrollPosition:UICollectionViewScrollPositionRight animated:YES];
+                                          }];
+                     }];
+}
+
 -(void)saleListingSetup{
     self.navigationItem.title = @"E D I T";
+    [self showHUD];
+    
+    //images
+    if ([self.listing objectForKey:@"image8"]) {
+        
+        self.photostotal = 8;
+        
+        PFFile *imageFile = [self.listing objectForKey:@"image8"];
+        [imageFile getDataInBackgroundWithBlock:^(NSData * _Nullable data, NSError * _Nullable error) {
+            if (data) {
+                self.runningPhotosTotal++;
+                
+                UIImage *image = [UIImage imageWithData:data];
+                self.eighthImage = image;
+                
+                NSLog(@"got data 8 %@", self.eighthImage);
+                
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+            else{
+                //error getting the data so
+                self.runningPhotosTotal++;
+                self.eighthImage = [UIImage imageNamed:@"camHolder"];
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+        }];
+    }
+    
+    if ([self.listing objectForKey:@"image7"]) {
+        
+        if (self.photostotal == 0) {
+            self.photostotal = 7;
+        }
+        PFFile *imageFile = [self.listing objectForKey:@"image7"];
+        [imageFile getDataInBackgroundWithBlock:^(NSData * _Nullable data, NSError * _Nullable error) {
+            if (data) {
+                self.runningPhotosTotal++;
+                
+                UIImage *image = [UIImage imageWithData:data];
+                self.seventhImage = image;
+                
+                NSLog(@"got data 7 %@", self.seventhImage);
+                
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+            else{
+                //error getting the data so
+                self.runningPhotosTotal++;
+                self.seventhImage = [UIImage imageNamed:@"camHolder"];
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+        }];
+    }
+    
+    if ([self.listing objectForKey:@"image6"]) {
+        
+        if (self.photostotal == 0) {
+            self.photostotal = 6;
+        }
+        PFFile *imageFile = [self.listing objectForKey:@"image6"];
+        [imageFile getDataInBackgroundWithBlock:^(NSData * _Nullable data, NSError * _Nullable error) {
+            if (data) {
+                self.runningPhotosTotal++;
+                
+                UIImage *image = [UIImage imageWithData:data];
+                self.sixthImage = image;
+                
+                NSLog(@"got data 6 %@", self.sixthImage);
+                
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+            else{
+                //error getting the data so
+                self.runningPhotosTotal++;
+                self.sixthImage = [UIImage imageNamed:@"camHolder"];
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+        }];
+    }
+    
+    if ([self.listing objectForKey:@"image5"]) {
+        
+        if (self.photostotal == 0) {
+            self.photostotal = 5;
+        }
+        PFFile *imageFile = [self.listing objectForKey:@"image5"];
+        [imageFile getDataInBackgroundWithBlock:^(NSData * _Nullable data, NSError * _Nullable error) {
+            if (data) {
+                self.runningPhotosTotal++;
+                
+                UIImage *image = [UIImage imageWithData:data];
+                self.fifthImage = image;
+                
+                NSLog(@"got data 5 %@", self.fifthImage);
+                
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+            else{
+                //error getting the data so
+                self.runningPhotosTotal++;
+                self.fifthImage = [UIImage imageNamed:@"camHolder"];
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+        }];
+    }
+    
+    if ([self.listing objectForKey:@"image4"]) {
+        
+        if (self.photostotal == 0) {
+            self.photostotal = 4;
+        }
+        PFFile *imageFile = [self.listing objectForKey:@"image4"];
+        [imageFile getDataInBackgroundWithBlock:^(NSData * _Nullable data, NSError * _Nullable error) {
+            if (data) {
+                self.runningPhotosTotal++;
+                
+                UIImage *image = [UIImage imageWithData:data];
+                self.fourthImage = image;
+                
+                NSLog(@"got data 4 %@", self.fourthImage);
+                
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+            else{
+                //error getting the data so
+                self.runningPhotosTotal++;
+                self.fourthImage = [UIImage imageNamed:@"camHolder"];
+
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+        }];
+    }
+    
+    if ([self.listing objectForKey:@"image3"]) {
+        
+        if (self.photostotal == 0) {
+            self.photostotal = 3;
+        }
+        
+        PFFile *imageFile = [self.listing objectForKey:@"image3"];
+        [imageFile getDataInBackgroundWithBlock:^(NSData * _Nullable data, NSError * _Nullable error) {
+            if (data) {
+                self.runningPhotosTotal++;
+                
+                UIImage *image = [UIImage imageWithData:data];
+                self.thirdImage = image;
+                
+                NSLog(@"got data 3 %@", self.thirdImage);
+
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+            else{
+                self.runningPhotosTotal++;
+                self.thirdImage = [UIImage imageNamed:@"camHolder"];
+
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+        }];
+    }
+    
+    if ([self.listing objectForKey:@"image2"]) {
+        
+        if (self.photostotal == 0) {
+            self.photostotal = 2;
+        }
+        PFFile *imageFile = [self.listing objectForKey:@"image2"];
+        [imageFile getDataInBackgroundWithBlock:^(NSData * _Nullable data, NSError * _Nullable error) {
+            if (data) {
+                self.runningPhotosTotal++;
+                
+                UIImage *image = [UIImage imageWithData:data];
+                self.secondImage = image;
+                
+                NSLog(@"got data 2 %@", self.secondImage);
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+            else{
+                self.runningPhotosTotal++;
+                self.secondImage = [UIImage imageNamed:@"camHolder"];
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+        }];
+    }
+    
+    if ([self.listing objectForKey:@"image1"]) {
+        if (self.photostotal == 0) {
+            self.photostotal = 1;
+        }
+        
+        PFFile *imageFile = [self.listing objectForKey:@"image1"];
+        [imageFile getDataInBackgroundWithBlock:^(NSData * _Nullable data, NSError * _Nullable error) {
+            if (data) {
+                self.runningPhotosTotal++;
+                UIImage *image = [UIImage imageWithData:data];
+                self.firstImage = image;
+                
+                NSLog(@"got data 1 %@", self.firstImage);
+
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+            else{
+                self.runningPhotosTotal++;
+                self.firstImage = [UIImage imageNamed:@"camHolder"];
+                
+                if (self.runningPhotosTotal == self.photostotal) {
+                    [self finishLoadingImages];
+                }
+            }
+        }];
+        
+    }
     
     if ([self.listing objectForKey:@"itemTitle"]) {
         self.itemTitleTextField.text = [self.listing objectForKey:@"itemTitle"];
@@ -2388,11 +2951,6 @@
         self.payField.text = [NSString stringWithFormat:@"%@%.2f",symbol,[[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", [self.listing objectForKey:@"currency"]]]floatValue]];
     }
     
-    //location is not updatable when editing listing
-//    self.chooseLocation.text = [self.listing objectForKey:@"location"];
-//    self.locationCell.accessoryType = UITableViewCellAccessoryNone;
-//    self.locationCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    
     self.chooseCategroy.text = [self.listing objectForKey:@"category"];
     
     //sizing
@@ -2401,7 +2959,7 @@
     if ([sizeLabel isEqualToString:@"Multiple"]) {
         self.multipleSizeArray = [self.listing objectForKey:@"multipleSizes"];
 
-        if ([self.chooseCategroy.text isEqualToString:@"Clothing"]) {
+        if ([self.chooseCategroy.text isEqualToString:@"Tops"] || [self.chooseCategroy.text isEqualToString:@"Bottoms"] || [self.chooseCategroy.text isEqualToString:@"Outerwear"]) {
             self.multipleSizeAcronymArray = [self.listing objectForKey:@"sizeArray"];
         }
     }
@@ -2417,44 +2975,17 @@
         self.geopoint = [self.listing objectForKey:@"geopoint"];
     }
     
-    //images
-    if ([self.listing objectForKey:@"image1"]) {
-        [self.secondCam setEnabled:YES];
-        [self.firstCam setEnabled:NO];
-
-        [self.filesArray addObject:[self.listing objectForKey:@"image1"]];
-        self.photostotal = 1;
-    }
-    
-    if ([self.listing objectForKey:@"image2"]) {
-
-        [self.thirdCam setEnabled:YES];
-        [self.secondCam setEnabled:NO];
+    //setup quantity available
+    if ([self.listing objectForKey:@"quantity"]) {
+        int quant = [[self.listing objectForKey:@"quantity"]intValue];
         
-        [self.filesArray addObject:[self.listing objectForKey:@"image2"]];
-        self.photostotal = 2;
-    }
-    
-    if ([self.listing objectForKey:@"image3"]) {
-
-        [self.fourthCam setEnabled:YES];
-        [self.thirdCam setEnabled:NO];
-        
-        [self.filesArray addObject:[self.listing objectForKey:@"image3"]];
-        self.photostotal = 3;
-    }
-    
-    if ([self.listing objectForKey:@"image4"]) {
-
-        [self.fourthCam setEnabled:NO];
-        [self.fifthCam setEnabled:YES];
-
-        [self.filesArray addObject:[self.listing objectForKey:@"image4"]];
-        self.photostotal = 4;
+        //otherwise just use 1 as the placeholder so can change if user adds multiple sizes
+        if (quant > 1) {
+            self.quantityField.text = [NSString stringWithFormat:@"%@",[self.listing objectForKey:@"quantity"]];
+        }
     }
     
     //check if should ignore 2 photos requirement
-    
     NSDateComponents *components3 = [[NSDateComponents alloc] init];
     NSCalendar *theCalendar = [NSCalendar currentCalendar];
 
@@ -2470,23 +3001,6 @@
         //createdAt is earlier than date 2 pic became mandatory, ignore requirements for them
         self.ignore2Pics = YES;
     }
-    
-//    if ([self.listing objectForKey:@"image5"]) {
-//        
-//        [self.fifthCam setEnabled:NO];
-//        [self.sixthCam setEnabled:YES];
-//
-//        [self.filesArray addObject:[self.listing objectForKey:@"image5"]];
-//        self.photostotal = 5;
-//    }
-//    
-//    if ([self.listing objectForKey:@"image6"]) {
-//        
-//        [self.sixthCam setEnabled:NO];
-//        
-//        [self.filesArray addObject:[self.listing objectForKey:@"image6"]];
-//        self.photostotal = 6;
-//    }
 }
 
 
@@ -2566,7 +3080,6 @@
 }
 
 -(void)showBarButton{
-    NSLog(@"SHOW");
     [UIView animateWithDuration:0.3
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -2594,266 +3107,204 @@
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     
+    //setup to use pffile array as the cell source
+    
     AddImageCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
+    
+//    cell.itemImageView.file = nil;
+//    cell.itemImageView.image = nil;
+    
     cell.delegate = self;
     
-    if (self.photostotal == 0) {
-        
-        [cell.deleteButton setHidden:YES];
-        
-        if (indexPath.row == 0) {
-            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
+    if (indexPath.row == 0) {
 
+        //check photos total to display correct stuff
+        if (self.imagesArray.count == 0) {
+            [cell.deleteButton setHidden:YES];
             [self.firstCam setEnabled:YES];
-        }
-        else if (indexPath.row == 1) {
-            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-
-            [self.secondCam setEnabled:NO];
-        }
-        else if (indexPath.row == 2) {
-            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-
-            [self.thirdCam setEnabled:NO];
-        }
-        else if (indexPath.row == 3) {
-            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-
-            [self.fourthCam setEnabled:NO];
-        }
-        else if (indexPath.row == 4) {
-            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-
-            [self.fifthCam setEnabled:NO];
-        }
-        else if (indexPath.row == 5) {
-            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            
-
-            [self.sixthCam setEnabled:NO];
-        }
-    }
-    else if (self.photostotal == 1) {
-        if (indexPath.row == 0) {
-            [cell.deleteButton setHidden:NO];
-            
-            [cell.itemImageView setFile:self.filesArray[0]];
-        }
-        else if (indexPath.row == 1) {
-            [cell.deleteButton setHidden:YES];
-            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-            
-
-        }
-        else if (indexPath.row == 2) {
-            [cell.deleteButton setHidden:YES];
-            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            
-
-        }
-        else if (indexPath.row == 3) {
-            [cell.deleteButton setHidden:YES];
-            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            
-
-        }
-//        else if (indexPath.row == 4) {
-//            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-//            
-//
-//            [cell.deleteButton setHidden:YES];
-//        }
-//        else if (indexPath.row == 5) {
-//            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-//            
-//
-//            [cell.deleteButton setHidden:YES];
-//        }
-    }
-    else if (self.photostotal == 2) {
-        if (indexPath.row == 0) {
-            [cell.deleteButton setHidden:NO];
-            
-            [cell.itemImageView setFile:self.filesArray[0]];
-        }
-        else if (indexPath.row == 1) {
-            [cell.deleteButton setHidden:NO];
-            
-            [cell.itemImageView setFile:self.filesArray[1]];
-        }
-        else if (indexPath.row == 2) {
-            [cell.deleteButton setHidden:YES];
             [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
         }
-        else if (indexPath.row == 3) {
-            [cell.deleteButton setHidden:YES];
-            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-            
+        else{
+            [cell.deleteButton setHidden:NO];
+            [self.firstCam setEnabled:NO];
+
+            [cell.itemImageView setImage:self.imagesArray[indexPath.row]];
+//            [cell.itemImageView setFile:self.filesArray[0]];
+//            [cell.itemImageView loadInBackground];
 
         }
-//        else if (indexPath.row == 4) {
-//            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-//            
-//
-//            [cell.deleteButton setHidden:YES];
-//        }
-//        else if (indexPath.row == 5) {
-//            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-//            
-//
-//            [cell.deleteButton setHidden:YES];
-//        }
-    }
-    else if (self.photostotal == 3) {
-        if (indexPath.row == 0) {
-            [cell.deleteButton setHidden:NO];
-            
-            [cell.itemImageView setFile:self.filesArray[0]];
-        }
-        else if (indexPath.row == 1) {
-            [cell.deleteButton setHidden:NO];
-            
-            [cell.itemImageView setFile:self.filesArray[1]];
-        }
-        else if (indexPath.row == 2) {
-            [cell.deleteButton setHidden:NO];
-            
-            [cell.itemImageView setFile:self.filesArray[2]];
-        }
-        else if (indexPath.row == 3) {
-            [cell.deleteButton setHidden:YES];
-            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-            
-
-        }
-//        else if (indexPath.row == 4) {
-//            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-//            
-//
-//            [cell.deleteButton setHidden:YES];
-//        }
-//        else if (indexPath.row == 5) {
-//            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-//            
-//
-//            [cell.deleteButton setHidden:YES];
-//        }
         
     }
-    else if (self.photostotal == 4) {
-        if (indexPath.row == 0) {
-            [cell.deleteButton setHidden:NO];
-            
-            [cell.itemImageView setFile:self.filesArray[0]];
-        }
-        else if (indexPath.row == 1) {
-            [cell.deleteButton setHidden:NO];
-            
-            [cell.itemImageView setFile:self.filesArray[1]];
-        }
-        else if (indexPath.row == 2) {
-            [cell.deleteButton setHidden:NO];
-            
-            [cell.itemImageView setFile:self.filesArray[2]];
-        }
-        else if (indexPath.row == 3) {
-            [cell.deleteButton setHidden:NO];
-            
-            [cell.itemImageView setFile:self.filesArray[3]];
-        }
-//        else if (indexPath.row == 4) {
-//            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-//            
-//
-//            [cell.deleteButton setHidden:YES];
-//        }
-//        else if (indexPath.row == 5) {
-//            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
-//            
-//
-//            [cell.deleteButton setHidden:YES];
-//        }
-    }
-//    else if (self.photostotal == 5) {
-//        if (indexPath.row == 0) {
-//            [cell.deleteButton setHidden:NO];
-//            
-//            [cell.itemImageView setFile:self.filesArray[0]];
-//
-//        }
-//        else if (indexPath.row == 1) {
-//            [cell.deleteButton setHidden:NO];
-//            
-//            [cell.itemImageView setFile:self.filesArray[1]];
-//
-//        }
-//        else if (indexPath.row == 2) {
-//            [cell.deleteButton setHidden:NO];
-//            
-//            [cell.itemImageView setFile:self.filesArray[2]];
-//
-//        }
-//        else if (indexPath.row == 3) {
-//            [cell.deleteButton setHidden:NO];
-//            
-//            [cell.itemImageView setFile:self.filesArray[3]];
-//
-//        }
-//        else if (indexPath.row == 4) {
-//            [cell.itemImageView setFile:self.filesArray[4]];
-//
-//            [cell.deleteButton setHidden:NO];
-//        }
-//        else if (indexPath.row == 5) {
-//            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
-//            
-//
-//            [cell.deleteButton setHidden:YES];
-//        }
-//
-//    }
-//    else if (self.photostotal == 6) {
-//        if (indexPath.row == 0) {
-//            [cell.deleteButton setHidden:NO];
-//            
-//            [cell.itemImageView setFile:self.filesArray[0]];
-//        }
-//        else if (indexPath.row == 1) {
-//            [cell.deleteButton setHidden:NO];
-//            
-//            [cell.itemImageView setFile:self.filesArray[1]];
-//        }
-//        else if (indexPath.row == 2) {
-//            [cell.deleteButton setHidden:NO];
-//            
-//            [cell.itemImageView setFile:self.filesArray[2]];
-//        }
-//        else if (indexPath.row == 3) {
-//            [cell.deleteButton setHidden:NO];
-//            
-//            [cell.itemImageView setFile:self.filesArray[3]];
-//        }
-//        else if (indexPath.row == 4) {
-//            [cell.itemImageView setFile:self.filesArray[4]];
-//            [cell.deleteButton setHidden:NO];
-//        }
-//        else if (indexPath.row == 5) {
-//            [cell.itemImageView setFile:self.filesArray[5]];
-//            [cell.deleteButton setHidden:NO];
-//        }
-//    }
 
-    [cell.itemImageView loadInBackground];
+    else if (indexPath.row == 1) {
+        
+        //check photos total to display correct stuff
+        if (self.imagesArray.count < 1) {
+            [cell.deleteButton setHidden:YES];
+            [self.secondCam setEnabled:NO];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.imagesArray.count == 1) {
+            [cell.deleteButton setHidden:YES];
+            [self.secondCam setEnabled:YES];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
+        }
+        else if (self.imagesArray.count > 1) {
+            [cell.deleteButton setHidden:NO];
+            [self.secondCam setEnabled:NO];
+            
+            [cell.itemImageView setImage:self.imagesArray[indexPath.row]];
+
+//            [cell.itemImageView setFile:self.filesArray[1]];
+//            [cell.itemImageView loadInBackground];
+        }
+        
+    }
+    else if (indexPath.row == 2) {
+        
+        //check photos total to display correct stuff
+        if (self.imagesArray.count < 2) {
+            [cell.deleteButton setHidden:YES];
+            [self.thirdCam setEnabled:NO];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.imagesArray.count == 2) {
+            [cell.deleteButton setHidden:YES];
+            [self.thirdCam setEnabled:YES];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
+        }
+        else if (self.imagesArray.count > 2) {
+            [cell.deleteButton setHidden:NO];
+            [self.thirdCam setEnabled:NO];
+            
+            [cell.itemImageView setImage:self.imagesArray[indexPath.row]];
+
+//            [cell.itemImageView setFile:self.filesArray[2]];
+//            [cell.itemImageView loadInBackground];
+        }
+        
+    }
+    else if (indexPath.row == 3) {
+        
+        //check photos total to display correct stuff
+        if (self.imagesArray.count < 3) {
+            [cell.deleteButton setHidden:YES];
+            [self.fourthCam setEnabled:NO];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.imagesArray.count == 3) {
+            [cell.deleteButton setHidden:YES];
+            [self.fourthCam setEnabled:YES];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
+        }
+        else if (self.imagesArray.count > 3) {
+            [cell.deleteButton setHidden:NO];
+            [self.fourthCam setEnabled:NO];
+            
+            [cell.itemImageView setImage:self.imagesArray[indexPath.row]];
+
+//            [cell.itemImageView setFile:self.filesArray[3]];
+//            [cell.itemImageView loadInBackground];
+        }
+    }
+    else if (indexPath.row == 4) {
+        
+        //check photos total to display correct stuff
+        if (self.imagesArray.count < 4) {
+            [cell.deleteButton setHidden:YES];
+            [self.fifthCam setEnabled:NO];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.imagesArray.count == 4) {
+            [cell.deleteButton setHidden:YES];
+            [self.fifthCam setEnabled:YES];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
+        }
+        else if (self.imagesArray.count > 4) {
+            [cell.deleteButton setHidden:NO];
+            [self.fifthCam setEnabled:NO];
+            
+            [cell.itemImageView setImage:self.imagesArray[indexPath.row]];
+
+//            [cell.itemImageView setFile:self.filesArray[4]];
+//            [cell.itemImageView loadInBackground];
+        }
+    }
+    else if (indexPath.row == 5) {
+        
+        //check photos total to display correct stuff
+        if (self.imagesArray.count < 5) {
+            [cell.deleteButton setHidden:YES];
+            [self.sixthCam setEnabled:NO];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.imagesArray.count == 5) {
+            [cell.deleteButton setHidden:YES];
+            [self.sixthCam setEnabled:YES];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
+        }
+        else if (self.imagesArray.count > 5) {
+            [cell.deleteButton setHidden:NO];
+            [self.sixthCam setEnabled:NO];
+            
+            [cell.itemImageView setImage:self.imagesArray[indexPath.row]];
+
+//            [cell.itemImageView setFile:self.filesArray[5]];
+//            [cell.itemImageView loadInBackground];
+        }
+
+    }
+    else if (indexPath.row == 6) {
+        
+        //check photos total to display correct stuff
+        if (self.imagesArray.count < 6) {
+            [cell.deleteButton setHidden:YES];
+            [self.sevenCam setEnabled:NO];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.imagesArray.count == 6) {
+            [cell.deleteButton setHidden:YES];
+            [self.sevenCam setEnabled:YES];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
+        }
+        else if (self.imagesArray.count > 6) {
+            [cell.deleteButton setHidden:NO];
+            [self.sevenCam setEnabled:NO];
+            
+            [cell.itemImageView setImage:self.imagesArray[indexPath.row]];
+        }
+        
+    }
+    else if (indexPath.row == 7) {
+        
+        //check photos total to display correct stuff
+        if (self.imagesArray.count < 7) {
+            [cell.deleteButton setHidden:YES];
+            [self.eightCam setEnabled:NO];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"camHolder"]];
+        }
+        else if (self.imagesArray.count == 7) {
+            [cell.deleteButton setHidden:YES];
+            [self.eightCam setEnabled:YES];
+            [cell.itemImageView setImage:[UIImage imageNamed:@"addImage"]];
+        }
+        else if (self.imagesArray.count > 7) {
+            [cell.deleteButton setHidden:NO];
+            [self.eightCam setEnabled:NO];
+
+            [cell.itemImageView setImage:self.imagesArray[indexPath.row]];
+        }
+        
+    }
     
     return cell;
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
-    NSLog(@"SELECTED %ld", (long)indexPath.row);
+//    NSLog(@"SELECTED %ld", (long)indexPath.row);
     
     if (indexPath.row == 0) {
-        NSLog(@"first pressed");
         [self firstCamPressed:self];
     }
     else if (indexPath.row == 1) {
@@ -2865,16 +3316,27 @@
     else if (indexPath.row == 3) {
         [self fourthCamPressed:self];
     }
-//    else if (indexPath.row == 4) {
-//        [self fifthCamPressed:self];
-//    }
-//    else if (indexPath.row == 5) {
-//        [self sixthCamPressed:self];
-//    }
+    else if (indexPath.row == 4) {
+        [self fifthCamPressed:self];
+    }
+    else if (indexPath.row == 5) {
+        [self sixthCamPressed:self];
+    }
+    else if (indexPath.row == 6) {
+        [self seventhCamPressed];
+    }
+    else if (indexPath.row == 7) {
+        [self eightCamPressed];
+    }
 }
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
-    return 4;
+    if (self.imagesArray.count < 8) {
+        return self.imagesArray.count + 1;
+    }
+    else{
+        return self.imagesArray.count;
+    }
 }
 
 -(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
@@ -2906,11 +3368,19 @@
 
     NSMutableArray *placeholder = [NSMutableArray arrayWithArray:self.filesArray];
     
-    PFFile *image = [placeholder objectAtIndex:fromIndexPath.item];
+    PFFile *imageFile = [placeholder objectAtIndex:fromIndexPath.item];
     [placeholder removeObjectAtIndex:fromIndexPath.item];
-    [placeholder insertObject:image atIndex:toIndexPath.item];
+    [placeholder insertObject:imageFile atIndex:toIndexPath.item];
     
     self.filesArray = placeholder;
+    
+    NSMutableArray *imagePlaceholder = [NSMutableArray arrayWithArray:self.imagesArray];
+    
+    UIImage *image = [imagePlaceholder objectAtIndex:fromIndexPath.item];
+    [imagePlaceholder removeObjectAtIndex:fromIndexPath.item];
+    [imagePlaceholder insertObject:image atIndex:toIndexPath.item];
+    
+    self.imagesArray = imagePlaceholder;
     
 }
 
@@ -2941,34 +3411,45 @@
 
     NSIndexPath *indexPath = [self.imgCollectionView indexPathForCell:cell];
     
-    if (indexPath.row == 0) {
-//        [self generalDeletePressedOnCell:0];
-        [self firstDeletePressedOnCell:cell];
-    }
-    else if (indexPath.row == 1){
-        [self secondDeletePressedOnCell:cell];
-    }
-    else if (indexPath.row == 2){
-        [self thirdDeletePressedOnCell:cell];
-    }
-    else if (indexPath.row == 3){
-        [self fourthDeletePressedOnCell:cell];
-    }
-//    else if (indexPath.row == 4){
-//        [self fifthDeletePressedOnCell:cell];
-//    }
-//    else if (indexPath.row == 5){
-//        [self sixthDeletePressedOnCell:cell];
-//    }
+    int index = (int) indexPath.row;
     
+    if (index < self.imagesArray.count && index < self.filesArray.count) {
+        [self generalDeletePressedOnCell:index];
+    }
+    else{
+        [Answers logCustomEventWithName:@"Delete Index Error in Create Sale Listing"
+                       customAttributes:@{}];
+        
+        //index is too high, reload the CV to try again
+        [self animateCVReload];
+
+    }
 }
 
 -(void)generalDeletePressedOnCell:(int)index{
     //update CV array
+    [self.imagesArray removeObjectAtIndex:index];
     [self.filesArray removeObjectAtIndex:index];
     self.photostotal--;
     
+    if (self.photostotal == 0) {
+        self.calledImgAnalyzer = NO;
+    }
+    
+    if (self.photostotal >= 2) {
+        self.imgFooterLabel.text = @"Pro tip: Hold down on images to rearrange";
+        [self.imgFooterView setNeedsDisplay];
+    }
+    else{
+        self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+        [self.imgFooterView setNeedsDisplay];
+    }
+    
     //animate reload
+    [self animateCVReload];
+}
+
+-(void)animateCVReload{
     [UIView animateWithDuration:0.3
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -4356,6 +4837,7 @@
                                    CGPointMake([self.colourSwipeView center].x + 10.0f, [self.colourSwipeView center].y)]];
             [[self.colourSwipeView layer] addAnimation:animation forKey:@"position"];
             
+            NSLog(@"dismiss colour alpha %f", self.dismissColourButton.alpha);
             //animate dismiss button text change
             [UIView transitionWithView:self.dismissColourButton duration:0.3 options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
                 
@@ -5013,7 +5495,7 @@
     vc.heroImage = [UIImage imageNamed:@"taggedEg"];
     
     vc.titleString = @"T A G G E D  P H O T O S";
-    vc.mainLabelText = @"To prove to buyers that you own the photographed item, simply place something to identify yourself in the photo.\n\nThis could be your Bump username written on a piece of paper, an ID card with your name on it or anything that identifies yourself as the person that took the photo";
+    vc.mainLabelText = @"To prove to buyers that you own the photographed item, simply place something to identify yourself in the photo\n\nThis could be your Bump username written on a piece of paper, an ID card with your name on it or anything that identifies yourself as the person that took the photo";
     [self presentViewController:vc animated:YES completion:nil];
 }
 @end

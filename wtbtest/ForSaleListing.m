@@ -93,7 +93,7 @@
     else if ([self.currency isEqualToString:@"EUR"]) {
         self.currencySymbol = @"€";
     }
-    else if ([self.currency isEqualToString:@"USD"]) {
+    else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
         self.currencySymbol = @"$";
     }
     self.sizeLabel.adjustsFontSizeToFitWidth = YES;
@@ -190,6 +190,12 @@
     else if (index == 5){
         [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image6"]];
     }
+    else if (index == 6){
+        [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image7"]];
+    }
+    else if (index == 7){
+        [((PFImageView *)view)setFile:[self.listingObject objectForKey:@"image8"]];
+    }
     [((PFImageView *)view) loadInBackground];
 
     return view;
@@ -223,12 +229,12 @@
     vc.chosenIndex = (int)index;
     vc.numberOfPics = self.numberOfPics;
     vc.listing = self.listingObject;
-    
+    vc.delegate = self;
+
     if (self.tabBarController.tabBar.frame.size.height == 0) {
         [self hideBarButton];
         
         //register for delegate so we know when detail disappears on the modal VC thats displaying this for sale VC
-        vc.delegate = self;
     }
     
     [self presentViewController:vc animated:YES completion:nil];
@@ -262,54 +268,43 @@
             
             //hide multiple button by default
             [self.multipleButton setHidden:YES];
-        
-            if ([self.listingObject objectForKey:@"image6"]){
+            
+            if ([self.listingObject objectForKey:@"image8"]){
+                [self.pageIndicator setNumberOfPages:8];
+                self.numberOfPics = 8;
+                [self.pageIndicator setHidden:NO];
+            }
+            else if ([self.listingObject objectForKey:@"image7"]){
+                [self.pageIndicator setNumberOfPages:7];
+                self.numberOfPics = 7;
+                [self.pageIndicator setHidden:NO];
+            }
+            else if ([self.listingObject objectForKey:@"image6"]){
                 [self.pageIndicator setNumberOfPages:6];
                 self.numberOfPics = 6;
                 [self.pageIndicator setHidden:NO];
-                self.firstImage = [self.listingObject objectForKey:@"image1"];
-                self.secondImage = [self.listingObject objectForKey:@"image2"];
-                self.thirdImage = [self.listingObject objectForKey:@"image3"];
-                self.fourthImage = [self.listingObject objectForKey:@"image4"];
-                self.fifthImage = [self.listingObject objectForKey:@"image5"];
-                self.sixthImage = [self.listingObject objectForKey:@"image6"];
-                
             }
             else if ([self.listingObject objectForKey:@"image5"]){
                 [self.pageIndicator setNumberOfPages:5];
                 self.numberOfPics = 5;
                 [self.pageIndicator setHidden:NO];
-                self.firstImage = [self.listingObject objectForKey:@"image1"];
-                self.secondImage = [self.listingObject objectForKey:@"image2"];
-                self.thirdImage = [self.listingObject objectForKey:@"image3"];
-                self.fourthImage = [self.listingObject objectForKey:@"image4"];
-                self.fifthImage = [self.listingObject objectForKey:@"image5"];
             }
             else if ([self.listingObject objectForKey:@"image4"]){
                 [self.pageIndicator setNumberOfPages:4];
                 self.numberOfPics = 4;
                 [self.pageIndicator setHidden:NO];
-                self.firstImage = [self.listingObject objectForKey:@"image1"];
-                self.secondImage = [self.listingObject objectForKey:@"image2"];
-                self.thirdImage = [self.listingObject objectForKey:@"image3"];
-                self.fourthImage = [self.listingObject objectForKey:@"image4"];
                 
             }
             else if ([self.listingObject objectForKey:@"image3"]){
                 [self.pageIndicator setNumberOfPages:3];
                 self.numberOfPics = 3;
                 [self.pageIndicator setHidden:NO];
-                self.firstImage = [self.listingObject objectForKey:@"image1"];
-                self.secondImage = [self.listingObject objectForKey:@"image2"];
-                self.thirdImage = [self.listingObject objectForKey:@"image3"];
                 
             }
             else if ([self.listingObject objectForKey:@"image2"]) {
                 [self.pageIndicator setNumberOfPages:2];
                 self.numberOfPics = 2;
                 [self.pageIndicator setHidden:NO];
-                self.firstImage = [self.listingObject objectForKey:@"image1"];
-                self.secondImage = [self.listingObject objectForKey:@"image2"];
                 
             }
             else{
@@ -318,10 +313,6 @@
                 
             }
             [self.carouselView reloadData];
-            
-//            self.imageViewTwo.contentMode = UIViewContentModeScaleAspectFit;
-//            [self.imageViewTwo setFile:[self.listingObject objectForKey:@"image1"]];
-//            [self.imageViewTwo loadInBackground];
             
             if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
                 self.soldLabel.text = @"S O L D";
@@ -332,7 +323,13 @@
             }
             else if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"deleted"]){
                 [self showAlertWithTitle:@"Item Deleted" andMsg:@"The seller has removed the item, it may be no longer unavailable - send them a message to find out"];
-
+            }
+            
+            if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"proxy"]) {
+                if ([[NSUserDefaults standardUserDefaults]boolForKey:@"seenProxyWarning"] != YES) {
+                    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenProxyWarning"];
+                    [self showNormalAlertWithTitle:@"Proxy Warning" andMsg:@"A proxy is when someone is willing to queue up for unreleased items on your behalf, it's like a preorder. Usually, you will pay someone proxying for you the retail price of the item plus a fee for the service.\n\nBe careful, always pay via PayPal Goods & Services and ask the user proxying for references so you can be sure they're legitimate. If a user claims they need the payment to be gifted in order to access the funds faster, it's better to decline and find someone that will accept PayPal Goods & Services.\n\nIf you're ever unsure about a proxy, message Team Bump and we'll help you out 🤝"];
+                }
             }
             
             //set title label
@@ -521,6 +518,16 @@
                 [self.upVoteButton setTitle:@"" forState:UIControlStateNormal];
             }
             
+            if ([self.listingObject objectForKey:@"quantity"]) {
+                
+                int quant = [[self.listingObject objectForKey:@"quantity"]intValue];
+                NSLog(@"quant %d", quant);
+                
+                if ( quant > 1) {
+                    self.hasMultiple = YES;
+                    [self.tableView reloadData];
+                }
+            }
             if ([self.source isEqualToString:@"share"] || self.fromPush == YES) {
                 [self.tableView reloadData];
             }
@@ -704,8 +711,18 @@
 //hide the first header in table view
 - (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    if(section == 1 || section == 2){
-        return 20.0f;
+    if (self.hasMultiple) {
+        if(section == 1){
+            return 30.0f;
+        }
+        else if (section == 2){
+            return 40.0f;
+        }
+    }
+    else{
+        if(section == 1 || section == 2){
+            return 20.0f;
+        }
     }
     return 0.0f;
 }
@@ -718,10 +735,28 @@
     return 0.0f;
 }
 
-- (UIView *) tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
-{
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-    return headerView;
+- (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
+    UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
+    header.contentView.backgroundColor = [UIColor colorWithRed:0.96 green:0.97 blue:0.99 alpha:1.0];
+
+    if (self.hasMultiple) {
+        header.textLabel.textColor = [UIColor grayColor];
+        header.textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
+        CGRect headerFrame = header.frame;
+        header.textLabel.frame = headerFrame;
+        if (section ==2){
+            header.textLabel.text =  [NSString stringWithFormat:@" %@ Available", [self.listingObject objectForKey:@"quantity"]];
+        }
+    }
+}
+
+-(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
+    
+    if (section ==2 && self.hasMultiple){
+        return [NSString stringWithFormat:@" %@ Available", [self.listingObject objectForKey:@"quantity"]];
+    }
+    
+    return nil;
 }
 
 -(void) calcPostedDate{
@@ -1042,11 +1077,6 @@
         return;
     }
     
-    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
-    
-    NSString *possID = @"";
-    NSString *otherId = @"";
-    
     NSString *descr;
 
     if (![self.listingObject objectForKey:@"itemTitle"]) {
@@ -1058,32 +1088,26 @@
         }
     }
     
-    if (self.pureWTS == YES) {
-        //no WTB so use WTS to create convo ID
-        possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"sellerUser"]objectId], self.listingObject.objectId];
-        otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
-    }
-    else{
-        //there's a WTB so use that for convo ID
-        possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"sellerUser"]objectId], self.WTBObject.objectId];
-        otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.WTBObject.objectId];
-    }
+    NSString *possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"sellerUser"]objectId], self.listingObject.objectId];
+    NSString *otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
     
-    NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
+    //split into sub queries to avoid the contains parameter which can't be indexed
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
+    [convoQuery whereKey:@"convoId" equalTo:possID];
     
-    [convoQuery whereKey:@"convoId" containedIn:idArray];
-    [convoQuery includeKey:@"buyerUser"];
-    [convoQuery includeKey:@"sellerUser"];
-    
-    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+    PFQuery *otherPossConvo = [PFQuery queryWithClassName:@"convos"];
+    [otherPossConvo whereKey:@"convoId" equalTo:otherId];
+
+    PFQuery *comboConvoQuery = [PFQuery orQueryWithSubqueries:@[convoQuery, otherPossConvo]];
+    [comboConvoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //convo exists, goto that one but pretype a message like "I'm interested in your Supreme bogo" etc.
             MessageViewController *vc = [[MessageViewController alloc]init];
             vc.convoId = [object objectForKey:@"convoId"];
             vc.convoObject = object;
             vc.listing = self.listingObject;
-            vc.otherUser = [object objectForKey:@"sellerUser"];
-            vc.otherUserName = [[object objectForKey:@"sellerUser"]username];
+            vc.otherUser = self.seller;
+            vc.otherUserName = self.seller.username;
             vc.messageSellerPressed = YES;
             
             if (![self.listingObject objectForKey:@"itemTitle"]) {
@@ -1109,27 +1133,21 @@
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
             convoObject[@"buyerUser"] = [PFUser currentUser];
             convoObject[@"sellerUser"] = [self.listingObject objectForKey:@"sellerUser"];
-            if (self.pureWTS == YES) {
-                convoObject[@"pureWTS"] = @"YES";
-                convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
-            }
-            else{
-                convoObject[@"pureWTS"] = @"NO";
-                convoObject[@"wtbListing"] = self.WTBObject;
-                convoObject[@"itemId"] = self.WTBObject.objectId;
-                convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.WTBObject.objectId];
-            }
-            
             convoObject[@"wtsListing"] = self.listingObject;
+            convoObject[@"pureWTS"] = @"YES";
+            convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
             
             if (self.source) {
-                convoObject[@"source"] = self.source; //where did the convo originate from - featured vs WTS
+                convoObject[@"source"] = self.source; //where did the convo originate from
             }
             
             convoObject[@"totalMessages"] = @0;
             convoObject[@"buyerUnseen"] = @0;
             convoObject[@"sellerUnseen"] = @0;
-            
+            convoObject[@"profileConvo"] = @"NO";
+            [convoObject setObject:@"NO" forKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId]];
+            [convoObject setObject:@"NO" forKey:[NSString stringWithFormat:@"deleted%@",self.seller.objectId]];
+
             //save additional stuff onto convo object for faster inbox loading
             if ([self.listingObject objectForKey:@"thumbnail"]) {
                 convoObject[@"thumbnail"] = [self.listingObject objectForKey:@"thumbnail"];
@@ -1156,8 +1174,8 @@
                     MessageViewController *vc = [[MessageViewController alloc]init];
                     vc.convoId = [convoObject objectForKey:@"convoId"];
                     vc.convoObject = convoObject;
-                    vc.otherUser = [self.listingObject objectForKey:@"sellerUser"];
-                    vc.otherUserName = [[self.listingObject objectForKey:@"sellerUser"]username];
+                    vc.otherUser = self.seller;
+                    vc.otherUserName = self.seller.username;
                     vc.messageSellerPressed = YES;
                     if (![self.listingObject objectForKey:@"itemTitle"]) {
                         vc.sellerItemTitle = descr;
@@ -1244,9 +1262,11 @@
 
 -(void)showNormalAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
     
+    [self hideBarButton];
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -1715,7 +1735,6 @@
         return;
     }
     
-    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     PFUser *selectedUser = [self.facebookUsers objectAtIndex:self.friendIndexSelected];
 
     //update recents
@@ -1753,13 +1772,16 @@
     NSString *possID = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId,selectedUser.objectId];
     NSString *otherId = [NSString stringWithFormat:@"%@%@",selectedUser.objectId,[PFUser currentUser].objectId];
     
-    NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
+    //split into sub queries to avoid the contains parameter which can't be indexed
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
+    [convoQuery whereKey:@"convoId" equalTo:possID];
     
-    [convoQuery whereKey:@"convoId" containedIn:idArray];
-    [convoQuery includeKey:@"buyerUser"];
-    [convoQuery includeKey:@"sellerUser"];
+    PFQuery *otherPossConvo = [PFQuery queryWithClassName:@"convos"];
+    [otherPossConvo whereKey:@"convoId" equalTo:otherId];
     
-    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+    PFQuery *comboConvoQuery = [PFQuery orQueryWithSubqueries:@[convoQuery, otherPossConvo]];
+    [comboConvoQuery whereKey:@"profileConvo" equalTo:@"YES"];
+    [comboConvoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //convo exists
 
@@ -2124,7 +2146,7 @@
                                       @"where":@"For sale"
                                       }];
     
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"screenshotDropDown" object:self.firstImage];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"screenshotDropDown" object:[self.listingObject objectForKey:@"image1"]];
 }
 
 #pragma mark - invite view delegates
@@ -2369,8 +2391,12 @@
 }
 
 #pragma mark - detail image viewer delegate
--(void)dismissedDetailImageView{
-    [self showBarButton];
+-(void)dismissedDetailImageViewWithIndex:(NSInteger)lastSelected{
+    if (self.tabBarController.tabBar.frame.size.height == 0) {
+        [self showBarButton];
+    }
+
+    [self.carouselView scrollToItemAtIndex:lastSelected animated:NO];
 }
 
 #pragma mark - colour part of label
@@ -2421,7 +2447,7 @@
     
     //user's general bump array (WTB + WTS)
     NSMutableArray *generalBumpedArray = [NSMutableArray array];
-    if ([[PFUser currentUser] objectForKey:@"bumpArray"]) {
+    if ([[PFUser currentUser] objectForKey:@"totalBumpArray"]) {
         [generalBumpedArray addObjectsFromArray:[[PFUser currentUser] objectForKey:@"totalBumpArray"]];
     }
     
@@ -2494,7 +2520,8 @@
             
             NSDictionary *params = @{@"userId": [[self.listingObject objectForKey:@"sellerUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.listingObject.objectId};
             
-            if (self.dontLikePush != YES) {
+            if (self.dontLikePush != YES && self.likedAlready != YES) {
+                self.likedAlready = YES;
                 [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                     if (!error) {
                         NSLog(@"push response %@", response);
@@ -2758,9 +2785,7 @@
     messageObject1[@"senderName"] = @"Team Bump";
     messageObject1[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
     messageObject1[@"status"] = @"sent";
-    messageObject1[@"offer"] = @"NO";
     messageObject1[@"mediaMessage"] = @"NO";
-    messageObject1[@"boostMessage"] = @"YES";
     [messageObject1 saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
             
@@ -2865,7 +2890,6 @@
 }
 
 -(void)retrieveFacebookData{
-    NSLog(@"retrieve fb data");
     [self showBarButton];
     
     NSMutableDictionary* parameters = [NSMutableDictionary dictionary];
@@ -2893,6 +2917,7 @@
                  [bumpedObj setObject:[PFUser currentUser] forKey:@"user"];
                  [bumpedObj setObject:[NSDate date] forKey:@"safeDate"];
                  [bumpedObj setObject:@0 forKey:@"timesBumped"];
+                 [bumpedObj setObject:@"live" forKey:@"status"];
                  [bumpedObj saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                      if (succeeded) {
                          NSLog(@"saved bumped obj");

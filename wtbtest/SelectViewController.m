@@ -7,6 +7,7 @@
 //
 
 #import "SelectViewController.h"
+#import "CategoryDetailCell.h"
 
 @interface SelectViewController ()
 
@@ -16,6 +17,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+
     if ([self.setting isEqualToString:@"condition"]) {
         self.title = @"C O N D I T I O N";
     }
@@ -25,9 +28,13 @@
     else if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]){
         self.title = @"S I Z E";
     }
+    else if ([self.setting isEqualToString:@"clothing"]){
+        self.title = @"C L O T H I N G";
+    }
     else{
         self.title = @"S E L E C T";
     }
+    
     
     self.selectedSizes = [NSMutableArray array];
     
@@ -45,8 +52,10 @@
     
     NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
     
-    self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear",@"Accessories", nil];
-    
+    self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear",@"Accessories",@"Proxy", nil];
+    self.clothingCategoryArray = [NSArray arrayWithObjects:@"Tops",@"Bottoms",@"Outerwear", nil];
+    self.clothingyDescriptionArray = [NSArray arrayWithObjects:@"Long/shortsleeve Tees, Polos, Shirts, Sweatshirts & Hoodies",@"Jeans, Shorts, Swimwear, Sweatpants & Joggers",@"Bombers, Coats, Jackets, Raincoats", nil];
+
     if (self.sellListing == YES) {
         self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Other", nil];
         
@@ -57,8 +66,6 @@
         self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Other", nil];
         
         self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL",@"Other", nil];
-        
-        self.conditionArray = [NSArray arrayWithObjects:@"Brand New With Tags",@"Brand New Without Tags", @"Used", @"Other",nil];
     }
     else{
         self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Any", nil];
@@ -75,6 +82,7 @@
     }
     
     [self.tableView registerNib:[UINib nibWithNibName:@"selectCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
+    [self.tableView registerNib:[UINib nibWithNibName:@"CategoryDetailCell" bundle:nil] forCellReuseIdentifier:@"catCell"];
     
     //holding array is just if user has previously selected an option then is coming back to the VC
     if (![self.holdingGender isEqualToString:@""]) {
@@ -134,6 +142,9 @@
     else if ([self.setting isEqualToString:@"category"]){
         return self.categoryArray.count;
     }
+    else if ([self.setting isEqualToString:@"clothing"]){
+        return self.clothingCategoryArray.count;
+    }
     else if ([self.setting isEqualToString:@"sizeclothing"]){
         return self.clothingyArray.count;
     }
@@ -155,124 +166,194 @@
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    self.cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
-    self.cell.delegate = self;
-    
-    if (!self.cell) {
-        self.cell = [[selectCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
-    }
-    
-    if ([self.setting isEqualToString:@"condition"]) {
-        self.cell.textLabel.text = [self.conditionArray objectAtIndex:indexPath.row];
-        [self.cell.segmentControl setHidden:YES];
+    if ([self.setting isEqualToString:@"clothing"]) {
+        CategoryDetailCell *cell = [tableView dequeueReusableCellWithIdentifier:@"catCell" forIndexPath:indexPath];
+        cell.categoryLabel.text = [self.clothingCategoryArray objectAtIndex:indexPath.row];
+        cell.lowerLabel.text = [self.clothingyDescriptionArray objectAtIndex:indexPath.row];
         
-        if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
+        if ([self.selectedSizes containsObject:cell.categoryLabel.text]) {
             //already been selected, show checkmark
-            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            cell.accessoryType = UITableViewCellAccessoryCheckmark;
         }
         else{
             //hasnt already been selected
-            self.cell.accessoryType = UITableViewCellAccessoryNone;
-        }
-    }
-    else if ([self.setting isEqualToString:@"category"]){
-        self.cell.textLabel.text = [self.categoryArray objectAtIndex:indexPath.row];
-        [self.cell.segmentControl setHidden:YES];
-        
-        if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
-            //already been selected, show checkmark
-            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
-
-        }
-        else{
-            //hasnt already been selected
-            self.cell.accessoryType = UITableViewCellAccessoryNone;
-        }
-    }
-    else if ([self.setting isEqualToString:@"sizeclothing"]){
-        self.cell.textLabel.text = [self.clothingyArray objectAtIndex:indexPath.row];
-        [self.cell.segmentControl setHidden:YES];
-        
-        if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
-            //already been selected, show checkmark
-            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
-        }
-        else{
-            //hasnt already been selected
-            self.cell.accessoryType = UITableViewCellAccessoryNone;
+            cell.accessoryType = UITableViewCellAccessoryNone;
         }
         
+        return cell;
     }
-    else if ([self.setting isEqualToString:@"sizefoot"]){
-        if (indexPath.row == 0) {
-            [self.cell.segmentControl setHidden:NO];
-            [self.cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-            self.cell.accessoryType = UITableViewCellAccessoryNone;
-            self.cell.textLabel.text = @"";
-            
-            //update selected index
-            if ([self.genderSelected isEqualToString:@"Mens"]) {
-                self.cell.segmentControl.selectedSegmentIndex = 0;
-            }
-            else{
-                self.cell.segmentControl.selectedSegmentIndex = 1;
-            }
+    else{
+        self.cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
+        
+        self.cell.delegate = self;
+        [self.cell.proxyExplainButton setHidden:YES];
+        self.cell.mainLabel.text = @"";
+        
+        if (!self.cell) {
+            self.cell = [[selectCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
         }
-        else{
-            if ([self.genderSelected isEqualToString:@"Mens"]) {
-                self.cell.textLabel.text = [self.mensSizeArray objectAtIndex:indexPath.row-1];
-            }
-            else{
-                self.cell.textLabel.text = [self.femaleSizeArray objectAtIndex:indexPath.row-1];
-            }
-            
+        
+        if ([self.setting isEqualToString:@"condition"]) {
+            self.cell.textLabel.text = [self.conditionArray objectAtIndex:indexPath.row];
             [self.cell.segmentControl setHidden:YES];
             
-            if ([self.holdingGender isEqualToString:self.genderSelected]) {
-                
-                //highlight previously chosen sizes
-                
-                for (NSString *size in self.selectedSizes) {
-                    
-                    if ([self.genderSelected isEqualToString:@"Mens"]) {
-                        //mens
-                        if ([[self.mensSizeUKArray objectAtIndex:indexPath.row-1] isEqualToString:size]) {
-                            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
-                            break;
-                        }
-                        else{
-                            self.cell.accessoryType = UITableViewCellAccessoryNone;
-                        }
-                    }
-                    else{
-                        //womens
-                        if ([[self.femaleSizeUKArray objectAtIndex:indexPath.row-1] isEqualToString:size]) {
-                            self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
-                            break;
-                        }
-                        else{
-                            self.cell.accessoryType = UITableViewCellAccessoryNone;
-                        }
-                    }
-                }
+            if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
+                //already been selected, show checkmark
+                self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
             }
             else{
+                //hasnt already been selected
                 self.cell.accessoryType = UITableViewCellAccessoryNone;
             }
         }
+        else if ([self.setting isEqualToString:@"category"]){
+            self.cell.mainLabel.text = [self.categoryArray objectAtIndex:indexPath.row];
+            
+            [self.cell.segmentControl setHidden:YES];
+            
+            if ([self.cell.mainLabel.text isEqualToString:@"Proxy"]) {
+                [self.cell.proxyExplainButton setHidden:NO];
+            }
+            
+            if ([self.cell.mainLabel.text isEqualToString:@"Clothing"]) {
+                self.cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            }
+            else if ([self.selectedSizes containsObject:self.cell.mainLabel.text]) {
+                //already been selected, show checkmark
+                self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            }
+            else{
+                //hasnt already been selected
+                self.cell.accessoryType = UITableViewCellAccessoryNone;
+            }
+        }
+        else if ([self.setting isEqualToString:@"clothing"]){
+            self.cell.textLabel.text = [self.clothingCategoryArray objectAtIndex:indexPath.row];
+            
+            [self.cell.segmentControl setHidden:YES];
+            
+            if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
+                //already been selected, show checkmark
+                self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            }
+            else{
+                //hasnt already been selected
+                self.cell.accessoryType = UITableViewCellAccessoryNone;
+            }
+        }
+        else if ([self.setting isEqualToString:@"sizeclothing"]){
+            self.cell.textLabel.text = [self.clothingyArray objectAtIndex:indexPath.row];
+            [self.cell.segmentControl setHidden:YES];
+            
+            if ([self.selectedSizes containsObject:self.cell.textLabel.text]) {
+                //already been selected, show checkmark
+                self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            }
+            else{
+                //hasnt already been selected
+                self.cell.accessoryType = UITableViewCellAccessoryNone;
+            }
+            
+        }
+        else if ([self.setting isEqualToString:@"sizefoot"]){
+            if (indexPath.row == 0) {
+                [self.cell.segmentControl setHidden:NO];
+                [self.cell setSelectionStyle:UITableViewCellSelectionStyleNone];
+                self.cell.accessoryType = UITableViewCellAccessoryNone;
+                self.cell.textLabel.text = @"";
+                
+                //update selected index
+                if ([self.genderSelected isEqualToString:@"Mens"]) {
+                    self.cell.segmentControl.selectedSegmentIndex = 0;
+                }
+                else{
+                    self.cell.segmentControl.selectedSegmentIndex = 1;
+                }
+            }
+            else{
+                if ([self.genderSelected isEqualToString:@"Mens"]) {
+                    self.cell.textLabel.text = [self.mensSizeArray objectAtIndex:indexPath.row-1];
+                }
+                else{
+                    self.cell.textLabel.text = [self.femaleSizeArray objectAtIndex:indexPath.row-1];
+                }
+                
+                [self.cell.segmentControl setHidden:YES];
+                
+                if ([self.holdingGender isEqualToString:self.genderSelected]) {
+                    
+                    //highlight previously chosen sizes
+                    
+                    for (NSString *size in self.selectedSizes) {
+                        
+                        if ([self.genderSelected isEqualToString:@"Mens"]) {
+                            //mens
+                            if ([[self.mensSizeUKArray objectAtIndex:indexPath.row-1] isEqualToString:size]) {
+                                self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+                                break;
+                            }
+                            else{
+                                self.cell.accessoryType = UITableViewCellAccessoryNone;
+                            }
+                        }
+                        else{
+                            //womens
+                            if ([[self.femaleSizeUKArray objectAtIndex:indexPath.row-1] isEqualToString:size]) {
+                                self.cell.accessoryType = UITableViewCellAccessoryCheckmark;
+                                break;
+                            }
+                            else{
+                                self.cell.accessoryType = UITableViewCellAccessoryNone;
+                            }
+                        }
+                    }
+                }
+                else{
+                    self.cell.accessoryType = UITableViewCellAccessoryNone;
+                }
+            }
+        }
+        
+        return self.cell;
     }
-    
-    return self.cell;
+
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 44;
+    if ([self.setting isEqualToString:@"clothing"]) {
+        return 88;
+    }
+    else{
+        return 44;
+    }
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
+    
+    if ([self.setting isEqualToString:@"clothing"]) {
+        
+        NSString *selectionString = [self.clothingCategoryArray objectAtIndex:indexPath.row];
+        [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withgender:self.genderSelected andsizes:nil];
+        [self.navigationController popToRootViewControllerAnimated:YES];
+
+        return;
+    }
+
+    
     selectCell *selected = [tableView cellForRowAtIndexPath:indexPath];
+    
+    //check if category & Clothing pressed then push another select VC on top
+    if ([self.setting isEqualToString:@"category"] && [selected.mainLabel.text isEqualToString:@"Clothing"]) {
+        SelectViewController *vc = [[SelectViewController alloc]init];
+        vc.setting = @"clothing";
+        vc.holdingArray = self.selectedSizes;
+        vc.delegate = self;
+        self.pushingClothing = YES;
+        [self.navigationController pushViewController:vc animated:YES];
+        return;
+    }
     
     // First figure out how many sections there are
     NSInteger lastSectionIndex = [tableView numberOfSections] - 1;
@@ -465,6 +546,9 @@
     if ([self.setting isEqualToString:@"category"]) {
         selectionString = [self.categoryArray objectAtIndex:indexPath.row];
     }
+    else if ([self.setting isEqualToString:@"clothing"]) {
+        selectionString = [self.clothingCategoryArray objectAtIndex:indexPath.row];
+    }
     else if ([self.setting isEqualToString:@"condition"]) {
         selectionString = [self.conditionArray objectAtIndex:indexPath.row];
     }
@@ -484,18 +568,29 @@
     }
     
     //if not nothing (coz of selection cell in sizes) proceed..
-    NSLog(@"selected: %@", selectionString);
+//    NSLog(@"selected: %@", selectionString);
     
     if (![selectionString isEqualToString:@""]) {
             [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withgender:self.genderSelected andsizes:nil];
+        
+        if ([self.setting isEqualToString:@"clothing"]) {
+            [self.navigationController popToRootViewControllerAnimated:YES];
+        }
+        else{
             [self.navigationController popViewControllerAnimated:YES];
+        }
     }
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     
-     if ([self.setting isEqualToString:@"sizefoot"] && self.selectedSizes.count > 0 && ![self.selectedSizes containsObject:@"Any"] && ![self.selectedSizes containsObject:@"Other"]){
+    if (self.pushingClothing) {
+        self.pushingClothing = NO;
+        return;
+    }
+    
+    if ([self.setting isEqualToString:@"sizefoot"] && self.selectedSizes.count > 0 && ![self.selectedSizes containsObject:@"Any"] && ![self.selectedSizes containsObject:@"Other"]){
         
          //convert array strings into numbers to sort into ascending order
          NSArray *sizeStrings = [NSArray arrayWithArray:self.selectedSizes];
@@ -545,7 +640,7 @@
     
     if (([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"])) {
         NSArray *finalSelection = [NSArray arrayWithArray:self.selectedSizes];
-        NSLog(@"final selection is %@", finalSelection);
+//        NSLog(@"final selection is %@", finalSelection);
         [self.delegate addItemViewController:self didFinishEnteringItem:nil withgender:self.genderSelected andsizes:finalSelection];
     }
 }
@@ -665,5 +760,26 @@
 }
 
 -(void)secondPressed{
+}
+
+#pragma mark - second level category delegates
+-(void)addItemViewController:(SelectViewController *)controller didFinishEnteringItem:(NSString *)selectionString withgender:(NSString *)genderString andsizes:(NSArray *)array{
+    if (selectionString) {
+        [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withgender:nil andsizes:nil];
+        
+    }
+}
+
+-(void)proxyExplainPressed{
+    [self showAlertWithTitle:@"What's a proxy?" andMsg:@"A proxy is when someone is willing to queue up for a drop on your behalf. It's almost like a preorder for items that are yet to be released. Usually you will pay someone proxying for you the retail price of the item plus a fee for the service."];
+}
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 @end

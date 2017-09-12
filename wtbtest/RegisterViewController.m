@@ -42,6 +42,16 @@
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
+    //currency swipe view
+    self.currencySwipeView.delegate = self;
+    self.currencySwipeView.dataSource = self;
+    self.currencySwipeView.clipsToBounds = YES;
+    self.currencySwipeView.pagingEnabled = NO;
+    self.currencySwipeView.truncateFinalPage = NO;
+    [self.currencySwipeView setBackgroundColor:[UIColor clearColor]];
+    self.currencySwipeView.alignment = SwipeViewAlignmentEdge;
+    [self.currencySwipeView reloadData];
+    
     UITapGestureRecognizer* tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(removeKeyboard)];
     tapGesture.numberOfTapsRequired = 1;
     [self.tableView addGestureRecognizer:tapGesture];
@@ -49,12 +59,36 @@
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
-    self.selectedCurrency = @"GBP";
-    [self.GBPButton setSelected:YES];
+    //use phone data to preselect the local currency
+    NSLocale *locale = [NSLocale currentLocale];
+    NSString *countryCode = [locale objectForKey: NSLocaleCountryCode];
+    
+    if (countryCode) {
+        
+        if ([countryCode isEqualToString:@"GB"]) {
+            self.selectedCurrency = @"GBP";
+        }
+        else if ([countryCode isEqualToString:@"US"] || [countryCode isEqualToString:@"CA"]) {
+            self.selectedCurrency = @"USD";
+        }
+        else if ([countryCode isEqualToString:@"IT"] ||[countryCode isEqualToString:@"DE"] || [countryCode isEqualToString:@"FR"] || [countryCode isEqualToString:@"NL"] || [countryCode isEqualToString:@"AT"]) {
+            self.selectedCurrency = @"EUR";
+        }
+        else if ([countryCode isEqualToString:@"AU"]) {
+            self.selectedCurrency = @"AUD";
+        }
+        else{
+            self.selectedCurrency = @"USD";
+        }
+    }
+    else{
+        self.selectedCurrency = @"USD";
+    }
     
     [self setImageBorder];
     
     self.profanityList = @[@"fuck", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"#", @"?", @"!", @"£", @"/", @"(", @")", @":", @",", @"'", @"$", @" ",@"<", @">", @"+", @"=", @"%", @"[", @"]", @"{", @"}", @"^", @"..fuckfuck"];
+    self.currencyArray = @[@"GBP", @"USD", @"EUR", @"AUD"];
     
     self.longRegButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
     [self.longRegButton setTitle:@"R E G I S T E R" forState:UIControlStateNormal];
@@ -101,8 +135,8 @@
         [bannedInstallsQuery whereKey:@"deviceToken" equalTo:@"thisISNothing"];
     }
     
-    [bannedInstallsQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-        if (number >= 1) {
+    [bannedInstallsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
             //user is banned - log them out
             
             [Answers logCustomEventWithName:@"Preventing Banned User Signing Up"
@@ -110,6 +144,21 @@
             
             self.banMode = YES;
             [self showAlertWithTitle:@"Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
+        }
+        else{
+            //do final check against NSUserDefaults incase user was banned without device token coz didn't enable push
+            if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"banned"] isEqualToString:@"YES"]) {
+                //user is banned - log them out
+                
+                [Answers logCustomEventWithName:@"Preventing Banned User Signing Up"
+                               customAttributes:@{
+                                                  @"trigger":@"defaults"
+                                                  }];
+                
+                self.banMode = YES;
+                [self showAlertWithTitle:@"Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
+                return;
+            }
         }
     }];
 }
@@ -243,9 +292,7 @@
     if ([userData objectForKey:@"picture"]) {
         NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", userData[@"id"]];
         NSURL *picUrl = [NSURL URLWithString:userImageURL];
-        NSData *picData = [NSData dataWithContentsOfURL:picUrl]; //cast as a jpeg //CHANGE
-        
-//        [self.profilePicture sd_setImageWithURL:picUrl];
+        NSData *picData = [NSData dataWithContentsOfURL:picUrl];
         
         //save image
         if (picData == nil) {
@@ -257,7 +304,8 @@
                                               }];
         }
         else{
-            PFFile *picFile = [PFFile fileWithData:picData];
+            //to avoid being saved as .bin file
+            PFFile *picFile = [PFFile fileWithData:picData contentType:@"image/jpeg"];
             [picFile saveInBackground]; //speed up reg save
             
             self.user[PF_USER_PICTURE] = picFile;
@@ -360,7 +408,7 @@
                 return self.passwordCell;
             }
             else if(indexPath.row == 6){
-                return self.currencyCell;
+                return self.currencySwipeCell;
             }
         }
         else if (indexPath.section ==1){
@@ -676,63 +724,53 @@
             //check username entered is unique
             PFQuery *usernameQuery = [PFQuery queryWithClassName:@"_User"];
             [usernameQuery whereKey:@"username" equalTo:username];
-            [usernameQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-                if (!error) {
-                    if (number == 0) {
-                        NSLog(@"username is available!");
+            [usernameQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (!object) { 
+                    NSLog(@"username is available!");
+                    
+                    //now do saving
+                    if (self.emailMode) {
+                        self.user.password = pass;
+                        self.user.username = [username lowercaseString];
                         
-                        //now do saving
-                        if (self.emailMode) {
-                            self.user.password = pass;
-                            self.user.username = [username lowercaseString];
-                            
-                            //sign user up first then save stuff
-                            
-                            [self.user signUpInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                                if (succeeded) {
-                                    NSLog(@"signed up!");
-                                    [self saveUser];
-                                }
-                                else{
-                                    NSLog(@"signup failed %@", error);
-                                    
-                                    [Answers logCustomEventWithName:@"Email Signup error"
-                                                   customAttributes:@{
-                                                                      @"error":error
-                                                                      }];
-                                    
-                                    [self hideHUD];
-                                    [self.regButton setEnabled:YES];
-                                    [self.helpButton setEnabled:YES];
-                                    [self.cancelCrossButton setEnabled:YES];
-                                    [self showAlertWithTitle:@"Sign up Error" andMsg:[NSString stringWithFormat:@"%@", error]];
-                                }
-                            }];
-                            
-                        }
-                        else{
-                            //just save, signed up via fb
-                            [self saveUser];
-                        }
-
+                        //sign user up first then save stuff
+                        
+                        [self.user signUpInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                            if (succeeded) {
+                                NSLog(@"signed up!");
+                                [self saveUser];
+                            }
+                            else{
+                                NSLog(@"signup failed %@", error);
+                                
+                                [Answers logCustomEventWithName:@"Email Signup error"
+                                               customAttributes:@{
+                                                                  @"error":error
+                                                                  }];
+                                
+                                [self hideHUD];
+                                [self.regButton setEnabled:YES];
+                                [self.helpButton setEnabled:YES];
+                                [self.cancelCrossButton setEnabled:YES];
+                                [self showAlertWithTitle:@"Sign up Error" andMsg:[NSString stringWithFormat:@"%@", error]];
+                            }
+                        }];
+                        
                     }
                     else{
-                        NSLog(@"username taken");
-                        [self hideHUD];
-                        [self.regButton setEnabled:YES];
-                        [self.helpButton setEnabled:YES];
-                        [self.cancelCrossButton setEnabled:YES];
-                        self.warningLabel.text = @"Username taken";
-                        self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
+                        //just save, signed up via fb
+                        [self saveUser];
                     }
+                    
                 }
                 else{
-                    NSLog(@"error checking username");
+                    NSLog(@"username taken");
                     [self hideHUD];
-                    self.warningLabel.text = @"Error with username";
                     [self.regButton setEnabled:YES];
-                    [self.cancelCrossButton setEnabled:YES];
                     [self.helpButton setEnabled:YES];
+                    [self.cancelCrossButton setEnabled:YES];
+                    self.warningLabel.text = @"Username taken";
+                    self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
                 }
             }];
         }
@@ -783,7 +821,8 @@
     self.user[@"completedReg"] = @"YES";
     self.user[@"indexedListings"] = @"YES";
     self.user[@"bumpArray"] = @[];
-    
+    [self.user setObject:[NSDate date] forKey:@"lastActive"];
+    [self.user addObject:[NSDate date] forKey:@"activeSessions"];
     
     //add device token to user obj so simple to track and ban
     PFInstallation *installation = [PFInstallation currentInstallation];
@@ -936,6 +975,7 @@
                  [bumpedObj setObject:self.user forKey:@"user"];
                  [bumpedObj setObject:[NSDate date] forKey:@"safeDate"];
                  [bumpedObj setObject:@0 forKey:@"timesBumped"];
+                 [bumpedObj setObject:@"live" forKey:@"status"];
                  [bumpedObj saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                      if (succeeded) {
                          NSLog(@"saved bumped obj");
@@ -1112,8 +1152,6 @@
         [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
                 [self hideHUD];
-
-                NSLog(@"SAVED IMAGE FILE");
                 
                 self.imageSaved = YES;
                 self.imageFile = filePicture;
@@ -1337,7 +1375,7 @@
             
             //next safe date to send email
             NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-            dayComponent.minute = 30;
+            dayComponent.minute = 5;
             NSCalendar *theCalendar = [NSCalendar currentCalendar];
             NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
             [self.user setObject:safeDate forKey:@"nextEmailSafeDate"];
@@ -1445,5 +1483,69 @@
     [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
     [localNotification setRepeatInterval: 0];
     [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+}
+
+#pragma mark - swipe view delegates
+
+-(UIView *)swipeView:(SwipeView *)swipeView viewForItemAtIndex:(NSInteger)index reusingView:(UIView *)view{
+    
+    UILabel *messageLabel = nil;
+    
+    if (view == nil)
+    {
+        view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 80,30)];
+        messageLabel = [[UILabel alloc]initWithFrame:CGRectMake(5,0, 70, 30)];
+        messageLabel.layer.cornerRadius = 7;
+        messageLabel.layer.masksToBounds = YES;
+        messageLabel.textAlignment = NSTextAlignmentCenter;
+        [messageLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+        [view addSubview:messageLabel];
+    }
+    else
+    {
+        messageLabel = [[view subviews] lastObject];
+    }
+    
+    //set brand label
+    messageLabel.text = [self.currencyArray objectAtIndex:index];
+    
+    //set image
+    if ([self.selectedCurrency isEqualToString:messageLabel.text]) {
+        //selected
+        messageLabel.backgroundColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
+        messageLabel.textColor = [UIColor whiteColor];
+        
+    }
+    else{
+        //unselected
+        messageLabel.backgroundColor = [UIColor clearColor];
+        messageLabel.textColor = [UIColor blackColor];
+    }
+    
+    return view;
+}
+-(void)swipeView:(SwipeView *)swipeView didSelectItemAtIndex:(NSInteger)index{
+    
+    NSString *selected = [self.currencyArray objectAtIndex:index];
+    
+    if (![self.selectedCurrency isEqualToString:selected]) {
+        //deselect currently selected currency
+        UIView *prevView = [self.currencySwipeView itemViewAtIndex:[self.currencyArray indexOfObject:self.selectedCurrency]];
+        UILabel *messageLabel = [[prevView subviews] lastObject];
+        messageLabel.backgroundColor = [UIColor clearColor];
+        messageLabel.textColor = [UIColor blackColor];
+        
+        //select new currency
+        self.selectedCurrency = selected;
+        UIView *newView = [self.currencySwipeView itemViewAtIndex:index];
+        UILabel *newMessageLabel = [[newView subviews] lastObject];
+        newMessageLabel.backgroundColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
+        newMessageLabel.textColor = [UIColor whiteColor];
+    }
+}
+
+-(NSInteger)numberOfItemsInSwipeView:(SwipeView *)swipeView{
+    
+    return self.currencyArray.count;
 }
 @end

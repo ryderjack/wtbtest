@@ -30,5 +30,8 @@
         [self.delegate genderSelected:@"Womens"];
     }
 }
+- (IBAction)explainProxyPressed:(id)sender {
+    [self.delegate proxyExplainPressed];
+}
 
 @end

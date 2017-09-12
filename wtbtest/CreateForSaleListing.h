@@ -51,6 +51,8 @@
 @property (nonatomic, strong) UIButton *fourthCam;
 @property (nonatomic, strong) UIButton *fifthCam;
 @property (nonatomic, strong) UIButton *sixthCam;
+@property (nonatomic, strong) UIButton *sevenCam;
+@property (nonatomic, strong) UIButton *eightCam;
 
 //add multiple images at once
 @property (nonatomic) BOOL multipleMode;
@@ -59,6 +61,7 @@
 //text fields
 @property (weak, nonatomic) IBOutlet UITextView *descriptionField;
 @property (weak, nonatomic) IBOutlet UITextField *payField;
+@property (weak, nonatomic) IBOutlet UITextField *quantityField;
 
 //choices
 @property (weak, nonatomic) IBOutlet UILabel *chooseCondition;
@@ -117,6 +120,18 @@
 @property (nonatomic, strong) NSIndexPath *selectedIndexPath;
 
 @property (nonatomic, strong) NSMutableArray *filesArray;
+@property (nonatomic, strong) NSMutableArray *imagesArray;
+
+@property (nonatomic) int runningPhotosTotal;
+
+@property (nonatomic, strong) UIImage *firstImage;
+@property (nonatomic, strong) UIImage *secondImage;
+@property (nonatomic, strong) UIImage *thirdImage;
+@property (nonatomic, strong) UIImage *fourthImage;
+@property (nonatomic, strong) UIImage *fifthImage;
+@property (nonatomic, strong) UIImage *sixthImage;
+@property (nonatomic, strong) UIImage *seventhImage;
+@property (nonatomic, strong) UIImage *eighthImage;
 
 @property (nonatomic) int cellWidth;
 
@@ -138,12 +153,13 @@
 @property (weak, nonatomic) IBOutlet UIImageView *chosenColourImageView;
 @property (weak, nonatomic) IBOutlet UIImageView *secondChosenColourImageView;
 
+//colour footer
 @property (nonatomic, strong) UIButton *dismissColourButton;
+@property (nonatomic, strong) UIView *colourContainerView;
 
 //image saving
 @property (nonatomic, strong) UIImage *itemImage;
 @property (nonatomic, strong) UIImage *placeHolderImage;
-
 
 //sam's mode
 @property(nonatomic) BOOL listingAsMode;
@@ -160,5 +176,13 @@
 //location
 @property (strong, nonatomic) PFGeoPoint *geopoint;
 @property (strong, nonatomic) NSString *locationString;
+
+@property (nonatomic, strong) UIView *imgFooterView;
+@property (strong, nonatomic) UILabel *imgFooterLabel;
+
+//img analyzer
+@property (nonatomic, strong) NSArray *categories;
+@property (nonatomic) BOOL calledImgAnalyzer;
+
 
 @end

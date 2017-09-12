@@ -16,7 +16,7 @@
 @class DetailImageController;
 
 @protocol DetailImageDelegate <NSObject>
-- (void)dismissedDetailImageView;
+- (void)dismissedDetailImageViewWithIndex:(NSInteger)lastSelected;
 @end
 
 @interface DetailImageController : UIViewController <UIScrollViewDelegate, iCarouselDelegate, iCarouselDataSource>

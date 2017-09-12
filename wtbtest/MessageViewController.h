@@ -22,7 +22,7 @@
 @class MessageViewController;
 
 @protocol messagesDelegate <NSObject>
-- (void)lastMessageInConvo:(PFObject *)message;
+- (void)lastMessageInConvo:(NSString *)message incomingMsg:(BOOL)incoming;
 @end
 
 @interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,JRWebViewDelegate, customAlertDelegate,QBImagePickerControllerDelegate, UITextViewDelegate, SwipeViewDelegate, SwipeViewDataSource, feedbackDelegate,bannerDelegate>
@@ -170,6 +170,6 @@
 @property (nonatomic) BOOL banMode;
 
 //blocked mode
-@property (nonatomic) BOOL userBlocked;
+@property (nonatomic) int paypalSentCounter;
 
 @end

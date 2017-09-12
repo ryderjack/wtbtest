@@ -32,6 +32,10 @@
 @property (nonatomic, strong) NSMutableArray *filterSizesArray;
 @property (nonatomic, strong) NSMutableArray *filterBrandsArray;
 @property (nonatomic, strong) NSMutableArray *filterColoursArray;
+@property (nonatomic, strong) NSString *filterCategory;
+
+@property (nonatomic) float filterLower;
+@property (nonatomic) float filterUpper;
 
 @property (nonatomic, strong) NSString *searchString;
 

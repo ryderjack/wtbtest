@@ -29,6 +29,7 @@
     
     self.thirdBody.adjustsFontSizeToFitWidth = YES;
     self.thirdBody.minimumScaleFactor=0.5;
+    
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -44,7 +45,7 @@
     }
     else if ([self.selection isEqualToString:@"New"]) {
         [self.secondLabel setTextColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
-
+        
     }
     else if ([self.selection isEqualToString:@"Used"]) {
         [self.thirdLabel setTextColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];

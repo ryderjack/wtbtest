@@ -7,8 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <ParseUI/ParseUI.h>
 
 @interface simpleBannerHeader : UICollectionReusableView
 @property (weak, nonatomic) IBOutlet UILabel *simpleHeaderLabel;
+@property (weak, nonatomic) IBOutlet PFImageView *headerImageView;
 
 @end

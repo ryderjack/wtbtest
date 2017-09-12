@@ -6,7 +6,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <customFonts key="customFonts">
@@ -21,8 +21,19 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="40"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="MVg-Of-fZ0" customClass="PFImageView">
+                    <rect key="frame" x="15" y="5" width="30" height="30"/>
+                    <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="30" id="IUb-xg-Ozj"/>
+                        <constraint firstAttribute="height" constant="30" id="Z6R-oh-p0n"/>
+                    </constraints>
+                </imageView>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Latest items for sale" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2da-o4-7dW">
-                    <rect key="frame" x="43" y="8" width="234" height="24"/>
+                    <rect key="frame" x="63" y="8" width="194" height="24"/>
+                    <constraints>
+                        <constraint firstAttribute="width" secondItem="2da-o4-7dW" secondAttribute="height" multiplier="73:8" constant="-25" id="PMn-Jl-D5Q"/>
+                    </constraints>
                     <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="12"/>
                     <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     <nil key="highlightedColor"/>
@@ -30,12 +41,14 @@
             </subviews>
             <color key="backgroundColor" red="0.41960784313725491" green="0.41960784313725491" blue="0.83921568627450982" alpha="1" colorSpace="calibratedRGB"/>
             <constraints>
-                <constraint firstItem="2da-o4-7dW" firstAttribute="top" secondItem="U6b-Vx-4bR" secondAttribute="topMargin" id="VWS-a6-k0f"/>
-                <constraint firstItem="2da-o4-7dW" firstAttribute="centerX" secondItem="U6b-Vx-4bR" secondAttribute="centerX" id="e8t-SM-aLu"/>
-                <constraint firstItem="2da-o4-7dW" firstAttribute="leading" secondItem="U6b-Vx-4bR" secondAttribute="leading" constant="43" id="xMj-Pq-6v4"/>
-                <constraint firstItem="2da-o4-7dW" firstAttribute="centerY" secondItem="U6b-Vx-4bR" secondAttribute="centerY" id="zXq-Fj-9Xm"/>
+                <constraint firstItem="MVg-Of-fZ0" firstAttribute="leading" secondItem="U6b-Vx-4bR" secondAttribute="leading" constant="15" id="Blu-kX-FG6"/>
+                <constraint firstItem="MVg-Of-fZ0" firstAttribute="centerY" secondItem="2da-o4-7dW" secondAttribute="centerY" id="e9D-fH-dBu"/>
+                <constraint firstItem="2da-o4-7dW" firstAttribute="leading" secondItem="MVg-Of-fZ0" secondAttribute="trailing" constant="18" id="eS5-Kf-KCF"/>
+                <constraint firstItem="2da-o4-7dW" firstAttribute="centerX" secondItem="U6b-Vx-4bR" secondAttribute="centerX" id="foi-5n-6jY"/>
+                <constraint firstItem="2da-o4-7dW" firstAttribute="centerY" secondItem="U6b-Vx-4bR" secondAttribute="centerY" id="sLT-Ei-NG4"/>
             </constraints>
             <connections>
+                <outlet property="headerImageView" destination="MVg-Of-fZ0" id="3EZ-bI-o5U"/>
                 <outlet property="simpleHeaderLabel" destination="2da-o4-7dW" id="fRR-r3-4OW"/>
             </connections>
             <point key="canvasLocation" x="34" y="49"/>

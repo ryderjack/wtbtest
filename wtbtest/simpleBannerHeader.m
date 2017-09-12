@@ -13,6 +13,7 @@
 - (void)awakeFromNib {
     [super awakeFromNib];
     // Initialization code
+    [self.headerImageView setHidden:YES];
     self.simpleHeaderLabel.adjustsFontSizeToFitWidth = YES;
     self.simpleHeaderLabel.minimumScaleFactor=0.5;
 }

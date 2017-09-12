@@ -8,11 +8,12 @@
 
 #import <UIKit/UIKit.h>
 #import <SwipeView/SwipeView.h>
+#import "NMRangeSlider.h"
 
 @class FilterVC;
 
 @protocol FilterDelegate <NSObject>
-- (void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours;
+- (void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper;
 - (void)noChange;
 
 @end
@@ -20,6 +21,13 @@
 @interface FilterVC : UITableViewController <SwipeViewDelegate, SwipeViewDataSource>
 
 @property (nonatomic, weak) id <FilterDelegate> delegate;
+
+//slider
+@property (weak, nonatomic) IBOutlet UILabel *sliderLabel;
+@property (weak, nonatomic) IBOutlet NMRangeSlider *doubleSlider;
+@property (nonatomic, strong) NSString *currencySymbol;
+@property (nonatomic) float filterLower;
+@property (nonatomic) float filterUpper;
 
 //general
 @property (strong, nonatomic) NSMutableArray *filtersArray;
@@ -31,11 +39,12 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *conditionCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *categoryCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *sizeCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *applyCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *distanceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *brandCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *colourCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *categoryIconCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *priceSliderCell;
 
 //price buttons
 @property (weak, nonatomic) IBOutlet UIButton *hightolowButton;
@@ -43,13 +52,20 @@
 
 //condition buttons
 @property (weak, nonatomic) IBOutlet UIButton *usedButton;
-@property (weak, nonatomic) IBOutlet UIButton *deadstockButton;
 @property (weak, nonatomic) IBOutlet UIButton *conditionNewButton;
 
 //category buttons
 @property (weak, nonatomic) IBOutlet UIButton *clothingButton;
 @property (weak, nonatomic) IBOutlet UIButton *footButton;
 @property (weak, nonatomic) IBOutlet UIButton *accessoryButton;
+
+//category cell w/ icons
+@property (weak, nonatomic) IBOutlet SwipeView *categorySwipeView;
+@property (nonatomic, strong) NSArray *categoryArray;
+//@property (strong, nonatomic) NSMutableArray *chosenCategoriesArray;
+@property (strong, nonatomic) NSString *chosenCategory;
+@property (nonatomic, strong) NSArray *categoryImagesArray;
+@property (nonatomic, strong) NSArray *categorySelectedImagesArray;
 
 //location buttons
 @property (weak, nonatomic) IBOutlet UIButton *distanceButton;
@@ -66,6 +82,9 @@
 @property (weak, nonatomic) IBOutlet SwipeView *brandSwipeView;
 @property (nonatomic, strong) NSArray *brandArray;
 @property (nonatomic, strong) NSArray *brandAcronymArray;
+
+@property (nonatomic, strong) NSArray *brandImagesArray;
+@property (nonatomic, strong) NSArray *brandSelectedImagesArray;
 
 @property (strong, nonatomic) NSMutableArray *chosenBrandsArray;
 

@@ -28,23 +28,47 @@
     
     self.shoesArray = [NSArray arrayWithObjects:@"1", @"1.5", @"2", @"2.5",@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", nil];
     
-    self.brandArray = [NSArray arrayWithObjects:@"Supreme", @"Palace", @"Bape",@"Patta",@"Off White",@"Gosha", @"Stussy",@"Kith", @"Adidas", @"Stone Island", @"Nike", @"Ralph Lauren", @"Gucci",@"Vetements",@"Balenciaga",@"Vlone",@"ASSC",@"CDG",@"P+F",@"Raf Simons",nil];
+    //brands
+    self.brandArray = [NSArray arrayWithObjects:@"Supreme", @"Palace", @"Bape",@"Patta",@"Off White",@"Gosha", @"Stussy",@"Kith", @"Adidas", @"Stone Island", @"Nike", @"Ralph Lauren", @"Gucci",@"Champion",@"Jordan",@"Louis Vuitton",@"Vetements",@"Balenciaga",@"Vlone",@"ASSC",@"CDG",@"P+F",@"Raf Simons", nil];
     
-    self.brandAcronymArray = [NSArray arrayWithObjects:@"supreme", @"palace", @"bape",@"patta",@"offwhite",@"gosha", @"stussy",@"kith",@"adidas", @"stoneisland", @"nike", @"ralph", @"gucci",@"vetements",@"balen",@"vlone",@"assc",@"cdg",@"pf",@"raf",nil];
+    self.brandImagesArray = [NSArray arrayWithObjects:@"supremeNormal1", @"palaceNormal2", @"bapeNormal3",@"pattaNormal2",@"offWhiteNormal1",@"goshaNormal1", @"stussyNormal",@"kithNormal", @"adidasNormal2", @"stoneyNormal2", @"nikeNormal2", @"ralphNormal2", @"gucciNormal",@"championNormal",@"jordanNormal",@"LVNormal",@"veteNormal",@"balenNormal",@"vloneNormal",@"asscNormal",@"cdgNormal",@"placesNormal",@"rafNormal", nil];
+    
+    self.brandSelectedImagesArray = [NSArray arrayWithObjects:@"supremeSelected1", @"palaceSelected2", @"bapeSelected2",@"pattaSelected2",@"offWhiteSelected1",@"goshaSelected1", @"stussySelected",@"kithSelected", @"adidasSelected2", @"stoneySelected2", @"nikeSelected2", @"ralphSelected2", @"gucciSelected",@"championSelected",@"jordanSelected",@"LVSelected",@"veteSelected",@"balenSelected",@"vloneSelected",@"asscSelected",@"cdgSelected",@"placesSelected",@"rafSelected", nil];
+    
+    self.brandAcronymArray = [NSArray arrayWithObjects:@"supreme", @"palace", @"bape",@"patta",@"offwhite",@"gosha", @"stussy",@"kith",@"adidas", @"stoneisland", @"nike", @"ralph", @"gucci",@"champion",@"jordan",@"lv",@"vetements",@"balen",@"vlone",@"assc",@"cdg",@"pf",@"raf",nil];
+    
+    //categories
+    self.chosenCategory = @"";
+    
+    self.categoryArray = [NSArray arrayWithObjects:@"Tops", @"Bottoms", @"Outerwear",@"Footwear",@"Accessories",@"Proxy", nil];
+    
+    self.categoryImagesArray = [NSArray arrayWithObjects:@"topsIcon",@"bottomsIcon",@"outIcon",@"footIcon",@"accIcon",@"proxyIcon", nil];
+    
+    self.categorySelectedImagesArray = [NSArray arrayWithObjects:@"topsSelected",@"bottomsSelected",@"outSelected",@"footSelected",@"accSelected",@"proxySelected", nil];
     
     self.titleCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.priceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.conditionCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.categoryCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.sizeCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.applyCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.distanceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.spaceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.brandCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.colourCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.categoryIconCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.priceSliderCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    //category swipe view
+    self.categorySwipeView.delegate = self;
+    self.categorySwipeView.dataSource = self;
+    self.categorySwipeView.clipsToBounds = YES;
+    self.categorySwipeView.pagingEnabled = NO;
+    self.categorySwipeView.truncateFinalPage = NO;
+    [self.categorySwipeView setBackgroundColor:[UIColor clearColor]];
+    self.categorySwipeView.alignment = SwipeViewAlignmentEdge;
+    [self.categorySwipeView reloadData];
     
     //setup sizes swipe view
-    
     self.sizeMode = @"footwear";
     self.lastSelected = @"";
     
@@ -86,6 +110,20 @@
     self.filtersArray = [NSMutableArray array];
     self.chosenSizesArray = [NSMutableArray array];
     self.chosenBrandsArray = [NSMutableArray array];
+    
+    //price slider
+    self.doubleSlider.minimumRange = 50;
+    
+    self.doubleSlider.maximumValue = 1000;
+    self.doubleSlider.minimumValue = 0;
+    self.doubleSlider.upperValue = 1000;
+    self.doubleSlider.lowerValue = 0;
+    
+    self.doubleSlider.stepValue = 10;
+    self.doubleSlider.stepValueContinuously = YES;
+    
+    [self.doubleSlider addTarget:self action:@selector(priceValueChanged) forControlEvents:UIControlEventValueChanged];
+    [self.doubleSlider setTintColor:[UIColor lightGrayColor]];
 
     if (self.sendArray) {
         [self.filtersArray addObjectsFromArray:self.sendArray];
@@ -93,9 +131,8 @@
         //set up previous filters
         if (self.filtersArray.count > 0) {
             
-            self.titleLabel.text = [NSString stringWithFormat:@"F I L T E R S  %lu", self.filtersArray.count];
+            [self updateTitle];
             
-            //check for brands
             if ([self.filtersArray containsObject:@"hightolow"]) {
                 [self.hightolowButton setSelected:YES];
             }
@@ -108,71 +145,62 @@
             if ([self.filtersArray containsObject:@"used"]){
                 [self.usedButton setSelected:YES];
             }
-            if ([self.filtersArray containsObject:@"deadstock"]){
-                [self.deadstockButton setSelected:YES];
-            }
             if ([self.filtersArray containsObject:@"aroundMe"]) {
                 [self.distanceButton setSelected:YES];
             }
-            if ([self.filtersArray containsObject:@"supreme"]) {
-                [self.chosenBrandsArray addObject:@"supreme"];
+            
+            if ([self.filtersArray containsObject:@"price"]) {
+                self.doubleSlider.lowerValue = self.filterLower;
+                self.doubleSlider.upperValue = self.filterUpper;
+                [self updateSliderLabels];
             }
-            if ([self.filtersArray containsObject:@"palace"]) {
-                [self.chosenBrandsArray addObject:@"palace"];
-            }
-            if ([self.filtersArray containsObject:@"bape"]) {
-                [self.chosenBrandsArray addObject:@"bape"];
-            }
-            if ([self.filtersArray containsObject:@"ralph"]) {
-                [self.chosenBrandsArray addObject:@"ralph"];
-            }
-            if ([self.filtersArray containsObject:@"nike"]) {
-                [self.chosenBrandsArray addObject:@"nike"];
-            }
-            if ([self.filtersArray containsObject:@"stoneisland"]) {
-                [self.chosenBrandsArray addObject:@"stoneisland"];
-            }
-            if ([self.filtersArray containsObject:@"adidas"]) {
-                [self.chosenBrandsArray addObject:@"adidas"];
-            }
-            if ([self.filtersArray containsObject:@"patta"]) {
-                [self.chosenBrandsArray addObject:@"patta"];
-            }
-            if ([self.filtersArray containsObject:@"gosha"]) {
-                [self.chosenBrandsArray addObject:@"gosha"];
-            }
-            if ([self.filtersArray containsObject:@"stussy"]) {
-                [self.chosenBrandsArray addObject:@"stussy"];
-            }
-            if ([self.filtersArray containsObject:@"kith"]) {
-                [self.chosenBrandsArray addObject:@"kith"];
-            }
-            if ([self.filtersArray containsObject:@"gucci"]) {
-                [self.chosenBrandsArray addObject:@"gucci"];
-            }
-            if ([self.filtersArray containsObject:@"offwhite"]) {
-                [self.chosenBrandsArray addObject:@"offwhite"];
-            }
-            if ([self.filtersArray containsObject:@"vetements"]) {
-                [self.chosenBrandsArray addObject:@"vetements"];
-            }
-            if ([self.filtersArray containsObject:@"balen"]) {
-                [self.chosenBrandsArray addObject:@"balen"];
-            }
-            if ([self.filtersArray containsObject:@"vlone"]) {
-                [self.chosenBrandsArray addObject:@"vlone"];
-            }
-            if ([self.filtersArray containsObject:@"assc"]) {
-                [self.chosenBrandsArray addObject:@"assc"];
-            }
-            if ([self.filtersArray containsObject:@"cdg"]) {
-                [self.chosenBrandsArray addObject:@"cdg"];
-            }
-            if ([self.filtersArray containsObject:@"pf"]) {
-                [self.chosenBrandsArray addObject:@"pf"];
-            }
-            if ([self.filtersArray containsObject:@"raf"]) {
-                [self.chosenBrandsArray addObject:@"raf"];
+            
+            //add brands
+            for (NSString *brand in self.brandAcronymArray) {
+                if ([self.filtersArray containsObject:brand]) {
+                    [self.chosenBrandsArray addObject:brand];
+                    
+                    //add extra keywords if needed
+                    if ([brand isEqualToString:@"offwhite"]) {
+                        [self.chosenBrandsArray addObject:@"off-white"];
+                    }
+                    else if ([brand isEqualToString:@"stoneisland"]) {
+                        [self.chosenBrandsArray addObject:@"stone"];
+                        [self.chosenBrandsArray addObject:@"island"];
+                    }
+                    else if ([brand isEqualToString:@"vlone"]) {
+                        [self.filtersArray addObject:@"vlone"];
+                        [self.chosenBrandsArray addObject:@"vlone"];
+                        [self.chosenBrandsArray addObject:@"v-lone"];
+                    }
+                    else if ([brand isEqualToString:@"assc"]) {
+                        [self.chosenBrandsArray addObject:@"assc"];
+                        [self.chosenBrandsArray addObject:@"antisocialclub"];
+                        [self.chosenBrandsArray addObject:@"anti"];
+                        [self.chosenBrandsArray addObject:@"social"];
+                        [self.chosenBrandsArray addObject:@"club"];
+                    }
+                    else if ([brand isEqualToString:@"cdg"]) {
+                        [self.chosenBrandsArray addObject:@"comme"];
+                        [self.chosenBrandsArray addObject:@"des"];
+                        [self.chosenBrandsArray addObject:@"garcons"];
+                    }
+                    else if ([brand isEqualToString:@"pf"]) {
+                        [self.chosenBrandsArray addObject:@"places"];
+                        [self.chosenBrandsArray addObject:@"faces"];
+                    }
+                    else if ([brand isEqualToString:@"raf"]) {
+                        [self.chosenBrandsArray addObject:@"simons"];
+                    }
+                    else if ([brand isEqualToString:@"lv"]) {
+                        [self.chosenBrandsArray addObject:@"louis"];
+                        [self.chosenBrandsArray addObject:@"vuitton"];
+                        [self.chosenBrandsArray addObject:@"vutton"];
+                    }
+                    else if ([brand isEqualToString:@"jordan"]) {
+                        [self.chosenBrandsArray addObject:@"jordans"];
+                    }
+                }
             }
             
             [self.brandSwipeView reloadData];
@@ -197,8 +225,24 @@
                 self.colourSwipeView.currentItemIndex = selectedIndex;
             }
             
-            if ([self.filtersArray containsObject:@"clothing"]){
+            //check for categories
+            for (NSString *category in self.filtersArray) {
+                if ([self.categoryArray containsObject:category]) {
+                    self.chosenCategory = category;
+                    break;
+                }
+            }
+            [self.categorySwipeView reloadData];
+            
+            if (![self.chosenCategory isEqualToString:@""]) {
+                //scroll swipeView to first selected category
+                NSUInteger selectedIndex = [self.categoryArray indexOfObject:self.chosenCategory];
+                self.categorySwipeView.currentItemIndex = selectedIndex;
+            }
+            
+            if ([self.filtersArray containsObject:@"Tops"] || [self.filtersArray containsObject:@"Bottoms"] || [self.filtersArray containsObject:@"Outerwear"]){
                 //check if send array contains a size & set as last selected
+                
                 for (NSString *parameter in self.sendArray) {
                     if ([self.sizeLabels containsObject:parameter]) {
 //                        self.lastSelected = parameter;
@@ -222,7 +266,7 @@
                 [self.menButton setEnabled:NO];
                 [self.womenButton setEnabled:NO];
             }
-            else if ([self.filtersArray containsObject:@"footwear"]){
+            else if ([self.filtersArray containsObject:@"Footwear"]){
                 
                 //check if send array contains a size & set as last selected
                 for (NSString *parameter in self.sendArray) {
@@ -248,9 +292,11 @@
                 [self.womenButton setEnabled:YES];
                 
             }
-            else if ([self.filtersArray containsObject:@"accessory"]){
+            else if ([self.filtersArray containsObject:@"Accessories"] || [self.filtersArray containsObject:@"Proxy"]){
                 [self.accessoryButton setSelected:YES];
                 [self setupFootwearSizes];
+                [self setupAccessories];
+                
                 [self.menButton setEnabled:NO];
                 [self.womenButton setEnabled:NO];
                 
@@ -342,7 +388,7 @@
                 return 125;
             }
             else if (indexPath.row == 2){
-                return 120;
+                return 174;
             }
             else if (indexPath.row == 3){
                 return 178;
@@ -351,7 +397,7 @@
                 return 120;
             }
             else if (indexPath.row == 5){
-                return 120;
+                return 215;
             }
             else if (indexPath.row == 6){
                 return 120;
@@ -373,7 +419,7 @@
                 return 125;
             }
             else if (indexPath.row == 2){
-                return 120;
+                return 174;
             }
             else if (indexPath.row == 3){
                 return 178;
@@ -382,7 +428,7 @@
                 return 120;
             }
             else if (indexPath.row == 5){
-                return 120;
+                return 215;
             }
             else if (indexPath.row == 6){
                 return 60;
@@ -398,7 +444,7 @@
                 return 174;
             }
             else if (indexPath.row == 1){
-                return 120;
+                return 174;
             }
             else if (indexPath.row == 2){
                 return 178;
@@ -431,7 +477,7 @@
                 return self.colourCell;
             }
             else if (indexPath.row == 2){
-                return self.categoryCell;
+                return self.categoryIconCell;
             }
             else if (indexPath.row == 3){
                 return self.sizeCell;
@@ -440,7 +486,7 @@
                 return self.conditionCell;
             }
             else if (indexPath.row == 5){
-                return self.priceCell;
+                return self.priceSliderCell;
             }
             else if (indexPath.row == 6){
                 return self.distanceCell;
@@ -462,7 +508,7 @@
                 return self.colourCell;
             }
             else if (indexPath.row == 2){
-                return self.categoryCell;
+                return self.categoryIconCell;
             }
             else if (indexPath.row == 3){
                 return self.sizeCell;
@@ -471,7 +517,7 @@
                 return self.conditionCell;
             }
             else if (indexPath.row == 5){
-                return self.priceCell;
+                return self.priceSliderCell;
             }
             else if (indexPath.row == 6){
                 return self.spaceCell;
@@ -487,7 +533,7 @@
                 return self.brandCell;
             }
             else if (indexPath.row == 1){
-                return self.categoryCell;
+                return self.categoryIconCell;
             }
             else if (indexPath.row == 2){
                 return self.sizeCell;
@@ -543,7 +589,12 @@
 
 -(void)updateTitle{
     if (self.filtersArray.count > 0) {
-        self.titleLabel.text = [NSString stringWithFormat:@"F I L T E R S  %lu", self.filtersArray.count];
+//        self.titleLabel.text = [NSString stringWithFormat:@"F I L T E R S  %lu", self.filtersArray.count];
+        
+        //change colour of filter number
+        NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"F I L T E R S  %lu",self.filtersArray.count]];
+        [self modifyString:filterString setColorForText:[NSString stringWithFormat:@"%lu",self.filtersArray.count] withColor:[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0]];
+        [self.titleLabel setAttributedText:filterString];
     }
     else{
         self.titleLabel.text = @"F I L T E R S";
@@ -554,7 +605,14 @@
     
     //if tap cross and just pressed clear then we should clear, otherwise forget the changes - revert back to filters selected when last hit apply
     if (self.filtersArray.count == 0 && self.sendArray.count != 0) {
-        [self.delegate filtersReturned:self.filtersArray withSizesArray:self.chosenSizesArray andBrandsArray:self.chosenBrandsArray andColours:self.chosenColourArray];
+        float upp = self.doubleSlider.upperValue;
+        
+        if (upp == 1000) {
+            upp = 100000;
+        }
+        
+        [self.delegate filtersReturned:self.filtersArray withSizesArray:self.chosenSizesArray andBrandsArray:self.chosenBrandsArray andColours:self.chosenColourArray andCategories:self.chosenCategory andPricLower:self.doubleSlider.lowerValue andPriceUpper:upp];
+    
     }
     else{
         [self.delegate noChange];
@@ -568,11 +626,6 @@
     
     [self.conditionNewButton setSelected:NO];
     [self.usedButton setSelected:NO];
-    [self.deadstockButton setSelected:NO];
-
-    [self.clothingButton setSelected:NO];
-    [self.accessoryButton setSelected:NO];
-    [self.footButton setSelected:NO];
     
     [self.menButton setSelected:NO];
     [self.womenButton setSelected:NO];
@@ -584,23 +637,32 @@
     [self.chosenSizesArray removeAllObjects];
     [self.chosenColourArray removeAllObjects];
     
+    self.chosenCategory = @"";
     self.lastSelected = @"";
+
     [self.swipeView reloadData];
     [self.brandSwipeView reloadData];
     [self.colourSwipeView reloadData];
+    [self.categorySwipeView reloadData];
+    
+    [self setupClothingSizes];
+    
+    self.doubleSlider.upperValue = 1000;
+    self.doubleSlider.lowerValue = 0;
+    [self updateSliderLabels];
     
     [self updateTitle];
 }
 - (IBAction)hightolowPressed:(id)sender {
     if(self.hightolowButton.selected == YES){
+        NSLog(@"remove selected ");
+
         [self.hightolowButton setSelected:NO];
         [self.filtersArray removeObject:@"hightolow"];
     }
     else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"hightolow"
-                                          }];
+        NSLog(@"add selected ");
+
         [self.hightolowButton setSelected:YES];
         [self.filtersArray addObject:@"hightolow"];
         [self.lowtoHighButton setSelected:NO];
@@ -614,10 +676,7 @@
         [self.filtersArray removeObject:@"lowtohigh"];
     }
     else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"lowtohigh"
-                                          }];
+
         [self.lowtoHighButton setSelected:YES];
         [self.filtersArray addObject:@"lowtohigh"];
         [self.hightolowButton setSelected:NO];
@@ -632,16 +691,11 @@
         [self.filtersArray removeObject:@"new"];
     }
     else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"new"
-                                          }];
+
         [self.conditionNewButton setSelected:YES];
         [self.filtersArray addObject:@"new"];
         [self.usedButton setSelected:NO];
         [self.filtersArray removeObject:@"used"];
-        [self.deadstockButton setSelected:NO];
-        [self.filtersArray removeObject:@"deadstock"];
     }
     [self updateTitle];
 }
@@ -653,36 +707,11 @@
         [self.filtersArray removeObject:@"used"];
     }
     else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"used"
-                                          }];
+
         [self.usedButton setSelected:YES];
         [self.filtersArray addObject:@"used"];
         [self.conditionNewButton setSelected:NO];
-        [self.filtersArray removeObject:@"deadstock"];
-        [self.deadstockButton setSelected:NO];
-        
         [self.filtersArray removeObject:@"new"];
-    }
-    [self updateTitle];
-}
-- (IBAction)deadstockPressed:(id)sender {
-    if(self.deadstockButton.selected == YES){
-        [self.deadstockButton setSelected:NO];
-        [self.filtersArray removeObject:@"deadstock"];
-    }
-    else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"deadstock"
-                                          }];
-        [self.deadstockButton setSelected:YES];
-        [self.filtersArray addObject:@"deadstock"];
-        [self.conditionNewButton setSelected:NO];
-        [self.filtersArray removeObject:@"new"];
-        [self.usedButton setSelected:NO];
-        [self.filtersArray removeObject:@"used"];
     }
     [self updateTitle];
 }
@@ -693,10 +722,7 @@
         [self.filtersArray removeObject:@"clothing"];
     }
     else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"clothing"
-                                          }];
+
         [self.clothingButton setSelected:YES];
         [self.filtersArray addObject:@"clothing"];
         [self.footButton setSelected:NO];
@@ -719,10 +745,7 @@
         [self.filtersArray removeObject:@"footwear"];
     }
     else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"footwear"
-                                          }];
+
         [self.footButton setSelected:YES];
         [self.filtersArray addObject:@"footwear"];
         [self.clothingButton setSelected:NO];
@@ -744,10 +767,7 @@
         
     }
     else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"accessories"
-                                          }];
+
         [self.accessoryButton setSelected:YES];
         [self.filtersArray addObject:@"accessory"];
         
@@ -799,8 +819,14 @@
                                           @"filter":filter
                                           }];
     }
+    float upp = self.doubleSlider.upperValue;
     
-    [self.delegate filtersReturned:noduplicates withSizesArray:self.chosenSizesArray andBrandsArray:self.chosenBrandsArray andColours:self.chosenColourArray];
+    if (upp == 1000) {
+        upp = 100000;
+    }
+    
+    [self.delegate filtersReturned:self.filtersArray withSizesArray:self.chosenSizesArray andBrandsArray:self.chosenBrandsArray andColours:self.chosenColourArray andCategories:self.chosenCategory andPricLower:self.doubleSlider.lowerValue andPriceUpper:upp];
+
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -810,10 +836,7 @@
         [self.filtersArray removeObject:@"male"];
     }
     else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"men"
-                                          }];
+
         [self.menButton setSelected:YES];
         [self.filtersArray addObject:@"male"];
         [self.womenButton setSelected:NO];
@@ -827,10 +850,7 @@
         [self.filtersArray removeObject:@"female"];
     }
     else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"women"
-                                          }];
+
         
         [self.womenButton setSelected:YES];
         [self.filtersArray addObject:@"female"];
@@ -846,10 +866,7 @@
         [self.filtersArray removeObject:@"aroundMe"];
     }
     else{
-        [Answers logCustomEventWithName:@"Filters enabled"
-                       customAttributes:@{
-                                          @"filter":@"aroundme"
-                                          }];
+
         [self.distanceButton setSelected:YES];
         [self.filtersArray addObject:@"aroundMe"];
     }
@@ -891,267 +908,321 @@
         
         //set brand label
         brandLabel.text = [self.brandArray objectAtIndex:index];
+        NSString *selected = [self.brandAcronymArray objectAtIndex:index];
         
-        if (index == 0) {
+        //set image
+        if ([self.chosenBrandsArray containsObject:selected]) {
+            //set selected
+            [brandLabel setTextColor:[UIColor whiteColor]];
+            [imageView setImage:[UIImage imageNamed:self.brandSelectedImagesArray[index]]];
 
-            //supreme
-            if ([self.chosenBrandsArray containsObject:@"supreme"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"supremeSelected1"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"supremeNormal1"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
         }
-        else if(index == 1){
-            //palace
-            if ([self.chosenBrandsArray containsObject:@"palace"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"palaceSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"palaceNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
+        else{
+            //set unselected
+            [brandLabel setTextColor:[UIColor lightGrayColor]];
+            [imageView setImage:[UIImage imageNamed:self.brandImagesArray[index]]];
         }
-        else if(index == 3){
-            //patta
-            if ([self.chosenBrandsArray containsObject:@"patta"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"pattaSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"pattaNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
+        
+//        if (index == 0) {
+//
+//            //supreme
+//            if ([self.chosenBrandsArray containsObject:@"supreme"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"supremeSelected1"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"supremeNormal1"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 1){
+//            //palace
+//            if ([self.chosenBrandsArray containsObject:@"palace"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"palaceSelected2"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"palaceNormal2"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 3){
+//            //patta
+//            if ([self.chosenBrandsArray containsObject:@"patta"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"pattaSelected2"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"pattaNormal2"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 4){
+//            //offwhite
+//            if ([self.chosenBrandsArray containsObject:@"offwhite"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"offWhiteSelected1"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"offWhiteNormal1"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 5){
+//            //gosha
+//            if ([self.chosenBrandsArray containsObject:@"gosha"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"goshaSelected1"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"goshaNormal1"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 6){
+//            //stussy
+//            if ([self.chosenBrandsArray containsObject:@"stussy"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"stussySelected"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"stussyNormal"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 7){
+//            //kith
+//            if ([self.chosenBrandsArray containsObject:@"kith"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"kithSelected"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"kithNormal"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 2){
+//            //bape
+//            if ([self.chosenBrandsArray containsObject:@"bape"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"bapeSelected2"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"bapeNormal3"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 8){
+//            //adidas
+//            if ([self.chosenBrandsArray containsObject:@"adidas"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"adidasSelected2"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"adidasNormal2"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 9){
+//            //Stone Island
+//            if ([self.chosenBrandsArray containsObject:@"stoneisland"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"stoneySelected2"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"stoneyNormal2"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 10){
+//            //Nike
+//            if ([self.chosenBrandsArray containsObject:@"nike"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"nikeSelected2"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"nikeNormal2"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 11){
+//            //Ralph Lauren
+//            if ([self.chosenBrandsArray containsObject:@"ralph"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"ralphSelected2"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"ralphNormal2"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 12){
+//            //Gucci
+//            if ([self.chosenBrandsArray containsObject:@"gucci"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"gucciSelected"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"gucciNormal"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 13){
+//            //Vetements
+//            if ([self.chosenBrandsArray containsObject:@"vetements"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"veteSelected"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"veteNormal"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 14){
+//            //Balenciaga
+//            if ([self.chosenBrandsArray containsObject:@"balen"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"balenSelected"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"balenNormal"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 15){
+//            //Vlone
+//            if ([self.chosenBrandsArray containsObject:@"vlone"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"vloneSelected"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"vloneNormal"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 16){
+//            //ASSC
+//            if ([self.chosenBrandsArray containsObject:@"assc"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"asscSelected"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"asscNormal"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 17){
+//            //CDG
+//            if ([self.chosenBrandsArray containsObject:@"cdg"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"cdgSelected"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"cdgNormal"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 18){
+//            //Places+Faces
+//            if ([self.chosenBrandsArray containsObject:@"pf"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"placesSelected"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"placesNormal"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+//        else if(index == 19){
+//            //Raf Simons
+//            if ([self.chosenBrandsArray containsObject:@"raf"]) {
+//                //selected img
+//                [imageView setImage:[UIImage imageNamed:@"rafSelected"]];
+//                [brandLabel setTextColor:[UIColor whiteColor]];
+//            }
+//            else{
+//                //default img
+//                [imageView setImage:[UIImage imageNamed:@"rafNormal"]];
+//                [brandLabel setTextColor:[UIColor lightGrayColor]];
+//            }
+//        }
+        return view;
+    }
+    else if (swipeView == self.categorySwipeView) {
+        UIImageView *imageView = nil;
+        UILabel *categoryLabel = nil;
+        
+        if (view == nil)
+        {
+            view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 80,90)];
+            imageView = [[UIImageView alloc]initWithFrame:CGRectMake(5,5, 50, 50)];
+            categoryLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 65, 60, 20)];
+            categoryLabel.numberOfLines = 0;
+            categoryLabel.textAlignment = NSTextAlignmentCenter;
+            categoryLabel.font = [UIFont fontWithName:@"PingFangSC-Medium" size:9];
+            [categoryLabel setTextColor:[UIColor lightGrayColor]];
+            [view setAlpha:1.0];
+            [view addSubview:categoryLabel];
+            [view addSubview:imageView];
         }
-        else if(index == 4){
-            //offwhite
-            if ([self.chosenBrandsArray containsObject:@"offwhite"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"offWhiteSelected1"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"offWhiteNormal1"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
+        else
+        {
+            imageView = [[view subviews] lastObject];
+            categoryLabel = [[view subviews] objectAtIndex:0];
         }
-        else if(index == 5){
-            //gosha
-            if ([self.chosenBrandsArray containsObject:@"gosha"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"goshaSelected1"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"goshaNormal1"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
+        
+        //set brand label
+        categoryLabel.text = [self.categoryArray objectAtIndex:index];
+        
+        //set image
+        if ([self.chosenCategory isEqualToString:categoryLabel.text]) {
+            //set selected
+            [categoryLabel setTextColor:[UIColor whiteColor]];
+            [imageView setImage:[UIImage imageNamed:self.categorySelectedImagesArray[index]]];
+            
         }
-        else if(index == 6){
-            //stussy
-            if ([self.chosenBrandsArray containsObject:@"stussy"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"stussySelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"stussyNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 7){
-            //kith
-            if ([self.chosenBrandsArray containsObject:@"kith"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"kithSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"kithNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 2){
-            //bape
-            if ([self.chosenBrandsArray containsObject:@"bape"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"bapeSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"bapeNormal3"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 8){
-            //adidas
-            if ([self.chosenBrandsArray containsObject:@"adidas"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"adidasSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"adidasNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 9){
-            //Stone Island
-            if ([self.chosenBrandsArray containsObject:@"stoneisland"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"stoneySelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"stoneyNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 10){
-            //Nike
-            if ([self.chosenBrandsArray containsObject:@"nike"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"nikeSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"nikeNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 11){
-            //Ralph Lauren
-            if ([self.chosenBrandsArray containsObject:@"ralph"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"ralphSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"ralphNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 12){
-            //Gucci
-            if ([self.chosenBrandsArray containsObject:@"gucci"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"gucciSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"gucciNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 13){
-            //Vetements
-            if ([self.chosenBrandsArray containsObject:@"vetements"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"veteSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"veteNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 14){
-            //Balenciaga
-            if ([self.chosenBrandsArray containsObject:@"balen"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"balenSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"balenNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 15){
-            //Vlone
-            if ([self.chosenBrandsArray containsObject:@"vlone"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"vloneSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"vloneNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 16){
-            //ASSC
-            if ([self.chosenBrandsArray containsObject:@"assc"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"asscSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"asscNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 17){
-            //CDG
-            if ([self.chosenBrandsArray containsObject:@"cdg"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"cdgSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"cdgNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 18){
-            //Places+Faces
-            if ([self.chosenBrandsArray containsObject:@"pf"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"placesSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"placesNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        else if(index == 19){
-            //Raf Simons
-            if ([self.chosenBrandsArray containsObject:@"raf"]) {
-                //selected img
-                [imageView setImage:[UIImage imageNamed:@"rafSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-            else{
-                //default img
-                [imageView setImage:[UIImage imageNamed:@"rafNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
+        else{
+            //set unselected
+            [categoryLabel setTextColor:[UIColor lightGrayColor]];
+            [imageView setImage:[UIImage imageNamed:self.categoryImagesArray[index]]];
         }
         return view;
     }
@@ -1259,7 +1330,7 @@
 
 -(void)swipeViewCurrentItemIndexDidChange:(SwipeView *)swipeView{
     
-    if (swipeView == self.brandSwipeView || swipeView == self.colourSwipeView) {
+    if (swipeView == self.brandSwipeView || swipeView == self.colourSwipeView || swipeView == self.categorySwipeView) {
         //do nothing
     }
     else{
@@ -1284,385 +1355,154 @@
         UIImageView *imageView = [[[self.brandSwipeView itemViewAtIndex:index] subviews] lastObject];
         UILabel *brandLabel = [[[self.brandSwipeView itemViewAtIndex:index] subviews] objectAtIndex:0];
         
-        if (index == 0) {
-            //supreme
-            if ([self.chosenBrandsArray containsObject:@"supreme"]) {
-                //deselect supreme
-                [self.filtersArray removeObject:@"supreme"];
-                [self.chosenBrandsArray removeObject:@"supreme"];
-                [imageView setImage:[UIImage imageNamed:@"supremeNormal1"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"supreme"];
-                [self.chosenBrandsArray addObject:@"supreme"];
-                [imageView setImage:[UIImage imageNamed:@"supremeSelected1"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 1){
-            //palace
-            if ([self.chosenBrandsArray containsObject:@"palace"]) {
-                //deselect
-                [self.filtersArray removeObject:@"palace"];
-                [self.chosenBrandsArray removeObject:@"palace"];
-                [imageView setImage:[UIImage imageNamed:@"palaceNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"palace"];
-                [self.chosenBrandsArray addObject:@"palace"];
-                [imageView setImage:[UIImage imageNamed:@"palaceSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 2){
-            //bape
-            if ([self.chosenBrandsArray containsObject:@"bape"]) {
-                //deselect
-                [self.filtersArray removeObject:@"bape"];
-                [self.chosenBrandsArray removeObject:@"bape"];
-                [imageView setImage:[UIImage imageNamed:@"bapeNormal3"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"bape"];
-                [self.chosenBrandsArray addObject:@"bape"];
-                [imageView setImage:[UIImage imageNamed:@"bapeSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 3){
-            //patta
-            if ([self.chosenBrandsArray containsObject:@"patta"]) {
-                //deselect
-                [self.filtersArray removeObject:@"patta"];
-                [self.chosenBrandsArray removeObject:@"patta"];
-                [imageView setImage:[UIImage imageNamed:@"pattaNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"patta"];
-                [self.chosenBrandsArray addObject:@"patta"];
-                [imageView setImage:[UIImage imageNamed:@"pattaSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 4){
-            //offwhite
-            if ([self.chosenBrandsArray containsObject:@"offwhite"]) {
-                //deselect
-                [self.filtersArray removeObject:@"offwhite"];
-                [self.chosenBrandsArray removeObject:@"offwhite"];
+        NSString *selected = [self.brandAcronymArray objectAtIndex:index];
+        
+        //enable/disable image & label
+        if ([self.chosenBrandsArray containsObject:selected]) {
+            //deselect
+            [brandLabel setTextColor:[UIColor lightGrayColor]];
+            [imageView setImage:[UIImage imageNamed:self.brandImagesArray[index]]];
+            
+            [self.filtersArray removeObject:selected];
+            [self.chosenBrandsArray removeObject:selected];
+            
+            //remove additional keywords for specific brands
+            if ([selected isEqualToString:@"offwhite"]) {
                 [self.chosenBrandsArray removeObject:@"off-white"];
-                [imageView setImage:[UIImage imageNamed:@"offWhiteNormal1"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
             }
-            else{
-                //select
-                [self.filtersArray addObject:@"offwhite"];
-                [self.chosenBrandsArray addObject:@"offwhite"];
-                [self.chosenBrandsArray addObject:@"off-white"];
-                [imageView setImage:[UIImage imageNamed:@"offWhiteSelected1"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 5){
-            //gosha
-            if ([self.chosenBrandsArray containsObject:@"gosha"]) {
-                //deselect
-                [self.filtersArray removeObject:@"gosha"];
-                [self.chosenBrandsArray removeObject:@"gosha"];
-                [imageView setImage:[UIImage imageNamed:@"goshaNormal1"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"gosha"];
-                [self.chosenBrandsArray addObject:@"gosha"];
-                [imageView setImage:[UIImage imageNamed:@"goshaSelected1"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 6){
-            //stussy
-            if ([self.chosenBrandsArray containsObject:@"stussy"]) {
-                //deselect
-                [self.filtersArray removeObject:@"stussy"];
-                [self.chosenBrandsArray removeObject:@"stussy"];
-                [imageView setImage:[UIImage imageNamed:@"stussyNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"stussy"];
-                [self.chosenBrandsArray addObject:@"stussy"];
-                [imageView setImage:[UIImage imageNamed:@"stussySelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 7){
-            //kith
-            if ([self.chosenBrandsArray containsObject:@"kith"]) {
-                //deselect
-                [self.filtersArray removeObject:@"kith"];
-                [self.chosenBrandsArray removeObject:@"kith"];
-                [imageView setImage:[UIImage imageNamed:@"kithNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"kith"];
-                [self.chosenBrandsArray addObject:@"kith"];
-                [imageView setImage:[UIImage imageNamed:@"kithSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 8){
-            //adidas
-            if ([self.chosenBrandsArray containsObject:@"adidas"]) {
-                //deselect
-                [self.filtersArray removeObject:@"adidas"];
-                [self.chosenBrandsArray removeObject:@"adidas"];
-                [imageView setImage:[UIImage imageNamed:@"adidasNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"adidas"];
-                [self.chosenBrandsArray addObject:@"adidas"];
-                [imageView setImage:[UIImage imageNamed:@"adidasSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 9){
-            //Stone Island
-            if ([self.chosenBrandsArray containsObject:@"stoneisland"]) {
-                //deselect
-                [self.filtersArray removeObject:@"stoneisland"];
-                
-                [self.chosenBrandsArray removeObject:@"stoneisland"];
+            else if ([selected isEqualToString:@"stoneisland"]) {
                 [self.chosenBrandsArray removeObject:@"stone"];
                 [self.chosenBrandsArray removeObject:@"island"];
-                
-                [imageView setImage:[UIImage imageNamed:@"stoneyNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
             }
-            else{
-                //select
-                [self.filtersArray addObject:@"stoneisland"];
-                [self.chosenBrandsArray addObject:@"stoneisland"];
-                [self.chosenBrandsArray addObject:@"stone"];
-                [self.chosenBrandsArray addObject:@"island"];
-                
-                [imageView setImage:[UIImage imageNamed:@"stoneySelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 10){
-            //Nike
-            if ([self.chosenBrandsArray containsObject:@"nike"]) {
-                //deselect
-                [self.filtersArray removeObject:@"nike"];
-                [self.chosenBrandsArray removeObject:@"nike"];
-                [imageView setImage:[UIImage imageNamed:@"nikeNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"nike"];
-                [self.chosenBrandsArray addObject:@"nike"];
-                [imageView setImage:[UIImage imageNamed:@"nikeSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 11){
-            //Ralph Lauren
-            if ([self.chosenBrandsArray containsObject:@"ralph"]) {
-                //deselect
-                [self.filtersArray removeObject:@"ralph"];
-                [self.chosenBrandsArray removeObject:@"ralph"];
-                [imageView setImage:[UIImage imageNamed:@"ralphNormal2"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"ralph"];
-                [self.chosenBrandsArray addObject:@"ralph"];
-                [imageView setImage:[UIImage imageNamed:@"ralphSelected2"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 12){
-            //Gucci
-            if ([self.chosenBrandsArray containsObject:@"gucci"]) {
-                //deselect
-                [self.filtersArray removeObject:@"gucci"];
-                [self.chosenBrandsArray removeObject:@"gucci"];
-                [imageView setImage:[UIImage imageNamed:@"gucciNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"gucci"];
-                [self.chosenBrandsArray addObject:@"gucci"];
-                [imageView setImage:[UIImage imageNamed:@"gucciSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 13){
-            //Vetements
-            if ([self.chosenBrandsArray containsObject:@"vetements"]) {
-                //deselect
-                [self.filtersArray removeObject:@"vetements"];
-                [self.chosenBrandsArray removeObject:@"vetements"];
-                [imageView setImage:[UIImage imageNamed:@"veteNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"vetements"];
-                [self.chosenBrandsArray addObject:@"vetements"];
-                [imageView setImage:[UIImage imageNamed:@"veteSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 14){
-            //Balenciaga
-            if ([self.chosenBrandsArray containsObject:@"balen"]) {
-                //deselect
-                [self.filtersArray removeObject:@"balen"];
-                [self.chosenBrandsArray removeObject:@"balenciaga"];
-                [imageView setImage:[UIImage imageNamed:@"balenNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"balen"];
-                [self.chosenBrandsArray addObject:@"balenciaga"];
-                [imageView setImage:[UIImage imageNamed:@"balenSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 15){
-            //Vlone
-            if ([self.chosenBrandsArray containsObject:@"vlone"]) {
-                //deselect
+            else if ([selected isEqualToString:@"vlone"]) {
                 [self.filtersArray removeObject:@"vlone"];
                 [self.chosenBrandsArray removeObject:@"vlone"];
                 [self.chosenBrandsArray removeObject:@"v-lone"];
-
-                [imageView setImage:[UIImage imageNamed:@"vloneNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
             }
-            else{
-                //select
-                [self.filtersArray addObject:@"vlone"];
-                [self.chosenBrandsArray addObject:@"vlone"];
-                [self.chosenBrandsArray addObject:@"v-lone"];
-                [imageView setImage:[UIImage imageNamed:@"vloneSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
-            }
-        }
-        else if(index == 16){
-            //ASSC
-            if ([self.chosenBrandsArray containsObject:@"assc"]) {
-                //deselect
-                [self.filtersArray removeObject:@"assc"];
+            else if ([selected isEqualToString:@"assc"]) {
                 [self.chosenBrandsArray removeObject:@"assc"];
                 [self.chosenBrandsArray removeObject:@"antisocialclub"];
                 [self.chosenBrandsArray removeObject:@"anti"];
                 [self.chosenBrandsArray removeObject:@"social"];
                 [self.chosenBrandsArray removeObject:@"club"];
-
-                [imageView setImage:[UIImage imageNamed:@"asscNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
             }
-            else{
-                //select
-                [self.filtersArray addObject:@"assc"];
+            else if ([selected isEqualToString:@"cdg"]) {
+                [self.chosenBrandsArray removeObject:@"comme"];
+                [self.chosenBrandsArray removeObject:@"des"];
+                [self.chosenBrandsArray removeObject:@"garcons"];
+            }
+            else if ([selected isEqualToString:@"pf"]) {
+                [self.chosenBrandsArray removeObject:@"places"];
+                [self.chosenBrandsArray removeObject:@"faces"];
+            }
+            else if ([selected isEqualToString:@"raf"]) {
+                [self.chosenBrandsArray removeObject:@"simons"];
+            }
+            else if ([selected isEqualToString:@"lv"]) {
+                [self.chosenBrandsArray removeObject:@"louis"];
+                [self.chosenBrandsArray removeObject:@"vuitton"];
+                [self.chosenBrandsArray removeObject:@"vutton"];
+            }
+            else if ([selected isEqualToString:@"jordan"]) {
+                [self.chosenBrandsArray removeObject:@"jordans"];
+            }
+        }
+        else{
+            //select
+            [brandLabel setTextColor:[UIColor whiteColor]];
+            [imageView setImage:[UIImage imageNamed:self.brandSelectedImagesArray[index]]];
+            
+            [self.filtersArray addObject:selected];
+            [self.chosenBrandsArray addObject:selected];
+            
+            //add additional keywords for specific brands
+            if ([selected isEqualToString:@"offwhite"]) {
+                [self.chosenBrandsArray addObject:@"off-white"];
+            }
+            else if ([selected isEqualToString:@"stoneisland"]) {
+                [self.chosenBrandsArray addObject:@"stone"];
+                [self.chosenBrandsArray addObject:@"island"];
+            }
+            else if ([selected isEqualToString:@"vlone"]) {
+                [self.filtersArray addObject:@"vlone"];
+                [self.chosenBrandsArray addObject:@"vlone"];
+                [self.chosenBrandsArray addObject:@"v-lone"];
+            }
+            else if ([selected isEqualToString:@"assc"]) {
                 [self.chosenBrandsArray addObject:@"assc"];
                 [self.chosenBrandsArray addObject:@"antisocialclub"];
                 [self.chosenBrandsArray addObject:@"anti"];
                 [self.chosenBrandsArray addObject:@"social"];
                 [self.chosenBrandsArray addObject:@"club"];
-                
-                [imageView setImage:[UIImage imageNamed:@"asscSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
             }
-        }
-        else if(index == 17){
-            //CDG
-            if ([self.chosenBrandsArray containsObject:@"cdg"]) {
-                //deselect
-                [self.filtersArray removeObject:@"cdg"];
-                [self.chosenBrandsArray removeObject:@"cdg"];
-                [self.chosenBrandsArray removeObject:@"comme"];
-                [self.chosenBrandsArray removeObject:@"des"];
-                [self.chosenBrandsArray removeObject:@"garcons"];
-
-                [imageView setImage:[UIImage imageNamed:@"cdgNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"cdg"];
-                [self.chosenBrandsArray addObject:@"cdg"];
+            else if ([selected isEqualToString:@"cdg"]) {
                 [self.chosenBrandsArray addObject:@"comme"];
                 [self.chosenBrandsArray addObject:@"des"];
                 [self.chosenBrandsArray addObject:@"garcons"];
-                
-                [imageView setImage:[UIImage imageNamed:@"cdgSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
             }
-        }
-        else if(index == 18){
-            //Places+Faces
-            if ([self.chosenBrandsArray containsObject:@"pf"]) {
-                //deselect
-                [self.filtersArray removeObject:@"pf"];
-                [self.chosenBrandsArray removeObject:@"pf"];
-                [self.chosenBrandsArray removeObject:@"places"];
-                [self.chosenBrandsArray removeObject:@"faces"];
-                
-                [imageView setImage:[UIImage imageNamed:@"placesNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                //select
-                [self.filtersArray addObject:@"pf"];
-                [self.chosenBrandsArray addObject:@"pf"];
+            else if ([selected isEqualToString:@"pf"]) {
                 [self.chosenBrandsArray addObject:@"places"];
                 [self.chosenBrandsArray addObject:@"faces"];
-
-                [imageView setImage:[UIImage imageNamed:@"placesSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
+            }
+            else if ([selected isEqualToString:@"raf"]) {
+                [self.chosenBrandsArray addObject:@"simons"];
+            }
+            else if ([selected isEqualToString:@"lv"]) {
+                [self.chosenBrandsArray addObject:@"louis"];
+                [self.chosenBrandsArray addObject:@"vuitton"];
+                [self.chosenBrandsArray addObject:@"vutton"];
+            }
+            else if ([selected isEqualToString:@"jordan"]) {
+                [self.chosenBrandsArray addObject:@"jordans"];
             }
         }
-        else if(index == 19){
-            //Raf Simons
-            if ([self.chosenBrandsArray containsObject:@"raf"]) {
-                //deselect
-                [self.filtersArray removeObject:@"raf"];
-                [self.chosenBrandsArray removeObject:@"raf"];
-                [self.chosenBrandsArray removeObject:@"simons"];
+    }
+    else if (swipeView == self.categorySwipeView) {
+        UIImageView *imageView = [[[self.categorySwipeView itemViewAtIndex:index] subviews] lastObject];
+        UILabel *catLabel = [[[self.categorySwipeView itemViewAtIndex:index] subviews] objectAtIndex:0];
+        
+        //deselect all categories
+        
+        if ([self.chosenCategory isEqualToString:catLabel.text]) {
+            //deselect the one tapped
+            [catLabel setTextColor:[UIColor lightGrayColor]];
+            [imageView setImage:[UIImage imageNamed:self.categoryImagesArray[index]]];
+            
+            [self.filtersArray removeObject:catLabel.text];
+            self.chosenCategory = @"";
+        }
+        else{
+            //select as new chosen category
+            
+            //first deselect previous if exists
+            if (![self.chosenCategory isEqualToString:@""]) {
+                UIImageView *imageView1 = [[[self.categorySwipeView itemViewAtIndex:[self.categoryArray indexOfObject:self.chosenCategory]] subviews] lastObject];
+                UILabel *catLabel1 = [[[self.categorySwipeView itemViewAtIndex:[self.categoryArray indexOfObject:self.chosenCategory]] subviews] objectAtIndex:0];
+                
+                [catLabel1 setTextColor:[UIColor lightGrayColor]];
+                [imageView1 setImage:[UIImage imageNamed:[self.categoryImagesArray objectAtIndex:[self.categoryArray indexOfObject:self.chosenCategory]]]];
+                
+                [self.filtersArray removeObject:self.chosenCategory];
 
-                [imageView setImage:[UIImage imageNamed:@"rafNormal"]];
-                [brandLabel setTextColor:[UIColor lightGrayColor]];
             }
-            else{
-                //select
-                [self.filtersArray addObject:@"raf"];
-                [self.chosenBrandsArray addObject:@"raf"];
-                [self.chosenBrandsArray addObject:@"simons"];
-
-                [imageView setImage:[UIImage imageNamed:@"rafSelected"]];
-                [brandLabel setTextColor:[UIColor whiteColor]];
+            
+            //select new category
+            [catLabel setTextColor:[UIColor whiteColor]];
+            [imageView setImage:[UIImage imageNamed:self.categorySelectedImagesArray[index]]];
+            
+            [self.filtersArray addObject:catLabel.text];
+            self.chosenCategory = catLabel.text;
+            
+            if ([catLabel.text isEqualToString:@"Footwear"]) {
+                [self setupFootwearSizes];
             }
+            else if ([catLabel.text isEqualToString:@"Tops"] || [catLabel.text isEqualToString:@"Bottoms"] || [catLabel.text isEqualToString:@"Outerwear"]) {
+                [self setupClothingSizes];
+            }
+            else if ([catLabel.text isEqualToString:@"Accessories"] || [catLabel.text isEqualToString:@"Proxy"]) {
+                [self setupAccessories];
+            }
+            
         }
     }
     else if (swipeView == self.colourSwipeView){
@@ -1731,16 +1571,17 @@
         }
         else{
             //if user hasn't selected a category then check what mode swipe view is in and add to filters array
-            if (![self.filtersArray containsObject:@"clothing"] && ![self.filtersArray containsObject:@"footwear"] && ![self.filtersArray containsObject:@"accessory"]) {
+            if (![self.filtersArray containsObject:@"Tops"] && ![self.filtersArray containsObject:@"Bottoms"] && ![self.filtersArray containsObject:@"Outerwear"] && ![self.filtersArray containsObject:@"Footwear"] && ![self.filtersArray containsObject:@"Accessories"] && ![self.filtersArray containsObject:@"Proxy"]) {
                 //no cat has been previously selected but user has tapped a size, can presume its a clothing size!
                 //so select clothing category too
-                [self.clothingButton setSelected:YES];
-                [self.footButton setSelected:NO];
-                [self.accessoryButton setSelected:NO];
                 
-                [self.filtersArray addObject:@"clothing"];
-                [self.filtersArray removeObject:@"footwear"];
-                [self.filtersArray removeObject:@"accessory"];
+                [self.filtersArray addObject:@"Tops"];
+                self.chosenCategory = @"Tops";
+                [self.categorySwipeView reloadData];
+                
+                //scroll to Tops category icon so its deffs seen
+                NSUInteger selectedIndex = [self.categoryArray indexOfObject:self.chosenCategory];
+                [self.categorySwipeView scrollToItemAtIndex:selectedIndex duration:0.2];
                 
                 [self.menButton setEnabled:NO];
                 [self.womenButton setEnabled:NO];
@@ -1759,7 +1600,6 @@
                 
                 //select
                 messageLabel.backgroundColor = [UIColor whiteColor];
-                //        self.lastSelected = messageLabel.text;
             }
         }
     }
@@ -1770,6 +1610,9 @@
     
     if (swipeView == self.brandSwipeView) {
         return self.brandArray.count;
+    }
+    else if (swipeView == self.categorySwipeView){
+        return self.categoryArray.count;
     }
     else if (swipeView == self.colourSwipeView){
         return self.coloursArray.count;
@@ -1785,6 +1628,9 @@
 }
 
 -(void)setupFootwearSizes{
+    [self.menButton setEnabled:YES];
+    [self.womenButton setEnabled:YES];
+    
     self.sizeMode = @"footwear";
     self.swipeView.alpha = 1.0;
     self.swipeView.userInteractionEnabled = YES;
@@ -1807,6 +1653,15 @@
 }
 
 -(void)setupClothingSizes{
+    [self.filtersArray removeObject:@"male"];
+    [self.filtersArray removeObject:@"female"];
+
+    [self.menButton setSelected:NO];
+    [self.womenButton setSelected:NO];
+    
+    [self.menButton setEnabled:NO];
+    [self.womenButton setEnabled:NO];
+    
     self.sizeMode = @"clothing";
     self.swipeView.alpha = 1.0;
     self.swipeView.userInteractionEnabled = YES;
@@ -1822,11 +1677,22 @@
 }
 
 -(void)setupAccessories{
+    [self.filtersArray removeObject:@"male"];
+    [self.filtersArray removeObject:@"female"];
+    
+    [self.menButton setSelected:NO];
+    [self.womenButton setSelected:NO];
+    
+    [self.menButton setEnabled:NO];
+    [self.womenButton setEnabled:NO];
+    
     self.sizeMode = @"accessories";
     
 //    [self.filtersArray removeObject:self.lastSelected];
     [self.filtersArray removeObjectsInArray:self.chosenSizesArray];
     [self.chosenSizesArray removeAllObjects];
+    
+    
     
     self.lastSelected = @"";
     [self updateTitle];
@@ -1873,4 +1739,54 @@
     [imageView.layer setBorderWidth: 1.0];
 }
 
+-(void)priceValueChanged{
+    [self updateSliderLabels];
+}
+- (void) updateSliderLabels
+{
+    if (self.doubleSlider.lowerValue == 0 && self.doubleSlider.upperValue == 1000) {
+        [self.filtersArray removeObject:@"price"];
+        [self.doubleSlider setTintColor:[UIColor lightGrayColor]];
+
+        self.sliderLabel.text = @"Any";
+    }
+    else if (self.doubleSlider.lowerValue == 0 && self.doubleSlider.upperValue != 1000){
+        if (![self.filtersArray containsObject:@"price"]) {
+            [self.filtersArray addObject:@"price"];
+        }
+        [self.doubleSlider setTintColor:[UIColor whiteColor]];
+        self.sliderLabel.text = [NSString stringWithFormat:@"up to %@%.0f",self.currencySymbol,self.doubleSlider.upperValue];
+    }
+    else if (self.doubleSlider.lowerValue != 0 && self.doubleSlider.upperValue == 1000){
+        if (![self.filtersArray containsObject:@"price"]) {
+            [self.filtersArray addObject:@"price"];
+        }
+        
+        [self.doubleSlider setTintColor:[UIColor whiteColor]];
+        self.sliderLabel.text = [NSString stringWithFormat:@"%@%.0f+",self.currencySymbol,self.doubleSlider.lowerValue];
+    }
+    else{
+        if (![self.filtersArray containsObject:@"price"]) {
+            [self.filtersArray addObject:@"price"];
+        }
+        
+        [self.doubleSlider setTintColor:[UIColor whiteColor]];
+        self.sliderLabel.text = [NSString stringWithFormat:@"%@%.0f to %@%.0f", self.currencySymbol,self.doubleSlider.lowerValue,self.currencySymbol,self.doubleSlider.upperValue];
+    }
+    
+    [self updateTitle];
+}
+
+#pragma mark - colour part of label
+
+-(NSMutableAttributedString *)modifyString: (NSMutableAttributedString *)mainString setColorForText:(NSString*) textToFind withColor:(UIColor*) color
+{
+    NSRange range = [mainString.mutableString rangeOfString:textToFind options:NSCaseInsensitiveSearch];
+    
+    if (range.location != NSNotFound) {
+        [mainString addAttribute:NSForegroundColorAttributeName value:color range:range];
+    }
+    
+    return mainString;
+}
 @end

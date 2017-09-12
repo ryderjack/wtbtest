@@ -89,8 +89,8 @@
                 }
                 
                 PFQuery *megaBanQuery = [PFQuery orQueryWithSubqueries:@[bannedQuery]];
-                [megaBanQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-                    if (number >= 1) {
+                [megaBanQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                    if (object) {
                         //user is banned - log them out
                         
                         [Answers logCustomEventWithName:@"Banned user attempted login"
@@ -105,6 +105,22 @@
 
                     }
                     else{
+                        //do final check against NSUserDefaults incase user was banned without device token coz didn't enable push
+                        if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"banned"] isEqualToString:@"YES"]) {
+                            [Answers logCustomEventWithName:@"Banned user attempted login"
+                                           customAttributes:@{
+                                                              @"trigger":@"defaults"
+                                                              }];
+                            [self hideHUD];
+                            
+                            [self.logInButton setEnabled:YES];
+                            [self.facebookLoginButton setEnabled:YES];
+                            [self.resetButton setEnabled:YES];
+                            
+                            [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
+                            return;
+                        }
+                        
                         //everything okay
                         NSLog(@"success logging in");
 

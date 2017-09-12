@@ -57,9 +57,6 @@
     [self.purchasedLabel setHidden:YES];
     [self.purchasedCheckView setHidden:YES];
     
-    self.buyNowArray = [NSMutableArray array];
-    self.buyNowIDs = [NSMutableArray array];
-    
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
         self.currencySymbol = @"£";
@@ -67,7 +64,7 @@
     else if ([self.currency isEqualToString:@"EUR"]) {
         self.currencySymbol = @"€";
     }
-    else if ([self.currency isEqualToString:@"USD"]) {
+    else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
         self.currencySymbol = @"$";
     }
     
@@ -214,9 +211,6 @@
                 [self.listingObject incrementKey:@"views"];
                 [self.listingObject saveInBackground];
             }
-            
-            //check what boosts are enabled then display the correct summary boost icon
-//            [self refreshBoostBadge];
             
             NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listingObject objectForKey:@"bumpArray"]];
 
@@ -722,42 +716,32 @@
 
 -(void)setupMessages{
     
-    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     NSString *possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"postUser"]objectId], self.listingObject.objectId];
     NSString *otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"postUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
-    NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
     
-    [convoQuery whereKey:@"convoId" containedIn:idArray];
-    [convoQuery includeKey:@"buyerUser"];
-    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+    //split into sub queries to avoid the contains parameter which can't be indexed
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
+    [convoQuery whereKey:@"convoId" equalTo:possID];
+    
+    PFQuery *otherPossConvo = [PFQuery queryWithClassName:@"convos"];
+    [otherPossConvo whereKey:@"convoId" equalTo:otherId];
+    
+    PFQuery *comboConvoQuery = [PFQuery orQueryWithSubqueries:@[convoQuery, otherPossConvo]];
+    [comboConvoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        
         if (object) {
             //convo exists, goto that one
             
-            if (self.featureBoost == YES || self.highlightBoost == YES || self.searchBoost == YES) {
-                [Answers logCustomEventWithName:@"Message Tapped from WTBListing"
-                               customAttributes:@{
-                                                  @"type":@"Boosted",
-                                                  @"featured":[NSNumber numberWithBool:self.featureBoost],
-                                                  @"highlighted":[NSNumber numberWithBool:self.highlightBoost],
-                                                  @"searchBoost":[NSNumber numberWithBool:self.searchBoost]
-                                                  }];
-            }
-            else{
-                [Answers logCustomEventWithName:@"Message Tapped from WTBListing"
-                               customAttributes:@{
-                                                  @"type":@"normal",
-                                                  @"featured":[NSNumber numberWithBool:self.featureBoost],
-                                                  @"highlighted":[NSNumber numberWithBool:self.highlightBoost],
-                                                  @"searchBoost":[NSNumber numberWithBool:self.searchBoost]
-                                                  }];
-            }
-            
+            [Answers logCustomEventWithName:@"Message Tapped from WTBListing"
+                           customAttributes:@{
+                                              @"type":@"normal",
+                                              }];
             MessageViewController *vc = [[MessageViewController alloc]init];
             vc.convoId = [object objectForKey:@"convoId"];
             vc.convoObject = object;
             vc.listing = self.listingObject;
             vc.otherUser = [object objectForKey:@"buyerUser"];
-            vc.otherUserName = [[object objectForKey:@"buyerUser"]username];
+            vc.otherUserName = self.buyer.username;
 //            vc.tabBarHeight = self.tabBarHeight;
             [self.longButton setEnabled:YES];
             [self hideHUD];
@@ -777,7 +761,11 @@
             convoObject[@"buyerUnseen"] = @0;
             convoObject[@"sellerUnseen"] = @0;
             convoObject[@"source"] = @"WTB";
-                        
+            convoObject[@"profileConvo"] = @"NO";
+            
+            [convoObject setObject:@"NO" forKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId]]; //SET make sure all previous convos have NO set if not already YES
+            [convoObject setObject:@"NO" forKey:[NSString stringWithFormat:@"deleted%@",self.buyer.objectId]];
+            
             //save additional stuff onto convo object for faster inbox loading
             if ([self.listingObject objectForKey:@"thumbnail"]) {
                 convoObject[@"thumbnail"] = [self.listingObject objectForKey:@"thumbnail"];
@@ -801,33 +789,19 @@
                 if (succeeded) {
                     //saved
                     
-                    if (self.featureBoost == YES || self.highlightBoost == YES || self.searchBoost == YES) {
-                        [Answers logCustomEventWithName:@"Message Tapped from WTBListing"
-                                       customAttributes:@{
-                                                          @"type":@"Boosted",
-                                                          @"featured":[NSNumber numberWithBool:self.featureBoost],
-                                                          @"highlighted":[NSNumber numberWithBool:self.highlightBoost],
-                                                          @"searchBoost":[NSNumber numberWithBool:self.searchBoost]
-                                                          }];
-                    }
-                    else{
-                        [Answers logCustomEventWithName:@"Message Tapped from WTBListing"
-                                       customAttributes:@{
-                                                          @"type":@"normal",
-                                                          @"featured":[NSNumber numberWithBool:self.featureBoost],
-                                                          @"highlighted":[NSNumber numberWithBool:self.highlightBoost],
-                                                          @"searchBoost":[NSNumber numberWithBool:self.searchBoost]
-                                                          }];
-                    }
+                    [Answers logCustomEventWithName:@"Message Tapped from WTBListing"
+                                   customAttributes:@{
+                                                      @"type":@"normal"
+                                                      }];
                     
                     MessageViewController *vc = [[MessageViewController alloc]init];
                     vc.convoId = [convoObject objectForKey:@"convoId"];
                     vc.convoObject = convoObject;
                     vc.listing = self.listingObject;
                     vc.userIsBuyer = NO;
-                    vc.otherUser = [self.listingObject objectForKey:@"postUser"];
-                    vc.otherUserName = [[self.listingObject objectForKey:@"postUser"]username];
-//                    vc.tabBarHeight = self.tabBarHeight;
+                    vc.otherUser = self.buyer;
+                    vc.otherUserName = self.buyer.username;
+
                     [self hideHUD];
                     [self.longButton setEnabled:YES];
                     [self.navigationController pushViewController:vc animated:YES];
@@ -854,74 +828,6 @@
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
 
     if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
-        
-        double secondsInADay = 86400;
-
-        //check if boosted and show boosts in title of alert view if so
-        if (self.highlightBoost == YES && self.searchBoost == YES && self.featureBoost == YES) {
-            
-            NSTimeInterval distanceBetweenDates = [[self.listingObject objectForKey:@"highlightExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost = distanceBetweenDates / secondsInADay;
-            
-            NSTimeInterval distanceBetweenDates1 = [[self.listingObject objectForKey:@"searchBoostExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost1 = distanceBetweenDates1 / secondsInADay;
-            
-            NSTimeInterval distanceBetweenDates2 = [[self.listingObject objectForKey:@"featuredBoostExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost2 = distanceBetweenDates2 / secondsInADay;
-            
-            actionSheet.title = [NSString stringWithFormat:@"Highlight Boost: %ld days\nSearch Boost: %ld days\nFeatured Boost: %ld days", (long)daysSinceBoost, (long)daysSinceBoost1, (long)daysSinceBoost2];
-        }
-        else if (self.highlightBoost == YES && self.searchBoost == YES && self.featureBoost == NO) {
-            
-            NSTimeInterval distanceBetweenDates = [[self.listingObject objectForKey:@"highlightExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost = distanceBetweenDates / secondsInADay;
-            
-            NSTimeInterval distanceBetweenDates1 = [[self.listingObject objectForKey:@"searchBoostExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost1 = distanceBetweenDates1 / secondsInADay;
-            
-            actionSheet.title = [NSString stringWithFormat:@"Highlight Boost: %ld days\nSearch Boost: %ld days", (long)daysSinceBoost, (long)daysSinceBoost1];
-        }
-        else if (self.highlightBoost == YES && self.searchBoost == NO && self.featureBoost == NO) {
-            
-            NSTimeInterval distanceBetweenDates = [[self.listingObject objectForKey:@"highlightExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost = distanceBetweenDates / secondsInADay;
-            
-            actionSheet.title = [NSString stringWithFormat:@"Highlight Boost: %ld days remaining", (long)daysSinceBoost];
-        }
-        else if (self.highlightBoost == NO && self.searchBoost == YES && self.featureBoost == NO) {
-            
-            NSTimeInterval distanceBetweenDates1 = [[self.listingObject objectForKey:@"searchBoostExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost1 = distanceBetweenDates1 / secondsInADay;
-            
-            actionSheet.title = [NSString stringWithFormat:@"Search Boost: %ld days remaining", (long)daysSinceBoost1];
-        }
-        else if (self.highlightBoost == NO && self.searchBoost == NO && self.featureBoost == YES) {
-            
-            NSTimeInterval distanceBetweenDates2 = [[self.listingObject objectForKey:@"featuredBoostExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost2 = distanceBetweenDates2 / secondsInADay;
-            
-            actionSheet.title = [NSString stringWithFormat:@"Featured Boost: %ld days remaining", (long)daysSinceBoost2];
-        }
-        else if (self.highlightBoost == NO && self.searchBoost == YES && self.featureBoost == YES) {
-            
-            NSTimeInterval distanceBetweenDates1 = [[self.listingObject objectForKey:@"searchBoostExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost1 = distanceBetweenDates1 / secondsInADay;
-            
-            NSTimeInterval distanceBetweenDates2 = [[self.listingObject objectForKey:@"featuredBoostExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost2 = distanceBetweenDates2 / secondsInADay;
-            
-            actionSheet.title = [NSString stringWithFormat:@"Search Boost: %ld days\nFeatured Boost: %ld days", (long)daysSinceBoost1,(long)daysSinceBoost2];
-        }
-        else if (self.highlightBoost == YES && self.searchBoost == NO && self.featureBoost == YES) {
-            
-            NSTimeInterval distanceBetweenDates = [[self.listingObject objectForKey:@"highlightExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost = distanceBetweenDates / secondsInADay;
-            
-            NSTimeInterval distanceBetweenDates2 = [[self.listingObject objectForKey:@"featuredBoostExpiry"]timeIntervalSinceDate:[NSDate date]];
-            NSInteger daysSinceBoost2 = distanceBetweenDates2 / secondsInADay;
-            
-            actionSheet.title = [NSString stringWithFormat:@"Search Boost: %ld days\nFeatured Boost: %ld days", (long)daysSinceBoost,(long)daysSinceBoost2];
-        }
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
@@ -968,7 +874,7 @@
                 }];
             }]];
         }
-        else if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"live"] && self.highlightBoost != YES && self.searchBoost != YES && self.featureBoost != YES) {
+        else if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"live"]) {
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as purchased" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 [self.delegate changedPurchasedStatus];
 
@@ -1041,7 +947,6 @@
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         [self showBarButton];
-//        [self refreshBoostBadge];
     }]];
     
     [self presentViewController:actionSheet animated:YES completion:nil];
@@ -1082,7 +987,6 @@
         self.hud.labelText = @"Copied";
     }
 }
-
 
 -(void)hideHUD{
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -1132,7 +1036,7 @@
     
     //user's general bump array (WTB + WTS)
     NSMutableArray *generalBumpedArray = [NSMutableArray array];
-    if ([[PFUser currentUser] objectForKey:@"bumpArray"]) {
+    if ([[PFUser currentUser] objectForKey:@"totalBumpArray"]) {
         [generalBumpedArray addObjectsFromArray:[[PFUser currentUser] objectForKey:@"totalBumpArray"]];
     }
     
@@ -1196,7 +1100,8 @@
         if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId]) {
             NSDictionary *params = @{@"userId": [[self.listingObject objectForKey:@"postUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.listingObject.objectId};
             
-            if (self.dontLikePush != YES) {
+            if (self.dontLikePush != YES && self.likedAlready != YES) {
+                self.likedAlready = YES;
                 [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                     if (!error) {
                         NSLog(@"push response %@", response);
@@ -1530,7 +1435,10 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
--(void)dismissedDetailImageView{
+-(void)dismissedDetailImageViewWithIndex:(NSInteger)lastSelected{
+    [self.carouselView scrollToItemAtIndex:lastSelected animated:NO];
+    self.picIndicator.currentPage = self.carouselView.currentItemIndex;
+
     [self showBarButton];
 }
 
@@ -1622,150 +1530,74 @@
 -(NSInteger)collectionView:(UICollectionView *)collectionView
     numberOfItemsInSection:(NSInteger)section
 {
-    if (collectionView == self.sendBox.collectionView) {
-        return self.facebookUsers.count;
-    }
-    else{
-        return self.buyNowArray.count;
-    }
+    return self.facebookUsers.count;
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     
-    if (collectionView != self.sendBox.collectionView) {
-        self.barButtonPressed = YES;
-
-        //buy now items
-        if (indexPath.row == self.buyNowArray.count-1 && self.buyNowArray.count > 1) {
-            
-            [Answers logCustomEventWithName:@"Tapped 'view more' after creating listing"
-                           customAttributes:@{}];
-
-            if (self.modalMode) {
-                //because this is being presented modally from search we can't access tabbar directly
-                [self hideBarButton];
-                
-                AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-                appDelegate.tabBarController.selectedIndex = 1;
-            }
-            else{
-                self.tabBarController.selectedIndex = 1;
-            }
-            [self successDonePressed];
+    //if user deselects the user thats already selected
+    if (self.selectedFriend == YES && self.friendIndexSelected == indexPath.row) {
+        //already selected this user so deselect him
+        NSLog(@"deselect");
+        
+        self.selectedFriend = NO;
+        [self.sendBox.collectionView reloadData];
+        [self.sendBox.smallInviteButton setHidden:NO];
+        
+        if ([self.sendBox.messageField isFirstResponder]) {
+            //dismiss keyboard only and show initial will be called there
+            [self.sendBox.messageField resignFirstResponder];
         }
         else{
-            [Answers logCustomEventWithName:@"Tapped for sale listing after creating listing"
-                           customAttributes:@{}];
-            
-            [self hideSuccess];
-            
-            self.shouldShowSuccess = YES;
-            
-            PFObject *WTS = [self.buyNowArray objectAtIndex:indexPath.item];
-            ForSaleListing *vc = [[ForSaleListing alloc]init];
-            vc.listingObject = WTS;
-            vc.WTBObject = self.similarListing;
-            vc.source = @"I want too";
-            vc.pureWTS = NO;
-            
-            if (self.modalMode) {
-                [self willDisappearSetup];
-                vc.delegate = self;
-            }
-            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-            [self presentViewController:nav animated:YES completion:nil];
+            //reset to OG appearance by calling show initial
+            [self ShowInitialSendBox];
         }
     }
+    
+    //if user selects another friend instead of the friend currently selected
+    else if (self.selectedFriend == YES && self.friendIndexSelected != indexPath.row){
+        
+        //update the selected friend
+        self.friendIndexSelected = (int)indexPath.row;
+        
+        //refresh
+        [self.sendBox.collectionView reloadData];
+    }
+    
+    //first tap of a user
     else{
-        //send collection view
-        NSLog(@"selected");
+        //after tapping a user
+        [self.sendBox.smallInviteButton setHidden:YES];
+        self.selectedFriend = YES;
+        self.friendIndexSelected = (int)indexPath.row;
+        [self.sendBox.collectionView reloadData];
         
-        //if user deselects the user thats already selected
-        if (self.selectedFriend == YES && self.friendIndexSelected == indexPath.row) {
-            //already selected this user so deselect him
-            NSLog(@"deselect");
-            
-            self.selectedFriend = NO;
-            [self.sendBox.collectionView reloadData];
-            [self.sendBox.smallInviteButton setHidden:NO];
-            
-            if ([self.sendBox.messageField isFirstResponder]) {
-                //dismiss keyboard only and show initial will be called there
-                [self.sendBox.messageField resignFirstResponder];
-            }
-            else{
-                //reset to OG appearance by calling show initial
-                [self ShowInitialSendBox];
-            }
-        }
+        //scroll up
+        [UIView animateWithDuration:0.5
+                              delay:0.0
+             usingSpringWithDamping:0.7
+              initialSpringVelocity:0.5
+                            options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                //Animations
+                                self.bgView.alpha = 0.8;
+                                
+                                [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height-(290+self.tabBarHeightInt),[UIApplication sharedApplication].keyWindow.frame.size.width,290)];
+                                [self.sendBox.messageField setHidden:NO];
+                            }
+                         completion:^(BOOL finished) {
+                             
+                         }];
         
-        //if user selects another friend instead of the friend currently selected
-        else if (self.selectedFriend == YES && self.friendIndexSelected != indexPath.row){
-            
-            //update the selected friend
-            self.friendIndexSelected = (int)indexPath.row;
-            
-            //refresh
-            [self.sendBox.collectionView reloadData];
-        }
-        
-        //first tap of a user
-        else{
-            //after tapping a user
-            [self.sendBox.smallInviteButton setHidden:YES];
-            self.selectedFriend = YES;
-            self.friendIndexSelected = (int)indexPath.row;
-            [self.sendBox.collectionView reloadData];
-            
-            //scroll up
-            [UIView animateWithDuration:0.5
-                                  delay:0.0
-                 usingSpringWithDamping:0.7
-                  initialSpringVelocity:0.5
-                                options:UIViewAnimationOptionCurveEaseIn animations:^{
-                                    //Animations
-                                    self.bgView.alpha = 0.8;
-                                    
-                                    [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height-(290+self.tabBarHeightInt),[UIApplication sharedApplication].keyWindow.frame.size.width,290)];
-                                    [self.sendBox.messageField setHidden:NO];
-                                }
-                             completion:^(BOOL finished) {
-                                 
-                             }];
-            
-            //title button
-            [self.longButton setTitle:@"S E N D" forState:UIControlStateNormal];
-            [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
-            [self.longButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        }
+        //title button
+        [self.longButton setTitle:@"S E N D" forState:UIControlStateNormal];
+        [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+        [self.longButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     }
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView
                  cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (collectionView != self.sendBox.collectionView) {
-        ForSaleCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
-        cell.itemView.image = nil;
-        
-        if (indexPath.row == self.buyNowArray.count-1 && self.buyNowArray.count > 1) {
-            [cell.itemView setImage:[UIImage imageNamed:@"viewMore"]];
-        }
-        else{
-            PFObject *WTS = [self.buyNowArray objectAtIndex:indexPath.item];
-            //        NSLog(@"WTS: %@ at index: %ld", WTS, (long)indexPath.row);
-            //setup cell
-            [cell.itemView setFile:[WTS objectForKey:@"thumbnail"]];
-            [cell.itemView loadInBackground];
-        }
-        
-        cell.itemView.layer.cornerRadius = 35;
-        cell.itemView.layer.masksToBounds = YES;
-        cell.itemView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-        cell.itemView.contentMode = UIViewContentModeScaleAspectFill;
-        
-        return cell;
-    }
     
     SendToUserCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.userImageView.image = nil;
@@ -2002,7 +1834,6 @@
 
 -(void)sendMessageWithText:(NSString *)messageText{
     //check if there is a profile convo between the users
-    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     
     //seen a crash here [__NSArrayM objectAtIndex:]: index 0 beyond bounds for empty array
     //so added protection
@@ -2041,18 +1872,20 @@
     }
     [[PFUser currentUser]saveInBackground];
     
-    
     //possible convoIDs
     NSString *possID = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId,selectedUser.objectId];
     NSString *otherId = [NSString stringWithFormat:@"%@%@",selectedUser.objectId,[PFUser currentUser].objectId];
     
-    NSArray *idArray = [NSArray arrayWithObjects:possID,otherId, nil];
+    //split into sub queries to avoid the contains parameter which can't be indexed
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
+    [convoQuery whereKey:@"convoId" equalTo:possID];
     
-    [convoQuery whereKey:@"convoId" containedIn:idArray];
-    [convoQuery includeKey:@"buyerUser"];
-    [convoQuery includeKey:@"sellerUser"];
+    PFQuery *otherPossConvo = [PFQuery queryWithClassName:@"convos"];
+    [otherPossConvo whereKey:@"convoId" equalTo:otherId];
     
-    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+    PFQuery *comboConvoQuery = [PFQuery orQueryWithSubqueries:@[convoQuery, otherPossConvo]];
+    [comboConvoQuery whereKey:@"profileConvo" equalTo:@"YES"];
+    [comboConvoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //convo exists
             PFObject *convo = object;
@@ -2343,376 +2176,6 @@
         }
     }
 }
-- (IBAction)iwantbuttonPressed:(id)sender {
-    if (self.wantMode == YES) {
-        
-        //present confirmation step only if haven't already hit this button here
-
-    }
-    else{
-        [self hideBarButton];
-        
-        //boost options
-        [Answers logCustomEventWithName:@"Boost pressed"
-                       customAttributes:@{
-                                          @"pageName":@"own Listing"
-                                          }];
-        
-        if ([self.buyer.objectId isEqualToString:[PFUser currentUser].objectId] && ![[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
-            
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Active Listings" message:@"You can't Boost an already purchased listing! Tap 'Boost' to unmark your listing as purchased and get it seen by sellers!" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"No thanks" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-            }]];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Boost" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                [self.listingObject setObject:@"live" forKey:@"status"];
-                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-                        
-                        //present Boost VC
-                        self.barButtonPressed = YES;
-
-                        boostController *vc = [[boostController alloc]init];
-                        vc.listing = self.listingObject;
-                        vc.delegate = self;
-                        
-                        if (self.modalMode) {
-                            [self willDisappearSetup];
-                        }
-                        
-                        [self presentViewController:vc animated:YES completion:nil];
-                        
-                        //unhide 'purchased' label
-                        self.purchasedLabel.alpha = 1.0;
-                        self.purchasedCheckView.alpha = 1.0;
-                        
-                        [UIView animateWithDuration:0.2
-                                              delay:0
-                                            options:UIViewAnimationOptionCurveEaseIn
-                                         animations:^{
-                                             self.purchasedLabel.alpha = 0.0;
-                                             self.purchasedCheckView.alpha = 0.0;
-                                             
-                                         }
-                                         completion:^(BOOL finished) {
-                                             [self.purchasedLabel setHidden:YES];
-                                             [self.purchasedCheckView setHidden:YES];
-                                             
-                                             self.purchasedLabel.alpha = 1.0;
-                                             self.purchasedCheckView.alpha = 1.0;
-                                         }];
-                    }
-                }];
-            }]];
-            
-            [self presentViewController:alertView animated:YES completion:nil];
-        }
-        else{
-            // i want button is now the boost button coz looking at own listing
-            self.barButtonPressed = YES;
-
-            boostController *vc = [[boostController alloc]init];
-            vc.listing = self.listingObject;
-            vc.delegate = self;
-            
-            if (self.modalMode) {
-                [self willDisappearSetup];
-            }
-            
-            [self presentViewController:vc animated:YES completion:nil];
-        }
-    }
-}
-
-
--(void)useCurrentLoc{
-    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
-        if (!error) {
-            double latitude = geoPoint.latitude;
-            double longitude = geoPoint.longitude;
-            
-            CLLocation *loc = [[CLLocation alloc]initWithLatitude:latitude longitude:longitude];
-            CLGeocoder *geocoder = [[CLGeocoder alloc]init];
-            [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
-                if (placemarks) {
-                    CLPlacemark *placemark = [placemarks lastObject];
-                    self.similarLocationString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.administrativeArea];
-                    
-                    if (geoPoint) {
-                        self.similarGeopoint = geoPoint;
-                    }
-                    else{
-                        NSLog(@"error with location");
-                    }
-                }
-                else{
-                    NSLog(@"error %@", error);
-                }
-            }];
-        }
-        else{
-            NSLog(@"error %@", error);
-        }
-    }];
-}
-
-
-#pragma mark - success view methods
-
--(void)setUpSuccess{
-    self.successView = nil;
-    
-    self.completionShowing = YES;
-    self.setupYes = YES;
-    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"SuccessView" owner:self options:nil];
-    self.successView = (CreateSuccessView *)[nib objectAtIndex:0];
-    self.successView.delegate = self;
-    self.successView.alpha = 0.0;
-    [self.successView setCollectionViewDataSourceDelegate:self indexPath:nil];
-    [[UIApplication sharedApplication].keyWindow insertSubview:self.successView aboveSubview:self.searchBgView];
-
-    
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-        //iphone5
-        [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -480, 300, 480)];
-    }
-    else{
-        [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170, -480, 340, 480)]; //iPhone 6/7 specific
-    }
-    
-    self.successView.layer.cornerRadius = 10;
-    self.successView.layer.masksToBounds = YES;
-    
-//    //show NEW label?
-//    if ([[NSUserDefaults standardUserDefaults] valueForKey:@"newBoostCount"]){
-//        NSInteger count = [[NSUserDefaults standardUserDefaults] integerForKey:@"newBoostCount"];
-//        if (count >= 5) {
-//            [self.successView.unseendNewLabel setHidden:YES];
-//        }
-//        else{
-//            [self.successView.unseendNewLabel setHidden:NO];
-//            count++;
-//            [[NSUserDefaults standardUserDefaults] setInteger:count forKey:@"newBoostCount"];
-//        }
-//    }
-//    else{
-//        //first time with new boost button
-//        [[NSUserDefaults standardUserDefaults] setInteger:1 forKey:@"newBoostCount"];
-//    }
-    
-    [self showSuccess];
-}
-
--(void)showSuccess{
-    NSLog(@"SHOW SUCCESS");
-    
-    [self.successView setAlpha:1.0];
-    [UIView animateWithDuration:1.5
-                          delay:0.0
-         usingSpringWithDamping:0.5
-          initialSpringVelocity:0.5
-                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                            //Animations
-                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-                                //iphone5
-                                [self.successView setFrame:CGRectMake(0, 0, 300, 480)];
-                            }
-                            else{
-                                [self.successView setFrame:CGRectMake(0, 0, 340, 480)];
-                            }
-                            self.successView.center = self.view.center;
-                            
-                            if (self.shouldShowSuccess == YES) {
-                                self.searchBgView.alpha = 0.8;
-                                self.shouldShowSuccess = NO;
-                            }
-                            
-                        }
-                     completion:^(BOOL finished) {
-                         
-                     }];
-}
-
--(void)hideSuccess{
-    self.createdListing = NO;
-    [UIView animateWithDuration:1.0
-                          delay:0.0
-         usingSpringWithDamping:0.1
-          initialSpringVelocity:0.5
-                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                            //Animations
-                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-                                //iphone5
-                                [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150,1000, 300, 480)];
-                            }
-                            else{
-                                [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170,1000, 340, 480)]; //iPhone 6/7 specific
-                            }
-                            [self.searchBgView setAlpha:0.0];
-                        }
-                     completion:^(BOOL finished) {
-                         //Completion Block
-                         self.completionShowing = NO;
-                         [self.successView setAlpha:0.0];
-                         
-                         if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
-                             //iphone5
-                             [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -480, 300, 480)];
-                         }
-                         else{
-                             [self.successView setFrame:CGRectMake((self.view.frame.size.width/2)-170, -480, 340, 480)]; //iPhone 6/7 specific
-                         }
-                     }];
-}
-
--(void)sharePressed{
-    [Answers logCustomEventWithName:@"Success Share pressed"
-                   customAttributes:@{
-                                      @"pageName":@"I want too"
-                                      }];
-    [self hideSuccess];
-    
-    self.shouldShowSuccess = YES;
-    self.barButtonPressed = YES;
-    
-    FBGroupShareViewController *vc = [[FBGroupShareViewController alloc]init];
-    vc.objectId = self.similarListing.objectId;
-    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:vc];
-    [self presentViewController:navigationController animated:YES completion:nil];
-}
-
--(void)successDonePressed{
-    [Answers logCustomEventWithName:@"Success Done pressed"
-                   customAttributes:@{
-                                      @"pageName":@"I want too"
-                                      }];
-    [self hideSuccess];
-}
-
--(void)createPressed{
-    [Answers logCustomEventWithName:@"Success Create pressed"
-                   customAttributes:@{
-                                      @"pageName":@"I want too"
-                                      }];
-    [self hideSuccess];
-    self.barButtonPressed = YES;
-
-    if (self.modalMode) {
-        //because this is being presented modally from search we can't access tabbar directly
-        [self willDisappearSetup];
-        [self removeKeyBoardObservers];
-
-        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-        appDelegate.tabBarController.selectedIndex = 2;
-        
-    }
-    else{
-        self.tabBarController.selectedIndex = 2;
-    }
-    
-}
-
--(void)editPressed{
-    [Answers logCustomEventWithName:@"Success Edit pressed"
-                   customAttributes:@{
-                                      @"pageName":@"I want too"
-                                      }];
-    [self hideSuccess];
-    
-    self.shouldShowSuccess = YES;
-    self.barButtonPressed = YES;
-    
-    //show edit VC
-    CreateViewController *vc = [[CreateViewController alloc]init];
-    vc.status = @"edit";
-    vc.listing = self.similarListing;
-    vc.addDetails = YES;
-    
-    if (self.modalMode) {
-        vc.delegate = self;
-        [self hideBarButton];
-    }
-    
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-    [self presentViewController:nav animated:YES completion:nil];
-}
-
--(void)addMorePressed{
-    [Answers logCustomEventWithName:@"Success Add more pressed"
-                   customAttributes:@{
-                                      @"pageName":@"create"
-                                      }];
-    [self hideSuccess];
-    
-    self.shouldShowSuccess = YES;
-    
-    self.barButtonPressed = YES;
-
-    //show edit VC
-    CreateViewController *vc = [[CreateViewController alloc]init];
-    vc.status = @"edit";
-    vc.listing = self.similarListing;
-    vc.addDetails = YES;
-    
-    if (self.modalMode) {
-        vc.delegate = self;
-        [self willDisappearSetup];
-    }
-    
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-    [self presentViewController:nav animated:YES completion:nil];
-}
-
--(void)findRelevantItems{
-    [self.buyNowArray removeAllObjects];
-    [self.buyNowIDs removeAllObjects];
-    
-    NSArray *WTBKeywords = [self.similarListing objectForKey:@"keywords"];
-    
-    PFQuery *salesQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-    [salesQuery whereKey:@"status" equalTo:@"live"];
-    [salesQuery whereKey:@"keywords" containedIn:WTBKeywords];
-    //    [salesQuery orderByDescending:@"createdAt"];
-    salesQuery.limit = 10;
-    [salesQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            [self.buyNowArray addObjectsFromArray:objects];
-            
-            for (PFObject *forSale in objects) {
-                [self.buyNowIDs addObject:forSale.objectId];
-            }
-            
-            if (objects.count < 10) {
-                PFQuery *salesQuery2 = [PFQuery queryWithClassName:@"forSaleItems"];
-                [salesQuery2 whereKey:@"status" equalTo:@"live"];
-                [salesQuery2 orderByDescending:@"lastUpdated"];
-                [salesQuery whereKey:@"objectId" notContainedIn:self.buyNowIDs];
-                salesQuery2.limit = 10-self.buyNowArray.count;
-                [salesQuery2 findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                    if (objects) {
-                        for (PFObject *forSale in objects) {
-                            if (![self.buyNowIDs containsObject:forSale.objectId]) {
-                                [self.buyNowArray addObject:forSale];
-                                [self.buyNowIDs addObject:forSale.objectId];
-                            }
-                        }
-                        [self.successView.collectionView reloadData];
-                    }
-                    else{
-                        NSLog(@"error in second query %@", error);
-                    }
-                }];
-            }
-            else{
-                [self.successView.collectionView reloadData];
-            }
-        }
-        else{
-            NSLog(@"error %@", error);
-        }
-    }];
-}
 
 -(void)goneToBackground{
     //block further keyboard changes
@@ -2956,30 +2419,6 @@
     return output;
 }
 
-// this boost pressed is from the success drop down
--(void)boostPressed{
-    [Answers logCustomEventWithName:@"Boost pressed"
-                   customAttributes:@{
-                                      @"pageName":@"create success"
-                                      }];
-    
-    [self hideSuccess];
-    self.shouldShowSuccess = YES;
-    
-    self.barButtonPressed = YES;
-    
-
-    boostController *vc = [[boostController alloc]init];
-    vc.delegate = self;
-    vc.listing = self.similarListing;
-    
-    if (self.modalMode) {
-        [self willDisappearSetup];
-    }
-    
-    [self presentViewController:vc animated:YES completion:nil];
-}
-
 -(void)checkStatus{
     if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"purchased"]) {
         [self.purchasedLabel setHidden:NO];
@@ -2988,124 +2427,6 @@
     else{
         [self.purchasedLabel setHidden:YES];
         [self.purchasedCheckView setHidden:YES];
-    }
-}
-
--(void)refreshBoostBadge{
-    
-    //check what boosts are enabled then display the correct boost icon
-    if ([self.listingObject objectForKey:@"highlighted"]) {
-        
-        NSDate *expiryDate = [self.listingObject objectForKey:@"highlightExpiry"];
-        
-        if ([[self.listingObject objectForKey:@"highlighted"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
-            
-            self.highlightBoost = YES;
-            
-        }
-        else if ([[self.listingObject objectForKey:@"highlighted"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
-            [self.listingObject removeObjectForKey:@"highlighted"];
-            [self.listingObject saveInBackground];
-        }
-        
-    }
-    
-    if ([self.listingObject objectForKey:@"searchBoost"]) {
-        
-        NSDate *expiryDate = [self.listingObject objectForKey:@"searchBoostExpiry"];
-        
-        if ([[self.listingObject objectForKey:@"searchBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
-            
-            self.searchBoost = YES;
-            
-        }
-        else if ([[self.listingObject objectForKey:@"searchBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
-            [self.listingObject removeObjectForKey:@"searchBoost"];
-            [self.listingObject saveInBackground];
-        }
-    }
-    
-    if ([self.listingObject objectForKey:@"featuredBoost"]) {
-        
-        NSDate *expiryDate = [self.listingObject objectForKey:@"featuredBoostExpiry"];
-        
-        if ([[self.listingObject objectForKey:@"featuredBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedDescending) {
-            
-            self.featureBoost = YES;
-
-        }
-        else if ([[self.listingObject objectForKey:@"featuredBoost"] isEqualToString:@"YES"] && [expiryDate compare:[NSDate date]]==NSOrderedAscending) {
-            [self.listingObject removeObjectForKey:@"featuredBoost"];
-            [self.listingObject saveInBackground];
-        }
-    }
-    
-    if (self.highlightBoost == YES && self.searchBoost == NO && self.featureBoost == NO && self.fromSearchBoost == NO) {
-        self.purchasedLabel.text = @"B O O S T";
-        [self.purchasedCheckView setImage:[UIImage imageNamed:@"blueBoost"]];
-        
-        [self.purchasedLabel setHidden:NO];
-        [self.purchasedCheckView setHidden:NO];
-    }
-    else if ((self.highlightBoost == YES && self.searchBoost == YES && self.featureBoost == NO) || (self.highlightBoost == NO && self.searchBoost == YES && self.featureBoost == NO) || self.fromSearchBoost == YES) {
-        self.purchasedLabel.text = @"B O O S T";
-        [self.purchasedCheckView setImage:[UIImage imageNamed:@"greenBoost"]];
-        
-        [self.purchasedLabel setHidden:NO];
-        [self.purchasedCheckView setHidden:NO];
-    }
-    else if ((self.highlightBoost == YES && self.searchBoost == YES && self.featureBoost == YES) || (self.highlightBoost == NO && self.searchBoost == YES && self.featureBoost == YES) || (self.highlightBoost == NO && self.searchBoost == NO && self.featureBoost == YES) || (self.highlightBoost == YES && self.searchBoost == NO && self.featureBoost == YES)) {
-        self.purchasedLabel.text = @"F E A T U R E D";
-        [self.purchasedCheckView setImage:[UIImage imageNamed:@"purpleBoost"]];
-        
-        [self.purchasedLabel setHidden:NO];
-        [self.purchasedCheckView setHidden:NO];
-    }
-    else {
-        [self checkStatus];
-    }
-}
-
-#pragma mark - boost delegate
-
--(void)dismissedWithPurchase:(NSString *)purchase{
-    
-    if (self.modalMode) {
-        [self willAppearSetup];
-    }
-    
-    if (![self.buyer.objectId isEqualToString:[PFUser currentUser].objectId] && ![purchase isEqualToString:@""]) {
-        //means they're seeing the boost controller as they've tapped they want it too
-        //so fire off notif to explore to update the listing
-        
-        [self.listingObject fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:@"latestListingBoosted" object:object];
-            }
-        }];
-    }
-    else{
-        if ([purchase isEqualToString:@"featured"]) {
-            self.purchasedLabel.text = @"F E A T U R E D";
-            [self.purchasedCheckView setImage:[UIImage imageNamed:@"purpleBoost"]];
-            
-            [self.purchasedLabel setHidden:NO];
-            [self.purchasedCheckView setHidden:NO];
-        }
-        else if ([purchase isEqualToString:@"search"]) {
-            self.purchasedLabel.text = @"B O O S T";
-            [self.purchasedCheckView setImage:[UIImage imageNamed:@"greenBoost"]];
-            
-            [self.purchasedLabel setHidden:NO];
-            [self.purchasedCheckView setHidden:NO];
-        }
-        else if ([purchase isEqualToString:@"highlight"]) {
-            self.purchasedLabel.text = @"B O O S T";
-            [self.purchasedCheckView setImage:[UIImage imageNamed:@"blueBoost"]];
-            
-            [self.purchasedLabel setHidden:NO];
-            [self.purchasedCheckView setHidden:NO];
-        }
     }
 }
 
@@ -3138,11 +2459,7 @@
         [self listingRefresh];
         self.editModePressed = NO;
     }
-    
-    if (self.shouldShowSuccess == YES) {
-        self.createdListing = YES;
-        [self showSuccess];
-    }
+
 }
 
 -(void)willDisappearSetup{
@@ -3290,6 +2607,7 @@
                  [bumpedObj setObject:[PFUser currentUser] forKey:@"user"];
                  [bumpedObj setObject:[NSDate date] forKey:@"safeDate"];
                  [bumpedObj setObject:@0 forKey:@"timesBumped"];
+                 [bumpedObj setObject:@"live" forKey:@"status"];
                  [bumpedObj saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                      if (succeeded) {
                          NSLog(@"saved bumped obj");

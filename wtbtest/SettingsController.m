@@ -40,6 +40,7 @@
     self.notificationsCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.locationLabelCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.bioCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.currencySwipeCell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     self.emailFields.delegate = self;
     self.depopField.delegate = self;
@@ -49,10 +50,31 @@
     self.bioField.delegate = self;
     
     self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"bump", @"terrible", @"bad", @"depop", @"grailed", @"ebay"];
-    
-    [self setImageBorder:self.testingView];
+    self.currencyArray = @[@"GBP", @"USD", @"EUR", @"AUD"];
     
     self.currentUser = [PFUser currentUser];
+
+    //currency swipe view
+    self.currencySwipeView.delegate = self;
+    self.currencySwipeView.dataSource = self;
+    self.currencySwipeView.clipsToBounds = YES;
+    self.currencySwipeView.pagingEnabled = NO;
+    self.currencySwipeView.truncateFinalPage = NO;
+    [self.currencySwipeView setBackgroundColor:[UIColor clearColor]];
+    self.currencySwipeView.alignment = SwipeViewAlignmentEdge;
+    
+    NSString *currency = [self.currentUser objectForKey:@"currency"];
+    
+    if ([self.currencyArray containsObject:currency]) {
+        self.selectedCurrency = currency;
+    }
+    else{
+        self.selectedCurrency = @"";
+    }
+    
+    [self.currencySwipeView reloadData];
+    
+    [self setImageBorder:self.testingView];
     
     self.currentPaypal = [self.currentUser objectForKey:@"paypal"];
     self.currentContact = [self.currentUser objectForKey:@"email"];
@@ -100,18 +122,6 @@
     
     self.contactEmailField.text = [NSString stringWithFormat:@"%@",self.currentContact];
     
-    NSString *currency = [self.currentUser objectForKey:@"currency"];
-    if ([currency isEqualToString:@"GBP"]) {
-        [self.GBPButton setSelected:YES];
-    }
-    else if ([currency isEqualToString:@"USD"]) {
-        [self.USDButton setSelected:YES];
-    }
-    else if ([currency isEqualToString:@"EUR"]) {
-        [self.EURButton setSelected:YES];
-    }
-    self.selectedCurrency = @"";
-    
     if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
         //CMO switch setup
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"CMOModeOn"]==YES) {
@@ -128,21 +138,6 @@
         else{
             [self.listAsSwitch setOn:NO];
         }
-        
-        //seller mode setup
-        PFQuery *trustedQuery = [PFQuery queryWithClassName:@"trustedSellers"];
-        [trustedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
-        [trustedQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-            if (number >= 1) {
-                
-                if ([[NSUserDefaults standardUserDefaults]boolForKey:@"notSellerMode"]==YES) {
-                    [self.sellerModeSwitch setOn:NO];
-                }
-                else{
-                    [self.sellerModeSwitch setOn:YES];
-                }
-            }
-        }];
     }
 }
 
@@ -294,7 +289,7 @@
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
-            return self.currencyCell;
+            return self.currencySwipeCell;
         }
     }
 //    else if (indexPath.section == 3){
@@ -383,6 +378,9 @@
                     if (succeeded) {
                         NSLog(@"saved!");
                         [self hideHUD];
+                        
+                        [self updateConvoImages];
+                        
                     }
                     else{
                         NSLog(@"error saving %@", error);
@@ -393,6 +391,11 @@
             else{
                 NSLog(@"error saving file %@", error);
                 [self hideHUD];
+                
+                [Answers logCustomEventWithName:@"Error saving profile PFFile"
+                               customAttributes:@{
+                                                  @"where":@"Settings"
+                                                  }];
             }
         }];
         [picker dismissViewControllerAnimated:YES completion:nil];
@@ -539,7 +542,7 @@
     //fail safe
     [self hideHUD];
 
-    if (![self.selectedCurrency isEqualToString:@""]) {
+    if (self.currencyChanged) {
         [self.currentUser  setObject:self.selectedCurrency forKey:@"currency"];
     }
     
@@ -1028,5 +1031,121 @@
     }
 }
 
+-(void)updateConvoImages{
+    //update user's top 20 recent convos to include the user's profile picture
+    //query for convos where I'm the buyer then update buyerPicture & same for sellerPicture
+   
+    PFQuery *convoQ = [PFQuery queryWithClassName:@"convos"];
+    [convoQ whereKey:@"totalMessages" greaterThan:@0];
+    [convoQ whereKeyExists:@"buyerUser"];
+    [convoQ whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+    [convoQ orderByDescending:@"lastSentDate"];
+    convoQ.limit = 20;
+    [convoQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            
+            for (PFObject *convo in objects) {
+                convo[@"buyerPicture"] = [[PFUser currentUser] objectForKey:@"picture"];
+                [convo saveInBackground];
+            }
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"Error retrieving user's buyer convos to change pic"
+                           customAttributes:@{
+                                              @"where":@"Settings",
+                                              }];
+        }
+    }];
+    
+    PFQuery *sellingConvoQ = [PFQuery queryWithClassName:@"convos"];
+    [sellingConvoQ whereKey:@"totalMessages" greaterThan:@0];
+    [sellingConvoQ whereKeyExists:@"sellerUser"];
+    [sellingConvoQ whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+    [sellingConvoQ orderByDescending:@"lastSentDate"];
+    sellingConvoQ.limit = 20;
+    [sellingConvoQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            
+            for (PFObject *convo in objects) {
+                convo[@"sellerPicture"] = [[PFUser currentUser] objectForKey:@"picture"];
+                [convo saveInBackground];
+            }
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"Error retrieving user's seller convos to change pic"
+                           customAttributes:@{
+                                              @"where":@"Settings",
+                                              }];
+        }
+    }];
+}
 
+
+#pragma mark - swipe view delegates
+
+-(UIView *)swipeView:(SwipeView *)swipeView viewForItemAtIndex:(NSInteger)index reusingView:(UIView *)view{
+    
+    UILabel *messageLabel = nil;
+    
+    if (view == nil)
+    {
+        view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 80,30)];
+        messageLabel = [[UILabel alloc]initWithFrame:CGRectMake(5,0, 70, 30)];
+        messageLabel.layer.cornerRadius = 7;
+        messageLabel.layer.masksToBounds = YES;
+        messageLabel.textAlignment = NSTextAlignmentCenter;
+        [messageLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+        [view addSubview:messageLabel];
+    }
+    else
+    {
+        messageLabel = [[view subviews] lastObject];
+    }
+    
+    //set brand label
+    messageLabel.text = [self.currencyArray objectAtIndex:index];
+    
+    //set image
+    if ([self.selectedCurrency isEqualToString:messageLabel.text]) {
+        //selected
+        messageLabel.backgroundColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
+        messageLabel.textColor = [UIColor whiteColor];
+        
+    }
+    else{
+        //unselected
+        messageLabel.backgroundColor = [UIColor clearColor];
+        messageLabel.textColor = [UIColor blackColor];
+    }
+    
+    return view;
+}
+-(void)swipeView:(SwipeView *)swipeView didSelectItemAtIndex:(NSInteger)index{
+    
+    NSString *selected = [self.currencyArray objectAtIndex:index];
+    
+    if (![self.selectedCurrency isEqualToString:selected]) {
+        self.currencyChanged = YES;
+        
+        //deselect currently selected currency
+        UIView *prevView = [self.currencySwipeView itemViewAtIndex:[self.currencyArray indexOfObject:self.selectedCurrency]];
+        UILabel *messageLabel = [[prevView subviews] lastObject];
+        messageLabel.backgroundColor = [UIColor clearColor];
+        messageLabel.textColor = [UIColor blackColor];
+        
+        //select new currency
+        self.selectedCurrency = selected;
+        UIView *newView = [self.currencySwipeView itemViewAtIndex:index];
+        UILabel *newMessageLabel = [[newView subviews] lastObject];
+        newMessageLabel.backgroundColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
+        newMessageLabel.textColor = [UIColor whiteColor];
+    }
+}
+
+-(NSInteger)numberOfItemsInSwipeView:(SwipeView *)swipeView{
+    
+    return self.currencyArray.count;
+}
 @end

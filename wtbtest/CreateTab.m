@@ -37,7 +37,7 @@
     //open WTB immediately
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(wantedPressed:) name:@"openWTB" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sellPressed:) name:@"openSell" object:nil];
-
+    
     if (self.introMode) {
         self.skipButton.alpha = 0.0;
         [self.skipButton setHidden:NO];
@@ -74,7 +74,7 @@
         else if ([self.currency isEqualToString:@"EUR"]) {
             self.currencySymbol = @"€";
         }
-        else if ([self.currency isEqualToString:@"USD"]) {
+        else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
             self.currencySymbol = @"$";
         }
     }
@@ -172,9 +172,9 @@
     //keep the success view neutral until loaded
     self.successView.mainLabel.text = @"";
     [self.successView.blueButton setTitle:@"" forState:UIControlStateNormal];
-
+    
     [self getLatestForSale];
-        
+    
 //    //find wanted items that match up to this listing
 //    PFQuery *wantedQuery = [PFQuery queryWithClassName:@"wantobuys"];
 //    [wantedQuery whereKey:@"status" equalTo:@"live"];
@@ -191,8 +191,6 @@
 //            NSLog(@"error getting relevant wanted items %@", error);
 //        }
 //    }];
-    
-//    [self triggerSuccess];
 }
 
 -(void)triggerSuccess{
@@ -216,7 +214,6 @@
                             self.successView.center = self.view.center;
                         }
                      completion:^(BOOL finished) {
-                         
                      }];
 }
 
@@ -261,6 +258,9 @@
                              self.createBPressed = NO;
                              [self wantedPressed:self];
                          }
+                         
+                         //load this again for next listing so different items
+                         [self getLatestForSale];
                      }];
 }
 
@@ -431,7 +431,6 @@
         PFObject *WTS = [self.buyNowArray objectAtIndex:indexPath.item];
         ForSaleListing *vc = [[ForSaleListing alloc]init];
         vc.listingObject = WTS;
-        vc.WTBObject = self.justPostedListing;
         vc.source = @"create";
         vc.pureWTS = YES;
         vc.fromCreate = YES;
@@ -548,44 +547,6 @@
     self.sellingSuccessMode = YES;
     self.justPostedListing = listing;
     self.createdAListing = YES;
-    
-//    //find wanted items that match up to this listing
-//    PFQuery *wantedQuery = [PFQuery queryWithClassName:@"wantobuys"];
-//    [wantedQuery whereKey:@"status" equalTo:@"live"];
-//    [wantedQuery orderByDescending:@"lastUpdated,bumpCount"];
-//    NSArray *listingKeywords = [listing objectForKey:@"keywords"];
-//    [wantedQuery whereKey:@"searchKeywords" containsAllObjectsInArray:listingKeywords];
-//    wantedQuery.limit = 10;
-//    [wantedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//        if (objects) {
-//            if (objects.count > 0) {
-//                self.WTBArray = objects;
-//                [self.successView.collectionView reloadData];
-//            }
-//            else{
-//                [self setupSuccessForSelling];
-//
-//                //no relevant WTBs so get the latest
-//                PFQuery *pullQuery = [PFQuery queryWithClassName:@"wantobuys"];
-//                [pullQuery whereKey:@"status" equalTo:@"live"];
-//                [pullQuery orderByDescending:@"lastUpdated"];
-//                pullQuery.limit = 10;
-//                [pullQuery cancel];
-//                [pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//                    if (error) {
-//                        NSLog(@"error getting for sale items");
-//                    }
-//                    else{
-//                        self.WTBArray = objects;
-//                        [self.successView.collectionView reloadData];
-//                    }
-//                }];
-//            }
-//        }
-//        else{
-//            NSLog(@"error getting relevant wanted items %@", error);
-//        }
-//    }];
     
     [self setupSuccessForSelling];
     [self triggerSuccess];

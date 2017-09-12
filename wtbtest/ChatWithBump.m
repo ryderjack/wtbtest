@@ -88,7 +88,7 @@
 
     if (self.showSuggested) {
 
-        self.suggestedMessagesArray = [NSMutableArray arrayWithObjects:@"Tap for more info ➡️",@"Authenticity", @"Payment",@"Email Verification",@"Location",@"Username Change",@"Password Change", nil];
+        self.suggestedMessagesArray = [NSMutableArray arrayWithObjects:@"Tap for more info ➡️",@"Authenticity", @"Payment",@"Email Verification",@"Location",@"Username Change",@"Password Change",@"Trading",@"Proxies", nil];
         self.actualMessagesToSend = [NSMutableArray arrayWithObjects:@"placeholder",[NSString stringWithFormat:@"Hey %@,\n\nHere's our fraud prevention policy. We've found this to be an effective way of ensuring authenticity on Bump:\n\n1️⃣ 📸 We encourage tagged photos on Bump so buyers can be sure items exist\n\n2️⃣ 👟 Our team of moderators are monitoring listings for fakes / suspicious behaviour\n\n3️⃣ 🔑 We make it really easy for anyone to report a listing to us\n\n4️⃣ 🤑 We encourage users to pay each other using PayPal Goods & Services so if something does go wrong, you're protected!\n\nIf however, you were to get sent a fake then you would be able to take up a claim with PayPal and get a full refund. And of course, we would be here to help you through the process 👊\n\nAny other questions please let me know!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
                                      
                             [NSString stringWithFormat:@"Hey %@,\n\nWhen you see something you like, send the seller a message to let them know you’re interested. Make sure you agree on specifics like price, postage and condition before you pay.\n\nWhen the deal is agreed, the seller can send their PayPal details within the chat on Bump. You can then pay the seller through PayPal without leaving Bump.\n\nWe encourage paying via Goods & Services to ensure you receive full buyer protection 💪\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
@@ -100,6 +100,8 @@
                                      [NSString stringWithFormat:@"Hey %@,\n\nFancy a change of username? Send us a message in chat here and we'll sort you out 🙌\n\nOnce it's changed just log out then back in!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
                                      
                                      [NSString stringWithFormat:@"Hey %@,\n\nForgot your password? Simply log out and then hit log in on the welcome screen. Then you can hit Reset in the top right corner of the screen!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     [NSString stringWithFormat:@"Hey %@,\n\nWe do NOT encourage trading on Bump for a number of reasons.\n\nMainly because it's so easy for scammers to hijack a trade. There's nothing stopping a scammer agreeing to send the item you expect to receive but in reality sending a completely different and often worthless item. When this happens you've lost your original item and it's extremely tough, if not impossible, to get some money back.\n\nAvoid trading and you'll be much safer 💰\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     [NSString stringWithFormat:@"Hey %@,\n\nWhat's a proxy?\n\nA proxy is when someone is willing to queue up for a drop on your behalf. It's almost like a preorder for items that are yet to be released. Usually you will pay someone proxying for you the retail price of the item plus a fee for the service.\n\nBe careful, it's easy for a scammer to take your money, promise to get your item and then never speak to you again.\n\nAlways pay via PayPal Goods & Services and ask the user proxying for references so you can be sure they're legitimate. If a user claims they need the payment to be gifted in order to access the funds faster, it's better to decline and find someone that will accept PayPal Goods & Services.\n\nIf you're ever unsure about a proxy, message Team Bump and we'll help you out 🤝\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
                                      nil];
 
 
@@ -484,7 +486,7 @@
                     imagePickerController.allowsMultipleSelection = YES;
                     imagePickerController.maximumNumberOfSelection = 4;
                     imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                    imagePickerController.numberOfColumnsInPortrait = 2;
+                    imagePickerController.numberOfColumnsInPortrait = 4;
                     imagePickerController.showsNumberOfSelectedAssets = YES;
                     [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
                 });
@@ -529,7 +531,7 @@
                         imagePickerController.allowsMultipleSelection = YES;
                         imagePickerController.maximumNumberOfSelection = 4;
                         imagePickerController.mediaType = QBImagePickerMediaTypeImage;
-                        imagePickerController.numberOfColumnsInPortrait = 2;
+                        imagePickerController.numberOfColumnsInPortrait = 4;
                         imagePickerController.showsNumberOfSelectedAssets = YES;
                         [self.navigationController presentViewController:imagePickerController animated:YES completion:NULL];
                     });

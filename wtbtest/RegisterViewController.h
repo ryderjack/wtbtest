@@ -18,6 +18,7 @@
 #import "TOJRWebView.h"
 #import "AddSizeController.h"
 #import <MessageUI/MessageUI.h>
+#import <SwipeView/SwipeView.h>
 
 @class RegisterViewController;
 
@@ -26,7 +27,7 @@
 - (void)RegVCLoginPressed;
 @end
 
-@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,CLLocationManagerDelegate, JRWebViewDelegate,sizeDelegate,MFMailComposeViewControllerDelegate>
+@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,CLLocationManagerDelegate, JRWebViewDelegate,sizeDelegate,MFMailComposeViewControllerDelegate,SwipeViewDelegate,SwipeViewDataSource>
 NS_ASSUME_NONNULL_BEGIN
 
 //cells
@@ -41,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *secondNameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *passwordCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *currencySwipeCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *nameField;
@@ -67,6 +69,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UIButton *USDButton;
 @property (weak, nonatomic) IBOutlet UIButton *EURButton;
 @property (nonnull, strong) NSString *selectedCurrency;
+
+//currency swipe view
+@property (weak, nonatomic) IBOutlet SwipeView *currencySwipeView;
+@property (nonatomic, strong) NSArray *currencyArray;
 
 //profanity
 @property (nonatomic, strong) NSArray *profanityList;

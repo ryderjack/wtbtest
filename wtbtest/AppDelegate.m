@@ -38,6 +38,7 @@
         
         configuration.applicationId = @"jack1234";
         configuration.clientKey = @"jack1234";
+        
         //local host
 //        configuration.server = @"http://localhost:1337/parse";
         
@@ -47,11 +48,11 @@
         //preproduction
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE
         
-        //s3 file adapter testing
+        //dev server w/ dev DB
 //        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
     }]];
 
-//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
     [[ChimpKit sharedKit] setApiKey:@"5cbba863ff961ff8c60266185defc785-us14"];
@@ -133,7 +134,7 @@
     
 //    MBFingerTipWindow *finger = [[MBFingerTipWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
 //    finger.alwaysShowTouches = YES;
-//    self.window = finger;
+//    self.window = finger; 
 
     self.window.rootViewController = self.tabBarController;
     [self.window makeKeyAndVisible];
@@ -369,10 +370,10 @@
     
     PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
     [unseenQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
-    [unseenQuery whereKey:@"totalMessages" notEqualTo:@0];
+    [unseenQuery whereKey:@"totalMessages" greaterThan:@0];
     [unseenQuery orderByDescending:@"createdAt"];
     //to stop user seeing an unread badge for a convo they can no longer see since its been deleted
-    [unseenQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] notEqualTo:@"YES"];
+    [unseenQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] equalTo:@"NO"];
     [unseenQuery includeKey:@"lastSent"];
     
     [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -412,7 +413,7 @@
 
                         totalUnseen = totalUnseen + unseen;
                         
-                        NSLog(@"TOTAL UNSEEN %d", totalUnseen);
+//                        NSLog(@"TOTAL UNSEEN %d", totalUnseen);
                     }
                 }
                 
@@ -832,7 +833,6 @@
     if ([PFUser currentUser]) {
         [[PFUser currentUser]setObject:[NSDate date] forKey:@"lastActive"];
         [[PFUser currentUser]addObject:[NSDate date] forKey:@"activeSessions"];
-
         [[PFUser currentUser]saveInBackground];
         
         [Answers logCustomEventWithName:@"User began session"

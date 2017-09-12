@@ -56,9 +56,9 @@
         UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
         self.navigationItem.leftBarButtonItem = cancelButton;
     }
+    [self setImageBorder:self.unreadView];
     
     if (self.unseenTBMsg == YES) {
-        NSLog(@"unseen TB msg");
         [self.unreadView setHidden:NO];
     }
     else{
@@ -74,6 +74,13 @@
 //        [PFUser currentUser][@"snapSeen"] = @"YES";
 //        [[PFUser currentUser]saveInBackground];
 //    }
+}
+
+-(void)setImageBorder:(UIImageView *)imageView{
+    imageView.layer.cornerRadius = 5;
+    imageView.layer.masksToBounds = YES;
+    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
+    imageView.contentMode = UIViewContentModeScaleAspectFill;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -142,10 +149,10 @@
     }
     else if (indexPath.section == 1){
         if (indexPath.row == 0) {
-            return self.instaCell;
+            return self.feedbackCell;
         }
         else if (indexPath.row == 1) {
-            return self.feedbackCell;
+            return self.instaCell;
         }
     }
     else if (indexPath.section == 2){
@@ -196,7 +203,7 @@
 
     }
     else if (indexPath.section == 1){
-        if (indexPath.row == 0) {
+        if (indexPath.row == 1) {
 
             [Answers logCustomEventWithName:@"Insta Follow Pressed"
                            customAttributes:@{}];
@@ -206,7 +213,7 @@
                 [[UIApplication sharedApplication] openURL: instaURL];
             }
         }
-        else if (indexPath.row == 1) {
+        else if (indexPath.row == 0) {
             //chat w/ Bump
             if (self.tappedTB) {
                 return;

@@ -25,7 +25,7 @@
 @interface UserProfileController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, JRWebViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ProfileSettingsDelegate,engageDelegate,FilterDelegate,ForSaleListingDelegate,ListingControllerDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
-@property (nonatomic, strong) NSArray *WTBArray;
+@property (nonatomic, strong) NSMutableArray *WTBArray;
 @property (nonatomic, strong) NSMutableArray *forSaleArray;
 @property (nonatomic, strong) NSMutableArray *bumpedArray;
 @property (nonatomic, strong) NSMutableArray *bumpedIds;
@@ -144,11 +144,17 @@
 @property (nonatomic, strong) NSMutableArray *filterSizesArray;
 @property (nonatomic, strong) NSMutableArray *filterBrandsArray;
 @property (nonatomic, strong) NSMutableArray *filterColoursArray;
+@property (nonatomic, strong) NSString *filterCategory;
+
+@property (nonatomic) float filterLower;
+@property (nonatomic) float filterUpper;
 
 @property (nonatomic, strong) PFQuery *saleQuery;
 
 //queries
 @property (nonatomic) BOOL loadingSales;
+@property (nonatomic) BOOL firstLoad; //prevent "no listings" showing whilst loading
+
 
 //browsing
 @property (nonatomic) BOOL tappedListing;

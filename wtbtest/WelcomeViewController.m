@@ -28,7 +28,7 @@
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
-    self.brandArray = [NSArray arrayWithObjects:@"supremeWelcome", @"palaceWelcome", @"pattaWelcome",@"offWhiteWelcome",@"goshaWelcome", @"adidasWelcome", @"stoneyWelcome", @"nikeWelcome",@"kithWelcome",@"ralphWelcome",@"yeezyWelcome",@"bapeWelcome",@"gucciWelcome",@"stussyWelcome",@"balenWelcome",@"cdgWelcome",@"veteWelcome",@"vloneWelcome",@"rafWelcome",@"asscWelcome",@"placesWelcome", nil];
+    self.brandArray = [NSArray arrayWithObjects:@"supremeWelcome", @"palaceWelcome", @"pattaWelcome",@"offWhiteWelcome",@"goshaWelcome", @"adidasWelcome", @"stoneyWelcome", @"nikeWelcome",@"kithWelcome",@"ralphWelcome",@"yeezyWelcome",@"bapeWelcome",@"gucciWelcome",@"stussyWelcome",@"balenWelcome",@"cdgWelcome",@"veteWelcome",@"vloneWelcome",@"rafWelcome",@"asscWelcome",@"jordanWelcome",@"LVWelcome",@"placesWelcome",@"champWelcome", nil];
     
     //brand swipe view
     self.brandSwipeView.delegate = self;
@@ -97,8 +97,8 @@
             }
             
             PFQuery *megaBanQuery = [PFQuery orQueryWithSubqueries:@[bannedInstallsQuery, bannedQuery]];
-            [megaBanQuery countObjectsInBackgroundWithBlock:^(int number, NSError * _Nullable error) {
-                if (number >= 1) {
+            [megaBanQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object){
                     //user is banned - log them out
                     NSLog(@"user is banned");
                     
@@ -112,6 +112,21 @@
 
                 }
                 else{
+                    //do final check against NSUserDefaults incase user was banned without device token coz didn't enable push
+                    if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"banned"] isEqualToString:@"YES"]) {
+                        NSLog(@"user is banned");
+                        
+                        [PFUser logOut];
+                        
+                        [Answers logCustomEventWithName:@"Logging Banned User Out"
+                                       customAttributes:@{
+                                                          @"from":@"Welcome",
+                                                          @"trigger":@"defaults"
+                                                          }];
+                        [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
+                        return;
+                    }
+                    
                     //not banned, now check if completed reg
                     NSLog(@"not banned");
                     

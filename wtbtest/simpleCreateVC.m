@@ -702,7 +702,6 @@
         PFObject *WTS = [self.buyNowArray objectAtIndex:indexPath.item];
         ForSaleListing *vc = [[ForSaleListing alloc]init];
         vc.listingObject = WTS;
-        vc.WTBObject = self.listing;
         vc.source = @"create";
         vc.pureWTS = NO;
         vc.fromCreate = YES;

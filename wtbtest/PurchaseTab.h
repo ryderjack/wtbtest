@@ -63,6 +63,8 @@
 
 //header
 @property (nonatomic, strong) simpleBannerHeader *headerView;
+@property (nonatomic) BOOL postingMode;
+@property (nonatomic, strong) UIImage *bannerImage;
 
 //array of WTB indexes
 @property (nonatomic, strong) NSMutableArray *listingIndexesArray;
@@ -115,7 +117,12 @@
 @property (nonatomic, strong) NSMutableArray *filterSizesArray;
 @property (nonatomic, strong) NSMutableArray *filterBrandsArray;
 @property (nonatomic, strong) NSMutableArray *filterColoursArray;
+@property (nonatomic, strong) NSString *filterCategory;
+@property (nonatomic) float filterLower;
+@property (nonatomic) float filterUpper;
+
 @property (weak, nonatomic) IBOutlet UILabel *noResultsLabel;
+@property (nonatomic) BOOL filterIntro;
 
 //floating location
 @property (weak, nonatomic) IBOutlet UIButton *floatingLocationButton;

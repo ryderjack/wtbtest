@@ -11,6 +11,7 @@
 #import "UserProfileController.h"
 #import "NavigationController.h"
 #import <Crashlytics/Crashlytics.h>
+#import "UIImageView+Letters.h"
 
 @interface ReviewsVC ()
 
@@ -30,7 +31,6 @@
     [self.dateFormatter setLocale:[NSLocale currentLocale]];
     [self.dateFormatter setDateFormat:@"dd MMM"];
     
-    self.feedbackArray = [NSMutableArray array];
     self.totalFeedback = [NSArray array];
     
 }
@@ -41,54 +41,15 @@
 }
 
 -(void)loadFeedback{
-    //first query for sales feedback
-    PFQuery *salesQuery = [PFQuery queryWithClassName:@"feedback"];
-    [salesQuery whereKey:@"sellerUser" equalTo:self.user];
-    [salesQuery whereKey:@"gaveFeedback" notEqualTo:self.user];
-    [salesQuery includeKey:@"buyerUser"];
-    [salesQuery includeKey:@"gaveFeedback"];
-    [salesQuery orderByDescending:@"createdAt"];
-    [salesQuery whereKey:@"status" notEqualTo:@"deleted"];
-    
-    [salesQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+    PFQuery *bigFeedbackQuery = [PFQuery queryWithClassName:@"feedback"];
+    [bigFeedbackQuery whereKey:@"status" equalTo:@"live"]; //SET set all previous feedback objects with a 'live' status
+    [bigFeedbackQuery whereKey:@"gotFeedback" equalTo:self.user]; //SET all previous feedback objects to add gotFeedback field of user who got feedback about them
+    [bigFeedbackQuery orderByDescending:@"createdAt"];
+    [bigFeedbackQuery includeKey:@"gaveFeedback"];
+    [bigFeedbackQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
-            [self.feedbackArray removeAllObjects];
-            [self.feedbackArray addObjectsFromArray:objects];
-            
-            //query for purchase feedback
-            PFQuery *purchaseQuery = [PFQuery queryWithClassName:@"feedback"];
-            [purchaseQuery whereKey:@"buyerUser" equalTo:self.user];
-            [purchaseQuery whereKey:@"gaveFeedback" notEqualTo:self.user];
-            [purchaseQuery includeKey:@"gaveFeedback"];
-            [purchaseQuery includeKey:@"sellerUser"];
-            [purchaseQuery orderByDescending:@"createdAt"];
-            [purchaseQuery whereKey:@"status" notEqualTo:@"deleted"];
-
-            [purchaseQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                if (!error) {
-                    [self.feedbackArray addObjectsFromArray:objects];
-                    NSSortDescriptor *sortDescriptor;
-                    sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"createdAt"
-                                                                 ascending:NO];
-                    NSArray *sortDescriptors = [NSArray arrayWithObject:sortDescriptor];
-                    NSArray *sortedArray = [self.feedbackArray sortedArrayUsingDescriptors:sortDescriptors];
-                    
-                    [self.feedbackArray removeAllObjects];
-                    [self.feedbackArray addObjectsFromArray:sortedArray];
-                    
-                    self.totalFeedback = nil;
-                    self.totalFeedback = [NSArray arrayWithArray:self.feedbackArray];
-                                        
-                    if (self.feedbackArray.count == 0) {
-                        //show label
-                    }
-                    
-                    [self.tableView reloadData];
-                }
-                else{
-                    NSLog(@"error %@", error);
-                }
-            }];
+            self.totalFeedback = objects;            
+            [self.tableView reloadData];
         }
         else{
             NSLog(@"error %@", error);
@@ -145,10 +106,20 @@
     }
 
     PFUser *gaveUser = [feedbackObject objectForKey:@"gaveFeedback"];
-    [cell.userImageView setFile:[gaveUser objectForKey:@"picture"]];
-    [cell.userImageView loadInBackground];
-    cell.usernameLabel.text = gaveUser.username;
     
+    if([gaveUser objectForKey:@"picture"]){
+        
+        [cell.userImageView setFile:[gaveUser objectForKey:@"picture"]];
+        [cell.userImageView loadInBackground];
+    }
+    else{
+        NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
+                                        NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+        
+        [cell.userImageView setImageWithString:gaveUser.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
+    }
+    
+    cell.usernameLabel.text = gaveUser.username;
     cell.commentLabel.text = [feedbackObject objectForKey:@"comment"];
 
     return cell;
@@ -165,7 +136,8 @@
         self.selectedFbObject = feedbackObject;
         [self reviewPressed];
     }
-    else{
+    else if(gaveUser){
+        //control for nil users
         UserProfileController *vc = [[UserProfileController alloc]init];
         vc.user = gaveUser;
         [self.navigationController pushViewController:vc animated:YES];
@@ -244,24 +216,11 @@
     
     //update user's deals data
     PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
-    
-    PFUser *gaveFeedback = [feedbackObject objectForKey:@"gaveFeedback"];
-    
-    PFUser *otherUser;
-    if ([[[feedbackObject objectForKey:@"sellerUser"]objectId] isEqualToString:gaveFeedback.objectId]) {
-        //current user is seller user
-        otherUser = [feedbackObject objectForKey:@"buyerUser"];
-        
-    }
-    else{
-        //current user is buyer user so get the other one
-        otherUser = [feedbackObject objectForKey:@"sellerUser"];
-    }
-    
-    [dealsQuery whereKey:@"User" equalTo:otherUser];
+    PFUser *gotFeedback = [feedbackObject objectForKey:@"gotFeedback"];
+    [dealsQuery whereKey:@"User" equalTo:gotFeedback];
     [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
-            NSLog(@"found users deals data %@", object);
+//            NSLog(@"found users deals data %@", object);
             
             //decrement by the same star value
             [object incrementKey:[NSString stringWithFormat:@"star%d",starsLeft] byAmount:@-1];
