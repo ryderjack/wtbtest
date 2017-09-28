@@ -19,6 +19,7 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CreateForSaleListing">
             <connections>
+                <outlet property="buySwitch" destination="kT1-tb-n15" id="D1W-L1-SLO"/>
                 <outlet property="categoryCell" destination="aC1-qw-8pf" id="cwo-Cu-Dka"/>
                 <outlet property="chooseCategroy" destination="Hu5-g1-WXZ" id="ik2-Qh-4XR"/>
                 <outlet property="chooseColourLabel" destination="IeN-cY-Llm" id="vNy-4W-VBw"/>
@@ -34,6 +35,7 @@
                 <outlet property="descriptionField" destination="NQE-yy-Veq" id="Gem-O6-6ty"/>
                 <outlet property="imagesCell" destination="E7x-Pq-Owk" id="vau-Np-Jeo"/>
                 <outlet property="imgCollectionView" destination="lAc-Aj-aer" id="Cq2-XW-nZV"/>
+                <outlet property="instantBuyCell" destination="Ct2-8t-qCH" id="OZC-KO-SNf"/>
                 <outlet property="itemTitleCell" destination="5SR-eh-mGX" id="XgX-DU-OP4"/>
                 <outlet property="itemTitleTextField" destination="4aM-rQ-nkS" id="vZg-0s-Jfa"/>
                 <outlet property="locationCell" destination="dGV-BU-bwH" id="EWc-Nf-PXP"/>
@@ -41,6 +43,8 @@
                 <outlet property="payField" destination="Gxo-KE-miQ" id="lur-aM-Zlj"/>
                 <outlet property="quantityField" destination="qXK-pe-SVX" id="sEj-X5-04Z"/>
                 <outlet property="secondChosenColourImageView" destination="l5y-nN-gFs" id="FOJ-FE-7zw"/>
+                <outlet property="selectShippingLabel" destination="koj-2h-iD3" id="NgO-D2-52r"/>
+                <outlet property="shippingCell" destination="v9b-c7-fRh" id="Rcy-V6-UlD"/>
                 <outlet property="sizeCell" destination="Rah-Z7-6rC" id="VFt-yO-pyd"/>
                 <outlet property="spaceCell" destination="RW0-Ma-Rp5" id="iny-kV-J54"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
@@ -157,7 +161,7 @@
                     <constraint firstItem="mj8-w7-QF6" firstAttribute="leading" secondItem="qXK-pe-SVX" secondAttribute="trailing" constant="20" id="tmr-iD-p1x"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-425" y="526"/>
+            <point key="canvasLocation" x="-355" y="670"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="7H9-ow-oBP">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
@@ -329,6 +333,76 @@
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-433" y="338"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" id="v9b-c7-fRh">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="v9b-c7-fRh" id="4Sq-vz-RoP">
+                <rect key="frame" x="0.0" y="0.0" width="287" height="43.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Select" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="koj-2h-iD3">
+                        <rect key="frame" x="194" y="12.5" width="93" height="18.5"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="93" id="nLh-xx-yRg"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <color key="textColor" red="0.59215686270000001" green="0.59215686270000001" blue="0.59215686270000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Shipping" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Mzy-3E-XFw">
+                        <rect key="frame" x="20" y="8" width="62" height="27"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="62" id="2UA-FI-qOE"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
+                        <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="Mzy-3E-XFw" firstAttribute="top" secondItem="4Sq-vz-RoP" secondAttribute="topMargin" id="6kA-jM-1RT"/>
+                    <constraint firstItem="Mzy-3E-XFw" firstAttribute="centerY" secondItem="4Sq-vz-RoP" secondAttribute="centerY" id="CiD-6I-q5m"/>
+                    <constraint firstItem="Mzy-3E-XFw" firstAttribute="centerY" secondItem="koj-2h-iD3" secondAttribute="centerY" id="GVe-la-2co"/>
+                    <constraint firstAttribute="trailing" secondItem="koj-2h-iD3" secondAttribute="trailing" id="Xzk-ab-tac"/>
+                    <constraint firstItem="Mzy-3E-XFw" firstAttribute="leading" secondItem="4Sq-vz-RoP" secondAttribute="leadingMargin" constant="12" id="ynz-r9-8hn"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-433" y="628"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="Ct2-8t-qCH">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Ct2-8t-qCH" id="FtI-Xl-i2y">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Instant buy" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QdP-ZQ-BF0">
+                        <rect key="frame" x="20" y="8" width="68.5" height="27"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
+                        <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="kT1-tb-n15">
+                        <rect key="frame" x="242" y="6" width="49" height="31"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="47" id="u09-lL-B6G"/>
+                        </constraints>
+                        <color key="onTintColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                        <connections>
+                            <action selector="instantBuySwitchChanged:" destination="-1" eventType="valueChanged" id="dNW-lW-ez3"/>
+                        </connections>
+                    </switch>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="top" secondItem="FtI-Xl-i2y" secondAttribute="topMargin" id="E51-aO-IIu"/>
+                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="centerY" secondItem="kT1-tb-n15" secondAttribute="centerY" id="OvW-rb-d1c"/>
+                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="leading" secondItem="FtI-Xl-i2y" secondAttribute="leadingMargin" constant="12" id="YQ7-by-LXh"/>
+                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="centerY" secondItem="FtI-Xl-i2y" secondAttribute="centerY" id="puY-AS-pY0"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="kT1-tb-n15" secondAttribute="trailing" constant="23" id="veh-d0-Ulz"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-433" y="540"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" id="dGV-BU-bwH">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>

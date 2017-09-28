@@ -31,6 +31,12 @@
     
     self.navigationItem.title = @"S E L L";
     
+    //buy now/shipping setup
+    self.buyRows = 1;
+    self.globalEnabled = YES;
+    self.nationalPrice = 0.00;
+    self.globalPrice = 0.00;
+    
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     //hide swipe view to start (unless in edit mode)
@@ -129,6 +135,8 @@
     self.spaceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.imagesCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.colourCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.instantBuyCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.shippingCell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -294,7 +302,7 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 6;
+    return 7;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -315,6 +323,9 @@
         return 1;
     }
     else if (section == 5){
+        return self.buyRows;
+    }
+    else if (section == 6){
         return 1;
     }
     else{
@@ -358,6 +369,14 @@
         return self.descriptionCell;
     }
     else if (indexPath.section ==5){
+        if(indexPath.row == 0){
+            return self.instantBuyCell;
+        }
+        else if(indexPath.row == 1){
+            return self.shippingCell;
+        }
+    }
+    else if (indexPath.section ==6){
         return self.spaceCell;
     }
     return nil;
@@ -508,10 +527,20 @@
                 }
             }
         }
-
     }
     else if(indexPath.section == 3){
         [self addColourPressed:self];
+    }
+    else if(indexPath.section == 5){
+        if (indexPath.row == 1) {
+            ShippingOptionsView *vc = [[ShippingOptionsView alloc]init];
+            vc.nationalPrice = self.nationalPrice;
+            vc.globalPrice = self.globalPrice;
+            vc.globalEnabled = self.globalEnabled;
+            vc.currencySymbol = self.currencySymbol;
+            vc.delegate = self;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
     }
     else {
         [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
@@ -526,13 +555,13 @@
     else if (indexPath.section == 1){
         return 104;
     }
-    else if (indexPath.section ==2 || indexPath.section == 3){
+    else if (indexPath.section ==2 || indexPath.section == 3 || indexPath.section == 5){
         return 44;
     }
     else if (indexPath.section ==4){
         return 104;
     }
-    else if (indexPath.section ==5){
+    else if (indexPath.section ==6){
         return 60;
     }
     return 44;
@@ -2977,7 +3006,7 @@
     
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         if (self.banMode) {
             self.banMode = NO;
             
@@ -5439,7 +5468,7 @@
 -(void)showVerifyAlert{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:@"To keep Bump safe we authenticate users via Facebook or Email.\n\nTo list your item either tap the link in the verification email we sent you or connect your Facebook account\n\nDon't forget to check your Junk Folder" preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         //dismiss VC
         [self dismissViewControllerAnimated:YES completion:nil];
     }]];
@@ -5470,5 +5499,47 @@
     vc.titleString = @"T A G G E D  P H O T O S";
     vc.mainLabelText = @"To prove to buyers that you own the photographed item, simply place something to identify yourself in the photo\n\nThis could be your Bump username written on a piece of paper, an ID card with your name on it or anything that identifies yourself as the person that took the photo";
     [self presentViewController:vc animated:YES completion:nil];
+}
+- (IBAction)instantBuySwitchChanged:(id)sender {
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:5];
+
+    if (self.buySwitch.isOn) {
+        //on
+        self.buyRows++;
+        [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        
+        //scroll to bottom
+        [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+    }
+    else{
+        //off
+        //scroll up slightly
+        NSIndexPath *indexPath1 = [NSIndexPath indexPathForRow:0 inSection:5];
+        [self.tableView scrollToRowAtIndexPath:indexPath1 atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+        
+        self.buyRows--;
+        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+     }
+}
+
+#pragma mark - shipping delegate
+-(void)shippingOptionsWithNational:(float)nationalPrice withGlobal:(float)globalPrice withGlobalEnabled:(BOOL)globalOn{
+    self.nationalPrice = nationalPrice;
+    self.globalPrice = globalPrice;
+    self.globalEnabled = globalOn;
+    
+    NSLog(@"national price: %f    global: %f", nationalPrice, globalPrice);
+    
+    if (nationalPrice > 0.00 && globalOn == YES && globalPrice > 0.00) {
+        //done
+        self.selectShippingLabel.text = @"Global";
+    }
+    else if (nationalPrice > 0.00 && globalOn != YES) {
+        //done w/ national shipping
+        self.selectShippingLabel.text = @"National";
+    }
+    else{
+        self.selectShippingLabel.text = @"Select";
+    }
 }
 @end

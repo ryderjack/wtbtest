@@ -454,7 +454,7 @@
                         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
                                                                     @"itms-apps://itunes.apple.com/app/id1096047233"]];
                     }]];
-                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
+//                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
                 }
             }
         }
@@ -2855,7 +2855,7 @@
     
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }

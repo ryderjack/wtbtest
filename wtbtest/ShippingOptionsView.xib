@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13173"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <customFonts key="customFonts">
+        <array key="PingFang.ttc">
+            <string>PingFangSC-Medium</string>
+            <string>PingFangSC-Regular</string>
+        </array>
+    </customFonts>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="ShippingOptionsView">
+            <connections>
+                <outlet property="globalDecisionCell" destination="Ra3-K8-dee" id="lNr-R6-99Z"/>
+                <outlet property="globalShippingCell" destination="Bku-7J-t6p" id="1KU-h7-3PN"/>
+                <outlet property="globalSwitch" destination="YPU-JM-yIK" id="8Ot-X6-V6r"/>
+                <outlet property="globalTextfield" destination="6lZ-0P-czn" id="wfn-Yr-Bxi"/>
+                <outlet property="nationalShippingCell" destination="eTC-dA-dZh" id="UvO-UQ-PdG"/>
+                <outlet property="nationalTextfield" destination="gka-oL-GFc" id="QLg-IS-Hso"/>
+                <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableView opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" bouncesZoom="NO" style="grouped" separatorStyle="none" rowHeight="44" sectionHeaderHeight="18" sectionFooterHeight="18" id="i5M-Pr-FkT">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+            <viewLayoutGuide key="safeArea" id="NQg-xp-Ubj"/>
+            <connections>
+                <outlet property="dataSource" destination="-1" id="Tng-2m-Rnh"/>
+                <outlet property="delegate" destination="-1" id="9aC-8N-iBw"/>
+            </connections>
+        </tableView>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="Bku-7J-t6p">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Bku-7J-t6p" id="wEP-qC-RHG">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Shipping price" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c8C-6X-7xb">
+                        <rect key="frame" x="20" y="8" width="89" height="27"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
+                        <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="£0.00" textAlignment="right" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="6lZ-0P-czn">
+                        <rect key="frame" x="192" y="11" width="95" height="21"/>
+                        <color key="tintColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="95" id="ViI-wg-9RE"/>
+                        </constraints>
+                        <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="calibratedRGB"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <textInputTraits key="textInputTraits" keyboardType="decimalPad" returnKeyType="done"/>
+                    </textField>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="6lZ-0P-czn" firstAttribute="top" secondItem="wEP-qC-RHG" secondAttribute="topMargin" constant="3" id="1lx-BE-5iM"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="6lZ-0P-czn" secondAttribute="trailing" constant="25" id="9vv-qb-7X4"/>
+                    <constraint firstItem="c8C-6X-7xb" firstAttribute="centerY" secondItem="wEP-qC-RHG" secondAttribute="centerY" id="Bx7-uG-dbi"/>
+                    <constraint firstItem="c8C-6X-7xb" firstAttribute="centerY" secondItem="6lZ-0P-czn" secondAttribute="centerY" id="eQq-PI-zlL"/>
+                    <constraint firstItem="c8C-6X-7xb" firstAttribute="leading" secondItem="wEP-qC-RHG" secondAttribute="leadingMargin" constant="12" id="iQt-Lk-bHv"/>
+                    <constraint firstItem="c8C-6X-7xb" firstAttribute="top" secondItem="wEP-qC-RHG" secondAttribute="topMargin" id="oPz-tL-kSA"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-433" y="324"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="eTC-dA-dZh">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="eTC-dA-dZh" id="9d6-cu-DKk">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Shipping price" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4FG-Py-fCA">
+                        <rect key="frame" x="20" y="8" width="89" height="27"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
+                        <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="£0.00" textAlignment="right" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="gka-oL-GFc">
+                        <rect key="frame" x="192" y="11" width="95" height="21"/>
+                        <color key="tintColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="95" id="9YU-c8-uDu"/>
+                        </constraints>
+                        <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="calibratedRGB"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <textInputTraits key="textInputTraits" keyboardType="decimalPad" returnKeyType="done"/>
+                    </textField>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="4FG-Py-fCA" firstAttribute="centerY" secondItem="9d6-cu-DKk" secondAttribute="centerY" id="2QD-nI-KZi"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="gka-oL-GFc" secondAttribute="trailing" constant="25" id="9yu-qj-iaE"/>
+                    <constraint firstItem="4FG-Py-fCA" firstAttribute="centerY" secondItem="gka-oL-GFc" secondAttribute="centerY" id="Ca0-Hi-WVa"/>
+                    <constraint firstItem="4FG-Py-fCA" firstAttribute="top" secondItem="9d6-cu-DKk" secondAttribute="topMargin" id="uus-Pm-zSu"/>
+                    <constraint firstItem="4FG-Py-fCA" firstAttribute="leading" secondItem="9d6-cu-DKk" secondAttribute="leadingMargin" constant="12" id="wNV-3x-GFB"/>
+                    <constraint firstItem="gka-oL-GFc" firstAttribute="top" secondItem="9d6-cu-DKk" secondAttribute="topMargin" constant="3" id="xIP-Td-5t4"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-433" y="114"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="Ra3-K8-dee">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Ra3-K8-dee" id="0q7-9A-APw">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="International Shipping" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Q60-HW-brl">
+                        <rect key="frame" x="20" y="8" width="135" height="27"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
+                        <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="YPU-JM-yIK">
+                        <rect key="frame" x="240" y="6" width="49" height="31"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="47" id="gw4-7h-vZN"/>
+                        </constraints>
+                        <color key="onTintColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                        <connections>
+                            <action selector="globalSwitchChanged:" destination="-1" eventType="valueChanged" id="bbc-rr-wSZ"/>
+                        </connections>
+                    </switch>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="trailing" secondItem="YPU-JM-yIK" secondAttribute="trailing" constant="33" id="3Bd-Jg-AZd"/>
+                    <constraint firstItem="Q60-HW-brl" firstAttribute="top" secondItem="0q7-9A-APw" secondAttribute="topMargin" id="FtM-mv-cui"/>
+                    <constraint firstItem="Q60-HW-brl" firstAttribute="centerY" secondItem="0q7-9A-APw" secondAttribute="centerY" id="fpJ-hJ-uN2"/>
+                    <constraint firstItem="Q60-HW-brl" firstAttribute="centerY" secondItem="YPU-JM-yIK" secondAttribute="centerY" id="sHf-Gf-Jcf"/>
+                    <constraint firstItem="Q60-HW-brl" firstAttribute="leading" secondItem="0q7-9A-APw" secondAttribute="leadingMargin" constant="12" id="w6b-GO-51O"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-433" y="215"/>
+        </tableViewCell>
+    </objects>
+</document>

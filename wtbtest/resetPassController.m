@@ -339,7 +339,7 @@
     
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         if (self.dontMatchError) {
             self.dontMatchError = NO;
             [self.navigationController popToRootViewControllerAnimated:YES];
@@ -387,7 +387,7 @@
 -(void)showEmailAlert{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Reset Email Sent" message:@"You've already requested a password reset! Be sure to check your Junk Folder for an email from Team Bump (hello@sobump.com) You can request another password reset email in 5 mins" preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }

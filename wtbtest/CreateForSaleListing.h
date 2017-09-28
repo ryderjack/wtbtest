@@ -20,6 +20,7 @@
 #import <LXReorderableCollectionViewFlowLayout.h>
 #import "ConditionsOptionsTableView.h"
 #import <SwipeView/SwipeView.h>
+#import "ShippingOptionsView.h"
 
 @class CreateForSaleListing;
 
@@ -29,7 +30,7 @@
 
 @end
 
-@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate,UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate,ConditionsDelegate,SwipeViewDelegate, SwipeViewDataSource,UIGestureRecognizerDelegate>
+@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate,UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate,ConditionsDelegate,SwipeViewDelegate, SwipeViewDataSource,UIGestureRecognizerDelegate, shippingDelegate>
 
 //delegate
 @property (nonatomic, weak) id <CreateForSaleDelegate> delegate;
@@ -45,6 +46,10 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *imagesCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *itemTitleCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *colourCell;
+
+//purchase cells
+@property (strong, nonatomic) IBOutlet UITableViewCell *instantBuyCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *shippingCell;
 
 //camera buttons
 @property (nonatomic, strong) UIButton *firstCam;
@@ -186,5 +191,14 @@
 @property (nonatomic, strong) NSArray *categories;
 @property (nonatomic) BOOL calledImgAnalyzer;
 
+//instant buy cells
+@property (weak, nonatomic) IBOutlet UISwitch *buySwitch;
+@property (weak, nonatomic) IBOutlet UILabel *selectShippingLabel;
+@property (nonatomic) int buyRows;
+
+//shipping
+@property (nonatomic) float nationalPrice;
+@property (nonatomic) float globalPrice;
+@property (nonatomic) BOOL globalEnabled;
 
 @end

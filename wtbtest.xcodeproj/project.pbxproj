@@ -30,6 +30,8 @@
 		040202F51ED978C80006A5CD /* buyButtonCart@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 040202F21ED978C80006A5CD /* buyButtonCart@2x.png */; };
 		040202F61ED978C80006A5CD /* buyButtonCart@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 040202F31ED978C80006A5CD /* buyButtonCart@3x.png */; };
 		040202F71ED978C80006A5CD /* buyButtonCart.png in Resources */ = {isa = PBXBuildFile; fileRef = 040202F41ED978C80006A5CD /* buyButtonCart.png */; };
+		0402BD7E1F7D1465000B1C27 /* ShippingOptionsView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0402BD7C1F7D1465000B1C27 /* ShippingOptionsView.m */; };
+		0402BD7F1F7D1465000B1C27 /* ShippingOptionsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0402BD7D1F7D1465000B1C27 /* ShippingOptionsView.xib */; };
 		0403332A1CAADDFC00C59385 /* alertIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 040333271CAADDFC00C59385 /* alertIcon.png */; };
 		0403332B1CAADDFC00C59385 /* alertIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 040333281CAADDFC00C59385 /* alertIcon@2x.png */; };
 		0403332C1CAADDFC00C59385 /* alertIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 040333291CAADDFC00C59385 /* alertIcon@3x.png */; };
@@ -1515,6 +1517,9 @@
 		040202F21ED978C80006A5CD /* buyButtonCart@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buyButtonCart@2x.png"; sourceTree = "<group>"; };
 		040202F31ED978C80006A5CD /* buyButtonCart@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buyButtonCart@3x.png"; sourceTree = "<group>"; };
 		040202F41ED978C80006A5CD /* buyButtonCart.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = buyButtonCart.png; sourceTree = "<group>"; };
+		0402BD7B1F7D1465000B1C27 /* ShippingOptionsView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShippingOptionsView.h; sourceTree = "<group>"; };
+		0402BD7C1F7D1465000B1C27 /* ShippingOptionsView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShippingOptionsView.m; sourceTree = "<group>"; };
+		0402BD7D1F7D1465000B1C27 /* ShippingOptionsView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ShippingOptionsView.xib; sourceTree = "<group>"; };
 		040333271CAADDFC00C59385 /* alertIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = alertIcon.png; sourceTree = "<group>"; };
 		040333281CAADDFC00C59385 /* alertIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alertIcon@2x.png"; sourceTree = "<group>"; };
 		040333291CAADDFC00C59385 /* alertIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alertIcon@3x.png"; sourceTree = "<group>"; };
@@ -4890,6 +4895,9 @@
 		04F7EF801E1541BC00061745 /* Selling */ = {
 			isa = PBXGroup;
 			children = (
+				0402BD7B1F7D1465000B1C27 /* ShippingOptionsView.h */,
+				0402BD7C1F7D1465000B1C27 /* ShippingOptionsView.m */,
+				0402BD7D1F7D1465000B1C27 /* ShippingOptionsView.xib */,
 				0411C1961EE7052900A5B91B /* Seller Application Form */,
 				04D941121DC8DEBF004ED987 /* CreateForSaleListing.h */,
 				04D941131DC8DEBF004ED987 /* CreateForSaleListing.m */,
@@ -6290,6 +6298,7 @@
 				04DA96241EF93859007AA5C3 /* engagementView.xib in Resources */,
 				04FA392A1F741E4900C346EB /* filterBGWhite.png in Resources */,
 				0451D7521D3A35270010379E /* currencyIcon@3x.png in Resources */,
+				0402BD7F1F7D1465000B1C27 /* ShippingOptionsView.xib in Resources */,
 				04239C8B1F3B5C5000ACE74C /* listingLikeBorder.png in Resources */,
 				04FD43B31F348BF30068F89D /* asscSelected@2x.png in Resources */,
 				04A273D41D9879C900D7213C /* empty@2x.png in Resources */,
@@ -6755,6 +6764,7 @@
 				0411C14E1EE0448700A5B91B /* mainApprovedSellerController.m in Sources */,
 				04C080571C847E3800B8682C /* ExploreCell.m in Sources */,
 				04F7EF7F1E15411F00061745 /* CreateSuccessView.m in Sources */,
+				0402BD7E1F7D1465000B1C27 /* ShippingOptionsView.m in Sources */,
 				049EF42C1C776E49000A599F /* AppDelegate.m in Sources */,
 				04FD433E1F30F1AA0068F89D /* resetPassController.m in Sources */,
 				04DA96271EF938A7007AA5C3 /* engageTracker.m in Sources */,
