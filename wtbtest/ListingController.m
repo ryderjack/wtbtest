@@ -763,8 +763,8 @@
             convoObject[@"source"] = @"WTB";
             convoObject[@"profileConvo"] = @"NO";
             
-            [convoObject setObject:@"NO" forKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId]]; //SET make sure all previous convos have NO set if not already YES
-            [convoObject setObject:@"NO" forKey:[NSString stringWithFormat:@"deleted%@",self.buyer.objectId]];
+            [convoObject setObject:@"NO" forKey:@"buyerDeleted"];
+            [convoObject setObject:@"NO" forKey:@"sellerDeleted"];
             
             //save additional stuff onto convo object for faster inbox loading
             if ([self.listingObject objectForKey:@"thumbnail"]) {
@@ -2350,7 +2350,7 @@
                    customAttributes:@{
                                       @"type":@"whatsapp"
                                       }];
-    NSString *shareString = @"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com";
+    NSString *shareString = @"Check out Bump on the App Store - Safely Buy & Sell Streetwear with ZERO fees\n\nAvailable here: http://sobump.com";
     NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
     if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
         [[UIApplication sharedApplication] openURL: whatsappURL];
@@ -2374,7 +2374,7 @@
                                       @"type":@"share sheet"
                                       }];
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com"];
+    [items addObject:@"Check out Bump on the App Store - Safely Buy & Sell Streetwear with ZERO fees\n\nAvailable here: http://sobump.com"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     
     [self hideBarButton];

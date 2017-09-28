@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Bump</string>
+	<string>BUMP</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0.21</string>
+	<string>2.0.23</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -33,7 +33,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1232</string>
+	<string>1236</string>
 	<key>Fabric</key>
 	<dict>
 		<key>APIKey</key>
@@ -42,7 +42,7 @@
 	<key>FacebookAppID</key>
 	<string>955972104485652</string>
 	<key>FacebookDisplayName</key>
-	<string>wtb</string>
+	<string>BUMP</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>
@@ -65,11 +65,11 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Bump needs the camera for photos!</string>
+	<string>BUMP uses the camera to take photos of items!</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Bump uses your location to find listings around you!</string>
+	<string>BUMP uses your location to find listings around you!</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Bump needs access to change your profile pictures and so you can send photos to buyers/sellers!</string>
+	<string>BUMP needs access to change your profile pictures and so you can send photos to buyers/sellers!</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

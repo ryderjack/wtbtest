@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -45,40 +45,40 @@
                 <outlet property="delegate" destination="-1" id="9aC-8N-iBw"/>
             </connections>
         </tableView>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="202" id="eEM-zs-tiw">
-            <rect key="frame" x="0.0" y="0.0" width="375" height="202"/>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="153" id="eEM-zs-tiw">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="153"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="eEM-zs-tiw" id="5w1-qR-Ia1">
-                <rect key="frame" x="0.0" y="0.0" width="375" height="201.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="375" height="153"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="A D D  S I Z E S" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ON8-Gl-fHv">
                         <rect key="frame" x="119" y="45" width="137" height="24"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="137" id="3Po-03-uE5"/>
-                            <constraint firstAttribute="height" constant="24" id="TeA-YQ-nqz"/>
+                            <constraint firstAttribute="width" constant="137" id="5OZ-BN-h60"/>
+                            <constraint firstAttribute="height" constant="24" id="7q0-89-voc"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="12"/>
                         <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tell us your ideal sneaker and clothing sizes so Bump works better for you 🏎💨" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="3" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ghI-NQ-k1N">
-                        <rect key="frame" x="29" y="115" width="317" height="78"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tell us your ideal sneaker and clothing sizes so Bump works better for you" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="3" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ghI-NQ-k1N">
+                        <rect key="frame" x="29" y="83" width="317" height="64"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
                         <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                 </subviews>
                 <constraints>
-                    <constraint firstAttribute="bottomMargin" secondItem="ghI-NQ-k1N" secondAttribute="bottom" constant="0.5" id="SJ9-E9-ioe"/>
-                    <constraint firstItem="ON8-Gl-fHv" firstAttribute="centerX" secondItem="5w1-qR-Ia1" secondAttribute="centerX" id="Ze3-3D-WqG"/>
-                    <constraint firstItem="ON8-Gl-fHv" firstAttribute="top" secondItem="5w1-qR-Ia1" secondAttribute="topMargin" constant="37" id="jxz-HN-mAi"/>
-                    <constraint firstItem="ghI-NQ-k1N" firstAttribute="leading" secondItem="5w1-qR-Ia1" secondAttribute="leadingMargin" constant="21" id="mcO-hK-A2D"/>
-                    <constraint firstItem="ghI-NQ-k1N" firstAttribute="top" secondItem="ON8-Gl-fHv" secondAttribute="bottom" constant="46" id="yhZ-FF-s94"/>
-                    <constraint firstItem="ON8-Gl-fHv" firstAttribute="centerX" secondItem="ghI-NQ-k1N" secondAttribute="centerX" id="z1L-lR-44G"/>
+                    <constraint firstItem="ON8-Gl-fHv" firstAttribute="centerX" secondItem="ghI-NQ-k1N" secondAttribute="centerX" id="1Dw-Av-Nax"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="ghI-NQ-k1N" secondAttribute="bottom" constant="-2.5" id="1qO-2u-FU3"/>
+                    <constraint firstItem="ghI-NQ-k1N" firstAttribute="leading" secondItem="5w1-qR-Ia1" secondAttribute="leadingMargin" constant="21" id="7Gw-eX-Z42"/>
+                    <constraint firstItem="ON8-Gl-fHv" firstAttribute="centerX" secondItem="5w1-qR-Ia1" secondAttribute="centerX" id="Gh9-fE-Y0H"/>
+                    <constraint firstItem="ghI-NQ-k1N" firstAttribute="top" secondItem="ON8-Gl-fHv" secondAttribute="bottom" constant="14" id="PwW-cz-coD"/>
+                    <constraint firstItem="ON8-Gl-fHv" firstAttribute="top" secondItem="5w1-qR-Ia1" secondAttribute="topMargin" constant="37" id="X16-Dp-ye3"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-444.5" y="-153"/>
+            <point key="canvasLocation" x="-444.5" y="-177.5"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="264" id="OF9-5O-1Ck">
             <rect key="frame" x="0.0" y="0.0" width="375" height="264"/>
@@ -212,7 +212,7 @@
                         </constraints>
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You can change these later" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dTA-X1-hL9">
-                        <rect key="frame" x="8" y="226" width="359" height="24"/>
+                        <rect key="frame" x="8" y="206" width="359" height="24"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="24" id="Gth-iv-85Y"/>
                         </constraints>
@@ -226,8 +226,8 @@
                     <constraint firstItem="iew-8G-Ovx" firstAttribute="top" secondItem="SLb-JZ-2kt" secondAttribute="bottom" constant="19" id="6Os-aO-U7l"/>
                     <constraint firstItem="SLb-JZ-2kt" firstAttribute="top" secondItem="9Fi-bO-RjW" secondAttribute="bottom" constant="33" id="I1I-nH-ebu"/>
                     <constraint firstItem="9Fi-bO-RjW" firstAttribute="top" secondItem="Bxa-wk-NvY" secondAttribute="topMargin" constant="29" id="YGU-61-CQK"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="dTA-X1-hL9" secondAttribute="bottom" constant="11.5" id="ad5-HE-fEK"/>
-                    <constraint firstItem="dTA-X1-hL9" firstAttribute="top" secondItem="iew-8G-Ovx" secondAttribute="bottom" constant="50" id="d5l-VR-EOr"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="dTA-X1-hL9" secondAttribute="bottom" constant="31.5" id="ad5-HE-fEK"/>
+                    <constraint firstItem="dTA-X1-hL9" firstAttribute="top" secondItem="iew-8G-Ovx" secondAttribute="bottom" constant="30" id="d5l-VR-EOr"/>
                     <constraint firstItem="iew-8G-Ovx" firstAttribute="centerX" secondItem="dTA-X1-hL9" secondAttribute="centerX" id="f7h-DI-yP4"/>
                     <constraint firstAttribute="trailing" secondItem="SLb-JZ-2kt" secondAttribute="trailing" id="jto-5G-u4T"/>
                     <constraint firstItem="SLb-JZ-2kt" firstAttribute="leading" secondItem="Bxa-wk-NvY" secondAttribute="leadingMargin" constant="21" id="rEr-GM-OPj"/>
@@ -235,7 +235,7 @@
                     <constraint firstItem="dTA-X1-hL9" firstAttribute="trailing" secondItem="Bxa-wk-NvY" secondAttribute="trailingMargin" id="zva-kA-gDn"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-446.5" y="566"/>
+            <point key="canvasLocation" x="-446" y="544"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="QC5-ae-PH3">
             <rect key="frame" x="0.0" y="0.0" width="375" height="60"/>

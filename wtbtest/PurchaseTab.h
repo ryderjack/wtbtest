@@ -24,8 +24,9 @@
 #import "notificatView.h"
 #import "FilterVC.h"
 #import <YLProgressBar/YLProgressBar.h>
+#import "BrowseLocation.h"
 
-@interface PurchaseTab : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout,customAlertDelegate,UISearchBarDelegate,TheMainSearchViewDelegate,CLLocationManagerDelegate,dropDelegate,WelcomeDelegate,rateDelegate,FilterDelegate,inviteDelegate>
+@interface PurchaseTab : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout,customAlertDelegate,UISearchBarDelegate,TheMainSearchViewDelegate,CLLocationManagerDelegate,dropDelegate,WelcomeDelegate,rateDelegate,FilterDelegate,inviteDelegate, BrowseLocationDelegate>
 
 //cv
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
@@ -55,6 +56,8 @@
 @property (nonatomic, strong) PFQuery *infiniteQuery;
 @property (nonatomic, strong) PFQuery *pullQuery;
 @property (nonatomic) int skipped;
+
+@property (nonatomic) int skipNumb;
 
 //prompt button
 @property (weak, nonatomic) IBOutlet UIButton *anotherPromptButton;
@@ -126,6 +129,8 @@
 @property (nonatomic, strong) NSMutableArray *filterSizesArray;
 @property (nonatomic, strong) NSMutableArray *filterBrandsArray;
 @property (nonatomic, strong) NSMutableArray *filterColoursArray;
+@property (nonatomic, strong) NSMutableArray *filterContinentsArray;
+
 @property (nonatomic, strong) NSString *filterCategory;
 @property (nonatomic) float filterLower;
 @property (nonatomic) float filterUpper;
@@ -137,7 +142,17 @@
 @property (weak, nonatomic) IBOutlet UIButton *floatingLocationButton;
 @property (nonatomic) float lastLocButtonY;
 
+//@property (nonatomic) int skipNumb;
+
 //scroll to top
 -(void)doubleTapScroll;
+
+//location string
+@property (nonatomic, strong) NSString *locationFilter;
+@property (weak, nonatomic) IBOutlet UIButton *locationBut;
+
+//location filter view
+@property (nonatomic, strong) BrowseLocation *locationFilterView;
+@property (nonatomic) BOOL locationFilterShowing;
 
 @end

@@ -175,7 +175,7 @@
         if (!error) {
             //SAVE THEM TOO!!!!
             NSArray* friends = [result objectForKey:@"data"];
-            NSLog(@"Found: %lu friends with bump installed", (unsigned long)friends.count);
+            NSLog(@"Found: %lu friends with BUMP installed", (unsigned long)friends.count);
             NSMutableArray *friendsHoldingArray = [NSMutableArray array];
             
             for (NSDictionary *friend in friends) {
@@ -190,7 +190,7 @@
                 [self setImageBorder:self.friendTwoImageView];
                 [self setImageBorder:self.friendThreeImageView];
                 
-                self.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friends.count];
+                self.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use BUMP", (unsigned long)friends.count];
                 self.showFriendsCell = YES;
                 
                 int rowIndex = 0;//your row index where you want to add cell
@@ -874,45 +874,6 @@
                                         customAttributes:@{}];
                      }
                  }];
-                 
-//                 NSDictionary *params = @{@"id": @"a9803761de",@"double_optin":@NO,@"email": @{@"email":email}, @"merge_vars": @{@"FNAME": [self.user objectForKey:@"firstName"], @"LName":[self.user objectForKey:@"lastName"]}};
-//                 
-//                 [[ChimpKit sharedKit] callApiMethod:@"lists/subscribe" withParams:params andCompletionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
-//                     //        NSLog(@"HTTP Status Code: %d", response.statusCode);
-////                     NSLog(@"Response String: %@", response);
-//                     //
-//                     if (error) {
-//                         //Handle connection error
-//                         NSLog(@"Chimp Error, %@", error);
-//                         
-//                         dispatch_async(dispatch_get_main_queue(), ^{
-//                             //Update UI here
-//                             [Answers logCustomEventWithName:@"welcome email error"
-//                                            customAttributes:@{
-//                                                               @"error":error
-//                                                               }];
-//                         });
-//                     } else {
-//                         NSError *parseError = nil;
-//                         id response = [NSJSONSerialization JSONObjectWithData:data
-//                                                                       options:0
-//                                                                         error:&parseError];
-//                         if ([response isKindOfClass:[NSDictionary class]]) {
-//                             id email = [response objectForKey:@"email"];
-//                             if ([email isKindOfClass:[NSString class]]) {
-//                                 //Successfully subscribed email address
-//                                 NSLog(@"success with the chimp!");
-//                                 
-//                                 [Answers logCustomEventWithName:@"Sent welcome email"
-//                                                customAttributes:@{}];
-//                                 
-//                                 dispatch_async(dispatch_get_main_queue(), ^{
-//                                     //Update UI here
-//                                 });
-//                             }
-//                         }
-//                     }
-//                 }];
              }
 
              [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"showHowWorks"];
@@ -929,7 +890,7 @@
              convoObject[@"totalMessages"] = @0;
              [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                  if (succeeded) {
-                     NSString *messageString = @"🙌 Welcome to Bump 🙌\n\n👟 Buying\nBrowse the latest items for sale, search through items by tapping the search bar at the top of the home tab, and create wanted listings so sellers can see what you want\n\n🤑 Selling\nList an item by tapping the tag icon or search through wanted listings to sell even faster\n\n💥 Got any questions? Just send us a message 👊\n\nSophie @ Team Bump";
+                     NSString *messageString = @"🙌 Welcome to BUMP 🙌\n\nBuying\nBrowse the latest items for sale, search through items by tapping the search bar at the top of the home tab, and create wanted listings so sellers can see what you want\n\nSelling\nList an item by tapping the tag icon or search through wanted listings to sell even faster\n\n💥 Got any questions? Just send us a message\n\nSophie @ Team BUMP";
                      
                      //saved, create intro message
                      PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
@@ -1083,7 +1044,7 @@
     self.webViewController.doneButtonTitle = @"";
     self.webViewController.delegate = self;
     //hide toolbar banner
-    self.webViewController.infoMode = NO;
+//    self.webViewController.infoMode = NO;
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }

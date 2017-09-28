@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <FastttCamera.h>
+#import "FastttCamera.h"
 
 @class ConfirmController;
 

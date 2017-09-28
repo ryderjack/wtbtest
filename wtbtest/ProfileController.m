@@ -121,10 +121,10 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
     if (section == 0) {
-        return 2;
+        return 1;
     }
     else if (section == 1){
-        return 2;
+        return 3;
     }
     else if (section == 2){
         return 5;
@@ -139,20 +139,20 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (indexPath.section == 0){
+    if (indexPath.section == 1){
         if (indexPath.row == 0) {
             return self.inviteCell;
         }
         else if (indexPath.row == 1) {
             return self.rateCell;
         }
+        else if (indexPath.row == 2) {
+            return self.instaCell;
+        }
     }
-    else if (indexPath.section == 1){
+    else if (indexPath.section == 0){
         if (indexPath.row == 0) {
             return self.feedbackCell;
-        }
-        else if (indexPath.row == 1) {
-            return self.instaCell;
         }
     }
     else if (indexPath.section == 2){
@@ -188,7 +188,7 @@
     
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     
-    if (indexPath.section == 0){
+    if (indexPath.section == 1){
         if (indexPath.row == 0) {
             //invite pressed
             [self showInviteView];
@@ -200,11 +200,8 @@
                                               }];
             [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.navigationController];
         }
-
-    }
-    else if (indexPath.section == 1){
-        if (indexPath.row == 1) {
-
+        else if (indexPath.row == 2) {
+            
             [Answers logCustomEventWithName:@"Insta Follow Pressed"
                            customAttributes:@{}];
             
@@ -213,7 +210,11 @@
                 [[UIApplication sharedApplication] openURL: instaURL];
             }
         }
-        else if (indexPath.row == 0) {
+
+    }
+    else if (indexPath.section == 0){
+
+        if (indexPath.row == 0) {
             //chat w/ Bump
             if (self.tappedTB) {
                 return;
@@ -310,7 +311,7 @@
             self.webView.showPageTitles = YES;
             self.webView.doneButtonTitle = @"";
             self.webView.payMode = NO;
-            self.webView.infoMode = NO;
+//            self.webView.infoMode = NO;
             self.webView.delegate = self;
             
             NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];
@@ -328,7 +329,7 @@
             self.webView.showPageTitles = NO;
             self.webView.doneButtonTitle = @"";
             //hide toolbar banner
-            self.webView.infoMode = NO;
+//            self.webView.infoMode = NO;
             self.webView.delegate = self;
             NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];
             [self presentViewController:navigationController animated:YES completion:nil];

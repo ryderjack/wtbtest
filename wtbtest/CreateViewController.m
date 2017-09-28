@@ -803,7 +803,7 @@
     self.webViewController.delegate = self;
     self.webViewController.editMode = YES;
     self.webViewController.doneButtonTitle = @"";
-    self.webViewController.infoMode = NO;
+//    self.webViewController.infoMode = NO;
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
@@ -843,7 +843,7 @@
     squareCropperViewController.doneFont = [UIFont fontWithName:@"PingFangSC-Regular" size:18.0f];
     squareCropperViewController.cancelFont = [UIFont fontWithName:@"PingFangSC-Regular" size:16.0f];
     squareCropperViewController.excludedBackgroundColor = [UIColor blackColor];
-    squareCropperViewController.tapNumber = self.tapNumber;
+//    squareCropperViewController.tapNumber = self.tapNumber;
     [self.navigationController presentViewController:squareCropperViewController animated:YES completion:nil];
 }
 

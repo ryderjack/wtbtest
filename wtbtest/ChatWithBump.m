@@ -12,6 +12,7 @@
 #import "DetailImageController.h"
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "NavigationController.h"
+#import "JRMessage.h"
 
 @interface ChatWithBump ()
 
@@ -23,22 +24,27 @@
 {
     [super viewDidLoad];
     
-    self.title = @"Team Bump";
+    //new property in iOS 11 which automatically adjusts insets on scroll views. Disable so we can do it ourselves
+    if (@available(iOS 11.0, *)) {
+        [self.collectionView setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentNever];
+    }
     
-    UIButton *btn =  [UIButton buttonWithType:UIButtonTypeCustom];
-    btn.frame = CGRectMake(0,0,25,25);
-    PFImageView *buttonView = [[PFImageView alloc]initWithFrame:btn.frame];
-    [buttonView setImage:[UIImage imageNamed:@"35"]];
-    [self setImageBorder:buttonView];
-    [btn addSubview:buttonView];
-    UIBarButtonItem *imageButton = [[UIBarButtonItem alloc] initWithCustomView:btn];
+    self.title = @"Team BUMP";
     
-    self.navigationItem.rightBarButtonItem = imageButton;
+//    UIButton *btn =  [UIButton buttonWithType:UIButtonTypeCustom];
+//    btn.frame = CGRectMake(0,0,25,25);
+//    PFImageView *buttonView = [[PFImageView alloc]initWithFrame:btn.frame];
+//    [buttonView setImage:[UIImage imageNamed:@"35"]];
+//    [self setImageBorder:buttonView];
+//    [btn addSubview:buttonView];
+//    UIBarButtonItem *imageButton = [[UIBarButtonItem alloc] initWithCustomView:btn];
+    
+//    self.navigationItem.rightBarButtonItem = imageButton;
     
     self.collectionView.collectionViewLayout.messageBubbleFont = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
     
-    self.inputToolbar.contentView.textView.pasteDelegate = self;
+//    self.inputToolbar.contentView.textView.JsqDelegate = self;
 //    self.inputToolbar.contentView.leftBarButtonItem = nil;
     
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"sendPicBlk"] forState:UIControlStateNormal];
@@ -89,19 +95,19 @@
     if (self.showSuggested) {
 
         self.suggestedMessagesArray = [NSMutableArray arrayWithObjects:@"Tap for more info ➡️",@"Authenticity", @"Payment",@"Email Verification",@"Location",@"Username Change",@"Password Change",@"Trading",@"Proxies", nil];
-        self.actualMessagesToSend = [NSMutableArray arrayWithObjects:@"placeholder",[NSString stringWithFormat:@"Hey %@,\n\nHere's our fraud prevention policy. We've found this to be an effective way of ensuring authenticity on Bump:\n\n1️⃣ 📸 We encourage tagged photos on Bump so buyers can be sure items exist\n\n2️⃣ 👟 Our team of moderators are monitoring listings for fakes / suspicious behaviour\n\n3️⃣ 🔑 We make it really easy for anyone to report a listing to us\n\n4️⃣ 🤑 We encourage users to pay each other using PayPal Goods & Services so if something does go wrong, you're protected!\n\nIf however, you were to get sent a fake then you would be able to take up a claim with PayPal and get a full refund. And of course, we would be here to help you through the process 👊\n\nAny other questions please let me know!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+        self.actualMessagesToSend = [NSMutableArray arrayWithObjects:@"placeholder",[NSString stringWithFormat:@"Hey %@,\n\nHere's our fraud prevention policy. We've found this to be an effective way of ensuring authenticity on Bump:\n\n1️⃣ We encourage tagged photos on Bump so buyers can be sure items exist\n\n2️⃣ Our team of moderators are monitoring listings for fakes / suspicious behaviour\n\n3️⃣ We make it really easy for anyone to report a listing to us\n\n4️⃣ We encourage users to pay each other using PayPal Goods & Services so if something does go wrong, you're protected!\n\nIf however, you were to get sent a fake then you would be able to take up a claim with PayPal and get a full refund. And of course, we would be here to help you through the process\n\nAny other questions please let me know!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
                                      
-                            [NSString stringWithFormat:@"Hey %@,\n\nWhen you see something you like, send the seller a message to let them know you’re interested. Make sure you agree on specifics like price, postage and condition before you pay.\n\nWhen the deal is agreed, the seller can send their PayPal details within the chat on Bump. You can then pay the seller through PayPal without leaving Bump.\n\nWe encourage paying via Goods & Services to ensure you receive full buyer protection 💪\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                            [NSString stringWithFormat:@"Hey %@,\n\nWhen you see something you like, send the seller a message to let them know you’re interested. Make sure you agree on specifics like price, postage and condition before you pay.\n\nWhen the deal is agreed, the seller can send their PayPal details within the chat on BUMP. You can then pay the seller through PayPal without leaving BUMP.\n\nWe encourage paying via Goods & Services to ensure you receive full buyer protection 💪\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
                              
-                                     [NSString stringWithFormat:@"Hey %@,\n\nIf you don't think you've received your email confirmation from us then please check your Junk Folder! In most cases it will be here, from Team Bump (hello@sobump.com).\n\nIf you still can't find it, just tap the envelope icon on your profile to resend it - make sure your email address in Settings on Bump is correct first 📫 \n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     [NSString stringWithFormat:@"Hey %@,\n\nIf you don't think you've received your email confirmation from us then please check your Junk Folder! In most cases it will be here, from Team BUMP (hello@sobump.com).\n\nIf you still can't find it, just tap the envelope icon on your profile to resend it - make sure your email address in Settings on BUMP is correct first 📫 \n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
                                      
-                                     [NSString stringWithFormat:@"Hey %@,\n\nWhen you first signup Bump automatically displays the nearest city and country to your current location on your profile.\n\nWant to change this? Just goto Settings (tap the cog icon from your profile) and you can select a different location to display on your profile.\n\nYour profile location does NOT impact on the products you see on Bump. If you would like to filter by location when browsing just tap the filters button and scroll down to filter by products 'Around me' 📍\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     [NSString stringWithFormat:@"Hey %@,\n\nWhen you first signup BUMP automatically displays the nearest city and country to your current location on your profile.\n\nWant to change this? Just goto Settings (tap the cog icon from your profile) and you can select a different location to display on your profile.\n\nYour profile location does NOT impact on the products you see on BUMP. If you would like to filter by location when browsing just tap the filters button and scroll down to filter by products 'Around me' 📍\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
                                      
-                                     [NSString stringWithFormat:@"Hey %@,\n\nFancy a change of username? Send us a message in chat here and we'll sort you out 🙌\n\nOnce it's changed just log out then back in!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     [NSString stringWithFormat:@"Hey %@,\n\nFancy a change of username? Send us a message in chat here and we'll sort it out 🙌\n\nOnce it's changed just log out then back in!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
                                      
                                      [NSString stringWithFormat:@"Hey %@,\n\nForgot your password? Simply log out and then hit log in on the welcome screen. Then you can hit Reset in the top right corner of the screen!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
-                                     [NSString stringWithFormat:@"Hey %@,\n\nWe do NOT encourage trading on Bump for a number of reasons.\n\nMainly because it's so easy for scammers to hijack a trade. There's nothing stopping a scammer agreeing to send the item you expect to receive but in reality sending a completely different and often worthless item. When this happens you've lost your original item and it's extremely tough, if not impossible, to get some money back.\n\nAvoid trading and you'll be much safer 💰\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
-                                     [NSString stringWithFormat:@"Hey %@,\n\nWhat's a proxy?\n\nA proxy is when someone is willing to queue up for a drop on your behalf. It's almost like a preorder for items that are yet to be released. Usually you will pay someone proxying for you the retail price of the item plus a fee for the service.\n\nBe careful, it's easy for a scammer to take your money, promise to get your item and then never speak to you again.\n\nAlways pay via PayPal Goods & Services and ask the user proxying for references so you can be sure they're legitimate. If a user claims they need the payment to be gifted in order to access the funds faster, it's better to decline and find someone that will accept PayPal Goods & Services.\n\nIf you're ever unsure about a proxy, message Team Bump and we'll help you out 🤝\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     [NSString stringWithFormat:@"Hey %@,\n\nWe do NOT encourage trading on BUMP for a number of reasons.\n\nMainly because it's so easy for scammers to hijack a trade. There's nothing stopping a scammer agreeing to send the item you expect to receive but in reality sending a completely different and often worthless item. When this happens you've lost your original item and it's extremely tough, if not impossible, to get some money back.\n\nAvoid trading and you'll be much safer 💰\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
+                                     [NSString stringWithFormat:@"Hey %@,\n\nWhat's a proxy?\n\nA proxy is when someone is willing to queue up for a drop on your behalf. It's almost like a preorder for items that are yet to be released. Usually you will pay someone proxying for you the retail price of the item plus a fee for the service.\n\nBe careful, it's easy for a scammer to take your money, promise to get your item and then never speak to you again.\n\nAlways pay via PayPal Goods & Services and ask the user proxying for references so you can be sure they're legitimate. If a user claims they need the payment to be gifted in order to access the funds faster, it's better to decline and find someone that will accept PayPal Goods & Services.\n\nIf you're ever unsure about a proxy, message Team BUMP and we'll help you out 🤝\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
                                      nil];
 
 
@@ -126,23 +132,26 @@
 -(void)didMoveToParentViewController:(UIViewController *)parent {
     [super didMoveToParentViewController:parent];
     //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-    [self.collectionView addPullToRefreshWithActionHandler:^{
-        if (self.infiniteLoading != YES && self.moreToLoad == YES) {
-            
-            self.infiniteLoading = YES;
-            self.earlierPressed = YES;
-            [self loadMessages];
-        }
-        else{
-            [self.collectionView.pullToRefreshView stopAnimating];
-        }
-    }];
     
-    //we need the spinner so init
-    if (!self.spinner) {
-        self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-        [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
-        [self.spinner startAnimating];
+    if (self.showPull) {
+        [self.collectionView addPullToRefreshWithActionHandler:^{
+            if (self.infiniteLoading != YES && self.moreToLoad == YES) {
+                
+                self.infiniteLoading = YES;
+                self.earlierPressed = YES;
+                [self loadMessages];
+            }
+            else{
+                [self.collectionView.pullToRefreshView stopAnimating];
+            }
+        }];
+        
+        //we need the spinner so init
+        if (!self.spinner) {
+            self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+            [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
+            [self.spinner startAnimating];
+        }
     }
 }
 
@@ -181,7 +190,7 @@
                         [self.messagesParseArray addObject:messageOb];
                     }
                     
-                    __block JSQMessage *message = nil;
+                    __block JRMessage *message = nil;
                     
                     if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                         [messageOb setObject:@"seen" forKey:@"status"];
@@ -210,7 +219,7 @@
                             photoItem.appliesMediaViewMaskAsOutgoing = NO;
                         }
                         
-                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
+                        message = [[JRMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
                         message.msgObject = messageOb;
                         
                         [self.messages insertObject:message atIndex:0];
@@ -263,7 +272,7 @@
                     else{
                         NSString *messageText = [messageOb objectForKey:@"message"];
                         
-                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
+                        message = [[JRMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
                         
                         if (![self.messages containsObject:message]) {
                             [self.messages insertObject:message atIndex:0];
@@ -313,6 +322,13 @@
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+    //decide whether to show review banner
+    int messageTotal = [[self.convoObject objectForKey:@"totalMessages"]intValue];
+    
+    if (messageTotal > 10) {
+        self.showPull = YES;
+    }
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
@@ -382,7 +398,7 @@
 {
     NSString *messageString = text;
     
-    JSQMessage *message = [[JSQMessage alloc] initWithSenderId:senderId
+    JRMessage *message = [[JRMessage alloc] initWithSenderId:senderId
                                              senderDisplayName:senderDisplayName
                                                           date:date
                                                           text:messageString];
@@ -414,15 +430,15 @@
                                               @"type":@"text"
                                               }];
             
-            NSDictionary *params = @{@"userId": @"IIEf7cUvrO", @"message": [NSString stringWithFormat:@"TO TEAM BUMP FROM %@: %@",[PFUser currentUser].username ,messageString], @"sender": [PFUser currentUser].username};
-            [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                if (!error) {
-                    NSLog(@"response %@", response);
-                }
-                else{
-                    NSLog(@"push error %@", error);
-                }
-            }];
+//            NSDictionary *params = @{@"userId": @"IIEf7cUvrO", @"message": [NSString stringWithFormat:@"TO TEAM BUMP FROM %@: %@",[PFUser currentUser].username ,messageString], @"sender": [PFUser currentUser].username};
+//            [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//                if (!error) {
+//                    NSLog(@"response %@", response);
+//                }
+//                else{
+//                    NSLog(@"push error %@", error);
+//                }
+//            }];
         }
         else{
             NSLog(@"error sending message %@", error);
@@ -465,6 +481,8 @@
             NSLog(@"error with conv %@", error);
         }
     }];
+    
+    [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
 }
 
 - (void)didPressAccessoryButton:(UIButton *)sender
@@ -637,7 +655,7 @@
     UIImage *newImage = [image scaleImageToSizeFIT:CGSizeMake(750, 750)];
     
     JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc] initWithImage:newImage];
-    JSQMessage *photoMessage = [JSQMessage messageWithSenderId:self.senderId
+    JRMessage *photoMessage = [JRMessage messageWithSenderId:self.senderId
                                                    displayName:self.senderDisplayName
                                                          media:photoItem];
     [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
@@ -764,7 +782,7 @@
      *  Otherwise, return your previously created bubble image data objects.
      */
     
-    JSQMessage *message = self.messages[indexPath.item];
+    JRMessage *message = self.messages[indexPath.item];
     
     if ([message.senderId isEqualToString:self.senderId])
     {
@@ -775,7 +793,7 @@
 
 - (id<JSQMessageAvatarImageDataSource>)collectionView:(JSQMessagesCollectionView *)collectionView avatarImageDataForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+    JRMessage *message = [self.messages objectAtIndex:indexPath.item];
     
     if ([message.senderId isEqualToString:self.senderId]) {
         return nil;
@@ -820,14 +838,14 @@
     
     //show timestamp if message was sent >= 1 hour after previous message
     if (indexPath.item == 0) {
-        JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+        JRMessage *message = [self.messages objectAtIndex:indexPath.item];
         NSAttributedString *finalStamp = [[NSAttributedString alloc]initWithString:[[[JSQMessagesTimestampFormatter sharedFormatter] attributedTimestampForDate:message.date] string] attributes:textAttributes];
         return finalStamp;
     }
     else{
         //get previous message
-        JSQMessage *previousMessage = [self.messages objectAtIndex:indexPath.item-1];
-        JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+        JRMessage *previousMessage = [self.messages objectAtIndex:indexPath.item-1];
+        JRMessage *message = [self.messages objectAtIndex:indexPath.item];
         
         //check difference between 2 dates
         NSDate* date1 = previousMessage.date;
@@ -864,13 +882,29 @@
 }
 
 
+//- (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
+//
+//    if (self.showSuggested == YES ){
+//        return UIEdgeInsetsMake(0, 0, 50, 0);
+//    }
+//    else{
+//        return self.collectionView.layoutMargins;
+//    }
+//}
+
 - (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
     
-    if (self.showSuggested == YES ){
-        return UIEdgeInsetsMake(0, 0, 50, 0);
+    if (@available(iOS 11.0, *)) {
+        //so to calculate height insets we need to return (navigation bar height + status bar height + listing banner height) - adjusted content insets
+        return UIEdgeInsetsMake(self.navigationController.navigationBar.frame.size.height + [UIApplication sharedApplication].statusBarFrame.size.height, 0, self.carousel.frame.size.height, 0); // top, left, bottom, right
     }
     else{
-        return self.collectionView.layoutMargins;
+        if (self.showSuggested == YES) {
+            return UIEdgeInsetsMake(0, 0, 50, 0); // top, left, bottom, right
+        }
+        else{
+            return self.collectionView.layoutMargins;
+        }
     }
 }
 
@@ -898,7 +932,7 @@
      *  Instead, override the properties you want on `self.collectionView.collectionViewLayout` from `viewDidLoad`
      */
     
-    JSQMessage *msg = [self.messages objectAtIndex:indexPath.item];
+    JRMessage *msg = [self.messages objectAtIndex:indexPath.item];
     
     if (!msg.isMediaMessage) {
         
@@ -960,8 +994,8 @@
     }
     else{
         //get previous message
-        JSQMessage *previousMessage = [self.messages objectAtIndex:indexPath.item-1];
-        JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+        JRMessage *previousMessage = [self.messages objectAtIndex:indexPath.item-1];
+        JRMessage *message = [self.messages objectAtIndex:indexPath.item];
         
         //check difference between 2 dates
         NSDate* date1 = previousMessage.date;
@@ -985,13 +1019,13 @@
     /**
      *  iOS7-style sender name labels
      */
-    JSQMessage *currentMessage = [self.messages objectAtIndex:indexPath.item];
+    JRMessage *currentMessage = [self.messages objectAtIndex:indexPath.item];
     if ([[currentMessage senderId] isEqualToString:self.senderId]) {
         return 0.0f;
     }
     
     if (indexPath.item - 1 > 0) {
-        JSQMessage *previousMessage = [self.messages objectAtIndex:indexPath.item - 1];
+        JRMessage *previousMessage = [self.messages objectAtIndex:indexPath.item - 1];
         if ([[previousMessage senderId] isEqualToString:[currentMessage senderId]]) {
             return 0.0f;
         }
@@ -1023,7 +1057,7 @@
 
 - (void)collectionView:(JSQMessagesCollectionView *)collectionView didTapMessageBubbleAtIndexPath:(NSIndexPath *)indexPath
 {
-    JSQMessage *tappedMessage = [self.messages objectAtIndex:indexPath.item];
+    JRMessage *tappedMessage = [self.messages objectAtIndex:indexPath.item];
     
     if ([[self.messages objectAtIndex:indexPath.item] isMediaMessage] == YES){
         
@@ -1151,6 +1185,11 @@
                         }
                      completion:^(BOOL finished) {
                      }];
+    
+    //need to reset insets on iOS 11 since scroll view has some new properties which mess up insets after keyboard displayed
+    if (@available(iOS 11.0, *)) {
+        self.collectionView.contentInset = UIEdgeInsetsMake(0, 0, 44, 0);
+    }
 }
 
 -(void)textViewDidChange:(UITextView *)textView{
@@ -1207,8 +1246,8 @@
         messageLabel.backgroundColor = [UIColor whiteColor];
     }
     else{
-        messageLabel.textColor = [UIColor whiteColor];
-        messageLabel.backgroundColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+        messageLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
+        messageLabel.backgroundColor = [UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0];
     }
     
     return view;
@@ -1261,7 +1300,7 @@
     }
 
     
-    JSQMessage *JSmessage = [[JSQMessage alloc] initWithSenderId:@"BUMP" senderDisplayName:@"Team Bump" date:[NSDate date] text:message];
+    JRMessage *JSmessage = [[JRMessage alloc] initWithSenderId:@"BUMP" senderDisplayName:@"Team Bump" date:[NSDate date] text:message];
     
     if (![self.messages containsObject:JSmessage]) {
         [self.messages addObject:JSmessage];

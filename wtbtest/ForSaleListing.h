@@ -30,7 +30,7 @@
 
 @end
 
-@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate>
+@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate, UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
 
@@ -45,6 +45,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *image2Cell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *carouselCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *extraInfoCell;
 
 //labels
 @property (weak, nonatomic) IBOutlet UILabel *priceLabel;
@@ -56,7 +57,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *usernameButton;
 @property (weak, nonatomic) IBOutlet UILabel *itemTitle;
 @property (weak, nonatomic) IBOutlet UILabel *sellerTextLabel;
-@property (nonatomic) BOOL hasMultiple;
 
 //icons
 @property (weak, nonatomic) IBOutlet UIImageView *sizeIcon;
@@ -72,8 +72,8 @@
 //@property (weak, nonatomic) IBOutlet PFImageView *imageViewTwo;
 //seller info
 @property (nonatomic, strong) PFUser *seller;
-@property (weak, nonatomic) IBOutlet PFImageView *sellerImgView;
 @property (nonatomic) BOOL fetchedListing;
+@property (nonatomic) BOOL fetchedUser;
 
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
@@ -107,6 +107,8 @@
 //carousel
 @property (weak, nonatomic) IBOutlet iCarousel *carouselView;
 @property (nonatomic, strong) NSMutableArray *imageArray;
+@property (weak, nonatomic) IBOutlet UILabel *zoomPromptLabel;
+@property (nonatomic) BOOL zoomPromptShowing;
 
 //buttons cell
 @property (strong, nonatomic) IBOutlet UITableViewCell *sendCell;
@@ -154,6 +156,11 @@
 //user push preferences
 @property (nonatomic) BOOL dontLikePush;
 @property (nonatomic) BOOL likedAlready;
+
+//extra info cell
+@property (weak, nonatomic) IBOutlet UILabel *countryLabel;
+
+
 
 
 @end

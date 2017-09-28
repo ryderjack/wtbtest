@@ -24,7 +24,7 @@
 -(void)enteredSearchTerm:(NSString *)term inSellingSearch:(BOOL)mode;
 @end
 
-@interface searchedViewC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate,UICollectionViewDelegateFlowLayout, ExploreCellDelegate, UISearchBarDelegate, FilterDelegate, searchBoostDelegate>
+@interface searchedViewC : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate,UICollectionViewDelegateFlowLayout, UISearchBarDelegate, FilterDelegate, searchBoostDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *results;
@@ -32,6 +32,8 @@
 @property (nonatomic, strong) NSMutableArray *filterSizesArray;
 @property (nonatomic, strong) NSMutableArray *filterBrandsArray;
 @property (nonatomic, strong) NSMutableArray *filterColoursArray;
+@property (nonatomic, strong) NSMutableArray *filterContinentsArray;
+
 @property (nonatomic, strong) NSString *filterCategory;
 
 @property (nonatomic) float filterLower;

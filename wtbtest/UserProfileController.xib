@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13173"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -95,7 +95,6 @@
                     </connections>
                 </button>
             </subviews>
-            <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
             <constraints>
                 <constraint firstItem="ATt-K1-CsL" firstAttribute="top" secondItem="gwB-H8-gNd" secondAttribute="bottom" constant="8" symbolic="YES" id="8nj-cW-TX0"/>
                 <constraint firstAttribute="trailing" secondItem="BD6-gL-jeP" secondAttribute="trailing" id="B1N-VM-s36"/>
@@ -103,6 +102,7 @@
                 <constraint firstAttribute="bottom" secondItem="ATt-K1-CsL" secondAttribute="bottom" constant="7" id="BUJ-G8-dhv"/>
                 <constraint firstItem="ATt-K1-CsL" firstAttribute="centerX" secondItem="LCs-Y4-duq" secondAttribute="centerX" id="Gsx-jy-X9G"/>
                 <constraint firstItem="fnc-Nb-g9H" firstAttribute="top" secondItem="22l-aR-kYi" secondAttribute="top" id="H9q-DS-Owf"/>
+                <constraint firstItem="BD6-gL-jeP" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="Pec-iq-ctR"/>
                 <constraint firstAttribute="bottom" secondItem="BD6-gL-jeP" secondAttribute="bottom" id="Q2c-p7-iKp"/>
                 <constraint firstItem="ATt-K1-CsL" firstAttribute="centerX" secondItem="BD6-gL-jeP" secondAttribute="centerX" id="S5w-VI-WXt"/>
                 <constraint firstItem="BD6-gL-jeP" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="VoA-wW-bXF"/>
@@ -112,7 +112,6 @@
                 <constraint firstItem="22l-aR-kYi" firstAttribute="top" secondItem="LCs-Y4-duq" secondAttribute="bottom" constant="8" symbolic="YES" id="rq5-Kq-9hZ"/>
                 <constraint firstItem="LCs-Y4-duq" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="68" id="rsb-Wr-qSV"/>
                 <constraint firstItem="22l-aR-kYi" firstAttribute="centerX" secondItem="ATt-K1-CsL" secondAttribute="centerX" id="s7Z-RZ-92S"/>
-                <constraint firstItem="BD6-gL-jeP" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="xwZ-EU-5By"/>
             </constraints>
             <nil key="simulatedTopBarMetrics"/>
             <point key="canvasLocation" x="385.5" y="341.5"/>

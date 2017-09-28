@@ -43,6 +43,7 @@
     self.filterSizesArray = [NSMutableArray array];
     self.filterBrandsArray = [NSMutableArray array];
     self.filterColoursArray = [NSMutableArray array];
+    self.filterContinentsArray = [NSMutableArray array];
     
     self.lastSelected = [[NSIndexPath alloc]init];
     
@@ -893,6 +894,8 @@
         if (self.tabMode) {
             vc.delegate = self;
         }
+        vc.seller = [selected objectForKey:@"sellerUser"];
+
         [self.navigationController pushViewController:vc animated:YES];
     }
     else if (self.segmentedControl.selectedSegmentIndex == 1){
@@ -933,6 +936,8 @@
             if (self.tabMode) {
                 vc.delegate = self;
             }
+            vc.seller = [selected objectForKey:@"sellerUser"];
+
             [self.navigationController pushViewController:vc animated:YES];
         }
         else{
@@ -977,7 +982,7 @@
     self.webView.showPageTitles = NO;
     self.webView.doneButtonTitle = @"";
     self.webView.payMode = NO;
-    self.webView.infoMode = NO;
+//    self.webView.infoMode = NO;
     self.webView.delegate = self;
     
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];
@@ -1149,7 +1154,6 @@
 }
 
 -(void)segmentControlChanged{
-    NSLog(@"CHANGED");
     [self.createButton setHidden:YES];
     [self.bumpImageView setHidden:YES];
     [self.bumpLabel setHidden:YES];
@@ -1324,31 +1328,31 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     
-    //Copy Link
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Profile Link" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [Answers logCustomEventWithName:@"Copied Link"
-                       customAttributes:@{
-                                          @"link":@"profile"
-                                          }];
-        
-        NSString *urlString = [NSString stringWithFormat:@"http://sobump.com/p?profile=%@",self.user.username];
-        UIPasteboard *pb = [UIPasteboard generalPasteboard];
-        [pb setString:urlString];
-        
-        //show HUD
-        [self showHUDForCopy:YES];
-        
-        double delayInSeconds = 2.0; // number of seconds to wait
-        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-            [self hideHUD];
-            self.hud.labelText = @"";
-        });
-    }]];
-    
     if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Message" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
             [self setupMessages];
+        }]];
+        
+        //Copy Link
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Profile Link" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Copied Link"
+                           customAttributes:@{
+                                              @"link":@"profile"
+                                              }];
+            
+            NSString *urlString = [NSString stringWithFormat:@"http://sobump.com/p?profile=%@",self.user.username];
+            UIPasteboard *pb = [UIPasteboard generalPasteboard];
+            [pb setString:urlString];
+            
+            //show HUD
+            [self showHUDForCopy:YES];
+            
+            double delayInSeconds = 2.0; // number of seconds to wait
+            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                [self hideHUD];
+                self.hud.labelText = @"";
+            });
         }]];
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
@@ -1388,6 +1392,29 @@
 //            }]];
 //        }
 
+    }
+    else{
+        //Copy Link
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Profile Link" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Copied Link"
+                           customAttributes:@{
+                                              @"link":@"profile"
+                                              }];
+            
+            NSString *urlString = [NSString stringWithFormat:@"http://sobump.com/p?profile=%@",self.user.username];
+            UIPasteboard *pb = [UIPasteboard generalPasteboard];
+            [pb setString:urlString];
+            
+            //show HUD
+            [self showHUDForCopy:YES];
+            
+            double delayInSeconds = 2.0; // number of seconds to wait
+            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                [self hideHUD];
+                self.hud.labelText = @"";
+            });
+        }]];
     }
     
     [self presentViewController:actionSheet animated:YES completion:nil];
@@ -1529,7 +1556,14 @@
     self.splitter = [[BLKDelegateSplitter alloc] initWithFirstDelegate:self secondDelegate:self.myBar.behaviorDefiner];
     
     self.collectionView.delegate = (id<UICollectionViewDelegate>)self.splitter;
-    self.collectionView.contentInset = UIEdgeInsetsMake(self.myBar.maximumBarHeight, 0.0, 0.0, 0.0);
+    
+    if (@available(iOS 11.0, *)) {
+        self.collectionView.contentInset = UIEdgeInsetsMake(self.myBar.maximumBarHeight-20, 0.0, 0.0, 0.0);
+    }
+    else{
+        //seeing odd behaviour with collection view. Same sizes on iOS 10 & 11 but 11 has a larger top inset..
+        self.collectionView.contentInset = UIEdgeInsetsMake(self.myBar.maximumBarHeight, 0.0, 0.0, 0.0);
+    }
     
     // big mode setup
     
@@ -1913,7 +1947,7 @@
         //editImageView
         self.editImageView = [[PFImageView alloc]initWithFrame:CGRectMake(0,0, 30, 30)];
         [self.editImageView setImage:[UIImage imageNamed:@"editButton"]];
-        [self.myBar addSubview:self.editImageView];
+//        [self.myBar addSubview:self.editImageView];
         
         //image view button initial
         BLKFlexibleHeightBarSubviewLayoutAttributes *initialImageButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
@@ -2648,7 +2682,7 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 
--(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper{
+-(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper andContinents:(NSMutableArray *)continents{
     [self.forSaleArray removeAllObjects];
     [self.collectionView reloadData];
     
@@ -2660,6 +2694,7 @@
         self.filterCategory = category;
         self.filterUpper = upper;
         self.filterLower = lower;
+        self.filterContinentsArray = continents;
         
         //change colour of filter number
         NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"F I L T E R  %lu",self.filtersArray.count]];
@@ -2675,6 +2710,8 @@
         [self.filterSizesArray removeAllObjects];
         [self.filterBrandsArray removeAllObjects];
         [self.filterColoursArray removeAllObjects];
+        [self.filterContinentsArray removeAllObjects];
+        
         self.filterCategory = @"";
     }
     
@@ -2888,10 +2925,10 @@
     self.segmentedControl.frame = CGRectMake(0, self.myBar.frame.size.height-50,[UIApplication sharedApplication].keyWindow.frame.size.width, 50);
     self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
     self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
-    self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+    self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0];
     self.segmentedControl.selectionIndicatorHeight = 2;
-    self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10]};
-    self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]};
+    self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10],NSForegroundColorAttributeName : [UIColor lightGrayColor]};
+    self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName :  [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0]};
     [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
     
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialSegAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] init];

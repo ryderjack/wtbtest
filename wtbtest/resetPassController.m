@@ -63,12 +63,6 @@
 }
 
 -(void)textFieldDidEndEditing:(UITextField *)textField{
-//    if (self.resetMode) {
-//        NSString *pass = [self.mainTextField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-//        if ([pass length] < 8 && [pass length] != 0) {
-//            [self showAlertWithTitle:@"Password Length" andMsg:@"Passwords must be at least 8 characters"];
-//        }
-//    }
     [self resetPressed:self];
 }
 
@@ -185,7 +179,7 @@
     
     __block int resetCount = [[[NSUserDefaults standardUserDefaults] valueForKey:@"resetCount"]intValue];
     
-    if (resetCount > 3) {
+    if (resetCount > 300) {
         [self showAlertWithTitle:@"Reset Requests Exceeded" andMsg:@"You've requested a password reset 3 times! Send us an email at hello@sobump.com to reset your password"];
         [self hideHUD];
         [self.resetButton setEnabled:YES];
@@ -234,7 +228,8 @@
                     NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
                     NSString *safeString = [dateFormatter stringFromDate:safeDate];
                     [[NSUserDefaults standardUserDefaults]setValue:safeString forKey:@"safeResetDate"];
-                    
+
+                    self.dontMatchError = YES;
                     [self showAlertWithTitle:@"Reset Email Sent 📩" andMsg:@"Tap the link the email to reset your password\n\nDon't forget to check your Junk Mail folder!"];
                     [self.resetButton setTitle:@"Sent" forState:UIControlStateNormal];
 
@@ -287,6 +282,7 @@
                 NSString *safeString = [dateFormatter stringFromDate:safeDate];
                 [[NSUserDefaults standardUserDefaults]setValue:safeString forKey:@"safeResetDate"];
                 
+                self.dontMatchError = YES;
                 [self showAlertWithTitle:@"Reset Email Sent 📩" andMsg:@"Tap the link the email to reset your password\n\nDon't forget to check your Junk Mail folder"];
                 
                 [self.resetButton setTitle:@"Sent" forState:UIControlStateNormal];
@@ -346,7 +342,7 @@
     [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         if (self.dontMatchError) {
             self.dontMatchError = NO;
-            [self.navigationController popViewControllerAnimated:YES];
+            [self.navigationController popToRootViewControllerAnimated:YES];
         }
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
@@ -384,6 +380,8 @@
     [alertView addAction:[UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         [self.navigationController popToRootViewControllerAnimated:YES];
     }]];
+    
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 
 -(void)showEmailAlert{

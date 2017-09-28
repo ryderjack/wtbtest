@@ -21,23 +21,34 @@
     _fastCamera = [FastttCamera new];
     self.fastCamera.delegate = self;
     
-    [self fastttAddChildViewController:self.fastCamera];
-    self.fastCamera.view.frame = self.camView.frame;
-    self.fastCamera.cameraFlashMode = FastttCameraFlashModeOff;
+
+}
+
+-(void)viewDidLayoutSubviews{
+    [super viewDidLayoutSubviews];
     
-    if (self.offerMode == YES) {
-        // add tag label as camera overlay
-        [self.fastCamera.view addSubview:self.tageLabel];
-        
-        // set date
-        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-        [dateFormatter setLocale:[NSLocale currentLocale]];
-        [dateFormatter setDateFormat:@"MMM YY"];
-        
-        NSDate *formattedDate = [NSDate date];
-        self.tageLabel.text = [NSString stringWithFormat:@"%@\n%@", [PFUser currentUser].username, [dateFormatter stringFromDate:formattedDate]];
-        dateFormatter = nil;
+    if (!self.loaded) {
+        self.loaded = YES;
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0 * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            [self fastttAddChildViewController:self.fastCamera];
+            self.fastCamera.view.frame = self.camView.frame;
+            self.fastCamera.cameraFlashMode = FastttCameraFlashModeOff;
+        });
     }
+    
+//    if (self.offerMode == YES) {
+//        // add tag label as camera overlay
+//        // set date
+//        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+//        [dateFormatter setLocale:[NSLocale currentLocale]];
+//        [dateFormatter setDateFormat:@"MMM YY"];
+//
+//        NSDate *formattedDate = [NSDate date];
+//        self.tageLabel.text = [NSString stringWithFormat:@"%@\n%@", [PFUser currentUser].username, [dateFormatter stringFromDate:formattedDate]];
+//        dateFormatter = nil;
+//    }
+    
 }
 
 - (void)didReceiveMemoryWarning {

@@ -1824,7 +1824,7 @@ referenceSizeForHeaderInSection:(NSInteger)section {
                 self.web.showUrlWhileLoading = YES;
                 self.web.showPageTitles = YES;
                 self.web.doneButtonTitle = @"";
-                self.web.infoMode = NO;
+//                self.web.infoMode = NO;
                 self.web.delegate = self;
                 self.web.dropMode = YES;
                 
@@ -2174,7 +2174,7 @@ referenceSizeForHeaderInSection:(NSInteger)section {
     self.pushAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.pushAlert.delegate = self;
     self.pushAlert.titleLabel.text = @"Enable Push";
-    self.pushAlert.messageLabel.text = @"Tap to be notified when sellers & potential buyers send you a message on Bump";
+    self.pushAlert.messageLabel.text = @"Tap to be notified when sellers & potential buyers send you a message on BUMP";
     self.pushAlert.numberOfButtons = 2;
     [self.pushAlert.secondButton setTitle:@"E N A B L E" forState:UIControlStateNormal];
     
@@ -2858,6 +2858,7 @@ referenceSizeForHeaderInSection:(NSInteger)section {
 }
 
 -(void)hideInviteView{
+
     [UIView animateWithDuration:0.3
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -3152,7 +3153,7 @@ referenceSizeForHeaderInSection:(NSInteger)section {
     self.web.showUrlWhileLoading = YES;
     self.web.showPageTitles = YES;
     self.web.doneButtonTitle = @"";
-    self.web.infoMode = NO;
+//    self.web.infoMode = NO;
     self.web.delegate = self;
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
     [self presentViewController:navigationController animated:YES completion:nil];

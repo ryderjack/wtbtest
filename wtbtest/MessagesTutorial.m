@@ -37,8 +37,8 @@
         self.heroImageView.image = [UIImage imageNamed:@"yeezy"];
     }
     else{
-        self.titleLabel.text = @"How to sell on Bump";
-        self.explainLabel.text = @"On Bump, sellers send buyers an offer to buy their stuff. Tap the tag icon to send an offer, pictures & more!";
+        self.titleLabel.text = @"How to sell on BUMP";
+        self.explainLabel.text = @"On BUMP, sellers send buyers an offer to buy their stuff. Tap the tag icon to send an offer, pictures & more!";
         self.heroImageView.image = [UIImage imageNamed:@"tagExplain"];
     }
     [self.progressButton setHidden:NO];
@@ -100,13 +100,13 @@
     
     if (self.sellerMode == YES) {
         self.titleLabel.text = @"Suggested Items";
-        self.explainLabel.text = @"Tap on the cart to view suggested items based on what you want to buy on Bump";
+        self.explainLabel.text = @"Tap on the cart to view suggested items based on what you want to buy on BUMP";
         self.heroImageView.image = [UIImage imageNamed:@"cartTab"];
     }
     else if (self.introMode == YES){
         [self.progressButton setTitle:@"Create a WTB" forState:UIControlStateNormal];
         self.titleLabel.text = @"Suggested Items";
-        self.explainLabel.text = @"Bump uses your wanted items to show you relevant products that can be purchased within the app";
+        self.explainLabel.text = @"BUMP uses your wanted items to show you relevant products that can be purchased within the app";
         self.heroImageView.image = [UIImage imageNamed:@"buyNowTut"];
     }
     else{
@@ -135,13 +135,13 @@
         [self.progressButton setTitle:@"Done" forState:UIControlStateNormal];
         [self performSelector:@selector(unhideProgress) withObject:nil afterDelay:1.0];
         self.titleLabel.text = @"Buy it now";
-        self.explainLabel.text = @"Recommended items are displayed under a WTB. Tap one to view details, message the seller and purchase it on Bump";
+        self.explainLabel.text = @"Recommended items are displayed under a WTB. Tap one to view details, message the seller and purchase it on BUMP";
         self.heroImageView.image = [UIImage imageNamed:@"buyNowTut"];
     }
     else{
         [self.progressButton setHidden:NO];
         [self.progressButton setTitle:@"Next" forState:UIControlStateNormal];
-        self.titleLabel.text = @"Buy on Bump";
+        self.titleLabel.text = @"Buy on BUMP";
         self.explainLabel.text = @"After you've sent your offer, buyers can tap on the offer message, to be taken to the checkout";
         self.heroImageView.image = [UIImage imageNamed:@"buy_1"];
         
@@ -159,7 +159,7 @@
 }
 
 -(void)setupPageFour{
-    self.titleLabel.text = @"Buy on Bump";
+    self.titleLabel.text = @"Buy on BUMP";
     self.explainLabel.text = @"Buyers enter their address, check the total then hit Pay with PayPal";
     
     NSArray *buyImages = @[@"buy_2.png",@"buy_3.png",@"buy_4.png"];
@@ -178,7 +178,7 @@
 -(void)setupPageFive{
     [self.heroImageView stopAnimating];
     [self.progressButton setTitle:@"Done" forState:UIControlStateNormal];
-    self.titleLabel.text = @"Buy on Bump";
+    self.titleLabel.text = @"Buy on BUMP";
     self.explainLabel.text = @"Log in to PayPal and pay the seller's email address in the top banner then hit 'Paid'!";
     self.heroImageView.image = [UIImage imageNamed:@"buy_5"];
 }

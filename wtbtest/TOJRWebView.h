@@ -9,7 +9,7 @@
 #import <TOWebViewController/TOWebViewController.h>
 #import "customAlertViewClass.h"
 #import <SpinKit/RTSpinKitView.h>
-#import <MBProgressHUD.h>
+#import "MBProgressHUD.h"
 #import <FXBlurView/FXBlurView.h>
 #import "AddImagesTutorial.h"
 
@@ -36,6 +36,7 @@
 @property (nonatomic) BOOL payMode;
 @property (nonatomic) BOOL dropMode;
 @property (nonatomic) BOOL storeMode;
+@property (nonatomic) BOOL infoMode;
 
 //update button
 @property (nonatomic, strong) UIButton *longButton;

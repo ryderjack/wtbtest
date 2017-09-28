@@ -17,6 +17,7 @@
 #import "TOJRWebView.h"
 #import <StoreKit/StoreKit.h>
 #import "CreateTab.h"
+#import "CreateForSaleListing.h"
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate, UITabBarControllerDelegate, JRWebViewDelegate,SKPaymentTransactionObserver>
 
@@ -30,6 +31,7 @@
 @property (nonatomic, strong) PFInstallation *installation;
 @property (nonatomic, strong) PurchaseTab *purchaseView;
 @property (nonatomic, strong) CreateTab *createTabView;
+@property (nonatomic, strong) CreateForSaleListing *createSaleListing;
 
 @property (nonatomic, strong) NSMutableArray *unseenMessages;
 

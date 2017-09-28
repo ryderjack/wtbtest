@@ -20,26 +20,48 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
     [self.noWantedResultsLabel setHidden:YES];
 
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
     self.navigationItem.rightBarButtonItem = cancelButton;
+
+//    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"<" style:UIBarButtonItemStylePlain target:self action:@selector(popViewControllerAnimated:)];
+//    self.navigationItem.leftBarButtonItem = cancelButton;
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(scrollTop) name:@"scrollSearchTop" object:nil];
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
 
     self.searchBar = [[UISearchBar alloc] init];
     self.searchBar.searchBarStyle = UISearchBarStyleMinimal;
     self.searchBar.delegate = self;
-    self.navigationItem.titleView = self.searchBar;
     [self.searchBar sizeToFit];
     self.searchBar.text = self.searchString;
+//    self.searchBar.showsCancelButton = YES;
+    
+    if (@available(iOS 11.0, *)) {
+        //nav bar height will be 56 (coz of bigger search bars)
+        //move the whole collection view down because of the header
+        
+        UIView *container = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 200, 44)];
+        [self.searchBar setFrame:CGRectMake(0, 0, 200, 44)];
+        [container addSubview:self.searchBar];
+        self.navigationItem.titleView = container;
+    }
+    else{
+        //nav bar height will be standard 44
+        self.navigationItem.titleView = self.searchBar;
+    }
+    
+//    //force cancel button to be enabled
+//    UIButton *btnCancel = [self.searchBar valueForKey:@"_cancelButton"];
+//    [btnCancel setEnabled:YES];
     
     //prompt to dismiss keyboard
     [self addDoneButton];
     
     //collection view/cell setup
-    
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
 
     if (self.sellingSearch) {
@@ -109,17 +131,18 @@
         }
         
         [flowLayout setMinimumInteritemSpacing:0];
+        
+        //setup header
+        [self.collectionView registerNib:[UINib nibWithNibName:@"simpleBannerHeader" bundle:nil]
+              forSupplementaryViewOfKind:UICollectionElementKindSectionHeader
+                     withReuseIdentifier:@"Header"];
+        
+        flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 40);
+        flowLayout.sectionHeadersPinToVisibleBounds = NO;
     }
 
-    flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 40);
-    flowLayout.sectionHeadersPinToVisibleBounds = NO;
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
-
-    //setup header
-    [self.collectionView registerNib:[UINib nibWithNibName:@"simpleBannerHeader" bundle:nil]
-          forSupplementaryViewOfKind:UICollectionElementKindSectionHeader
-                 withReuseIdentifier:@"Header"];
     
     [self.collectionView setCollectionViewLayout:flowLayout];
     self.collectionView.delegate = self;
@@ -133,6 +156,7 @@
     self.filterSizesArray = [NSMutableArray array];
     self.filterBrandsArray = [NSMutableArray array];
     self.filterColoursArray = [NSMutableArray array];
+    self.filterContinentsArray = [NSMutableArray array];
     self.filterCategory = @"";
 
     self.uselessWords = [NSArray arrayWithObjects:@"x",@"to",@"with",@"and",@"the",@"wtb",@"or",@" ",@".",@"very",@"interested", @"in",@"wanted", @"",@",", nil];
@@ -156,7 +180,7 @@
         [self.bannerHeaderView.simpleHeaderLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
 
         if (self.sellingSearch) {
-            [self.bannerHeaderView setBackgroundColor:[UIColor clearColor]];
+            [self.bannerHeaderView setBackgroundColor:[UIColor redColor]];
             self.bannerHeaderView.simpleHeaderLabel.text = @"For sale results";
         }
         else{
@@ -212,6 +236,11 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    UITextField *txfSearchField = [self.searchBar valueForKey:@"searchField"];
+    
+    if (@available(iOS 11.0, *)) {
+        [txfSearchField setAttributedText:[[NSAttributedString alloc] initWithString:self.searchString attributes:@{NSFontAttributeName: [UIFont fontWithName:@"PingFangSC-Regular" size:14]}]];
+    }
     if (self.viewedListing != YES) {
         [self queryParsePull];
 //        [self getBoostedSearchListings];
@@ -221,12 +250,12 @@
 -(void)didMoveToParentViewController:(UIViewController *)parent {
     [super didMoveToParentViewController:parent];
     //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-    [self.collectionView addPullToRefreshWithActionHandler:^{
-        if (self.pullFinished == YES) {
-            [self queryParsePull];
-//            [self getBoostedSearchListings];
-        }
-    }];
+//    [self.collectionView addPullToRefreshWithActionHandler:^{
+//        if (self.pullFinished == YES) {
+//            [self queryParsePull];
+////            [self getBoostedSearchListings];
+//        }
+//    }];
     
     self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
     [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
@@ -313,7 +342,11 @@
             [self.results addObjectsFromArray:objects];
             
             [self.collectionView reloadData];
-            [self.collectionView.pullToRefreshView stopAnimating];
+
+//            [self.collectionView setContentOffset:CGPointMake(0, 0)];
+            
+//            [self.collectionView.pullToRefreshView stopAnimating]; //CHECK this is causing CV to scroll past the top upon reload
+
             self.pullFinished = YES;
         }
         else{
@@ -334,6 +367,8 @@
         [self.collectionView.infiniteScrollingView stopAnimating];
         return;
     }
+    
+    [self hideFilterButton];
     
     self.infinFinished = NO;
     self.showFooter = NO;
@@ -394,11 +429,15 @@
             [self.collectionView reloadData];
             [self.collectionView.infiniteScrollingView stopAnimating];
             self.infinFinished = YES;
+            
+            [self showFilterButton];
         }
         else{
             NSLog(@"error %@", error);
             self.infinFinished = YES;
             [self showError];
+            
+            [self showFilterButton];
         }
     }];
 }
@@ -409,8 +448,21 @@
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
+-(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
+    [self cancelPressed];
+}
+
 - (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
+//    if (@available(iOS 11.0, *)) {
+//        //nav bar height will be 56 (coz of bigger search bars)
+//        return UIEdgeInsetsMake(20, 8, 8, 8); // top, left, bottom, right
+//    }
+//    else{
+//        //nav bar height will be standard 44
+//    }
+
     return UIEdgeInsetsMake(8, 8, 8, 8); // top, left, bottom, right
+
 }
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
@@ -767,7 +819,8 @@
         vc.source = @"search";
         vc.fromBuyNow = YES;
         vc.pureWTS = YES;
-        
+        vc.seller = [itemObject objectForKey:@"sellerUser"];
+
         //switch off hiding nav bar
         self.navigationController.navigationBarHidden = NO;
         [self.navigationController pushViewController:vc animated:YES];
@@ -808,6 +861,28 @@
 -(void)setupPullQuery{
     if (self.filtersArray.count > 0) {
         
+        //setup location
+        if (self.filterContinentsArray.count > 0) {
+            if ([self.filterContinentsArray containsObject:@"Around me"]) {
+                
+                if (self.currentLocation) {
+                    [self.pullQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:100];
+                }
+                else{
+                    //prompt to turn location on?
+                    [Answers logCustomEventWithName:@"Around me searched without location"
+                                   customAttributes:@{}];
+                }
+            }
+            else{
+                //got a continent to filter
+                [self.pullQuery whereKey:@"continent" containedIn:self.filterContinentsArray];
+            }
+        }
+        else{
+            //don't do anything as it's global
+        }
+        
         //price
         if ([self.filtersArray containsObject:@"price"]) {
             [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThanOrEqualTo:@(self.filterLower)];
@@ -824,11 +899,6 @@
         }
         else{
             [self.pullQuery orderByDescending:@"lastUpdated"];
-        }
-
-        //location
-        if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
-            [self.pullQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:400];
         }
         
         //condition
@@ -879,6 +949,29 @@
 
 -(void)setupInfinQuery{
     if (self.filtersArray.count > 0) {
+        
+        //setup location
+        if (self.filterContinentsArray.count > 0) {
+            if ([self.filterContinentsArray containsObject:@"Around me"]) {
+                
+                if (self.currentLocation) {
+                    [self.infiniteQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:100];
+                }
+                else{
+                    //prompt to turn location on?
+                    [Answers logCustomEventWithName:@"Around me searched without location"
+                                   customAttributes:@{}];
+                }
+            }
+            else{
+                //got a continent to filter
+                [self.infiniteQuery whereKey:@"continent" containedIn:self.filterContinentsArray];
+            }
+            
+        }
+        else{
+            //don't do anything as it's global
+        }
         
         //price
         if ([self.filtersArray containsObject:@"price"]) {
@@ -931,8 +1024,7 @@
         
         //colour filters
         if (self.filterColoursArray.count > 0) {
-            NSLog(@"filters brand array %@", self.filterBrandsArray);
-            [self.infiniteQuery whereKey:@"coloursArray" containedIn:self.filterColoursArray]; //was mainColour
+            [self.infiniteQuery whereKey:@"coloursArray" containedIn:self.filterColoursArray];
         }
         
     }
@@ -959,6 +1051,10 @@
     self.searchString = searchBar.text;
     NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
     [self.delegate enteredSearchTerm:self.searchString inSellingSearch:self.sellingSearch];
+    
+//    //force cancel button to be enabled
+//    UIButton *btnCancel = [self.searchBar valueForKey:@"_cancelButton"];
+//    [btnCancel setEnabled:YES];
 
     if (![stringCheck isEqualToString:@""]) {
         [self.results removeAllObjects];
@@ -971,12 +1067,17 @@
 
 -(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
     [self.searchBar resignFirstResponder];
-    self.searchString = searchBar.text;
-    NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
+    NSString *stringCheck = [searchBar.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     if (![stringCheck isEqualToString:@""]) {
+        self.searchString = searchBar.text;
         [self.delegate enteredSearchTerm:self.searchString inSellingSearch:self.sellingSearch];
     }
+    
+//    //force cancel button to be enabled
+//    UIButton *btnCancel = [self.searchBar valueForKey:@"_cancelButton"];
+//    [btnCancel setEnabled:YES];
 }
 
 - (IBAction)filterPressed:(id)sender {
@@ -999,7 +1100,7 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 
--(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper{
+-(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper andContinents:(NSMutableArray *)continents{
     [self.results removeAllObjects];
     [self.collectionView reloadData];
     
@@ -1011,6 +1112,7 @@
         self.filterCategory = category;
         self.filterUpper = upper;
         self.filterLower = lower;
+        self.filterContinentsArray = continents;
         
         //update filter button title and colour
         NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"F I L T E R  %lu",self.filtersArray.count]];
@@ -1026,11 +1128,11 @@
         [self.filterSizesArray removeAllObjects];
         [self.filterBrandsArray removeAllObjects];
         [self.filterColoursArray removeAllObjects];
+        [self.filterContinentsArray removeAllObjects];
+
         self.filterCategory = @"";
     }
     self.lastInfinSkipped = 0;
-    
-    NSLog(@"filters array in explore %@", self.filtersArray);
     
     if (self.results.count != 0) {
         [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
@@ -1054,6 +1156,8 @@
         [self.filterSizesArray removeAllObjects];
         [self.filterBrandsArray removeAllObjects];
         [self.filterColoursArray removeAllObjects];
+        [self.filterContinentsArray removeAllObjects];
+
         self.filterCategory = @"";
     }
 }
@@ -1199,6 +1303,10 @@
 
 -(void)dismissKeyboard{
     [self.searchBar resignFirstResponder];
+    
+//    //force cancel button to be enabled
+//    UIButton *btnCancel = [self.searchBar valueForKey:@"_cancelButton"];
+//    [btnCancel setEnabled:YES];
 }
 
 #pragma mark - colour part of label
@@ -1212,5 +1320,11 @@
     }
     
     return mainString;
+}
+
+-(void)scrollTop{
+    if (self.results.count != 0) {
+        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
+    }
 }
 @end

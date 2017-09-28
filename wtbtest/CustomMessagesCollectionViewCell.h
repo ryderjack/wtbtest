@@ -6,7 +6,8 @@
 //  Copyright © 2017 Jack Ryder. All rights reserved.
 //
 
-#import <JSQMessagesViewController/JSQMessagesViewController.h>
+#import "JSQMessagesViewController.h"
+//#import <JSQMessagesViewController/JSQMessagesViewController.h>
 
 @interface CustomMessagesCollectionViewCell : JSQMessagesCollectionViewCell
 

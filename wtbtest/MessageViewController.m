@@ -22,6 +22,7 @@
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "ExplainView.h"
 #import "AppDelegate.h"
+#import "JRMessage.h"
 
 @interface MessageViewController ()
 
@@ -35,6 +36,14 @@
 {
     [super viewDidLoad];
     
+    //new property in iOS 11 which automatically adjusts insets on scroll views. Disable so we can do it ourselves
+    if (@available(iOS 11.0, *)) {
+        [self.collectionView setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentNever];
+    }
+    
+//    UIMenuItem *menuItem = [[UIMenuItem alloc] initWithTitle:@"Paste 2" action:@selector(customPaste:)];
+//    [[UIMenuController sharedMenuController] setMenuItems:[NSArray arrayWithObject:menuItem]];
+    
     //register custom cell stuff
 //    self.incomingCellIdentifier = CustomMessagesCollectionViewCellIncoming.cellReuseIdentifier;
 //    self.incomingMediaCellIdentifier = CustomMessagesCollectionViewCellIncoming.mediaCellReuseIdentifier;
@@ -46,7 +55,7 @@
     if (![self.otherUserName isEqualToString:@""]) {
         self.title = [NSString stringWithFormat:@"@%@",self.otherUserName];
     }
-    
+        
     self.paypalSentCounter = 0;
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
@@ -98,9 +107,6 @@
                 [buttonView setFile:listingFile];
                 [buttonView loadInBackground];
             }
-            else{
-                
-            }
         }];
         
 
@@ -116,13 +122,28 @@
     self.collectionView.collectionViewLayout.messageBubbleFont = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
     
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
-    self.inputToolbar.contentView.textView.pasteDelegate = self;
+        
     self.inputToolbar.contentView.textView.placeHolder = @"Write a message...";
+    
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"sendPicBlk"] forState:UIControlStateNormal];
     [self.inputToolbar.contentView.leftBarButtonItem setImage:[UIImage imageNamed:@"sendPicBlue"] forState:UIControlStateHighlighted];
     self.inputToolbar.contentView.backgroundColor = [UIColor whiteColor];
     [self.inputToolbar.contentView.textView.layer setBorderWidth:0.0];
     self.inputToolbar.contentView.textView.delegate = self;
+    self.inputToolbar.contentView.textView.jsqPasteDelegate = self;
+
+//    //paste delegate broken as fuck on iOS10
+//    if (@available(iOS 11.0, *)) {
+//        self.inputToolbar.contentView.textView.jsqPasteDelegate = self;
+//    }
+//    else{
+//
+////        self.inputToolbar.contentView.textView.inputAssistantItem.leadingBarButtonGroups = @[];
+////        self.inputToolbar.contentView.textView.inputAssistantItem.trailingBarButtonGroups = @[];
+//    }
+    
+    NSLog(self.inputToolbar.contentView.textView.hasText ? @"works": @"doesn't work");
+
     [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
     
     //avatar images
@@ -142,6 +163,7 @@
     self.placeholderAssetArray = [NSMutableArray array];
     self.imagesToProcess = [NSMutableArray array];
     
+    
     //set suggested messages
     if (self.userIsBuyer == YES) {
         
@@ -152,10 +174,18 @@
             //load messages left
             if ([self.convoObject objectForKey:@"buyerSuggestedMessages"]) {
                 [self.suggestedMessagesArray addObjectsFromArray:[self.convoObject objectForKey:@"buyerSuggestedMessages"]];
+                
+                //track when a paypal is sent so we can prompt buyer to ask for the tracking number
+                if ([self.convoObject objectForKey:@"paypalSent"] && ![self.convoObject objectForKey:@"addedTrackingMsg"] && ![self.suggestedMessagesArray containsObject:@"Tracking number?"]) {
+                    [self.convoObject setObject:@"YES" forKey:@"addedTrackingMsg"];
+                    [self.convoObject saveInBackground];
+
+                    [self.suggestedMessagesArray insertObject:@"Tracking number?" atIndex:0];
+                }
             }
             else{
                 if (self.messageSellerPressed == YES) {
-                [self.suggestedMessagesArray addObjectsFromArray:@[@"Still available?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?",@"What's your PayPal?", @"Not interested thanks", @"Dismiss"]];
+                [self.suggestedMessagesArray addObjectsFromArray:@[@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?",@"What's your PayPal?", @"Not interested thanks", @"Dismiss"]];
                 }
                 else{
                     if (self.profileConvo) {
@@ -163,6 +193,14 @@
                     }
                     else{
                         [self.suggestedMessagesArray addObjectsFromArray:@[@"What are you selling?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?",@"What's your PayPal?", @"Not interested thanks", @"Dismiss"]];
+                        
+                        //track when a paypal is sent so we can prompt buyer to ask for the tracking number
+                        if ([self.convoObject objectForKey:@"paypalSent"] && ![self.convoObject objectForKey:@"addedTrackingMsg"]) {
+                            [self.convoObject setObject:@"YES" forKey:@"addedTrackingMsg"];
+                            [self.convoObject saveInBackground];
+                            
+                            [self.suggestedMessagesArray insertObject:@"Tracking number?" atIndex:0];
+                        }
                     }
                 }
             }
@@ -255,48 +293,58 @@
                    customAttributes:@{
                                       @"pageName":@"Convo",
                                       }];
-    
 }
 
 -(void)didMoveToParentViewController:(UIViewController *)parent {
     [super didMoveToParentViewController:parent];
     //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-    [self.collectionView addPullToRefreshWithActionHandler:^{
-        if (self.infiniteLoading != YES && self.finishedFirstScroll == YES && self.moreToLoad == YES) {
-            
-            self.infiniteLoading = YES;
-            self.earlierPressed = YES;
-            [self loadMessages];
-        }
-        else{
-            [self.collectionView.pullToRefreshView stopAnimating];
-        }
-    }];
     
-    //we need the spinner so init
-    if (!self.spinner) {
-        self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-        [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
-        [self.spinner startAnimating];
+    if (self.showPull) {
+        //only show pull if there's enough messages otherwise it's a watse of resources
+        [self.collectionView addPullToRefreshWithActionHandler:^{
+            if (self.infiniteLoading != YES && self.finishedFirstScroll == YES && self.moreToLoad == YES) {
+
+                self.infiniteLoading = YES;
+                self.earlierPressed = YES;
+                [self loadMessages];
+            }
+            else{
+                [self.collectionView.pullToRefreshView stopAnimating];
+            }
+        }];
+
+        //we need the spinner so init
+        if (!self.spinner) {
+            self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+            [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
+            [self.spinner startAnimating];
+        }
     }
 }
 
 - (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
     
-    if (self.showSuggested == YES && self.showingListingBanner == YES) {
-        NSLog(@"banner showing so use correct insets");
-        return UIEdgeInsetsMake(80, 0, 50, 0); // top, left, bottom, right
-    }
-    else if (self.showSuggested == YES && self.showingListingBanner != YES){
-        return UIEdgeInsetsMake(0, 0, 50, 0);
-    }
-    else if (self.showSuggested == NO && self.showingListingBanner == YES){
-        NSLog(@"banner showing so use correct insets 1");
-
-          return UIEdgeInsetsMake(80, 0, 0, 0);
+    
+    if (@available(iOS 11.0, *)) {
+        //so to calculate height insets we need to return (navigation bar height + status bar height + listing banner height) - adjusted content insets
+        return UIEdgeInsetsMake(self.listingView.frame.size.height + self.navigationController.navigationBar.frame.size.height + [UIApplication sharedApplication].statusBarFrame.size.height, 0, self.carousel.frame.size.height, 0); // top, left, bottom, right
     }
     else{
-        return self.collectionView.layoutMargins;
+        if (self.showSuggested == YES && self.showingListingBanner == YES) {
+//            NSLog(@"banner showing so use correct insets");
+            return UIEdgeInsetsMake(80, 0, 50, 0); // top, left, bottom, right
+        }
+        else if (self.showSuggested == YES && self.showingListingBanner != YES){
+//            NSLog(@"just bottom insets");
+            return UIEdgeInsetsMake(0, 0, 50, 0);
+        }
+        else if (self.showSuggested == NO && self.showingListingBanner == YES){
+//            NSLog(@"banner just showing so use correct insets 1");
+            return UIEdgeInsetsMake(80, 0, 0, 0);
+        }
+        else{
+            return self.collectionView.layoutMargins;
+        }
     }
 }
 
@@ -370,7 +418,7 @@
                         [self.messagesParseArray addObject:messageOb];
                     }
                     
-                    __block JSQMessage *message = nil;
+                    __block JRMessage *message = nil;
                     
                     if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                         [messageOb setObject:@"seen" forKey:@"status"];
@@ -404,7 +452,7 @@
                             photoItem.appliesMediaViewMaskAsOutgoing = NO;
                         }
                         
-                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
+                        message = [[JRMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
                         message.msgObject = messageOb;
                         
                         //allow user to tap image and goto listing
@@ -472,7 +520,6 @@
                     }
                     else{
                         //normal text message
-                        
                         NSString *messageText = [messageOb objectForKey:@"message"];
                         
                         if (![[messageOb objectForKey:@"senderId"] isEqualToString:[PFUser currentUser].objectId] && [[messageOb objectForKey:@"paypalMessage"]isEqualToString:@"YES"]){
@@ -481,7 +528,7 @@
                             messageText = [NSString stringWithFormat:@"%@\nTap to Pay now",[messageOb objectForKey:@"message"]];
                         }
                         
-                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
+                        message = [[JRMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
                         
                         if ([[messageOb objectForKey:@"sharedMessage"]isEqualToString:@"YES"]){
                             
@@ -621,6 +668,10 @@
     //decide whether to show review banner
     int messageTotal = [[self.convoObject objectForKey:@"totalMessages"]intValue];
     
+    if (messageTotal > 10) {
+        self.showPull = YES;
+    }
+    
     if (self.checkPayPalTapped == YES) {
         self.checkPayPalTapped = NO;
     }
@@ -637,12 +688,16 @@
             self.currencySymbol = @"$";
         }
         
-        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-
-        if (self.pureWTS && messageTotal > 0 && self.listing && (!self.fromLatest || (self.tabBarController.selectedIndex != 0 && nav.visibleViewController == nil)))
+//        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+//        if (self.pureWTS && messageTotal > 0 && self.listing && (!self.fromLatest || (self.tabBarController.selectedIndex != 0 && nav.visibleViewController == nil)))
+        if (self.pureWTS && messageTotal > 0 && self.listing)
         {
-            self.showingListingBanner = YES;
-            [self showListingBanner];
+            double delayInSeconds = 0;
+            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                self.showingListingBanner = YES;
+                [self showListingBanner];
+            });
         }
     }
     
@@ -694,7 +749,6 @@
     
     //fixes bug which hides last message in convo
     //if we scroll here instead of after loadMessages then it works
-    
     if (self.firstLayout && self.automaticallyScrollsToMostRecentMessage) {
         self.firstLayout = NO;
         [self scrollToBottomAnimated:YES];
@@ -766,7 +820,7 @@
                         [self.messagesParseArray insertObject:messageOb atIndex:0];
                     }
                     
-                    __block JSQMessage *message = nil;
+                    __block JRMessage *message = nil;
                     
                     if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                         [messageOb setObject:@"seen" forKey:@"status"];
@@ -797,7 +851,7 @@
                         __block JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc]init];
                         photoItem.image = [UIImage imageNamed:@"empty"];
                         
-                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
+                        message = [[JRMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
                         
                         message.msgObject = messageOb;
                         
@@ -857,7 +911,7 @@
                             messageText = [NSString stringWithFormat:@"%@\nTap to Pay now",[messageOb objectForKey:@"message"]];
                         }
                         
-                        message = [[JSQMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
+                        message = [[JRMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
                        
                         if ([[messageOb objectForKey:@"sharedMessage"]isEqualToString:@"YES"]){
                             
@@ -987,7 +1041,7 @@
     
     if (self.messageSellerPressed == YES) {
         self.messageSellerPressed = NO;
-
+        
         self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Hey, is your '%@' still available?", self.sellerItemTitle];
         
         self.savedString = self.inputToolbar.contentView.textView.text;
@@ -1016,6 +1070,8 @@
     [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
     [center removeObserver:self name:UIKeyboardWillChangeFrameNotification object:nil];
     [center removeObserver:self name:@"NewMessage" object:nil];
+    [center removeObserver:self name:UIApplicationDidBecomeActiveNotification object:nil];
+    [center removeObserver:self name:UIApplicationWillResignActiveNotification object:nil];
     
     if (![self isMovingFromParentViewController]){
         [self.inputToolbar.contentView.textView resignFirstResponder];
@@ -1075,7 +1131,7 @@
 -(void)changePayPalEmail{
     UIAlertController *alertController = [UIAlertController
                                           alertControllerWithTitle:@"PayPal Email"
-                                          message:@"Enter your PayPal email address so it's faster for you to send it to buyers on Bump"
+                                          message:@"Enter your PayPal email address so it's faster for you to send it to buyers on BUMP"
                                           preferredStyle:UIAlertControllerStyleAlert];
     
     [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
@@ -1112,7 +1168,7 @@
 }
 
 -(void)showPayPalAlert{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Enter PayPal Email" message:[NSString stringWithFormat:@"Save your PayPal email on Bump so you can send it to buyers faster! Don't worry, Bump doesn't handle any passwords!\n\nIs '%@' correct?", [[PFUser currentUser] objectForKey:@"paypal"]] preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Enter PayPal Email" message:[NSString stringWithFormat:@"Save your PayPal email on BUMP so you can send it to buyers faster! Don't worry, BUMP doesn't handle any passwords!\n\nIs '%@' correct?", [[PFUser currentUser] objectForKey:@"paypal"]] preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Change" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         self.inputToolbar.contentView.textView.text = @"";
@@ -1273,7 +1329,7 @@
     
     //for instant reload in inbox after tapping send, pass the sent message back to inboxVC
     if (self.paypalMessage) {
-        [self.delegate lastMessageInConvo:@"You sent your PayPal 🤑" incomingMsg:NO];
+        [self.delegate lastMessageInConvo:@"You sent your PayPal 💰" incomingMsg:NO];
     }
     else{
         [self.delegate lastMessageInConvo:[NSString stringWithFormat:@"You: %@", text] incomingMsg:NO];
@@ -1287,7 +1343,7 @@
     NSString *messageString = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     self.sentPush = NO;
     
-    JSQMessage *message = [[JSQMessage alloc] initWithSenderId:senderId
+    JRMessage *message = [[JRMessage alloc] initWithSenderId:senderId
                                              senderDisplayName:senderDisplayName
                                                           date:date
                                                           text:messageString];
@@ -1310,6 +1366,9 @@
         
         self.paypalSentCounter++;
         if (self.paypalSentCounter >= 3) {
+            //stop this message appearing when send more messages
+            [self.messages removeObject:message];
+            
             //prevent user tapping paypal button infinite times
             [Answers logCustomEventWithName:@"PayPal Spamming Detected"
                            customAttributes:@{
@@ -1350,7 +1409,6 @@
                     [[NSUserDefaults standardUserDefaults] setObject:sentArray forKey:@"sentArray"];
                 }
             }
-
             
             [Answers logCustomEventWithName:@"Message Sent"
                            customAttributes:@{
@@ -1370,8 +1428,8 @@
             }
             
             //reset deletion keys so a previously deleted convo can appear in inbox since there's unseen messages there
-            [self.convoObject setObject:@"NO" forKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId]];
-            [self.convoObject setObject:@"NO" forKey:[NSString stringWithFormat:@"deleted%@",self.otherUser.objectId]];
+            [self.convoObject setObject:@"NO" forKey:@"sellerDeleted"];
+            [self.convoObject setObject:@"NO" forKey:@"buyerDeleted"];
             
             [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded){
@@ -1436,6 +1494,12 @@
         }
     }];
     
+    //remove duplicates
+    NSOrderedSet *orderedSet = [NSOrderedSet orderedSetWithArray:self.messages];
+    NSArray *arrayWithoutDuplicates = [orderedSet array];
+    [self.messages removeAllObjects];
+    [self.messages addObjectsFromArray:arrayWithoutDuplicates];
+    
     [self finishSendingMessageAnimated:YES];
     
     //reset carousel origin
@@ -1462,6 +1526,13 @@
     
     [self.collectionView.collectionViewLayout invalidateLayoutWithContext:[JSQMessagesCollectionViewFlowLayoutInvalidationContext context]];
     [self.collectionView reloadItemsAtIndexPaths:@[pathToLastItem]];
+    
+//    if (self.fixInsets) {
+//        NSLog(@"scroll!");
+//        if (self.collectionView.contentSize.height > self.collectionView.frame.size.height) {
+////            [self.collectionView setContentOffset: CGPointMake(0, self.collectionView.contentSize.height- self.collectionView.frame.size.height + self.inputToolbar.bounds.size.height)];
+//        }
+//    }
 }
 
 -(BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text{
@@ -1780,7 +1851,7 @@
     self.webViewController.showUrlWhileLoading = YES;
     self.webViewController.showPageTitles = NO;
     self.webViewController.doneButtonTitle = @"";
-    self.webViewController.infoMode = NO;
+//    self.webViewController.infoMode = NO;
     self.checkPayPalTapped = YES;
     self.webViewController.delegate = self;
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
@@ -1813,7 +1884,7 @@
 
 -(void)finalImage:(UIImage *)image{
     
-    [JSQSystemSoundPlayer jsq_playMessageSentSound];
+//    [JSQSystemSoundPlayer jsq_playMessageSentSound];
     
     [self.delegate lastMessageInConvo:@"You sent a photo 📷" incomingMsg:NO];
 
@@ -1844,7 +1915,7 @@
     }
     
     JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc] initWithImage:newImage];
-    JSQMessage *photoMessage = [JSQMessage messageWithSenderId:self.senderId
+    JRMessage *photoMessage = [JRMessage messageWithSenderId:self.senderId
                                                    displayName:self.senderDisplayName
                                                          media:photoItem];
     [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
@@ -2015,7 +2086,7 @@
      *  Otherwise, return your previously created bubble image data objects.
      */
     
-    JSQMessage *message = self.messages[indexPath.item];
+    JRMessage *message = self.messages[indexPath.item];
     
     if (message.isOfferMessage == YES) {
         return self.offerBubbleImageData;
@@ -2039,7 +2110,7 @@
 
 - (id<JSQMessageAvatarImageDataSource>)collectionView:(JSQMessagesCollectionView *)collectionView avatarImageDataForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+    JRMessage *message = [self.messages objectAtIndex:indexPath.item];
     
     if ([message.senderId isEqualToString:self.senderId]) {
         return nil;
@@ -2075,14 +2146,14 @@
     
     //show timestamp if message was sent >= 1 hour after previous message
     if (indexPath.item == 0) {
-        JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+        JRMessage *message = [self.messages objectAtIndex:indexPath.item];
         NSAttributedString *finalStamp = [[NSAttributedString alloc]initWithString:[[[JSQMessagesTimestampFormatter sharedFormatter] attributedTimestampForDate:message.date] string] attributes:textAttributes];
         return finalStamp;
     }
     else{
         //get previous message
-        JSQMessage *previousMessage = [self.messages objectAtIndex:indexPath.item-1];
-        JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+        JRMessage *previousMessage = [self.messages objectAtIndex:indexPath.item-1];
+        JRMessage *message = [self.messages objectAtIndex:indexPath.item];
         
         //check difference between 2 dates
         NSDate* date1 = previousMessage.date;
@@ -2102,7 +2173,7 @@
     
     
 //    if (indexPath.item % 3 == 0) {
-//        JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+//        JRMessage *message = [self.messages objectAtIndex:indexPath.item];
 //        return [[JSQMessagesTimestampFormatter sharedFormatter] attributedTimestampForDate:message.date];
 //    }
     return nil;
@@ -2176,7 +2247,7 @@
     
   JSQMessagesCollectionViewCell *cell = (JSQMessagesCollectionViewCell *)[super collectionView:collectionView cellForItemAtIndexPath:indexPath];
     
-    JSQMessage *msg = [self.messages objectAtIndex:indexPath.item];
+    JRMessage *msg = [self.messages objectAtIndex:indexPath.item];
     
 //    CustomMessagesCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:self.incomingCellIdentifier forIndexPath:indexPath];
     
@@ -2208,6 +2279,9 @@
     if (msg.isOfferMessage || msg.isShared || msg.isPayPal) {
         cell.textView.textColor = [UIColor whiteColor];
         cell.textView.dataDetectorTypes = UIDataDetectorTypeNone;
+        
+        //from iOS 11 saw the cell was picking up textview behaviour over cell taps so disable that
+        cell.textView.userInteractionEnabled = NO;
     }
     
     return cell;
@@ -2254,8 +2328,8 @@
     }
     else{
         //get previous message
-        JSQMessage *previousMessage = [self.messages objectAtIndex:indexPath.item-1];
-        JSQMessage *message = [self.messages objectAtIndex:indexPath.item];
+        JRMessage *previousMessage = [self.messages objectAtIndex:indexPath.item-1];
+        JRMessage *message = [self.messages objectAtIndex:indexPath.item];
         
         //check difference between 2 dates
         NSDate* date1 = previousMessage.date;
@@ -2279,13 +2353,13 @@
     /**
      *  iOS7-style sender name labels
      */
-//    JSQMessage *currentMessage = [self.messages objectAtIndex:indexPath.item];
+//    JRMessage *currentMessage = [self.messages objectAtIndex:indexPath.item];
 //    if ([[currentMessage senderId] isEqualToString:self.senderId]) {
 //        return 0.0f;
 //    }
 //    
 //    if (indexPath.item - 1 > 0) {
-//        JSQMessage *previousMessage = [self.messages objectAtIndex:indexPath.item - 1];
+//        JRMessage *previousMessage = [self.messages objectAtIndex:indexPath.item - 1];
 //        if ([[previousMessage senderId isEqualToString:[currentMessage senderId]]) {
 //            return 0.0f;
 //        }
@@ -2340,7 +2414,9 @@
 - (void)collectionView:(JSQMessagesCollectionView *)collectionView didTapMessageBubbleAtIndexPath:(NSIndexPath *)indexPath
 {
 
-    JSQMessage *tappedMessage = [self.messages objectAtIndex:indexPath.item];
+    JRMessage *tappedMessage = [self.messages objectAtIndex:indexPath.item];
+    
+    NSLog(@"tapped message %@", tappedMessage);
     
     if ([[self.messages objectAtIndex:indexPath.item] isMediaMessage] == YES && tappedMessage.isShared == NO){
         
@@ -2382,6 +2458,8 @@
     else if(tappedMessage.isShared == YES){
         if (tappedMessage.saleShare == YES) {
             
+            NSLog(@"sale share!");
+            
             [Answers logCustomEventWithName:@"Tapped Shared Listing"
                            customAttributes:@{
                                               @"mode":@"SALE"
@@ -2400,10 +2478,15 @@
                 vc.source = @"share";
                 vc.pureWTS = YES;
                 vc.fromBuyNow = YES;
+                vc.seller = [tappedMessage.sharedListing objectForKey:@"sellerUser"];
                 [self.navigationController pushViewController:vc animated:YES];
             }
         }
         else{
+            
+            NSLog(@"wanted share!");
+
+            
             [Answers logCustomEventWithName:@"Tapped Shared Listing"
                            customAttributes:@{
                                               @"mode":@"WTB"
@@ -2424,7 +2507,7 @@
         int buildNumber = [appVersion intValue];
         if (buildNumber < 1159) {
             //prompt to update
-            [self showAlertWithTitle:@"Update" andMsg:@"Update your app version to pay faster on Bump!"];
+            [self showAlertWithTitle:@"Update" andMsg:@"Update your app version to pay faster on BUMP!"];
         }
         else{
             //copy email to clipboard
@@ -2449,6 +2532,7 @@
 
 - (BOOL)composerTextView:(JSQMessagesComposerTextView *)textView shouldPasteWithSender:(id)sender
 {
+    NSLog(@"should paste");
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     NSString *string = pasteboard.string;
     if (string) {
@@ -2457,8 +2541,9 @@
     else{
         return NO;
     }
-}
 
+    return YES;
+}
 -(void)profileTapped{
     if (self.otherUser && self.profileBTapped == NO) {
         self.somethingTapped = YES;
@@ -2476,6 +2561,7 @@
         vc.source = @"messages";
         vc.pureWTS = YES;
         vc.fromBuyNow = YES;
+        vc.seller = [self.listing objectForKey:@"sellerUser"];
         [self.navigationController pushViewController:vc animated:YES];
     }
     else{
@@ -2628,8 +2714,8 @@
     self.customAlert.delegate = self;
     if (self.offerReminderMode == YES) {
         if (self.userIsBuyer == YES) {
-            self.customAlert.titleLabel.text = @"Buying on Bump";
-            self.customAlert.messageLabel.text = @"Build your reputation, stay protected & pay ZERO Bump fees. Ask the seller for their PayPal and pay on Bump";
+            self.customAlert.titleLabel.text = @"Buying on BUMP";
+            self.customAlert.messageLabel.text = @"Build your reputation, stay protected & pay ZERO BUMP fees. Ask the seller for their PayPal and pay on BUMP";
             self.customAlert.numberOfButtons = 1;
         }
         else{
@@ -2642,7 +2728,7 @@
                 self.customAlert.messageLabel.text = @"Build your reputation, stay protected & get paid with PayPal. Tap the image icon to send photos";
                 self.customAlert.numberOfButtons = 1;
             }
-            self.customAlert.titleLabel.text = @"Selling on Bump";
+            self.customAlert.titleLabel.text = @"Selling on BUMP";
         }
         
         [self.customAlert.doneButton setTitle:@"D I S M I S S" forState:UIControlStateNormal];
@@ -2652,7 +2738,7 @@
     }
     else{
         self.customAlert.titleLabel.text = @"Permssion Needed";
-        self.customAlert.messageLabel.text = @"Tap to goto Settings & enable Bump's Photos Permission";
+        self.customAlert.messageLabel.text = @"Tap to goto Settings & enable BUMP's Photos Permission";
         self.customAlert.numberOfButtons = 2;
         [self.customAlert.secondButton setTitle:@"S E T T I N G S" forState:UIControlStateNormal];
     }
@@ -2890,6 +2976,9 @@
                 messageString = [NSString stringWithFormat:@"@%@ sent their PayPal email %@",[PFUser currentUser].username,[[PFUser currentUser] objectForKey:@"paypal"]];
             }
             
+            [self.convoObject setObject:@"YES" forKey:@"paypalSent"];
+            [self.convoObject saveInBackground];
+            
             UIButton *button = [[UIButton alloc]init];
             self.paypalMessage = YES;
             self.paypalPush = YES;
@@ -2950,10 +3039,15 @@
 
 -(void)keyboardOFFScreen:(NSNotification *)notification
 {
-    NSLog(@"KEYBOARD WILL HIDE");
+    NSLog(@"KEYBOARD WILL HIDE 1");
     
     if (self.changeKeyboard == NO) {
         return;
+    }
+    
+    //need to reset insets on iOS 11 since scroll view has some new properties which mess up insets after keyboard displayed
+    if (@available(iOS 11.0, *)) {
+        self.collectionView.contentInset = UIEdgeInsetsMake(0, 0, 44, 0);
     }
     
     if (self.shouldShowPayPalView && self.paypalView) {
@@ -2961,6 +3055,8 @@
     }
     
     [self resetCarouselHeight];
+
+
 
 }
 
@@ -3166,6 +3262,8 @@
     if (self.listingBannerShowing == YES) {
         return;
     }
+    
+    NSLog(@"SHOW LISTING BANNER");
 
     if (!self.listingView) {
         
@@ -3195,22 +3293,49 @@
         }];
     }
     
-    if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
-        //iPhone7
-        [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, [UIApplication sharedApplication].keyWindow.frame.size.width, 130)];
-    }
-    else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
-        //iPhone 7 plus
-        [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,[UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
-    }
-    else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
-        //iPhone SE
-        [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,375, 230)];
-    }
-    else{
-        //fall back
-        [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, [UIApplication sharedApplication].keyWindow.frame.size.width, 130)];
-    }
+    [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,[UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
+    
+//    if (@available(iOS 11.0, *)) {
+//        if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+//            //iPhone7 - done
+//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, [UIApplication sharedApplication].keyWindow.frame.size.width, 15)];
+//        }
+//        else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
+//            //iPhone 7 plus
+//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,[UIApplication sharedApplication].keyWindow.frame.size.width, 15)];
+//        }
+//        else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
+//            //iPhone SE
+//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,375, 15)];
+//        }
+//        else{
+//            //fall back
+//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, [UIApplication sharedApplication].keyWindow.frame.size.width, 15)];
+//        }
+//    }
+//    else{
+//        NSLog(@"not 11 ");
+//
+//        if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+//            //iPhone7 - done
+//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, [UIApplication sharedApplication].keyWindow.frame.size.width, 30)];
+//        }
+//        else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
+//            //iPhone 7 plus
+//            NSLog(@"6/7 plus ");
+//
+//
+////            [self.listingView setNeedsLayout];
+//        }
+//        else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
+//            //iPhone SE
+//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,375, 129)];
+//        }
+//        else{
+//            //fall back
+//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, [UIApplication sharedApplication].keyWindow.frame.size.width, 15)];
+//        }
+//    }
     
     [self.view addSubview:self.listingView];
 
@@ -3218,6 +3343,10 @@
     
     [self.listingView setAlpha:1.0];
     self.listingBannerShowing = YES;
+    
+    [self.collectionView.collectionViewLayout invalidateLayoutWithContext:[JSQMessagesCollectionViewFlowLayoutInvalidationContext context]];
+    [self.collectionView reloadData];
+    
 }
 
 -(void)bannerTapped{
@@ -3227,6 +3356,7 @@
     vc.source = @"messages";
     vc.pureWTS = YES;
     vc.fromBuyNow = YES;
+    vc.seller = [self.listing objectForKey:@"sellerUser"];
     [self.navigationController pushViewController:vc animated:YES];
     
 }
@@ -3281,5 +3411,6 @@
     
     self.demoMessageNumber++;
 }
+
 @end
 

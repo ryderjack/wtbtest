@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <FastttCamera.h>
+#import "FastttCamera.h"
 #import "ConfirmController.h"
 
 @class CameraController;
@@ -29,5 +29,6 @@
 @property (nonatomic, weak) id <CameraControllerDelegate> delegate;
 @property (weak, nonatomic) IBOutlet UILabel *tageLabel;
 @property (nonatomic) BOOL offerMode;
+@property (nonatomic) BOOL loaded;
 
 @end

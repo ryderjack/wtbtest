@@ -224,7 +224,7 @@
     
     if (indexPath.section == 0){
         if (indexPath.row == 0) {
-            return 202;
+            return 153;
         }
         else if(indexPath.row == 1){
             return 226;

@@ -312,7 +312,7 @@
         }
         
         //send push
-        NSString *pushText = [NSString stringWithFormat:@"%@ just liked your listing 👊", [PFUser currentUser].username];
+        NSString *pushText = [NSString stringWithFormat:@"%@ just liked your listing", [PFUser currentUser].username];
         
         if (![[[listingObject objectForKey:@"postUser"]objectId] isEqualToString:[[PFUser currentUser]objectId]]) {
             NSDictionary *params = @{@"userId": [[listingObject objectForKey:@"postUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": listingObject.objectId};

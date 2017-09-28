@@ -13,7 +13,7 @@
 @class FilterVC;
 
 @protocol FilterDelegate <NSObject>
-- (void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper;
+- (void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper andContinents:(NSMutableArray *)continents;
 - (void)noChange;
 
 @end
@@ -45,6 +45,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *colourCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *categoryIconCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *priceSliderCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *locationContinentsCell;
 
 //price buttons
 @property (weak, nonatomic) IBOutlet UIButton *hightolowButton;
@@ -69,7 +70,9 @@
 
 //location buttons
 @property (weak, nonatomic) IBOutlet UIButton *distanceButton;
-
+@property (weak, nonatomic) IBOutlet SwipeView *locationSwipeView;
+@property (nonatomic, strong) NSArray *continentsArray;
+@property (nonatomic, strong) NSMutableArray *chosenContinentsArray;
 //applyButton
 @property (nonatomic, strong) UIButton *applyButton;
 
@@ -105,5 +108,8 @@
 //mode
 @property (nonatomic) BOOL sellingSearch;
 @property (nonatomic) BOOL profileSearch;
+
+//status bar background view
+@property (nonatomic, strong) UIView *statusBarBGView;
 
 @end

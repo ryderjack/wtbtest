@@ -22,14 +22,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
-    //key learnings for having 4+ images
-    //cant mix pffiles with images
-    //could maybe have 6 non-reusable cells, then wonder if the switching around is still easy? -- not possible with collection views
-    //need pffiles not images coz when editing listings we get back a pffile and don't want to wait for a fetch before loading
-    //resizing the images down to smaller size makes them look better in the CV
-    
-    //problem: coz we use pffiles, which take a while to save on a bad network, they may appear to disappear...
 
     //THE PLAN
     //use images when creating a listing. It's fast & reliable AND can use smaller thumbnails so looks better
@@ -156,7 +148,6 @@
     self.placeholderAssetArray = [NSMutableArray array];
     self.multipleSizeAcronymArray = [NSMutableArray array];
     self.finalSizeArray = [NSMutableArray array];
-    
     
     self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
     if (self.introMode != YES) {
@@ -734,7 +725,7 @@
             }
             else if ([self.flagWords containsObject:string.lowercaseString]){
                 textField.text = @"";
-                [self showAlertWithTitle:@"Authenticity Warning" andMsg:@"Bump is for buying/selling authentic streetwear, if you're found to be selling fake or replica items we will be forced to ban your account to protect the community"];
+                [self showAlertWithTitle:@"Authenticity Warning" andMsg:@"BUMP is for buying/selling authentic streetwear, if you're found to be selling fake or replica items we will be forced to ban your account to protect the community"];
                 return;
             }
             else if([autoColourCheck containsObject:string.lowercaseString] && self.chosenColourSArray.count < 2 && ![self.chosenColourSArray containsObject:string.capitalizedString]){
@@ -988,6 +979,7 @@
         CameraController *vc = [[CameraController alloc]init];
         vc.delegate = self;
         vc.offerMode = YES;
+        self.multipleMode = NO;
         [self presentViewController:vc animated:YES completion:nil];
     }]];
     
@@ -1241,7 +1233,7 @@
                 NSLog(@"saved file");
                 
                 //add in check so only runs for first image
-//                if (self.calledImgAnalyzer) { //CHANGE add ! to enable
+//                if (self.calledImgAnalyzer) { //CHECK add ! to enable
 //                    //now call img analyzer
 //                    NSDictionary *params = @{@"imageURL": imageFile.url};
 //                    
@@ -1371,7 +1363,12 @@
                 [self.imgFooterView setNeedsDisplay];
             }
             else{
-                self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+                if ([self.chooseCategroy.text isEqualToString:@"Proxy"]) {
+                    self.imgFooterLabel.text = @"Photos: Max 8";
+                }
+                else{
+                    self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+                }
                 [self.imgFooterView setNeedsDisplay];
             }
         }
@@ -1434,7 +1431,12 @@
             [self.imgFooterView setNeedsDisplay];
         }
         else{
-            self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+            if ([self.chooseCategroy.text isEqualToString:@"Proxy"]) {
+                self.imgFooterLabel.text = @"Photos: Max 8";
+            }
+            else{
+                self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+            }
             [self.imgFooterView setNeedsDisplay];
         }
     }
@@ -1485,7 +1487,7 @@
             [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
                 if (placemarks) {
                     CLPlacemark *placemark = [placemarks lastObject];
-                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.ISOcountryCode];
+                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.country];
                     
                     if (geoPoint) {
                         self.geopoint = geoPoint;
@@ -1539,6 +1541,24 @@
         else{
             self.chooseSize.text = @"Select";
         }
+        
+        //don't require 2 images for a proxy
+        if ([selectionString isEqualToString:@"Proxy"]) {
+            self.ignore2Pics = YES;
+            
+            if (self.photostotal >= 2) {
+                self.imgFooterLabel.text = @"Pro tip: Hold down on images to rearrange";
+            }
+            else{
+                self.imgFooterLabel.text = @"Photos: Max 8";
+            }
+            [self.imgFooterView setNeedsDisplay];
+            
+        }
+        else{
+            self.ignore2Pics = NO;
+        }
+        
         self.chooseCategroy.text = selectionString;
     }
     else if ([self.selection isEqualToString:@"size"]){
@@ -1629,7 +1649,7 @@
 - (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
     if (section == 0 || section == 2) {
-        return 0.0;
+        return 0.01;
     }
     else if (section == 1) {
         return 80.0;
@@ -1650,7 +1670,7 @@
         return 32;
     }
     else{
-        return 0.0;
+        return 0.01;
     }
 }
 
@@ -1669,7 +1689,12 @@
                 self.imgFooterLabel.text = @"Pro tip: Hold down on images to rearrange";
             }
             else{
-                self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+                if ([self.chooseCategroy.text isEqualToString:@"Proxy"]) {
+                    self.imgFooterLabel.text = @"Photos: Max 8";
+                }
+                else{
+                    self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+                }
             }
             
             self.imgFooterLabel.numberOfLines = 1;
@@ -1957,6 +1982,9 @@
         if (self.chosenColourSArray.count > 0) {
             [forSaleItem setObject:self.chosenColourSArray forKey:@"coloursArray"];
         }
+        else if (self.editMode){
+            [forSaleItem removeObjectForKey:@"coloursArray"];
+        }
         
         if (self.editMode != YES) {
             [forSaleItem setObject:@"live" forKey:@"status"];
@@ -2039,11 +2067,18 @@
                 if (![[[PFUser currentUser] objectForKey:@"profileLocation"] containsString:@"(null)"]) {
                     [forSaleItem setObject:[[PFUser currentUser] objectForKey:@"profileLocation"] forKey:@"location"];
                 }
-                
+            }
+            
+            if ([[PFUser currentUser] objectForKey:@"continent"]) {
+                [forSaleItem setObject:[[PFUser currentUser] objectForKey:@"continent"] forKey:@"continent"];
             }
         }
         
-        if (self.geopoint) {
+        //use geopoint info from profile so matches to the label
+        if ([[PFUser currentUser] objectForKey:@"geopoint"]) {
+            [forSaleItem setObject:[[PFUser currentUser] objectForKey:@"geopoint"] forKey:@"geopoint"];
+        }
+        else if (self.geopoint){
             [forSaleItem setObject:self.geopoint forKey:@"geopoint"];
         }
 
@@ -2285,7 +2320,7 @@
                             //cancel first listing local push
                             NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
                             for(UILocalNotification *notification in notificationArray){
-                                if ([notification.alertBody isEqualToString:@"What are you selling? List your first item for sale on Bump now! 🤑"]) {
+                                if ([notification.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on bump"]) {
                                     // delete this notification
                                     [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
                                 }
@@ -2313,7 +2348,7 @@
                             NSDate * combinedDate = [theCalendar dateFromComponents:components3];
                             
                             UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-                            [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on Bump 🏎💨"]; //make sure this matches the app delegate local notifications handler method
+                            [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]; //make sure this matches the app delegate local notifications handler method
                             [localNotification setFireDate: combinedDate];
                             [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
                             [localNotification setRepeatInterval: 0];
@@ -2349,7 +2384,12 @@
             AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
             appDelegate.tabBarController.selectedIndex = 0;
             
-            [self dismissViewControllerAnimated:YES completion:nil];
+            if (self.introMode) {
+                [self.delegate dismissCreateParent];
+            }
+            else{
+                [self dismissViewControllerAnimated:YES completion:nil];
+            }
         }
     }
 }
@@ -2526,7 +2566,7 @@
                 UIImage *image = [UIImage imageWithData:data];
                 self.eighthImage = image;
                 
-                NSLog(@"got data 8 %@", self.eighthImage);
+//                NSLog(@"got data 8 %@", self.eighthImage);
                 
                 
                 if (self.runningPhotosTotal == self.photostotal) {
@@ -2558,7 +2598,7 @@
                 UIImage *image = [UIImage imageWithData:data];
                 self.seventhImage = image;
                 
-                NSLog(@"got data 7 %@", self.seventhImage);
+//                NSLog(@"got data 7 %@", self.seventhImage);
                 
                 
                 if (self.runningPhotosTotal == self.photostotal) {
@@ -2590,7 +2630,7 @@
                 UIImage *image = [UIImage imageWithData:data];
                 self.sixthImage = image;
                 
-                NSLog(@"got data 6 %@", self.sixthImage);
+//                NSLog(@"got data 6 %@", self.sixthImage);
                 
                 
                 if (self.runningPhotosTotal == self.photostotal) {
@@ -2622,7 +2662,7 @@
                 UIImage *image = [UIImage imageWithData:data];
                 self.fifthImage = image;
                 
-                NSLog(@"got data 5 %@", self.fifthImage);
+//                NSLog(@"got data 5 %@", self.fifthImage);
                 
                 
                 if (self.runningPhotosTotal == self.photostotal) {
@@ -2654,7 +2694,7 @@
                 UIImage *image = [UIImage imageWithData:data];
                 self.fourthImage = image;
                 
-                NSLog(@"got data 4 %@", self.fourthImage);
+//                NSLog(@"got data 4 %@", self.fourthImage);
                 
                 
                 if (self.runningPhotosTotal == self.photostotal) {
@@ -2687,8 +2727,7 @@
                 UIImage *image = [UIImage imageWithData:data];
                 self.thirdImage = image;
                 
-                NSLog(@"got data 3 %@", self.thirdImage);
-
+//                NSLog(@"got data 3 %@", self.thirdImage);
                 
                 if (self.runningPhotosTotal == self.photostotal) {
                     [self finishLoadingImages];
@@ -2718,7 +2757,7 @@
                 UIImage *image = [UIImage imageWithData:data];
                 self.secondImage = image;
                 
-                NSLog(@"got data 2 %@", self.secondImage);
+//                NSLog(@"got data 2 %@", self.secondImage);
                 
                 if (self.runningPhotosTotal == self.photostotal) {
                     [self finishLoadingImages];
@@ -2747,7 +2786,7 @@
                 UIImage *image = [UIImage imageWithData:data];
                 self.firstImage = image;
                 
-                NSLog(@"got data 1 %@", self.firstImage);
+//                NSLog(@"got data 1 %@", self.firstImage);
 
                 if (self.runningPhotosTotal == self.photostotal) {
                     [self finishLoadingImages];
@@ -2762,7 +2801,6 @@
                 }
             }
         }];
-        
     }
     
     if ([self.listing objectForKey:@"itemTitle"]) {
@@ -2794,7 +2832,6 @@
 
             if ([self.chosenColourSArray[0] isEqualToString:@"White"]) {
                 [self setWhiteImageBorder:self.chosenColourImageView];
-                
             }
             else{
                 [self setImageBorder:self.chosenColourImageView];
@@ -2825,14 +2862,14 @@
             self.chooseColourLabel.alpha = 0.0;
             self.chosenColourImageView.alpha = 1.0;
             self.secondChosenColourImageView.alpha = 1.0;
-            
+                        
             if ([self.chosenColourSArray[0] isEqualToString:@"White"]) {
-                [self setWhiteImageBorder:self.chosenColourImageView];
-                [self setImageBorder:self.secondChosenColourImageView];
-            }
-            else if ([self.chosenColourSArray[1] isEqualToString:@"White"]){
                 [self setWhiteImageBorder:self.secondChosenColourImageView];
                 [self setImageBorder:self.chosenColourImageView];
+            }
+            else if ([self.chosenColourSArray[1] isEqualToString:@"White"]){
+                [self setWhiteImageBorder:self.chosenColourImageView];
+                [self setImageBorder:self.secondChosenColourImageView];
             }
         }
     }
@@ -2880,6 +2917,10 @@
     }
     
     self.chooseCategroy.text = [self.listing objectForKey:@"category"];
+    
+    if ([self.chooseCategroy.text isEqualToString:@"Proxy"]) {
+        self.ignore2Pics = YES;
+    }
     
     //sizing
     NSString *sizeLabel = [self.listing objectForKey:@"sizeLabel"];
@@ -2963,7 +3004,7 @@
         self.webViewController.delegate = self;
         self.webViewController.depopMode = YES;
         self.webViewController.doneButtonTitle = @"";
-        self.webViewController.infoMode = NO;
+//        self.webViewController.infoMode = NO;
         NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
         [self presentViewController:navigationController animated:YES completion:nil];
     }
@@ -3222,7 +3263,6 @@
 
             [cell.itemImageView setImage:self.imagesArray[indexPath.row]];
         }
-        
     }
     
     return cell;
@@ -3369,7 +3409,12 @@
         [self.imgFooterView setNeedsDisplay];
     }
     else{
-        self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+        if ([self.chooseCategroy.text isEqualToString:@"Proxy"]) {
+            self.imgFooterLabel.text = @"Photos: Max 8";
+        }
+        else{
+            self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+        }
         [self.imgFooterView setNeedsDisplay];
     }
     

@@ -80,6 +80,8 @@
 @property (nonatomic) BOOL hasBio;
 @property (nonatomic) BOOL setupHeader;
 
+@property (nonatomic,strong) UIBarButtonItem *doneButton;
+
 
 //verified section
 @property (nonatomic, strong) UILabel *verifiedWithLabel;
@@ -144,6 +146,8 @@
 @property (nonatomic, strong) NSMutableArray *filterSizesArray;
 @property (nonatomic, strong) NSMutableArray *filterBrandsArray;
 @property (nonatomic, strong) NSMutableArray *filterColoursArray;
+@property (nonatomic, strong) NSMutableArray *filterContinentsArray;
+
 @property (nonatomic, strong) NSString *filterCategory;
 
 @property (nonatomic) float filterLower;

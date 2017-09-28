@@ -11,6 +11,7 @@
 #import "UIImage+Resize.h"
 #import "AppConstant.h"
 #import "UIImageView+Letters.h"
+#import <CLPlacemark+HZContinents.h>
 
 @interface SettingsController ()
 
@@ -624,57 +625,106 @@
     }
 }
 
-- (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
-    UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
+-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+    UIView *header;
     
-    header.textLabel.textColor = [UIColor grayColor];
-    header.textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
-    CGRect headerFrame = header.frame;
-    header.textLabel.frame = headerFrame;
-    header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+    if (@available(iOS 11.0, *)) {
+        if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+            //iPhone6/7
+            header = [[UIView alloc]initWithFrame:CGRectMake(16, 0, self.tableView.frame.size.width, 32)];
+        }
+        else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
+            //iPhone 6 plus
+            header = [[UIView alloc]initWithFrame:CGRectMake(20, 0, self.tableView.frame.size.width, 32)];
+        }
+        else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
+            //iPhone 4/5
+            header = [[UIView alloc]initWithFrame:CGRectMake(16, 0, self.tableView.frame.size.width, 32)];
+        }
+        else{
+            //fall back
+            header = [[UIView alloc]initWithFrame:CGRectMake(16, 0, self.tableView.frame.size.width, 32)];
+        }
+    }
+    else{
+        header = [[UIView alloc]initWithFrame:CGRectMake(8, 0, self.tableView.frame.size.width, 32)];
+    }
+    UILabel *textLabel = [[UILabel alloc]initWithFrame:header.frame];
+    textLabel.textColor = [UIColor grayColor];
+    textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
+    header.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+    
+    [header addSubview:textLabel];
     if (section ==2){
-        header.textLabel.text = @"  Currency";
+        textLabel.text = @"Currency";
     }
     else if (section == 1){
-        header.textLabel.text = @"  Account";
+        textLabel.text = @"Account";
     }
     else if (section == 4){
-        header.textLabel.text = @"  Other";
+        textLabel.text = @"Other";
     }
-//    else if (section == 3){
-//        header.textLabel.text = @"  Location";
-//    }
     else if (section == 3){
-        header.textLabel.text = @"  Notifications";
+        textLabel.text = @"Notifications";
     }
     else if (section == 0){
-        header.textLabel.text = @"  Me";
+        textLabel.text = @"Me";
     }
+    
+    return header;
 }
 
--(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
-    
-    if (section ==2){
-        return @"  Currency";
-    }
-    else if (section == 0){
-        return @"  Me";
-    }
-    else if (section == 1){
-        return @"  Account";
-    }
-//    else if (section == 3){
-//        return @"  Location";
+//- (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
+//    UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
+//
+//    header.textLabel.textColor = [UIColor grayColor];
+//    header.textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
+//    CGRect headerFrame = header.frame;
+//    header.textLabel.frame = headerFrame;
+//    header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+//    if (section ==2){
+//        header.textLabel.text = @"  Currency";
 //    }
-    else if (section == 3){
-        return @"  Notifications";
-    }
-    else if (section == 4){
-        return @"  Other";
-    }
-    
-    return nil;
-}
+//    else if (section == 1){
+//        header.textLabel.text = @"  Account";
+//    }
+//    else if (section == 4){
+//        header.textLabel.text = @"  Other";
+//    }
+////    else if (section == 3){
+////        header.textLabel.text = @"  Location";
+////    }
+//    else if (section == 3){
+//        header.textLabel.text = @"  Notifications";
+//    }
+//    else if (section == 0){
+//        header.textLabel.text = @"  Me";
+//    }
+//}
+//
+//-(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
+//
+//    if (section ==2){
+//        return @"  Currency";
+//    }
+//    else if (section == 0){
+//        return @"  Me";
+//    }
+//    else if (section == 1){
+//        return @"  Account";
+//    }
+////    else if (section == 3){
+////        return @"  Location";
+////    }
+//    else if (section == 3){
+//        return @"  Notifications";
+//    }
+//    else if (section == 4){
+//        return @"  Other";
+//    }
+//
+//    return nil;
+//}
 
 - (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
@@ -1017,16 +1067,24 @@
         titleString = [NSString stringWithFormat:@"%@",placemark.country];
     }
     else{
-        titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.ISOcountryCode];
+        titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.country];
     }
-    
-    NSLog(@"title string %@", titleString);
     
     if (![titleString containsString:@"(null)"]) { //protect against saving erroneous location
         
-        self.locLabel.text = [NSString stringWithFormat:@"Location: %@", titleString];
+        self.locLabel.text = titleString;
         
         [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
+        
+        if (![[placemark continent] isEqualToString:@""]) {
+            [[PFUser currentUser]setObject:[placemark continent] forKey:@"continent"];
+        }
+        
+        //get geopoint for new location for this user's listings
+        PFGeoPoint *geopoint = [PFGeoPoint geoPointWithLocation:placemark.location];
+        if (geopoint) {
+            [[PFUser currentUser]setObject:geopoint forKey:@"geopoint"];
+        }
         [[PFUser currentUser]saveInBackground];
     }
 }

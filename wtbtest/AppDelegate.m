@@ -15,7 +15,6 @@
 #import <Crashlytics/Crashlytics.h>
 #import <HNKGooglePlacesAutocomplete/HNKGooglePlacesAutocomplete.h>
 #import "BumpVC.h"
-#import <ChimpKit.h>
 #import "mainApprovedSellerController.h"
 #include <CommonCrypto/CommonCrypto.h>
 #import "resetPassController.h"
@@ -43,19 +42,18 @@
 //        configuration.server = @"http://localhost:1337/parse";
         
         //production
-//        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
+        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
         
         //preproduction
-//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE
+//        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE remove these links for safety reasons from the actual build
         
         //dev server w/ dev DB
-        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
+//        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
     }]];
 
-//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
-    [[ChimpKit sharedKit] setApiKey:@"5cbba863ff961ff8c60266185defc785-us14"];
 
     if ([PFUser currentUser]) {
         [self logUser];
@@ -80,6 +78,8 @@
     self.inboxView = [[InboxViewController alloc]init];
     self.purchaseView = [[PurchaseTab alloc]init];
     
+    self.createSaleListing = [[CreateForSaleListing alloc]init];
+    
     [self.window setBackgroundColor:[UIColor whiteColor]];
     
 //    NavigationController *navController = [[NavigationController alloc] initWithRootViewController:self.exploreView];
@@ -88,7 +88,8 @@
 //    NavigationController *navController3 = [[NavigationController alloc] initWithRootViewController:self.welcomeView];
     NavigationController *navController4 = [[NavigationController alloc] initWithRootViewController:self.inboxView];
     NavigationController *navController7 = [[NavigationController alloc] initWithRootViewController:self.purchaseView];
-    
+//    NavigationController *navController8 = [[NavigationController alloc] initWithRootViewController:self.createSaleListing];
+
     self.tabBarController = [[UITabBarController alloc] init];
     self.tabBarController.viewControllers = [NSArray arrayWithObjects:navController7,navController6,navController4, navController2, nil];
     self.tabBarController.tabBar.translucent = NO;
@@ -248,19 +249,19 @@
             }
         }];
     }
-    else if ([localNotif.alertBody isEqualToString:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on Bump 🏎💨"]){
+    else if ([localNotif.alertBody containsString:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]){
         [Answers logCustomEventWithName:@"Opened First Reminder Push"
                        customAttributes:@{}];
         
         self.tabBarController.selectedIndex = 0;
     }
-    else if ([localNotif.alertBody isEqualToString:@"What are you selling? List your first item for sale on Bump now! 🤑"]){
+    else if ([localNotif.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on bump now"]){
         [Answers logCustomEventWithName:@"Opened First Listing Post Reminder Push"
                        customAttributes:@{}];
         
         self.tabBarController.selectedIndex = 1;
     }
-    else if ([localNotif.alertBody isEqualToString:@"What's your next cop? Find it on Bump 👊"]){
+    else if ([localNotif.alertBody containsString:@"What's your next cop? Find it on BUMP"]){
         [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
                        customAttributes:@{}];
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
@@ -312,6 +313,7 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
+            vc.seller = [listingObject objectForKey:@"sellerUser"];
 
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
             [nav pushViewController:vc animated:YES];
@@ -333,7 +335,7 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
-
+            vc.seller = [listingObject objectForKey:@"sellerUser"];
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
             [nav pushViewController:vc animated:YES];
         }
@@ -363,17 +365,16 @@
     PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"convos"];
     [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
     [buyingUnseenQuery whereKey:@"buyerUnseen" greaterThan:@0];
+    [buyingUnseenQuery whereKey:@"buyerDeleted" equalTo:@"NO"];
     
     PFQuery *sellingUnseenQuery = [PFQuery queryWithClassName:@"convos"];
     [sellingUnseenQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
     [sellingUnseenQuery whereKey:@"sellerUnseen" greaterThan:@0];
+    [sellingUnseenQuery whereKey:@"sellerDeleted" equalTo:@"NO"];
     
     PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
-    [unseenQuery whereKey:@"convoId" containsString:[PFUser currentUser].objectId];
     [unseenQuery whereKey:@"totalMessages" greaterThan:@0];
     [unseenQuery orderByDescending:@"createdAt"];
-    //to stop user seeing an unread badge for a convo they can no longer see since its been deleted
-    [unseenQuery whereKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId] equalTo:@"NO"];
     [unseenQuery includeKey:@"lastSent"];
     
     [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -394,12 +395,8 @@
                     if ([[msgObject objectForKey:@"status"]isEqualToString:@"sent"] && ![[msgObject objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
                         
                         [self.unseenMessages addObject:convo];
-
-                        PFUser *buyer = [convo objectForKey:@"buyerUser"];
-                    
-                        //me IIEf7cUvrO
-                    
-                        if ([[PFUser currentUser].objectId isEqualToString:buyer.objectId]) {
+                        
+                        if ([[PFUser currentUser].objectId isEqualToString:[convo objectForKey:@"buyerId"]]) {
                             //current user is buyer so other user is seller
                             unseen = [[convo objectForKey:@"buyerUnseen"] intValue];
                             //NSLog(@"unseen buyer %@", [convo objectForKey:@"buyerUnseen"]);
@@ -512,7 +509,7 @@
 //    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
     NSString *itemTitle = [localUserInfo valueForKey:@"itemTitle"];
     
-    if ([notification.alertBody isEqualToString:@"What's your next cop? Find it on Bump 👊"]){
+    if ([notification.alertBody containsString:@"What's your next cop? Find it on Bump 👊"]){
         [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
                        customAttributes:@{}];
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
@@ -529,13 +526,13 @@
 //        self.tabBarController.selectedIndex = 0;
 //        [[NSNotificationCenter defaultCenter] postNotificationName:@"showRelease" object:itemTitle];
 //    }
-    else if ([notification.alertBody isEqualToString:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on Bump 🏎💨"]){
+    else if ([notification.alertBody.lowercaseString containsString:@"congrats on your first listing! want to sell faster? try searching through wanted listings on bump"]){
         [Answers logCustomEventWithName:@"Opened First Reminder Push"
                        customAttributes:@{}];
         
         self.tabBarController.selectedIndex = 0;
     }
-    else if ([notification.alertBody isEqualToString:@"What are you selling? List your first item for sale on Bump now! 🤑"]){
+    else if ([notification.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on bump now!"]){
         [Answers logCustomEventWithName:@"Opened First Listing Post Reminder Push"
                        customAttributes:@{}];
         
@@ -563,7 +560,7 @@
         
 //        NSLog(@"userinfo: %@", userInfo);
         
-        if ([strMsg hasPrefix:@"Team Bump"]) {
+        if ([[strMsg lowercaseString] hasPrefix:@"team bump"]) {
             [self checkForTBMessages];
             self.tabBarController.selectedIndex = 3;
         }
@@ -589,6 +586,7 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
+            vc.seller = [listingObject objectForKey:@"sellerUser"];
 
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
 //            [nav pushViewController:vc animated:YES];
@@ -701,6 +699,7 @@
         vc.fromBuyNow = YES;
         vc.pureWTS = YES;
         vc.fromPush = YES;
+        vc.seller = [listingObject objectForKey:@"sellerUser"];
 
         NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
         
@@ -780,6 +779,9 @@
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
     
+    //record last active time
+    [[NSUserDefaults standardUserDefaults]setValue:[NSDate date] forKey:@"lastActiveTime"];
+    
     if ([[NSUserDefaults standardUserDefaults]boolForKey:@"longTermLocalSeen"] != YES){
         
         //schedule 6 day inactivity local notification
@@ -823,7 +825,29 @@
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshHome" object:nil];
+    // removed as user was switching apps and kept scrolling to top
+    // only refresh after inactivity of 1 hour
+    
+    if ([[NSUserDefaults standardUserDefaults]valueForKey:@"lastActiveTime"]){
+        
+        NSDate *lastActive = [[NSUserDefaults standardUserDefaults]valueForKey:@"lastActiveTime"];
+        
+//        NSLog(@"last active: %@", lastActive);
+        
+        NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:lastActive];
+        double secondsInAnHour = 3600;
+        NSInteger hoursSinceLastActive = distanceBetweenDates / secondsInAnHour;
+        
+//        NSLog(@"hours since: %ld", (long)hoursSinceLastActive);
+
+        if (hoursSinceLastActive > 0) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshHome" object:nil];
+        }
+    }
+    else{
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshHome" object:nil];
+    }
+    
     [self checkMesages];
     [self checkForTBMessages];
 }
@@ -844,7 +868,7 @@
     //cancel long term local push
     NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
     for(UILocalNotification *notification in notificationArray){
-        if ([notification.alertBody isEqualToString:@"What's your next cop? Find it on Bump 👊"]) {
+        if ([notification.alertBody.lowercaseString containsString:@"what's your next cop? find it on bump"]) {
             // delete this notification
             [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
         }
@@ -894,6 +918,10 @@
                 if (![presenter.visibleViewController  isKindOfClass:[searchedViewC class]]) {
                     [presenter popViewControllerAnimated:YES];
                 }
+                else{
+                    //scroll to top of searchVC
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"scrollSearchTop" object:viewController];
+                }
             }
         }
         else{
@@ -901,7 +929,6 @@
             NSLog(@"no vc being presented");
         }
     }
-
     
     if (previousController == viewController) {
         // the same tab was tapped a second time
@@ -1038,7 +1065,7 @@
 }
 
 -(BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray * _Nullable))restorationHandler{
-    NSLog(@"continue user activity %@", userActivity);
+//    NSLog(@"continue user activity %@", userActivity);
     return YES;
 }
 @end

@@ -16,7 +16,6 @@
 #import "droppingCell.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 #import <Crashlytics/Crashlytics.h>
-#import "FeaturedItems.h"
 #import "ChatWithBump.h"
 #import "CreateForSaleListing.h"
 #import "mainApprovedSellerController.h"
@@ -28,6 +27,8 @@
 #import "AddSizeController.h"
 #import "ExplainView.h"
 #import "AppDelegate.h"
+#import <CLPlacemark+HZContinents.h>
+#import <Transcontinental/HZCountryToContinentDecoder.h>
 
 @interface PurchaseTab ()
 
@@ -40,19 +41,51 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    [self.locationBut setHidden:YES];
     [self.noResultsLabel setHidden:YES];
     
     //setup search bar
-    self.navSearchbar = [[UISearchBar alloc]init];
-    self.navSearchbar.placeholder = @"Search";
-    self.navSearchbar.delegate = self;
-    UITextField *txfSearchField = [self.navSearchbar valueForKey:@"searchField"];
-    txfSearchField.backgroundColor =[UIColor colorWithRed:0.18 green:0.17 blue:0.18 alpha:1.0];
-    [txfSearchField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:@"Search" attributes:@{NSForegroundColorAttributeName: [UIColor whiteColor]}]];
-    UIImageView *imgView = (UIImageView*)txfSearchField.leftView;
-    imgView.image = [imgView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    imgView.tintColor = [UIColor whiteColor];
-    self.navigationItem.titleView = self.navSearchbar;
+//    self.navSearchbar = [[UISearchBar alloc]init];
+//    self.navSearchbar.placeholder = @"Search";
+//    self.navSearchbar.delegate = self;
+//    UITextField *txfSearchField = [self.navSearchbar valueForKey:@"searchField"];
+////    txfSearchField.backgroundColor =[UIColor colorWithRed:0.18 green:0.17 blue:0.18 alpha:1.0];
+//    txfSearchField.backgroundColor =[UIColor clearColor];
+//
+//    if (@available(iOS 11.0, *)) {
+//        NSMutableParagraphStyle *paragraphStyle = [NSMutableParagraphStyle new];
+//        paragraphStyle.alignment = NSTextAlignmentCenter;
+//
+//        [txfSearchField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:@"Search" attributes:@{NSForegroundColorAttributeName: [UIColor whiteColor],NSFontAttributeName: [UIFont fontWithName:@"PingFangSC-Medium" size:16], NSParagraphStyleAttributeName:paragraphStyle}]];
+//
+//        UIView *container = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 300, 44)];
+//        [self.navSearchbar setFrame:CGRectMake(0, 0, 300, 44)];
+//
+//        [container addSubview:self.navSearchbar];
+//        self.navigationItem.titleView = container;
+//    }
+//    else{
+//        [txfSearchField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:@"Search" attributes:@{NSForegroundColorAttributeName: [UIColor whiteColor]}]];
+//
+//        self.navigationItem.titleView = self.navSearchbar;
+//
+//    }
+//
+//    UIImageView *imgView = (UIImageView*)txfSearchField.leftView;
+//    imgView.image = [imgView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+//    imgView.tintColor = [UIColor whiteColor];
+    
+    UIView *container = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 300, 44)];
+    UIButton *searchButton = [[UIButton alloc]initWithFrame:container.frame];
+    
+    [searchButton setTitle:@"Search" forState:UIControlStateNormal];
+    [searchButton setTitleEdgeInsets:UIEdgeInsetsMake(0,8, 0, 0)];
+    [searchButton.titleLabel setFont: [UIFont fontWithName:@"PingFangSC-Medium" size:15]];
+    [searchButton.titleLabel setTextColor:[UIColor whiteColor]];
+    [searchButton addTarget:self action:@selector(searchPressed) forControlEvents:UIControlEventTouchUpInside];
+    [searchButton setImage:[UIImage imageNamed:@"searchIcon"] forState:UIControlStateNormal];    
+    [container addSubview:searchButton];
+    self.navigationItem.titleView = container;
 
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
@@ -101,6 +134,10 @@
     
     self.products = [NSMutableArray array];
     self.productIds = [NSMutableArray array];
+    
+    //setup location filter button
+    self.locationFilter = @"Global";
+    [self.locationBut setTitle:@"Global" forState:UIControlStateNormal];
     
     self.skipped = 0;
     
@@ -210,6 +247,39 @@
         else{
             [self getLatestForSale];
             
+            //check whether user has a continent saved on their user object (for version 2.0.34 where continent filtering is introduced)
+            if (![[PFUser currentUser] objectForKey:@"continent"]) {
+                
+                if ([[PFUser currentUser]objectForKey:@"profileLocation"]) {
+                    [self calcContinent];
+                }
+                else{
+                    //just use device data to set continent
+                    NSLocale *currentLocale = [NSLocale currentLocale];  // get the current locale.
+                    NSString *countryCode = [currentLocale objectForKey:NSLocaleCountryCode];
+                    
+                    if (countryCode != NULL) {
+                        HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
+                        NSString *expectedContinent = [continentDecoder continentForCountryCode:countryCode];
+                        
+                        if (expectedContinent != NULL) {
+                            [[PFUser currentUser]setObject:expectedContinent forKey:@"continent"];
+                            [[PFUser currentUser]saveInBackground];
+                        }
+                    }
+                    else{
+                        [Answers logCustomEventWithName:@"No country code from device error"
+                                       customAttributes:@{}];
+                    }
+                }
+            }
+            
+            //since 2.0.23 we now save geopoints on users to then set on their listings
+            if (![currentUser objectForKey:@"geopoint"]) {
+                [self saveGeoPoint];
+            }
+            
+            //decide whether user has been active enough to send a message asking why they like bump
             [self sendFeedbackMessage];
             
             //convert old style emailVerified key to new one so we can update it on the client
@@ -263,32 +333,15 @@
                 }];
             }
             
-            //check if need to see new explain VC (if signed up earlier than that update)
-            NSCalendar *theCalendar = [NSCalendar currentCalendar];
-            NSDateComponents *components3 = [[NSDateComponents alloc] init];
-            [components3 setYear:2017];
-            [components3 setMonth:7];
-            [components3 setDay:24];
-            NSDate * combinedDate = [theCalendar dateFromComponents:components3];
-            
-            if( [[PFUser currentUser].createdAt timeIntervalSinceDate:combinedDate] < 0 && ![[PFUser currentUser]objectForKey:@"seenChangeVC"]) {
-                ExplainView *vc = [[ExplainView alloc]init];
-                vc.changedMode = YES;
-                [self presentViewController:vc animated:YES completion:nil];
-            }
-            
             //check if user has deviceToken set for tracking / banning purposes
             if (![[PFUser currentUser]objectForKey:@"deviceToken"]) {
-                NSLog(@"no device token!");
 
                 PFInstallation *installation = [PFInstallation currentInstallation];
                 
-                //protect agains
-                if (installation.deviceToken) {
-                    NSLog(@"installation %@", installation);
-                    
-//                    [[PFUser currentUser] setObject:installation.deviceToken forKey:@"deviceToken"];
-//                    [[PFUser currentUser]saveInBackground];
+                //protect against nil
+                if (installation.deviceToken != nil) {
+                    [[PFUser currentUser] setObject:installation.deviceToken forKey:@"deviceToken"];
+                    [[PFUser currentUser]saveInBackground];
                 }
             }
             
@@ -338,33 +391,33 @@
             }
             
             //check if they have wanted words
-            if (![currentUser objectForKey:@"wantedWords"]) {
-                PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
-                [myPosts whereKey:@"postUser" equalTo:currentUser];
-                [myPosts orderByDescending:@"lastUpdated"];
-                myPosts.limit = 10;
-                [myPosts findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                    if (objects) {
-                        NSMutableArray *wantedWords = [NSMutableArray array];
-                        
-                        for (PFObject *listing in objects) {
-                            NSArray *keywords = [listing objectForKey:@"searchKeywords"];
-                            
-                            for (NSString *word in keywords) {
-                                if (![wantedWords containsObject:word]) {
-                                    [wantedWords addObject:word];
-                                }
-                            }
-                        }
-                        //                        NSLog(@"wanted words: %@", wantedWords);
-                        [currentUser setObject:wantedWords forKey:@"wantedWords"];
-                        [currentUser saveInBackground];
-                    }
-                    else{
-                        NSLog(@"nee posts pet");
-                    }
-                }];
-            }
+//            if (![currentUser objectForKey:@"wantedWords"]) {
+//                PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
+//                [myPosts whereKey:@"postUser" equalTo:currentUser];
+//                [myPosts orderByDescending:@"lastUpdated"];
+//                myPosts.limit = 10;
+//                [myPosts findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//                    if (objects) {
+//                        NSMutableArray *wantedWords = [NSMutableArray array];
+//                        
+//                        for (PFObject *listing in objects) {
+//                            NSArray *keywords = [listing objectForKey:@"searchKeywords"];
+//                            
+//                            for (NSString *word in keywords) {
+//                                if (![wantedWords containsObject:word]) {
+//                                    [wantedWords addObject:word];
+//                                }
+//                            }
+//                        }
+//                        //                        NSLog(@"wanted words: %@", wantedWords);
+//                        [currentUser setObject:wantedWords forKey:@"wantedWords"];
+//                        [currentUser saveInBackground];
+//                    }
+//                    else{
+//                        NSLog(@"nee posts pet");
+//                    }
+//                }];
+//            }
             
             // finally check if they've been banned - put it last because otherwise if logout user from a previous user check this will still run and throw error 'can't do a comparison query for type (null)
             [self checkIfBanned];
@@ -389,7 +442,7 @@
             if (daysSinceSigningUp > 2) {
                 //can prompt now
                 if (![appVersion isEqualToString:latest]) {
-                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available 📲" message:nil preferredStyle:UIAlertControllerStyleAlert];
+                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:nil preferredStyle:UIAlertControllerStyleAlert];
                     
                     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
                         [Answers logCustomEventWithName:@"Cancel Update pressed"
@@ -401,7 +454,7 @@
                         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
                                                                     @"itms-apps://itunes.apple.com/app/id1096047233"]];
                     }]];
-//                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
+                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
                 }
             }
         }
@@ -419,6 +472,7 @@
     self.filterSizesArray = [NSMutableArray array];
     self.filterBrandsArray = [NSMutableArray array];
     self.filterColoursArray = [NSMutableArray array];
+    self.filterContinentsArray = [NSMutableArray array];
     self.filterCategory = @"";
 
 //    [PFUser logOut]; //CHECK
@@ -460,7 +514,7 @@
     self.navigationController.navigationBar.barStyle = UIBarStyleBlack;
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:12],
-                                    NSFontAttributeName, [UIColor blackColor], NSForegroundColorAttributeName,  nil];
+                                    NSFontAttributeName, [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0], NSForegroundColorAttributeName,  nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     self.navigationController.navigationBar.translucent = NO;
     [self.navigationController.navigationBar setBarTintColor: [UIColor colorWithRed:0.11 green:0.11 blue:0.11 alpha:1.0]];
@@ -493,6 +547,12 @@
     if (self.tappedItem == YES) {
         self.tappedItem = NO;
     }
+    else{
+        if ([PFUser currentUser]) {
+            //minimize checking when banned so not if keep checking out items
+            [self checkIfBanned];
+        }
+    }
     
     //to make sure infin not always spinning
     [self.infiniteQuery cancel];
@@ -507,9 +567,13 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-        
+    
     BOOL modalPresent = (self.presentedViewController);
     if ([PFUser currentUser] && modalPresent != YES) {
+        
+        if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] == YES || [[PFUser currentUser] objectForKey:@"facebookId"]) {
+            [self removeEmailReminder];
+        }
         
         //show filter intro
         if (![[[PFUser currentUser] objectForKey:@"filterIntro"] isEqualToString:@"YES"] && [[[PFUser currentUser] objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
@@ -521,6 +585,8 @@
             
             //decide whether to show email reminder header
             if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser] objectForKey:@"facebookId"]) {
+//                NSLog(@"SETUP EMAIL HEADER CALLED 2");
+
                 [self setupEmailHeader];
             }
         }
@@ -538,11 +604,10 @@
             [self.navigationController presentViewController:vc animated:YES completion:nil];
         }
         else{
-            //check if banned everytime they come back to home? //CHECK
-            [self checkIfBanned];
-            
-            //get location for filter searches
-            [self parseLocation];
+            //get location for filter searches only if we don't already have one
+            if (!self.currentLocation) {
+                [self parseLocation];
+            }
         }
     }
 }
@@ -707,6 +772,10 @@
     vc.source = @"latest";
     vc.fromBuyNow = YES;
     vc.pureWTS = YES;
+    vc.seller = [itemObject objectForKey:@"sellerUser"];
+    
+    NSLog(@"SELLER FROM BUY NOW: %@", [itemObject objectForKey:@"sellerUser"]);
+    
     //switch off hiding nav bar
     self.navigationController.navigationBarHidden = NO;
     [self.navigationController pushViewController:vc animated:YES];
@@ -1009,7 +1078,31 @@
 }
 
 -(void)setupPullQuery{
+    
     if (self.filtersArray.count > 0) {
+        
+        //setup location
+        if (self.filterContinentsArray.count > 0) {
+            if ([self.filterContinentsArray containsObject:@"Around me"]) {
+                
+                if (self.currentLocation) {
+                    [self.pullQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:100];
+                }
+                else{
+                    //prompt to turn location on?
+                    [Answers logCustomEventWithName:@"Around me searched without location"
+                                   customAttributes:@{}];
+                }
+            }
+            else{
+                //got a continent to filter
+                [self.pullQuery whereKey:@"continent" containedIn:self.filterContinentsArray];
+            }
+            
+        }
+        else{
+            //don't do anything as it's global
+        }
         
         //price
         if ([self.filtersArray containsObject:@"price"]) {
@@ -1027,18 +1120,6 @@
         }
         else{
             [self.pullQuery orderByDescending:@"lastUpdated"];
-        }
-        
-        //location
-        if ([self.filtersArray containsObject:@"aroundMe"]) {
-//            [self.pullQuery whereKeyExists:@"geopoint"];
-            
-            if (self.currentLocation) {
-                [self.pullQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:400];
-            }
-            else{
-                //prompt to turn location on?
-            }
         }
         
         //condition
@@ -1084,6 +1165,29 @@
 -(void)setupInfinQuery{
     if (self.filtersArray.count > 0) {
         
+        //setup location
+        if (self.filterContinentsArray.count > 0) {
+            if ([self.filterContinentsArray containsObject:@"Around me"]) {
+                
+                if (self.currentLocation) {
+                    [self.infiniteQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:100];
+                }
+                else{
+                    //prompt to turn location on?
+                    [Answers logCustomEventWithName:@"Around me searched without location"
+                                   customAttributes:@{}];
+                }
+            }
+            else{
+                //got a continent to filter
+                [self.infiniteQuery whereKey:@"continent" containedIn:self.filterContinentsArray];
+            }
+            
+        }
+        else{
+            //don't do anything as it's global
+        }
+        
         //price
         if ([self.filtersArray containsObject:@"price"]) {
             [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThanOrEqualTo:@(self.filterLower)];
@@ -1097,12 +1201,6 @@
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
             [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThan:@(0.00)];
             [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
-        }
-        
-        //location
-        if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
-//            [self.infiniteQuery whereKeyExists:@"geopoint"];
-            [self.infiniteQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:400];
         }
         
         //condition
@@ -1267,13 +1365,10 @@
     }
 }
 
-
--(void)parseLocation{
+-(void)saveGeoPoint{
     [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
         if (geoPoint) {
-            NSLog(@"got location: %@", self.currentLocation);
-            
-            self.currentLocation = geoPoint;
+            [[PFUser currentUser]setObject:geoPoint forKey:@"geopoint"];
             
             double latitude = geoPoint.latitude;
             double longitude = geoPoint.longitude;
@@ -1283,13 +1378,62 @@
             [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
                 if (placemarks) {
                     CLPlacemark *placemark = [placemarks lastObject];
-                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.ISOcountryCode];
+                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.country];
+                    
+                    if (![titleString containsString:@"(null)"]) { //protect against saving when user hasn't granted location permission
+                        
+                        [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
+                        
+                        if (![[placemark continent]isEqualToString:@""]) {
+                            [[PFUser currentUser]setObject:[placemark continent] forKey:@"continent"];
+                        }
+                        
+                        [[PFUser currentUser]saveInBackground];
+                    }
+                }
+                else{
+                    NSLog(@"placemark error %@", error);
+                }
+            }];
+            
+            
+        }
+    }];
+}
+
+-(void)parseLocation{
+    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
+        if (geoPoint) {
+            self.currentLocation = geoPoint;
+            
+            NSLog(@"got location: %@", self.currentLocation);
+
+            double latitude = geoPoint.latitude;
+            double longitude = geoPoint.longitude;
+            
+            CLLocation *loc = [[CLLocation alloc]initWithLatitude:latitude longitude:longitude];
+            CLGeocoder *geocoder = [[CLGeocoder alloc]init];
+            [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
+                if (placemarks) {
+                    CLPlacemark *placemark = [placemarks lastObject];
+                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.country];
                     
                     if (![titleString containsString:@"(null)"]) { //protect against saving when user hasn't granted location permission
                         
                         //only save if user doesn't have a profile location set
                         if (![[PFUser currentUser]objectForKey:@"profileLocation"]) {
                             [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
+                            [[PFUser currentUser]saveInBackground];
+                        }
+                        
+                        //only save if user doesn't have a geopoint set
+                        if (![[PFUser currentUser]objectForKey:@"geopoint"]) {
+                            [[PFUser currentUser]setObject:geoPoint forKey:@"geopoint"];
+                            [[PFUser currentUser]saveInBackground];
+                        }
+                        
+                        if (![[PFUser currentUser]objectForKey:@"continent"] && ![[placemark continent]isEqualToString:@""]) {
+                            [[PFUser currentUser]setObject:[placemark continent] forKey:@"continent"];
                             [[PFUser currentUser]saveInBackground];
                         }
                     }
@@ -1390,7 +1534,7 @@
         [self.searchBgView setBackgroundColor:[UIColor blackColor]];
 
         self.pushAlert.titleLabel.text = @"Enable Push";
-        self.pushAlert.messageLabel.text = @"Tap to be notified when sellers & potential buyers send you a message on Bump";
+        self.pushAlert.messageLabel.text = @"Tap to be notified when sellers & potential buyers send you a message on BUMP";
         self.pushAlert.numberOfButtons = 2;
         [self.pushAlert.secondButton setTitle:@"E N A B L E" forState:UIControlStateNormal];
     }
@@ -1404,8 +1548,6 @@
                          self.searchBgView.alpha = 0.7f;
                      }
                      completion:nil];
-    
-
     
     if ([ [ UIScreen mainScreen ] bounds ].size.height == 568) {
         //iphone5
@@ -1743,7 +1885,7 @@
     
     if (self.lowRating == YES) {
         self.customAlert.titleLabel.text = @"Your Feedback";
-        self.customAlert.messageLabel.text = @"Hit 'Message' to send Team Bump some quick feedback 💬";
+        self.customAlert.messageLabel.text = @"Hit 'Message' to send Team BUMP some quick feedback 💬";
         self.customAlert.numberOfButtons = 2;
     }
     
@@ -1953,20 +2095,27 @@
                          [self.bgView removeGestureRecognizer:self.tap];
                      }];
     
-    [UIView animateWithDuration:1.0
-                          delay:0.0
-         usingSpringWithDamping:0.1
-          initialSpringVelocity:0.5
-                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                            //Animations
-                            [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 300)];
-                        }
-                     completion:^(BOOL finished) {
-                         //Completion Block
-                         self.alertShowing = NO;
-                         [self.inviteView setAlpha:0.0];
-                         self.inviteView = nil;
-                     }];
+    if (self.locationFilterShowing) {
+        self.locationFilterShowing = NO;
+        [self hideLocationFilterView];
+    }
+    else{
+        [UIView animateWithDuration:1.0
+                              delay:0.0
+             usingSpringWithDamping:0.1
+              initialSpringVelocity:0.5
+                            options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                //Animations
+                                [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 300)];
+                            }
+                         completion:^(BOOL finished) {
+                             //Completion Block
+                             self.alertShowing = NO;
+                             [self.inviteView setAlpha:0.0];
+                             self.inviteView = nil;
+                         }];
+    }
+
 }
 
 -(void)whatsappPressed{
@@ -1974,7 +2123,7 @@
                    customAttributes:@{
                                       @"type":@"whatsapp"
                                       }];
-    NSString *shareString = @"Check out Bump for iOS - buy & sell streetwear quickly and with ZERO fees 👟\n\nAvailable here: http://sobump.com";
+    NSString *shareString = @"Check out BUMP for iOS - buy & sell streetwear quickly and with ZERO fees\n\nAvailable here: http://sobump.com";
     NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
     if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
         [[UIApplication sharedApplication] openURL: whatsappURL];
@@ -1999,7 +2148,7 @@
                                       @"type":@"share sheet"
                                       }];
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out Bump for iOS - buy & sell streetwear quickly and with ZERO fees 👟\n\nAvailable here: http://sobump.com"];
+    [items addObject:@"Check out BUMP for iOS - buy & sell streetwear quickly and with ZERO fees\n\nAvailable here: http://sobump.com"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
 }
@@ -2051,6 +2200,8 @@
         vc.fromBuyNow = YES;
         vc.pureWTS = YES;
         vc.fromPush = YES;
+        vc.seller = [listingObj objectForKey:@"sellerUser"];
+
         NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
         //            [nav pushViewController:vc animated:YES];
         
@@ -2114,6 +2265,8 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
+            vc.seller = [listingObj objectForKey:@"sellerUser"];
+
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
 //            [nav pushViewController:vc animated:YES];
             
@@ -2154,6 +2307,7 @@
     vc.fromBuyNow = YES;
     vc.pureWTS = YES;
     vc.fromPush = YES;
+    vc.seller = [listingObject objectForKey:@"sellerUser"];
 
     NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
 //    [nav pushViewController:vc animated:YES];
@@ -2214,6 +2368,7 @@
     vc.fromBuyNow = YES;
     vc.pureWTS = YES;
     vc.fromPush = YES;
+    vc.seller = [listingObject objectForKey:@"sellerUser"];
 
     NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
 //    [nav pushViewController:vc animated:YES];
@@ -2729,7 +2884,7 @@
     [self presentViewController:vc animated:YES completion:nil];
 }
 
--(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper{
+-(void)filtersReturned:(NSMutableArray *)filters withSizesArray:(NSMutableArray *)sizes andBrandsArray:(NSMutableArray *)brands andColours:(NSMutableArray *)colours andCategories:(NSString *)category andPricLower:(float)lower andPriceUpper:(float)upper andContinents:(NSMutableArray *)continents{
     //reset collection view
     [self.products removeAllObjects];
     [self.productIds removeAllObjects];
@@ -2743,6 +2898,7 @@
         self.filterCategory = category;
         self.filterUpper = upper;
         self.filterLower = lower;
+        self.filterContinentsArray = continents;
         
         //change colour of filter number
         NSMutableAttributedString *filterString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"F I L T E R  %lu",self.filtersArray.count]];
@@ -2758,6 +2914,8 @@
         [self.filterSizesArray removeAllObjects];
         [self.filterBrandsArray removeAllObjects];
         [self.filterColoursArray removeAllObjects];
+        [self.filterContinentsArray removeAllObjects];
+
         self.filterCategory = @"";
     }
     
@@ -2788,6 +2946,8 @@
         [self.filterSizesArray removeAllObjects];
         [self.filterBrandsArray removeAllObjects];
         [self.filterColoursArray removeAllObjects];
+        [self.filterContinentsArray removeAllObjects];
+
         self.filterCategory = @"";
     }
 }
@@ -2958,6 +3118,8 @@
     self.postingItem = postingItems[0];
     self.bannerImage = postingItems[1];
     
+    NSLog(@"listing item: %@     and got image: %@", self.postingItem, self.bannerImage);
+    
     //save listing
     [self saveListing];
     
@@ -2992,6 +3154,7 @@
     
     self.postingMode = YES;
     [self.collectionView.collectionViewLayout invalidateLayout];
+    [self.headerView setNeedsLayout];
     [self.headerView setNeedsDisplay];
     
     //scroll collection view to the top
@@ -3040,7 +3203,7 @@
                 //cancel first listing local push
                 NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
                 for(UILocalNotification *notification in notificationArray){
-                    if ([notification.alertBody isEqualToString:@"What are you selling? List your first item for sale on Bump now! 🤑"]) {
+                    if ([notification.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on bump"]) {
                         // delete this notification
                         [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
                     }
@@ -3068,7 +3231,7 @@
                 NSDate * combinedDate = [theCalendar dateFromComponents:components3];
                 
                 UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-                [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on Bump 🏎💨"]; //make sure this matches the app delegate local notifications handler method
+                [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]; //make sure this matches the app delegate local notifications handler method
                 [localNotification setFireDate: combinedDate];
                 [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
                 [localNotification setRepeatInterval: 0];
@@ -3190,6 +3353,11 @@
 }
 
 -(void)removeEmailReminder{
+    //prevent multiple calls
+    if (self.showEmailReminder == NO) {
+        return;
+    }
+    
     self.showEmailReminder = NO;
     
     //reset collection view header
@@ -3217,11 +3385,11 @@
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
     
     [self.collectionView setCollectionViewLayout:flowLayout];
-    
     [self.collectionView.collectionViewLayout invalidateLayout];
-    [self.headerView setNeedsDisplay];
-    [self.headerView setNeedsLayout];
+    
     self.progressBar = nil;
+    [self.headerView setNeedsDisplay]; //is header ever behind cells?
+    [self.headerView setNeedsLayout];
     
     [self.collectionView performBatchUpdates:^{
         [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
@@ -3233,6 +3401,7 @@
 }
 
 -(void)setupEmailHeader{
+    NSLog(@"SETUP EMAIL HEADER");
     if (self.showEmailReminder == YES) {
         return;
     }
@@ -3263,7 +3432,7 @@
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
     
-    flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 40);
+    flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 60);
     flowLayout.sectionHeadersPinToVisibleBounds = NO;
     
     [self.collectionView setCollectionViewLayout:flowLayout];
@@ -3290,5 +3459,201 @@
         
         [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
     }
+}
+
+-(void)calcContinent{
+    NSArray *locStrings = [[[PFUser currentUser]objectForKey:@"profileLocation"] componentsSeparatedByString:@", "];
+    
+    if (locStrings.count > 1) {
+        //get the second object
+        NSString *code = [locStrings lastObject];
+        
+        if (code.length == 2) {
+            if (code!= NULL) {
+                HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
+                NSString *expectedContinent = [continentDecoder continentForCountryCode:code];
+                
+                if (expectedContinent != NULL) {
+                    [Answers logCustomEventWithName:@"Set user's continent"
+                                   customAttributes:@{}];
+                    
+                    [[PFUser currentUser]setObject:expectedContinent forKey:@"continent"];
+                    [[PFUser currentUser]saveInBackground];
+                }
+            }
+        }
+        else{
+            //not as expected so use device
+            NSLocale *currentLocale = [NSLocale currentLocale];  // get the current locale.
+            
+            NSString *countryCode = [currentLocale objectForKey:NSLocaleCountryCode];
+            
+            if (countryCode != NULL) {
+                HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
+                NSString *expectedContinent = [continentDecoder continentForCountryCode:countryCode];
+                
+                if (expectedContinent != NULL) {
+                    [Answers logCustomEventWithName:@"Set user's continent"
+                                   customAttributes:@{}];
+                    
+                    [[PFUser currentUser]setObject:expectedContinent forKey:@"continent"];
+                    [[PFUser currentUser]saveInBackground];
+                }
+            }
+            else{
+                [Answers logCustomEventWithName:@"No country code from device error"
+                               customAttributes:@{}];
+            }
+        }
+    }
+    else if(locStrings.count == 1){
+        //get the first object as the user must have just selected a country
+        NSString *code = locStrings[0];
+        
+        if (code.length == 2) {
+            if (code!= NULL) {
+                HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
+                NSString *expectedContinent = [continentDecoder continentForCountryCode:code];
+                
+                if (expectedContinent != NULL) {
+                    [Answers logCustomEventWithName:@"Set user's continent"
+                                   customAttributes:@{}];
+                    
+                    [[PFUser currentUser]setObject:expectedContinent forKey:@"continent"];
+                    [[PFUser currentUser]saveInBackground];
+                }
+            }
+        }
+        else{
+            //not as expected so use device
+            NSLocale *currentLocale = [NSLocale currentLocale];  // get the current locale.
+            
+            NSString *countryCode = [currentLocale objectForKey:NSLocaleCountryCode];
+            
+            if (countryCode != NULL) {
+                HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
+                NSString *expectedContinent = [continentDecoder continentForCountryCode:countryCode];
+                
+                if (expectedContinent != NULL) {
+                    [Answers logCustomEventWithName:@"Set user's continent"
+                                   customAttributes:@{}];
+                    
+                    [[PFUser currentUser]setObject:expectedContinent forKey:@"continent"];
+                    [[PFUser currentUser]saveInBackground];
+                }
+            }
+            else{
+                [Answers logCustomEventWithName:@"No country code from device error"
+                               customAttributes:@{}];
+            }
+        }
+    }
+    else{
+        //not as expected so use device
+        NSLocale *currentLocale = [NSLocale currentLocale];  // get the current locale.
+        
+        NSString *countryCode = [currentLocale objectForKey:NSLocaleCountryCode];
+        
+        if (countryCode != NULL) {
+            HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
+            NSString *expectedContinent = [continentDecoder continentForCountryCode:countryCode];
+            
+            if (expectedContinent != NULL) {
+                [[PFUser currentUser]setObject:expectedContinent forKey:@"continent"];
+                [[PFUser currentUser]saveInBackground];
+            }
+        }
+        else{
+            [Answers logCustomEventWithName:@"No country code from device error"
+                           customAttributes:@{}];
+        }
+    }
+}
+
+#pragma mark - location filter view delegates
+
+-(void)showLocationFilterView{
+    [Answers logCustomEventWithName:@"Location Filter Showing"
+                   customAttributes:@{}];
+    
+    if (self.alertShowing == YES) {
+        return;
+    }
+    
+    self.alertShowing = YES;
+    self.bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.bgView.alpha = 0.0;
+    [self.bgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.bgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"ContinentDropDown" owner:self options:nil];
+    self.locationFilterView = (BrowseLocation *)[nib objectAtIndex:0];
+    self.locationFilterView.delegate = self;
+    
+    [self.locationFilterView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -300, 300, 300)];
+    
+    self.locationFilterView.layer.cornerRadius = 10;
+    self.locationFilterView.layer.masksToBounds = YES;
+    
+    self.locationFilterShowing = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.locationFilterView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.locationFilterView setFrame:CGRectMake(0, 0, 300, 300)];
+                            self.locationFilterView.center = self.view.center;
+                        }
+                     completion:^(BOOL finished) {
+                         [self.bgView addGestureRecognizer:self.tap];
+                     }];
+}
+
+-(void)hideLocationFilterView{
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.bgView = nil;
+                         [self.bgView removeGestureRecognizer:self.tap];
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.locationFilterView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 300)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.alertShowing = NO;
+                         [self.locationFilterView setAlpha:0.0];
+                         self.locationFilterView = nil;
+                     }];
+}
+
+-(void)locationPressed:(NSString *)loc{
+    if (![self.locationFilter isEqualToString:loc]) {
+        self.locationFilter = loc;
+        [self getLatestForSale];
+    }
+    [self hideLocationFilterView];
 }
 @end

@@ -417,7 +417,7 @@
     squareCropperViewController.doneFont = [UIFont fontWithName:@"PingFangSC-Medium" size:15.0f];
     squareCropperViewController.cancelFont = [UIFont fontWithName:@"PingFangSC-Regular" size:15.0f];
     squareCropperViewController.excludedBackgroundColor = [UIColor blackColor];
-    squareCropperViewController.tapNumber = self.tapNumber;
+//    squareCropperViewController.tapNumber = self.tapNumber;
 //    NSLog(@"TAP NUMBER %d", self.tapNumber);
     squareCropperViewController.doneText = @"Confirm";
     
@@ -705,6 +705,8 @@
         vc.source = @"create";
         vc.pureWTS = NO;
         vc.fromCreate = YES;
+        vc.seller = [WTS objectForKey:@"sellerUser"];
+
         NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
         [self presentViewController:nav animated:YES completion:nil];
     }
@@ -989,7 +991,7 @@
             [[PFUser currentUser]incrementKey:@"postNumber"];
             [[PFUser currentUser] saveInBackground];
             
-            //send FB friends a push asking them to Bump listing! //CHECK just for WTS atm
+            //send FB friends a push asking them to Bump listing! just for WTS atm
 //            NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just posted a listing - Tap to Bump it 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
 //            
 //            PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
@@ -1172,7 +1174,7 @@
     self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.customAlert.delegate = self;
     self.customAlert.titleLabel.text = @"Enable Push";
-    self.customAlert.messageLabel.text = @"Tap to be notified when sellers & potential buyers send you a message on Bump";
+    self.customAlert.messageLabel.text = @"Tap to be notified when sellers & potential buyers send you a message on BUMP";
     self.customAlert.numberOfButtons = 2;
     [self.customAlert.secondButton setTitle:@"E N A B L E" forState:UIControlStateNormal];
     
@@ -1321,7 +1323,7 @@
     NSDate * combinedDate = [theCalendar dateFromComponents:components3];
     
     UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-    [localNotification setAlertBody:@"What are you selling? List your first item for sale on Bump now! 🤑"]; //make sure this matches the app delegate local notifications handler method
+    [localNotification setAlertBody:@"What are you selling? List your first item for sale on BUMP now 🏷"]; //make sure this matches the app delegate local notifications handler method
     [localNotification setFireDate: combinedDate];
     [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
     [localNotification setRepeatInterval: 0];

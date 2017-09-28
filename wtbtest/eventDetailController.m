@@ -200,7 +200,7 @@
     self.webView.showPageTitles = NO;
     self.webView.doneButtonTitle = @"";
     self.webView.payMode = NO;
-    self.webView.infoMode = NO;
+//    self.webView.infoMode = NO;
     self.webView.delegate = self;
     
     NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];

@@ -6,7 +6,8 @@
 //  Copyright © 2016 Jack Ryder. All rights reserved.
 //
 
-#import <JSQMessagesViewController/JSQMessagesViewController.h>
+#import "JSQMessagesViewController.h"
+//#import <JSQMessagesViewController/JSQMessagesViewController.h>
 #import <Parse/Parse.h>
 #import "JSQMessages.h"
 #import <ParseUI/ParseUI.h>
@@ -14,7 +15,7 @@
 #import <DGActivityIndicatorView.h>
 #import <SwipeView/SwipeView.h>
 
-@interface ChatWithBump : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, UICollectionViewDelegate, UINavigationControllerDelegate,QBImagePickerControllerDelegate,SwipeViewDelegate,SwipeViewDataSource>
+@interface ChatWithBump : JSQMessagesViewController <UICollectionViewDelegate, UINavigationControllerDelegate,QBImagePickerControllerDelegate,SwipeViewDelegate,SwipeViewDataSource>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -34,6 +35,8 @@
 
 @property (nonatomic, strong) PFObject *messageObject;
 @property (nonatomic, strong) PFObject *lastMessage;
+
+@property (nonatomic) BOOL showPull;
 
 //avatar
 @property (nonatomic, strong) JSQMessagesAvatarImage *avaImage;

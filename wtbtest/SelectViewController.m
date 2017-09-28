@@ -681,7 +681,7 @@
     
     //prompt user that multiple sizes can be selected
     if (self.sellListing == YES) {
-        self.customAlert.messageLabel.text = @"We use UK sizing as standard on Bump so more buyers can easily find your listing\n\nTap all the UK sizes you're selling!";
+        self.customAlert.messageLabel.text = @"We use UK sizing as standard on BUMP so more buyers can easily find your listing\n\nTap all the UK sizes you're selling!";
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"seenMultipleSellPrompt1"];
     }
     else{

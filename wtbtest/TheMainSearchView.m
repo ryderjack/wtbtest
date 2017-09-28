@@ -35,23 +35,46 @@
     self.searchBar.delegate = self;
     self.navigationItem.titleView = self.searchBar;
     [self.searchBar sizeToFit];
-    self.searchBar.placeholder = @"Search through items for sale";
+    self.searchBar.showsCancelButton = YES;
+
+    //set search bar font attributes
+    [[UITextField appearanceWhenContainedInInstancesOfClasses:@[[UISearchBar class]]] setDefaultTextAttributes:@{NSFontAttributeName: [UIFont fontWithName:@"PingFangSC-Regular" size:14]}];
+    
+    //force cancel button to be enabled
+    UIButton *btnCancel = [self.searchBar valueForKey:@"_cancelButton"];
+    [btnCancel setEnabled:YES];
+
+    if (@available(iOS 11.0, *)) {
+        //nav bar height will be 56 (coz of bigger search bars)
+        //move placeholder view and table view slightly down
+        
+        [self.placeholderView setFrame:CGRectMake(self.placeholderView.frame.origin.x, self.placeholderView.frame.origin.y+12, [UIApplication sharedApplication].keyWindow.frame.size.width,self.placeholderView.frame.size.height)];
+        
+        [self.tableView setContentInset:UIEdgeInsetsMake(12, 0, 0, 0)];
+    }
+    else{
+        //nav bar height will be standard 44
+        self.searchBar.placeholder = @"Search through items for sale";
+    }
     
     //segment control
     self.segmentedControl = [[HMSegmentedControl alloc] init];
     self.segmentedControl.frame = CGRectMake(self.placeholderView.frame.origin.x, self.placeholderView.frame.origin.y, [UIApplication sharedApplication].keyWindow.frame.size.width,self.placeholderView.frame.size.height);
+    
     self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
     self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
-    self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+    self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0];
     self.segmentedControl.selectionIndicatorHeight = 2;
-    self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:9]};
-    self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]};
+    self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:9],NSForegroundColorAttributeName : [UIColor lightGrayColor]};
+    self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0]};
+    
     [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
     [self.segmentedControl setSectionTitles:@[@"F O R  S A L E",@"W A N T E D",@"P E O P L E"]];
     [self.view addSubview:self.segmentedControl];
     
-    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
-    self.navigationItem.rightBarButtonItem = cancelButton;
+    
+//    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
+//    self.navigationItem.rightBarButtonItem = cancelButton;
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
@@ -70,6 +93,25 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    if (@available(iOS 11.0, *)) {
+        NSString *placeholder = @"";
+        
+        if (self.segmentedControl.selectedSegmentIndex == 0) {
+            placeholder = @"Search through items for sale";
+        }
+        else if (self.segmentedControl.selectedSegmentIndex == 1) {
+            placeholder = @"Search through items people want";
+        }
+        else{
+            placeholder = @"Search for users";
+        }
+        
+        UITextField *txfSearchField = [self.searchBar valueForKey:@"searchField"];
+        [txfSearchField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:placeholder attributes:@{NSFontAttributeName: [UIFont fontWithName:@"PingFangSC-Regular" size:14]}]];
+    }
+    
+    
     [self.navigationController.navigationBar setHidden:NO];
     self.searchBar.text = @"";
     [self.tableView reloadData];
@@ -81,11 +123,13 @@
 }
 
 -(void)segmentControlChanged{
+    NSString *placeholder = @"";
+    
     if (self.segmentedControl.selectedSegmentIndex == 0) {
         self.userSearch = NO;
         self.sellingSearch = YES;
         
-        self.searchBar.placeholder = @"Search through items for sale";
+        placeholder = @"Search through items for sale";
         
         if (self.noUserLabel) {
             [self.noUserLabel removeFromSuperview];
@@ -96,7 +140,7 @@
         self.userSearch = NO;
         self.sellingSearch = NO;
        
-        self.searchBar.placeholder = @"Search through items people want";
+        placeholder = @"Search through wanted items";
         
         if (self.noUserLabel) {
             [self.noUserLabel removeFromSuperview];
@@ -107,8 +151,11 @@
         self.userSearch = YES;
         self.sellingSearch = NO;
         
-        self.searchBar.placeholder = @"Search for users";
+        placeholder = @"Search for users";
     }
+    
+    UITextField *txfSearchField = [self.searchBar valueForKey:@"searchField"];
+    [txfSearchField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:placeholder attributes:@{NSFontAttributeName: [UIFont fontWithName:@"PingFangSC-Regular" size:14]}]];
     
 
     [self.tableView reloadData];
@@ -192,11 +239,24 @@
     }
     else if(self.userSearch == NO && self.sellingSearch == NO){
         //wanted selected
-        self.searchString = [NSString stringWithFormat:@"%@",[self.wantedSearchResults objectAtIndex:indexPath.row]];
+        NSString *searchText = [NSString stringWithFormat:@"%@",[self.wantedSearchResults objectAtIndex:indexPath.row]];
+        self.searchString = searchText;
+        
+        NSMutableArray *placeholder = [NSMutableArray arrayWithArray:self.wantedSearchResults];
+        
+        if (![[placeholder firstObject] isEqualToString:searchText]) {
+            [placeholder removeObject:searchText];
+            [placeholder insertObject:searchText atIndex:0];
+        }
+        
+        self.wantedSearchResults = placeholder;
+        
+        [[PFUser currentUser] setObject:placeholder forKey:@"searches"];
+        [[PFUser currentUser] saveInBackground];
         
         [self.searchBar resignFirstResponder];
         searchedViewC *vc = [[searchedViewC alloc]init];
-        vc.searchString = [NSString stringWithFormat:@"%@",[self.wantedSearchResults objectAtIndex:indexPath.row]];
+        vc.searchString = searchText;
         vc.currencySymbol = self.currencySymbol;
         vc.currency = self.currency;
         vc.delegate = self;
@@ -207,11 +267,24 @@
     }
     else if(self.userSearch == NO && self.sellingSearch == YES){
         //selling selected
-        self.searchString = [NSString stringWithFormat:@"%@",[self.sellingSearchResults objectAtIndex:indexPath.row]];
+        NSString *searchText = [NSString stringWithFormat:@"%@",[self.sellingSearchResults objectAtIndex:indexPath.row]];
+        self.searchString = searchText;
         
+        NSMutableArray *placeholder = [NSMutableArray arrayWithArray:self.sellingSearchResults];
+        
+        if (![[placeholder firstObject] isEqualToString:searchText]) {
+            [placeholder removeObject:searchText];
+            [placeholder insertObject:searchText atIndex:0];
+        }
+        
+        self.sellingSearchResults = placeholder;
+
+        [[PFUser currentUser] setObject:placeholder forKey:@"sellingSearches"];
+        [[PFUser currentUser] saveInBackground];
+
         [self.searchBar resignFirstResponder];
         searchedViewC *vc = [[searchedViewC alloc]init];
-        vc.searchString = [NSString stringWithFormat:@"%@",[self.sellingSearchResults objectAtIndex:indexPath.row]];
+        vc.searchString = searchText;
         vc.currencySymbol = self.currencySymbol;
         vc.currency = self.currency;
         vc.delegate = self;
@@ -242,6 +315,10 @@
     
     self.searchString = searchBar.text;
     NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
+    //force cancel button to be enabled
+    UIButton *btnCancel = [self.searchBar valueForKey:@"_cancelButton"];
+    [btnCancel setEnabled:YES];
     
     if (self.userSearch == NO && self.sellingSearch == NO){
         //wanted selected
@@ -360,6 +437,7 @@
 }
 
 -(void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
+    
     BOOL createdToday = NO;
     if ([self isDateToday:[PFUser currentUser].createdAt]) {
         createdToday = YES;
@@ -438,6 +516,10 @@
         self.searchString = self.searchBar.text;
         [self gotoListingsInSellingMode:YES];
     }
+    
+    //force cancel button to be enabled
+    UIButton *btnCancel = [self.searchBar valueForKey:@"_cancelButton"];
+    [btnCancel setEnabled:YES];
 }
 
 -(void)gotoListingsInSellingMode:(BOOL)sellingSearch{
@@ -599,6 +681,10 @@
 
 -(void)hideKeyb{
     [self.searchBar resignFirstResponder];
+    
+    //force cancel button to be enabled
+    UIButton *btnCancel = [self.searchBar valueForKey:@"_cancelButton"];
+    [btnCancel setEnabled:YES];
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{

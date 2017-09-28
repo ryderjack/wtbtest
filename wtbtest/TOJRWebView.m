@@ -22,6 +22,8 @@
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
     self.applicationLeftBarButtonItems = @[cancelButton];
     
+    self.view.backgroundColor = [UIColor redColor];
+    
     if (self.createMode == YES || self.editMode == YES) {
         self.tapCount = 0;
         UITapGestureRecognizer *targetGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
@@ -41,9 +43,32 @@
         //web view seemed to be pushed down y slightly so ensure its at the top of the view
         [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, self.view.frame.origin.y, self.webView.frame.size.width, self.webView.frame.size.height)];
     }
+    else{
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0 * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            
+            if (@available(iOS 11.0, *)) {
+                [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, self.view.frame.origin.y+(self.navigationController.navigationBar.frame.size.height + 60), self.webView.frame.size.width, self.webView.frame.size.height)];
+            }
+        });
+    }
     
     if (self.dropMode == YES) {
         self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+    }
+    
+    if (self.infoMode) {
+        UIView *emailView = [[UIView alloc]initWithFrame:CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y+64, self.view.frame.size.width, 44)];
+        UIButton *emailButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, emailView.frame.size.width, emailView.frame.size.height)];
+        emailButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+        emailButton.titleLabel.minimumScaleFactor=0.5;
+        [emailButton setTitle:[NSString stringWithFormat:@"Seller's email copied, paste when ready!"] forState:UIControlStateNormal];
+        emailButton.backgroundColor = [UIColor colorWithRed:0.42 green:0.42 blue:0.84 alpha:1.0];
+        [emailButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        emailButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Semibold" size:15];
+        [emailView addSubview:emailButton];
+        [emailButton setCenter:CGPointMake(emailView.frame.size.width / 2, emailView.frame.size.height / 2)];
+        [self.view addSubview:emailView];
     }
 }
 
@@ -112,10 +137,10 @@
     
     if (self.createMode == YES || self.editMode == YES || self.depopMode == YES) {
         if (self.editMode == YES || self.depopMode == YES){
-            self.doneButton = nil;
+//            self.doneButton = nil;
         }
         else if (self.createMode == YES){
-            self.doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Camera" style:UIBarButtonItemStylePlain target:self action:@selector(CameraPressed)];
+//            self.doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Camera" style:UIBarButtonItemStylePlain target:self action:@selector(CameraPressed)];
         }
         
         self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];

@@ -6,7 +6,7 @@
 //
 //
 
-#import <JSQMessagesViewController/JSQMessagesViewController.h>
+//#import <JSQMessagesViewController/JSQMessagesViewController.h>
 #import "JSQMessages.h"
 #import <Parse/Parse.h>
 #import "CameraController.h"
@@ -25,7 +25,7 @@
 - (void)lastMessageInConvo:(NSString *)message incomingMsg:(BOOL)incoming;
 @end
 
-@interface MessageViewController : JSQMessagesViewController <JSQMessagesComposerTextViewPasteDelegate, CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,JRWebViewDelegate, customAlertDelegate,QBImagePickerControllerDelegate, UITextViewDelegate, SwipeViewDelegate, SwipeViewDataSource, feedbackDelegate,bannerDelegate>
+@interface MessageViewController : JSQMessagesViewController < CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,JRWebViewDelegate, customAlertDelegate,QBImagePickerControllerDelegate, SwipeViewDelegate, SwipeViewDataSource, feedbackDelegate,bannerDelegate, JSQMessagesComposerTextViewPasteDelegate>
 
 //basic setup
 @property (nonatomic, strong) NSString *convoId;
@@ -34,6 +34,7 @@
 @property (nonatomic, strong) PFObject *convoObject;
 @property (nonatomic, strong) PFUser *otherUser;
 @property (nonatomic, strong) NSMutableArray *messages;
+@property (nonatomic, strong) NSMutableArray *messageIds;
 @property (nonatomic, strong) NSMutableArray *pictureMessages;
 
 //carousel of suggested messages
@@ -144,6 +145,7 @@
 
 //spinner
 @property (nonatomic, strong) DGActivityIndicatorView *spinner;
+@property (nonatomic) BOOL showPull;
 
 //paypal header
 @property (nonatomic, strong) UIView *paypalView;

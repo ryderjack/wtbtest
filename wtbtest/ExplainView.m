@@ -34,17 +34,17 @@
     if (self.changedMode) {
         //setup change gif and label
         
-        NSArray *imageNames = @[@"djk-1.jpg",@"djk-2.jpg",@"djk-3.jpg",@"djk-4.jpg",@"djk-5.jpg",@"djk-6.jpg",@"djk-7.jpg",@"djk-8.jpg",@"djk-9.jpg",@"djk-10.jpg",@"djk-11.jpg",@"djk-12.jpg",@"djk-13.jpg",@"djk-14.jpg",@"djk-15.jpg",@"djk-16.jpg",@"djk-17.jpg",@"djk-18.jpg",@"djk-19.jpg",@"djk-20.jpg",@"djk-21.jpg",@"djk-22.jpg",@"djk-23.jpg",@"djk-24.jpg",@"djk-25.jpg",@"djk-26.jpg",@"djk-27.jpg",@"djk-28.jpg",@"djk-29.jpg",@"djk-30.jpg",];
-        
-        NSMutableArray *images = [[NSMutableArray alloc] init];
-        for (int i = 0; i < imageNames.count; i++) {
-            [images addObject:[UIImage imageNamed:[imageNames objectAtIndex:i]]];
-        }
-        
-        // Normal Animation
-        self.imageView.animationImages = images;
-        self.imageView.animationDuration = 6.0;
-        [self.imageView startAnimating];
+//        NSArray *imageNames = @[@"djk-1.jpg",@"djk-2.jpg",@"djk-3.jpg",@"djk-4.jpg",@"djk-5.jpg",@"djk-6.jpg",@"djk-7.jpg",@"djk-8.jpg",@"djk-9.jpg",@"djk-10.jpg",@"djk-11.jpg",@"djk-12.jpg",@"djk-13.jpg",@"djk-14.jpg",@"djk-15.jpg",@"djk-16.jpg",@"djk-17.jpg",@"djk-18.jpg",@"djk-19.jpg",@"djk-20.jpg",@"djk-21.jpg",@"djk-22.jpg",@"djk-23.jpg",@"djk-24.jpg",@"djk-25.jpg",@"djk-26.jpg",@"djk-27.jpg",@"djk-28.jpg",@"djk-29.jpg",@"djk-30.jpg",];
+//        
+//        NSMutableArray *images = [[NSMutableArray alloc] init];
+//        for (int i = 0; i < imageNames.count; i++) {
+//            [images addObject:[UIImage imageNamed:[imageNames objectAtIndex:i]]];
+//        }
+//        
+//        // Normal Animation
+//        self.imageView.animationImages = images;
+//        self.imageView.animationDuration = 6.0;
+//        [self.imageView startAnimating];
         
         //set title
         self.titleLabel.text = @"B U M P ' S  C H A N G E D !";
@@ -303,7 +303,7 @@
     NSDate * combinedDate = [theCalendar dateFromComponents:components3];
     
     UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-    [localNotification setAlertBody:@"What are you selling? List your first item for sale on Bump now! 🤑"]; //make sure this matches the app delegate local notifications handler method
+    [localNotification setAlertBody:@"What are you selling? List your first item for sale on BUMP now 🏷"]; //make sure this matches the app delegate local notifications handler method
     [localNotification setFireDate: combinedDate];
     [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
     [localNotification setRepeatInterval: 0];
@@ -333,7 +333,7 @@
     self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.customAlert.delegate = self;
     self.customAlert.titleLabel.text = @"Enable Push";
-    self.customAlert.messageLabel.text = @"Tap to be notified when buyers send you a message on Bump 💬";
+    self.customAlert.messageLabel.text = @"Tap to be notified when buyers send you a message on BUMP";
     self.customAlert.numberOfButtons = 2;
     [self.customAlert.secondButton setTitle:@"E N A B L E" forState:UIControlStateNormal];
     
@@ -419,10 +419,13 @@
 
 -(void)secondPressed{
     //present push dialog
-    [Answers logCustomEventWithName:@"Accepted Push Permissions"
-                   customAttributes:@{
-                                      @"username":[PFUser currentUser].username
-                                      }];
+    if ([PFUser currentUser]) {
+        [Answers logCustomEventWithName:@"Accepted Push Permissions"
+                       customAttributes:@{
+                                          @"username":[PFUser currentUser].username
+                                          }];
+    }
+
     [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForPushPermission"];
     [[NSUserDefaults standardUserDefaults]setBool:NO forKey:@"declinedPushPermissions"];
     

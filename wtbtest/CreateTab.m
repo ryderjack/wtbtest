@@ -467,6 +467,8 @@
         vc.source = @"create";
         vc.pureWTS = YES;
         vc.fromCreate = YES;
+        vc.seller = [WTS objectForKey:@"sellerUser"];
+
         NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
         [self presentViewController:nav animated:YES completion:nil];
     }
@@ -638,7 +640,7 @@
         NSDate * combinedDate = [theCalendar dateFromComponents:components3];
         
         UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-        [localNotification setAlertBody:@"What are you selling? List your first item for sale on Bump now! 🤑"]; //make sure this matches the app delegate local notifications handler method
+        [localNotification setAlertBody:@"What are you selling? List your first item for sale on BUMP now 🏷"]; //make sure this matches the app delegate local notifications handler method
         [localNotification setFireDate: combinedDate];
         [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
         [localNotification setRepeatInterval: 0];
@@ -667,7 +669,7 @@
     self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.customAlert.delegate = self;
     self.customAlert.titleLabel.text = @"Enable Push";
-    self.customAlert.messageLabel.text = @"Tap to be notified when buyers send you a message on Bump 💬";
+    self.customAlert.messageLabel.text = @"Tap to be notified when buyers send you a message on BUMP";
     self.customAlert.numberOfButtons = 2;
     [self.customAlert.secondButton setTitle:@"E N A B L E" forState:UIControlStateNormal];
     
@@ -775,6 +777,14 @@
 -(void)listingFinished{
     self.listingInProgress = NO;
     self.listingDidFail = NO;
+}
+
+-(void)dismissCreateParent{
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshHome" object:nil];
+
+    [self dismissViewControllerAnimated:YES completion:^{
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }];
 }
 
 @end

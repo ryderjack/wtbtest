@@ -35,6 +35,9 @@
     [self.sellerTextLabel setTextColor:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]];
     
     self.navigationItem.title = @"S E L L I N G";
+    [self.zoomPromptLabel setHidden:YES];
+
+    self.countryLabel.text = @"";
     
     self.sendLabel.titleLabel.numberOfLines = 0;
     self.upVoteLabel.titleLabel.numberOfLines = 0;
@@ -85,6 +88,7 @@
     self.infoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.image2Cell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.carouselCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.extraInfoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
@@ -152,6 +156,29 @@
     //dismiss Invite gesture
     self.inviteTap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
     self.inviteTap.numberOfTapsRequired = 1;
+    
+    //prompt user to tap image to zoom
+    if (![[NSUserDefaults standardUserDefaults]boolForKey:@"seenZoomPrompt"]) {
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenZoomPrompt"];
+        
+        self.zoomPromptShowing = YES;
+        self.carouselView.alpha = 0.2;
+        [self.zoomPromptLabel setHidden:NO];
+    }
+    
+}
+
+-(void)hideZoomPrompt{
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.carouselView.alpha = 1.0;
+                             self.zoomPromptLabel.alpha = 0.0;
+                         }
+                         completion:^(BOOL finished) {
+                             [self.zoomPromptLabel setHidden:YES];
+                         }];
 }
 
 #pragma mark - carousel delegates
@@ -201,6 +228,13 @@
     return view;
 }
 
+-(void)carouselWillBeginDragging:(iCarousel *)carousel{
+    //hide zoom prompt if showing
+    if (self.zoomPromptShowing == YES) {
+        [self hideZoomPrompt];
+    }
+}
+
 - (void)carouselDidEndScrollingAnimation:(iCarousel *)carousel{
     self.pageIndicator.currentPage = self.carouselView.currentItemIndex;
 }
@@ -223,6 +257,14 @@
 }
 
 - (void)carousel:(iCarousel *)carousel didSelectItemAtIndex:(NSInteger)index{
+    
+    //hide zoom prompt if showing
+    if (self.zoomPromptShowing == YES) {
+        [self hideZoomPrompt];
+    }
+    
+    [Answers logCustomEventWithName:@"Tapped sale listing image"
+                   customAttributes:@{}];
     
     DetailImageController *vc = [[DetailImageController alloc]init];
     vc.listingPic = YES;
@@ -262,7 +304,7 @@
     
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
-//            NSLog(@"Listing %@", self.listingObject);
+//            NSLog(@"Listing %@", [self.listingObject objectForKey:@"geopoint"]);
             
             self.fetchedListing = YES;
             
@@ -333,7 +375,8 @@
             }
             
             //set title label
-            NSString *titleLabelText = [NSString stringWithFormat:@"%@\n",[self.listingObject objectForKey:@"itemTitle"]];
+            NSString *titleString = [self.listingObject objectForKey:@"itemTitle"];
+            NSString *titleLabelText = [NSString stringWithFormat:@"%@\n",titleString];
             
             float price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
             NSString *priceText = @"";
@@ -343,18 +386,12 @@
                 
                 //we have a price so add onto title label
                 titleLabelText = [NSString stringWithFormat:@"%@%@", titleLabelText, priceText];
-                
-                if ([self.listingObject objectForKey:@"location"]) {
-                    titleLabelText = [NSString stringWithFormat:@"%@ | %@", titleLabelText,[self.listingObject objectForKey:@"location"]];
-                }
             }
-            else{
-                if ([self.listingObject objectForKey:@"location"]) {
-                    titleLabelText = [NSString stringWithFormat:@"%@%@", titleLabelText,[self.listingObject objectForKey:@"location"]];
-                }
-            }
-
-            self.itemTitle.text = titleLabelText;
+            
+            //bold the title
+            NSMutableAttributedString *titleTxt = [[NSMutableAttributedString alloc] initWithString:titleLabelText];
+            [self modifyString:titleTxt setFontForText:titleString];
+            self.itemTitle.attributedText = titleTxt;
             
             NSString *descLabelText = [NSString stringWithFormat:@"Details %@",[self.listingObject objectForKey:@"description"]];
             
@@ -432,9 +469,6 @@
             
             [self calcPostedDate];
             
-            //seller info
-            self.seller = [self.listingObject objectForKey:@"sellerUser"];
-            
             if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
                 [self.longButton setTitle:@"E D I T" forState:UIControlStateNormal];
                 [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
@@ -462,35 +496,7 @@
                 [self.listingObject saveInBackground];
             }
             
-            [self setImageBorder];
-            [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                if (object) {
-                    [self.usernameButton setTitle:[NSString stringWithFormat:@"@%@", self.seller.username] forState:UIControlStateNormal];
-                    
-                    PFFile *pic = [self.seller objectForKey:@"picture"];
-                    if (pic != nil) {
-                        [self.sellerImgView setFile:pic];
-                        [self.sellerImgView loadInBackground];
-                    }
-                    else{
-                        [self.sellerImgView setImage:[UIImage imageNamed:@"empty"]];
-                    }
-                    
-                    if ([[self.seller objectForKey:@"ignoreLikePushes"]isEqualToString:@"YES"]) {
-                        self.dontLikePush = YES;
-                    }
-                    else{
-                        self.dontLikePush = NO;
-                    }
-                    
-                }
-                else{
-                    NSLog(@"seller error %@", error);
-                    [self showAlertWithTitle:@"Seller not found!" andMsg:nil];
-                }
-            }];
-            
-            //setup number of bumps
+            //setup number of likes
             NSMutableArray *bumpArray = [NSMutableArray arrayWithArray:[self.listingObject objectForKey:@"bumpArray"]];
             if ([bumpArray containsObject:[PFUser currentUser].objectId]) {
                 //update upvote lower label, allow user to see who else has bumped the listing
@@ -518,16 +524,49 @@
                 [self.upVoteButton setTitle:@"" forState:UIControlStateNormal];
             }
             
+            //set extra cell info
+            NSString *extraString = @"";
+
             if ([self.listingObject objectForKey:@"quantity"]) {
                 
                 int quant = [[self.listingObject objectForKey:@"quantity"]intValue];
-                NSLog(@"quant %d", quant);
                 
                 if ( quant > 1) {
-                    self.hasMultiple = YES;
-                    [self.tableView reloadData];
+                    
+                    if ([self.listingObject objectForKey:@"location"]) {
+                        extraString = [NSString stringWithFormat:@"Location %@\n\nQuantity %d", [self.listingObject objectForKey:@"location"],quant];
+                    }
+                    else{
+                        extraString = [NSString stringWithFormat:@"Quantity %d",quant];
+                    }
+                }
+                else{
+                    if ([self.listingObject objectForKey:@"location"]) {
+                        extraString = [NSString stringWithFormat:@"Location %@", [self.listingObject objectForKey:@"location"]];
+                    }
                 }
             }
+            else if([self.listingObject objectForKey:@"location"]){
+                //no quantity but check if there's location
+                extraString = [NSString stringWithFormat:@"Location %@", [self.listingObject objectForKey:@"location"]];
+            }
+            
+            //now set location & quantity on label
+            if (![extraString isEqualToString:@""]) {
+                
+                NSMutableAttributedString *string = [[NSMutableAttributedString alloc] initWithString:extraString];
+
+                if ([extraString containsString:@"Location"]) {
+                    [self modifyString:string setColorForText:@"Location" withColor:[UIColor lightGrayColor]];
+                }
+                
+                if ([extraString containsString:@"Quantity"]) {
+                    [self modifyString:string setColorForText:@"Quantity" withColor:[UIColor lightGrayColor]];
+                }
+                self.countryLabel.attributedText = string;
+            }
+            
+            
             if ([self.source isEqualToString:@"share"] || self.fromPush == YES) {
                 [self.tableView reloadData];
             }
@@ -535,6 +574,26 @@
         }
         else{
             NSLog(@"error fetching listing %@", error);
+        }
+    }];
+    
+    [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            self.fetchedUser = YES; //to help stop messages infinite spinner
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.usernameButton setTitle:[NSString stringWithFormat:@"@%@", self.seller.username] forState:UIControlStateNormal];
+            });
+            if ([[self.seller objectForKey:@"ignoreLikePushes"]isEqualToString:@"YES"]) {
+                self.dontLikePush = YES;
+            }
+            else{
+                self.dontLikePush = NO;
+            }
+        }
+        else{
+            NSLog(@"seller error %@", error);
+            [self showAlertWithTitle:@"Seller not found!" andMsg:nil];
         }
     }];
 }
@@ -576,7 +635,7 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    
+
     //make sure not adding duplicate observers
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
@@ -623,7 +682,7 @@
         return 1;
     }
     else if (section ==1){
-        return 2;
+        return 3;
     }
     else if (section ==2){
         return 1;
@@ -648,6 +707,9 @@
         else if (indexPath.row == 1){
             return self.descriptionCell;
         }
+        else if (indexPath.row == 2){
+            return self.extraInfoCell;
+        }
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
@@ -666,7 +728,7 @@
 -(CGFloat)tableView:(UITableView *)tableView estimatedHeightForRowAtIndexPath:(NSIndexPath *)indexPath{
     if (indexPath.section == 0){
         if (indexPath.row == 0) {
-            return 387;
+            return 399;
         }
     }
     else if (indexPath.section == 1){
@@ -676,6 +738,9 @@
         else if (indexPath.row == 1){
             return 114;
         }
+        else if (indexPath.row == 1){
+            return 110;
+        }
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
@@ -684,7 +749,7 @@
     }
     else if (indexPath.section == 3){
         if (indexPath.row == 0) {
-            return 100;
+            return 90;
         }
     }
     return 44;
@@ -711,53 +776,43 @@
 //hide the first header in table view
 - (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    if (self.hasMultiple) {
-        if(section == 1){
-            return 30.0f;
-        }
-        else if (section == 2){
-            return 40.0f;
-        }
-    }
-    else{
-        if(section == 1 || section == 2){
-            return 20.0f;
-        }
+    if(section == 1){
+        return 20.0f;
     }
     return 0.0f;
 }
 
--(NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section{
-    return @"";
-    
-}
--(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
-    return 0.0f;
-}
+//-(NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section{
+//    return @"";
+//
+//}
+//-(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
+//    return 0.0f;
+//}
 
 - (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
     UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
     header.contentView.backgroundColor = [UIColor colorWithRed:0.96 green:0.97 blue:0.99 alpha:1.0];
 
-    if (self.hasMultiple) {
-        header.textLabel.textColor = [UIColor grayColor];
-        header.textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
-        CGRect headerFrame = header.frame;
-        header.textLabel.frame = headerFrame;
-        if (section ==2){
-            header.textLabel.text =  [NSString stringWithFormat:@" %@ Available", [self.listingObject objectForKey:@"quantity"]];
-        }
-    }
+//    if (self.hasMultiple) {
+//        header.textLabel.textColor = [UIColor grayColor];
+//        header.textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
+//        CGRect headerFrame = header.frame;
+//        header.textLabel.frame = headerFrame;
+//        if (section ==2){
+//            header.textLabel.text =  [NSString stringWithFormat:@" %@ Available", [self.listingObject objectForKey:@"quantity"]];
+//        }
+//    }
 }
-
--(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
-    
-    if (section ==2 && self.hasMultiple){
-        return [NSString stringWithFormat:@" %@ Available", [self.listingObject objectForKey:@"quantity"]];
-    }
-    
-    return nil;
-}
+//
+//-(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
+//
+//    if (section ==2 && self.hasMultiple){
+//        return [NSString stringWithFormat:@" %@ Available", [self.listingObject objectForKey:@"quantity"]];
+//    }
+//
+//    return nil;
+//}
 
 -(void) calcPostedDate{
     NSDate *createdDate = [self.listingObject objectForKey:@"lastUpdated"];
@@ -965,13 +1020,6 @@
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
--(void)setImageBorder{
-    self.sellerImgView.layer.cornerRadius = 11;
-    self.sellerImgView.layer.masksToBounds = YES;
-    self.sellerImgView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-    self.sellerImgView.contentMode = UIViewContentModeScaleAspectFill;
-}
-
 -(void)showHUDForCopy:(BOOL)copying{
     self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
     self.hud.square = YES;
@@ -1017,7 +1065,7 @@
         self.web.showUrlWhileLoading = YES;
         self.web.showPageTitles = YES;
         self.web.doneButtonTitle = @"";
-        self.web.infoMode = NO;
+//        self.web.infoMode = NO;
         self.web.delegate = self;
         self.web.storeMode = YES;
         
@@ -1071,11 +1119,6 @@
     }
 }
 -(void)setupMessages{
-    if (self.fetchedListing != YES) {
-        [Answers logCustomEventWithName:@"Message tapped before item fetched"
-                       customAttributes:@{}];
-        return;
-    }
     
     NSString *descr;
 
@@ -1087,19 +1130,12 @@
             descr = [NSString stringWithFormat:@"%@..", descr];
         }
     }
-    
-    NSString *possID = [NSString stringWithFormat:@"%@%@%@", [PFUser currentUser].objectId, [[self.listingObject objectForKey:@"sellerUser"]objectId], self.listingObject.objectId];
-    NSString *otherId = [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId];
-    
-    //split into sub queries to avoid the contains parameter which can't be indexed
-    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
-    [convoQuery whereKey:@"convoId" equalTo:possID];
-    
-    PFQuery *otherPossConvo = [PFQuery queryWithClassName:@"convos"];
-    [otherPossConvo whereKey:@"convoId" equalTo:otherId];
 
-    PFQuery *comboConvoQuery = [PFQuery orQueryWithSubqueries:@[convoQuery, otherPossConvo]];
-    [comboConvoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
+    [convoQuery whereKey:@"sellerUser" equalTo:[self.listingObject objectForKey:@"sellerUser"]];
+    [convoQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+    [convoQuery whereKey:@"convoId" equalTo: [NSString stringWithFormat:@"%@%@%@",[[self.listingObject objectForKey:@"sellerUser"]objectId],[PFUser currentUser].objectId, self.listingObject.objectId]];
+    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //convo exists, goto that one but pretype a message like "I'm interested in your Supreme bogo" etc.
             MessageViewController *vc = [[MessageViewController alloc]init];
@@ -1107,7 +1143,7 @@
             vc.convoObject = object;
             vc.listing = self.listingObject;
             vc.otherUser = self.seller;
-            vc.otherUserName = self.seller.username;
+            vc.otherUserName = @""; //self.seller.username messages VC will load this even if its not given it
             vc.messageSellerPressed = YES;
             
             if (![self.listingObject objectForKey:@"itemTitle"]) {
@@ -1129,6 +1165,17 @@
             [self.navigationController pushViewController:vc animated:YES];
         }
         else{
+            
+            if (!self.fetchedUser) {
+                NSLog(@"no username fetched yet");
+                [Answers logCustomEventWithName:@"Message tapped before seller fetched"
+                               customAttributes:@{}];
+                [self hideHUD];
+                [self.longButton setEnabled:YES];
+                
+                return;
+            }
+            
             //create a new convo and goto it
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
             convoObject[@"buyerUser"] = [PFUser currentUser];
@@ -1145,8 +1192,8 @@
             convoObject[@"buyerUnseen"] = @0;
             convoObject[@"sellerUnseen"] = @0;
             convoObject[@"profileConvo"] = @"NO";
-            [convoObject setObject:@"NO" forKey:[NSString stringWithFormat:@"deleted%@",[PFUser currentUser].objectId]];
-            [convoObject setObject:@"NO" forKey:[NSString stringWithFormat:@"deleted%@",self.seller.objectId]];
+            [convoObject setObject:@"NO" forKey:@"buyerDeleted"];
+            [convoObject setObject:@"NO" forKey:@"sellerDeleted"];
 
             //save additional stuff onto convo object for faster inbox loading
             if ([self.listingObject objectForKey:@"thumbnail"]) {
@@ -1246,7 +1293,7 @@
 }
 
 -(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
-    
+
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -1272,8 +1319,8 @@
 }
 
 -(void)setupBarButton{
-    self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
-    [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+    self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+    [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
     [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
     [self.longButton addTarget:self action:@selector(BarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.longButton.alpha = 0.0f;
@@ -1310,7 +1357,6 @@
     tap.numberOfTapsRequired = 1;
     [self.bgView addGestureRecognizer:tap];
     [self.navigationController.view insertSubview:self.bgView belowSubview:self.sendBox];
-    NSLog(@"setup send");
     
 }
 - (IBAction)sendPressed:(id)sender {
@@ -1446,6 +1492,7 @@
     SendToUserCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.userImageView.image = nil;
     
+    NSLog(@"fb users");
     PFUser *fbUser = [self.facebookUsers objectAtIndex:indexPath.item];
     
     if (![fbUser objectForKey:@"picture"]) {
@@ -1599,7 +1646,7 @@
                             [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height-(keyboardFrame.size.height + self.sendBox.frame.size.height),self.sendBox.frame.size.width,self.sendBox.frame.size.height)];
                             
                             //animate the long button up
-                            [self.longButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60 + keyboardFrame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+                            [self.longButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 + keyboardFrame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
                         }
                      completion:^(BOOL finished) {
                          
@@ -1627,7 +1674,7 @@
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             
                             //animate the long button down
-                            [self.longButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(60+self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+                            [self.longButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50+self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
                         }
                      completion:^(BOOL finished) {
                          
@@ -2288,7 +2335,7 @@
                    customAttributes:@{
                                       @"type":@"whatsapp"
                                       }];
-    NSString *shareString = @"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com";
+    NSString *shareString = @"Check out Bump on the App Store - Safely Buy & Sell Streetwear with ZERO fees\n\nAvailable here: http://sobump.com";
     NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
     if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
         [[UIApplication sharedApplication] openURL: whatsappURL];
@@ -2312,7 +2359,7 @@
                                       @"type":@"share sheet"
                                       }];
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out Bump on the App Store - the one place for all streetwear WTBs & the latest releases 👟\n\nAvailable here: http://sobump.com"];
+    [items addObject:@"Check out Bump on the App Store - Safely Buy & Sell Streetwear with ZERO fees\n\nAvailable here: http://sobump.com"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     
     [self hideBarButton];
@@ -2333,6 +2380,8 @@
     for (NSUInteger i = 0; i < count - 1; ++i) {
         NSInteger remainingCount = count - i;
         NSInteger exchangeIndex = i + arc4random_uniform((u_int32_t )remainingCount);
+        
+        NSLog(@"shuffle");
         [array exchangeObjectAtIndex:i withObjectAtIndex:exchangeIndex];
     }
 }
@@ -2412,13 +2461,24 @@
     return mainString;
 }
 
+-(NSMutableAttributedString *)modifyString: (NSMutableAttributedString *)mainString setFontForText:(NSString*) textToFind
+{
+    NSRange range = [mainString.mutableString rangeOfString:textToFind options:NSCaseInsensitiveSearch];
+    
+    if (range.location != NSNotFound) {
+        [mainString addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"PingFangSC-Medium" size:13] range:range];
+    }
+    
+    return mainString;
+}
+
 #pragma bumping logic
 - (IBAction)upVotePressed:(id)sender {
     if (self.fetchedListing != YES) {
         [Answers logCustomEventWithName:@"Like tapped before item fetched"
                        customAttributes:@{}];
         
-        [self showAlertWithTitle:@"Hang on!" andMsg:@"Make sure your connection is up to scratch! Try liking again in a minute"];
+        [self showNormalAlertWithTitle:@"Hang on!" andMsg:@"Make sure your connection is up to scratch! Try liking again in a minute"];
         
         return;
     }
@@ -2514,7 +2574,7 @@
         }
         
         //send push to the seller notifying them of the Bump
-        NSString *pushText = [NSString stringWithFormat:@"%@ just liked your listing 👊", [PFUser currentUser].username];
+        NSString *pushText = [NSString stringWithFormat:@"%@ just liked your listing", [PFUser currentUser].username];
         
         if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
             
@@ -2601,6 +2661,7 @@
                 NSString *numberString = [self floatToString:number];
                 
                 // Add the letter for the abbreviation
+                NSLog(@"abbrev");
                 abbrevNum = [NSString stringWithFormat:@"%@%@", numberString, [abbrev objectAtIndex:i]];
             }
         }
