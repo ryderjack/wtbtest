@@ -131,19 +131,7 @@
     [self.inputToolbar.contentView.textView.layer setBorderWidth:0.0];
     self.inputToolbar.contentView.textView.delegate = self;
     self.inputToolbar.contentView.textView.jsqPasteDelegate = self;
-
-//    //paste delegate broken as fuck on iOS10
-//    if (@available(iOS 11.0, *)) {
-//        self.inputToolbar.contentView.textView.jsqPasteDelegate = self;
-//    }
-//    else{
-//
-////        self.inputToolbar.contentView.textView.inputAssistantItem.leadingBarButtonGroups = @[];
-////        self.inputToolbar.contentView.textView.inputAssistantItem.trailingBarButtonGroups = @[];
-//    }
     
-    NSLog(self.inputToolbar.contentView.textView.hasText ? @"works": @"doesn't work");
-
     [self.inputToolbar.contentView.rightBarButtonItem setHidden:YES];
     
     //avatar images
@@ -1063,6 +1051,8 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     //clear observers
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
