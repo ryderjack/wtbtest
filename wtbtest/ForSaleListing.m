@@ -77,7 +77,7 @@
         
         //register for notification so we know when to dismiss long button after switching tabs
         //because its a modalVC 'willdisappear' never called
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showHideLongButton:) name:@"switchedTabs" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showHideLowerButtons:) name:@"switchedTabs" object:nil];
     }
     else{
         self.tabBarHeightInt = self.tabBarController.tabBar.frame.size.height;
@@ -288,17 +288,26 @@
     [self.navigationController.navigationBar setHidden:NO];
     [self.navigationController.navigationBar setBarTintColor: nil];
 
-    if (self.barButtonPressed == YES) {
-        self.barButtonPressed = NO;
+    if (self.anyButtonPressed == YES) {
+        self.anyButtonPressed = NO;
     }
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    if (self.buttonShowing == NO) {
-        if (!self.longButton) {
-            [self setupBarButton];
+    if (self.buttonsShowing == NO) {
+        if (!self.setupButtons) {
+            [self decideButtonSetup];
         }
+        
+        //for when user comes back after switching tabs we need to be able to recreate the bar buttons
+        if (self.buyButtonShowing && !self.buyButton) {
+            [self setupTwoBarButtons];
+        }
+        else if (!self.messageButton){
+            [self setupMessageBarButton];
+        }
+        
         [self showBarButton];
     }
     
@@ -378,8 +387,34 @@
             NSString *titleString = [self.listingObject objectForKey:@"itemTitle"];
             NSString *titleLabelText = [NSString stringWithFormat:@"%@\n",titleString];
             
-            float price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
+            float price;
             NSString *priceText = @"";
+
+            //do we need to show native currency?
+            if(self.buyButtonShowing) {
+                self.currency = [self.listingObject objectForKey:@"currency"];
+                
+                price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
+                
+                if ([self.currency isEqualToString:@"GBP"]) {
+                    self.currencySymbol = @"£";
+                }
+                else if ([self.currency isEqualToString:@"EUR"]) {
+                    self.currencySymbol = @"€";
+                }
+                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+                    self.currencySymbol = @"$";
+                }
+                priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+                self.purchasePrice = price;
+                
+                [self.buyButton setTitle:[NSString stringWithFormat:@"Purchase for %@", priceText] forState:UIControlStateNormal];
+            }
+            else{
+                price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
+
+            }
+            
             
             if (price != 0.00) {
                 priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
@@ -470,9 +505,9 @@
             [self calcPostedDate];
             
             if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-                [self.longButton setTitle:@"E D I T" forState:UIControlStateNormal];
-                [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
-                [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+                [self.messageButton setTitle:@"E D I T" forState:UIControlStateNormal];
+                [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+                [self.messageButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
                 
                 //change report button into 'mark as sold'
                 self.markAsSoldMode = YES;
@@ -491,7 +526,7 @@
             }
             else{
                 //not the same buyer
-                [self.longButton setTitle:@"M E S S A G E  S E L L E R" forState:UIControlStateNormal];
+                [self.messageButton setTitle:@"Message Seller" forState:UIControlStateNormal];
                 [self.listingObject incrementKey:@"views"];
                 [self.listingObject saveInBackground];
             }
@@ -602,10 +637,8 @@
     [super viewWillDisappear:animated];
     
     [self hideBarButton];
-    
-    if (self.affiliateMode != YES) {
-        [self hideSendBox];
-    }
+    [self hideSendBox];
+
     
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
@@ -627,9 +660,12 @@
 -(void)viewDidDisappear:(BOOL)animated{
     [super viewDidDisappear:animated];
     
-    if (self.barButtonPressed != YES) {
+    if (self.anyButtonPressed != YES) {
+        NSLog(@"set to nil");
         //fail safe to avoid bar button wrongly showing
-        self.longButton = nil;
+        self.messageButton = nil;
+        self.buyButton = nil;
+        self.longSendButton = nil;
     }
 }
 
@@ -651,9 +687,8 @@
     if (self.tabBarController.tabBar.frame.size.height == 0) {
         //these observers are for when user is viewing listing from search, where disappear VC methods aren't called!
         [center removeObserver:self name:@"switchedTabs" object:nil];
-        [center addObserver:self selector:@selector(showHideLongButton:) name:@"switchedTabs" object:nil];
+        [center addObserver:self selector:@selector(showHideLowerButtons:) name:@"switchedTabs" object:nil];
     }
-    
     
     if (![[PFUser currentUser]objectForKey:@"seenBumpingIntro"]) {
         //show bumping tutorial
@@ -1045,77 +1080,85 @@
     });
 }
 
--(void)BarButtonPressed{
-    [self.longButton setEnabled:NO];
+-(void)buyButtonPressed{
+    self.anyButtonPressed = YES;
+    [self.buyButton setEnabled:NO];
     
-    self.barButtonPressed = YES;
+    CheckoutSummary *vc = [[CheckoutSummary alloc]init];
+    vc.listingObject = self.listingObject;
     
-    if (self.affiliateMode == YES) {
-        NSString *descText = [self.affiliateObject objectForKey:@"description"];
-        NSString *retailerText = [self.affiliateObject objectForKey:@"retailer"];
-        
-        [Answers logCustomEventWithName:@"Pressed Visit Affiliate Store"
-                       customAttributes:@{
-                                          @"item":descText,
-                                          @"retailer":retailerText
-                                          }];
-        
-        //open WebView
-        self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:[self.affiliateObject objectForKey:@"productURL"]]];
-        self.web.showUrlWhileLoading = YES;
-        self.web.showPageTitles = YES;
-        self.web.doneButtonTitle = @"";
-//        self.web.infoMode = NO;
-        self.web.delegate = self;
-        self.web.storeMode = YES;
-        
-        NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
-        [self presentViewController:navigationController animated:YES completion:nil];
-        
+//    if (![[PFUser currentUser]objectForKey:@"address"]) {
+//        vc.addAddress = YES;
+//    }
+    
+    if (self.tabBarController.tabBar.frame.size.height == 0) {
+        [self hideBarButton];
+        vc.delegate = self;
     }
-    else if (self.sendMode == YES) {
-        //either send message or dismiss
-        if ([self.longButton.titleLabel.text isEqualToString:@"D I S M I S S"]) {
-            [Answers logCustomEventWithName:@"Dismissed Send Box"
-                           customAttributes:@{
-                                              @"where":@"for sale"
-                                              }];
-            NSLog(@"dismiss");
-            [self hideSendBox];
-            [self.longButton setEnabled:YES];
-        }
-        else{
-            [Answers logCustomEventWithName:@"Sent listing to friend"
-                           customAttributes:@{
-                                              @"where":@"for sale",
-                                              @"message":self.sendBox.messageField.text
-                                              }];
-            //increment sent property on listing
-            [self.listingObject incrementKey:@"sentNumber"];
-            [self.listingObject saveInBackground];
-            
-            //send a message G
-            [self sendMessageWithText:self.sendBox.messageField.text];
-            [self hideSendBox];
-            self.sendMode = NO;
-            [self.longButton setEnabled:YES];
-        }
+    
+    vc.salePrice = self.purchasePrice;
+    vc.currencySymbol = self.currencySymbol;
+    
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    [self.navigationController presentViewController:nav animated:YES completion:^{
+        [self.buyButton setEnabled:YES];
+    }];
+
+}
+
+-(void)longSendButtonPressed{
+    self.anyButtonPressed = YES;
+    [self.longSendButton setEnabled:NO];
+    
+    //either send message or dismiss
+    if ([self.longSendButton.titleLabel.text isEqualToString:@"Dismiss"]) {
+        [Answers logCustomEventWithName:@"Dismissed Send Box"
+                       customAttributes:@{
+                                          @"where":@"for sale"
+                                          }];
+        NSLog(@"dismiss");
+        [self hideSendBox];
+        [self.longSendButton setEnabled:YES];
     }
     else{
-        if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-            [self showHUDForCopy:NO];
-            [self setupMessages];
-        }
-        else{
-            NSLog(@"edit listing");
-            [self hideBarButton];
+        [Answers logCustomEventWithName:@"Sent listing to friend"
+                       customAttributes:@{
+                                          @"where":@"for sale",
+                                          @"message":self.sendBox.messageField.text
+                                          }];
+        //increment sent property on listing
+        [self.listingObject incrementKey:@"sentNumber"];
+        [self.listingObject saveInBackground];
+        
+        //send a message G
+        [self sendMessageWithText:self.sendBox.messageField.text];
+        [self hideSendBox];
+        self.sendMode = NO;
+        [self.longSendButton setEnabled:YES];
+    }
+    
+}
 
-            CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-            vc.editMode = YES;
-            vc.listing = self.listingObject;
-            [self.longButton setEnabled:YES];
-            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-            [self presentViewController:nav animated:YES completion:nil];        }
+-(void)messageBarButtonPressed{
+    [self.messageButton setEnabled:NO];
+    
+    self.anyButtonPressed = YES;
+    
+    if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        [self showHUDForCopy:NO];
+        [self setupMessages];
+    }
+    else{
+        [self hideBarButton];
+        
+        CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+        vc.editMode = YES;
+        vc.listing = self.listingObject;
+        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+        [self presentViewController:nav animated:YES completion:^{
+            [self.messageButton setEnabled:YES];
+        }];
+        
     }
 }
 -(void)setupMessages{
@@ -1161,7 +1204,7 @@
             vc.pureWTS = YES;
 
             [self hideHUD];
-            [self.longButton setEnabled:YES];
+            [self.messageButton setEnabled:YES];
             [self.navigationController pushViewController:vc animated:YES];
         }
         else{
@@ -1171,7 +1214,7 @@
                 [Answers logCustomEventWithName:@"Message tapped before seller fetched"
                                customAttributes:@{}];
                 [self hideHUD];
-                [self.longButton setEnabled:YES];
+                [self.messageButton setEnabled:YES];
                 
                 return;
             }
@@ -1237,12 +1280,12 @@
                     }
                     
                     [self hideHUD];
-                    [self.longButton setEnabled:YES];
+                    [self.messageButton setEnabled:YES];
                     [self.navigationController pushViewController:vc animated:YES];
                 }
                 else{
                     NSLog(@"error saving convo");
-                    [self.longButton setEnabled:YES];
+                    [self.messageButton setEnabled:YES];
                     [self hideHUD];
                 }
             }];
@@ -1265,13 +1308,14 @@
 }
 -(void)hideBarButton{
     NSLog(@"HIDE BAR BUTTON");
-    self.buttonShowing = NO;
+    self.buttonsShowing = NO;
 
     [UIView animateWithDuration:0.2
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
                      animations:^{
-                         [self.longButton setAlpha:0.0];
+                         [self.messageButton setAlpha:0.0];
+                         [self.buyButton setAlpha:0.0];
                      }
                      completion:^(BOOL finished) {
                      }];
@@ -1279,14 +1323,44 @@
 
 -(void)showBarButton{
     NSLog(@"SHOW BAR BUTTON");
-    self.buttonShowing = YES;
+    self.buttonsShowing = YES;
 
-    self.longButton.alpha = 0.0f;
+    self.messageButton.alpha = 0.0f;
+    self.buyButton.alpha = 0.0;
+    
     [UIView animateWithDuration:0.2
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
                      animations:^{
-                         self.longButton.alpha = 1.0f;
+                         self.messageButton.alpha = 1.0f;
+                         self.buyButton.alpha = 1.0;
+                     }
+                     completion:^(BOOL finished) {
+                     }];
+}
+
+-(void)showSendButton{
+    self.sendButtonShowing = YES;
+    self.longSendButton.alpha = 0.0f;
+    
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.longSendButton.alpha = 1.0f;
+                     }
+                     completion:^(BOOL finished) {
+                     }];
+}
+
+-(void)hideSendButton{
+    self.sendButtonShowing = NO;
+
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.longSendButton setAlpha:0.0];
                      }
                      completion:^(BOOL finished) {
                      }];
@@ -1318,13 +1392,84 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
--(void)setupBarButton{
-    self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
-    [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
-    [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
-    [self.longButton addTarget:self action:@selector(BarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
-    self.longButton.alpha = 0.0f;
-    [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
+-(void)decideButtonSetup{
+    
+    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        [self setupMessageBarButton];
+    }
+    else{
+        //check if instant buy is on & if countries are the same - if not, is global shipping enabled to show both anyway
+        if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"]) {
+            
+            if ([self.listingObject objectForKey:@"country"] && [[PFUser currentUser]objectForKey:@"country"]) {
+                
+                NSString *listingCountry = [self.listingObject objectForKey:@"country"];
+                NSString *userCountry = [[PFUser currentUser]objectForKey:@"country"];
+                
+                //check if countries are the same
+                if ([listingCountry isEqualToString:userCountry]) {
+                    //same so show both
+                    //                [self setupTwoBarButtons];
+                }
+                else if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]){
+                    //                [self setupTwoBarButtons];
+                }
+                else{
+                    //                [self setupMessageBarButton];
+                }
+            }
+            else{
+                //CHANGE add in prompt to get user's country if this fails???
+            }
+        }
+        else{
+            //        [self setupMessageBarButton];
+        }
+        [self setupTwoBarButtons]; //CHANGE
+    }
+    
+    self.setupButtons = YES;
+}
+
+-(void)setupMessageBarButton{
+    self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
+    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+    [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.messageButton.alpha = 0.0f;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
+}
+-(void)setupSendBarButton{
+    self.longSendButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+    [self.longSendButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
+    [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+    [self.longSendButton addTarget:self action:@selector(longSendButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.longSendButton.alpha = 0.0f;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.longSendButton];
+}
+
+-(void)setupTwoBarButtons{
+    self.buyButtonShowing = YES;
+    
+    //setup message button
+    self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width/2, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width/2, 50)];
+    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
+    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
+    [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.messageButton.alpha = 0.0f;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
+    
+    //setup buy button
+    self.buyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width/2, 50)];
+    [self.buyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
+    [self.buyButton setBackgroundColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
+    [self.buyButton addTarget:self action:@selector(buyButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.buyButton.alpha = 0.0f;
+    
+    //title is set when listing fetched for price
+    [self.buyButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.buyButton];
 }
 
 #pragma marl - send box delegates
@@ -1383,17 +1528,7 @@
     //reset textfield
     self.sendBox.messageField.text = @"";
     
-    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        [self.longButton setTitle:@"E D I T" forState:UIControlStateNormal];
-        [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
-        [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
-    }
-    else{
-        [self.longButton setTitle:@"M E S S A G E  S E L L E R" forState:UIControlStateNormal];
-        [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
-        [self.longButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    }
-    [self.longButton setEnabled:YES];
+    [self hideSendButton];
     
     //reset collection view
     self.selectedFriend = NO;
@@ -1479,9 +1614,9 @@
                              }];
             
             //title button
-            [self.longButton setTitle:@"S E N D" forState:UIControlStateNormal];
-            [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
-            [self.longButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            [self.longSendButton setTitle:@"Send" forState:UIControlStateNormal];
+            [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+            [self.longSendButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         }
 }
 
@@ -1646,7 +1781,7 @@
                             [self.sendBox setFrame:CGRectMake(0,[UIApplication sharedApplication].keyWindow.frame.size.height-(keyboardFrame.size.height + self.sendBox.frame.size.height),self.sendBox.frame.size.width,self.sendBox.frame.size.height)];
                             
                             //animate the long button up
-                            [self.longButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 + keyboardFrame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+                            [self.longSendButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 + keyboardFrame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
                         }
                      completion:^(BOOL finished) {
                          
@@ -1674,7 +1809,7 @@
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             
                             //animate the long button down
-                            [self.longButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50+self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+                            [self.longSendButton setFrame: CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50+self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
                         }
                      completion:^(BOOL finished) {
                          
@@ -1683,6 +1818,13 @@
 
 -(void)ShowInitialSendBox{
     NSLog(@"SHOW INITIAL");
+    
+    if (!self.longSendButton) {
+        [self setupSendBarButton];
+    }
+    
+    [self showSendButton];
+    
     if ([[PFUser currentUser]objectForKey:@"facebookId"] && self.facebookUsers.count > 0) {
         [self.sendBox.smallInviteButton setHidden:NO];
     }
@@ -1697,9 +1839,9 @@
     }
     
     //update bar button title
-    [self.longButton setTitle:@"D I S M I S S" forState:UIControlStateNormal];
-    [self.longButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
-    [self.longButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+    [self.longSendButton setTitle:@"Dismiss" forState:UIControlStateNormal];
+    [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+    [self.longSendButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
     
     //show
     [self.sendBox setAlpha:1.0];
@@ -2406,7 +2548,11 @@
     return output;
 }
 
--(void)showHideLongButton:(NSNotification*)note {
+-(void)showHideLowerButtons:(NSNotification*)note {
+    NSLog(@"switching");
+    
+    self.anyButtonPressed = YES;
+
     UIViewController *viewController = [note object];
     if ([viewController isKindOfClass:[NavigationController class]]) {
         
@@ -2414,10 +2560,16 @@
         
         if ([vc.visibleViewController isKindOfClass:[PurchaseTab class]]){
             [self showBarButton];
+            if (self.sendButtonShowing) {
+                [self showSendButton];
+            }
         }
         else{
             [self hideBarButton];
             
+            if (self.sendButtonShowing) {
+                [self hideSendButton];
+            }
         }
     }
 }
@@ -2634,7 +2786,7 @@
                                           }];
     }
     
-    self.barButtonPressed = YES;
+    self.anyButtonPressed = YES;
     
     whoBumpedTableView *vc = [[whoBumpedTableView alloc]init];
     vc.bumpArray = [self.listingObject objectForKey:@"bumpArray"];
@@ -2912,7 +3064,7 @@
     
     if (![PFFacebookUtils isLinkedWithUser:[PFUser currentUser]]) {
         NSLog(@"it is linked");
-        self.barButtonPressed = YES;
+        self.anyButtonPressed = YES;
         [self hideBarButton];
         
         [PFFacebookUtils linkUserInBackground:[PFUser currentUser] withPublishPermissions:@[] block:^(BOOL succeeded, NSError * _Nullable error) {
@@ -3052,5 +3204,10 @@
             NSLog(@"error on friends %li", (long)error.code);
         }
     }];
+}
+
+#pragma mark - dismiss checkout
+-(void)dismissedCheckout{
+    [self showBarButton];
 }
 @end

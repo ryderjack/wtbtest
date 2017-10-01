@@ -247,33 +247,6 @@
         else{
             [self getLatestForSale];
             
-            //check whether user has a continent saved on their user object (for version 2.0.34 where continent filtering is introduced)
-            if (![[PFUser currentUser] objectForKey:@"continent"]) {
-                
-                if ([[PFUser currentUser]objectForKey:@"profileLocation"]) {
-                    [self calcContinent];
-                }
-                else{
-                    //just use device data to set continent
-                    NSLocale *currentLocale = [NSLocale currentLocale];  // get the current locale.
-                    NSString *countryCode = [currentLocale objectForKey:NSLocaleCountryCode];
-                    
-                    if (countryCode != NULL) {
-                        HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
-                        NSString *expectedContinent = [continentDecoder continentForCountryCode:countryCode];
-                        
-                        if (expectedContinent != NULL) {
-                            [[PFUser currentUser]setObject:expectedContinent forKey:@"continent"];
-                            [[PFUser currentUser]saveInBackground];
-                        }
-                    }
-                    else{
-                        [Answers logCustomEventWithName:@"No country code from device error"
-                                       customAttributes:@{}];
-                    }
-                }
-            }
-            
             //since 2.0.23 we now save geopoints on users to then set on their listings
             if (![currentUser objectForKey:@"geopoint"]) {
                 [self saveGeoPoint];
@@ -567,6 +540,8 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    
+//    [self setContinentsOnListings]; //CHANGE
     
     BOOL modalPresent = (self.presentedViewController);
     if ([PFUser currentUser] && modalPresent != YES) {
@@ -1388,6 +1363,11 @@
                             [[PFUser currentUser]setObject:[placemark continent] forKey:@"continent"];
                         }
                         
+                        if (![[placemark country]isEqualToString:@""]) {
+                            [[PFUser currentUser]setObject:[placemark country] forKey:@"country"];
+                            [[PFUser currentUser]setObject:[placemark ISOcountryCode] forKey:@"countryCode"];
+                        }
+                        
                         [[PFUser currentUser]saveInBackground];
                     }
                 }
@@ -1422,20 +1402,23 @@
                         
                         //only save if user doesn't have a profile location set
                         if (![[PFUser currentUser]objectForKey:@"profileLocation"]) {
+                            
                             [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
-                            [[PFUser currentUser]saveInBackground];
-                        }
-                        
-                        //only save if user doesn't have a geopoint set
-                        if (![[PFUser currentUser]objectForKey:@"geopoint"]) {
                             [[PFUser currentUser]setObject:geoPoint forKey:@"geopoint"];
+                            
+                            if (![[placemark continent]isEqualToString:@""]) {
+                                [[PFUser currentUser]setObject:[placemark continent] forKey:@"continent"];
+                            }
+                            
+                            if (![[placemark country]isEqualToString:@""]) {
+                                [[PFUser currentUser]setObject:[placemark country] forKey:@"country"];
+                                [[PFUser currentUser]setObject:[placemark ISOcountryCode] forKey:@"countryCode"];
+                            }
+
                             [[PFUser currentUser]saveInBackground];
+
                         }
                         
-                        if (![[PFUser currentUser]objectForKey:@"continent"] && ![[placemark continent]isEqualToString:@""]) {
-                            [[PFUser currentUser]setObject:[placemark continent] forKey:@"continent"];
-                            [[PFUser currentUser]saveInBackground];
-                        }
                     }
                 }
                 else{
@@ -3655,5 +3638,105 @@
         [self getLatestForSale];
     }
     [self hideLocationFilterView];
+}
+
+-(void)setContinentsOnListings{
+    PFQuery *listingsQ = [PFQuery queryWithClassName:@"forSaleItems"];
+    [listingsQ whereKeyExists:@"location"];
+    [listingsQ whereKeyDoesNotExist:@"continent"];
+    listingsQ.limit = 500;
+    listingsQ.skip = self.skipNumb;
+    [listingsQ orderByDescending:@"lastUpdated"];
+    [listingsQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            
+            NSLog(@"objects %ld", objects.count);
+            
+            for (PFObject *listing in objects) {
+                
+                NSLog(@"location: %@", [listing objectForKey:@"location"]);
+                
+                NSString *continentToSave = @"";
+                
+                if ([listing objectForKey:@"location"]) {
+                    
+                    NSArray *locStrings = [[listing objectForKey:@"location"] componentsSeparatedByString:@", "];
+                    
+                    if (locStrings.count > 1) {
+                        //get the second object
+                        NSString *code = [locStrings lastObject];
+                        
+                        if (code.length == 2) {
+                            
+                            if (code!= NULL) {
+                                HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
+                                NSString *expectedContinent = [continentDecoder continentForCountryCode:code];
+                                
+                                if (expectedContinent != NULL) {
+                                    NSLog(@"CONTINENT 1: %@", expectedContinent);
+                                    continentToSave = expectedContinent;
+                                }
+                                
+                            }
+                            
+                        }
+                        else{
+                            //not as expected so use device
+                            NSLog(@"not as expected: %@", locStrings);
+                        }
+                    }
+                    else if(locStrings.count == 1){
+                        //get the first object as the user must have just selected a country
+                        NSString *code = locStrings[0];
+                        
+                        if (code.length == 2) {
+                            NSLog(@"country code 2: %@", code);
+                            
+                            if (code!= NULL) {
+                                HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
+                                NSString *expectedContinent = [continentDecoder continentForCountryCode:code];
+                                
+                                if (expectedContinent != NULL) {
+                                    NSLog(@"CONTINENT 2: %@", expectedContinent);
+                                    continentToSave = expectedContinent;
+                                }
+                                
+                            }
+                            
+                        }
+                        else{
+                            //not as expected so use device
+                            NSLog(@"not as expected 2: %@", locStrings);
+                            
+                        }
+                    }
+                    else{
+                        //not as expected so use device
+                        NSLog(@"not as expected 3");
+                    }
+                    
+                }
+                else{
+                    NSLog(@"no location on listing");
+                }
+                
+                if (![continentToSave isEqualToString:@""]) {
+                    [listing setObject:continentToSave forKey:@"continent"];
+                    [listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            NSLog(@"saved");
+                        }
+                    }];
+                }
+            }
+            
+            if (objects.count == 500) {
+                NSLog(@"load more");
+                self.skipNumb+=500;
+                //                [self setContinentsOnListings];
+            }
+            
+        }
+    }];
 }
 @end

@@ -49,6 +49,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UILabel *usernameLabel;
 
 @property (nonatomic) BOOL changePayPal;
+@property (nonatomic) BOOL locationAddMode;
+@property (nonatomic) BOOL autoPopMode;
 
 //buttons
 @property (weak, nonatomic) IBOutlet UIButton *GBPButton;

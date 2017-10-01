@@ -19,6 +19,7 @@
 #import "TOJRWebView.h"
 #import "DetailImageController.h"
 #import "BumpingIntroVC.h"
+#import "CheckoutSummary.h"
 
 @class ForSaleListing;
 
@@ -30,7 +31,7 @@
 
 @end
 
-@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate, UIGestureRecognizerDelegate>
+@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate, UIGestureRecognizerDelegate, CheckoutDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
 
@@ -99,10 +100,17 @@
 @property (nonatomic) BOOL fromCreate;
 @property (nonatomic) BOOL markAsSoldMode;
 
-//big button
-@property (nonatomic, strong) UIButton *longButton;
-@property (nonatomic) BOOL buttonShowing;
-@property (nonatomic) BOOL barButtonPressed;
+//message & buy buttons
+@property (nonatomic, strong) UIButton *messageButton;
+@property (nonatomic, strong) UIButton *buyButton;
+@property (nonatomic, strong) UIButton *longSendButton;
+
+@property (nonatomic) BOOL buttonsShowing;
+@property (nonatomic) BOOL anyButtonPressed;
+@property (nonatomic) BOOL setupButtons;
+@property (nonatomic) BOOL buyButtonShowing;
+@property (nonatomic) BOOL sendButtonShowing;
+
 
 //carousel
 @property (weak, nonatomic) IBOutlet iCarousel *carouselView;
@@ -160,7 +168,8 @@
 //extra info cell
 @property (weak, nonatomic) IBOutlet UILabel *countryLabel;
 
-
+//purchase
+@property (nonatomic) float purchasePrice;
 
 
 @end

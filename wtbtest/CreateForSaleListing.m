@@ -34,8 +34,12 @@
     //buy now/shipping setup
     self.buyRows = 1;
     self.globalEnabled = YES;
+    
     self.nationalPrice = 0.00;
     self.globalPrice = 0.00;
+    
+    self.countryCode = @"";
+    self.country = @"";
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
@@ -171,7 +175,6 @@
         }
         else{
             //don't reset a previous location when editing so just get loc when creating
-            [self saleuseCurrentLoc];
             [self.longButton setTitle:@"C R E A T E" forState:UIControlStateNormal];
             
             [Answers logCustomEventWithName:@"Viewed page"
@@ -258,7 +261,6 @@
         }
         else{
             //don't reset a previous location when editing
-            [self saleuseCurrentLoc];
             [self.longButton setTitle:@"C R E A T E" forState:UIControlStateNormal];
             
             [Answers logCustomEventWithName:@"Viewed page"
@@ -1505,42 +1507,6 @@
     self.payField.inputAccessoryView = keyboardToolbar;
 }
 
--(void)saleuseCurrentLoc{
-    [PFGeoPoint geoPointForCurrentLocationInBackground:^(PFGeoPoint * _Nullable geoPoint, NSError * _Nullable error) {
-        if (!error) {
-            double latitude = geoPoint.latitude;
-            double longitude = geoPoint.longitude;
-            
-            CLLocation *loc = [[CLLocation alloc]initWithLatitude:latitude longitude:longitude];
-            CLGeocoder *geocoder = [[CLGeocoder alloc]init];
-            [geocoder reverseGeocodeLocation:loc completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
-                if (placemarks) {
-                    CLPlacemark *placemark = [placemarks lastObject];
-                    NSString *titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.country];
-                    
-                    if (geoPoint) {
-                        self.geopoint = geoPoint;
-                        self.locationString = titleString;
-                    }
-                    else{
-                        self.locationString = @"";
-                        self.geopoint = nil;
-                        
-                        [Answers logCustomEventWithName:@"Location Error on sale listing"
-                                       customAttributes:@{}];
-                    }
-                }
-                else{
-                    NSLog(@"loc error 1 %@", error);
-                }
-            }];
-        }
-        else{
-            NSLog(@"loc error 2 %@", error);
-        }
-    }];
-}
-
 -(void)tagString:(NSString *)tag{
 }
 
@@ -1891,9 +1857,22 @@
     
     if (self.photostotal < 2 && self.ignore2Pics != YES){
         
-        [self showAlertWithTitle:@"2 Photos Needed 📸" andMsg:@"To help fight scammers and strengthen the community please add at least 2 tagged photos to your listing"];
+        [self showAlertWithTitle:@"2 Photos Needed" andMsg:@"To help fight scammers and strengthen the community please add at least 2 tagged photos to your listing"];
         [self.longButton setEnabled:YES];
     }
+    else if (self.buySwitch.isOn && [self.selectShippingLabel.text isEqualToString:@"Select"]){
+        [self showAlertWithTitle:@"Shipping Prices" andMsg:@"Add Shipping prices to your listing"];
+        [self.longButton setEnabled:YES];
+    }
+    
+    //this should be protected against in the shipping options VC
+//    else if (self.buySwitch.isOn && ([self.country isEqualToString:@""] || [self.countryCode isEqualToString:@""])){ //CHANGE test this
+//        [Answers logCustomEventWithName:@"No Country listing error"
+//                       customAttributes:@{}];
+//        [self addLocationPrompt];
+//
+//        [self.longButton setEnabled:YES];
+//    }
     else if(([self.chooseCategroy.text isEqualToString:@"Accessories"] || [self.chooseCategroy.text isEqualToString:@"Proxy"]) && ([self.chooseCondition.text isEqualToString:@"Select"] || [self.descriptionField.text isEqualToString:@"Describe the item's style, sizing, and any possible flaws"] || (self.photostotal < 2 && self.ignore2Pics != YES) || (self.photostotal == 0 && self.ignore2Pics == YES) || [titleCheck isEqualToString:@""] || [self.payField.text isEqualToString:@""] || [priceCheck isEqualToString:@"0.00"])){
 //        NSLog(@"accessories selected but haven't filled everything else in");
         
@@ -2098,6 +2077,15 @@
                 }
             }
             
+            //if it's an instant buy option these will be saved locally, else check user
+            if (![self.country isEqualToString:@""] && ![self.countryCode isEqualToString:@""]) {
+                [forSaleItem setObject:self.country forKey:@"country"];
+                [forSaleItem setObject:self.countryCode forKey:@"countryCode"];
+            }
+            else if ([[PFUser currentUser] objectForKey:@"country"]) {
+                [forSaleItem setObject:[[PFUser currentUser] objectForKey:@"country"] forKey:@"country"];
+            }
+            
             if ([[PFUser currentUser] objectForKey:@"continent"]) {
                 [forSaleItem setObject:[[PFUser currentUser] objectForKey:@"continent"] forKey:@"continent"];
             }
@@ -2107,7 +2095,7 @@
         if ([[PFUser currentUser] objectForKey:@"geopoint"]) {
             [forSaleItem setObject:[[PFUser currentUser] objectForKey:@"geopoint"] forKey:@"geopoint"];
         }
-        else if (self.geopoint){
+        else if (self.geopoint && self.editMode){
             [forSaleItem setObject:self.geopoint forKey:@"geopoint"];
         }
 
@@ -2328,6 +2316,29 @@
         }
         
         [forSaleItem setObject:@(quantInt) forKey:@"quantity"];
+        
+        //instant buy fields
+        //is it on?
+        //national postage price
+        //global postage on?
+        //global postage price
+        //already set the country and country code slightly further up if needs be
+        
+        if (self.buySwitch.isOn) {
+            [forSaleItem setObject:@"YES" forKey:@"instantBuy"];
+            [forSaleItem setObject:@(self.nationalPrice) forKey:@"nationalShippingPrice"];
+            
+            if (self.globalEnabled) {
+                [forSaleItem setObject:@"YES" forKey:@"globalShipping"];
+                [forSaleItem setObject:@(self.globalPrice) forKey:@"globalShippingPrice"];
+            }
+            else{
+                [forSaleItem setObject:@"NO" forKey:@"globalShipping"];
+            }
+        }
+        else{
+            [forSaleItem setObject:@"NO" forKey:@"instantBuy"];
+        }
         
         if (self.editMode || self.listingAsMode) {
             [self showHUD];
@@ -5523,10 +5534,13 @@
 }
 
 #pragma mark - shipping delegate
--(void)shippingOptionsWithNational:(float)nationalPrice withGlobal:(float)globalPrice withGlobalEnabled:(BOOL)globalOn{
+-(void)shippingOptionsWithNational:(float)nationalPrice withGlobal:(float)globalPrice withGlobalEnabled:(BOOL)globalOn andCountry:(NSString *)country withCountryCode:(NSString *)code{
+    
     self.nationalPrice = nationalPrice;
     self.globalPrice = globalPrice;
     self.globalEnabled = globalOn;
+    self.country = country;
+    self.countryCode = code;
     
     NSLog(@"national price: %f    global: %f", nationalPrice, globalPrice);
     

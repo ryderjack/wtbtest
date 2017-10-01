@@ -211,6 +211,15 @@
                    customAttributes:@{
                                       @"pageName":@"Settings",
                                       }];
+    
+    if (self.locationAddMode) {
+        self.locationAddMode = NO;
+        self.autoPopMode = YES;
+        
+        LocationView *vc = [[LocationView alloc]init];
+        vc.delegate = self;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -1085,7 +1094,19 @@
         if (geopoint) {
             [[PFUser currentUser]setObject:geopoint forKey:@"geopoint"];
         }
+        
+        if (![[placemark country]isEqualToString:@""]) {
+            [[PFUser currentUser]setObject:[placemark country] forKey:@"country"];
+            [[PFUser currentUser]setObject:[placemark ISOcountryCode] forKey:@"countryCode"];
+        }
+        
         [[PFUser currentUser]saveInBackground];
+        
+        //for when users are here from shipping vc and just need to quickly add a location
+        if (self.autoPopMode) {
+            self.autoPopMode = NO;
+            [self.navigationController popViewControllerAnimated:YES];
+        }
     }
 }
 

@@ -32,6 +32,8 @@
 		040202F71ED978C80006A5CD /* buyButtonCart.png in Resources */ = {isa = PBXBuildFile; fileRef = 040202F41ED978C80006A5CD /* buyButtonCart.png */; };
 		0402BD7E1F7D1465000B1C27 /* ShippingOptionsView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0402BD7C1F7D1465000B1C27 /* ShippingOptionsView.m */; };
 		0402BD7F1F7D1465000B1C27 /* ShippingOptionsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0402BD7D1F7D1465000B1C27 /* ShippingOptionsView.xib */; };
+		0402BD831F7E653A000B1C27 /* CheckoutSummary.m in Sources */ = {isa = PBXBuildFile; fileRef = 0402BD811F7E653A000B1C27 /* CheckoutSummary.m */; };
+		0402BD841F7E653A000B1C27 /* CheckoutSummary.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0402BD821F7E653A000B1C27 /* CheckoutSummary.xib */; };
 		0403332A1CAADDFC00C59385 /* alertIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 040333271CAADDFC00C59385 /* alertIcon.png */; };
 		0403332B1CAADDFC00C59385 /* alertIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 040333281CAADDFC00C59385 /* alertIcon@2x.png */; };
 		0403332C1CAADDFC00C59385 /* alertIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 040333291CAADDFC00C59385 /* alertIcon@3x.png */; };
@@ -1520,6 +1522,9 @@
 		0402BD7B1F7D1465000B1C27 /* ShippingOptionsView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShippingOptionsView.h; sourceTree = "<group>"; };
 		0402BD7C1F7D1465000B1C27 /* ShippingOptionsView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShippingOptionsView.m; sourceTree = "<group>"; };
 		0402BD7D1F7D1465000B1C27 /* ShippingOptionsView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ShippingOptionsView.xib; sourceTree = "<group>"; };
+		0402BD801F7E653A000B1C27 /* CheckoutSummary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CheckoutSummary.h; sourceTree = "<group>"; };
+		0402BD811F7E653A000B1C27 /* CheckoutSummary.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CheckoutSummary.m; sourceTree = "<group>"; };
+		0402BD821F7E653A000B1C27 /* CheckoutSummary.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CheckoutSummary.xib; sourceTree = "<group>"; };
 		040333271CAADDFC00C59385 /* alertIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = alertIcon.png; sourceTree = "<group>"; };
 		040333281CAADDFC00C59385 /* alertIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alertIcon@2x.png"; sourceTree = "<group>"; };
 		040333291CAADDFC00C59385 /* alertIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alertIcon@3x.png"; sourceTree = "<group>"; };
@@ -4895,6 +4900,9 @@
 		04F7EF801E1541BC00061745 /* Selling */ = {
 			isa = PBXGroup;
 			children = (
+				0402BD801F7E653A000B1C27 /* CheckoutSummary.h */,
+				0402BD811F7E653A000B1C27 /* CheckoutSummary.m */,
+				0402BD821F7E653A000B1C27 /* CheckoutSummary.xib */,
 				0402BD7B1F7D1465000B1C27 /* ShippingOptionsView.h */,
 				0402BD7C1F7D1465000B1C27 /* ShippingOptionsView.m */,
 				0402BD7D1F7D1465000B1C27 /* ShippingOptionsView.xib */,
@@ -5989,6 +5997,7 @@
 				048D7A151E4A06D000277D44 /* envelopeSend.png in Resources */,
 				04D9B99A1C89FCA2004AF0F2 /* cart@2x.png in Resources */,
 				04BEE55D1DD76F22004CD8D1 /* offer_8@2x.png in Resources */,
+				0402BD841F7E653A000B1C27 /* CheckoutSummary.xib in Resources */,
 				04BEE51E1DD5278D004CD8D1 /* sellerProfile@3x.png in Resources */,
 				0411C1D01EEABCF900A5B91B /* soldIcon2@2x.png in Resources */,
 				04FD43491F3334600068F89D /* filterBG2@2x.png in Resources */,
@@ -6574,6 +6583,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-wtbtest/Pods-wtbtest-resources.sh",
+				"${PODS_ROOT}/CountryPicker/CountryPicker/CountryPicker.bundle",
 				"${PODS_ROOT}/FBSDKCoreKit/FacebookSDKStrings.bundle",
 				"${PODS_ROOT}/JSQMessagesViewController/JSQMessagesViewController/Assets/JSQMessagesAssets.bundle",
 				"${PODS_ROOT}/JSQMessagesViewController/JSQMessagesViewController/Controllers/JSQMessagesViewController.xib",
@@ -6612,8 +6622,8 @@
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/en.lproj",
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/fr.lproj",
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/pt-BR.lproj",
-				$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePicker.bundle,
-				$PODS_CONFIGURATION_BUILD_DIR/TOWebViewController/TOWebViewControllerLocalizable.bundle,
+				"$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePicker.bundle",
+				"$PODS_CONFIGURATION_BUILD_DIR/TOWebViewController/TOWebViewControllerLocalizable.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -6779,6 +6789,7 @@
 				04D1EF2B1E4A119F0025DCB0 /* SendToUserCell.m in Sources */,
 				04CD30AF1D1404E400E2850D /* InboxViewController.m in Sources */,
 				049F20261F221C58007C4BE4 /* BumpingIntroVC.m in Sources */,
+				0402BD831F7E653A000B1C27 /* CheckoutSummary.m in Sources */,
 				04C0805F1C8497AC00B8682C /* ExploreVC.m in Sources */,
 				04BEE5121DD39758004CD8D1 /* ReviewsVC.m in Sources */,
 				046987C51E6C1F5D00E11AC5 /* inviteViewClass.m in Sources */,

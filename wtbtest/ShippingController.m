@@ -17,13 +17,11 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.title = @"S H I P P I N G";
-    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
-                                    NSFontAttributeName, nil];
-    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    self.navigationItem.title = @"A D D R E S S";
+    [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
-    UIBarButtonItem *savebutton = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStylePlain target:self action:@selector(saveStuff)];
-    self.navigationItem.rightBarButtonItem = savebutton;
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
+    self.navigationItem.leftBarButtonItem = cancelButton;
     
     self.nameCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.buildingCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -33,6 +31,9 @@
     self.phoneNumCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.countryCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
+    self.addressLineOne.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.addressLineTwo.selectionStyle = UITableViewCellSelectionStyleNone;
+    
     self.nameField.delegate = self;
     self.buildingField.delegate = self;
     self.streetField.delegate = self;
@@ -41,15 +42,25 @@
     self.numberField.delegate = self;
     self.countryField.delegate = self;
     
+    self.addressLine1.delegate = self;
+    self.addressLine2.delegate = self;
+    
     self.currentUser = [PFUser currentUser];
     
     self.nameField.text = [self.currentUser objectForKey:@"fullname"];
     
-    if ([self.currentUser objectForKey:@"building"]) {
-        self.buildingField.text = [self.currentUser objectForKey:@"building"];
+    //add country picker to textfield
+    self.picker = [[CountryPicker alloc]init];
+    self.picker.showsSelectionIndicator = YES;
+    
+    self.countryField.inputView = self.picker;
+    self.picker.backgroundColor = [UIColor whiteColor];
+    
+    if ([self.currentUser objectForKey:@"lineOne"]) {
+        self.addressLine1.text = [self.currentUser objectForKey:@"lineOne"];
     }
-    if ([self.currentUser objectForKey:@"street"]) {
-        self.streetField.text = [self.currentUser objectForKey:@"street"];
+    if ([self.currentUser objectForKey:@"lineTwo"]) {
+        self.addressLine2.text = [self.currentUser objectForKey:@"lineTwo"];
     }
     if ([self.currentUser objectForKey:@"city"]) {
         self.cityField.text = [self.currentUser objectForKey:@"city"];
@@ -57,18 +68,51 @@
     if ([self.currentUser objectForKey:@"postcode"]) {
         self.postcodeField.text = [self.currentUser objectForKey:@"postcode"];
     }
-    if ([self.currentUser objectForKey:@"phonenumber"]) {
-        self.numberField.text = [self.currentUser objectForKey:@"phonenumber"];
+    
+    if ([self.currentUser objectForKey:@"shippingCountry"]) {
+        self.countryField.text = [self.currentUser objectForKey:@"shippingCountry"];
+        
+        if ([self.currentUser objectForKey:@"shippingCountryCode"]) {
+            NSString *countryCode = [self.currentUser objectForKey:@"shippingCountryCode"];
+            self.picker.selectedCountryCode = countryCode;
+        }
     }
-    if ([self.currentUser objectForKey:@"country"]) {
-        self.countryField.text = [self.currentUser objectForKey:@"country"];
+    else{
+        self.picker.selectedLocale = [NSLocale currentLocale];
+        NSString *selected = self.picker.selectedCountryName;
+        self.countryField.text = selected;
     }
-     [self addDoneButton];
+    
+    [self addDoneButton];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
+                                    NSFontAttributeName, nil];
+    self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+    
+}
+
+-(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
+    if (textField == self.countryField) {
+        return NO;
+    }
+    return YES;
+}
+
+-(void)textFieldDidEndEditing:(UITextField *)textField{
+    if (textField == self.countryField) {
+        NSString *selected = self.picker.selectedCountryName;
+        textField.text = selected;
+    }
 }
 
 #pragma mark - Table view data source
@@ -78,7 +122,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 7;
+    return 6;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -88,10 +132,10 @@
             return self.nameCell;
         }
         else if (indexPath.row == 1){
-            return self.buildingCell;
+            return self.addressLineOne;
         }
         else if (indexPath.row == 2){
-            return self.streetnameCell;
+            return self.addressLineTwo;
         }
         else if (indexPath.row == 3){
             return self.cityCell;
@@ -102,74 +146,123 @@
         else if (indexPath.row == 5){
             return self.countryCell;
         }
-        else if (indexPath.row == 6){
-            return self.phoneNumCell;
-        }
+//        else if (indexPath.row == 6){
+//            return self.phoneNumCell;
+//        }
     }
     return nil;
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
 
-    if (indexPath.row == 6) {
-        return 99;
-    }
+//    if (indexPath.row == 6) {
+//        return 99;
+//    }
     return 44;
 }
 
--(BOOL)textFieldShouldReturn:(UITextField *)textField{
-    [textField resignFirstResponder];
+-(void)textFieldDidBeginEditing:(UITextField *)textField{
+    self.somethingChanged = YES;
+}
+
+-(BOOL)textFieldShouldReturn:(UITextField*)textField
+{
+    if (textField == self.nameField) {
+        [self.addressLine1 becomeFirstResponder];
+    }
+    else if (textField == self.addressLine1) {
+        [self.addressLine2 becomeFirstResponder];
+    }
+    else if (textField == self.addressLine2) {
+        [self.cityField becomeFirstResponder];
+    }
+    else if (textField == self.cityField) {
+        [self.postcodeField becomeFirstResponder];
+    }
+    else if (textField == self.postcodeField) {
+        [self.countryField becomeFirstResponder];
+    }
+    else{
+        [textField resignFirstResponder];
+    }
     return YES;
 }
 
 -(void)saveStuff{
-    [self.navigationItem.rightBarButtonItem setEnabled:NO];
-    
+    [self.navigationItem.leftBarButtonItem setEnabled:NO];
+
     NSString *name = [self.nameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
-    NSString *building = [self.buildingField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
-    NSString *street = [self.streetField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
-    NSString *number = [self.numberField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
-    NSString *city = [self.cityField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
     NSString *postcode = [self.postcodeField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     NSString *country = [self.countryField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *city = [self.cityField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+
+    NSString *line1 = [self.addressLine1.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *line2 = [self.addressLine2.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
-    if ([name isEqualToString:@""] || [building isEqualToString:@""]||[street isEqualToString:@""] || [number isEqualToString:@""] || [city isEqualToString:@""] || [postcode isEqualToString:@""] || [country isEqualToString:@""]) {
-        self.warningLabel.text = @"Fill out all the above fields!";
-        [self.navigationItem.rightBarButtonItem setEnabled:YES];
+    NSString *addressString;
+    
+    if ([line2 isEqualToString:@""]) {
+        addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.addressLine1.text,self.cityField.text,self.postcodeField.text,self.countryField.text];
+    }
+    else{
+        addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.addressLine1.text, self.addressLine2.text,self.cityField.text,self.postcodeField.text,self.countryField.text];
+    }
+
+    if ([name isEqualToString:@""] || [line1 isEqualToString:@""]|| [postcode isEqualToString:@""] || [country isEqualToString:@""] || [city isEqualToString:@""]) {
+        
+        [self.delegate addedAddress:addressString withName:self.nameField.text withLineOne:self.addressLine1.text withLineTwo:self.addressLine2.text withCity:self.cityField.text withCountry:self.picker.selectedCountryCode fullyEntered:NO];
     }
     else{
         //pass back & save to current user
-        [self.currentUser setObject:[self.buildingField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"building"];
-        [self.currentUser setObject:[self.streetField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"street"];
-        [self.currentUser setObject:[self.cityField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"city"];
-        [self.currentUser setObject:[self.numberField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"phonenumber"];
-        [self.currentUser setObject:[self.postcodeField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"postcode"];
-        [self.currentUser setObject:[self.countryField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"country"];
+        [self.delegate addedAddress:addressString withName:self.nameField.text withLineOne:self.addressLine1.text withLineTwo:self.addressLine2.text withCity:self.cityField.text withCountry:self.picker.selectedCountryCode fullyEntered:YES];
         
-        [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            if (succeeded) {
-                NSString *addressString = @"";
-                
-                if (self.settingsMode == YES) {
-                    addressString = [NSString stringWithFormat:@"Address: %@ %@ %@ %@ %@",self.buildingField.text, self.streetField.text, self.cityField.text, self.postcodeField.text, self.numberField.text];
-                }
-                else{
-                    addressString = [NSString stringWithFormat:@"%@\n%@ %@, %@\n%@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.buildingField.text, self.streetField.text, self.cityField.text, self.postcodeField.text,self.countryField.text ,self.numberField.text];
-                }
-                [self.delegate addItemViewController:self didFinishEnteringAddress:addressString];
-                [self.navigationController popViewControllerAnimated:YES];
-            }
-            else{
-                [self.navigationItem.rightBarButtonItem setEnabled:YES];
-                NSLog(@"error %@", error);
-            }
-        }];
-        
+        [self.currentUser setObject:@"YES" forKey:@"enteredAddress"];
+        [self.currentUser setObject:addressString forKey:@"addressString"];
     }
+    
+    //set what we have on the user object
+    if (![line1 isEqualToString:@""]) {
+        [self.currentUser setObject:[self.addressLine1.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"lineOne"];
+    }
+    
+    if (![line2 isEqualToString:@""]) {
+        [self.currentUser setObject:[self.addressLine2.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"lineTwo"];
+    }
+    else{
+        [self.currentUser removeObjectForKey:@"lineTwo"];
+    }
+    
+    if (![postcode isEqualToString:@""]) {
+        [self.currentUser setObject:[self.postcodeField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"postcode"];
+    }
+    
+    if (![country isEqualToString:@""]) {
+        [self.currentUser setObject:[self.countryField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"shippingCountry"];
+        [self.currentUser setObject:self.picker.selectedCountryCode forKey:@"shippingCountryCode"];
+    }
+    
+    if (![city isEqualToString:@""]) {
+        [self.currentUser setObject:[self.cityField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"city"];
+    }
+    
+    [self.currentUser saveInBackground];
+    
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 
 - (void)addDoneButton {
     UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
     [keyboardToolbar sizeToFit];
+
     UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
                                       initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                                       target:nil action:nil];
@@ -177,7 +270,11 @@
                                       initWithBarButtonSystemItem:UIBarButtonSystemItemDone
                                       target:self.view action:@selector(endEditing:)];
     keyboardToolbar.items = @[flexBarButton, doneBarButton];
+    [doneBarButton setTintColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
+    keyboardToolbar.barTintColor = [UIColor colorWithRed:1.00 green:1.00 blue:1.00 alpha:1.0];
+
     self.numberField.inputAccessoryView = keyboardToolbar;
+    self.countryField.inputAccessoryView = keyboardToolbar;
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
@@ -195,6 +292,15 @@
     // Explictly set your cell's layout margins
     if ([cell respondsToSelector:@selector(setLayoutMargins:)]) {
         [cell setLayoutMargins:UIEdgeInsetsZero];
+    }
+}
+
+-(void)dismissVC{
+    if (self.somethingChanged) {
+        [self saveStuff];
+    }
+    else{
+        [self.navigationController popViewControllerAnimated:YES];
     }
 }
 @end

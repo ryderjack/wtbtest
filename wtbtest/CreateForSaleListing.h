@@ -200,5 +200,8 @@
 @property (nonatomic) float nationalPrice;
 @property (nonatomic) float globalPrice;
 @property (nonatomic) BOOL globalEnabled;
+@property (nonatomic, strong) NSString *country;
+@property (nonatomic, strong) NSString *countryCode;
+
 
 @end
