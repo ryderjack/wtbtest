@@ -1015,12 +1015,14 @@
     
     //add keyboard observers for suggested message bubbles
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
-    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
-    [center removeObserver:self name:@"NewMessage" object:nil]; //remove this to stop it interfering with new messages and marking them as seen
 
+    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
     [center addObserver:self selector:@selector(keyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
+    
+    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
     [center addObserver:self selector:@selector(keyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+    
+    [center removeObserver:self name:@"NewMessage" object:nil];
     [center addObserver:self selector:@selector(handleNotification:) name:@"NewMessage" object:nil];
 
     

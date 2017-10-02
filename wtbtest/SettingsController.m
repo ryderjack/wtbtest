@@ -1116,7 +1116,7 @@
    
     PFQuery *convoQ = [PFQuery queryWithClassName:@"convos"];
     [convoQ whereKey:@"totalMessages" greaterThan:@0];
-    [convoQ whereKeyExists:@"buyerUser"];
+//    [convoQ whereKeyExists:@"buyerUser"];
     [convoQ whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
     [convoQ orderByDescending:@"lastSentDate"];
     convoQ.limit = 20;

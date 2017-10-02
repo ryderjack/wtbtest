@@ -23,6 +23,7 @@
 #import "SettingsController.h"
 #import "UIImageView+Letters.h"
 #import "AppDelegate.h"
+#import "segmentedTableView.h"
 
 @interface UserProfileController ()
 
@@ -1641,6 +1642,14 @@
     }
     [self.myBar addSubview:self.backButton];
     
+    //CHANGE add in check for order number here
+    if (self.tabMode) {
+        self.ordersButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
+        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon"] forState:UIControlStateNormal];
+        [self.ordersButton addTarget:self action:@selector(ordersButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+        [self.myBar addSubview:self.ordersButton];
+    }
+    
     //facebook button
     self.FBButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
     [self.FBButton setImage:[UIImage imageNamed:@"FBFillBlk"] forState:UIControlStateNormal];
@@ -1845,6 +1854,11 @@
     initialLayoutAttributesBackButton.size = self.backButton.frame.size;
     initialLayoutAttributesBackButton.frame = CGRectMake(5, 25, 30, 30);
     
+    //orders button
+    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesOrdersButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
+    initialLayoutAttributesOrdersButton.size = self.ordersButton.frame.size;
+    initialLayoutAttributesOrdersButton.frame = CGRectMake(50, 25, 30, 30);
+    
     //fb button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesfbButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesfbButton.size = self.FBButton.frame.size;
@@ -1870,6 +1884,9 @@
     [self.FBButton addLayoutAttributes:initialLayoutAttributesfbButton forProgress:0.0];
     [self.dotsButton addLayoutAttributes:initialLayoutAttributesDotsButton forProgress:0.0];
     [self.dividerImgView addLayoutAttributes:initialDividerView forProgress:0.0];
+    
+    [self.ordersButton addLayoutAttributes:initialLayoutAttributesOrdersButton forProgress:0.0];
+
 
     
     // small mode
@@ -2975,7 +2992,7 @@
     
     PFQuery *convoQ = [PFQuery queryWithClassName:@"convos"];
     [convoQ whereKey:@"totalMessages" greaterThan:@0];
-    [convoQ whereKeyExists:@"buyerUser"];
+//    [convoQ whereKeyExists:@"buyerUser"];
     [convoQ whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
     [convoQ orderByDescending:@"lastSentDate"];
     convoQ.limit = 20;
@@ -3018,5 +3035,11 @@
                                               }];
         }
     }];
+}
+
+-(void)ordersButtonPressed{
+    segmentedTableView *vc = [[segmentedTableView alloc]init];
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    [self presentViewController:nav animated:YES completion:nil];
 }
 @end

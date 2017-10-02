@@ -19,7 +19,7 @@
 - (void)dismissedCheckout;
 @end
 
-@interface CheckoutSummary : UITableViewController <ShippingControllerDelegate>
+@interface CheckoutSummary : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *addShippingAddressCell;
@@ -31,6 +31,17 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *footerCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *congratsHeader;
+
+//order summary specific cells
+@property (strong, nonatomic) IBOutlet UITableViewCell *shippedCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *reviewLeftCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *reviewGotCell;
+
+@property (strong, nonatomic) IBOutlet UITableViewCell *messageCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *refundCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *reportCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *trackingCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *courierCell;
 
 //delegate
 @property (nonatomic, weak) id <CheckoutDelegate> delegate;
@@ -78,4 +89,28 @@
 
 //checkout success mode
 @property (nonatomic) BOOL successMode;
+@property (nonatomic) BOOL orderSummaryMode;
+@property (nonatomic) BOOL isBuyer;
+
+//order summary mode
+@property (weak, nonatomic) IBOutlet UILabel *shippedLabel;
+@property (weak, nonatomic) IBOutlet UILabel *leftReviewLabel;
+@property (weak, nonatomic) IBOutlet UILabel *gotReviewLabel;
+@property (nonatomic, strong) PFObject *orderObject;
+
+@property (weak, nonatomic) IBOutlet UILabel *totalLabel;
+@property (nonatomic, strong) NSDateFormatter *dateFormat;
+@property (weak, nonatomic) IBOutlet UILabel *messageLabel;
+
+@property (nonatomic, strong) PFUser *otherUser;
+@property (nonatomic) BOOL fetchedUser;
+@property (nonatomic) BOOL settingUpMessages;
+@property (nonatomic) BOOL canShip;
+
+//shipping fields
+@property (weak, nonatomic) IBOutlet UITextField *trackingField;
+@property (weak, nonatomic) IBOutlet UITextField *courierField;
+@property (nonatomic) BOOL shipped;
+@property (nonatomic) int shippedSectionRows;
+
 @end

@@ -2963,6 +2963,7 @@
     reportObject[@"wtslisting"] = self.listingObject;
     reportObject[@"reporter"] = [PFUser currentUser];
     reportObject[@"reason"] = reason;
+    reportObject[@"status"] = @"live"; //CHANGE add this on every reported object created
     [reportObject saveInBackground];
     
     [self.listingObject incrementKey:@"reportedNumber"];

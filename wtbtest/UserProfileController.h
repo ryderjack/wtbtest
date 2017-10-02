@@ -101,6 +101,7 @@
 @property (nonatomic, strong) UIButton *imageButton;
 @property (nonatomic, strong) PFImageView *editImageView;
 @property (nonatomic, strong) UIButton *backButton;
+@property (nonatomic, strong) UIButton *ordersButton;
 
 @property (nonatomic, strong) PFImageView *dividerImgView;
 @property (nonatomic, strong) UIView *bgView;
