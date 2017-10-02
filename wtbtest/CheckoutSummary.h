@@ -10,6 +10,8 @@
 #import <Parse/Parse.h>
 #import <ParseUI/ParseUI.h>
 #import "ShippingController.h"
+#import <SpinKit/RTSpinKitView.h>
+#import <MBProgressHUD.h>
 
 @class CheckoutSummary;
 
@@ -28,6 +30,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *totalPriceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *footerCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *congratsHeader;
 
 //delegate
 @property (nonatomic, weak) id <CheckoutDelegate> delegate;
@@ -54,6 +57,10 @@
 
 @property (nonatomic) NSString *currencySymbol;
 
+@property (nonatomic) NSString *shippingText;
+@property (nonatomic) NSString *itemPriceText;
+@property (nonatomic) NSString *totalPriceText;
+
 //listing
 @property (nonatomic, strong) PFObject *listingObject;
 @property (nonatomic) NSString *listingCountryCode;
@@ -65,6 +72,10 @@
 
 @property (weak, nonatomic) IBOutlet UIButton *paypalLabel;
 
+//spinner
+@property (nonatomic, strong) RTSpinKitView *spinner;
+@property (nonatomic, strong) MBProgressHUD *hud;
 
-
+//checkout success mode
+@property (nonatomic) BOOL successMode;
 @end

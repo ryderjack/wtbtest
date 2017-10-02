@@ -443,9 +443,7 @@
     [spinner startAnimating];
     
     [self.tableView addInfiniteScrollingWithActionHandler:^{
-        if (self.infinFinished == YES) {
-            [weakSelf generalInfinQuery];
-        }
+        [weakSelf generalInfinQuery]; //CHANGE removed the if here - test
     }];
 }
 

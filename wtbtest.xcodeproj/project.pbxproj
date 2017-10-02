@@ -833,6 +833,9 @@
 		04B0F8811CA547B200C247F1 /* group1@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8801CA547B200C247F1 /* group1@3x.png */; };
 		04B0F8881CA58E0A00C247F1 /* groupWVController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04B0F8861CA58E0A00C247F1 /* groupWVController.m */; };
 		04B0F8891CA58E0A00C247F1 /* groupWVController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04B0F8871CA58E0A00C247F1 /* groupWVController.xib */; };
+		04B40DDC1F8167E70081F8E8 /* segmentedTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 04B40DDB1F8167E70081F8E8 /* segmentedTableView.m */; };
+		04B40DE01F8174950081F8E8 /* splitTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04B40DDE1F8174950081F8E8 /* splitTableViewCell.m */; };
+		04B40DE11F8174950081F8E8 /* splitTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04B40DDF1F8174950081F8E8 /* splitTableViewCell.xib */; };
 		04B4624B1CB02C4F003755B2 /* planeOff@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B4623C1CB02C4F003755B2 /* planeOff@2x.png */; };
 		04B4624C1CB02C4F003755B2 /* starOff.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B4623D1CB02C4F003755B2 /* starOff.png */; };
 		04B4624D1CB02C4F003755B2 /* starOff@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04B4623E1CB02C4F003755B2 /* starOff@2x.png */; };
@@ -2394,6 +2397,11 @@
 		04B0F8851CA58E0900C247F1 /* groupWVController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = groupWVController.h; sourceTree = "<group>"; };
 		04B0F8861CA58E0A00C247F1 /* groupWVController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = groupWVController.m; sourceTree = "<group>"; };
 		04B0F8871CA58E0A00C247F1 /* groupWVController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = groupWVController.xib; sourceTree = "<group>"; };
+		04B40DDA1F8167E70081F8E8 /* segmentedTableView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = segmentedTableView.h; sourceTree = "<group>"; };
+		04B40DDB1F8167E70081F8E8 /* segmentedTableView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = segmentedTableView.m; sourceTree = "<group>"; };
+		04B40DDD1F8174950081F8E8 /* splitTableViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = splitTableViewCell.h; sourceTree = "<group>"; };
+		04B40DDE1F8174950081F8E8 /* splitTableViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = splitTableViewCell.m; sourceTree = "<group>"; };
+		04B40DDF1F8174950081F8E8 /* splitTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = splitTableViewCell.xib; sourceTree = "<group>"; };
 		04B4623C1CB02C4F003755B2 /* planeOff@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "planeOff@2x.png"; sourceTree = "<group>"; };
 		04B4623D1CB02C4F003755B2 /* starOff.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = starOff.png; sourceTree = "<group>"; };
 		04B4623E1CB02C4F003755B2 /* starOff@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "starOff@2x.png"; sourceTree = "<group>"; };
@@ -4619,6 +4627,7 @@
 				041FF2381E01E5F300A5E7EE /* Bump */,
 				046987C61E6C1F6300E11AC5 /* Invite Friends */,
 				044C48C61E3A191A0021B447 /* Web View */,
+				04B40DE21F8174A10081F8E8 /* Orders */,
 				046ECB801DCF96BD00E77B3D /* Buy it now */,
 				0472B6251C7CCC9F00529B2E /* Navbar */,
 				04CD30B01D1404EA00E2850D /* Messaging */,
@@ -4736,6 +4745,18 @@
 				04B0F86C1CA5459D00C247F1 /* FBGroupShareViewController.xib */,
 			);
 			name = "Group Share";
+			sourceTree = "<group>";
+		};
+		04B40DE21F8174A10081F8E8 /* Orders */ = {
+			isa = PBXGroup;
+			children = (
+				04B40DDD1F8174950081F8E8 /* splitTableViewCell.h */,
+				04B40DDE1F8174950081F8E8 /* splitTableViewCell.m */,
+				04B40DDF1F8174950081F8E8 /* splitTableViewCell.xib */,
+				04B40DDA1F8167E70081F8E8 /* segmentedTableView.h */,
+				04B40DDB1F8167E70081F8E8 /* segmentedTableView.m */,
+			);
+			name = Orders;
 			sourceTree = "<group>";
 		};
 		04C080491C847C5400B8682C /* Create wanted listing */ = {
@@ -6114,6 +6135,7 @@
 				044E72431E210570005D55E5 /* visitSite@3x.png in Resources */,
 				04D9B9591C88E60E004AF0F2 /* ListingController.xib in Resources */,
 				0404512F1C8ED32B001D5F3B /* acceptBuyButton@1x.png in Resources */,
+				04B40DE11F8174950081F8E8 /* splitTableViewCell.xib in Resources */,
 				044DA4251E90062D00C5D3ED /* addSizeIcon@2x.png in Resources */,
 				0492A5E51E79961A0062C28D /* RateView.xib in Resources */,
 				0432C0351DF77404000CD9F5 /* NWTUnselected.png in Resources */,
@@ -6622,8 +6644,8 @@
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/en.lproj",
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/fr.lproj",
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/pt-BR.lproj",
-				"$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePicker.bundle",
-				"$PODS_CONFIGURATION_BUILD_DIR/TOWebViewController/TOWebViewControllerLocalizable.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePicker.bundle,
+				$PODS_CONFIGURATION_BUILD_DIR/TOWebViewController/TOWebViewControllerLocalizable.bundle,
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -6749,6 +6771,7 @@
 				042ED6B81F10FFBB00E55D71 /* CreateTab.m in Sources */,
 				04C081321C85C62700B8682C /* ConfirmController.m in Sources */,
 				04CD30E71D1C19B000E2850D /* InboxCell.m in Sources */,
+				04B40DDC1F8167E70081F8E8 /* segmentedTableView.m in Sources */,
 				0496C7B01E49ED9400B8ADBD /* CustomMessagesCollectionViewCellIncoming.m in Sources */,
 				04CD30D11D14141900E2850D /* MessageViewController.m in Sources */,
 				04B0F85A1CA413E500C247F1 /* FeedbackController.m in Sources */,
@@ -6812,6 +6835,7 @@
 				0472B6241C7CCC9500529B2E /* NavigationController.m in Sources */,
 				04679A901E030412003AF8EA /* notificatView.m in Sources */,
 				044C49001E3F58580021B447 /* AddImagesTutorial.m in Sources */,
+				04B40DE01F8174950081F8E8 /* splitTableViewCell.m in Sources */,
 				04FD43EC1F36280E0068F89D /* MBFingerTipWindow.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

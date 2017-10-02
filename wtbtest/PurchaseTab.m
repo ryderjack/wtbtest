@@ -2792,7 +2792,7 @@
                                                       @"status":@"Success"
                                                       }];
                     
-                    [self showAlertWithTitle:@"Email Verified ✅" andMsg:@"Congrats, you just verified your email! If you haven't already, connect your Facebook to share listings with friends on Bump"];
+                    [self showAlertWithTitle:@"Email Verified ✅" andMsg:@"Congrats, you just verified your email! If you haven't already, connect your Facebook to share listings with friends on BUMP"];
                     
                     //send welcome email if haven't already signed up with fb & received it that way
                     if (![[PFUser currentUser]objectForKey:@"facebookId"]) {
