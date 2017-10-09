@@ -12,6 +12,7 @@
 #import "ShippingController.h"
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
+#import "FeedbackController.h"
 
 @class CheckoutSummary;
 
@@ -19,7 +20,7 @@
 - (void)dismissedCheckout;
 @end
 
-@interface CheckoutSummary : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate>
+@interface CheckoutSummary : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate, feedbackDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *addShippingAddressCell;
@@ -111,6 +112,11 @@
 @property (weak, nonatomic) IBOutlet UITextField *trackingField;
 @property (weak, nonatomic) IBOutlet UITextField *courierField;
 @property (nonatomic) BOOL shipped;
+@property (nonatomic) BOOL showCourier;
+@property (nonatomic) BOOL showtracking;
+
 @property (nonatomic) int shippedSectionRows;
+
+@property (nonatomic) BOOL changedShippingInfo;
 
 @end

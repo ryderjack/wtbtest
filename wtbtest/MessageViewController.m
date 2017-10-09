@@ -69,6 +69,7 @@
             [bannedInstallsQuery whereKey:@"user" equalTo:self.otherUser];
             [bannedInstallsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
+                    NSLog(@"user is banned");
                     self.banMode = YES;
                     [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restrcited this user's account for violating our terms"];
                 }

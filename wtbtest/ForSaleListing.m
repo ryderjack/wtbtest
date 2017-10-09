@@ -295,25 +295,25 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    if (self.buttonsShowing == NO) {
-        if (!self.setupButtons) {
-            [self decideButtonSetup];
-        }
-        
-        //for when user comes back after switching tabs we need to be able to recreate the bar buttons
-        if (self.buyButtonShowing && !self.buyButton) {
-            [self setupTwoBarButtons];
-        }
-        else if (!self.messageButton){
-            [self setupMessageBarButton];
-        }
-        
-        [self showBarButton];
-    }
-    
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
 //            NSLog(@"Listing %@", [self.listingObject objectForKey:@"geopoint"]);
+            
+            if (self.buttonsShowing == NO) {
+                if (!self.setupButtons) {
+                    [self decideButtonSetup];
+                }
+                
+                //for when user comes back after switching tabs we need to be able to recreate the bar buttons
+                if (self.buyButtonShowing && !self.buyButton) {
+                    [self setupTwoBarButtons];
+                }
+                else if (!self.messageButton){
+                    [self setupMessageBarButton];
+                }
+                
+                [self showBarButton];
+            }
             
             self.fetchedListing = YES;
             
@@ -1272,7 +1272,8 @@
                     }
                     else{
                         vc.sellerItemTitle = [self.listingObject objectForKey:@"itemTitle"];
-                    }                    vc.userIsBuyer = YES;
+                    }
+                    vc.userIsBuyer = YES;
                     vc.listing = self.listingObject;
                     vc.pureWTS = YES;
                     if ([self.source isEqualToString:@"latest"]) {

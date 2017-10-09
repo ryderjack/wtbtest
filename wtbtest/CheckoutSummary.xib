@@ -29,7 +29,7 @@
                 <outlet property="conditionLabel" destination="sCF-06-3tC" id="Ges-ie-Jrk"/>
                 <outlet property="congratsHeader" destination="yNT-uI-TP9" id="Gf7-fe-aUh"/>
                 <outlet property="courierCell" destination="Exz-dv-0vC" id="TGJ-2o-5wa"/>
-                <outlet property="courierField" destination="au2-mV-DsE" id="FBf-Mm-dox"/>
+                <outlet property="courierField" destination="dl7-hS-uQq" id="tZn-Sk-H2A"/>
                 <outlet property="firstItemPriceLabel" destination="7Tw-Ce-158" id="WyG-Ey-9bb"/>
                 <outlet property="footerCell" destination="BY1-oa-2Ul" id="V0o-i4-q9W"/>
                 <outlet property="gotReviewLabel" destination="YhP-2p-qLD" id="TO5-ir-7wC"/>
@@ -55,7 +55,7 @@
                 <outlet property="totalPriceCell" destination="QUf-Wx-Dlg" id="9zg-CJ-PJA"/>
                 <outlet property="totalPriceLabel" destination="V3K-0g-VKL" id="b7a-yU-B4H"/>
                 <outlet property="trackingCell" destination="tp3-Te-kVU" id="QAz-7E-HJL"/>
-                <outlet property="trackingField" destination="dl7-hS-uQq" id="dIM-RV-wiq"/>
+                <outlet property="trackingField" destination="au2-mV-DsE" id="mbP-7W-Uu8"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -203,9 +203,9 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sCF-06-3tC">
-                        <rect key="frame" x="88" y="43" width="119" height="27"/>
+                        <rect key="frame" x="88" y="43" width="219" height="27"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="119" id="FXh-3q-qde"/>
+                            <constraint firstAttribute="width" constant="219" id="FXh-3q-qde"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
@@ -624,12 +624,13 @@
                     </label>
                     <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Enter" textAlignment="right" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="dl7-hS-uQq">
                         <rect key="frame" x="172" y="15" width="170" height="30"/>
+                        <color key="tintColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="170" id="Kp3-yS-veZ"/>
                         </constraints>
                         <nil key="textColor"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
-                        <textInputTraits key="textInputTraits"/>
+                        <textInputTraits key="textInputTraits" returnKeyType="done"/>
                     </textField>
                 </subviews>
                 <constraints>
@@ -662,12 +663,13 @@
                     </label>
                     <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Enter" textAlignment="right" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="au2-mV-DsE">
                         <rect key="frame" x="172" y="15" width="170" height="30"/>
+                        <color key="tintColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="170" id="4v5-YC-xvd"/>
                         </constraints>
                         <nil key="textColor"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
-                        <textInputTraits key="textInputTraits"/>
+                        <textInputTraits key="textInputTraits" returnKeyType="done"/>
                     </textField>
                 </subviews>
                 <constraints>
