@@ -2066,6 +2066,9 @@
 		04593B3B1F67F6860088DE14 /* postingRetry@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "postingRetry@2x.png"; sourceTree = "<group>"; };
 		04593B3C1F67F6860088DE14 /* postingRetry@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "postingRetry@3x.png"; sourceTree = "<group>"; };
 		04593B3D1F67F6860088DE14 /* postingRetry.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = postingRetry.png; sourceTree = "<group>"; };
+		045DB1B71F8D030F0057D48B /* starGrey@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "starGrey@2x.png"; sourceTree = "<group>"; };
+		045DB1B81F8D03100057D48B /* starGrey.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = starGrey.png; sourceTree = "<group>"; };
+		045DB1B91F8D03110057D48B /* starGrey@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "starGrey@3x.png"; sourceTree = "<group>"; };
 		04679A8A1E02BC93003AF8EA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		04679A8C1E0303E5003AF8EA /* notView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = notView.xib; sourceTree = "<group>"; };
 		04679A8E1E030412003AF8EA /* notificatView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = notificatView.h; sourceTree = "<group>"; };
@@ -3329,6 +3332,9 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				045DB1B81F8D03100057D48B /* starGrey.png */,
+				045DB1B71F8D030F0057D48B /* starGrey@2x.png */,
+				045DB1B91F8D03110057D48B /* starGrey@3x.png */,
 				0486FC9F1F8259B500AE6E70 /* ordersIcon.png */,
 				0486FC9C1F8259B300AE6E70 /* ordersIcon@2x.png */,
 				0486FCA01F8259B600AE6E70 /* ordersIcon@3x.png */,

@@ -20,9 +20,6 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.usersNameLabel.text = @"";
-    self.explainLabel.text = @"";
-    
     //set 5 stars as default
     self.starNumber = 5;
     
@@ -41,7 +38,6 @@
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
-    [self setImageBorder];
     self.commentField.delegate= self;
     
     self.user = [[PFUser alloc]init];
@@ -148,14 +144,10 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 1;
+    return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == 0){
-        return 1;
-    }
-
     return 1;
 }
 
@@ -165,6 +157,12 @@
         if (indexPath.row == 0) {
             return self.starCell;
         }
+        else if (indexPath.row == 1) {
+            return self.commentCell;
+        }
+        else if (indexPath.row == 2) {
+            return self.spaceCell;
+        }
     }
 
     return nil;
@@ -172,9 +170,13 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     if (indexPath.section == 0){
-        if (indexPath.row == 0) {
-            return 383;
-        }
+        return 153;
+    }
+    else if (indexPath.section == 1){
+        return 196;
+    }
+    else if (indexPath.section == 2){
+        return 60;
     }
 
     return 100;
@@ -210,6 +212,9 @@
     [self.thirdStar setSelected:NO];
     [self.fourthStar setSelected:NO];
     [self.fifthStar setSelected:NO];
+    
+    self.commentLabel.text = @"Say thanks";
+    self.ratingLabel.text = @"
 }
 - (IBAction)secondStarPressed:(id)sender {
     self.starNumber = 2;
@@ -273,12 +278,7 @@
         [self.fourthStar setSelected:YES];
     }
 }
--(void)setImageBorder{
-    self.userImageView.layer.cornerRadius = 35;
-    self.userImageView.layer.masksToBounds = YES;
-    self.userImageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-    self.userImageView.contentMode = UIViewContentModeScaleAspectFill;
-}
+
 -(BOOL)textFieldShouldReturn:(UITextField *)textField{
     [textField resignFirstResponder];
     return YES;

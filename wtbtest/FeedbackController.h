@@ -18,9 +18,11 @@
 - (void)leftReview;
 @end
 
-@interface FeedbackController : UITableViewController <UITextFieldDelegate>
+@interface FeedbackController : UITableViewController <UITextViewDelegate>
 NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *starCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *commentCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
 
 //star cell
 @property (weak, nonatomic) IBOutlet UIButton *firstStar;
@@ -28,9 +30,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UIButton *thirdStar;
 @property (weak, nonatomic) IBOutlet UIButton *fourthStar;
 @property (weak, nonatomic) IBOutlet UIButton *fifthStar;
-@property (weak, nonatomic) IBOutlet UITextField *commentField;
+@property (weak, nonatomic) IBOutlet UILabel *ratingLabel;
 
-@property (weak, nonatomic) IBOutlet UILabel *usersNameLabel;
+//comment cell
+@property (weak, nonatomic) IBOutlet UITextView *commentView;
+@property (weak, nonatomic) IBOutlet UILabel *commentLabel;
+
 
 @property (nonatomic) BOOL isBuyer;
 
@@ -47,10 +52,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) NSString *statusString;
 @property (nonatomic, strong) PFObject *convoObject;
-
-//main cell
-@property (weak, nonatomic) IBOutlet UILabel *explainLabel;
-@property (weak, nonatomic) IBOutlet PFImageView *userImageView;
 
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
