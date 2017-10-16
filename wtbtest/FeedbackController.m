@@ -10,6 +10,7 @@
 #import <Crashlytics/Crashlytics.h>
 #import "NavigationController.h"
 #import "AppDelegate.h"
+#import "ChatWithBump.h"
 
 @interface FeedbackController ()
 
@@ -21,13 +22,17 @@
     [super viewDidLoad];
     
     //set 5 stars as default
-    self.starNumber = 5;
+    self.starNumber = 0;
     
-    [self.firstStar setSelected:YES];
-    [self.secondStar setSelected:YES];
-    [self.thirdStar setSelected:YES];
-    [self.fourthStar setSelected:YES];
-    [self.fifthStar setSelected:YES];
+    self.ratingLabel.text = @"Rate";
+    
+//    [self.firstStar setSelected:YES];
+//    [self.secondStar setSelected:YES];
+//    [self.thirdStar setSelected:YES];
+//    [self.fourthStar setSelected:YES];
+//    [self.fifthStar setSelected:YES];
+    
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     self.navigationItem.title = @"R E V I E W";
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
@@ -35,22 +40,16 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     self.starCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    
+    self.commentCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.spaceCell.selectionStyle = UITableViewCellSelectionStyleNone;
+
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
-    self.commentField.delegate= self;
-    
-    self.user = [[PFUser alloc]init];
+    self.commentView.delegate= self;
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
     self.profanityList = @[@"fuck",@"fucking",@"cunt", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard"];
-    
-    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissFeedback)];
-    [self.navigationItem setLeftBarButtonItem:cancelButton];
-
-    UIBarButtonItem *reportButton = [[UIBarButtonItem alloc] initWithTitle:@"Report" style:UIBarButtonItemStylePlain target:self action:@selector(reportPressed)];
-    [self.navigationItem setRightBarButtonItem:reportButton];
     
     self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
     [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
@@ -68,37 +67,27 @@
                                       }];
 }
 
+-(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+    if (section==0) {
+        return 0.01f;
+    }
+    return 32.0f;
+}
+
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
-    self.user = [[PFUser alloc]init];
-    self.user.objectId = self.IDUser;
-    [self.user fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+    [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
-            
-            NSString *nameString = @"";
-            
-            if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
-                self.usersNameLabel.text = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
-            }
-            else{
-                self.usersNameLabel.text = [NSString stringWithFormat:@"%@",[self.user objectForKey:@"fullname"]];
-            }
-            
-            if ([self.user objectForKey:@"firstName"]) {
-                nameString = [self.user objectForKey:@"firstName"];
-            }
-            else{
-                nameString = self.user.username;
-            }
-            self.explainLabel.text = [NSString stringWithFormat:@"Rate your experience with %@ - let us know how it went.",nameString];
-            
-            [self.userImageView setFile:[self.user objectForKey:@"picture"]];
-            [self.userImageView loadInBackground];
-            
+            self.fetchedUser = YES;
+            [self.longButton setEnabled:YES];
         }
         else{
-            NSLog(@"error %@", error);
+            [Answers logCustomEventWithName:@"Error fetching feedback user"
+                           customAttributes:@{}];
+            
+            [self showAlertWithTitle:@"Connection Error" andMsg:@"Ensure you're connected to the internet then try again!"];
+            [self dismissFeedback];
         }
     }];
     
@@ -109,11 +98,10 @@
                 NSLog(@"FB OBJ: %@", object);
                 
                 //preset rating and comment
-                self.convoObject = [object objectForKey:@"convo"];
                 self.previousReview = [[object objectForKey:@"rating"]intValue];
                 
                 if ([object objectForKey:@"comment"]) {
-                    self.commentField.text = [object objectForKey:@"comment"];
+                    self.commentView.text = [object objectForKey:@"comment"];
                 }
                 
                 if (self.previousReview == 1) {
@@ -131,7 +119,6 @@
                 else if (self.previousReview == 5) {
                     [self fifthStarPressed:self];
                 }
-                
             }
         }];
     }
@@ -148,24 +135,41 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if (section == 2) {
+        return 2;
+    }
     return 1;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (indexPath.section == 0){
+        return self.starCell;
+    }
+    else if (indexPath.section == 1){
+        return self.commentCell;
+    }
+    else if (indexPath.section == 2){
         if (indexPath.row == 0) {
-            return self.starCell;
+            return self.supportCell;
         }
         else if (indexPath.row == 1) {
-            return self.commentCell;
-        }
-        else if (indexPath.row == 2) {
             return self.spaceCell;
         }
     }
 
     return nil;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    
+    [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    if (indexPath.section == 2) {
+        if (indexPath.row == 0) {
+            [self setupSupport];
+        }
+    }
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -183,18 +187,7 @@
 }
 
 - (void)reportPressed{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report" message:@"Bump takes inappropriate behaviour very seriously.\nIf you feel like this user has violated our terms let us know so we can make your experience on Bump as brilliant as possible. Call +447590554897 if you'd like to speak to one of the team immediately or message Team Bump from Settings" preferredStyle:UIAlertControllerStyleAlert];
-    
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }]];
-    
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-        PFObject *reportObject = [PFObject objectWithClassName:@"ReportedUsers"];
-        reportObject[@"reportedUser"] = self.user;
-        reportObject[@"reporter"] = [PFUser currentUser];
-        [reportObject saveInBackground];
-    }]];
-    [self presentViewController:alertView animated:YES completion:nil];
+
 }
 - (IBAction)firstStarPressed:(id)sender {
     self.starNumber = 1;
@@ -213,8 +206,8 @@
     [self.fourthStar setSelected:NO];
     [self.fifthStar setSelected:NO];
     
-    self.commentLabel.text = @"Say thanks";
-    self.ratingLabel.text = @"
+    self.commentLabel.text = @"Explain your issue";
+    self.ratingLabel.text = @"Terrible";
 }
 - (IBAction)secondStarPressed:(id)sender {
     self.starNumber = 2;
@@ -232,6 +225,9 @@
         [self.fourthStar setSelected:NO];
         [self.fifthStar setSelected:NO];
     }
+    
+    self.commentLabel.text = @"Explain your issue";
+    self.ratingLabel.text = @"Bad";
 }
 - (IBAction)thirdStarPressed:(id)sender {
     self.starNumber = 3;
@@ -248,6 +244,9 @@
         [self.fourthStar setSelected:NO];
         [self.fifthStar setSelected:NO];
     }
+    
+    self.commentLabel.text = @"Leave a comment";
+    self.ratingLabel.text = @"OK";
 }
 - (IBAction)fourthStarPressed:(id)sender {
     self.starNumber = 4;
@@ -263,6 +262,9 @@
         [self.thirdStar setSelected:YES];
         [self.fifthStar setSelected:NO];
     }
+    
+    self.commentLabel.text = @"Say thanks";
+    self.ratingLabel.text = @"Good";
 }
 - (IBAction)fifthStarPressed:(id)sender {
     self.starNumber = 5;
@@ -277,6 +279,9 @@
         [self.thirdStar setSelected:YES];
         [self.fourthStar setSelected:YES];
     }
+    
+    self.commentLabel.text = @"Say thanks";
+    self.ratingLabel.text = @"Excellent";
 }
 
 -(BOOL)textFieldShouldReturn:(UITextField *)textField{
@@ -284,13 +289,10 @@
     return YES;
 }
 
-- (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
-{
-    return 0.0f;
-}
+
 
 -(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
-    return 0.0f;
+    return 0.01f;
 }
 
 -(void)showHUD{
@@ -307,36 +309,43 @@
     });
 }
 
--(void)textFieldDidEndEditing:(UITextField *)textField{
-    if (textField == self.commentField) {
-        NSArray *words = [textField.text componentsSeparatedByString:@" "];
+#pragma mark - text view delegates
+
+-(void)textViewDidBeginEditing:(UITextView *)textView{
+    if ([textView.text isEqualToString:@"e.g. Fast shipping? Item as described? Good communication?"]) {
+        textView.text = @"";
+        textView.textColor = [UIColor colorWithRed:74/255.0f green:74/255.0f blue:74/255.0f alpha:1.0f];
+    }
+}
+
+-(void)textViewDidEndEditing:(UITextView *)textView{
+    if ([textView.text isEqualToString:@""]) {
+        textView.text = @"e.g. Fast shipping? Item as described? Good communication?";
+        textView.textColor = [UIColor lightGrayColor];
+    }
+    else{
+        //they've wrote something so do the check for profanity
+        NSArray *words = [textView.text componentsSeparatedByString:@" "];
         for (NSString *string in words) {
             if ([self.profanityList containsObject:string.lowercaseString]) {
-                textField.text = @"";
-                [self showAlertWithTitle:@"Language" andMsg:@"Bump does not condone any offensive language, if you've had a problem then tap 'Report' and we'll get in touch"];
-                return;
+                textView.text = @"e.g. Fast shipping? Item as described? Good communication?";
+                textView.textColor = [UIColor lightGrayColor];
             }
         }
     }
 }
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-    
-    if (textField == self.commentField) {
-        
-        //limit comment length
-        if(range.length + range.location > textField.text.length)
-        {
-            return NO;
-        }
-        NSUInteger newLength = [textField.text length] + [string length] - range.length;
-        return newLength <= 50;
+//return key removes keyboard in text view
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+    if([text isEqualToString:@"\n"]) {
+        [textView resignFirstResponder];
+        return NO;
     }
-    return string;
+    return YES;
 }
 
 -(void)dismissFeedback{
-    [self dismissViewControllerAnimated:YES completion:nil];
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 -(void)hideBarButton{
@@ -371,10 +380,30 @@
 }
 
 -(void)BarButtonPressed{
+    
+    //to do's
+    // 1. save feedback object
+    // 2. save this onto the order object as buyer/sellerReview
+    
+    // -- dismiss VC --
+    
+    // 3. send push notifying user who got feedback
+    // 4. update user's deals data - can do this in background when leave this VC (involves a query to find it too)
+    
     [self.longButton setEnabled:NO];
     
+    NSString *commentCheck = [self.commentView.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
     if (self.starNumber == 0) {
-        [self showAlertWithTitle:@"Tap a star" andMsg:@"Let other users on Bump know how your experience went, just tap a star 💫"];
+        [self showAlertWithTitle:@"Tap a star" andMsg:@"Let other users on BUMP know how your experience went, just tap a star 💫"];
+        [self.longButton setEnabled:YES];
+    }
+    else if ([self.commentView.text isEqualToString:@"e.g. Fast shipping? Item as described? Good communication?"] || [commentCheck isEqualToString:@""]) {
+        [self showAlertWithTitle:@"Comment" andMsg:@"Let other users on BUMP know how your experience went with a comment"];
+        [self.longButton setEnabled:YES];
+    }
+    else if (self.commentView.text.length < 5) {
+        [self showAlertWithTitle:@"Comment" andMsg:@"Let other users on BUMP know how your experience went with a longer & detailed comment"];
         [self.longButton setEnabled:YES];
     }
     else{
@@ -389,39 +418,112 @@
             feedbackObject = [PFObject objectWithClassName:@"feedback"];
         }
         
-        [feedbackObject setObject:self.convoObject forKey:@"convo"];
         [feedbackObject setObject:[NSNumber numberWithInt:self.starNumber] forKey:@"rating"];
         [feedbackObject setObject:[PFUser currentUser] forKey:@"gaveFeedback"];
-        [feedbackObject setObject:self.user forKey:@"gotFeedback"]; //SET set this object on all previous feedback objectds
-
+        [feedbackObject setObject:self.commentView.text forKey:@"comment"];
         [feedbackObject setObject:@"live" forKey:@"status"];
+        [feedbackObject setObject:self.user forKey:@"gotFeedback"];
+        [feedbackObject setObject:@"YES" forKey:@"order"];
+        [feedbackObject setObject:@"YES" forKey:@"order"];
+        [feedbackObject setObject:[self.orderObject objectForKey:@"itemImage"] forKey:@"thumbnail"];
         
+        //set gave feedback user's basic info so reviews can be queried faster
+        if ([[PFUser currentUser]objectForKey:@"picture"]) {
+            [feedbackObject setObject:[[PFUser currentUser]objectForKey:@"picture"] forKey:@"gavePicture"];
+        }
+        [feedbackObject setObject:[PFUser currentUser].username forKey:@"gaveUsername"];
+
         if (self.purchased == YES) {
             [feedbackObject setObject:self.user.objectId forKey:@"sellerId"];
+            [feedbackObject setObject:[PFUser currentUser].objectId forKey:@"buyerId"];
         }
         else{
             [feedbackObject setObject:self.user.objectId forKey:@"buyerId"];
+            [feedbackObject setObject:[PFUser currentUser].objectId forKey:@"sellerId"];
         }
         
-        if (![self.commentField.text isEqualToString:@""]) {
-            [Answers logCustomEventWithName:@"Left a Review"
-                           customAttributes:@{
-                                              @"comment":@"YES"
-                                              }];
-            [feedbackObject setObject:self.commentField.text forKey:@"comment"];
-        }
-        else{
-            [Answers logCustomEventWithName:@"Left a Review"
-                           customAttributes:@{
-                                              @"comment":@"NO"
-                                              }];
-        }
+        [Answers logCustomEventWithName:@"Review Pressed"
+                       customAttributes:@{
+                                          @"buyer":[NSNumber numberWithBool:self.purchased]
+                                          }];
         
         [feedbackObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (!error) {
-
-                //call delegate early to remove review banner in convo
-                [self.delegate leftReview];
+                
+                NSLog(@"saved fb object");
+                
+                [Answers logCustomEventWithName:@"Saved Feedback"
+                               customAttributes:@{
+                                                  @"success":@"YES"
+                                                  }];
+                
+                //save review to order object
+                if (self.purchased) {
+                    [self.orderObject setObject:feedbackObject forKey:@"sellerReview"];
+                    [self.orderObject setObject:@"YES" forKey:@"buyerLeftFeedback"];
+                    [self.orderObject setObject:@(self.starNumber) forKey:@"sellerStars"];
+                }
+                else{
+                    [self.orderObject setObject:feedbackObject forKey:@"buyerReview"]; //this is the review of the buyer NOT the review the buyer left
+                    [self.orderObject setObject:@"YES" forKey:@"sellerLeftFeedback"];
+                    [self.orderObject setObject:@(self.starNumber) forKey:@"buyerStars"];
+                }
+                [self.orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        [Answers logCustomEventWithName:@"Saved Feedback on Order"
+                                       customAttributes:@{
+                                                          @"success":@"YES"
+                                                          }];
+                        [self.delegate leftReview];
+                        
+                        NSLog(@"saved feedback on order");
+                        //pop VC will rest saves in BG
+                        [self hideHUD];
+                        [self dismissFeedback];
+                    }
+                    else{
+                        [Answers logCustomEventWithName:@"Saved Feedback on Order"
+                                       customAttributes:@{
+                                                          @"success":@"NO",
+                                                          @"error" : error.description,
+                                                          @"feedbackId" : feedbackObject.objectId
+                                                          }];
+                        
+                        //pop VC will rest saves in BG
+                        [self hideHUD];
+                        [self dismissFeedback];
+                    }
+                }];
+                
+                //decide whether to ask this user to review BUMP
+                [self sendReview]; //CHANGE
+                
+                //send push to other user
+                if (!self.editMode && !self.sentPush) {
+                    self.sentPush = YES;
+                    NSString *pushString = [NSString stringWithFormat:@"%@ just left you a review ✅", [PFUser currentUser].username];
+                    
+                    NSDictionary *params = @{@"userId": self.user.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+                    [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                        if (!error) {
+                            NSLog(@"response sending review push %@", response);
+                            
+                            [Answers logCustomEventWithName:@"Sent Review Push"
+                                           customAttributes:@{
+                                                              @"success":@"YES"
+                                                              }];
+                        }
+                        else{
+                            NSLog(@"review push error %@", error);
+                            
+                            [Answers logCustomEventWithName:@"Sent Review Push"
+                                           customAttributes:@{
+                                                              @"success":@"NO",
+                                                              @"error" : error.description
+                                                              }];
+                        }
+                    }];
+                }
 
                 //update user's deals data
                 PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
@@ -436,7 +538,6 @@
                         else{                            
                             [object incrementKey:@"dealsTotal"]; //deals total is now the total number of reviews a user has
                         }
-                        
                         
                         if (self.starNumber == 1) {
                             [object incrementKey:@"star1"];
@@ -469,124 +570,37 @@
                         [object setObject:[NSNumber numberWithInt:rating] forKey:@"currentRating"];
                         [object saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                             if (succeeded) {
-//                                NSLog(@"saved user's deal data %@", object);
-                                
-                                if (self.isBuyer == YES) {
-                                    [self.convoObject setObject:@"YES" forKey:@"buyerHasReviewed"];
-                                }
-                                else{
-                                    [self.convoObject setObject:@"YES" forKey:@"sellerHasReviewed"];
-                                }
-                                [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                                    if (succeeded) {
-                                        
-                                        NSLog(@"saved convo");
-                                        
-                                        [self hideHUD];
-                                        
-                                        if (self.starNumber >= 4 ) {
-                                            
-                                            PFUser *current = [PFUser currentUser];
-                                            
-                                            if ([current objectForKey:@"reviewDate"]) {
-                                                //has reviewed before
-                                                //check the version then time diff
-                                                
-                                                NSString *reviewedVersion = [current objectForKey:@"versionReviewed"];
-                                                NSString *currentVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-                                                
-                                                if ([reviewedVersion isEqualToString:currentVersion]) {
-                                                    //already reviewed this version, check if been prompted to invite friends
-                                                    [self invitePrompt];
-                                                    [self dismissFeedback];
-                                                }
-                                                else{
-                                                    //never reviewed this version, check if last review was later than 14 days ago
-                                                    NSDate *lastReviewDate = [current objectForKey:@"reviewDate"];
-                                                    
-                                                    //check difference between 2 dates
-                                                    NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:lastReviewDate];
-                                                    double secondsInADay = 86400;
-                                                    NSInteger daysBetweenDates = distanceBetweenDates / secondsInADay;
-                                                    
-                                                    if (daysBetweenDates >= 21) {
-                                                        //prompt again if > 3 weeks later
-                                                        [Answers logCustomEventWithName:@"Show Rate"
-                                                                       customAttributes:@{
-                                                                                          @"where": @"feedbackVC"
-                                                                                          }];
-                                                        [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.messageNav];
-                                                        [self dismissFeedback];
-                                                    }
-                                                    else{
-                                                        //rated too soon, check if seen invite
-                                                        [self invitePrompt];
-                                                        [self dismissFeedback];
-                                                    }
-                                                }
-                                            }
-                                            else{
-                                                //never been asked to review so prompt
-                                                [Answers logCustomEventWithName:@"Show Rate"
-                                                               customAttributes:@{
-                                                                                  @"where": @"feedbackVC"
-                                                                                  }];
-                                                [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.messageNav];
-                                                [self dismissFeedback];
-                                            }
-                                        }
-                                        else{
-                                            //didn't give a 4+ star rating
-                                            if (self.starNumber < 3) {
-                                                [self sendPoorFeedbackMessage];
-                                            }
-                                            [self dismissFeedback];
-                                        }
-                                    }
-                                    else{
-                                        NSLog(@"error saving convo %@", error);
-                                        [self hideHUD];
-                                        [self.longButton setEnabled:YES];
-                                        [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet code:4"];
-                                    }
-                                }];
-                                
-                                if (!self.editMode) {
-                                    NSString *pushString = [NSString stringWithFormat:@"%@ just left you a review ✅", [PFUser currentUser].username];
-                                    
-                                    NSDictionary *params = @{@"userId": self.IDUser, @"message": pushString, @"sender": [PFUser currentUser].username};
-                                    [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                                        if (!error) {
-                                            NSLog(@"response sending feedback push %@", response);
-                                        }
-                                        else{
-                                            NSLog(@"image push error %@", error);
-                                        }
-                                    }];
-                                }
-
+                                [Answers logCustomEventWithName:@"Saved Deals data"
+                                               customAttributes:@{
+                                                                  @"success":@"YES"
+                                                                  }];
                             }
                             else{
-                                NSLog(@"error saving deal data %@", error);
-                                [self hideHUD];
-                                [self.longButton setEnabled:YES];
-                                [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet code:1"];
+                                [Answers logCustomEventWithName:@"Saved Deals data"
+                                               customAttributes:@{
+                                                                  @"success":@"NO",
+                                                                  @"error" : error.description
+                                                                  }];
                             }
                         }];
                     }
                     else{
                         //no deals object
-                        NSLog(@"error %@", error);
-                        [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet code:2"];
-                        [self.longButton setEnabled:YES];
-                        [self hideHUD];
+                        [Answers logCustomEventWithName:@"Saved Deals data"
+                                       customAttributes:@{
+                                                          @"success":@"NO",
+                                                          @"error" : error.description
+                                                          }];
                     }
                 }];
             }
             else{
-                [self hideHUD];
-                NSLog(@"error saving feedback obj %@", error);
-                [self showAlertWithTitle:@"Error Saving" andMsg:@"Make sure you're connected to the internet code:3"]; //error on bump leaving feedback with guy - check cause
+                //error saving feedback object
+                [Answers logCustomEventWithName:@"Saved Feedback"
+                               customAttributes:@{
+                                                  @"success":@"NO",
+                                                  @"error" : error.description
+                                                  }];
             }
         }];
     }
@@ -616,10 +630,10 @@
     NSString *messageString = @"";
     
     if ([[PFUser currentUser]objectForKey:@"firstName"]) {
-        messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for leaving a review on Bump and helping the community!\n\nWe noticed you left a poor review for user @%@, is there anything you'd like us to help with?\n\nThanks\nSophie @ Team Bump",[[PFUser currentUser]objectForKey:@"firstName"],self.user.username];
+        messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for leaving a review on BUMP and helping the community!\n\nWe noticed you left a poor review for user @%@, is there anything you'd like us to help with?\n\nThanks\nSophie @ Team BUMP",[[PFUser currentUser]objectForKey:@"firstName"],self.user.username];
     }
     else{
-        messageString = [NSString stringWithFormat:@"Hey\n\nThanks for leaving a review on Bump and helping the community!\n\nWe noticed you left a poor review for user @%@, is there anything you'd like us to help with?\n\nThanks\nSophie @ Team Bump",self.user.username];
+        messageString = [NSString stringWithFormat:@"Hey\n\nThanks for leaving a review on BUMP and helping the community!\n\nWe noticed you left a poor review for user @%@, is there anything you'd like us to help with?\n\nThanks\nSophie @ Team BUMP",self.user.username];
     }
     
     //now save report message
@@ -671,6 +685,144 @@
                            customAttributes:@{
                                               @"status":@"Failed saving message"
                                               }];
+        }
+    }];
+}
+
+-(void)sendReview{
+    if (self.starNumber >= 4 ) {
+        
+        PFUser *current = [PFUser currentUser];
+        
+        if ([current objectForKey:@"reviewDate"]) {
+            //has reviewed before
+            //check the version then time diff
+            
+            NSString *reviewedVersion = [current objectForKey:@"versionReviewed"];
+            NSString *currentVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+            
+            if ([reviewedVersion isEqualToString:currentVersion]) {
+                //already reviewed this version, check if been prompted to invite friends
+//                [self invitePrompt];
+            }
+            else{
+                //never reviewed this version, check if last review was later than 14 days ago
+                NSDate *lastReviewDate = [current objectForKey:@"reviewDate"];
+                
+                //check difference between 2 dates
+                NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:lastReviewDate];
+                double secondsInADay = 86400;
+                NSInteger daysBetweenDates = distanceBetweenDates / secondsInADay;
+                
+                if (daysBetweenDates >= 21) {
+                    //prompt again if > 3 weeks later
+                    [Answers logCustomEventWithName:@"Show Rate"
+                                   customAttributes:@{
+                                                      @"where": @"feedbackVC"
+                                                      }];
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.messageNav];
+                }
+                else{
+                    //rated too soon, check if seen invite
+//                    [self invitePrompt];
+                }
+            }
+        }
+        else{
+            //never been asked to review so prompt
+            [Answers logCustomEventWithName:@"Show Rate"
+                           customAttributes:@{
+                                              @"where": @"feedbackVC"
+                                              }];
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"showRate" object:self.messageNav];
+        }
+    }
+    else{
+        //didn't give a 4+ star rating
+        if (self.starNumber < 3) {
+            [self sendPoorFeedbackMessage];
+        }
+    }
+}
+
+-(void)setupSupport{
+    if (self.tappedSupport) {
+        NSLog(@"returning from help");
+        return;
+    }
+    self.tappedSupport = YES;
+    
+    [self showHUD];
+    
+    //get the support ticket or create a new one if needed
+    PFQuery *convoQuery = [PFQuery queryWithClassName:@"supportConvos"];
+    NSString *convoId = [NSString stringWithFormat:@"TICKET%@%@", [PFUser currentUser].objectId, self.orderObject.objectId];
+    [convoQuery whereKey:@"ticketId" equalTo:convoId];
+    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            self.tappedSupport = NO;
+            [self hideHUD];
+            
+            //convo exists, go there
+            ChatWithBump *vc = [[ChatWithBump alloc]init];
+            vc.convoId = [NSString stringWithFormat:@"TICKET%@%@", [PFUser currentUser].objectId, self.orderObject.objectId];
+            vc.convoObject = object;
+            vc.otherUser = [PFUser currentUser];
+            vc.supportMode = YES;
+            vc.isBuyer = self.purchased;
+            //            [self.navigationController tabBarItem].badgeValue = nil;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else{
+            //create a new one
+            PFObject *convoObject = [PFObject objectWithClassName:@"supportConvos"];
+            convoObject[@"user"] = [PFUser currentUser];
+            convoObject[@"userId"] = [PFUser currentUser].objectId;
+            convoObject[@"ticketId"] = [NSString stringWithFormat:@"TICKET%@%@", [PFUser currentUser].objectId, self.orderObject.objectId];
+            convoObject[@"totalMessages"] = @0;
+            convoObject[@"status"] = @"open";
+            convoObject[@"orderObject"] = self.orderObject;
+            convoObject[@"orderDate"] = self.orderObject.createdAt;
+            convoObject[@"listing"] = [self.orderObject objectForKey:@"listing"];
+
+            if (self.purchased) {
+                convoObject[@"purchase"] = @"YES";
+                convoObject[@"buyerId"] = [PFUser currentUser].objectId;
+                convoObject[@"sellerId"] = self.user.objectId;
+            }
+            else{
+                convoObject[@"purchase"] = @"NO";
+                convoObject[@"buyerId"] = self.user.objectId;
+                convoObject[@"sellerId"] = [PFUser currentUser].objectId;
+            }
+            
+            convoObject[@"itemTitle"] = [self.orderObject objectForKey:@"itemTitle"];
+            convoObject[@"itemImage"] = [self.orderObject objectForKey:@"itemImage"];
+            
+            [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    //saved, goto VC
+                    self.tappedSupport = NO;
+                    [self hideHUD];
+                    
+                    ChatWithBump *vc = [[ChatWithBump alloc]init];
+                    vc.convoId = [NSString stringWithFormat:@"TICKET%@%@", [PFUser currentUser].objectId, self.orderObject.objectId];
+                    vc.convoObject = convoObject;
+                    vc.otherUser = [PFUser currentUser];
+                    vc.supportMode = YES;
+                    vc.isBuyer = self.purchased;
+                    
+                    //                    [self.navigationController tabBarItem].badgeValue = nil;
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
+                else{
+                    self.tappedSupport = NO;
+                    [self hideHUD];
+                    
+                    [self showAlertWithTitle:@"Connection Error" andMsg:@"Make sure you're connected to the internet and try again!"];
+                    NSLog(@"error saving support ticket");
+                }
+            }];
         }
     }];
 }

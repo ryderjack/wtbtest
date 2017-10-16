@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *starCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *commentCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *spaceCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *supportCell;
 
 //star cell
 @property (weak, nonatomic) IBOutlet UIButton *firstStar;
@@ -36,22 +37,21 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UITextView *commentView;
 @property (weak, nonatomic) IBOutlet UILabel *commentLabel;
 
-
-@property (nonatomic) BOOL isBuyer;
+//order
+@property (nonatomic, strong) PFObject *orderObject;
 
 //edit mode
 @property (nonatomic) BOOL editMode;
 @property (nonatomic, strong) PFObject *editFBObject;
 @property (nonatomic) int previousReview;
 
-
+//general
 @property (nonatomic, strong) PFUser *user;
-@property (nonnull, strong) NSString *IDUser;
 @property (nonatomic) BOOL purchased;
 @property (nonatomic) int starNumber;
+@property (nonatomic) BOOL fetchedUser;
 
-@property (nonatomic, strong) NSString *statusString;
-@property (nonatomic, strong) PFObject *convoObject;
+@property (nonatomic) BOOL sentPush;
 
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
@@ -69,6 +69,8 @@ NS_ASSUME_NONNULL_BEGIN
 //rate
 @property (nonatomic, strong) UINavigationController *messageNav;
 
+//support
+@property (nonatomic) BOOL tappedSupport;
 
 NS_ASSUME_NONNULL_END
 @end

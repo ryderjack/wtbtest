@@ -14,8 +14,9 @@
 #import <QBImagePickerController/QBImagePickerController.h>
 #import <DGActivityIndicatorView.h>
 #import <SwipeView/SwipeView.h>
+#import "ListingBannerView.h"
 
-@interface ChatWithBump : JSQMessagesViewController <UICollectionViewDelegate, UINavigationControllerDelegate,QBImagePickerControllerDelegate,SwipeViewDelegate,SwipeViewDataSource>
+@interface ChatWithBump : JSQMessagesViewController <UICollectionViewDelegate, UINavigationControllerDelegate,QBImagePickerControllerDelegate,SwipeViewDelegate,SwipeViewDataSource,bannerDelegate>
 
 @property (nonatomic, strong) NSString *convoId;
 @property (nonatomic, strong) NSString *otherUserName;
@@ -33,7 +34,6 @@
 @property (nonatomic, strong) NSMutableArray *messagesParseArray;
 @property (nonatomic, strong) NSMutableArray *sentMessagesParseArray;
 
-@property (nonatomic, strong) PFObject *messageObject;
 @property (nonatomic, strong) PFObject *lastMessage;
 
 @property (nonatomic) BOOL showPull;
@@ -62,5 +62,23 @@
 @property (nonatomic, strong) SwipeView *carousel;
 @property (nonatomic, strong) NSMutableArray *suggestedMessagesArray;
 @property (nonatomic, strong) NSMutableArray *actualMessagesToSend;
+
+//support ticket mode
+@property (nonatomic) BOOL supportMode;
+@property (nonatomic) BOOL isBuyer;
+
+//listing banner
+@property (nonatomic) BOOL listingBannerShowing;
+@property (nonatomic, strong) ListingBannerView *listingView;
+@property (nonatomic) BOOL showingListingBanner;
+
+//intro header for support tickets
+@property (nonatomic, strong) UIView *paypalView;
+@property (nonatomic) BOOL shouldShowPayPalView;
+
+//layout stuff
+@property (nonatomic) BOOL firstLayout;
+@property (nonatomic) BOOL finishedFirstScroll;
+
 
 @end

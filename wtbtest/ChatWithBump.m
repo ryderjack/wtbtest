@@ -13,6 +13,7 @@
 #import <SVPullToRefresh/SVPullToRefresh.h>
 #import "NavigationController.h"
 #import "JRMessage.h"
+#import "ForSaleListing.h"
 
 @interface ChatWithBump ()
 
@@ -29,17 +30,38 @@
         [self.collectionView setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentNever];
     }
     
-    self.title = @"Team BUMP";
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
-//    UIButton *btn =  [UIButton buttonWithType:UIButtonTypeCustom];
-//    btn.frame = CGRectMake(0,0,25,25);
-//    PFImageView *buttonView = [[PFImageView alloc]initWithFrame:btn.frame];
-//    [buttonView setImage:[UIImage imageNamed:@"35"]];
-//    [self setImageBorder:buttonView];
-//    [btn addSubview:buttonView];
-//    UIBarButtonItem *imageButton = [[UIBarButtonItem alloc] initWithCustomView:btn];
+    if (!self.supportMode) {
+        self.title = @"Team BUMP";
+        self.inputToolbar.contentView.textView.placeHolder = @"Ask us anything";
+    }
+    else{
+        self.title = @"Support Ticket";
+        self.inputToolbar.contentView.textView.placeHolder = @"How can we help?";
+    }
     
-//    self.navigationItem.rightBarButtonItem = imageButton;
+    if (self.supportMode) {
+        UIButton *btn =  [UIButton buttonWithType:UIButtonTypeCustom];
+        btn.frame = CGRectMake(0,6,25,25);
+        [btn addTarget:self action:@selector(gotoListing) forControlEvents:UIControlEventTouchUpInside];
+        
+        PFImageView *buttonView = [[PFImageView alloc]initWithFrame:btn.frame];
+        [buttonView setFile:[self.convoObject objectForKey:@"itemImage"]];
+        [buttonView loadInBackground];
+        
+        [btn addSubview:buttonView];
+        UIBarButtonItem *imageButton = [[UIBarButtonItem alloc] initWithCustomView:btn];
+        
+        if ([[self.convoObject objectForKey:@"status"]isEqualToString:@"open"]) {
+            UIBarButtonItem *moreButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlert)];
+            
+            [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:imageButton,moreButton, nil]];
+        }
+        else{
+            [self.navigationItem setRightBarButtonItem:imageButton];
+        }
+    }
     
     self.collectionView.collectionViewLayout.messageBubbleFont = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
@@ -79,8 +101,14 @@
     //hide by default
     self.showLoadEarlierMessagesHeader = NO;
     
-    [self loadConvoImages];
-    [self loadMessages];
+    if (self.supportMode) {
+        [self loadSupportImages];
+        [self loadSupportMessages];
+    }
+    else{
+        [self loadConvoImages];
+        [self loadMessages];
+    }
     
     self.bubbleFactory = [[JSQMessagesBubbleImageFactory alloc] initWithBubbleImage:[UIImage jsq_bubbleRegularTaillessImage] capInsets:UIEdgeInsetsZero];
     JSQMessagesBubbleImageFactory *bubbleFactoryOutline = [[JSQMessagesBubbleImageFactory alloc] initWithBubbleImage:[UIImage jsq_bubbleRegularStrokedTaillessImage] capInsets:UIEdgeInsetsZero];
@@ -90,9 +118,7 @@
     
     self.skipped = 0;
     
-    self.inputToolbar.contentView.textView.placeHolder = @"Ask us anything";
-
-    if (self.showSuggested) {
+    if (self.showSuggested && !self.supportMode) {
 
         self.suggestedMessagesArray = [NSMutableArray arrayWithObjects:@"Tap for more info ➡️",@"Authenticity", @"Payment",@"Email Verification",@"Location",@"Username Change",@"Password Change",@"Trading",@"Proxies", nil];
         self.actualMessagesToSend = [NSMutableArray arrayWithObjects:@"placeholder",[NSString stringWithFormat:@"Hey %@,\n\nHere's our fraud prevention policy. We've found this to be an effective way of ensuring authenticity on Bump:\n\n1️⃣ We encourage tagged photos on Bump so buyers can be sure items exist\n\n2️⃣ Our team of moderators are monitoring listings for fakes / suspicious behaviour\n\n3️⃣ We make it really easy for anyone to report a listing to us\n\n4️⃣ We encourage users to pay each other using PayPal Goods & Services so if something does go wrong, you're protected!\n\nIf however, you were to get sent a fake then you would be able to take up a claim with PayPal and get a full refund. And of course, we would be here to help you through the process\n\nAny other questions please let me know!\n\nThanks,\nSophie", [self.otherUser objectForKey:@"firstName"]],
@@ -139,7 +165,13 @@
                 
                 self.infiniteLoading = YES;
                 self.earlierPressed = YES;
-                [self loadMessages];
+                
+                if (self.supportMode) {
+                    [self loadSupportMessages];
+                }
+                else{
+                    [self loadMessages];
+                }
             }
             else{
                 [self.collectionView.pullToRefreshView stopAnimating];
@@ -152,6 +184,23 @@
             [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
             [self.spinner startAnimating];
         }
+    }
+}
+
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    
+    //fixes bug which hides last message in convo
+    //if we scroll here instead of after loadMessages then it works
+    if (self.firstLayout && self.automaticallyScrollsToMostRecentMessage) {
+        self.firstLayout = NO;
+        [self scrollToBottomAnimated:YES];
+        
+        //waits a sec to turn this on to prevent infinite scroll being called by the initial scroll to the most recent message
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            self.finishedFirstScroll = YES;
+        });
     }
 }
 
@@ -182,7 +231,7 @@
                 }
                 
                 int count = (int)[objects count];
-                self.skipped = count + self.skipped;
+                self.skipped += count;
                 
                 for (PFObject *messageOb in objects) {
                     
@@ -286,8 +335,15 @@
                 [self.collectionView reloadData];
                 
                 if (self.earlierPressed == NO) {
-                    [self scrollToBottomAnimated:NO];
-
+                    
+                    //fix the last message being hidden when first go on convo
+                    [self.view layoutIfNeeded];
+                    [self.collectionView.collectionViewLayout invalidateLayout];
+                    
+                    if (self.automaticallyScrollsToMostRecentMessage) {
+                        self.firstLayout = YES;
+                        [self viewDidLayoutSubviews];
+                    }
                 }
                 else{
                     [self.collectionView.pullToRefreshView stopAnimating];
@@ -328,6 +384,15 @@
     
     if (messageTotal > 10) {
         self.showPull = YES;
+    }
+    
+    if (messageTotal > 0) {
+        double delayInSeconds = 0.5;
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            self.showingListingBanner = YES;
+//            [self showListingBanner];
+        });
     }
 }
 
@@ -398,6 +463,12 @@
          senderDisplayName:(NSString *)senderDisplayName
                       date:(NSDate *)date
 {
+    
+    //hide intro paypal view
+    if (self.paypalView && self.messages.count == 0) {
+        [self removePayPalView];
+    }
+    
     NSString *messageString = text;
     
     JRMessage *message = [[JRMessage alloc] initWithSenderId:senderId
@@ -412,14 +483,20 @@
     senderName = [PFUser currentUser].username;
 
     
-    PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
+    PFObject *messageObject;
+    
+    if (self.supportMode) {
+        messageObject = [PFObject objectWithClassName:@"supportMsgs"];
+    }
+    else{
+        messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
+    }
     messageObject[@"message"] = messageString;
     messageObject[@"sender"] = [PFUser currentUser];
     messageObject[@"senderId"] = [PFUser currentUser].objectId;
     messageObject[@"senderName"] = senderName;
     messageObject[@"convoId"] = self.convoId;
     messageObject[@"status"] = @"sent";
-    messageObject[@"offer"] = @"NO";
     messageObject[@"mediaMessage"] = @"NO";
     
     [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
@@ -427,10 +504,19 @@
             
 //            NSLog(@"saved message, here it is: %@", messageObject);
             
-            [Answers logCustomEventWithName:@"Sent Message to Team Bump"
-                           customAttributes:@{
-                                              @"type":@"text"
-                                              }];
+            if (self.supportMode) {
+                [Answers logCustomEventWithName:@"Sent Support Message"
+                               customAttributes:@{
+                                                  @"type":@"text"
+                                                  }];
+            }
+            else{
+                [Answers logCustomEventWithName:@"Sent Message to Team Bump"
+                               customAttributes:@{
+                                                  @"type":@"text"
+                                                  }];
+            }
+
             
 //            NSDictionary *params = @{@"userId": @"IIEf7cUvrO", @"message": [NSString stringWithFormat:@"TO TEAM BUMP FROM %@: %@",[PFUser currentUser].username ,messageString], @"sender": [PFUser currentUser].username};
 //            [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
@@ -472,8 +558,14 @@
     [self.convoObject incrementKey:@"totalMessages"];
     [self.convoObject setObject:messageObject forKey:@"lastSent"];
     [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
-    
+    [self.convoObject setObject:messageString forKey:@"lastSentText"];
+    [self.convoObject setObject:[PFUser currentUser].objectId forKey:@"lastSentUserId"];
+
     [self.convoObject incrementKey:@"BumpUnseen"];
+    
+    if (self.supportMode) {
+        [self.convoObject setObject:@"open" forKey:@"status"];
+    }
     
     [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded){
@@ -519,7 +611,7 @@
             case PHAuthorizationStatusDenied:
             {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [self showAlertWithTitle:@"Photos Permission" andMsg:@"Bump needs access to your photos so we can send one 📷"];
+                    [self showAlertWithTitle:@"Photos Permission" andMsg:@"BUMP needs access to your photos so we can send one 📷"];
                 });
                 NSLog(@"denied");
             }
@@ -678,7 +770,14 @@
     
     PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:data];
     
-    PFObject *picObject = [PFObject objectWithClassName:@"teamBumpmMsgImages"];
+    PFObject *picObject;
+    
+    if (self.supportMode) {
+        picObject = [PFObject objectWithClassName:@"supportMsgImages"];
+    }
+    else{
+        picObject = [PFObject objectWithClassName:@"teamBumpmMsgImages"];
+    }
     [picObject setObject:filePicture forKey:@"Image"];
     [picObject setObject:self.convoObject forKey:@"convo"];
     [self.convoImagesArray addObject:picObject];
@@ -686,34 +785,46 @@
     [picObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
         if (succeeded) {
             
-            self.messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
-            self.messageObject[@"message"] = picObject.objectId;
-            self.messageObject[@"sender"] = [PFUser currentUser];
-            self.messageObject[@"senderId"] = [PFUser currentUser].objectId;
-            self.messageObject[@"senderName"] = [PFUser currentUser].username;
-            self.messageObject[@"convoId"] = self.convoId;
-            self.messageObject[@"status"] = @"sent";
-            self.messageObject[@"mediaMessage"] = @"YES";
-            if (self.tagString) {
-                [self.messageObject setObject:self.tagString forKey:@"tagString"];
+            PFObject *messageObject;
+            
+            if (self.supportMode) {
+                messageObject = [PFObject objectWithClassName:@"supportMsgs"];
             }
-            [self.messageObject saveInBackground];
+            else{
+                messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
+            }
+            
+            messageObject[@"message"] = picObject.objectId;
+            messageObject[@"sender"] = [PFUser currentUser];
+            messageObject[@"senderId"] = [PFUser currentUser].objectId;
+            messageObject[@"senderName"] = [PFUser currentUser].username;
+            messageObject[@"convoId"] = self.convoId;
+            messageObject[@"status"] = @"sent";
+            messageObject[@"mediaMessage"] = @"YES";
+            [messageObject saveInBackground];
             
             //set as last message sent
-            self.lastMessage = self.messageObject;
+            self.lastMessage = messageObject;
             
             //set msg object so photo is tagged
-            photoMessage.msgObject = self.messageObject;
+            photoMessage.msgObject = messageObject;
             
             if (![self.senderId isEqualToString:self.otherUser.objectId]) {
                 [self.convoObject incrementKey:@"convoImages"];
             }
             
-            [self.convoObject setObject:self.messageObject forKey:@"lastSent"];
+            [self.convoObject setObject:messageObject forKey:@"lastSent"];
             
             [self.convoObject incrementKey:@"totalMessages"];
             [self.convoObject incrementKey:@"BumpUnseen"];
             [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
+            [self.convoObject setObject:@"image" forKey:@"lastSentText"];
+            [self.convoObject setObject:[PFUser currentUser].objectId forKey:@"lastSentUserId"];
+
+            if (self.supportMode) {
+                [self.convoObject setObject:@"open" forKey:@"status"];
+            }
+            
             [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
 //                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
@@ -883,30 +994,31 @@
     return [self.messages count];
 }
 
-
-//- (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
-//
-//    if (self.showSuggested == YES ){
-//        return UIEdgeInsetsMake(0, 0, 50, 0);
-//    }
-//    else{
-//        return self.collectionView.layoutMargins;
-//    }
-//}
-
 - (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
     
-    if (@available(iOS 11.0, *)) {
-        //so to calculate height insets we need to return (navigation bar height + status bar height + listing banner height) - adjusted content insets
-        return UIEdgeInsetsMake(self.navigationController.navigationBar.frame.size.height + [UIApplication sharedApplication].statusBarFrame.size.height, 0, self.carousel.frame.size.height, 0); // top, left, bottom, right
+//    if (@available(iOS 11.0, *)) {
+//        NSLog(@"LISTING FRAME: %@     view frame %@", NSStringFromCGRect(self.listingView.frame),NSStringFromCGRect(self.view.frame));
+//
+//        //so to calculate height insets we need to return (navigation bar height + status bar height + listing banner height) - adjusted content insets
+//        return UIEdgeInsetsMake(self.listingView.frame.size.height + self.navigationController.navigationBar.frame.size.height + [UIApplication sharedApplication].statusBarFrame.size.height, 0, self.carousel.frame.size.height, 0); // top, left, bottom, right
+//    }
+//    else{
+//        if (self.showingListingBanner == YES) {
+//            return UIEdgeInsetsMake(80, 0, 0, 0);
+//        }
+//        else if (self.showSuggested == YES) {
+//            return UIEdgeInsetsMake(0, 0, 50, 0); // top, left, bottom, right
+//        }
+//        else{
+//            return self.collectionView.layoutMargins;
+//        }
+//    }
+    
+    if (self.showSuggested == YES) {
+        return UIEdgeInsetsMake(0, 0, 50, 0); // top, left, bottom, right
     }
     else{
-        if (self.showSuggested == YES) {
-            return UIEdgeInsetsMake(0, 0, 50, 0); // top, left, bottom, right
-        }
-        else{
-            return self.collectionView.layoutMargins;
-        }
+        return self.collectionView.layoutMargins;
     }
 }
 
@@ -1063,8 +1175,15 @@
     
     if ([[self.messages objectAtIndex:indexPath.item] isMediaMessage] == YES){
         
-        [Answers logCustomEventWithName:@"Tapped Image in Team Bump Chat"
-                       customAttributes:@{}];
+        if (self.supportMode) {
+            [Answers logCustomEventWithName:@"Tapped Image in Support Chat"
+                           customAttributes:@{}];
+        }
+        else{
+            [Answers logCustomEventWithName:@"Tapped Image in Team Bump Chat"
+                           customAttributes:@{}];
+        }
+
         
         DetailImageController *vc = [[DetailImageController alloc]init];
         vc.listingPic = NO;
@@ -1086,7 +1205,6 @@
         vc.chosenIndex = selectedIndex;
         vc.convoImagesArray = self.convoImagesArray;
         vc.convoMode = YES;
-        vc.tagText = [tappedMessage.msgObject objectForKey:@"tagString"];
         id<JSQMessageMediaData> mediaItem = tappedMessage.media;
         
         JSQPhotoMediaItem *photoItem = (JSQPhotoMediaItem *)mediaItem;
@@ -1119,7 +1237,7 @@
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{
-    imageView.layer.cornerRadius = imageView.frame.size.width / 2;
+    imageView.layer.cornerRadius = 12.5;
     imageView.layer.masksToBounds = YES;
     imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     imageView.contentMode = UIViewContentModeScaleAspectFill;
@@ -1155,12 +1273,39 @@
         }
     }];
 }
+-(void)loadSupportImages{
+    PFQuery *imageQuery = [PFQuery queryWithClassName:@"supportMsgImages"];
+    [imageQuery whereKey:@"convo" equalTo:self.convoObject];
+    [imageQuery orderByDescending:@"createdAt"];
+    [imageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            [self.convoImagesArray addObjectsFromArray:objects];
+            
+            //reverse order
+            NSArray *convoImg = [[self.convoImagesArray reverseObjectEnumerator] allObjects];
+            [self.convoImagesArray removeAllObjects];
+            [self.convoImagesArray addObjectsFromArray:convoImg];
+            
+            NSLog(@"convo img count %lu", (unsigned long)self.convoImagesArray.count);
+        }
+        else{
+            NSLog(@"error getting convo images %@", error);
+        }
+    }];
+}
+
 
 #pragma keyboard observer methods
 
 -(void)keyboardOnScreen:(NSNotification *)notification
 {
     NSLog(@"KEYBOARD WILL SHOW");
+    
+    //hide intro message
+    if (self.paypalView) {
+        [self hidePayPalView];
+    }
+    
     //reset carousel origin
     [UIView animateWithDuration:0.5
                           delay:0.0
@@ -1176,6 +1321,11 @@
 -(void)keyboardOFFScreen:(NSNotification *)notification
 {
     NSLog(@"KEYBOARD WILL HIDE");
+    
+    //show intro message again
+    if (self.shouldShowPayPalView && self.paypalView) {
+        [self showPayPalView];
+    }
     
     //reset carousel origin
     [UIView animateWithDuration:0.5
@@ -1325,6 +1475,306 @@
 
 }
 
+#pragma mark - Support ticket setup
+-(void)loadSupportMessages{
+    PFQuery *messageQuery = [PFQuery queryWithClassName:@"supportMsgs"];
+    [messageQuery whereKey:@"convoId" equalTo:self.convoId];
+    [messageQuery orderByDescending :@"createdAt"];
+    messageQuery.limit = 10;
+    messageQuery.skip = self.skipped;
+    [messageQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (!error) {
+            if (objects) {
+                
+                if (objects.count == 0) {
+                    [self setupPayPalView];
+                }
+                else{
+                    if (self.paypalView) {
+                        [self removePayPalView];
+                    }
+                }
+                
+                if (objects.count < 10) {
+                    NSLog(@"HIDE IT");
+                    
+                    self.moreToLoad = NO;
+                    self.collectionView.showsPullToRefresh = NO;
+                    
+                    //save memory
+                    [self.spinner stopAnimating];
+                    self.spinner = nil;
+                }
+                else{
+                    NSLog(@"SHOW IT");
+                    self.moreToLoad = YES;
+                    self.collectionView.showsPullToRefresh = YES;
+                }
+                
+                int count = (int)[objects count];
+                self.skipped += count;
+                
+                for (PFObject *messageOb in objects) {
+                    
+                    if (![self.messagesParseArray containsObject:messageOb]) {
+                        [self.messagesParseArray addObject:messageOb];
+                    }
+                    
+                    __block JRMessage *message = nil;
+                    
+                    if (![[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                        [messageOb setObject:@"seen" forKey:@"status"];
+                        [messageOb saveInBackground];
+                        [self.convoObject setObject:@0 forKey:@"userUnseen"];
+                    }
+                    else{
+                        // only add current user's messages to parse array so last one's status can be displayed
+                        if (![self.sentMessagesParseArray containsObject:messageOb]) {
+                            [self.sentMessagesParseArray addObject:messageOb];
+                        }
+                    }
+                    
+                    if ([[messageOb objectForKey:@"mediaMessage"] isEqualToString:@"YES"]) {
+                        
+                        //media message
+                        __block id<JSQMessageMediaData> newMediaData = nil;
+                        __block id newMediaAttachmentCopy = nil;
+                        __block JSQPhotoMediaItem *photoItem = [[JSQPhotoMediaItem alloc]init];
+                        photoItem.image = [UIImage imageNamed:@"empty"];
+                        
+                        if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                            photoItem.appliesMediaViewMaskAsOutgoing = YES;
+                        }
+                        else{
+                            photoItem.appliesMediaViewMaskAsOutgoing = NO;
+                        }
+                        
+                        message = [[JRMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt media:photoItem];
+                        message.msgObject = messageOb;
+                        
+                        [self.messages insertObject:message atIndex:0];
+                        
+                        //added so placeholder view is correct
+                        
+                        if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                            photoItem.appliesMediaViewMaskAsOutgoing = YES;
+                        }
+                        else{
+                            photoItem.appliesMediaViewMaskAsOutgoing = NO;
+                        }
+                        
+                        PFQuery *imageQuery = [PFQuery queryWithClassName:@"supportMsgImages"];
+                        [imageQuery whereKey:@"objectId" equalTo:[messageOb objectForKey:@"message"]];
+                        [imageQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                            if (!error) {
+                                PFFile *img = [object objectForKey:@"Image"];
+                                [img getDataInBackgroundWithBlock:^(NSData *data, NSError *error) {
+                                    if (!error) {
+                                        UIImage *messageImage = [UIImage imageWithData:data];
+                                        photoItem.image = messageImage;
+                                        
+                                        newMediaAttachmentCopy = [UIImage imageWithCGImage:photoItem.image.CGImage];
+                                        newMediaData = photoItem;
+                                        [message setValue:newMediaData forKey:@"media"];
+                                        
+                                        if ([[messageOb objectForKey:@"senderId"]isEqualToString:[PFUser currentUser].objectId]) {
+                                            [self.masker applyOutgoingBubbleImageMaskToMediaView:photoItem.mediaView];
+                                        }
+                                        else{
+                                            [self.masker applyIncomingBubbleImageMaskToMediaView:photoItem.mediaView];
+                                        }
+                                        [self.collectionView.collectionViewLayout invalidateLayoutWithContext:[JSQMessagesCollectionViewFlowLayoutInvalidationContext context]];
+                                        
+                                        [self.collectionView reloadData];
+                                        
+                                        message = nil;
+                                    }
+                                    else{
+                                        NSLog(@"error getting img data %@", error);
+                                    }
+                                }];
+                            }
+                            else{
+                                NSLog(@"error with image query %@", error);
+                            }
+                        }];
+                    }
+                    else{
+                        NSString *messageText = [messageOb objectForKey:@"message"];
+                        
+                        message = [[JRMessage alloc] initWithSenderId:[messageOb objectForKey:@"senderId"]  senderDisplayName:[messageOb objectForKey:@"senderName"] date:messageOb.createdAt text:messageText];
+                        
+                        if (![self.messages containsObject:message]) {
+                            [self.messages insertObject:message atIndex:0];
+                        }
+                    }
+                }
+                
+                [self.convoObject saveInBackground];
+                
+                [self.collectionView.collectionViewLayout invalidateLayoutWithContext:[JSQMessagesCollectionViewFlowLayoutInvalidationContext context]];
+                [self.collectionView reloadData];
+                
+                if (self.earlierPressed == NO) {
+                    
+                    //fix the last message being hidden when first go on convo
+                    [self.view layoutIfNeeded];
+                    [self.collectionView.collectionViewLayout invalidateLayout];
+                    
+                    if (self.automaticallyScrollsToMostRecentMessage) {
+                        self.firstLayout = YES;
+                        [self viewDidLayoutSubviews];
+                    }
+                }
+                else{
+                    [self.collectionView.pullToRefreshView stopAnimating];
+                    
+                    self.earlierPressed = NO;
+                    //NB: the last object in the messages array is the msg at the top of the CV
+                    //However, this means it is also the first indexPath
+                    //So, to calc. correct scroll we just take first indexPath and add the number of new objects just loaded so we end up at our OG position
+                    NSIndexPath *firstItemPath = [NSIndexPath indexPathForRow:0 inSection:0];
+                    NSIndexPath *lastSeenPath = [NSIndexPath indexPathForRow:firstItemPath.row+objects.count inSection:0];
+                    [self.collectionView scrollToItemAtIndexPath:lastSeenPath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:NO];
+                    self.infiniteLoading = NO;
+                }
+            }
+            else{
+                NSLog(@"no messages");
+            }
+        }
+        else{
+            //error retrieving messages
+            [self showError];
+        }
+    }];
+}
 
+#pragma mark - for sale listing preview banner
+-(void)showListingBanner{
+    if (self.listingBannerShowing == YES) {
+        return;
+    }
+    
+    NSLog(@"SHOW LISTING BANNER");
+    
+    if (!self.listingView) {
+        
+        NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"listingBannerViewFile" owner:self options:nil];
+        self.listingView = (ListingBannerView *)[nib objectAtIndex:0];
+        self.listingView.delegate = self;
+        
+        [self.listingView.itemImageView setFile:[self.convoObject objectForKey:@"itemImage"]];
+        [self.listingView.itemImageView loadInBackground];
+        
+        self.listingView.itemTitleLabel.text = [self.convoObject objectForKey:@"itemTitle"];
+        
+        NSDateFormatter *dateFormat = [[NSDateFormatter alloc] init];
+        [dateFormat setLocale:[NSLocale currentLocale]];
+        [dateFormat setDateFormat:@"dd MMM"];
+        
+        NSString *dateString = [dateFormat stringFromDate:self.convoObject.createdAt];
+
+        if (self.isBuyer) {
+            self.listingView.priceLabel.text = [NSString stringWithFormat:@"Purchased %@",dateString];
+        }
+        else{
+            self.listingView.priceLabel.text = [NSString stringWithFormat:@"Sold %@",dateString];
+        }
+    }
+    
+    [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,[UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
+    
+    [self.view addSubview:self.listingView];
+    
+    [self.listingView setAlpha:1.0];
+    self.listingBannerShowing = YES;
+    
+    [self.collectionView.collectionViewLayout invalidateLayoutWithContext:[JSQMessagesCollectionViewFlowLayoutInvalidationContext context]];
+    [self.collectionView reloadData];
+}
+
+
+-(void)bannerTapped{
+    //goto order summary
+    
+}
+
+-(void)setupPayPalView{
+    //setup intro PayPal message header
+    self.paypalView = [[UIView alloc]init];
+    [self.paypalView setFrame:CGRectMake(0,0, 300, 200)];
+    
+    //message
+    UILabel *introLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,0, 300, 200)];
+    introLabel.text = @"Send us a message to create a Support Ticket\n\nOne of our team will get back to you as soon as possible to resolve your issue\n\nPlease be as descriptive as possible and tell us everything that happened, including photos if required";
+    introLabel.numberOfLines = 0;
+    [introLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
+    introLabel.textAlignment = NSTextAlignmentCenter;
+    introLabel.textColor = [UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0];
+    [self.paypalView addSubview:introLabel];
+    
+    [self.view addSubview:self.paypalView];
+    
+    self.paypalView.center = CGPointMake(CGRectGetMidX([[UIScreen mainScreen]bounds]), CGRectGetMidY([[UIScreen mainScreen]bounds])-(50.0+self.inputToolbar.frame.size.height));
+    
+
+    self.shouldShowPayPalView = YES;
+}
+
+-(void)removePayPalView{
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.paypalView.alpha = 0.0;
+                     }
+                     completion:^(BOOL finished) {
+                         self.paypalView = nil;
+                         self.shouldShowPayPalView = NO;
+                     }];
+}
+-(void)hidePayPalView{
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.paypalView.alpha = 0.0;
+                     }
+                     completion:nil];
+}
+
+-(void)showPayPalView{
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.paypalView.alpha = 1.0;
+                     }
+                     completion:nil];
+}
+
+-(void)gotoListing{
+    ForSaleListing *vc = [[ForSaleListing alloc]init];
+    vc.listingObject = [self.convoObject objectForKey:@"listing"];
+    vc.pureWTS = YES;
+    vc.fromBuyNow = YES;
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+-(void)showAlert{
+    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Close Ticket" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self.convoObject setObject:@"closed" forKey:@"status"];
+        [self.convoObject setObject:[NSDate date] forKey:@"closedDate"];
+        [self.convoObject saveInBackground];
+        [self showAlertWithTitle:@"Support Ticket Closed" andMsg:@"If you've got any other issues just send us a message on here to reopen your support ticket"];
+    }]];
+    [self presentViewController:actionSheet animated:YES completion:nil];
+}
 @end
 

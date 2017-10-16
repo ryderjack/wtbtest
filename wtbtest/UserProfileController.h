@@ -47,6 +47,7 @@
 @property (nonatomic) BOOL saleMode; //from buy now tab
 @property (nonatomic) BOOL wantedMode; //user is not a seller so just display wanted & bumped
 @property (nonatomic) BOOL noDeals;
+@property (nonatomic) BOOL showOrderButton;
 
 //modes
 @property (nonatomic) BOOL fromSearch;
@@ -130,6 +131,8 @@
 
 //team bump messages
 @property (nonatomic) int messagesUnseen;
+@property (nonatomic) int supportUnseen;
+
 @property (nonatomic) BOOL showSnap;
 
 //ban mode for alert view
@@ -159,7 +162,6 @@
 //queries
 @property (nonatomic) BOOL loadingSales;
 @property (nonatomic) BOOL firstLoad; //prevent "no listings" showing whilst loading
-
 
 //browsing
 @property (nonatomic) BOOL tappedListing;

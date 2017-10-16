@@ -37,6 +37,10 @@
         [self.snapSeen setHidden:YES];
     }
     
+    if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
+        self.showOrderStuff = YES;
+    }
+    
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
@@ -65,15 +69,17 @@
         [self.unreadView setHidden:YES];
     }
     
+    if (self.unseenSupport == YES) {
+        //show unread icon in suport cell
+        [self.unreadSupportView setHidden:NO];
+    }
+    else{
+        [self.unreadSupportView setHidden:YES];
+    }
+    
     //dismiss Invite gesture
     self.tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
     self.tap.numberOfTapsRequired = 1;
-    
-//    //user will have seen the add prompt now so disable them seeing it
-//    if (![[PFUser currentUser]objectForKey:@"snapSeen"]) {
-//        [PFUser currentUser][@"snapSeen"] = @"YES";
-//        [[PFUser currentUser]saveInBackground];
-//    }
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{
@@ -121,6 +127,9 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
     if (section == 0) {
+        if (self.showOrderStuff) {
+            return 2;
+        }
         return 1;
     }
     else if (section == 1){
@@ -153,6 +162,9 @@
     else if (indexPath.section == 0){
         if (indexPath.row == 0) {
             return self.feedbackCell;
+        }
+        else if (indexPath.row == 1) {
+            return self.orderSupportCell;
         }
     }
     else if (indexPath.section == 2){
@@ -210,11 +222,21 @@
                 [[UIApplication sharedApplication] openURL: instaURL];
             }
         }
-
     }
     else if (indexPath.section == 0){
-
-        if (indexPath.row == 0) {
+        if (indexPath.row == 1) {
+            [Answers logCustomEventWithName:@"Support Pressed in Settings"
+                           customAttributes:@{}];
+            
+            //show the unread when any support tickets are unread
+            
+            //goto support tickets table view
+            segmentedTableView *vc = [[segmentedTableView alloc]init];
+            vc.supportMode = YES;
+            vc.delegate = self;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        else if (indexPath.row == 0) {
             //chat w/ Bump
             if (self.tappedTB) {
                 return;
@@ -606,4 +628,10 @@
     }
     return output;
 }
+
+-(void)dismissUnreadSupport{
+    NSLog(@"dismiss unread in profile controller");
+    [self.delegate supportTapped];
+}
+
 @end

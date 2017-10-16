@@ -1541,6 +1541,16 @@
         if ([selectionString isEqualToString:@"Proxy"]) {
             self.ignore2Pics = YES;
             
+            //disable instant buy for proxy category
+            [self.buySwitch setOn:NO];
+            [self.buySwitch setEnabled:NO];
+            
+            if (self.buyRows == 2) {
+                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:5];
+                self.buyRows--;
+                [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+            }
+        
             if (self.photostotal >= 2) {
                 self.imgFooterLabel.text = @"Pro tip: Hold down on images to rearrange";
             }
@@ -1552,6 +1562,7 @@
         }
         else{
             self.ignore2Pics = NO;
+            [self.buySwitch setEnabled:YES];
         }
         
         self.chooseCategroy.text = selectionString;
@@ -2082,8 +2093,14 @@
                 [forSaleItem setObject:self.country forKey:@"country"];
                 [forSaleItem setObject:self.countryCode forKey:@"countryCode"];
             }
-            else if ([[PFUser currentUser] objectForKey:@"country"]) {
-                [forSaleItem setObject:[[PFUser currentUser] objectForKey:@"country"] forKey:@"country"];
+            else{
+                //goto backup of using user's saved properties (hopefully)
+                if ([[PFUser currentUser] objectForKey:@"countryCode"]) {
+                    [forSaleItem setObject:[[PFUser currentUser] objectForKey:@"countryCode"] forKey:@"countryCode"];
+                }
+                if ([[PFUser currentUser] objectForKey:@"country"]) {
+                    [forSaleItem setObject:[[PFUser currentUser] objectForKey:@"country"] forKey:@"country"];
+                }
             }
             
             if ([[PFUser currentUser] objectForKey:@"continent"]) {
@@ -3022,7 +3039,7 @@
             self.banMode = NO;
             
             [self dismissViewControllerAnimated:YES completion:^{
-               //change to first tab to force a checkifbanned which will then log the user out
+               //change to first tab to force a check if banned which will then log the user out
                 AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
                 appDelegate.tabBarController.selectedIndex = 0;
             }];

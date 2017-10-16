@@ -1402,21 +1402,22 @@
         //check if instant buy is on & if countries are the same - if not, is global shipping enabled to show both anyway
         if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"]) {
             
-            if ([self.listingObject objectForKey:@"country"] && [[PFUser currentUser]objectForKey:@"country"]) {
+            if ([self.listingObject objectForKey:@"countryCode"] && [[PFUser currentUser]objectForKey:@"countryCode"]) {
                 
-                NSString *listingCountry = [self.listingObject objectForKey:@"country"];
-                NSString *userCountry = [[PFUser currentUser]objectForKey:@"country"];
+                //we compare country codes to decide on whether purchase is possible
+                NSString *listingCountry = [self.listingObject objectForKey:@"countryCode"];
+                NSString *userCountry = [[PFUser currentUser]objectForKey:@"countryCode"];
                 
                 //check if countries are the same
                 if ([listingCountry isEqualToString:userCountry]) {
                     //same so show both
-                    //                [self setupTwoBarButtons];
+                    [self setupTwoBarButtons];
                 }
                 else if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]){
-                    //                [self setupTwoBarButtons];
+                    [self setupTwoBarButtons];
                 }
                 else{
-                    //                [self setupMessageBarButton];
+                    [self setupMessageBarButton];
                 }
             }
             else{
@@ -1424,9 +1425,9 @@
             }
         }
         else{
-            //        [self setupMessageBarButton];
+            [self setupMessageBarButton];
         }
-        [self setupTwoBarButtons]; //CHANGE
+//        [self setupTwoBarButtons]; //CHANGE
     }
     
     self.setupButtons = YES;

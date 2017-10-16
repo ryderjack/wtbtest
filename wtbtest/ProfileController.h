@@ -10,15 +10,17 @@
 #import <MessageUI/MessageUI.h>
 #import "TOJRWebView.h"
 #import "inviteViewClass.h"
+#import "segmentedTableView.h"
 
 @class ProfileController;
 
 @protocol ProfileSettingsDelegate <NSObject>
 - (void)TeamBumpInboxTapped;
+- (void)supportTapped;
 - (void)snapSeen;
 @end
 
-@interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate, JRWebViewDelegate, inviteDelegate>
+@interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate, JRWebViewDelegate, inviteDelegate,segmentedViewDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *receivedOffers;
@@ -31,7 +33,10 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *feedbackCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *savedLaterCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *inviteCell;
+
 @property (weak, nonatomic) IBOutlet UIImageView *unreadView;
+@property (weak, nonatomic) IBOutlet UIImageView *unreadSupportView;
+
 @property (strong, nonatomic) IBOutlet UITableViewCell *termsCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *rateCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *snapchatCell;
@@ -40,15 +45,19 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *FAQCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *instaCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *logOutCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *orderSupportCell;
 
 //delegate
 @property (nonatomic, weak) id <ProfileSettingsDelegate> delegate;
 
 //modes
 @property (nonatomic) BOOL modal;
+@property (nonatomic) BOOL showOrderStuff;
 
 //Team Bump
 @property (nonatomic) BOOL unseenTBMsg;
+@property (nonatomic) BOOL unseenSupport;
+
 @property (nonatomic) BOOL showSnapDot;
 @property (nonatomic) BOOL tappedTB;
 

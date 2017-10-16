@@ -11,6 +11,9 @@
 #import <Crashlytics/Crashlytics.h>
 #import "ForSaleListing.h"
 #import "NavigationController.h"
+#import "ReviewsVC.h"
+#import "ChatWithBump.h"
+#import "OrderSummaryView.h"
 
 @interface CheckoutSummary ()
 
@@ -21,225 +24,66 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    if (self.orderSummaryMode) {
-        self.title = @"O R D E R";
-        
-        self.shippedSectionRows = 3;
-        
-        self.dateFormat = [[NSDateFormatter alloc] init];
-        [self.dateFormat setLocale:[NSLocale currentLocale]];
-        
-        self.trackingField.delegate = self;
-        self.courierField.delegate = self;
-
-        //don't need to fetch, have all info already - no pointers needed.
-        
-        //setup listing cell
-        self.itemTitleLabel.text = [self.orderObject objectForKey:@"itemTitle"];
-        
-        [self.itemImageView setFile:[self.orderObject objectForKey:@"itemImage"]];
-        [self.itemImageView loadInBackground];
-        
-        self.firstItemPriceLabel.text = @"";
-        
-        //setup next steps
-        
-        //reviews
-        if (self.isBuyer) {
-            //user is buyer, to do's:
-            
-            //1. leave feedback
-            if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
-                self.leftReviewLabel.text = @"Leave review";
-            }
-            else{
-                self.leftReviewLabel.text = @"Left review";
-                [self.leftReviewLabel setTextColor:[UIColor blackColor]];
-            }
-            
-            if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
-                self.gotReviewLabel.text = @"-";
-            }
-            else{
-                self.gotReviewLabel.text = @"View";
-            }
-        }
-        else{
-            //user is seller, to do's:
-            if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
-                self.leftReviewLabel.text = @"Leave review";
-            }
-            else{
-                self.leftReviewLabel.text = @"Left review";
-                [self.leftReviewLabel setTextColor:[UIColor blackColor]];
-            }
-            
-            if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
-                self.gotReviewLabel.text = @"-";
-            }
-            else{
-                self.gotReviewLabel.text = @"View";
-            }
-        }
-        
-        //shipping
-        if ([[self.orderObject objectForKey:@"shipped"] isEqualToString:@"YES"]) {
-            
-            [self.dateFormat setDateFormat:@"dd MMM"];
-            NSDate *shippedDate = [self.orderObject objectForKey:@"shippedDate"];
-            
-            self.shippedLabel.text = [self.dateFormat stringFromDate:shippedDate];
-            [self.shippedLabel setTextColor:[UIColor blackColor]];
-            
-            //show tracking cells - courier and tracking ID
-            if (self.isBuyer == YES){
-                //only show the cells that have been filled in to the buyer but show seller the empty fields to fill in
-                if ([self.orderObject objectForKey:@"trackingId"]) {
-                    NSString *tracking = [self.orderObject objectForKey:@"trackingId"];
-                    
-                    if (![tracking isEqualToString:@""]) {
-                        self.showtracking = YES;
-                        self.trackingField.text = tracking;
-                        self.shippedSectionRows++;
-                    }
-                }
-                if ([self.orderObject objectForKey:@"courierName"]) {
-                    NSString *courier = [self.orderObject objectForKey:@"courierName"];
-                    
-                    if (![courier isEqualToString:@""]) {
-                        self.showCourier = YES;
-                        self.courierField.text = courier;
-                        self.shippedSectionRows++;
-                    }
-                }
-            }
-            else{
-                self.shippedSectionRows = 5;
-                if ([self.orderObject objectForKey:@"trackingId"]) {
-                    NSString *tracking = [self.orderObject objectForKey:@"trackingId"];
-                    self.trackingField.text = tracking;
-                }
-                if ([self.orderObject objectForKey:@"courierName"]) {
-                    NSString *courier = [self.orderObject objectForKey:@"courierName"];
-                    self.courierField.text = courier;
-                }
-
-            }
-            self.shipped = YES;
-            [self.tableView reloadData];
-        }
-        else{
-            //not shipped
-            if (self.isBuyer != YES){
-                self.canShip = YES;
-                self.shippedLabel.text = @"Mark as shipped";
-            }
-            else{
-                self.shippedLabel.text = @"Awaiting shipment";
-                [self.shippedLabel setTextColor:[UIColor blackColor]];
-            }
-        }
-        
-        //setup price cells
-        self.totalLabel.text = @"Total Paid";
-        self.itemPriceLabel.text = [self.orderObject objectForKey:@"salePriceLabel"];
-        self.shippingPriceLabel.text = [self.orderObject objectForKey:@"shippingPriceLabel"];
-        self.totalPriceLabel.text = [self.orderObject objectForKey:@"totalPriceLabel"];
-        
-        self.listingObject = [self.orderObject objectForKey:@"listing"];
-        
-        [self.dateFormat setDateFormat:@"dd MMM YYYY"];
-
-        if (self.isBuyer) {
-            self.trackingField.userInteractionEnabled = NO;
-            self.courierField.userInteractionEnabled = NO;
-
-            self.messageLabel.text = @"Message Seller";
-            self.conditionLabel.text = [NSString stringWithFormat:@"Purchased %@", [self.dateFormat stringFromDate:self.orderObject.createdAt]];
-            self.otherUser = [self.orderObject objectForKey:@"sellerUser"];
-
-        }
-        else{
-            self.trackingField.userInteractionEnabled = YES;
-            self.courierField.userInteractionEnabled = YES;
-
-            self.messageLabel.text = @"Message Buyer";
-            self.conditionLabel.text = [NSString stringWithFormat:@"Sold %@", [self.dateFormat stringFromDate:self.orderObject.createdAt]];
-            self.otherUser = [self.orderObject objectForKey:@"buyerUser"];
-        }
-        
-        [self.otherUser fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                self.fetchedUser = YES;
-            }
-            else{
-                NSLog(@"error fetching other user %@", error);
-            }
-        }];
-        
+    self.title = @"C H E C K O U T";
+    
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
+    self.navigationItem.leftBarButtonItem = cancelButton;
+    
+    self.itemTitleLabel.text = [self.listingObject objectForKey:@"itemTitle"];
+    self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
+    
+    [self.itemImageView setFile:[self.listingObject objectForKey:@"thumbnail"]];
+    [self.itemImageView loadInBackground];
+    
+    if (self.successMode) {
+        //set shipping price & total price
+        self.itemPriceLabel.text = self.itemPriceText;
+        self.shippingPriceLabel.text = self.shippingText;
+        self.totalPriceLabel.text = self.totalPriceText;
     }
     else{
-        self.title = @"C H E C K O U T";
+        self.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol, self.salePrice];
         
-        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
-        self.navigationItem.leftBarButtonItem = cancelButton;
+        self.listingCountryCode = [self.listingObject objectForKey:@"countryCode"];
         
-        self.itemTitleLabel.text = [self.listingObject objectForKey:@"itemTitle"];
-        self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
-        
-        [self.itemImageView setFile:[self.listingObject objectForKey:@"thumbnail"]];
-        [self.itemImageView loadInBackground];
-        
-        if (self.successMode) {
-            //set shipping price & total price
-            self.itemPriceLabel.text = self.itemPriceText;
-            self.shippingPriceLabel.text = self.shippingText;
-            self.totalPriceLabel.text = self.totalPriceText;
-        }
-        else{
-            self.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol, self.salePrice];
+        if ([[[PFUser currentUser] objectForKey:@"enteredAddress"]isEqualToString:@"YES"] && [[PFUser currentUser] objectForKey:@"shippingCountryCode"]) {
+            self.addAddress = NO;
             
-            self.listingCountryCode = [self.listingObject objectForKey:@"countryCode"];
+            //now set address label
+            self.addressLabel.text = [[PFUser currentUser] objectForKey:@"addressString"];
             
-            if ([[[PFUser currentUser] objectForKey:@"enteredAddress"]isEqualToString:@"YES"] && [[PFUser currentUser] objectForKey:@"shippingCountryCode"]) {
-                self.addAddress = NO;
-                
-                //now set address label
-                self.addressLabel.text = [[PFUser currentUser] objectForKey:@"addressString"];
-                
-                NSString *countryCode = [[PFUser currentUser] objectForKey:@"shippingCountryCode"];
-                
-                //now calc shipping based on this address
-                float shipping;
-                //recalc shipping price & total price based on country
-                if ([self.listingCountryCode.lowercaseString isEqualToString:countryCode.lowercaseString]) {
-                    //national pricing
-                    shipping = [[self.listingObject objectForKey:@"nationalShippingPrice"]floatValue];
-                }
-                else{
-                    //int. pricing
-                    shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
-                }
-                
-                self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
-                self.totalPrice = shipping + self.salePrice;
-                self.totalPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,self.totalPrice];
-                
-                //enable pay button
-                [self.payButton setEnabled:YES];
-                self.payButton.alpha = 1;
+            NSString *countryCode = [[PFUser currentUser] objectForKey:@"shippingCountryCode"];
+            
+            //now calc shipping based on this address
+            float shipping;
+            //recalc shipping price & total price based on country
+            if ([self.listingCountryCode.lowercaseString isEqualToString:countryCode.lowercaseString]) {
+                //national pricing
+                shipping = [[self.listingObject objectForKey:@"nationalShippingPrice"]floatValue];
             }
             else{
-                self.addAddress = YES;
-                self.shippingPriceLabel.text = @"-";
-                self.totalPriceLabel.text = @"-";
-                
-                [self.payButton setEnabled:NO];
-                self.payButton.alpha = 0.5;
+                //int. pricing
+                shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
             }
             
-            [self.tableView reloadData];
+            self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+            self.totalPrice = shipping + self.salePrice;
+            self.totalPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,self.totalPrice];
+            
+            //enable pay button
+            [self.payButton setEnabled:YES];
+            self.payButton.alpha = 1;
         }
+        else{
+            self.addAddress = YES;
+            self.shippingPriceLabel.text = @"-";
+            self.totalPriceLabel.text = @"-";
+            
+            [self.payButton setEnabled:NO];
+            self.payButton.alpha = 0.5;
+        }
+        
+        [self.tableView reloadData];
     }
 
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
@@ -258,14 +102,6 @@
     self.spaceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.footerCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.congratsHeader.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.reviewLeftCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.reviewGotCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.shippedCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.messageCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.reportCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.refundCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.courierCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.trackingCell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     self.changeAddressPressed.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     self.paypalLabel.titleLabel.numberOfLines = 0;
@@ -279,29 +115,27 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    if (!self.orderSummaryMode) {
-        //show pay button but disabled
-        if (!self.payButton) {
-            self.payButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
-            [self.payButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
-            
-            if (self.successMode) {
-                [self.payButton setTitle:@"View Order" forState:UIControlStateNormal];
-                [self.payButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
-                [self.payButton addTarget:self action:@selector(viewOrderPressed) forControlEvents:UIControlEventTouchUpInside];
-            }
-            else{
-                [self.payButton setTitle:@"Pay with PayPal" forState:UIControlStateNormal];
-                [self.payButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
-                [self.payButton addTarget:self action:@selector(payPressed) forControlEvents:UIControlEventTouchUpInside];
-            }
-            
-            self.payButton.alpha = 0.0f;
-            [[UIApplication sharedApplication].keyWindow addSubview:self.payButton];
+    //show pay button but disabled
+    if (!self.payButton) {
+        self.payButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+        [self.payButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
+        
+        if (self.successMode) {
+            [self.payButton setTitle:@"View Order" forState:UIControlStateNormal];
+            [self.payButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
+            [self.payButton addTarget:self action:@selector(viewOrderPressed) forControlEvents:UIControlEventTouchUpInside];
+        }
+        else{
+            [self.payButton setTitle:@"Pay with PayPal" forState:UIControlStateNormal];
+            [self.payButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+            [self.payButton addTarget:self action:@selector(payPressed) forControlEvents:UIControlEventTouchUpInside];
         }
         
-        [self showBarButton];
+        self.payButton.alpha = 0.0f;
+        [[UIApplication sharedApplication].keyWindow addSubview:self.payButton];
     }
+    
+    [self showBarButton];
 }
 
 
@@ -326,17 +160,18 @@
 
 - (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    if (self.orderSummaryMode) {
-        if (section == 0){
+    if (self.successMode) {
+        if (section == 0  || section == 1){
             return 0.01f;
         }
         else{
-            return 35.0;
+            return 25.0f;
         }
     }
     else{
-        if (self.successMode) {
-            if (section == 0  || section == 1){
+        if (self.addAddress) {
+            //no gap between 0-1
+            if (section == 0 || section == 1){
                 return 0.01f;
             }
             else{
@@ -344,22 +179,11 @@
             }
         }
         else{
-            if (self.addAddress) {
-                //no gap between 0-1
-                if (section == 0 || section == 1){
-                    return 0.01f;
-                }
-                else{
-                    return 25.0f;
-                }
+            if (section == 0){
+                return 0.01f;
             }
             else{
-                if (section == 0){
-                    return 0.01f;
-                }
-                else{
-                    return 25.0f;
-                }
+                return 25.0f;
             }
         }
     }
@@ -370,201 +194,69 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    
-    if (self.orderSummaryMode) {
-        if (section == 0){
-            return 1;
-        }
-        else if (section == 1){
-            return self.shippedSectionRows;
-        }
-        else if (section == 2){
-            return 3;
-        }
-        else if (section == 3){
-            if (self.isBuyer) {
-                return 2;
-            }
-            else{
-                return 3;
-            }
+    if (section == 0){
+        return 1;
+    }
+    else if (section == 1){
+        return 1;
+    }
+    else if (section == 2){
+        return 2;
+    }
+    else if (section == 3){
+        if (self.successMode) {
+            return 2;
         }
         else{
-            return 0;
+            return 3;
         }
     }
     else{
-        if (section == 0){
-            return 1;
-        }
-        else if (section == 1){
-            return 1;
-        }
-        else if (section == 2){
-            return 2;
-        }
-        else if (section == 3){
-            if (self.successMode) {
-                return 2;
-            }
-            else{
-                return 3;
-            }
-        }
-        else{
-            return 0;
-        }
+        return 0;
     }
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (self.orderSummaryMode) {
-        if (indexPath.section == 0){
-            return self.itemCell;
+    if (indexPath.section == 0){
+        if (self.successMode) {
+            return self.congratsHeader;
         }
-        else if (indexPath.section == 1){
-            if (indexPath.row == 0) {
-                return self.shippedCell;
-            }
-            
-            if (self.shipped) {
-                if (self.shippedSectionRows == 5) {
-                    if (indexPath.row == 1) {
-                        return self.trackingCell;
-                    }
-                    else if (indexPath.row == 2) {
-                        return self.courierCell;
-                    }
-                    else if (indexPath.row == 3) {
-                        return self.reviewLeftCell;
-                    }
-                    else if (indexPath.row == 4) {
-                        return self.reviewGotCell;
-                    }
-                }
-                else if (self.showCourier && !self.showtracking){
-                    if (indexPath.row == 1) {
-                        return self.courierCell;
-                    }
-                    else if (indexPath.row == 2) {
-                        return self.reviewLeftCell;
-                    }
-                    else if (indexPath.row == 3) {
-                        return self.reviewGotCell;
-                    }
-                }
-                else if (!self.showCourier && self.showtracking){
-                    if (indexPath.row == 1) {
-                        return self.trackingCell;
-                    }
-                    else if (indexPath.row == 2) {
-                        return self.reviewLeftCell;
-                    }
-                    else if (indexPath.row == 3) {
-                        return self.reviewGotCell;
-                    }
-                }
-                else{
-                    if (indexPath.row == 1) {
-                        return self.trackingCell;
-                    }
-                    else if (indexPath.row == 2) {
-                        return self.courierCell;
-                    }
-                    else if (indexPath.row == 3) {
-                        return self.reviewLeftCell;
-                    }
-                    else if (indexPath.row == 4) {
-                        return self.reviewGotCell;
-                    }
-                }
-            }
-            else{
-                if (indexPath.row == 1) {
-                    return self.reviewLeftCell;
-                }
-                else if (indexPath.row == 2) {
-                    return self.reviewGotCell;
-                }
-            }
+        else if (self.addAddress) {
+            return self.addShippingAddressCell;
         }
-        else if (indexPath.section == 2){
-            if (indexPath.row == 0) {
-                return self.itemPriceCell;
-            }
-            else if (indexPath.row == 1) {
-                return self.shippingPriceCell;
-            }
-            else if (indexPath.row == 2) {
-                return self.totalPriceCell;
-            }
-        }
-        else if (indexPath.section == 3){
-            if (self.isBuyer) {
-                if (indexPath.row == 0) {
-                    return self.messageCell;
-                }
-                else if (indexPath.row == 1) {
-                    return self.reportCell;
-                }
-            }
-            else{
-                if (indexPath.row == 0) {
-                    return self.messageCell;
-                }
-                else if (indexPath.row == 1) {
-                    return self.refundCell;
-                }
-                else if (indexPath.row == 2) {
-                    return self.reportCell;
-                }
-            }
-
+        else{
+            return self.addressCell;
         }
     }
-    else{
-        if (indexPath.section == 0){
-            if (self.successMode) {
-                return self.congratsHeader;
-            }
-            else if (self.addAddress) {
-                return self.addShippingAddressCell;
-            }
-            else{
-                return self.addressCell;
+    else if (indexPath.section == 1){
+        return self.itemCell;
+    }
+    else if (indexPath.section == 2){
+        if (indexPath.row == 0) {
+            return self.itemPriceCell;
+        }
+        else{
+            return self.shippingPriceCell;
+        }
+    }
+    else if (indexPath.section == 3){
+        if (indexPath.row == 0) {
+            return self.totalPriceCell;
+        }
+        
+        if (self.successMode) {
+            if (indexPath.row == 1) {
+                return self.spaceCell;
             }
         }
-        else if (indexPath.section == 1){
-            return self.itemCell;
-        }
-        else if (indexPath.section == 2){
-            if (indexPath.row == 0) {
-                return self.itemPriceCell;
+        else{
+            if (indexPath.row == 1) {
+                return self.footerCell;
             }
-            else{
-                return self.shippingPriceCell;
+            else if (indexPath.row == 2) {
+                return self.spaceCell;
             }
-        }
-        else if (indexPath.section == 3){
-            if (indexPath.row == 0) {
-                return self.totalPriceCell;
-            }
-            
-            if (self.successMode) {
-                if (indexPath.row == 1) {
-                    return self.spaceCell;
-                }
-            }
-            else{
-                if (indexPath.row == 1) {
-                    return self.footerCell;
-                }
-                else if (indexPath.row == 2) {
-                    return self.spaceCell;
-                }
-            }
-            
         }
     }
 
@@ -572,87 +264,37 @@
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
-    if (self.orderSummaryMode) {
-        
-        if (indexPath.section == 0) {
-            //goto listing
-            [Answers logCustomEventWithName:@"Tapped Listing Checkout"
-                           customAttributes:@{}];
-            
-            ForSaleListing *vc = [[ForSaleListing alloc]init];
-            vc.listingObject = self.listingObject;
-            vc.source = @"checkout";
-            vc.fromBuyNow = YES;
-            vc.pureWTS = YES;
-            [self.navigationController pushViewController:vc animated:YES];
-        }
-        else if (indexPath.section == 1) {
-            if (indexPath.row == 0) {
-                [self markAsShipped];
-            }
-        }
-        
-        else if (indexPath.section == 3) {
-            if (indexPath.row == 0) {
-                [self setupMessages];
-            }
-            else if (indexPath.row == 1) {
-                if (self.isBuyer) {
-                    [self reportProblem];
-                }
-                else{
-                    [self refund];
-                }
-            }
-            else if (indexPath.row == 2) {
-                [self reportProblem];
-            }
-        }
-    }
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    if (self.orderSummaryMode) {
-        if (indexPath.section == 0){
-            return 87;
+    if (indexPath.section == 0){
+        if (self.successMode) {
+            return 207;
         }
-        else if (indexPath.section == 1 || indexPath.section == 2){
-            return 61;
-        }
-        else if (indexPath.section == 3){
-            return 61;
-        }
+        return 137;
     }
-    else{
-        if (indexPath.section == 0){
-            if (self.successMode) {
-                return 207;
-            }
-            return 137;
-        }
-        else if (indexPath.section == 1){
-            return 87;
-        }
-        else if (indexPath.section == 2){
+    else if (indexPath.section == 1){
+        return 87;
+    }
+    else if (indexPath.section == 2){
+        return 61;
+    }
+    else if (indexPath.section == 3){
+        if (indexPath.row == 0) {
             return 61;
         }
-        else if (indexPath.section == 3){
-            if (indexPath.row == 0) {
-                return 61;
+        
+        if (self.successMode) {
+            if (indexPath.row == 1) {
+                return 60;
             }
-            
-            if (self.successMode) {
-                if (indexPath.row == 1) {
-                    return 60;
-                }
+        }
+        else{
+            if (indexPath.row == 1) {
+                return 118;
             }
-            else{
-                if (indexPath.row == 1) {
-                    return 118;
-                }
-                else if (indexPath.row == 2) {
-                    return 60;
-                }
+            else if (indexPath.row == 2) {
+                return 60;
             }
         }
     }
@@ -832,7 +474,6 @@
 
 #pragma mark - HUD
 
-
 -(void)showHUD{
     
     if (!self.spinner) {
@@ -864,226 +505,18 @@
 }
 
 -(void)viewOrderPressed{
-    
-}
-
-#pragma mark - order summary only buttons
-
--(void)setupMessages{
-    if (!self.fetchedUser || self.settingUpMessages || !self.otherUser) {
-        NSLog(@"returning!");
-        return;
-    }
-    
-    self.settingUpMessages = YES;
-    
-    [self showHUD];
-    
-    PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
-    
-    if (self.isBuyer) {
-        [convoQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
-        [convoQuery whereKey:@"convoId" equalTo: [NSString stringWithFormat:@"%@%@%@",self.otherUser.objectId,[PFUser currentUser].objectId, self.listingObject.objectId]];
-    }
-    else{
-        [convoQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-        [convoQuery whereKey:@"convoId" equalTo: [NSString stringWithFormat:@"%@%@%@",[PFUser currentUser].objectId,self.otherUser.objectId, self.listingObject.objectId]];
-    }
-        
-    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            //convo exists, goto that one but pretype a message like "I'm interested in your Supreme bogo" etc.
-            MessageViewController *vc = [[MessageViewController alloc]init];
-            vc.convoId = [object objectForKey:@"convoId"];
-            vc.convoObject = object;
-            vc.listing = self.listingObject;
-            vc.otherUser = self.otherUser;
-            vc.otherUserName = @"";
-            
-            if (self.isBuyer) {
-                vc.userIsBuyer = YES;
-            }
-            
-            vc.pureWTS = YES;
-            
-            [self hideHUD];
-            self.settingUpMessages = NO;
-
-            [self.navigationController pushViewController:vc animated:YES];            
-        }
-        else{
-            NSLog(@"create a new convo");
-            
-            //create a new convo and goto it
-            PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
-
-            convoObject[@"wtsListing"] = self.listingObject;
-            convoObject[@"pureWTS"] = @"YES";
-            
-            convoObject[@"totalMessages"] = @0;
-            convoObject[@"buyerUnseen"] = @0;
-            convoObject[@"sellerUnseen"] = @0;
-            convoObject[@"profileConvo"] = @"NO";
-            [convoObject setObject:@"NO" forKey:@"buyerDeleted"];
-            [convoObject setObject:@"NO" forKey:@"sellerDeleted"];
-            
-            //save additional stuff onto convo object for faster inbox loading
-            if ([self.orderObject objectForKey:@"itemImage"]) {
-                convoObject[@"thumbnail"] = [self.orderObject objectForKey:@"itemImage"];
-            }
-            
-            NSLog(@"create a new convo 1 %@", self.otherUser);
-
-            if (self.isBuyer) {
-                convoObject[@"buyerUser"] = [PFUser currentUser];
-                convoObject[@"sellerUser"] = self.otherUser;
-                convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",self.otherUser.objectId,[PFUser currentUser].objectId, self.listingObject.objectId];
-                
-                convoObject[@"sellerUsername"] = self.otherUser.username;
-                convoObject[@"sellerId"] = self.otherUser.objectId;
-                
-                if ([self.otherUser objectForKey:@"picture"]) {
-                    convoObject[@"sellerPicture"] = [self.otherUser objectForKey:@"picture"];
-                }
-                
-                convoObject[@"buyerUsername"] = [PFUser currentUser].username;
-                convoObject[@"buyerId"] = [PFUser currentUser].objectId;
-                
-                if ([[PFUser currentUser] objectForKey:@"picture"]) {
-                    convoObject[@"buyerPicture"] = [[PFUser currentUser] objectForKey:@"picture"];
-                }
-            }
-            else{
-                convoObject[@"buyerUser"] = self.otherUser;
-                convoObject[@"sellerUser"] = [PFUser currentUser];
-                convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@%@",[PFUser currentUser].objectId, self.otherUser.objectId, self.listingObject.objectId];
-                
-                convoObject[@"sellerUsername"] = [PFUser currentUser].username;
-                convoObject[@"sellerId"] = [PFUser currentUser].objectId;
-                
-                if ([[PFUser currentUser] objectForKey:@"picture"]) {
-                    convoObject[@"sellerPicture"] = [[PFUser currentUser] objectForKey:@"picture"];
-                }
-                
-                convoObject[@"buyerUsername"] = self.otherUser.username;
-                convoObject[@"buyerId"] = self.otherUser.objectId;
-                
-                if ([self.otherUser objectForKey:@"picture"]) {
-                    convoObject[@"buyerPicture"] = [self.otherUser objectForKey:@"picture"];
-                }
-            }
-            
-            NSLog(@"create a new convo 2");
-
-            [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                if (succeeded) {
-                    NSLog(@"saved %@    user: %@    listing: %@", convoObject,self.otherUser, self.listingObject);
-                    
-                    //saved
-                    MessageViewController *vc = [[MessageViewController alloc]init];
-                    vc.convoId = [NSString stringWithFormat:@"%@%@%@",self.otherUser.objectId,[PFUser currentUser].objectId, self.listingObject.objectId];
-                    vc.convoObject = object;
-                    vc.listing = self.listingObject;
-                    vc.otherUser = self.otherUser;
-                    vc.otherUserName = @"";
-
-                    if (self.isBuyer) {
-                        vc.userIsBuyer = YES;
-                    }
-                    
-                    vc.pureWTS = YES;
-                    
-                    [self hideHUD];
-                    self.settingUpMessages = NO;
-                    
-                    [self.navigationController pushViewController:vc animated:YES];
-                }
-                else{
-                    NSLog(@"error saving convo %@", error);
-                    [self hideHUD];
-                    self.settingUpMessages = NO;
-                }
-            }];
-        }
-    }];
-}
-
--(void)refund{
-}
-
--(void)reportProblem{
-}
-
--(void)markAsShipped{
-    
-    if (self.canShip) {
-        self.canShip = NO;
-        [self showHUD];
-        [self.orderObject setObject:@"YES" forKey:@"shipped"];
-        [self.orderObject setObject:[NSDate date] forKey:@"shippedDate"];
-        [self.orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            if (succeeded) {
-                [self hideHUD];
-
-                //CHANGE send a push to the buyer
-
-                [self.dateFormat setDateFormat:@"dd-MMM"];
-                NSDate *shippedDate = [NSDate date];
-
-                self.shippedLabel.text = [self.dateFormat stringFromDate:shippedDate];
-                [self.shippedLabel setTextColor:[UIColor blackColor]];
-
-                //now show add tracking ID & Courier cells
-                self.shipped = YES;
-                self.shippedSectionRows = 5;
-
-                NSIndexPath *trackingPath = [NSIndexPath indexPathForRow:1 inSection:1];
-                NSIndexPath *courierPath = [NSIndexPath indexPathForRow:2 inSection:1];
-                [self.tableView insertRowsAtIndexPaths:@[trackingPath, courierPath] withRowAnimation:UITableViewRowAnimationFade];
-
-            }
-            else{
-                [self hideHUD];
-                self.canShip = YES;
-                NSLog(@"error marking as shipped");
-            }
-        }];
-    }
-}
-
--(void)textFieldDidEndEditing:(UITextField *)textField{
-    self.changedShippingInfo = YES;
-}
-
--(BOOL)textFieldShouldReturn:(UITextField *)textField{
-    [textField resignFirstResponder];
-    return YES;
-}
-
--(void)viewDidDisappear:(BOOL)animated{
-    [super viewDidDisappear:animated];
-    
-    //check if need to save courier / tracking
-    if (self.changedShippingInfo) {
-        [self.orderObject setObject:self.courierField.text forKey:@"courierName"];
-        [self.orderObject setObject:self.trackingField.text forKey:@"trackingId"];
-        [self.orderObject saveInBackground];
-    }
-}
-
--(void)leaveReviewPressed{
-    FeedbackController *vc = [[FeedbackController alloc]init];
-    vc.delegate = self;
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-    vc.IDUser = self.otherUser.objectId;
+    OrderSummaryView *vc = [[OrderSummaryView alloc]init];
     vc.isBuyer = self.isBuyer;
-    vc.messageNav = self.navigationController;
-    [self presentViewController:nav animated:YES completion:nil];
+    vc.orderObject = self.orderObject;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 
-#pragma mark - feedback delegate
-
--(void)leftReview{
+-(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
     
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 @end

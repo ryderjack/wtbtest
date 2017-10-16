@@ -168,12 +168,18 @@
         if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {
             NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:YES];
             [timer fire];
-            NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
+            NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:60.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
             [timer2 fire];
+            
+            if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
+                NSTimer *timer3 = [NSTimer scheduledTimerWithTimeInterval:120.0 target:self selector:@selector(checkForSupportMessages) userInfo:nil repeats:YES];
+                [timer3 fire];
+            }
         }
         else{
             [self checkMesages];
             [self checkForTBMessages];
+            [self checkForSupportMessages];
         }
     }
     else{
@@ -471,16 +477,8 @@
                 [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
             }
             
-            //check if seen snap, if not add badge to user tab
-//            if (![[PFUser currentUser]objectForKey:@"snapSeen"]) {
-//                UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[4];
-//                int currentTabValue = [itemToBadge.badgeValue intValue];
-//                int newTabValue = currentTabValue + 1;
-//                itemToBadge.badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
-//                
-//                //to trigger the dot in settings
-//                self.profileView.showSnap = YES;
-//            }
+            //call this after check for TB to make sure we have the correct tab bar badge
+            [self checkForSupportMessages];
         }
         else{
             if (error.code == 209) {
@@ -488,6 +486,34 @@
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"invalidSessionNotification" object:nil];
             }
             NSLog(@"error finding team bump messages %@", error);
+        }
+    }];
+}
+
+-(void)checkForSupportMessages{
+    if (![PFUser currentUser]) {
+        return;
+    }
+    PFQuery *convosQuery = [PFQuery queryWithClassName:@"supportConvos"];
+    [convosQuery whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
+    [convosQuery whereKey:@"userUnseen" greaterThan:@0];
+    [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            int count = (int)[objects count];
+            self.profileView.supportUnseen = count;
+
+            if (objects.count > 0) {
+                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"1"]]; //even if have multiple unseen keep badge @ 1
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"NewTBMessage" object:nil];
+            }
+
+        }
+        else{
+            if (error.code == 209) {
+                NSLog(@"invalid so logout");
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"invalidSessionNotification" object:nil];
+            }
+            NSLog(@"error finding support messages %@", error);
         }
     }];
 }
@@ -507,7 +533,7 @@
     
     NSDictionary *localUserInfo = notification.userInfo;
 //    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
-    NSString *itemTitle = [localUserInfo valueForKey:@"itemTitle"];
+//    NSString *itemTitle = [localUserInfo valueForKey:@"itemTitle"];
     
     if ([notification.alertBody containsString:@"What's your next cop? Find it on Bump 👊"]){
         [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
@@ -546,6 +572,8 @@
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     [self checkMesages];
     [self checkForTBMessages];
+    [self checkForSupportMessages];
+    
     NSString *bumpedStatus = [userInfo objectForKey:@"bumpRequest"];
     NSString *listing = [userInfo objectForKey:@"listingID"];
     
@@ -562,6 +590,10 @@
         
         if ([[strMsg lowercaseString] hasPrefix:@"team bump"]) {
             [self checkForTBMessages];
+            self.tabBarController.selectedIndex = 3;
+        }
+        else if([[strMsg lowercaseString] hasPrefix:@"bump support"]) {
+            [self checkForSupportMessages];
             self.tabBarController.selectedIndex = 3;
         }
         else if([strMsg containsString:@"liked your wanted listing"]){
@@ -850,6 +882,7 @@
     
     [self checkMesages];
     [self checkForTBMessages];
+    [self checkForSupportMessages];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {

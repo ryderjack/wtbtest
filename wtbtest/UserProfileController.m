@@ -103,7 +103,10 @@
     
     if (self.tabMode == YES) {
         self.user = [PFUser currentUser];
+        
+        //used for Team Bump & Support messages
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(newTBMessage) name:@"NewTBMessage" object:nil];
+
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshVeri) name:@"refreshVeri" object:nil];
         
         //for first TB message that's sent went user registers
@@ -209,7 +212,6 @@
                 [self.collectionView deleteItemsAtIndexPaths:@[self.lastSelected]];
             }
         }
-        
     }
     
     //protect against (null) user crash
@@ -256,8 +258,13 @@
                             [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restrcited this user's account for violating our terms"];
                         }
                     }];
-                    
-                    
+                }
+                else{
+                    //tab mode
+                    if ([[self.user objectForKey:@"orderNumber"]intValue] > 0) {
+                        self.showOrderButton = YES;
+                        [self.myBar addSubview:self.ordersButton];
+                    }
                 }
                 
                 [self loadBumpedListings];
@@ -273,6 +280,11 @@
                                                     NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
                     
                     [self.userImageView setImageWithString:self.user.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
+                    
+                    NSDictionary *textAttributes1 = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:10],
+                                                    NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+                    
+                    [self.smallImageView setImageWithString:self.user.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes1];
                 }
                 else{
                     PFFile *img = [self.user objectForKey:@"picture"];
@@ -412,10 +424,7 @@
                         [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
                         [self.reviewsButton setHidden:YES];
                     }
-                    else if (starNumber == 0) {
-                        [self.starImageView setImage:[UIImage imageNamed:@"0star"]];
-                    }
-                    else if (starNumber == 1){
+                    if (starNumber == 1){
                         [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
                     }
                     else if (starNumber == 2){
@@ -1642,12 +1651,10 @@
     }
     [self.myBar addSubview:self.backButton];
     
-    //CHANGE add in check for order number here
     if (self.tabMode) {
         self.ordersButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
         [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon"] forState:UIControlStateNormal];
         [self.ordersButton addTarget:self action:@selector(ordersButtonPressed) forControlEvents:UIControlEventTouchUpInside];
-        [self.myBar addSubview:self.ordersButton];
     }
     
     //facebook button
@@ -1677,7 +1684,7 @@
     
     //small imageview
     self.smallImageView = [[PFImageView alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
-    [self.smallImageView setBackgroundColor:[UIColor lightGrayColor]];
+    [self.smallImageView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     [self setImageBorder:self.smallImageView];
     [self.myBar addSubview:self.smallImageView];
     
@@ -1833,14 +1840,14 @@
     //small image view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesSmallImage = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesSmallImage.size = self.smallImageView.frame.size;
-    initialLayoutAttributesSmallImage.frame = CGRectMake(55, 25, 30, 30);
+    initialLayoutAttributesSmallImage.frame = CGRectMake(100, 25, 30, 30);
     initialLayoutAttributesSmallImage.alpha = 0.0f;
     [self.smallImageView addLayoutAttributes:initialLayoutAttributesSmallImage forProgress:0.0];
     
     //small username /loc view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesSmallName = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesSmallName.size = self.smallNameAndLoc.frame.size;
-    initialLayoutAttributesSmallName.frame = CGRectMake(90, 25, 200, 30);
+    initialLayoutAttributesSmallName.frame = CGRectMake(135, 25, 200, 30);
     initialLayoutAttributesSmallName.alpha = 0.0f;
     [self.smallNameAndLoc addLayoutAttributes:initialLayoutAttributesSmallName forProgress:0.0];
     
@@ -1857,7 +1864,7 @@
     //orders button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesOrdersButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesOrdersButton.size = self.ordersButton.frame.size;
-    initialLayoutAttributesOrdersButton.frame = CGRectMake(50, 25, 30, 30);
+    initialLayoutAttributesOrdersButton.frame = CGRectMake(55, 25, 30, 30);
     
     //fb button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesfbButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
@@ -2115,10 +2122,15 @@
         NSLog(@"unseen yes");
         profile.unseenTBMsg = YES;
     }
-    if (self.showSnap == YES) {
-        profile.showSnapDot = YES;
-        self.showSnap = NO;
+    
+    if (self.supportUnseen > 0) {
+        NSLog(@"unseen support");
+        profile.unseenSupport = YES;
     }
+//    if (self.showSnap == YES) {
+//        profile.showSnapDot = YES;
+//        self.showSnap = NO;
+//    }
     
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:profile];
     [self presentViewController:nav animated:YES completion:nil];
@@ -2134,8 +2146,21 @@
 }
 
 -(void)TeamBumpInboxTapped{
-    [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
-    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+    self.messagesUnseen = 0;
+    
+    if (self.supportUnseen == 0) {
+        [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+    }
+}
+
+-(void)supportTapped{
+    self.supportUnseen = 0;
+
+    if (self.messagesUnseen == 0) {
+        [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+    }
 }
 
 //-(void)snapSeen{
@@ -2251,16 +2276,16 @@
 -(void)retrieveFacebookData{
     
     //change verified image
-    self.FBButton.alpha = 0.0;
-    [self.myBar addSubview:self.FBButton];
-    
-    [UIView animateWithDuration:0.3
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         self.FBButton.alpha = 1.0;
-                     }
-                     completion:nil];
+//    self.FBButton.alpha = 0.0;
+//    [self.myBar addSubview:self.FBButton];
+//
+//    [UIView animateWithDuration:0.3
+//                          delay:0
+//                        options:UIViewAnimationOptionCurveEaseIn
+//                     animations:^{
+//                         self.FBButton.alpha = 1.0;
+//                     }
+//                     completion:nil];
     
     [UIView transitionWithView:self.verifiedImageView
                       duration:0.3f
@@ -2536,14 +2561,14 @@
     //check how user is verified
     if ([self.user objectForKey:@"facebookId"] && [[self.user objectForKey:@"emailIsVerified"]boolValue] == YES) {
         [self.verifiedImageView setImage:[UIImage imageNamed:@"bothVeri"]];
-        [self.myBar addSubview:self.FBButton];
+//        [self.myBar addSubview:self.FBButton];
         
         self.needsFB = NO;
         self.needsEmail = NO;
         
     }
     else if ([self.user objectForKey:@"facebookId"] && [[self.user objectForKey:@"emailIsVerified"]boolValue] != YES ) {
-        [self.myBar addSubview:self.FBButton];
+//        [self.myBar addSubview:self.FBButton];
         
         if (self.tabMode) {
             
