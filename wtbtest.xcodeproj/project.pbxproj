@@ -2104,6 +2104,7 @@
 		046703241F939AC5009FD451 /* ordersIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ordersIcon.png; sourceTree = "<group>"; };
 		046703251F939AC6009FD451 /* ordersIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ordersIcon@2x.png"; sourceTree = "<group>"; };
 		046703261F939AC8009FD451 /* ordersIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ordersIcon@3x.png"; sourceTree = "<group>"; };
+		0467032A1F961F0F009FD451 /* OrderSummaryView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OrderSummaryView.h; sourceTree = "<group>"; };
 		04679A8A1E02BC93003AF8EA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		04679A8C1E0303E5003AF8EA /* notView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = notView.xib; sourceTree = "<group>"; };
 		04679A8E1E030412003AF8EA /* notificatView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = notificatView.h; sourceTree = "<group>"; };
@@ -2414,7 +2415,6 @@
 		04A99E761F289F0000A698DD /* sendPayPalIcon3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sendPayPalIcon3.png; sourceTree = "<group>"; };
 		04A99E771F289F0000A698DD /* sendPayPalIcon3@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sendPayPalIcon3@2x.png"; sourceTree = "<group>"; };
 		04A99E781F289F0000A698DD /* sendPayPalIcon3@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sendPayPalIcon3@3x.png"; sourceTree = "<group>"; };
-		04AC1C351F8F9D4700368B2A /* OrderSummaryView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OrderSummaryView.h; sourceTree = "<group>"; };
 		04AC1C361F8F9D4700368B2A /* OrderSummaryView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OrderSummaryView.m; sourceTree = "<group>"; };
 		04AC1C371F8F9D4700368B2A /* OrderSummaryView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = OrderSummaryView.xib; sourceTree = "<group>"; };
 		04AF4AA11F20D4980064CF54 /* camoColour.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = camoColour.png; sourceTree = "<group>"; };
@@ -4830,7 +4830,7 @@
 				0402BD801F7E653A000B1C27 /* CheckoutSummary.h */,
 				0402BD811F7E653A000B1C27 /* CheckoutSummary.m */,
 				0402BD821F7E653A000B1C27 /* CheckoutSummary.xib */,
-				04AC1C351F8F9D4700368B2A /* OrderSummaryView.h */,
+				0467032A1F961F0F009FD451 /* OrderSummaryView.h */,
 				04AC1C361F8F9D4700368B2A /* OrderSummaryView.m */,
 				04AC1C371F8F9D4700368B2A /* OrderSummaryView.xib */,
 			);

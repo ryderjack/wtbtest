@@ -21,38 +21,38 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="OrderSummaryView">
             <connections>
-                <outlet property="addressLabel" destination="ljo-u1-ozs" id="Vf9-vc-FUJ"/>
-                <outlet property="dealLabel" destination="Oms-gK-R4B" id="7Ah-cU-yRK"/>
-                <outlet property="gotFeedbackCell" destination="3zD-CG-x5o" id="1Nj-QO-0Xf"/>
-                <outlet property="gotFeedbackLabel" destination="all-w6-Vm1" id="TXP-7X-3oF"/>
-                <outlet property="gotStarImageView" destination="bGC-NB-2sv" id="bGr-Jm-nHl"/>
-                <outlet property="itemImageView" destination="PmH-Gj-ciX" id="x16-Uf-PaK"/>
-                <outlet property="itemPriceLabel" destination="7KO-nG-rQw" id="XpA-No-Cod"/>
-                <outlet property="leaveFeedbackButton" destination="NHr-Nu-uNT" id="3ta-rr-8xY"/>
-                <outlet property="leaveFeedbackCell" destination="zid-GV-iv9" id="SQf-XN-1AZ"/>
-                <outlet property="leftFeedbackCell" destination="m6O-Yf-cGh" id="s3D-Bd-LYK"/>
-                <outlet property="leftFeedbackLabel" destination="9ny-J3-AUD" id="NBQ-72-5hs"/>
-                <outlet property="leftStarImageView" destination="BnT-jn-53K" id="Qk3-MV-QBs"/>
-                <outlet property="messageButton" destination="m6F-qJ-eEf" id="WFF-vN-NSU"/>
-                <outlet property="nextStepButton" destination="x2x-Ti-cGC" id="ytk-0r-4As"/>
-                <outlet property="nextStepLabel" destination="RnY-r6-DMT" id="suK-q9-V0h"/>
-                <outlet property="otherUserImageView" destination="c52-B1-FeQ" id="Lym-OL-6E1"/>
-                <outlet property="paymentCell" destination="nro-8Q-OyI" id="JA7-LD-w7H"/>
-                <outlet property="paymentLabel" destination="rKr-ac-885" id="vdi-HC-aCZ"/>
-                <outlet property="refundButton" destination="gPb-s5-MtF" id="geg-1O-nno"/>
-                <outlet property="shippingButton" destination="nxf-ez-mfb" id="xWm-SK-9g4"/>
-                <outlet property="shippingCell" destination="Wdn-3p-T5l" id="997-5e-Gqg"/>
-                <outlet property="shippingImageView" destination="JeR-bD-lcb" id="4EY-nC-J6i"/>
-                <outlet property="shippingMainLabel" destination="QDP-Q2-dSH" id="1yb-XG-LHA"/>
-                <outlet property="shippingPriceLabel" destination="jJ1-yM-Pe5" id="qLH-l1-2Vh"/>
-                <outlet property="titleCell" destination="gEV-ni-33E" id="tSX-ou-lfi"/>
-                <outlet property="titleLabel" destination="sIT-P7-mpT" id="ETD-4x-sPS"/>
-                <outlet property="totalPriceLabel" destination="e7N-xm-aix" id="1pP-fD-xxu"/>
-                <outlet property="transactionCell" destination="mWe-GU-1Ih" id="cR8-F0-siA"/>
+                <outlet property="addressLabel" destination="ljo-u1-ozs" id="Enm-LZ-jyH"/>
+                <outlet property="dealLabel" destination="Oms-gK-R4B" id="XUD-ES-yCE"/>
+                <outlet property="gotFeedbackCell" destination="3zD-CG-x5o" id="UbM-hl-0Gl"/>
+                <outlet property="gotFeedbackLabel" destination="all-w6-Vm1" id="KQ9-HR-9kh"/>
+                <outlet property="gotStarImageView" destination="bGC-NB-2sv" id="DkM-VU-MSu"/>
+                <outlet property="itemImageView" destination="PmH-Gj-ciX" id="9EA-oe-Zr1"/>
+                <outlet property="itemPriceLabel" destination="7KO-nG-rQw" id="5eV-e9-kBd"/>
+                <outlet property="leaveFeedbackButton" destination="NHr-Nu-uNT" id="H9b-Xc-9rr"/>
+                <outlet property="leaveFeedbackCell" destination="zid-GV-iv9" id="89X-Ol-bF3"/>
+                <outlet property="leftFeedbackCell" destination="m6O-Yf-cGh" id="ey1-90-SSB"/>
+                <outlet property="leftFeedbackLabel" destination="9ny-J3-AUD" id="y7F-lV-pEe"/>
+                <outlet property="leftStarImageView" destination="BnT-jn-53K" id="idD-jU-wXs"/>
+                <outlet property="messageButton" destination="m6F-qJ-eEf" id="CYK-y4-9SF"/>
+                <outlet property="nextStepButton" destination="x2x-Ti-cGC" id="Vik-Kn-XxV"/>
+                <outlet property="nextStepLabel" destination="RnY-r6-DMT" id="Fms-fS-PsR"/>
+                <outlet property="otherUserImageView" destination="c52-B1-FeQ" id="fdq-QT-SII"/>
+                <outlet property="paymentCell" destination="nro-8Q-OyI" id="PuA-ZZ-Vzb"/>
+                <outlet property="paymentLabel" destination="rKr-ac-885" id="T9p-nG-5o9"/>
+                <outlet property="refundButton" destination="gPb-s5-MtF" id="74D-Co-bMM"/>
+                <outlet property="shippingButton" destination="nxf-ez-mfb" id="09E-nf-9J4"/>
+                <outlet property="shippingCell" destination="Wdn-3p-T5l" id="O00-gO-oM4"/>
+                <outlet property="shippingImageView" destination="JeR-bD-lcb" id="hZ7-e2-MAx"/>
+                <outlet property="shippingMainLabel" destination="QDP-Q2-dSH" id="SfM-cL-VTw"/>
+                <outlet property="shippingPriceLabel" destination="jJ1-yM-Pe5" id="GUh-pB-QZk"/>
+                <outlet property="titleCell" destination="gEV-ni-33E" id="PZS-SI-LbV"/>
+                <outlet property="titleLabel" destination="sIT-P7-mpT" id="2Vv-F4-4Ep"/>
+                <outlet property="totalPriceLabel" destination="e7N-xm-aix" id="avl-Zt-Pbj"/>
+                <outlet property="transactionCell" destination="mWe-GU-1Ih" id="1YT-Ex-yrp"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
-                <outlet property="viewFeedbackButton" destination="qrq-jW-iaC" id="NBP-Y2-gXt"/>
-                <outlet property="viewListingButton" destination="IyP-nL-Lgy" id="Ecz-fv-j3n"/>
-                <outlet property="viewUserButton" destination="EeX-FU-oE9" id="Rtp-si-Hqo"/>
+                <outlet property="viewFeedbackButton" destination="qrq-jW-iaC" id="Pvn-K1-Klm"/>
+                <outlet property="viewListingButton" destination="IyP-nL-Lgy" id="Msk-LS-Vt0"/>
+                <outlet property="viewUserButton" destination="EeX-FU-oE9" id="Cp4-ZX-xP9"/>
             </connections>
         </placeholder>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
