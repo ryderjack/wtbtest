@@ -31,7 +31,6 @@
     //buyer just needs to leave feedback, then wait for shipping and feedback -> complete
     //seller needs to mark as shipped and leave feedback
     
-    
     self.title = @"O R D E R";
     
     self.transCellHeight = 213;
@@ -123,7 +122,7 @@
                 
             }
             else{
-                transText = [NSString stringWithFormat:@"Sold on %@ to\n%@\n%@",orderDateString,[self.otherUser objectForKey:@"fullname"],self.otherUser.username];
+                transText = [NSString stringWithFormat:@"Sold on %@ to\n%@\n@%@",orderDateString,[self.otherUser objectForKey:@"fullname"],self.otherUser.username];
                 [self.messageButton setTitle:@"Message Buyer" forState:UIControlStateNormal];
                 
                 //setup username of guy left / was left feedback
@@ -183,7 +182,7 @@
             self.leftFeedback = YES;
             
             //get number of stars that this user left & set correct image on leftStarImgView
-            int buyerStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
+            int buyerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
             if (buyerStars == 1) {
                 [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
             }
@@ -208,7 +207,7 @@
             self.rowNumber++;
 
             //set number of stars on gotImgView
-            int sellerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
+            int sellerStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
             if (sellerStars == 1) {
                 [self.gotStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
             }
@@ -234,22 +233,22 @@
 
             //user has left a review
             
-            //get number of stars that this user left & set correct image on leftStarImgView
-            int sellerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
+            //get number of stars that this user got & set correct image on leftStarImgView
+            int sellerStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
             if (sellerStars == 1) {
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
+                [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
             }
             else if (sellerStars == 2){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
+                [self.leftStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
             }
             else if (sellerStars == 3){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
+                [self.leftStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
             }
             else if (sellerStars == 4){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
+                [self.leftStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
             }
             else if (sellerStars == 5){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
+                [self.leftStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
             }
         }
         
@@ -257,22 +256,22 @@
             self.gotFeedback = YES;
             self.rowNumber++;
             
-            //set number of stars on gotImgView
-            int buyerStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
+            //set number of stars we left
+            int buyerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
             if (buyerStars == 1) {
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
+                [self.gotStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
             }
             else if (buyerStars == 2){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
+                [self.gotStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
             }
             else if (buyerStars == 3){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
+                [self.gotStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
             }
             else if (buyerStars == 4){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
+                [self.gotStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
             }
             else if (buyerStars == 5){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
+                [self.gotStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
             }
         }
     }
@@ -321,6 +320,7 @@
         }
         else{
             [self.shippingButton setTitle:@"Mark as Shipped" forState:UIControlStateNormal];
+            self.shippingMainLabel.text = @"Ship your item tracked delivery\nto this address";
         }
     }
     
@@ -766,7 +766,7 @@
             NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:[NSString stringWithFormat:@"You left feedback for\n@%@", self.otherUser.username]];
             [self.leftFeedbackLabel setAttributedText:[self modifyString:labelText setFontForText:[NSString stringWithFormat:@"@%@", self.otherUser.username]]];
             
-            leftStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
+            leftStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
 
         }
     }
@@ -777,7 +777,7 @@
             [self.leftFeedbackLabel setAttributedText:[self modifyString:labelText setFontForText:[NSString stringWithFormat:@"@%@", self.otherUser.username]]];
         }
         
-        leftStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
+        leftStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
     }
     
     //get number of stars that this user left & set correct image on leftStarImgView

@@ -397,6 +397,7 @@
                                 CheckoutSummary *vc = [[CheckoutSummary alloc]init];
                                 vc.successMode = YES;
                                 vc.listingObject = self.listingObject;
+                                vc.orderObject = saleOrder;
                                 
                                 vc.shippingText  = self.shippingPriceLabel.text;
                                 vc.itemPriceText  = self.itemPriceLabel.text;

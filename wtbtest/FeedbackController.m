@@ -59,8 +59,6 @@
     self.longButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.longButton];
     
-    [self showBarButton];
-    
     [Answers logCustomEventWithName:@"Viewed page"
                    customAttributes:@{
                                       @"pageName":@"Leave Review",
@@ -208,6 +206,11 @@
     
     self.commentLabel.text = @"Explain your issue";
     self.ratingLabel.text = @"Terrible";
+    
+    //check if entered a comment already & if so, show bar button
+    if (self.enteredComment) {
+        [self showBarButton];
+    }
 }
 - (IBAction)secondStarPressed:(id)sender {
     self.starNumber = 2;
@@ -228,6 +231,11 @@
     
     self.commentLabel.text = @"Explain your issue";
     self.ratingLabel.text = @"Bad";
+    
+    //check if entered a comment already & if so, show bar button
+    if (self.enteredComment) {
+        [self showBarButton];
+    }
 }
 - (IBAction)thirdStarPressed:(id)sender {
     self.starNumber = 3;
@@ -247,6 +255,11 @@
     
     self.commentLabel.text = @"Leave a comment";
     self.ratingLabel.text = @"OK";
+    
+    //check if entered a comment already & if so, show bar button
+    if (self.enteredComment) {
+        [self showBarButton];
+    }
 }
 - (IBAction)fourthStarPressed:(id)sender {
     self.starNumber = 4;
@@ -265,6 +278,11 @@
     
     self.commentLabel.text = @"Say thanks";
     self.ratingLabel.text = @"Good";
+    
+    //check if entered a comment already & if so, show bar button
+    if (self.enteredComment) {
+        [self showBarButton];
+    }
 }
 - (IBAction)fifthStarPressed:(id)sender {
     self.starNumber = 5;
@@ -282,6 +300,11 @@
     
     self.commentLabel.text = @"Say thanks";
     self.ratingLabel.text = @"Excellent";
+    
+    //check if entered a comment already & if so, show bar button
+    if (self.enteredComment) {
+        [self showBarButton];
+    }
 }
 
 -(BOOL)textFieldShouldReturn:(UITextField *)textField{
@@ -319,7 +342,10 @@
 }
 
 -(void)textViewDidEndEditing:(UITextView *)textView{
+    self.enteredComment = NO;
+
     if ([textView.text isEqualToString:@""]) {
+        [self hideBarButton];
         textView.text = @"e.g. Fast shipping? Item as described? Good communication?";
         textView.textColor = [UIColor lightGrayColor];
     }
@@ -328,9 +354,24 @@
         NSArray *words = [textView.text componentsSeparatedByString:@" "];
         for (NSString *string in words) {
             if ([self.profanityList containsObject:string.lowercaseString]) {
+                [self hideBarButton];
                 textView.text = @"e.g. Fast shipping? Item as described? Good communication?";
                 textView.textColor = [UIColor lightGrayColor];
+                return;
             }
+        }
+        
+        //check if tapped a star too & show submit if so
+        if (textView.text.length > 5) {
+            self.enteredComment = YES;
+            
+            if(self.starNumber > 0){
+                [self showBarButton];
+            }
+        }
+        else{
+            [self hideBarButton];
+            [self showAlertWithTitle:@"Comment" andMsg:@"Let other users on BUMP know how your experience went with a longer & detailed comment"];
         }
     }
 }

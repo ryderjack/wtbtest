@@ -165,21 +165,29 @@
     self.unseenMessages = [[NSMutableArray alloc]init];
     
     if ([PFUser currentUser]) {
+        
         if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {
             NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:YES];
             [timer fire];
             NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:60.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
             [timer2 fire];
-            
+
             if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
                 NSTimer *timer3 = [NSTimer scheduledTimerWithTimeInterval:120.0 target:self selector:@selector(checkForSupportMessages) userInfo:nil repeats:YES];
                 [timer3 fire];
             }
+            
+            NSTimer *timer4 = [NSTimer scheduledTimerWithTimeInterval:120.0 target:self selector:@selector(checkForOrders) userInfo:nil repeats:YES];
+            [timer4 fire];
         }
         else{
             [self checkMesages];
             [self checkForTBMessages];
-            [self checkForSupportMessages];
+            
+            if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
+                [self checkForSupportMessages];
+            }
+            [self checkForOrders];
         }
     }
     else{
@@ -432,17 +440,28 @@
                     
                     if (totalUnseen > 0) {
                         [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
-                        self.installation.badge = totalUnseen;
                     }
                     else{
                         [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
-                        self.installation.badge = 0;
                     }
+                    
+                    //add unseen orders to badge //CHANGE make sure this is bulletproof
+                    if (self.profileView.ordersUnseen > 0) {
+                        totalUnseen+= self.profileView.ordersUnseen;
+                    }
+                    self.installation.badge = totalUnseen;
                     [self.installation saveEventually];
                 }
                 else{
                     [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
-                    self.installation.badge = 0;
+                    
+                    //add unseen orders to badge //CHANGE make sure this is bulletproof
+                    if (self.profileView.ordersUnseen > 0) {
+                        self.installation.badge = self.profileView.ordersUnseen;
+                    }
+                    else{
+                        self.installation.badge = 0;
+                    }
                     [self.installation saveEventually];
                 }
             }
@@ -457,6 +476,42 @@
     }];
 }
 
+-(void) checkForOrders{
+    if (![PFUser currentUser]) {
+        return;
+    }
+    //query for convos we know this user hasn't seen
+    PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
+    [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+    [buyingUnseenQuery whereKey:@"buyerUnseen" greaterThan:@0];
+    
+    PFQuery *sellingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
+    [sellingUnseenQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+    [sellingUnseenQuery whereKey:@"sellerUnseen" greaterThan:@0];
+    
+    PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
+    [unseenQuery whereKey:@"status" equalTo:@"live"];
+    [unseenQuery orderByDescending:@"lastUpdated"];
+    
+    [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            int orderCount = (int)objects.count;
+//            self.profileView.ordersUnseen = orderCount;
+            self.profileView.ordersUnseen = 3;
+
+            if (objects.count > 0) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"UnseenOrders" object:@(orderCount)];
+            }
+            
+            [self calcProfileBadge];
+            
+        }
+        else{
+            NSLog(@"error finding orders %@", error);
+        }
+    }];
+}
+
 -(void)checkForTBMessages{
     if (![PFUser currentUser]) {
         return;
@@ -467,18 +522,20 @@
         if (object) {
             //is there anything unseen in the convo
             int userUnseen = [[object objectForKey:@"userUnseen"]intValue];
-            self.profileView.messagesUnseen = userUnseen;
+//            self.profileView.messagesUnseen = userUnseen;
+            
+            self.profileView.messagesUnseen = 2;
+
 
             if (userUnseen > 0) {
-                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"1"]]; //even if have multiple unseen keep badge @ 1
+//                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"1"]]; //even if have multiple unseen keep badge @ 1
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"NewTBMessage" object:nil];
             }
             else{
-                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+//                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
             }
             
-            //call this after check for TB to make sure we have the correct tab bar badge
-            [self checkForSupportMessages];
+            [self calcProfileBadge];
         }
         else{
             if (error.code == 209) {
@@ -500,13 +557,15 @@
     [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
-            self.profileView.supportUnseen = count;
+//            self.profileView.supportUnseen = count;
+            self.profileView.supportUnseen = 4;
 
             if (objects.count > 0) {
-                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"1"]]; //even if have multiple unseen keep badge @ 1
+//                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"1"]]; //even if have multiple unseen keep badge @ 1
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"NewTBMessage" object:nil];
             }
-
+            
+            [self calcProfileBadge];
         }
         else{
             if (error.code == 209) {
@@ -1100,5 +1159,33 @@
 -(BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray * _Nullable))restorationHandler{
 //    NSLog(@"continue user activity %@", userActivity);
     return YES;
+}
+
+-(void)calcProfileBadge{
+    NSLog(@"calcing tab badge in profile");
+    
+    //check if any support or team bump messages unseen
+    int tabInt = 0;
+    
+    if (self.profileView.supportUnseen > 0 || self.profileView.messagesUnseen > 0) {
+        tabInt++;
+    }
+    
+    //then get number of unseen orders
+    if (self.profileView.ordersUnseen > 0) {
+        tabInt += self.profileView.ordersUnseen;
+    }
+    
+    NSLog(@"total %d",tabInt);
+    
+    //add all together and set tab badge
+    if (tabInt == 0) {
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+    }
+    else{
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d",tabInt]];
+    }
+    
+    //CHANGE make sure to add the unseen orders number to installation badge as well as messages until an order has been 'read'
 }
 @end

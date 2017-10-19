@@ -133,6 +133,9 @@
 @property (nonatomic) int messagesUnseen;
 @property (nonatomic) int supportUnseen;
 
+//orders unseen
+@property (nonatomic) int ordersUnseen;
+
 @property (nonatomic) BOOL showSnap;
 
 //ban mode for alert view

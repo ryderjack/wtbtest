@@ -53,6 +53,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) BOOL sentPush;
 
+@property (nonatomic) BOOL enteredComment;
+
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
 @property (nonatomic, strong) MBProgressHUD *hud;

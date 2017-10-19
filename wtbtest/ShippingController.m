@@ -20,7 +20,7 @@
     self.navigationItem.title = @"A D D R E S S";
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
-    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"customBack"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
     self.navigationItem.leftBarButtonItem = cancelButton;
     
     self.nameCell.selectionStyle = UITableViewCellSelectionStyleNone;

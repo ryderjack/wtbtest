@@ -298,6 +298,27 @@
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
 //            NSLog(@"Listing %@", [self.listingObject objectForKey:@"geopoint"]);
+            self.seller = [self.listingObject objectForKey:@"sellerUser"];
+            
+            [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    self.fetchedUser = YES; //to help stop messages infinite spinner
+                    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self.usernameButton setTitle:[NSString stringWithFormat:@"@%@", self.seller.username] forState:UIControlStateNormal];
+                    });
+                    if ([[self.seller objectForKey:@"ignoreLikePushes"]isEqualToString:@"YES"]) {
+                        self.dontLikePush = YES;
+                    }
+                    else{
+                        self.dontLikePush = NO;
+                    }
+                }
+                else{
+                    NSLog(@"seller error %@", error);
+                    [self showAlertWithTitle:@"Seller not found!" andMsg:nil];
+                }
+            }];
             
             if (self.buttonsShowing == NO) {
                 if (!self.setupButtons) {
@@ -609,26 +630,6 @@
         }
         else{
             NSLog(@"error fetching listing %@", error);
-        }
-    }];
-    
-    [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            self.fetchedUser = YES; //to help stop messages infinite spinner
-            
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.usernameButton setTitle:[NSString stringWithFormat:@"@%@", self.seller.username] forState:UIControlStateNormal];
-            });
-            if ([[self.seller objectForKey:@"ignoreLikePushes"]isEqualToString:@"YES"]) {
-                self.dontLikePush = YES;
-            }
-            else{
-                self.dontLikePush = NO;
-            }
-        }
-        else{
-            NSLog(@"seller error %@", error);
-            [self showAlertWithTitle:@"Seller not found!" andMsg:nil];
         }
     }];
 }
@@ -1395,7 +1396,7 @@
 
 -(void)decideButtonSetup{
     
-    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
         [self setupMessageBarButton];
     }
     else{

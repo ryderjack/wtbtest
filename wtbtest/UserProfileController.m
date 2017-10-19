@@ -111,6 +111,10 @@
         
         //for first TB message that's sent went user registers
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(newTBMessageReg) name:@"NewTBMessageReg" object:nil];
+        
+        //for showing unseen order updates
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateOrderBadge:) name:@"UnseenOrders" object:nil];
+
     }
     
     if (self.user) { //added in this check as saw a crash when querying a null user
@@ -151,15 +155,18 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    //check if must show unread icon on cog icon 
-    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.tabMode == YES) {
-        if ([self.navigationController tabBarItem].badgeValue != nil) {
-            [self.backButton setImage:[UIImage imageNamed:@"unreadCog"] forState:UIControlStateNormal];
-        }
-        else{
-            [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
-        }
+    //check if must show unread icon on cog icon
+    if (self.tabMode && self.setupHeader) {
+        [self calcTabBadge];
     }
+//    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.tabMode == YES) {
+//        if (self.supportUnseen || self.messagesUnseen) { //CHANGE
+//            [self.backButton setImage:[UIImage imageNamed:@"unreadCog"] forState:UIControlStateNormal];
+//        }
+//        else{
+//            [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
+//        }
+//    }
     
     //refresh listings when user taps on profile tab
     if (self.tabMode == YES && self.user && self.segmentedControl.selectedSegmentIndex == 0) {
@@ -263,9 +270,13 @@
                     //tab mode
                     if ([[self.user objectForKey:@"orderNumber"]intValue] > 0) {
                         self.showOrderButton = YES;
-                        [self.myBar addSubview:self.ordersButton];
+//                        [self.myBar addSubview:self.ordersButton];
                     }
+                    
+                    [self.myBar addSubview:self.ordersButton]; //CHANGE
+
                 }
+                
                 
                 [self loadBumpedListings];
                 [self loadWTBListings];
@@ -2005,6 +2016,9 @@
         finalEditAttributes.alpha = 0.0;
         [self.editImageView addLayoutAttributes:finalEditAttributes forProgress:0.4];
     }
+    
+    //finish on this so we can update button images if any unread upon first tap on user's profile
+    [self calcTabBadge];
 }
 
 -(void)setupTrustedChecks{
@@ -2119,25 +2133,19 @@
     profile.delegate = self;
     
     if (self.messagesUnseen > 0) {
-        NSLog(@"unseen yes");
         profile.unseenTBMsg = YES;
     }
     
     if (self.supportUnseen > 0) {
-        NSLog(@"unseen support");
         profile.unseenSupport = YES;
     }
-//    if (self.showSnap == YES) {
-//        profile.showSnapDot = YES;
-//        self.showSnap = NO;
-//    }
     
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:profile];
     [self presentViewController:nav animated:YES completion:nil];
 }
 
 -(void)newTBMessage{
-    [self.backButton setImage:[UIImage imageNamed:@"unreadCog"] forState:UIControlStateNormal];
+    [self calcTabBadge];
 }
 
 -(void)newTBMessageReg{
@@ -2148,35 +2156,24 @@
 -(void)TeamBumpInboxTapped{
     self.messagesUnseen = 0;
     
-    if (self.supportUnseen == 0) {
-        [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
-        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
-    }
+    [self calcTabBadge];
+//    if (self.supportUnseen == 0) {
+//        [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
+//        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+//    }
 }
 
 -(void)supportTapped{
     self.supportUnseen = 0;
 
-    if (self.messagesUnseen == 0) {
-        [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
-        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
-    }
-}
-
-//-(void)snapSeen{
-//    UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[3];
-//    int currentTabValue = [itemToBadge.badgeValue intValue];
-//    
-//    if (currentTabValue > 1) {
-//        //minus one, still have some TB messages unseen
-//        int newTabValue = currentTabValue + 1;
-//        itemToBadge.badgeValue = [NSString stringWithFormat:@"%d", newTabValue];
-//    }
-//    else{
-//        //reset to nil
+    [self calcTabBadge];
+    
+//    if (self.messagesUnseen == 0) {
+//        [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
 //        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
 //    }
-//}
+}
+
 - (IBAction)createPressed:(id)sender {
     [self.tabBarController setSelectedIndex:1];
     double delayInSeconds = 0.5;
@@ -3066,5 +3063,41 @@
     segmentedTableView *vc = [[segmentedTableView alloc]init];
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
     [self presentViewController:nav animated:YES completion:nil];
+}
+
+-(void)updateOrderBadge:(NSNotification*)note {
+    [self calcTabBadge];
+}
+
+-(void)calcTabBadge{
+    NSLog(@"calc tab badge");
+    
+    //check if any support or team bump messages unseen
+    int tabInt = 0;
+    
+    if (self.supportUnseen > 0 || self.messagesUnseen > 0) {
+        tabInt++;
+        [self.backButton setImage:[UIImage imageNamed:@"unreadCog"] forState:UIControlStateNormal];
+    }
+    else{
+        [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
+    }
+    
+    //then get number of unseen orders
+    if (self.ordersUnseen > 0) {
+        tabInt+= self.ordersUnseen;
+        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIconUnread"] forState:UIControlStateNormal];
+    }
+    else{
+        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon"] forState:UIControlStateNormal];
+    }
+    
+    //add all together and set tab badge
+    if (tabInt == 0) {
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+    }
+    else{
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d",tabInt]];
+    }
 }
 @end
