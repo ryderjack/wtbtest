@@ -5538,6 +5538,10 @@
         
         //scroll to bottom
         [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+        
+        
+        //CHANGE
+        //trigger PayPal sign in
     }
     else{
         //off
