@@ -61,7 +61,8 @@
         self.navigationItem.leftBarButtonItem = cancelButton;
     }
     [self setImageBorder:self.unreadView];
-    
+    [self setImageBorder:self.unreadSupportView];
+
     if (self.unseenTBMsg == YES) {
         [self.unreadView setHidden:NO];
     }

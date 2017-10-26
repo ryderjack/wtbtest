@@ -21,6 +21,7 @@
 #import "PurchaseTab.h"
 #import "AppDelegate.h"
 #import "UIImageView+Letters.h"
+#import "SelectViewController.h"
 
 @interface ForSaleListing ()
 
@@ -316,11 +317,11 @@
                 }
                 else{
                     NSLog(@"seller error %@", error);
-                    [self showAlertWithTitle:@"Seller not found!" andMsg:nil];
+                    [self showAlertWithTitle:@"Seller not found" andMsg:nil];
                 }
             }];
             
-            if (self.buttonsShowing == NO) {
+            if (self.buttonsShowing == NO && !self.purchased) {
                 if (!self.setupButtons) {
                     [self decideButtonSetup];
                 }
@@ -387,7 +388,13 @@
             [self.carouselView reloadData];
             
             if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
-                self.soldLabel.text = @"S O L D";
+                
+                if ([[self.listingObject objectForKey:@"buyerId"]isEqualToString:[PFUser currentUser].objectId]) {
+                    self.soldLabel.text = @"P U R C H A S E D";
+                }
+                else{
+                    self.soldLabel.text = @"S O L D";
+                }
                 [self.soldLabel setHidden:NO];
                 
                 [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
@@ -429,7 +436,7 @@
                 priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
                 self.purchasePrice = price;
                 
-                [self.buyButton setTitle:[NSString stringWithFormat:@"Purchase for %@", priceText] forState:UIControlStateNormal];
+//                [self.buyButton setTitle:[NSString stringWithFormat:@"Purchase for %@", priceText] forState:UIControlStateNormal];
             }
             else{
                 price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
@@ -486,9 +493,9 @@
                 else if([sizeLabel isEqualToString:@"Other"]){
                     sizeLabel = sizeLabel;
                 }
-                else if ([self.listingObject objectForKey:@"sizeGender"] && [[self.listingObject objectForKey:@"category"]isEqualToString:@"footwear"]){
-                    sizeLabel = [NSString stringWithFormat:@"Size %@ %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
-                }
+//                else if ([self.listingObject objectForKey:@"sizeGender"] && [[self.listingObject objectForKey:@"category"]isEqualToString:@"footwear"]){
+//                    sizeLabel = [NSString stringWithFormat:@"Size %@ %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
+//                }
                 else{
                 
                     if ([[self.listingObject objectForKey:@"sizeLabel"] isEqualToString:@"XXL"]){
@@ -542,12 +549,19 @@
                 }
                 else{
                     [self.reportButton setSelected:YES];
-                    [self.reportLabel setTitle:@"U N M A R K  A S\nS O L D" forState:UIControlStateNormal];
+                    
+                    //if listing was sold through BUMP checkout, don't let seller mark as available again
+                    if ([[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]) {
+                        [self.reportButton setEnabled:NO];
+                        [self.reportLabel setTitle:@"S O L D" forState:UIControlStateNormal];
+                    }
+                    else{
+                        [self.reportLabel setTitle:@"U N M A R K  A S\nS O L D" forState:UIControlStateNormal];
+                    }
                 }
             }
             else{
                 //not the same buyer
-                [self.messageButton setTitle:@"Message Seller" forState:UIControlStateNormal];
                 [self.listingObject incrementKey:@"views"];
                 [self.listingObject saveInBackground];
             }
@@ -1092,9 +1106,11 @@
 //        vc.addAddress = YES;
 //    }
     
+    self.anyButtonPressed = YES;
+    vc.delegate = self;
+
     if (self.tabBarController.tabBar.frame.size.height == 0) {
         [self hideBarButton];
-        vc.delegate = self;
     }
     
     vc.salePrice = self.purchasePrice;
@@ -1188,7 +1204,11 @@
             vc.listing = self.listingObject;
             vc.otherUser = self.seller;
             vc.otherUserName = @""; //self.seller.username messages VC will load this even if its not given it
-            vc.messageSellerPressed = YES;
+            
+            //only prefill messages with 'is this available' if the item is available
+            if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
+                vc.messageSellerPressed = YES;
+            }
             
             if (![self.listingObject objectForKey:@"itemTitle"]) {
                 vc.sellerItemTitle = descr;
@@ -1436,15 +1456,16 @@
 
 -(void)setupMessageBarButton{
     self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
-    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
-    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
+    [self.messageButton setTitle:@"M E S S A G E" forState:UIControlStateNormal];
+    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
     [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.messageButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
 }
 -(void)setupSendBarButton{
     self.longSendButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
-    [self.longSendButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
+    [self.longSendButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
     [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
     [self.longSendButton addTarget:self action:@selector(longSendButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.longSendButton.alpha = 0.0f;
@@ -1456,15 +1477,17 @@
     
     //setup message button
     self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width/2, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width/2, 50)];
-    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
+    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
     [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
+    [self.messageButton setTitle:@"M E S S A G E" forState:UIControlStateNormal];
     [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.messageButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
     
     //setup buy button
     self.buyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width/2, 50)];
-    [self.buyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
+    [self.buyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
+    [self.buyButton setTitle:@"B U Y" forState:UIControlStateNormal];
     [self.buyButton setBackgroundColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
     [self.buyButton addTarget:self action:@selector(buyButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.buyButton.alpha = 0.0f;
@@ -2205,7 +2228,14 @@
     }];
 }
 - (IBAction)multiplePressed:(id)sender {
-    [self showMultipleALert];
+    
+    SelectViewController *vc = [[SelectViewController alloc]init];
+    vc.viewingMode = YES;
+    vc.viewingArray = [self.listingObject objectForKey:@"multipleSizes"];
+    [self.navigationController pushViewController:vc animated:YES];
+    
+    
+//    [self showMultipleALert];
 }
 
 -(void)showMultipleALert{
@@ -3212,6 +3242,24 @@
 
 #pragma mark - dismiss checkout
 -(void)dismissedCheckout{
+    NSLog(@"dismiss delegate");
     [self showBarButton];
+}
+
+-(void)PurchasedItemCheckout{
+    //refresh buttons
+    NSLog(@"purchased in listing");
+    self.purchased = YES;
+    
+    self.buyButton = nil;
+    self.messageButton = nil;
+//    [self setupMessageBarButton];
+    
+    //show purchased icon
+    self.soldLabel.text = @"P U R C H A S E D";
+    [self.soldLabel setHidden:NO];
+    
+    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
+    [self.soldCheckImageVoew setHidden:NO];
 }
 @end

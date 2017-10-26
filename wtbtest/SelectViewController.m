@@ -19,87 +19,95 @@
     [super viewDidLoad];
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
 
-    if ([self.setting isEqualToString:@"condition"]) {
-        self.title = @"C O N D I T I O N";
-    }
-    else if ([self.setting isEqualToString:@"category"]){
-        self.title = @"C A T E G O R Y";
-    }
-    else if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]){
-        self.title = @"S I Z E";
-    }
-    else if ([self.setting isEqualToString:@"clothing"]){
-        self.title = @"C L O T H I N G";
+    if (self.viewingMode) {
+        self.title = @"S I Z E S";
+        
     }
     else{
-        self.title = @"S E L E C T";
-    }
-    
-    
-    self.selectedSizes = [NSMutableArray array];
-    
-    if (self.holdingArray.count >0) {
-        for (NSString *size in self.holdingArray) {
-            if ([size containsString:@"UK "]) {
-                NSString *newString = [size stringByReplacingOccurrencesOfString:@"UK " withString:@""];
-                [self.selectedSizes addObject:newString];
-            }
-            else{
-                [self.selectedSizes addObject:size];
-            }
+        if ([self.setting isEqualToString:@"condition"]) {
+            self.title = @"C O N D I T I O N";
         }
-    }
-    
-    NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
-    
-    self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear",@"Accessories",@"Proxy", nil];
-    self.clothingCategoryArray = [NSArray arrayWithObjects:@"Tops",@"Bottoms",@"Outerwear", nil];
-    self.clothingyDescriptionArray = [NSArray arrayWithObjects:@"Long/shortsleeve Tees, Polos, Shirts, Sweatshirts & Hoodies",@"Jeans, Shorts, Swimwear, Sweatpants & Joggers",@"Bombers, Coats, Jackets, Raincoats", nil];
-
-    if (self.sellListing == YES) {
-        self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Other", nil];
-        
-        self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14",@"Other", nil];
-        
-        self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9",@"Other", nil];
-        
-        self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Other", nil];
-        
-        self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL",@"Other", nil];
-    }
-    else{
-        self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Any", nil];
-        
-        self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", @"Any", nil];
-        
-        self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9", @"Any", nil];
-        
-        self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Any", nil];
-        
-        self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"Any", nil];
-        self.deliveryArray = [NSArray arrayWithObjects:@"Meetup",@"Courier", @"Any", nil];
-        self.conditionArray = [NSArray arrayWithObjects:@"Brand New With Tags",@"Brand New Without Tags", @"Used", @"Any",nil];
-    }
-    
-    [self.tableView registerNib:[UINib nibWithNibName:@"selectCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
-    [self.tableView registerNib:[UINib nibWithNibName:@"CategoryDetailCell" bundle:nil] forCellReuseIdentifier:@"catCell"];
-    
-    //holding array is just if user has previously selected an option then is coming back to the VC
-    if (![self.holdingGender isEqualToString:@""]) {
-        self.genderSelected = self.holdingGender;
-//        NSLog(@"holding gender %@", self.holdingGender);
-    }
-    else{
-        if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"male"]) {
-            self.genderSelected = @"Mens";
+        else if ([self.setting isEqualToString:@"category"]){
+            self.title = @"C A T E G O R Y";
         }
-        else if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"female"]) {
-            self.genderSelected = @"Womens";
+        else if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]){
+            self.title = @"S I Z E";
+        }
+        else if ([self.setting isEqualToString:@"clothing"]){
+            self.title = @"C L O T H I N G";
         }
         else{
-            self.genderSelected = @"Mens";
+            self.title = @"S E L E C T";
         }
+        
+        
+        self.selectedSizes = [NSMutableArray array];
+        
+        if (self.holdingArray.count >0) {
+            for (NSString *size in self.holdingArray) {
+                if ([size containsString:@"UK "]) {
+                    NSString *newString = [size stringByReplacingOccurrencesOfString:@"UK " withString:@""];
+                    [self.selectedSizes addObject:newString];
+                }
+                else{
+                    [self.selectedSizes addObject:size];
+                }
+            }
+        }
+        
+        //    NSLog(@"holding %@ and selected %@", self.holdingArray, self.selectedSizes);
+        
+        self.categoryArray = [NSArray arrayWithObjects:@"Clothing",@"Footwear",@"Accessories",@"Proxy", nil];
+        self.clothingCategoryArray = [NSArray arrayWithObjects:@"Tops",@"Bottoms",@"Outerwear", nil];
+        self.clothingyDescriptionArray = [NSArray arrayWithObjects:@"Long/shortsleeve Tees, Polos, Shirts, Sweatshirts & Hoodies",@"Jeans, Shorts, Swimwear, Sweatpants & Joggers",@"Bombers, Coats, Jackets, Raincoats", nil];
+        
+        if (self.sellListing == YES) {
+            self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Other", nil];
+            
+            self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14",@"Other", nil];
+            
+            self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9",@"Other", nil];
+            
+            self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Other", nil];
+            
+            self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL",@"Other", nil];
+        }
+        else{
+            self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Any", nil];
+            
+            self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", @"Any", nil];
+            
+            self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9", @"Any", nil];
+            
+            self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Any", nil];
+            
+            self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"Any", nil];
+            self.deliveryArray = [NSArray arrayWithObjects:@"Meetup",@"Courier", @"Any", nil];
+            self.conditionArray = [NSArray arrayWithObjects:@"Brand New With Tags",@"Brand New Without Tags", @"Used", @"Any",nil];
+        }
+        //holding array is just if user has previously selected an option then is coming back to the VC
+        if (![self.holdingGender isEqualToString:@""]) {
+            self.genderSelected = self.holdingGender;
+            //        NSLog(@"holding gender %@", self.holdingGender);
+        }
+        else{
+            if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"male"]) {
+                self.genderSelected = @"Mens";
+            }
+            else if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"female"]) {
+                self.genderSelected = @"Womens";
+            }
+            else{
+                self.genderSelected = @"Mens";
+            }
+        }
+        
+        [self.tableView registerNib:[UINib nibWithNibName:@"CategoryDetailCell" bundle:nil] forCellReuseIdentifier:@"catCell"];
+
     }
+
+    [self.tableView registerNib:[UINib nibWithNibName:@"selectCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
+
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -136,7 +144,10 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
-    if ([self.setting isEqualToString:@"condition"]) {
+    if (self.viewingMode) {
+        return self.viewingArray.count;
+    }
+    else if ([self.setting isEqualToString:@"condition"]) {
         return self.conditionArray.count;
     }
     else if ([self.setting isEqualToString:@"category"]){
@@ -193,7 +204,12 @@
             self.cell = [[selectCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
         }
         
-        if ([self.setting isEqualToString:@"condition"]) {
+        if (self.viewingMode) {
+            self.cell.textLabel.text = [self.viewingArray objectAtIndex:indexPath.row];
+            [self.cell.segmentControl setHidden:YES];
+            self.cell.accessoryType = UITableViewCellAccessoryNone;
+        }
+        else if ([self.setting isEqualToString:@"condition"]) {
             self.cell.textLabel.text = [self.conditionArray objectAtIndex:indexPath.row];
             [self.cell.segmentControl setHidden:YES];
             
@@ -332,7 +348,10 @@
     
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     
-    if ([self.setting isEqualToString:@"clothing"]) {
+    if (self.viewingMode) {
+        return;
+    }
+    else if ([self.setting isEqualToString:@"clothing"]) {
         
         NSString *selectionString = [self.clothingCategoryArray objectAtIndex:indexPath.row];
         [self.delegate addItemViewController:self didFinishEnteringItem:selectionString withgender:self.genderSelected andsizes:nil];

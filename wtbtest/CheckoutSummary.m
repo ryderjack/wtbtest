@@ -14,6 +14,7 @@
 #import "ReviewsVC.h"
 #import "ChatWithBump.h"
 #import "OrderSummaryView.h"
+#import <SafariServices/SafariServices.h>
 
 @interface CheckoutSummary ()
 
@@ -30,7 +31,44 @@
     self.navigationItem.leftBarButtonItem = cancelButton;
     
     self.itemTitleLabel.text = [self.listingObject objectForKey:@"itemTitle"];
-    self.conditionLabel.text = [self.listingObject objectForKey:@"condition"];
+    
+    //format size label correctly
+    NSString *sizeLabel = @"";
+    
+    if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Accessories"]) {
+        sizeLabel = @"Accessory";
+    }
+    else if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Tops"] || [[self.listingObject objectForKey:@"category"]isEqualToString:@"Bottoms"] || [[self.listingObject objectForKey:@"category"]isEqualToString:@"Outerwear"]) {
+        if ([[self.listingObject objectForKey:@"sizeLabel"] isEqualToString:@"XXL"]){
+            sizeLabel = [NSString stringWithFormat:@"XXLarge"];
+        }
+        else if ([[self.listingObject objectForKey:@"sizeLabel"] isEqualToString:@"XL"]){
+            sizeLabel = [NSString stringWithFormat:@"XLarge"];
+        }
+        else if ([[self.listingObject objectForKey:@"sizeLabel"] isEqualToString:@"L"]){
+            sizeLabel = [NSString stringWithFormat:@"Large"];
+        }
+        else if ([[self.listingObject objectForKey:@"sizeLabel"] isEqualToString:@"M"]){
+            sizeLabel = [NSString stringWithFormat:@"Medium"];
+        }
+        else if ([[self.listingObject objectForKey:@"sizeLabel"] isEqualToString:@"S"]){
+            sizeLabel = [NSString stringWithFormat:@"Small"];
+        }
+        else if ([[self.listingObject objectForKey:@"sizeLabel"] isEqualToString:@"XS"]){
+            sizeLabel = [NSString stringWithFormat:@"XSmall"];
+        }
+        else if ([[self.listingObject objectForKey:@"sizeLabel"] isEqualToString:@"XXS"]){
+            sizeLabel = [NSString stringWithFormat:@"XXSmall"];
+        }
+        else{
+            sizeLabel = [NSString stringWithFormat:@"%@",[self.listingObject objectForKey:@"sizeLabel"]];
+        }
+    }
+    else if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Footwear"]) {
+        sizeLabel = [NSString stringWithFormat:@"%@",[self.listingObject objectForKey:@"sizeLabel"]];
+    }
+    
+    self.conditionLabel.text = sizeLabel;
     
     [self.itemImageView setFile:[self.listingObject objectForKey:@"thumbnail"]];
     [self.itemImageView loadInBackground];
@@ -111,6 +149,10 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
+    if (self.successMode && !self.buttonShowing) {
+        [self showBarButton];
+    }
+    
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
@@ -146,7 +188,15 @@
 
 -(void)dismissVC{
     [self hideBarButton];
-    [self.delegate dismissedCheckout];
+    
+    if (self.successMode) {
+        NSLog(@"call purchased delegate");
+        [self.delegate PurchasedItemCheckout];
+    }
+    else{
+        [self.delegate dismissedCheckout];
+    }
+    
     [self dismissViewControllerAnimated:YES completion:^{
         self.payButton = nil;
     }];
@@ -356,7 +406,7 @@
                 
                 saleOrder[@"sellerId"] = seller.objectId;
                 saleOrder[@"sellerUser"] = seller;
-                saleOrder[@"status"] = @"pending";
+                saleOrder[@"status"] = @"live"; //CHANGE
 
                 saleOrder[@"shippingAddress"] = self.addressLabel.text;
 
@@ -370,6 +420,9 @@
     
                 saleOrder[@"itemImage"] = [self.listingObject objectForKey:@"thumbnail"];
                 saleOrder[@"itemTitle"] = self.itemTitleLabel.text;
+                
+                //condition label now shows size
+                saleOrder[@"itemSize"] = self.conditionLabel.text;
                 saleOrder[@"lastUpdated"] = [NSDate date];
     
                 float shippingPrice = self.totalPrice - self.salePrice;
@@ -378,18 +431,58 @@
 
                 saleOrder[@"buyerLeftFeedback"] = @"NO";
                 saleOrder[@"sellerLeftFeedback"] = @"NO";
+                
+                saleOrder[@"sellerUnseen"] = @1;
+                saleOrder[@"buyerUnseen"] = @1;
 
                 [saleOrder saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                     if (succeeded) {
 
                         //mark listing as sold
                         [self.listingObject setObject:@"sold" forKey:@"status"];
+                        [self.listingObject setObject:@"YES" forKey:@"purchased"];
+                        [self.listingObject setObject:[PFUser currentUser].objectId forKey:@"buyerId"];
                         [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                             if (succeeded) {
                                 [self hideHUD];
                                 
+                                //increment buyer's order number
                                 [[PFUser currentUser]incrementKey:@"orderNumber"];
                                 [[PFUser currentUser]saveInBackground];
+                                
+                                //increment seller's order number
+//                                NSDictionary *params = @{@"sellerId": self.otherUser.objectId};
+//                                [PFCloud callFunctionInBackground:@"incrementOrderNumber" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//                                    if (!error) {
+//                                        NSLog(@"increment sucessful %@", response);
+//                                    }
+//                                    else{
+//                                        NSLog(@"error incrementing seller's order number %@", error);
+//                                    }
+//                                }];
+                                
+//                                NSString *pushString = [NSString stringWithFormat:@"Item Sold: %@ for %@", self.itemTitleLabel.text, self.totalLabel.text];
+                                
+//                                NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.orderObject.objectId};
+//                                [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//                                    if (!error) {
+//                                        NSLog(@"response sending sold push %@", response);
+//
+//                                        [Answers logCustomEventWithName:@"Sent Sold Push"
+//                                                       customAttributes:@{
+//                                                                          @"success":@"YES"
+//                                                                          }];
+//                                    }
+//                                    else{
+//                                        NSLog(@"sold push error %@", error);
+//
+//                                        [Answers logCustomEventWithName:@"Sent Sold Push"
+//                                                       customAttributes:@{
+//                                                                          @"success":@"NO",
+//                                                                          @"error" : error.description
+//                                                                          }];
+//                                    }
+//                                }];
                                 
                                 NSLog(@"saved order!");
 
@@ -398,6 +491,7 @@
                                 vc.successMode = YES;
                                 vc.listingObject = self.listingObject;
                                 vc.orderObject = saleOrder;
+                                vc.delegate = self;
                                 
                                 vc.shippingText  = self.shippingPriceLabel.text;
                                 vc.itemPriceText  = self.itemPriceLabel.text;
@@ -507,9 +601,11 @@
 
 -(void)viewOrderPressed{
     OrderSummaryView *vc = [[OrderSummaryView alloc]init];
-    vc.isBuyer = self.isBuyer;
+    vc.isBuyer = YES;
     vc.orderObject = self.orderObject;
     [self.navigationController pushViewController:vc animated:YES];
+    
+    [self hideBarButton];
 }
 
 -(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
@@ -519,5 +615,25 @@
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
+}
+
+#pragma mark - success delegates
+-(void)dismissedCheckout{
+    [self.delegate dismissedCheckout];
+}
+
+-(void)PurchasedItemCheckout{
+    //post notification that forces profile tab badge to be recalculated
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"orderPlaced" object:nil];
+    [self.delegate PurchasedItemCheckout];
+}
+- (IBAction)paypalFooterPressed:(id)sender {
+    SFSafariViewController *paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:@"https://www.paypal.com/gb/webapps/mpp/paypal-safety-and-security"]];
+    if (@available(iOS 11.0, *)) {
+        paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+    }
+    paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+
+    [self.navigationController presentViewController:paypalSafariView animated:YES completion:nil];
 }
 @end

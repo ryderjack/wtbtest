@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13174"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -32,7 +32,7 @@
                     <nil key="highlightedColor"/>
                 </label>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Users with a profile picture are 5x more likely to receive messages" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SAg-W0-GXz">
-                    <rect key="frame" x="46" y="183" width="208" height="99"/>
+                    <rect key="frame" x="46" y="183" width="208" height="107"/>
                     <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="14"/>
                     <nil key="highlightedColor"/>
                 </label>
@@ -46,13 +46,23 @@
                         <action selector="addPicPressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="A5R-xV-R7x"/>
                     </connections>
                 </button>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="paypalIntro.png" translatesAutoresizingMaskIntoConstraints="NO" id="2yY-jW-sV3" customClass="PFImageView">
+                    <rect key="frame" x="76" y="109" width="149" height="38"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="149" id="3cM-1B-eva"/>
+                        <constraint firstAttribute="height" constant="38" id="uwn-Ua-cNN"/>
+                    </constraints>
+                </imageView>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
                 <constraint firstItem="SAg-W0-GXz" firstAttribute="top" secondItem="GDk-sT-Ex9" secondAttribute="bottom" constant="22" id="2mn-c6-J52"/>
                 <constraint firstItem="Nzi-4O-Mbx" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="40" id="3sU-9t-5el"/>
                 <constraint firstItem="SAg-W0-GXz" firstAttribute="bottom" secondItem="iN0-l3-epB" secondAttribute="bottomMargin" id="7ka-zC-PWk"/>
+                <constraint firstItem="2yY-jW-sV3" firstAttribute="centerY" secondItem="GDk-sT-Ex9" secondAttribute="centerY" id="9fG-wT-Xfn"/>
+                <constraint firstItem="SAg-W0-GXz" firstAttribute="top" secondItem="2yY-jW-sV3" secondAttribute="bottom" constant="36" id="VXG-Dv-dNx"/>
                 <constraint firstItem="SAg-W0-GXz" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="46" id="Wu9-Ou-lgY"/>
+                <constraint firstItem="2yY-jW-sV3" firstAttribute="centerX" secondItem="GDk-sT-Ex9" secondAttribute="centerX" id="bZB-MJ-I0e"/>
                 <constraint firstItem="GDk-sT-Ex9" firstAttribute="top" secondItem="Nzi-4O-Mbx" secondAttribute="bottom" constant="34" id="fMT-om-qlE"/>
                 <constraint firstItem="Nzi-4O-Mbx" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="71" id="nLq-Hf-9nQ"/>
                 <constraint firstItem="Nzi-4O-Mbx" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="vii-bP-o13"/>
@@ -63,10 +73,14 @@
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <connections>
                 <outlet property="addButton" destination="GDk-sT-Ex9" id="R5Y-oY-sJf"/>
+                <outlet property="mainLabel" destination="SAg-W0-GXz" id="253-po-E9B"/>
+                <outlet property="paypalImageView" destination="2yY-jW-sV3" id="u2R-cw-HMJ"/>
+                <outlet property="titleLabel" destination="Nzi-4O-Mbx" id="PMu-7c-PGF"/>
             </connections>
         </view>
     </objects>
     <resources>
         <image name="addPicIcon.png" width="67" height="66"/>
+        <image name="paypalIntro.png" width="149" height="38"/>
     </resources>
 </document>

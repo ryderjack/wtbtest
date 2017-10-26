@@ -15,6 +15,7 @@
 // An empty implementation adversely affects performance during animation.
 - (void)drawRect:(CGRect)rect {
     // Drawing code
+    
     self.doneButton.alpha = 0.0;
     self.numberSelected = 0;
 }

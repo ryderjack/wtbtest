@@ -3182,7 +3182,7 @@
     
     //paypal message
     UILabel *introLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,imgView.frame.origin.y+20, 300, 180)];
-    introLabel.text = @"Stay protected & build your reputation by purchasing through BUMP\n\nWhen you're ready to Purchase just hit the Buy Button on the listing and pay through PayPal\n\nIf you're still unsure check out our FAQs in Settings";
+    introLabel.text = @"Stay protected & build your reputation by purchasing through BUMP\n\nWhen you're ready to Purchase just hit Buy on the listing and pay through PayPal\n\nIf you're still unsure check out our FAQs in Settings";
     introLabel.numberOfLines = 0;
     [introLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
     introLabel.textAlignment = NSTextAlignmentCenter;

@@ -42,7 +42,7 @@
     self.country = @"";
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
-    
+
     //hide swipe view to start (unless in edit mode)
     self.colourSwipeView.alpha = 0.0;
     self.coloursArray = @[@"Black", @"White", @"Grey",@"Blue", @"Orange", @"Green", @"Red", @"Camo",@"Peach", @"Yellow", @"Purple", @"Pink"];
@@ -357,9 +357,6 @@
         else if(indexPath.row == 2){
             return self.sizeCell;
         }
-//        else if(indexPath.row == 3){
-//            return self.locationCell;
-//        }
         else if(indexPath.row == 3){
             return self.payCell;
         }
@@ -557,8 +554,16 @@
     else if (indexPath.section == 1){
         return 104;
     }
-    else if (indexPath.section ==2 || indexPath.section == 3 || indexPath.section == 5){
+    else if (indexPath.section ==2 || indexPath.section == 3){
         return 44;
+    }
+    else if (indexPath.section ==5){
+        if (indexPath.row == 0) {
+            return 72;
+        }
+        else{
+            return 44;
+        }
     }
     else if (indexPath.section ==4){
         return 104;
@@ -884,6 +889,11 @@
         
         if ([check isEqualToString:@""]) {
             textField.text = @"";
+        }
+        
+        //if user had previously selected multiple sizes, then changes quantity to 1 -> force htem to rechoose sizes
+        if (([textField.text intValue] == 1 || [textField.text isEqualToString:@""]) && [self.chooseSize.text isEqualToString:@"Multiple"]) {
+            self.chooseSize.text = @"Select";
         }
         
     }
@@ -5530,28 +5540,73 @@
 }
 - (IBAction)instantBuySwitchChanged:(id)sender {
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:5];
-
-    if (self.buySwitch.isOn) {
-        //on
-        self.buyRows++;
-        [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-        
-        //scroll to bottom
-        [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
-        
-        
-        //CHANGE
-        //trigger PayPal sign in
+    
+    if ([self.quantityField.text intValue] > 1) {
+        [self showAlertWithTitle:@"Instant Buy Quantity" andMsg:@"Instant Buy is currently only available for single quantity listings. If you're selling multiple items please create another listing. We're working on adding support for multiple quantities asap!"];
+        [self.buySwitch setOn:NO];
+        return;
+    }
+    
+    //CHANGE
+    if ([[[PFUser currentUser] objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] || self.paypalEnabled) {
+        if (self.buySwitch.isOn) {
+            //on
+            self.buyRows++;
+            [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+            
+            //scroll to bottom
+            [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+        }
+        else{
+            //off
+            //scroll up slightly
+            NSIndexPath *indexPath1 = [NSIndexPath indexPathForRow:0 inSection:5];
+            [self.tableView scrollToRowAtIndexPath:indexPath1 atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+            
+            self.buyRows--;
+            [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        }
     }
     else{
-        //off
-        //scroll up slightly
-        NSIndexPath *indexPath1 = [NSIndexPath indexPathForRow:0 inSection:5];
-        [self.tableView scrollToRowAtIndexPath:indexPath1 atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+        NSLog(@"call cloud func");
         
-        self.buyRows--;
-        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-     }
+        //potentially use params here to pass this user's ID for tracking
+        [self showHUD];
+        NSDictionary *params = @{@"token": @"A21AAHyovg4ogEbZS937U9RtrijvphxurDRDmHihaU3rZg2-GfphnVqB13zXuSEkN5lps-wTqAs7GmkchoqD0P-2syscj8MBw"};
+        [PFCloud callFunctionInBackground:@"callPartnerAPI" withParameters:params block:^(NSString *urlString, NSError *error) {
+            if (!error) {
+                [self hidHUD];
+                urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+                NSLog(@"URL: %@", urlString);
+                
+                if (!self.addedPayPalObservers) {
+                    self.addedPayPalObservers = YES;
+                    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalSuccess:) name:@"paypalOnboardingSuccess" object:nil];
+                    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalFailed:) name:@"paypalOnboardingFailed" object:nil];
+                }
+                
+                //trigger PayPal sign in
+                if (!self.paypalSafariView) {
+                    self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
+                    self.paypalSafariView.delegate = self;
+                    if (@available(iOS 11.0, *)) {
+                        self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+                    }
+                    self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+                }
+                
+                [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:^{
+                    //switch off when we goto merchant onboarding and only switch on if we get the signal from custom url scheme triggered observer
+                    [self.buySwitch setOn:NO];
+                }];
+            }
+            else{
+                [self hidHUD];
+                [self.buySwitch setOn:NO];
+                NSLog(@"error grabbing paypal link %@", error);
+            }
+        }];
+    }
 }
 
 #pragma mark - shipping delegate
@@ -5577,4 +5632,75 @@
         self.selectShippingLabel.text = @"Select";
     }
 }
+
+#pragma mark - paypal delegates
+//called via notification triggered by custom URL scheme
+-(void)paypalSuccess:(NSNotification *)notif{
+    NSLog(@"pp success");
+    [self removePPObservers];
+    
+    self.paypalEnabled = YES;
+    [self.buySwitch setOn:YES];
+    [self instantBuySwitchChanged:self];
+    
+    NSDictionary *params = [notif object];
+    
+    if ([params valueForKey:@"merchantIdInPayPal"] == nil || [params valueForKey:@"isEmailConfirmed"] == nil) {
+        [self showAlertWithTitle:@"PayPal Error" andMsg:@"Please try again, if the problem persists just send Team BUMP a message from Settings"];
+        return;
+    }
+    
+    NSString *merchantId = [params valueForKey:@"merchantIdInPayPal"];
+    NSString *isEmailConfirmed = [params valueForKey:@"isEmailConfirmed"];
+    
+    NSLog(@"params in create %@", params);
+
+    if (![isEmailConfirmed isEqualToString:@"true"]) {
+        [self showAlertWithTitle:@"PayPal" andMsg:@"Remember to tap the link in the confirmation email PayPal sent you so you can start accepting payments on BUMP"];
+    }
+
+    [[PFUser currentUser]setObject:@"YES" forKey:@"paypalEnabled"];
+    [[PFUser currentUser]setObject:merchantId forKey:@"paypalMerchantId"];
+
+    [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+        if (succeeded) {
+            NSLog(@"saved paypal info on user");
+            [Answers logCustomEventWithName:@"Saved PayPal info on User"
+                           customAttributes:@{}];
+            
+        }
+        else{
+            NSLog(@"error saving paypal info on user %@", error);
+            
+            [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
+                           customAttributes:@{}];
+        }
+    }];
+    
+    //save paypal info to user
+    
+    //dismiss paypal onboarding safari view
+    [self.paypalSafariView dismissViewControllerAnimated:YES completion:^{
+        //turn on instant buy switch
+//        [self.buySwitch setOn:YES];
+//        [self instantBuySwitchChanged:self];
+    }];
+}
+
+-(void)paypalFailed:(NSNotification *)notif{
+    NSLog(@"pp failed");
+
+    [self removePPObservers];
+    [self.paypalSafariView dismissViewControllerAnimated:YES completion:^{
+        [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Make sure you've granted the relevant permissions on PayPal so you can sell instantly on BUMP"];
+        self.paypalSafariView = nil;
+    }];
+}
+
+-(void)removePPObservers{
+    self.addedPayPalObservers = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"paypalOnboardingSuccess" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"paypalOnboardingFailed" object:nil];
+}
+
 @end

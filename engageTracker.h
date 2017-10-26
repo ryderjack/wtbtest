@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <ParseUI/ParseUI.h>
 
 @class engageTracker;
 @protocol engageDelegate <NSObject>
@@ -29,6 +30,10 @@
 
 //add picture *new*
 @property (weak, nonatomic) IBOutlet UIButton *addButton;
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *mainLabel;
 
+//for instant buy intro
+@property (weak, nonatomic) IBOutlet PFImageView *paypalImageView;
 
 @end

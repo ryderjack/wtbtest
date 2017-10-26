@@ -19,6 +19,7 @@
 #include <CommonCrypto/CommonCrypto.h>
 #import "resetPassController.h"
 #import "MBFingerTipWindow.h"
+#import "OrderSummaryView.h"
 
 @interface AppDelegate ()
 
@@ -195,75 +196,10 @@
         [timer2 fire];
     }
     
-    //check if there's a local 'sneaker release' push
+    //check for local push trigger
     UILocalNotification *localNotif = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
-    NSDictionary *localUserInfo = localNotif.userInfo;
-//    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
-    NSString *itemTitle = [localUserInfo valueForKey:@"itemTitle"];
     
-    if (localNotif && itemTitle)
-    {
-        //query for link then open web view
-        PFQuery *linkQuery = [PFQuery queryWithClassName:@"Releases"];
-        [linkQuery whereKey:@"status" equalTo:@"live"];
-        [linkQuery whereKey:@"itemTitle" equalTo:itemTitle];
-        [linkQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                NSLog(@"open web view! did finish launching");
-                
-                NSString *link = [object objectForKey:@"itemLink"];
-                
-                if (![link isEqualToString:@"soon"]) {
-                    
-                    [Answers logCustomEventWithName:@"Opened Release Push"
-                                   customAttributes:@{
-                                                      @"itemTitle":itemTitle,
-                                                      @"mode":@"didFinishLaunch"
-                                                      }];
-                    
-                    self.web = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:link]];
-                    self.web.showUrlWhileLoading = YES;
-                    self.web.showPageTitles = YES;
-                    self.web.doneButtonTitle = @"";
-                    self.web.infoMode = NO;
-                    self.web.dropMode = YES;
-                    self.web.delegate = self;
-                    
-                    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.web];
-                    [self.window.rootViewController presentViewController:navigationController animated:YES completion:^{                        
-                        //update reminders array to keep it accurate
-                        NSMutableArray *remindersArray = [NSMutableArray array];
-                        
-                        if ([[PFUser currentUser]objectForKey:@"remindersArray"]) {
-                            [remindersArray addObjectsFromArray:[[PFUser currentUser]objectForKey:@"remindersArray"]];
-                        }
-                        
-                        NSMutableArray *discardedItems = [NSMutableArray array];
-                        
-                        for (NSString *itemTitle in remindersArray) {
-                            if ([itemTitle isEqualToString:itemTitle]){
-                                [discardedItems addObject:itemTitle];
-                            }
-                        }
-                        [remindersArray removeObjectsInArray:discardedItems];
-                        
-                        [[PFUser currentUser]setObject:remindersArray forKey:@"remindersArray"];
-                        [[PFUser currentUser] saveInBackground];
-                    }];
-                }
-            }
-            else{
-                [Answers logCustomEventWithName:@"Error Opening Release"
-                               customAttributes:@{
-                                                  @"error":error,
-                                                  @"where":@"did finish launching"
-                                                  }];
-                
-                NSLog(@"error getting release %@", error);
-            }
-        }];
-    }
-    else if ([localNotif.alertBody containsString:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]){
+    if ([localNotif.alertBody containsString:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]){
         [Answers logCustomEventWithName:@"Opened First Reminder Push"
                        customAttributes:@{}];
         
@@ -301,7 +237,33 @@
         NSDictionary *dic = [userInfo objectForKey:@"aps"];
         NSString *strMsg = [dic objectForKey:@"alert"];
         
-        if([strMsg containsString:@"liked your wanted listing"]){
+        if([strMsg hasSuffix:@"just left you a review ✅"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav presentViewController:nav animated:YES completion:nil];
+            
+        }
+        else if([strMsg hasPrefix:@"Item Sold:"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Sold Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav presentViewController:nav animated:YES completion:nil];
+            
+        }
+        else if([strMsg containsString:@"liked your wanted listing"]){
             //open wanted listing
             [Answers logCustomEventWithName:@"Opened listing after receiving Bump Push"
                            customAttributes:@{}];
@@ -355,12 +317,20 @@
         }
     }
     
+    //add observer which can refresh profile tab badge after user places an order
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self selector:@selector(profileBadgeRefresh) name:@"orderPlaced" object:nil];
+
     //app store observer
     
 //    [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
 
     //reset BOOL which limits like drop downs to once per session
     [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"seenLikeDrop"];
+    
+    if ([PFUser currentUser]) {
+        [self calcOrderNumber];
+    }
     
     return YES;
 }
@@ -446,9 +416,9 @@
                     }
                     
                     //add unseen orders to badge //CHANGE make sure this is bulletproof
-                    if (self.profileView.ordersUnseen > 0) {
-                        totalUnseen+= self.profileView.ordersUnseen;
-                    }
+//                    if (self.profileView.ordersUnseen > 0) {
+//                        totalUnseen+= self.profileView.ordersUnseen;
+//                    }
                     self.installation.badge = totalUnseen;
                     [self.installation saveEventually];
                 }
@@ -456,12 +426,13 @@
                     [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
                     
                     //add unseen orders to badge //CHANGE make sure this is bulletproof
-                    if (self.profileView.ordersUnseen > 0) {
-                        self.installation.badge = self.profileView.ordersUnseen;
-                    }
-                    else{
-                        self.installation.badge = 0;
-                    }
+//                    if (self.profileView.ordersUnseen > 0) {
+//                        self.installation.badge = self.profileView.ordersUnseen;
+//                    }
+//                    else{
+//                        self.installation.badge = 0;
+//                    }
+                    self.installation.badge = 0;
                     [self.installation saveEventually];
                 }
             }
@@ -476,7 +447,7 @@
     }];
 }
 
--(void) checkForOrders{
+-(void)checkForOrders{
     if (![PFUser currentUser]) {
         return;
     }
@@ -496,8 +467,8 @@
     [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int orderCount = (int)objects.count;
-//            self.profileView.ordersUnseen = orderCount;
-            self.profileView.ordersUnseen = 3;
+            NSLog(@"orders count %d", orderCount);
+            self.profileView.ordersUnseen = orderCount;
 
             if (objects.count > 0) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"UnseenOrders" object:@(orderCount)];
@@ -522,17 +493,10 @@
         if (object) {
             //is there anything unseen in the convo
             int userUnseen = [[object objectForKey:@"userUnseen"]intValue];
-//            self.profileView.messagesUnseen = userUnseen;
-            
-            self.profileView.messagesUnseen = 2;
-
+            self.profileView.messagesUnseen = userUnseen;
 
             if (userUnseen > 0) {
-//                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"1"]]; //even if have multiple unseen keep badge @ 1
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"NewTBMessage" object:nil];
-            }
-            else{
-//                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
             }
             
             [self calcProfileBadge];
@@ -557,11 +521,9 @@
     [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int count = (int)[objects count];
-//            self.profileView.supportUnseen = count;
-            self.profileView.supportUnseen = 4;
+            self.profileView.supportUnseen = count;
 
             if (objects.count > 0) {
-//                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"1"]]; //even if have multiple unseen keep badge @ 1
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"NewTBMessage" object:nil];
             }
             
@@ -857,6 +819,38 @@
         vc.userId = userId;
         NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
         [nav.visibleViewController.navigationController pushViewController:vc animated:YES];
+    }
+    
+    //when user returns from PayPal merchant onboarding e.g. bump://paypal/
+    else if ([[url host] isEqualToString:@"paypal"]){
+        
+        NSMutableDictionary *queryStringDictionary = [[NSMutableDictionary alloc] init];
+        NSArray *urlComponents = [[NSString stringWithFormat:@"%@", url] componentsSeparatedByString:@"&"];
+        
+        for (NSString *keyValuePair in urlComponents)
+        {
+            NSArray *pairComponents = [keyValuePair componentsSeparatedByString:@"="];
+            NSString *key = [[pairComponents firstObject] stringByRemovingPercentEncoding];
+            NSString *value = [[pairComponents lastObject] stringByRemovingPercentEncoding];
+            
+            [queryStringDictionary setObject:value forKey:key];
+        }
+        
+        NSLog(@"url components: %@", queryStringDictionary);
+        
+        //don't check on permissions coz user may just log in and in that case they already granted them the first time
+//        NSString *permissions = [queryStringDictionary valueForKey:@"permissionsGranted"];
+        NSString *consent = [queryStringDictionary valueForKey:@"consentStatus"];
+        
+        //also do a check on merchantId to make sure the current user's ID matches this so we're confident the user who initiated PayPal auth is the one who granted it  //CHANGE
+        
+        //depending on URL passed back, we know if user has successfully onboarded & whether to mark them as PayPal enabled - check parameters to know
+        if ([consent isEqualToString:@"true"]) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"paypalOnboardingSuccess" object:queryStringDictionary];
+        }
+        else{
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"paypalOnboardingFailed" object:queryStringDictionary];
+        }
     }
     
     return [[FBSDKApplicationDelegate sharedInstance] application:application
@@ -1162,7 +1156,6 @@
 }
 
 -(void)calcProfileBadge{
-    NSLog(@"calcing tab badge in profile");
     
     //check if any support or team bump messages unseen
     int tabInt = 0;
@@ -1176,8 +1169,6 @@
         tabInt += self.profileView.ordersUnseen;
     }
     
-    NSLog(@"total %d",tabInt);
-    
     //add all together and set tab badge
     if (tabInt == 0) {
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
@@ -1187,5 +1178,32 @@
     }
     
     //CHANGE make sure to add the unseen orders number to installation badge as well as messages until an order has been 'read'
+}
+
+-(void)profileBadgeRefresh{
+    NSLog(@"refreshing profile badge in profile");
+    [self checkForTBMessages];
+    [self checkForOrders];
+    [self checkForSupportMessages];
+}
+
+-(void)calcOrderNumber{
+    //query for convos we know this user hasn't seen
+    PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
+    [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+    
+    PFQuery *sellingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
+    [sellingUnseenQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+    
+    PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
+    [unseenQuery whereKey:@"status" equalTo:@"live"];
+    
+    [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            int count = (int)objects.count;
+            [[PFUser currentUser]setObject:@(count) forKey:@"orderNumber"];
+            [[PFUser currentUser] saveInBackground];
+        }
+    }];
 }
 @end

@@ -5,7 +5,7 @@
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13173"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13174"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
@@ -268,9 +268,9 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="S O L D" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dzA-hP-omO">
-                        <rect key="frame" x="35" y="289" width="51" height="26"/>
+                        <rect key="frame" x="35" y="289" width="97" height="26"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="51" id="BST-cU-mAn"/>
+                            <constraint firstAttribute="width" constant="97" id="BST-cU-mAn"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="9"/>
                         <color key="textColor" red="0.48914524912834167" green="0.87630254030227661" blue="0.76472771167755127" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>

@@ -2017,8 +2017,10 @@
         [self.editImageView addLayoutAttributes:finalEditAttributes forProgress:0.4];
     }
     
-    //finish on this so we can update button images if any unread upon first tap on user's profile
-    [self calcTabBadge];
+    if (self.tabMode){
+        //finish on this so we can update button images if any unread upon first tap on user's profile
+        [self calcTabBadge];
+    }
 }
 
 -(void)setupTrustedChecks{
@@ -2639,6 +2641,8 @@
     
     self.addPicView.layer.cornerRadius = 10;
     self.addPicView.layer.masksToBounds = YES;
+    
+    [self.addPicView.paypalImageView setHidden:YES];
     
     [[UIApplication sharedApplication].keyWindow addSubview:self.addPicView];
     

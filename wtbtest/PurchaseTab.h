@@ -25,6 +25,7 @@
 #import "FilterVC.h"
 #import <YLProgressBar/YLProgressBar.h>
 #import "BrowseLocation.h"
+#import "engageTracker.h"
 
 @interface PurchaseTab : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout,customAlertDelegate,UISearchBarDelegate,TheMainSearchViewDelegate,CLLocationManagerDelegate,dropDelegate,WelcomeDelegate,rateDelegate,FilterDelegate,inviteDelegate, BrowseLocationDelegate>
 
@@ -154,5 +155,9 @@
 //location filter view
 @property (nonatomic, strong) BrowseLocation *locationFilterView;
 @property (nonatomic) BOOL locationFilterShowing;
+
+//how to buy intro
+@property (nonatomic, strong) engageTracker *buyIntroView;
+@property (nonatomic) BOOL buyIntroShowing;
 
 @end

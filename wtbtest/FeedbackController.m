@@ -544,8 +544,8 @@
                     self.sentPush = YES;
                     NSString *pushString = [NSString stringWithFormat:@"%@ just left you a review ✅", [PFUser currentUser].username];
                     
-                    NSDictionary *params = @{@"userId": self.user.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
-                    [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                    NSDictionary *params = @{@"userId": self.user.objectId, @"message": pushString, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.orderObject.objectId};
+                    [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
                         if (!error) {
                             NSLog(@"response sending review push %@", response);
                             

@@ -43,7 +43,7 @@
     
     self.rowNumber = 5;
     
-    UIBarButtonItem *helpButton = [[UIBarButtonItem alloc] initWithTitle:@"Help" style:UIBarButtonItemStylePlain target:self action:@selector(helpPressed)];
+    UIBarButtonItem *helpButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showActionSheet)];
     self.navigationItem.rightBarButtonItem = helpButton;
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
@@ -67,265 +67,280 @@
     
     //setup cells
     
-    //listing cell
-    self.titleLabel.text = [self.orderObject objectForKey:@"itemTitle"];
-    [self.itemImageView setFile:[self.orderObject objectForKey:@"itemImage"]];
-    [self.itemImageView loadInBackground];
-    
-    if (self.isBuyer) {
-        self.otherUser = [self.orderObject objectForKey:@"sellerUser"];
-        [self.refundButton setTitle:@"Request Refund" forState:UIControlStateNormal];
-    }
-    else{
-        self.otherUser = [self.orderObject objectForKey:@"buyerUser"];
-        [self.refundButton setTitle:@"Issue Refund" forState:UIControlStateNormal];
-    }
-    
-    [self.otherUser fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+    [self.orderObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
-            NSLog(@"fetched other user");
             
-            self.fetchedUser = YES;
-
-            //other user info
-            if(![self.otherUser objectForKey:@"picture"]){
-                
-                NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
-                                                NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
-                
-                [self.otherUserImageView setImageWithString:self.otherUser.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
-            }
-            else{
-                [self.otherUserImageView setFile:[self.otherUser objectForKey:@"picture"]];
-                [self.otherUserImageView loadInBackground];
+            if ([[self.orderObject objectForKey:@"buyerId"]isEqualToString:[PFUser currentUser].objectId]) {
+                self.isBuyer = YES;
             }
             
-            NSString *transText;
+            //listing cell
+            //get correct size label
+            //check if has size
+            self.titleLabel.text = [NSString stringWithFormat:@"%@\n%@",[self.orderObject objectForKey:@"itemTitle"],[self.orderObject objectForKey:@"itemSize"]];
+            [self.itemImageView setFile:[self.orderObject objectForKey:@"itemImage"]];
+            [self.itemImageView loadInBackground];
             
             if (self.isBuyer) {
+                self.otherUser = [self.orderObject objectForKey:@"sellerUser"];
+                [self.refundButton setTitle:@"Request Refund" forState:UIControlStateNormal];
+            }
+            else{
+                self.otherUser = [self.orderObject objectForKey:@"buyerUser"];
+                [self.refundButton setTitle:@"Issue Refund" forState:UIControlStateNormal];
+            }
+            
+            [self.otherUser fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    NSLog(@"fetched other user");
+                    
+                    self.fetchedUser = YES;
+                    
+                    //other user info
+                    if(![self.otherUser objectForKey:@"picture"]){
+                        
+                        NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
+                                                        NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+                        
+                        [self.otherUserImageView setImageWithString:self.otherUser.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
+                    }
+                    else{
+                        [self.otherUserImageView setFile:[self.otherUser objectForKey:@"picture"]];
+                        [self.otherUserImageView loadInBackground];
+                    }
+                    
+                    NSString *transText;
+                    
+                    if (self.isBuyer) {
+                        
+                        transText = [NSString stringWithFormat:@"Purchased on %@ from\n%@\n@%@",orderDateString,[self.otherUser objectForKey:@"fullname"],self.otherUser.username];
+                        
+                        [self.messageButton setTitle:@"Message Seller" forState:UIControlStateNormal];
+                        
+                        //setup username of guy left / was left feedback
+                        if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
+                            //this user left a review
+                            NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:[NSString stringWithFormat:@"You left feedback for\n@%@", self.otherUser.username]];
+                            [self.leftFeedbackLabel setAttributedText:[self modifyString:labelText setFontForText:[NSString stringWithFormat:@"@%@", self.otherUser.username]]];
+                        }
+                        
+                        if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"YES"]) {
+                            NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:[NSString stringWithFormat:@"@%@\n left you feedback", self.otherUser.username]];
+                            [self.gotFeedbackLabel setAttributedText:[self modifyString:labelText setFontForText:[NSString stringWithFormat:@"@%@", self.otherUser.username]]];
+                        }
+                        
+                    }
+                    else{
+                        transText = [NSString stringWithFormat:@"Sold on %@ to\n%@\n@%@",orderDateString,[self.otherUser objectForKey:@"fullname"],self.otherUser.username];
+                        [self.messageButton setTitle:@"Message Buyer" forState:UIControlStateNormal];
+                        
+                        //setup username of guy left / was left feedback
+                        if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
+                            //current user got a review
+                            NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:[NSString stringWithFormat:@"@%@\n left you feedback", self.otherUser.username]];
+                            [self.gotFeedbackLabel setAttributedText:[self modifyString:labelText setFontForText:[NSString stringWithFormat:@"@%@", self.otherUser.username]]];
+                        }
+                        
+                        if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"YES"]) {
+                            //current user left a review
+                            NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:[NSString stringWithFormat:@"You left feedback for\n@%@", self.otherUser.username]];
+                            [self.leftFeedbackLabel setAttributedText:[self modifyString:labelText setFontForText:[NSString stringWithFormat:@"@%@", self.otherUser.username]]];
+                        }
+                    }
+                    
+                    NSString *name = [self.otherUser objectForKey:@"fullname"];
+                    
+                    NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:transText];
+                    [self.dealLabel setAttributedText:[self modifyString:labelText setFontForText:name]];
+                    
+                }
+                else{
+                    NSLog(@"error fetching other user %@", error);
+                }
+            }];
+            
+            //setup listing
+            self.listingObject = [self.orderObject objectForKey:@"listing"];
+            
+            //setup address
+            self.addressLabel.text = [self.orderObject objectForKey:@"shippingAddress"];
+            
+            //setup payment info
+            NSString *paymentString;
+            
+            self.itemPriceLabel.text = [self.orderObject objectForKey:@"salePriceLabel"];
+            self.shippingPriceLabel.text = [self.orderObject objectForKey:@"shippingPriceLabel"];
+            self.totalPriceLabel.text = [self.orderObject objectForKey:@"totalPriceLabel"];
+            
+            if (self.isBuyer) {
+                paymentString = [NSString stringWithFormat:@"Payment Sent\n%@ sent using PayPal",[self.orderObject objectForKey:@"totalPriceLabel"]];
+            }
+            else{
+                paymentString = [NSString stringWithFormat:@"Payment Received\n%@ sent to your PayPal",[self.orderObject objectForKey:@"totalPriceLabel"]];
+            }
+            self.paymentLabel.text = paymentString;
+            
+            
+            //setup next steps
+            
+            //reviews
+            if (self.isBuyer) {
                 
-                transText = [NSString stringWithFormat:@"Purchased on %@ from\n%@\n@%@",orderDateString,[self.otherUser objectForKey:@"fullname"],self.otherUser.username];
-
-                [self.messageButton setTitle:@"Message Seller" forState:UIControlStateNormal];
-                
-                //setup username of guy left / was left feedback
                 if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
                     //this user left a review
-                    NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:[NSString stringWithFormat:@"You left feedback for\n@%@", self.otherUser.username]];
-                    [self.leftFeedbackLabel setAttributedText:[self modifyString:labelText setFontForText:[NSString stringWithFormat:@"@%@", self.otherUser.username]]];
+                    self.leftFeedback = YES;
+                    
+                    //get number of stars that this user left & set correct image on leftStarImgView
+                    int buyerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
+                    if (buyerStars == 1) {
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
+                    }
+                    else if (buyerStars == 2){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
+                    }
+                    else if (buyerStars == 3){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
+                    }
+                    else if (buyerStars == 4){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
+                    }
+                    else if (buyerStars == 5){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
+                    }
                 }
                 
                 if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"YES"]) {
-                    NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:[NSString stringWithFormat:@"@%@\n left you feedback", self.otherUser.username]];
-                    [self.gotFeedbackLabel setAttributedText:[self modifyString:labelText setFontForText:[NSString stringWithFormat:@"@%@", self.otherUser.username]]];
+                    //other user has left a review
+                    self.gotFeedback = YES;
+                    
+                    self.rowNumber++;
+                    
+                    //set number of stars on gotImgView
+                    int sellerStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
+                    if (sellerStars == 1) {
+                        [self.gotStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
+                    }
+                    else if (sellerStars == 2){
+                        [self.gotStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
+                    }
+                    else if (sellerStars == 3){
+                        [self.gotStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
+                    }
+                    else if (sellerStars == 4){
+                        [self.gotStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
+                    }
+                    else if (sellerStars == 5){
+                        [self.gotStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
+                    }
                 }
                 
             }
             else{
-                transText = [NSString stringWithFormat:@"Sold on %@ to\n%@\n@%@",orderDateString,[self.otherUser objectForKey:@"fullname"],self.otherUser.username];
-                [self.messageButton setTitle:@"Message Buyer" forState:UIControlStateNormal];
-                
-                //setup username of guy left / was left feedback
-                if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
-                    //current user got a review
-                    NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:[NSString stringWithFormat:@"@%@\n left you feedback", self.otherUser.username]];
-                    [self.gotFeedbackLabel setAttributedText:[self modifyString:labelText setFontForText:[NSString stringWithFormat:@"@%@", self.otherUser.username]]];
+                //user is seller, to do's:
+                if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"YES"]) {
+                    self.leftFeedback = YES;
+                    
+                    //user has left a review
+                    
+                    //get number of stars that this user got & set correct image on leftStarImgView
+                    int sellerStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
+                    if (sellerStars == 1) {
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
+                    }
+                    else if (sellerStars == 2){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
+                    }
+                    else if (sellerStars == 3){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
+                    }
+                    else if (sellerStars == 4){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
+                    }
+                    else if (sellerStars == 5){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
+                    }
                 }
                 
-                if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"YES"]) {
-                    //current user left a review
-                    NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:[NSString stringWithFormat:@"You left feedback for\n@%@", self.otherUser.username]];
-                    [self.leftFeedbackLabel setAttributedText:[self modifyString:labelText setFontForText:[NSString stringWithFormat:@"@%@", self.otherUser.username]]];
+                if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
+                    self.gotFeedback = YES;
+                    self.rowNumber++;
+                    
+                    //set number of stars we left
+                    int buyerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
+                    if (buyerStars == 1) {
+                        [self.gotStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
+                    }
+                    else if (buyerStars == 2){
+                        [self.gotStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
+                    }
+                    else if (buyerStars == 3){
+                        [self.gotStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
+                    }
+                    else if (buyerStars == 4){
+                        [self.gotStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
+                    }
+                    else if (buyerStars == 5){
+                        [self.gotStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
+                    }
                 }
             }
             
-            NSString *name = [self.otherUser objectForKey:@"fullname"];
             
-            NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:transText];
-            [self.dealLabel setAttributedText:[self modifyString:labelText setFontForText:name]];
+            //shipping
+            if ([[self.orderObject objectForKey:@"shipped"] isEqualToString:@"YES"]) {
+                self.shipped = YES;
+                
+                [self.shippingImageView setImage:[UIImage imageNamed:@"OrderCheck"]];
+                
+                [self.dateFormat setDateFormat:@"dd MMM YYYY"];
+                NSDate *shippedDate = [self.orderObject objectForKey:@"shippedDate"];
+                
+                self.shippingMainLabel.text = [NSString stringWithFormat:@"Item Shipped\nSent on %@ to",[self.dateFormat stringFromDate:shippedDate]];
+                
+                if ([[self.orderObject objectForKey:@"trackingAdded"]isEqualToString:@"YES"]) {
+                    //tracking added
+                    self.addedTracking = YES;
+                    self.shippingCellHeight += 50;
+                    
+                    self.addressLabel.text = [NSString stringWithFormat:@"%@\n\nCourier: %@\nTracking: %@", self.addressLabel.text,[self.orderObject objectForKey:@"courierName"], [self.orderObject objectForKey:@"trackingId"]];
+                    
+                    if (self.isBuyer) {
+                        [self.shippingButton setTitle:@"I haven't received my item" forState:UIControlStateNormal];
+                    }
+                    else{
+                        [self.shippingButton setTitle:@"Update Tracking" forState:UIControlStateNormal];
+                    }
+                }
+                else{
+                    //no tracking added yet
+                    if (self.isBuyer) {
+                        [self.shippingButton setTitle:@"I haven't received my item" forState:UIControlStateNormal];
+                    }
+                    else{
+                        [self.shippingButton setTitle:@"Add Tracking" forState:UIControlStateNormal];
+                    }
+                }
+            }
+            else{
+                //not shipped
+                if (self.isBuyer) {
+                    [self.shippingButton setTitle:@"Report a Shipping Issue" forState:UIControlStateNormal];
+                    self.shippingMainLabel.text = @"Awaiting Shipment\nto this address";
+                }
+                else{
+                    [self.shippingButton setTitle:@"Mark as Shipped" forState:UIControlStateNormal];
+                    self.shippingMainLabel.text = @"Ship your item tracked delivery\nto this address";
+                }
+            }
             
+            [self.tableView reloadData];
+            [self calcStatus];
         }
         else{
-            NSLog(@"error fetching other user %@", error);
+            NSLog(@"error fetching order %@", error);
+            [self showAlertWithTitle:@"Error Fetching Order" andMsg:@"Please check your connection & try again"];
         }
     }];
-    
-    //setup listing
-    self.listingObject = [self.orderObject objectForKey:@"listing"];
-
-    //setup address
-    self.addressLabel.text = [self.orderObject objectForKey:@"shippingAddress"];
-    
-    //setup payment info
-    NSString *paymentString;
-    
-    self.itemPriceLabel.text = [self.orderObject objectForKey:@"salePriceLabel"];
-    self.shippingPriceLabel.text = [self.orderObject objectForKey:@"shippingPriceLabel"];
-    self.totalPriceLabel.text = [self.orderObject objectForKey:@"totalPriceLabel"];
-    
-    if (self.isBuyer) {
-        paymentString = [NSString stringWithFormat:@"Payment Sent\n%@ sent using PayPal",[self.orderObject objectForKey:@"totalPriceLabel"]];
-    }
-    else{
-        paymentString = [NSString stringWithFormat:@"Payment Received\n%@ sent to your PayPal",[self.orderObject objectForKey:@"totalPriceLabel"]];
-    }
-    self.paymentLabel.text = paymentString;
-
-
-    //setup next steps
-
-    //reviews
-    if (self.isBuyer) {
-
-        if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
-            //this user left a review
-            self.leftFeedback = YES;
-            
-            //get number of stars that this user left & set correct image on leftStarImgView
-            int buyerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
-            if (buyerStars == 1) {
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
-            }
-            else if (buyerStars == 2){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
-            }
-            else if (buyerStars == 3){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
-            }
-            else if (buyerStars == 4){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
-            }
-            else if (buyerStars == 5){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
-            }
-        }
-
-        if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"YES"]) {
-            //other user has left a review
-            self.gotFeedback = YES;
-
-            self.rowNumber++;
-
-            //set number of stars on gotImgView
-            int sellerStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
-            if (sellerStars == 1) {
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
-            }
-            else if (sellerStars == 2){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
-            }
-            else if (sellerStars == 3){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
-            }
-            else if (sellerStars == 4){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
-            }
-            else if (sellerStars == 5){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
-            }
-        }
-
-    }
-    else{
-        //user is seller, to do's:
-        if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"YES"]) {
-            self.leftFeedback = YES;
-
-            //user has left a review
-            
-            //get number of stars that this user got & set correct image on leftStarImgView
-            int sellerStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
-            if (sellerStars == 1) {
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
-            }
-            else if (sellerStars == 2){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
-            }
-            else if (sellerStars == 3){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
-            }
-            else if (sellerStars == 4){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
-            }
-            else if (sellerStars == 5){
-                [self.leftStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
-            }
-        }
-        
-        if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
-            self.gotFeedback = YES;
-            self.rowNumber++;
-            
-            //set number of stars we left
-            int buyerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
-            if (buyerStars == 1) {
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
-            }
-            else if (buyerStars == 2){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
-            }
-            else if (buyerStars == 3){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
-            }
-            else if (buyerStars == 4){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
-            }
-            else if (buyerStars == 5){
-                [self.gotStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
-            }
-        }
-    }
-    
-    
-    //shipping
-    if ([[self.orderObject objectForKey:@"shipped"] isEqualToString:@"YES"]) {
-        self.shipped = YES;
-        
-        [self.shippingImageView setImage:[UIImage imageNamed:@"OrderCheck"]];
-
-        [self.dateFormat setDateFormat:@"dd MMM YYYY"];
-        NSDate *shippedDate = [self.orderObject objectForKey:@"shippedDate"];
-
-        self.shippingMainLabel.text = [NSString stringWithFormat:@"Item Shipped\nSent on %@ to",[self.dateFormat stringFromDate:shippedDate]];
-
-        if ([[self.orderObject objectForKey:@"trackingAdded"]isEqualToString:@"YES"]) {
-            //tracking added
-            self.addedTracking = YES;
-            self.shippingCellHeight += 50;
-
-            self.addressLabel.text = [NSString stringWithFormat:@"%@\n\nCourier: %@\nTracking: %@", self.addressLabel.text,[self.orderObject objectForKey:@"courierName"], [self.orderObject objectForKey:@"trackingId"]];
-            
-            if (self.isBuyer) {
-                [self.shippingButton setTitle:@"I haven't received my item" forState:UIControlStateNormal];
-            }
-            else{
-                [self.shippingButton setTitle:@"Update Tracking" forState:UIControlStateNormal];
-            }
-        }
-        else{
-            //no tracking added yet
-            if (self.isBuyer) {
-                [self.shippingButton setTitle:@"I haven't received my item" forState:UIControlStateNormal];
-            }
-            else{
-                [self.shippingButton setTitle:@"Add Tracking" forState:UIControlStateNormal];
-            }
-        }
-    }
-    else{
-        //not shipped
-        if (self.isBuyer) {
-            [self.shippingButton setHidden:YES];
-            self.shippingMainLabel.text = @"Awaiting Shipment\nto this address";
-        }
-        else{
-            [self.shippingButton setTitle:@"Mark as Shipped" forState:UIControlStateNormal];
-            self.shippingMainLabel.text = @"Ship your item tracked delivery\nto this address";
-        }
-    }
-    
-    [self.tableView reloadData];
-    [self calcStatus];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -654,6 +669,7 @@
     vc.source = @"checkout";
     vc.fromBuyNow = YES;
     vc.pureWTS = YES;
+    vc.fromPush = YES;
     [self.viewListingButton setEnabled:YES];
     [self.navigationController pushViewController:vc animated:YES];
 }
@@ -664,53 +680,58 @@
 }
 - (IBAction)shippingButtonPressed:(id)sender {
     if (!self.shipped) {
-        [self showHUD];
-        [self.orderObject setObject:@"YES" forKey:@"shipped"];
-        [self.orderObject setObject:[NSDate date] forKey:@"shippedDate"];
-        [self.orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            if (succeeded) {
-                [self hideHUD];
-                self.shipped = YES;
-                
-                //send a push to the buyer
-                NSString *pushString = [NSString stringWithFormat:@"%@ just shipped '%@' ✈️", [PFUser currentUser].username, [self.orderObject objectForKey:@"itemTitle"]];
-                
-                NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
-                [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                    if (!error) {
-                        NSLog(@"response sending review push %@", response);
-                        
-                        [Answers logCustomEventWithName:@"Sent Shipping Push"
-                                       customAttributes:@{
-                                                          @"success":@"YES"
-                                                          }];
-                    }
-                    else{
-                        NSLog(@"review push error %@", error);
-                        
-                        [Answers logCustomEventWithName:@"Sent Shipping Push"
-                                       customAttributes:@{
-                                                          @"success":@"NO",
-                                                          @"error" : error.description
-                                                          }];
-                    }
-                }];
-                
-                //update shipping cell
-                [self.shippingImageView setImage:[UIImage imageNamed:@"OrderCheck"]];
-                [self.dateFormat setDateFormat:@"dd MMM YYYY"];
-                NSDate *shippedDate = [self.orderObject objectForKey:@"shippedDate"];
-                self.shippingMainLabel.text = [NSString stringWithFormat:@"Item Shipped\nSent on %@ to",[self.dateFormat stringFromDate:shippedDate]];
-                [self.shippingButton setTitle:@"Add Tracking" forState:UIControlStateNormal];
-                
-                //update next step label
-                [self calcStatus];
-            }
-            else{
-                [self hideHUD];
-                NSLog(@"error marking as shipped");
-            }
-        }];
+        if (self.isBuyer) {
+            [self helpPressed];
+        }
+        else{
+            [self showHUD];
+            [self.orderObject setObject:@"YES" forKey:@"shipped"];
+            [self.orderObject setObject:[NSDate date] forKey:@"shippedDate"];
+            [self.orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    [self hideHUD];
+                    self.shipped = YES;
+                    
+                    //send a push to the buyer
+                    NSString *pushString = [NSString stringWithFormat:@"%@ just shipped '%@' ✈️", [PFUser currentUser].username, [self.orderObject objectForKey:@"itemTitle"]];
+                    
+                    NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
+                    [PFCloud callFunctionInBackground:@"sendPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                        if (!error) {
+                            NSLog(@"response sending review push %@", response);
+                            
+                            [Answers logCustomEventWithName:@"Sent Shipping Push"
+                                           customAttributes:@{
+                                                              @"success":@"YES"
+                                                              }];
+                        }
+                        else{
+                            NSLog(@"review push error %@", error);
+                            
+                            [Answers logCustomEventWithName:@"Sent Shipping Push"
+                                           customAttributes:@{
+                                                              @"success":@"NO",
+                                                              @"error" : error.description
+                                                              }];
+                        }
+                    }];
+                    
+                    //update shipping cell
+                    [self.shippingImageView setImage:[UIImage imageNamed:@"OrderCheck"]];
+                    [self.dateFormat setDateFormat:@"dd MMM YYYY"];
+                    NSDate *shippedDate = [self.orderObject objectForKey:@"shippedDate"];
+                    self.shippingMainLabel.text = [NSString stringWithFormat:@"Item Shipped\nSent on %@ to",[self.dateFormat stringFromDate:shippedDate]];
+                    [self.shippingButton setTitle:@"Add Tracking" forState:UIControlStateNormal];
+                    
+                    //update next step label
+                    [self calcStatus];
+                }
+                else{
+                    [self hideHUD];
+                    NSLog(@"error marking as shipped");
+                }
+            }];
+        }
     }
     else{
         if (self.isBuyer) {
@@ -855,11 +876,23 @@
         }
         else if (!self.shipped){
             nextStep = @"Awaiting Shipment";
+            if ([[self.orderObject objectForKey:@"buyerUnseen"]intValue] != 0) {
+                self.orderObject[@"buyerUnseen"] = @0;
+                [self.orderObject saveInBackground];
+            }
         }
         else if (!self.gotFeedback){
             nextStep = @"Awaiting Feedback";
+            if ([[self.orderObject objectForKey:@"buyerUnseen"]intValue] != 0) {
+                self.orderObject[@"buyerUnseen"] = @0;
+                [self.orderObject saveInBackground];
+            }
         }
         else{
+            if ([[self.orderObject objectForKey:@"buyerUnseen"]intValue] != 0) {
+                self.orderObject[@"buyerUnseen"] = @0;
+                [self.orderObject saveInBackground];
+            }
             complete = YES;
         }
     }
@@ -872,9 +905,17 @@
         }
         else if (!self.gotFeedback){
             nextStep = @"Awaiting Feedback";
+            if ([[self.orderObject objectForKey:@"sellerUnseen"]intValue] != 0) {
+                self.orderObject[@"sellerUnseen"] = @0;
+                [self.orderObject saveInBackground];
+            }
         }
         else{
             complete = YES;
+            if ([[self.orderObject objectForKey:@"sellerUnseen"]intValue] != 0) {
+                self.orderObject[@"sellerUnseen"] = @0;
+                [self.orderObject saveInBackground];
+            }
         }
     }
     if (complete) {
@@ -1106,5 +1147,18 @@
     [alertController addAction:cancelAction];
     
     [self presentViewController:alertController animated:YES completion:nil];
+}
+
+-(void)showActionSheet{
+    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Contact Support" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self helpPressed];
+    }]];
+    
+    [self presentViewController:actionSheet animated:YES completion:nil];
 }
 @end

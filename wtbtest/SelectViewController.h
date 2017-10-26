@@ -49,6 +49,10 @@
 @property (nonatomic) BOOL multipleAllowed;
 @property (nonatomic) BOOL pushingClothing;
 
+//viewing multiple sizes from a listing
+@property (nonatomic) BOOL viewingMode; //when showing sizes from a lisitng
+@property (nonatomic, strong) NSMutableArray *viewingArray;
+
 //multiple reminder
 @property (nonatomic, strong) customAlertViewClass *customAlert;
 @property (nonatomic, strong) UIView *searchBgView;

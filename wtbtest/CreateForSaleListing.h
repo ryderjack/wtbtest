@@ -21,6 +21,7 @@
 #import "ConditionsOptionsTableView.h"
 #import <SwipeView/SwipeView.h>
 #import "ShippingOptionsView.h"
+#import <SafariServices/SafariServices.h>
 
 @class CreateForSaleListing;
 
@@ -30,7 +31,7 @@
 
 @end
 
-@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate,UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate,ConditionsDelegate,SwipeViewDelegate, SwipeViewDataSource,UIGestureRecognizerDelegate, shippingDelegate>
+@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate,UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate,ConditionsDelegate,SwipeViewDelegate, SwipeViewDataSource,UIGestureRecognizerDelegate, shippingDelegate,SFSafariViewControllerDelegate>
 
 //delegate
 @property (nonatomic, weak) id <CreateForSaleDelegate> delegate;
@@ -193,6 +194,8 @@
 
 //instant buy cells
 @property (weak, nonatomic) IBOutlet UISwitch *buySwitch;
+@property (nonatomic) BOOL forcedOff;
+
 @property (weak, nonatomic) IBOutlet UILabel *selectShippingLabel;
 @property (nonatomic) int buyRows;
 
@@ -203,5 +206,9 @@
 @property (nonatomic, strong) NSString *country;
 @property (nonatomic, strong) NSString *countryCode;
 
+//paypal onboarding
+@property (nonatomic, strong) SFSafariViewController *paypalSafariView;
+@property (nonatomic) BOOL addedPayPalObservers;
+@property (nonatomic) BOOL paypalEnabled;
 
 @end

@@ -48,6 +48,8 @@
 
 //mode
 @property (nonatomic) BOOL supportMode;
+@property (nonatomic) BOOL tappedOrder;
+
 
 //no results label
 @property (nonatomic, strong) UILabel *noResultsLabel;

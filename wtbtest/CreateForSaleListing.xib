@@ -5,7 +5,7 @@
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13173"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13174"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -370,39 +370,48 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="-433" y="628"/>
         </tableViewCell>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="Ct2-8t-qCH">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="72" id="Ct2-8t-qCH">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="72"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Ct2-8t-qCH" id="FtI-Xl-i2y">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="71.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Instant buy" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QdP-ZQ-BF0">
-                        <rect key="frame" x="20" y="8" width="68.5" height="27"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Instant Buy" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QdP-ZQ-BF0">
+                        <rect key="frame" x="20" y="8" width="70" height="23"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
                         <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="kT1-tb-n15">
-                        <rect key="frame" x="242" y="6" width="49" height="31"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="47" id="u09-lL-B6G"/>
-                        </constraints>
+                        <rect key="frame" x="242" y="6" width="51" height="28"/>
                         <color key="onTintColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                         <connections>
                             <action selector="instantBuySwitchChanged:" destination="-1" eventType="valueChanged" id="dNW-lW-ez3"/>
                         </connections>
                     </switch>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Stay protected and sell with PayPal Seller Protection on BUMP" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Hbf-HV-3Oa">
+                        <rect key="frame" x="20" y="32" width="210" height="31"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="210" id="MmK-3N-5BU"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="11"/>
+                        <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                        <nil key="highlightedColor"/>
+                    </label>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="top" secondItem="FtI-Xl-i2y" secondAttribute="topMargin" id="E51-aO-IIu"/>
-                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="centerY" secondItem="kT1-tb-n15" secondAttribute="centerY" id="OvW-rb-d1c"/>
-                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="leading" secondItem="FtI-Xl-i2y" secondAttribute="leadingMargin" constant="12" id="YQ7-by-LXh"/>
-                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="centerY" secondItem="FtI-Xl-i2y" secondAttribute="centerY" id="puY-AS-pY0"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="kT1-tb-n15" secondAttribute="trailing" constant="23" id="veh-d0-Ulz"/>
+                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="centerY" secondItem="kT1-tb-n15" secondAttribute="centerY" id="2ye-86-Vmq"/>
+                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="top" secondItem="FtI-Xl-i2y" secondAttribute="topMargin" id="DGe-iV-2cF"/>
+                    <constraint firstItem="Hbf-HV-3Oa" firstAttribute="top" secondItem="QdP-ZQ-BF0" secondAttribute="bottom" constant="1" id="Gss-88-wk0"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="kT1-tb-n15" secondAttribute="trailing" constant="21" id="InV-Lf-595"/>
+                    <constraint firstItem="kT1-tb-n15" firstAttribute="top" secondItem="FtI-Xl-i2y" secondAttribute="topMargin" constant="-2" id="QiV-Qb-V6J"/>
+                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="leading" secondItem="FtI-Xl-i2y" secondAttribute="leadingMargin" constant="12" id="YVo-aS-GxJ"/>
+                    <constraint firstItem="QdP-ZQ-BF0" firstAttribute="leading" secondItem="Hbf-HV-3Oa" secondAttribute="leading" id="Z3y-H1-eqw"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="Hbf-HV-3Oa" secondAttribute="bottom" constant="0.5" id="pFX-MX-NDu"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-433" y="540"/>
+            <point key="canvasLocation" x="-821" y="443"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" id="dGV-BU-bwH">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>

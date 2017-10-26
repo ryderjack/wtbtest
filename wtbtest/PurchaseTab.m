@@ -540,7 +540,7 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    
+        
 //    [self setContinentsOnListings]; //CHANGE
     
     BOOL modalPresent = (self.presentedViewController);
@@ -577,6 +577,9 @@
         else if (![[PFUser currentUser]objectForKey:@"sizeCountry"] && modalPresent != YES) {
             AddSizeController *vc = [[AddSizeController alloc]init];
             [self.navigationController presentViewController:vc animated:YES completion:nil];
+        }
+        else if (![[PFUser currentUser]objectForKey:@"seenBuyIntro"] && modalPresent != YES) { //CHANGE add in a check for date user was created
+//            [self showBuyIntro];
         }
         else{
             //get location for filter searches only if we don't already have one
@@ -2081,6 +2084,10 @@
     if (self.locationFilterShowing) {
         self.locationFilterShowing = NO;
         [self hideLocationFilterView];
+    }
+    else if (self.buyIntroShowing) {
+        self.buyIntroShowing = NO;
+        [self hideBuyIntro];
     }
     else{
         [UIView animateWithDuration:1.0
@@ -3739,4 +3746,92 @@
         }
     }];
 }
+
+#pragma mark - instant buy intro delegates
+
+-(void)showBuyIntro{
+    [Answers logCustomEventWithName:@"Showing Instant Buy Intro"
+                   customAttributes:@{}];
+    
+    if (self.alertShowing == YES) {
+        return;
+    }
+    
+    self.alertShowing = YES;
+    self.buyIntroShowing = YES;
+    
+    self.bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.bgView.alpha = 0.0;
+    [self.bgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.bgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"engagementView" owner:self options:nil];
+    self.buyIntroView = (engageTracker *)[nib objectAtIndex:0];
+    
+    [self.buyIntroView setFrame:CGRectMake(([UIApplication sharedApplication].keyWindow.frame.size.width/2)-150, -300, 300, 290)];
+    
+    self.buyIntroView.layer.cornerRadius = 10;
+    self.buyIntroView.layer.masksToBounds = YES;
+    
+    [self.buyIntroView.addButton setHidden:YES];
+    [self.buyIntroView.paypalImageView setHidden:NO];
+    
+    self.buyIntroView.titleLabel.text = @"I N S T A N T  B U Y";
+    self.buyIntroView.mainLabel.text = @"You can now get paid instantly on BUMP via PayPal, just enable Instant Buy on your listings";
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.buyIntroView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            //                            [self.addPicView setFrame:CGRectMake(0, 0, 300, 290)];
+                            self.buyIntroView.center = [UIApplication sharedApplication].keyWindow.center;
+                        }
+                     completion:^(BOOL finished) {
+                         [self.bgView addGestureRecognizer:self.tap];
+                     }];
+}
+
+-(void)hideBuyIntro{
+//    [[PFUser currentUser] setObject:@"YES" forKey:@"seenBuyIntro"];
+//    [[PFUser currentUser] saveInBackground];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.bgView = nil;
+                         [self.bgView removeGestureRecognizer:self.tap];
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.buyIntroView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 290)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.alertShowing = NO;
+                         [self.buyIntroView setAlpha:0.0];
+                         self.buyIntroView = nil;
+                     }];
+}
+
 @end

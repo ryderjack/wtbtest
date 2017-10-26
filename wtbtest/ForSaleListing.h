@@ -170,6 +170,7 @@
 
 //purchase
 @property (nonatomic) float purchasePrice;
+@property (nonatomic) BOOL purchased;
 
 
 @end

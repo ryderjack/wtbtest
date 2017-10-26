@@ -302,6 +302,7 @@
 
 -(void)loadMoreClosed{
     if(self.secondPullFinished != YES || ![PFUser currentUser] || self.secondInfinFinished != YES || self.sold.count == 0){
+        [self.tableView.infiniteScrollingView stopAnimating];
         return;
     }
     
@@ -432,11 +433,8 @@
 }
 
 -(void)loadMorePurchased{
-    if(self.firstPullFinished != YES || ![PFUser currentUser] || self.firstInfinFinished != YES || self.purchased.count == 0){
-        
-        if (self.firstPullFinished == YES) {
-            [self.tableView.infiniteScrollingView stopAnimating];
-        }
+    if(self.firstPullFinished != YES || ![PFUser currentUser] || self.firstInfinFinished != YES || self.purchased.count < 20){
+        [self.tableView.infiniteScrollingView stopAnimating];
         return;
     }
     
@@ -574,7 +572,8 @@
 }
 
 -(void)loadMoreSold{
-    if(self.secondPullFinished != YES || ![PFUser currentUser] || self.secondInfinFinished != YES || self.sold.count == 0){
+    if(self.secondPullFinished != YES || ![PFUser currentUser] || self.secondInfinFinished != YES || self.sold.count < 20){
+        [self.tableView.infiniteScrollingView stopAnimating];
         return;
     }
     
@@ -626,6 +625,13 @@
     }];
 }
 
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    //post notification that forces profile tab badge to be recalculated
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"orderPlaced" object:nil];
+}
+
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
@@ -651,6 +657,12 @@
                 NSLog(@"error finding support messages %@", error);
             }
         }];
+    }
+    else{
+        if (self.tappedOrder) {
+            self.tappedOrder = NO;
+            [self loadOrders];
+        }
     }
 }
 
@@ -888,6 +900,7 @@
         }
         
         vc.orderObject = order;
+        self.tappedOrder = YES;
         
         [self.navigationController pushViewController:vc animated:YES];
     }

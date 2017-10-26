@@ -17,9 +17,10 @@
 
 @protocol CheckoutDelegate <NSObject>
 - (void)dismissedCheckout;
+- (void)PurchasedItemCheckout;
 @end
 
-@interface CheckoutSummary : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate>
+@interface CheckoutSummary : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate, CheckoutDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *addShippingAddressCell;
