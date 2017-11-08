@@ -540,8 +540,6 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-        
-//    [self setContinentsOnListings]; //CHANGE
     
     BOOL modalPresent = (self.presentedViewController);
     if ([PFUser currentUser] && modalPresent != YES) {
@@ -612,10 +610,6 @@
     //set image
     [cell.itemImageView setFile:[forSaleItem objectForKey:@"thumbnail"]]; //was image1
     [cell.itemImageView loadInBackground];
-
-    //so first image in listing is loaded faster
-    PFFile *image = [forSaleItem objectForKey:@"image1"];
-    [image getDataInBackground];
     
     //set title
     if ([forSaleItem objectForKey:@"itemTitle"]) {
@@ -1503,7 +1497,7 @@
         }
         
         //add button in case user taps filter button
-        UIButton *filterProxy = [[UIButton alloc]initWithFrame:CGRectMake(self.filterButton.frame.origin.x, self.filterButton.frame.origin.y+65, self.filterButton.frame.size.width, self.filterButton.frame.size.height)];
+        UIButton *filterProxy = [[UIButton alloc]initWithFrame:CGRectMake(self.filterButton.frame.origin.x, self.filterButton.frame.origin.y+ self.navigationController.navigationBar.frame.size.height + [UIApplication sharedApplication].statusBarFrame.size.height, self.filterButton.frame.size.width, self.filterButton.frame.size.height)];
         [filterProxy addTarget:self action:@selector(proxyFilterPressed) forControlEvents:UIControlEventTouchUpInside];
         [self.searchBgView insertSubview:filterProxy aboveSubview:imgView];
         
@@ -2113,7 +2107,7 @@
                    customAttributes:@{
                                       @"type":@"whatsapp"
                                       }];
-    NSString *shareString = @"Check out BUMP for iOS - buy & sell streetwear quickly and with ZERO fees\n\nAvailable here: http://sobump.com";
+    NSString *shareString = @"Check out BUMP for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com";
     NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
     if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
         [[UIApplication sharedApplication] openURL: whatsappURL];
@@ -2138,7 +2132,7 @@
                                       @"type":@"share sheet"
                                       }];
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out BUMP for iOS - buy & sell streetwear quickly and with ZERO fees\n\nAvailable here: http://sobump.com"];
+    [items addObject:@"Check out BUMP for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
 }

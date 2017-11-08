@@ -48,7 +48,7 @@
         dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
             
             if (@available(iOS 11.0, *)) {
-                [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, self.view.frame.origin.y+(self.navigationController.navigationBar.frame.size.height + 60), self.webView.frame.size.width, self.webView.frame.size.height)];
+                [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, self.view.frame.origin.y+(self.navigationController.navigationBar.frame.size.height + [UIApplication sharedApplication].statusBarFrame.size.height + 44), self.webView.frame.size.width, self.webView.frame.size.height)];
             }
         });
     }
@@ -58,7 +58,7 @@
     }
     
     if (self.infoMode) {
-        UIView *emailView = [[UIView alloc]initWithFrame:CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y+64, self.view.frame.size.width, 44)];
+        UIView *emailView = [[UIView alloc]initWithFrame:CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y+self.navigationController.navigationBar.frame.size.height + [UIApplication sharedApplication].statusBarFrame.size.height, self.view.frame.size.width, 44)];
         UIButton *emailButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, emailView.frame.size.width, emailView.frame.size.height)];
         emailButton.titleLabel.adjustsFontSizeToFitWidth = YES;
         emailButton.titleLabel.minimumScaleFactor=0.5;
@@ -137,13 +137,18 @@
     
     if (self.createMode == YES || self.editMode == YES || self.depopMode == YES) {
         if (self.editMode == YES || self.depopMode == YES){
-//            self.doneButton = nil;
-        }
-        else if (self.createMode == YES){
-//            self.doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Camera" style:UIBarButtonItemStylePlain target:self action:@selector(CameraPressed)];
+            //            self.doneButton = nil;
         }
         
-        self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+        int adjust = 60;
+        //iPhone X has a bigger status bar - was 20px now 44px
+        
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+            //iPhone X
+            adjust = 80;
+        }
+        
+        self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-adjust, [UIApplication sharedApplication].keyWindow.frame.size.width, adjust)];
         [self.longButton setTitle:@"S C R E E N S H O T" forState:UIControlStateNormal];
         [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
         [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
@@ -157,7 +162,7 @@
         
     }
     else if (self.payMode == YES){
-//        self.doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Paid" style:UIBarButtonItemStylePlain target:self action:@selector(paidPressed)];
+        //        self.doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Paid" style:UIBarButtonItemStylePlain target:self action:@selector(paidPressed)];
     }
 }
 

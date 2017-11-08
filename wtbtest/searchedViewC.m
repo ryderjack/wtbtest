@@ -479,10 +479,6 @@
         [cell.itemImageView setFile:[forSaleItem objectForKey:@"thumbnail"]];
         [cell.itemImageView loadInBackground];
         
-        //so first image in listing is loaded faster when tapped
-        PFFile *image = [forSaleItem objectForKey:@"image1"];
-        [image getDataInBackground];
-        
         //set title
         if ([forSaleItem objectForKey:@"itemTitle"]) {
             cell.itemTitleLabel.text = [forSaleItem objectForKey:@"itemTitle"];

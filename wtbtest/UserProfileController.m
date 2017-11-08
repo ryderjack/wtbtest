@@ -273,7 +273,7 @@
 //                        [self.myBar addSubview:self.ordersButton];
                     }
                     
-                    [self.myBar addSubview:self.ordersButton]; //CHANGE
+                    [self.myBar addSubview:self.ordersButton]; //CHANGE remove this and uncomment above
 
                 }
                 
@@ -1578,22 +1578,28 @@
     
     self.collectionView.delegate = (id<UICollectionViewDelegate>)self.splitter;
     
+    //int to adjust for larger iPhone X status bar 44pt now instead of 20pt). Second adjust is for the small version of the bar
+    int adjust = 0;
+    
     if (@available(iOS 11.0, *)) {
-        self.collectionView.contentInset = UIEdgeInsetsMake(self.myBar.maximumBarHeight-20, 0.0, 0.0, 0.0);
+        
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+            //iPhone X has a bigger status bar - was 20px now 44px so 24pt bigger
+            adjust = 12;
+        }
+        self.collectionView.contentInset = UIEdgeInsetsMake(self.myBar.maximumBarHeight-[UIApplication sharedApplication].statusBarFrame.size.height, 0.0, 0.0, 0.0);
     }
     else{
         //seeing odd behaviour with collection view. Same sizes on iOS 10 & 11 but 11 has a larger top inset..
         self.collectionView.contentInset = UIEdgeInsetsMake(self.myBar.maximumBarHeight, 0.0, 0.0, 0.0);
     }
     
-    // big mode setup
-    
     //bg colour view
     if (self.hasBio || self.tabMode) {
-        self.bgView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.myBar.frame.size.width, (self.myBar.frame.size.height/2-40))];//-25
+        self.bgView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.myBar.frame.size.width, (self.myBar.frame.size.height/2-40) + adjust)];//-25
     }
     else{
-        self.bgView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.myBar.frame.size.width, (self.myBar.frame.size.height/2-15))];
+        self.bgView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.myBar.frame.size.width, (self.myBar.frame.size.height/2-15) + adjust)];
     }
     
     self.bgView.backgroundColor = [UIColor colorWithRed:0.96 green:0.97 blue:0.99 alpha:1.0];
@@ -1621,7 +1627,7 @@
     self.usernameLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
     self.usernameLabel.textAlignment = NSTextAlignmentCenter;
     [self.myBar addSubview:self.usernameLabel];
-
+    
     //verified label
     self.verifiedWithLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 300, 50)];
     self.verifiedWithLabel.numberOfLines = 1;
@@ -1770,16 +1776,16 @@
         initialDividerView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)+65.0);//-25
         
         //image view
-        initialLayoutAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-40.0);//-25
+        initialLayoutAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-40.0 + adjust);//-25
         
         //top username label
-        initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0);//-25
+        initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
         
         //verified with
         initialLayoutAttributesVerifiedLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0);//-25
         
         //stars view
-        initialLayoutAttributesStarView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds),CGRectGetMidY(self.myBar.bounds)-(((CGRectGetMidY(self.myBar.bounds)/2)+12.5)));//-25 .... needed to half 25 since theres a division of the midpoint happening
+        initialLayoutAttributesStarView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds),CGRectGetMidY(self.myBar.bounds)-(((CGRectGetMidY(self.myBar.bounds)/2)+12.5)) + adjust);//-25 .... needed to half 25 since theres a division of the midpoint happening
         
         //verified with: img view
         initialLayoutAttributesVerifiedImageView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+65.0);//-25
@@ -1820,7 +1826,7 @@
         initialDividerView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)+90.0);
         
         //image view
-        initialLayoutAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-15.0);
+        initialLayoutAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-15.0 + adjust);
         
         //top username label
         initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+60.0);
@@ -1829,7 +1835,7 @@
         initialLayoutAttributesVerifiedLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+60.0);
         
         //stars view
-        initialLayoutAttributesStarView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds),CGRectGetMidY(self.myBar.bounds)-((CGRectGetMidY(self.myBar.bounds)/2)));
+        initialLayoutAttributesStarView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds),CGRectGetMidY(self.myBar.bounds)-((CGRectGetMidY(self.myBar.bounds)/2)) + adjust);
         
         //verified with: img view
         initialLayoutAttributesVerifiedImageView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+90.0);
@@ -1847,45 +1853,44 @@
     initialBgView.frame = self.bgView.frame;
     [self.bgView addLayoutAttributes:initialBgView forProgress:0.0];
     
-    
     //small image view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesSmallImage = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesSmallImage.size = self.smallImageView.frame.size;
-    initialLayoutAttributesSmallImage.frame = CGRectMake(100, 25, 30, 30);
+    initialLayoutAttributesSmallImage.frame = CGRectMake(55, 25 + adjust, 30, 30);
     initialLayoutAttributesSmallImage.alpha = 0.0f;
     [self.smallImageView addLayoutAttributes:initialLayoutAttributesSmallImage forProgress:0.0];
     
     //small username /loc view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesSmallName = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesSmallName.size = self.smallNameAndLoc.frame.size;
-    initialLayoutAttributesSmallName.frame = CGRectMake(135, 25, 200, 30);
+    initialLayoutAttributesSmallName.frame = CGRectMake(90, 25 + adjust, 200, 30);
     initialLayoutAttributesSmallName.alpha = 0.0f;
     [self.smallNameAndLoc addLayoutAttributes:initialLayoutAttributesSmallName forProgress:0.0];
     
     //name & loc label
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesLabel = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesLabel.size = self.nameAndLoc.frame.size;
-    initialLayoutAttributesLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), 50);
+    initialLayoutAttributesLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), 50 + adjust);
     
     //back button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesBackButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesBackButton.size = self.backButton.frame.size;
-    initialLayoutAttributesBackButton.frame = CGRectMake(5, 25, 30, 30);
-    
-    //orders button
-    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesOrdersButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
-    initialLayoutAttributesOrdersButton.size = self.ordersButton.frame.size;
-    initialLayoutAttributesOrdersButton.frame = CGRectMake(55, 25, 30, 30);
+    initialLayoutAttributesBackButton.frame = CGRectMake(5, 25 + adjust, 30, 30);
     
     //fb button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesfbButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesfbButton.size = self.FBButton.frame.size;
-    initialLayoutAttributesfbButton.frame = CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width-85, 25, 30, 30);
+    initialLayoutAttributesfbButton.frame = CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width-85, 25 + adjust, 30, 30);
     
     //dots button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesDotsButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesDotsButton.size = self.dotsButton.frame.size;
-    initialLayoutAttributesDotsButton.frame = CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width-40, 25, 30, 30);
+    initialLayoutAttributesDotsButton.frame = CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width-40, 25 + adjust, 30, 30);
+    
+    //orders button
+    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesOrdersButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
+    initialLayoutAttributesOrdersButton.size = self.ordersButton.frame.size;
+    initialLayoutAttributesOrdersButton.frame = CGRectMake(55, 25 + adjust, 30, 30);
     
     // This is what we want the bar to look like at its maximum height (progress == 0.0)
     [self.userImageView addLayoutAttributes:initialLayoutAttributes forProgress:0.0];
@@ -1991,13 +1996,13 @@
         BLKFlexibleHeightBarSubviewLayoutAttributes *editAttributes = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
 
         if (self.hasBio || self.tabMode) {
-            initialImageButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-40.0);//-25
-            editAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+40, CGRectGetMidY(self.myBar.bounds)-5.0);//-25
-
+            initialImageButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-40.0 + adjust);//-25
+            editAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+40, CGRectGetMidY(self.myBar.bounds)-5.0 + adjust);//-25
+            
         }
         else{
-            initialImageButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-15.0);
-            editAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+40, CGRectGetMidY(self.myBar.bounds)+20.0);
+            initialImageButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-15.0 + adjust);
+            editAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+40, CGRectGetMidY(self.myBar.bounds)+20.0 + adjust);
         }
         
         initialImageButton.size = self.userImageView.frame.size;
@@ -2990,7 +2995,7 @@
     [self.myBar addSubview:self.segmentedControl];
     
     //setup dots button
-    [self.dotsButton setImage:[UIImage imageNamed:@"dotsFilled"] forState:UIControlStateNormal];
+    [self.dotsButton setImage:[UIImage imageNamed:@"profileDots"] forState:UIControlStateNormal];
     [self.dotsButton addTarget:self action:@selector(showAlertView) forControlEvents:UIControlEventTouchUpInside];
     
     [self.segmentedControl setSectionTitles:@[@"S E L L I N G", @"W A N T E D", @"L I K E S"]];
@@ -3090,15 +3095,18 @@
     //then get number of unseen orders
     if (self.ordersUnseen > 0) {
         tabInt+= self.ordersUnseen;
-        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIconUnread"] forState:UIControlStateNormal];
+        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon2"] forState:UIControlStateNormal]; //CHANGE
     }
     else{
-        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon"] forState:UIControlStateNormal];
+        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon2"] forState:UIControlStateNormal];
     }
     
     //add all together and set tab badge
     if (tabInt == 0) {
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+    }
+    else if(tabInt > 9){
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"9+"];
     }
     else{
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d",tabInt]];

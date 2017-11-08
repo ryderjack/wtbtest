@@ -152,6 +152,10 @@
     if (self.successMode && !self.buttonShowing) {
         [self showBarButton];
     }
+    else if(!self.successMode && !self.checkedSellersPPInfo){
+        //check if seller's email address is confirmed, if not buyer's payment will be cancelled anyway
+        [self getSellersPPAccountStatus];
+    }
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, nil];
@@ -163,9 +167,9 @@
         [self.payButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
         
         if (self.successMode) {
-            [self.payButton setTitle:@"View Order" forState:UIControlStateNormal];
+            [self.payButton setTitle:@"Dismiss" forState:UIControlStateNormal];
             [self.payButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
-            [self.payButton addTarget:self action:@selector(viewOrderPressed) forControlEvents:UIControlEventTouchUpInside];
+            [self.payButton addTarget:self action:@selector(dismissVC) forControlEvents:UIControlEventTouchUpInside];
         }
         else{
             [self.payButton setTitle:@"Pay with PayPal" forState:UIControlStateNormal];
@@ -377,152 +381,214 @@
                      }];
 }
 
-//CHANGE this needs to be a cloud method to avoid timeouts & aid speed
 -(void)payPressed{
+    self.paypalOrderId = @"";
     
+    if (self.addAddress == YES) {
+        [self showAlertWithTitle:@"Shipping Address" andMsg:@"Make sure to add your full shipping address"];
+        return;
+    }
+    
+    NSString *shippingPrice = [self.shippingPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
+    NSLog(@"%@", shippingPrice);
+
+    NSString *itemPrice = [self.itemPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
+    NSLog(@"%@", itemPrice);
+
+    NSString *totalPrice = [self.totalPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
+    NSLog(@"%@", totalPrice);
+
+    NSString *sellerId = [self.listingObject objectForKey:@"paypalMerchantId"];
+    NSLog(@"%@", sellerId);
+
+    NSString *itemTitle = self.itemTitleLabel.text;
+    NSLog(@"%@", itemTitle);
+
+    NSString *itemId = self.listingObject.objectId;
+    NSLog(@"%@", itemId);
+
+    NSString *currency = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"currency"]];;
+    NSLog(@"%@", currency);
+
+
+    NSString *buyerName = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"fullname"]];;
+    NSLog(@"%@", buyerName);
+
+    NSString *lineOne = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"lineOne"]];
+    NSLog(@"%@", lineOne);
+
+    NSString *lineTwo = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"lineTwo"]];;
+    NSLog(@"%@", lineTwo);
+
+    NSString *city = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"city"]];
+    NSLog(@"%@", city);
+
+    NSString *countryCode = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"shippingCountryCode"]];
+    NSLog(@"%@", countryCode);
+
+    NSString *postCode = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"postcode"]];;
+    NSLog(@"%@", postCode);
+
+
+    //potentially use params here to pass this user's ID for tracking
     [self showHUD];
+    NSLog(@"adding in params");
     
-    //save order object
+    NSDictionary *params = @{
+                             @"shippingPrice":shippingPrice,
+                             @"itemPrice":itemPrice,
+                             @"totalPrice":totalPrice,
+                             
+                             @"sellerId":sellerId,
+                             @"itemTitle": itemTitle,
+                             @"itemId":itemId,
+                             @"currency":currency,
+                             
+                             @"buyerName":buyerName,
+                             @"lineOne":lineOne,
+                             @"lineTwo":lineTwo,
+                             @"city":city,
+                             @"countryCode":countryCode,
+                             @"postCode":postCode
+                         };
     
-    //mark listing as sold
-    
-    //move to success VC
-    
-    //check status of listing, still available?
-    PFQuery *statusQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-    [statusQuery whereKey:@"objectId" equalTo:self.listingObject.objectId];
-    [statusQuery includeKey:@"sellerUser"];
-    [statusQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            if ([[object objectForKey:@"status"]isEqualToString:@"live"]) {
-
-                //still available so save order object
-                PFObject *saleOrder = [PFObject objectWithClassName:@"saleOrders"];
-                saleOrder[@"listing"] = self.listingObject;
-                saleOrder[@"buyerUser"] = [PFUser currentUser];
-                saleOrder[@"buyerId"] = [PFUser currentUser].objectId;
-                
-                PFUser *seller = [object objectForKey:@"sellerUser"];
-                
-                saleOrder[@"sellerId"] = seller.objectId;
-                saleOrder[@"sellerUser"] = seller;
-                saleOrder[@"status"] = @"live"; //CHANGE
-
-                saleOrder[@"shippingAddress"] = self.addressLabel.text;
-
-                saleOrder[@"salePrice"] = @(self.salePrice);
-                saleOrder[@"totalPrice"] = @(self.totalPrice);
-                saleOrder[@"currency"] = [self.listingObject objectForKey:@"currency"];
-                
-                saleOrder[@"salePriceLabel"] = self.itemPriceLabel.text;
-                saleOrder[@"shippingPriceLabel"] = self.shippingPriceLabel.text;
-                saleOrder[@"totalPriceLabel"] = self.totalPriceLabel.text;
-    
-                saleOrder[@"itemImage"] = [self.listingObject objectForKey:@"thumbnail"];
-                saleOrder[@"itemTitle"] = self.itemTitleLabel.text;
-                
-                //condition label now shows size
-                saleOrder[@"itemSize"] = self.conditionLabel.text;
-                saleOrder[@"lastUpdated"] = [NSDate date];
-    
-                float shippingPrice = self.totalPrice - self.salePrice;
-                saleOrder[@"shippingPrice"] = @(shippingPrice);
-                saleOrder[@"shipped"] = @"NO";
-
-                saleOrder[@"buyerLeftFeedback"] = @"NO";
-                saleOrder[@"sellerLeftFeedback"] = @"NO";
-                
-                saleOrder[@"sellerUnseen"] = @1;
-                saleOrder[@"buyerUnseen"] = @1;
-
-                [saleOrder saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-
-                        //mark listing as sold
-                        [self.listingObject setObject:@"sold" forKey:@"status"];
-                        [self.listingObject setObject:@"YES" forKey:@"purchased"];
-                        [self.listingObject setObject:[PFUser currentUser].objectId forKey:@"buyerId"];
-                        [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                            if (succeeded) {
-                                [self hideHUD];
-                                
-                                //increment buyer's order number
-                                [[PFUser currentUser]incrementKey:@"orderNumber"];
-                                [[PFUser currentUser]saveInBackground];
-                                
-                                //increment seller's order number
-//                                NSDictionary *params = @{@"sellerId": self.otherUser.objectId};
-//                                [PFCloud callFunctionInBackground:@"incrementOrderNumber" withParameters:params block:^(NSDictionary *response, NSError *error) {
-//                                    if (!error) {
-//                                        NSLog(@"increment sucessful %@", response);
-//                                    }
-//                                    else{
-//                                        NSLog(@"error incrementing seller's order number %@", error);
-//                                    }
-//                                }];
-                                
-//                                NSString *pushString = [NSString stringWithFormat:@"Item Sold: %@ for %@", self.itemTitleLabel.text, self.totalLabel.text];
-                                
-//                                NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.orderObject.objectId};
-//                                [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-//                                    if (!error) {
-//                                        NSLog(@"response sending sold push %@", response);
-//
-//                                        [Answers logCustomEventWithName:@"Sent Sold Push"
-//                                                       customAttributes:@{
-//                                                                          @"success":@"YES"
-//                                                                          }];
-//                                    }
-//                                    else{
-//                                        NSLog(@"sold push error %@", error);
-//
-//                                        [Answers logCustomEventWithName:@"Sent Sold Push"
-//                                                       customAttributes:@{
-//                                                                          @"success":@"NO",
-//                                                                          @"error" : error.description
-//                                                                          }];
-//                                    }
-//                                }];
-                                
-                                NSLog(@"saved order!");
-
-                                //goto success screen!
-                                CheckoutSummary *vc = [[CheckoutSummary alloc]init];
-                                vc.successMode = YES;
-                                vc.listingObject = self.listingObject;
-                                vc.orderObject = saleOrder;
-                                vc.delegate = self;
-                                
-                                vc.shippingText  = self.shippingPriceLabel.text;
-                                vc.itemPriceText  = self.itemPriceLabel.text;
-                                vc.totalPriceText  = self.totalPriceLabel.text;
-                                
-                                [self.navigationController pushViewController:vc animated:YES];
-                                
-                                [self hideBarButton];
-                                self.payButton = nil;
-                            }
-                            else{
-                                NSLog(@"error saving listing as sold %@",error);
-                            }
-                        }];
-                    }
-                    else{
-                        NSLog(@"error saving order %@", error);
-                    }
-                }];
-            }
-            else{
-                NSLog(@"item no longer available");
+    [PFCloud callFunctionInBackground:@"createPPOrder" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            [self hideHUD];
+            
+            NSLog(@"response: %@", response);
+            
+            if (![response valueForKey:@"orderId"] || ![response valueForKey:@"actionURL"]) {
+                [self showAlertWithTitle:@"PayPal Error #800" andMsg:@"Please try again, if the error persists send us an email hello@sobump.com"];
                 return;
             }
+            
+            self.paypalOrderId = [response valueForKey:@"orderId"];
+            NSString *urlString = [response valueForKey:@"actionURL"];
+            
+            urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+            NSLog(@"URL: %@", urlString);
+            
+            if (!self.addedPayPalObservers) {
+                self.addedPayPalObservers = YES;
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(createOrder) name:@"paypalCreatedOrderSuccess" object:nil];
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(createOrderFailed) name:@"paypalCreatedOrderFailed" object:nil];
+            }
+            self.paypalSafariView = nil;
+            
+            //trigger PayPal sign in to check order
+            self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
+            if (@available(iOS 11.0, *)) {
+                self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+            }
+            self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+            
+            [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:nil];
         }
         else{
-            NSLog(@"error checking listing status %@", error);
+            [self hideHUD];
+            NSLog(@"error grabbing paypal order link %@", error);
+            [self showAlertWithTitle:@"PayPal Error #801" andMsg:@"Please try again, if the error persists send us an email hello@sobump.com"];
+            return;
         }
     }];
 }
 
+-(void)createOrderFailed{
+    NSLog(@"didn't authenticate order");
+    [Answers logCustomEventWithName:@"Cancelled Order"
+                   customAttributes:@{}];
+    
+    [self removePPObservers];
+    [self.paypalSafariView dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)removePPObservers{
+    self.addedPayPalObservers = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"paypalCreatedOrderSuccess" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"paypalCreatedOrderFailed" object:nil];
+}
+
+-(void)createOrder{
+    [self removePPObservers];
+    [self.paypalSafariView dismissViewControllerAnimated:YES completion:nil];
+
+    [Answers logCustomEventWithName:@"Create Order Called"
+                   customAttributes:@{}];
+    
+    [self showHUD];
+    
+    NSLog(@"adding in params");
+    
+    float shippingPrice = self.totalPrice - self.salePrice;
+    
+    NSDictionary *params = @{
+                             @"listingId":self.listingObject.objectId,
+                             @"paypalOrderId":self.paypalOrderId,
+                             @"merchantId" : [self.listingObject objectForKey:@"merchantId"],
+                             
+                             @"buyerId":[PFUser currentUser].objectId,
+
+                             @"shippingAddress":self.addressLabel.text,
+                             
+                             @"salePrice":@(self.salePrice),
+                             @"totalPrice":@(self.totalPrice),
+                             @"shippingPrice":@(shippingPrice),
+                             
+                             @"salePriceLabel":self.itemPriceLabel.text,
+                             @"shippingPriceLabel":self.shippingPriceLabel.text,
+                             @"totalPriceLabel":self.totalPriceLabel.text,
+                             
+                             @"itemTitle":self.itemTitleLabel.text,
+                             @"itemSize":self.conditionLabel.text,
+                             
+                             @"invoiceId":[NSString stringWithFormat:@"invoice_%@%@",self.otherUser.objectId,self.listingObject.objectId],
+                             
+                             @"lastUpdated":[NSDate date]
+                             };
+    
+    [PFCloud callFunctionInBackground:@"createBUMPOrder" withParameters:params block:^(NSString *orderId, NSError *error) {
+        if (!error) {
+            NSLog(@"order creation success for orderId: %@", orderId);
+            
+            orderId = [orderId stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+            
+            PFObject *order = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:orderId];
+            [order fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    
+                    [self hideHUD];
+                    
+                    CheckoutSummary *vc = [[CheckoutSummary alloc]init];
+                    vc.successMode = YES;
+                    vc.listingObject = self.listingObject;
+                    vc.orderObject = order;
+                    vc.delegate = self;
+                    
+                    vc.shippingText  = self.shippingPriceLabel.text;
+                    vc.itemPriceText  = self.itemPriceLabel.text;
+                    vc.totalPriceText  = self.totalPriceLabel.text;
+                    
+                    [self.navigationController pushViewController:vc animated:YES];
+                    
+                    [self hideBarButton];
+                    self.payButton = nil;
+                }
+                else{
+                    //CHECK test this
+                    [self hideHUD];
+                    NSLog(@"error fetching order %@", error);
+                    [self showAlertWithTitle:@"Order Error #400" andMsg:@"We couldn't fetch your order, make sure you're connected to the internet!"];
+                    [self dismissVC];
+                }
+            }];
+        }
+        else{
+            NSLog(@"error creating BUMP order %@", error);
+            [self showAlertWithTitle:@"PayPal Error #802" andMsg:@"You haven't been charged as there was an error creating your PayPal order. Please try again and if the error persists just send us an email to hello@sobump.com"];
+        }
+    }];
+}
 - (IBAction)addAddress:(id)sender {
     ShippingController *vc = [[ShippingController alloc]init];
     vc.delegate = self;
@@ -613,6 +679,10 @@
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        if (self.sellerErrorShowing) {
+            self.sellerErrorShowing = NO;
+            [self dismissVC];
+        }
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -635,5 +705,71 @@
     paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
 
     [self.navigationController presentViewController:paypalSafariView animated:YES completion:nil];
+}
+
+-(void)getSellersPPAccountStatus{
+    
+    self.checkedSellersPPInfo = YES;
+    
+    if (![self.listingObject objectForKey:@"paypalMerchantId"]) {
+        [Answers logCustomEventWithName:@"No Merchant ID on listing Error"
+                       customAttributes:@{}];
+        return;
+    }
+    PFUser *seller = [self.listingObject objectForKey:@"sellerUser"];
+    
+    NSString *notifyMessage = [NSString stringWithFormat:@"Hey,\n\nSomeone just tried to buy your item '%@' but you need to confirm your PayPal email address before you can accept any payments.\n\nPlease confirm your PayPal email address immediately so buyers can purchase your items on BUMP.",self.itemTitleLabel.text];
+    
+    NSDictionary *params = @{
+                             @"merchantId":[self.listingObject objectForKey:@"paypalMerchantId"],
+                             @"sellerId":seller.objectId,
+                             @"listingId" : self.listingObject.objectId,
+                             @"message":notifyMessage
+                             };
+
+    [PFCloud callFunctionInBackground:@"getSellersAccountStatus" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            //now check if response is good to go
+            if ([response valueForKey:@"recievable"] && [response valueForKey:@"email"]) {
+                
+                BOOL permissionsGranted = [[response valueForKey:@"recievable"]boolValue];
+                BOOL emailConfirmed = [[response valueForKey:@"email"]boolValue];
+                
+                NSLog(permissionsGranted ? @"pp permissions granted" : @"pp permissions NOT granted");
+                NSLog(emailConfirmed ? @"pp email confirmed" : @"pp email NOT confirmed");
+                
+                if (permissionsGranted && emailConfirmed) {
+                    
+                    //good to buy!
+
+                }
+                else{
+                    //seller can't accept payments until they've confirmed their email, let buyer know
+                    self.sellerErrorShowing = YES;
+                    [self showAlertWithTitle:@"Seller Error" andMsg:@"This seller hasn't confirmed their PayPal email address yet which means they can't accept payments at this time. We've given them a hurry up so the item should be available to purchase soon"];
+                    
+                    [Answers logCustomEventWithName:@"Buyer shown Merchant email error"
+                                   customAttributes:@{}];
+                }
+            }
+            else{
+                //don't have receivable & merchant Id info in response, log error
+                
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"No receivable / merchant ID in response in checkout summary"
+                                                  }];
+            }
+        }
+        else{
+//            [self hidHUD];
+            NSLog(@"error getting the account status %@", error);
+            
+            [Answers logCustomEventWithName:@"PayPal Error"
+                           customAttributes:@{
+                                              @"type":@"Error getting account status in checkout summary"
+                                              }];
+        }
+    }];
 }
 @end

@@ -385,7 +385,7 @@
     [super viewWillAppear:animated];
         
     self.statusBarBGView = [[UIView alloc]init];
-    self.statusBarBGView.frame = CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 20);
+    self.statusBarBGView.frame = CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIApplication sharedApplication].statusBarFrame.size.height);
     self.statusBarBGView.backgroundColor = [UIColor blackColor]; // your colour
     self.statusBarBGView.alpha = 0.0;
     [[UIApplication sharedApplication].keyWindow addSubview:self.statusBarBGView];

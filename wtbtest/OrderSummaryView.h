@@ -37,6 +37,10 @@
 @property (nonatomic) BOOL shipped;
 @property (nonatomic) BOOL leftFeedback;
 @property (nonatomic) BOOL addedTracking;
+@property (nonatomic) BOOL refundRequested;
+@property (nonatomic) BOOL refundSent;
+@property (nonatomic) BOOL paymentPending;
+@property (nonatomic) BOOL paymentFailed;
 
 //cell heights
 @property (nonatomic) int transCellHeight;
@@ -69,6 +73,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *refundButton;
 @property (weak, nonatomic) IBOutlet UILabel *itemPriceLabel;
 @property (strong, nonatomic) IBOutlet UITableViewCell *paymentCell;
+@property (weak, nonatomic) IBOutlet PFImageView *paymentImageView;
 
 //shipping cell
 @property (weak, nonatomic) IBOutlet UILabel *addressLabel;

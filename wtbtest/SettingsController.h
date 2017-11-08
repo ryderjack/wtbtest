@@ -16,14 +16,13 @@
 #import "LocationView.h"
 #import <SwipeView/SwipeView.h>
 
-@interface SettingsController : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,customAlertDelegate,LocationViewControllerDelegate,SwipeViewDataSource,SwipeViewDelegate>
+@interface SettingsController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,customAlertDelegate,LocationViewControllerDelegate,SwipeViewDataSource,SwipeViewDelegate>
 
 NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *addressCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *emailCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *currencyCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *depopCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *pictureCelll;
 @property (strong, nonatomic) IBOutlet UITableViewCell *contactEmailCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *lastNameCell;
@@ -36,7 +35,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *currencySwipeCell;
 
 //textfields
-@property (weak, nonatomic) IBOutlet UITextField *emailFields;
 @property (weak, nonatomic) IBOutlet UITextField *firstNameField;
 @property (weak, nonatomic) IBOutlet UITextField *lastNameField;
 @property (weak, nonatomic) IBOutlet UILabel *addLabel;
@@ -110,6 +108,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet SwipeView *currencySwipeView;
 @property (nonatomic, strong) NSArray *currencyArray;
 @property (nonatomic) BOOL currencyChanged;
+
+//paypal
+@property (weak, nonatomic) IBOutlet UILabel *paypalAccountLabel;
+@property (nonatomic) BOOL paypalConnected;
+
 
 NS_ASSUME_NONNULL_END
 @end

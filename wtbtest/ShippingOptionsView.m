@@ -7,7 +7,6 @@
 //
 
 #import "ShippingOptionsView.h"
-#import "SettingsController.h"
 #import <Crashlytics/Crashlytics.h>
 #import <CLPlacemark+HZContinents.h>
 

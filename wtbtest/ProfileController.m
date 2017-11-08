@@ -569,7 +569,7 @@
                    customAttributes:@{
                                       @"type":@"whatsapp"
                                       }];
-    NSString *shareString = @"Check out Bump for iOS - buy & sell streetwear quickly and with ZERO fees 👟\n\nAvailable here: http://sobump.com";
+    NSString *shareString = @"Check out Bump for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com";
     NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
     if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
         [[UIApplication sharedApplication] openURL: whatsappURL];
@@ -594,7 +594,7 @@
                                       @"type":@"share sheet"
                                       }];
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out Bump for iOS - buy & sell streetwear quickly and with ZERO fees 👟\n\nAvailable here: http://sobump.com"];
+    [items addObject:@"Check out Bump for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
 }

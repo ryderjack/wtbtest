@@ -256,15 +256,16 @@
         
         self.changeKeyboard = YES;
         
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidBecomeActiveNotification object:nil]; //ADDED
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(comeBackToForeground)
                                                      name:UIApplicationDidBecomeActiveNotification
                                                    object:[UIApplication sharedApplication]];
         
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(goneToBackground)
-                                                     name:UIApplicationWillResignActiveNotification
-                                                   object:[UIApplication sharedApplication]];
+//        [[NSNotificationCenter defaultCenter] addObserver:self
+//                                                 selector:@selector(goneToBackground)
+//                                                     name:UIApplicationWillResignActiveNotification
+//                                                   object:[UIApplication sharedApplication]];
     }
     
     [Answers logCustomEventWithName:@"Viewed page"
@@ -2578,50 +2579,6 @@
     }
 }
 
--(void)showSuccessBannerWithText:(NSString *)text{
-    if (self.successBannerShowing == YES) {
-
-    }
-    else{
-        if (!self.successView) {
-            self.successView = [[UIView alloc]initWithFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, self.navigationController.navigationBar.frame.size.width, 30)];
-            self.successButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, self.successView.frame.size.width, self.successView.frame.size.height)];
-            [self.successButton setTitle:text forState:UIControlStateNormal];
-            self.successButton.backgroundColor = [UIColor colorWithRed:0.00 green:0.00 blue:0.00 alpha:0.8];
-            [self.successButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-            self.successButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
-            [self.successButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-            [self.successView addSubview:self.successButton];
-            [self.successButton setCenter:CGPointMake(self.successView.frame.size.width / 2, self.successView.frame.size.height / 2)];
-            [self.successButton addTarget:self action:@selector(gotoReview) forControlEvents:UIControlEventTouchUpInside];
-
-            UIButton *dismissButton = [[UIButton alloc]initWithFrame:CGRectMake(self.successView.frame.size.width-40,(self.successView.frame.size.height/2)-10, 20, 20)];
-            [dismissButton setImage:[UIImage imageNamed:@"bannerCross"] forState:UIControlStateNormal];
-            [dismissButton addTarget:self action:@selector(dismissSuccessBanner) forControlEvents:UIControlEventTouchUpInside];
-            [self.successButton addSubview:dismissButton];
-        }
-        [self.view addSubview:self.successView];
-        [self.successView setAlpha:0.8];
-
-        self.successBannerShowing = YES;
-    }
-}
-
--(void)dismissSuccessBanner{
-    if (self.successBannerShowing == YES) {
-        [UIView animateWithDuration:0.3
-                              delay:0
-                            options:UIViewAnimationOptionCurveEaseIn
-                         animations:^{
-                             [self.successView setAlpha:0.0];
-                         }
-                         completion:^(BOOL finished) {
-                             [self.successView removeFromSuperview];
-                             self.successBannerShowing = NO;
-                         }];
-    }
-}
-
 //for infinite load of messages
 
 //-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
@@ -3054,13 +3011,6 @@
     self.changeKeyboard = YES;
 }
 
-//review tapped
--(void)gotoReview{
-    self.somethingTapped = YES;
-    
-//CHANGE
-}
-
 -(void)leftReview{
     self.justLeftReview = YES;
     NSMutableArray *currentItems = [NSMutableArray arrayWithArray:self.navigationItem.rightBarButtonItems];
@@ -3270,8 +3220,8 @@
         }];
     }
     
-    [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,[UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
-    
+    [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+[UIApplication sharedApplication].statusBarFrame.size.height,[UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
+
 //    if (@available(iOS 11.0, *)) {
 //        if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
 //            //iPhone7 - done
@@ -3386,6 +3336,41 @@
     
     
     self.demoMessageNumber++;
+}
+
+-(void)dealloc{
+    NSLog(@"dealloc messages, %@", [NSNotificationCenter defaultCenter]);
+    
+    self.lastMessage = nil;
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
+    //ensure KVOs are deregistered before dealloc to prevent crash
+    
+    @try{
+        NSLog(@"removed in jsq dealloc");
+        [self.collectionView removeObserver:self forKeyPath:@"contentOffset"];
+        
+    }@catch(id anException){
+        NSLog(@"couldn't remove in jsq dealloc"); //ADDED
+    }
+    
+    //    @try{
+    //        NSLog(@"removed CV scroll view contentOffset KVO");
+    //        [self.collectionView removeObserver:self forKeyPath:@"contentOffset"];
+    //    }@catch(id anException){
+    //        NSLog(@"couldn't remove content offset 1"); //ADDED
+    //    }
+    //
+    //    @try{
+    //        NSLog(@"removed input tool bar content size KVO");
+    //        [self.inputToolbar.contentView.textView removeObserver:self forKeyPath:NSStringFromSelector(@selector(contentSize))];
+    //    }@catch(id anException){
+    //        NSLog(@"couldn't remove content offset 2"); //ADDED
+    //    }
+    
+    //force removal of pull to refresh
+    //    self.collectionView.showsPullToRefresh = NO;
+    
 }
 
 @end

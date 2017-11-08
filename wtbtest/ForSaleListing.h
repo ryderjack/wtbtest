@@ -20,6 +20,7 @@
 #import "DetailImageController.h"
 #import "BumpingIntroVC.h"
 #import "CheckoutSummary.h"
+#import "LocationView.h"
 
 @class ForSaleListing;
 
@@ -31,7 +32,7 @@
 
 @end
 
-@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate, UIGestureRecognizerDelegate, CheckoutDelegate>
+@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate, UIGestureRecognizerDelegate, CheckoutDelegate, LocationViewControllerDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
 

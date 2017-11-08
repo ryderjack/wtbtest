@@ -210,5 +210,7 @@
 @property (nonatomic, strong) SFSafariViewController *paypalSafariView;
 @property (nonatomic) BOOL addedPayPalObservers;
 @property (nonatomic) BOOL paypalEnabled;
+@property (nonatomic, strong) NSString *merchantId;
+@property (nonatomic) BOOL hideInstantBuy;
 
 @end

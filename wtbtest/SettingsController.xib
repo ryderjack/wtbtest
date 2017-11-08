@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13174"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
-        <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -35,10 +34,7 @@
                 <outlet property="currencyCell" destination="WnP-hy-I57" id="ZW3-Ee-RtO"/>
                 <outlet property="currencySwipeCell" destination="1Wd-Ve-ePZ" id="D5f-wW-reF"/>
                 <outlet property="currencySwipeView" destination="ta0-XJ-ipn" id="uxU-Wh-602"/>
-                <outlet property="depopCell" destination="OrY-cm-bR4" id="cQC-P8-Mjb"/>
-                <outlet property="depopField" destination="oc8-Ku-0l4" id="awI-uS-es3"/>
                 <outlet property="emailCell" destination="c20-Ec-Pex" id="kai-Y1-BWV"/>
-                <outlet property="emailFields" destination="iTI-ps-maX" id="e3F-E4-Zwr"/>
                 <outlet property="fbFriendSwitch" destination="oux-fF-FDk" id="IRK-LQ-HTf"/>
                 <outlet property="firstNameField" destination="jiD-Rc-zpL" id="BeH-2g-Lqk"/>
                 <outlet property="lastNameCell" destination="MZL-Po-MvA" id="aHM-6p-lLV"/>
@@ -50,6 +46,7 @@
                 <outlet property="locationLabelCell" destination="66M-sP-8AR" id="cZO-Nx-epw"/>
                 <outlet property="nameCell" destination="8IE-Et-7Cd" id="7ef-z6-r5i"/>
                 <outlet property="notificationsCell" destination="YcA-bT-n7s" id="A5I-OL-e28"/>
+                <outlet property="paypalAccountLabel" destination="A2T-07-2Fu" id="ALq-wc-fSN"/>
                 <outlet property="pictureCelll" destination="ku0-Td-kJz" id="sWa-Qy-uBg"/>
                 <outlet property="pushStatusButton" destination="yRO-eu-0oh" id="lLh-IL-DT6"/>
                 <outlet property="sellerModeCell" destination="S1h-ms-UzW" id="mFf-t3-A34"/>
@@ -106,40 +103,38 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="-348" y="-38"/>
         </tableViewCell>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="c20-Ec-Pex">
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" id="c20-Ec-Pex">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="c20-Ec-Pex" id="AAX-3d-N3I">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="287" height="43.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="PayPal" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Q0q-Sa-sSg">
                         <rect key="frame" x="8" y="11" width="123" height="21"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="123" id="4mr-VI-qqo"/>
+                            <constraint firstAttribute="width" constant="123" id="uJI-wc-KAh"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Enter" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="iTI-ps-maX">
-                        <rect key="frame" x="170" y="11" width="140" height="21"/>
-                        <color key="tintColor" red="0.24313725489999999" green="0.59215686270000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                        <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Add Account" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="A2T-07-2Fu">
+                        <rect key="frame" x="172" y="11" width="140" height="21"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
-                        <textInputTraits key="textInputTraits" keyboardType="emailAddress" returnKeyType="done"/>
-                    </textField>
+                        <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                        <nil key="highlightedColor"/>
+                    </label>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="Q0q-Sa-sSg" firstAttribute="centerY" secondItem="iTI-ps-maX" secondAttribute="centerY" id="AcL-uY-8Ec"/>
-                    <constraint firstItem="Q0q-Sa-sSg" firstAttribute="baseline" secondItem="iTI-ps-maX" secondAttribute="baseline" id="QIv-4l-P4o"/>
-                    <constraint firstItem="Q0q-Sa-sSg" firstAttribute="centerY" secondItem="AAX-3d-N3I" secondAttribute="centerY" id="ZvR-uV-Wcn"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="iTI-ps-maX" secondAttribute="trailing" constant="2" id="g9w-vG-tT0"/>
-                    <constraint firstItem="Q0q-Sa-sSg" firstAttribute="leading" secondItem="AAX-3d-N3I" secondAttribute="leadingMargin" id="oYm-Ow-GU6"/>
-                    <constraint firstItem="iTI-ps-maX" firstAttribute="leading" secondItem="Q0q-Sa-sSg" secondAttribute="trailing" constant="39" id="rAW-fW-ggT"/>
+                    <constraint firstItem="A2T-07-2Fu" firstAttribute="leading" secondItem="Q0q-Sa-sSg" secondAttribute="trailing" constant="41" id="4f4-S8-d3I"/>
+                    <constraint firstItem="Q0q-Sa-sSg" firstAttribute="centerY" secondItem="AAX-3d-N3I" secondAttribute="centerY" id="WCv-PH-wGY"/>
+                    <constraint firstItem="Q0q-Sa-sSg" firstAttribute="leading" secondItem="AAX-3d-N3I" secondAttribute="leadingMargin" id="jsW-ld-8no"/>
+                    <constraint firstItem="A2T-07-2Fu" firstAttribute="baseline" secondItem="Q0q-Sa-sSg" secondAttribute="baseline" id="k6w-2t-AAJ"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="A2T-07-2Fu" secondAttribute="trailing" constant="-33" id="mMr-cC-MuY"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-348" y="154"/>
+            <point key="canvasLocation" x="-348" y="53"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" id="Aqh-7q-75q">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
@@ -235,30 +230,6 @@
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-348" y="312"/>
-        </tableViewCell>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="OrY-cm-bR4">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
-            <autoresizingMask key="autoresizingMask"/>
-            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="OrY-cm-bR4" id="5Va-Ud-ami">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
-                <autoresizingMask key="autoresizingMask"/>
-                <subviews>
-                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="depop username" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="oc8-Ku-0l4">
-                        <rect key="frame" x="8" y="0.0" width="304" height="43"/>
-                        <color key="tintColor" red="0.24313725489999999" green="0.59215686270000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                        <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="16"/>
-                        <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" returnKeyType="done"/>
-                    </textField>
-                </subviews>
-                <constraints>
-                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="centerY" secondItem="5Va-Ud-ami" secondAttribute="centerY" id="Lbm-8A-Uy4"/>
-                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="leading" secondItem="5Va-Ud-ami" secondAttribute="leadingMargin" id="R0p-zF-ZLc"/>
-                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="trailing" secondItem="5Va-Ud-ami" secondAttribute="trailingMargin" id="SfP-XF-GaA"/>
-                    <constraint firstItem="oc8-Ku-0l4" firstAttribute="top" secondItem="5Va-Ud-ami" secondAttribute="top" id="l0e-dH-4dB"/>
-                </constraints>
-            </tableViewCellContentView>
-            <point key="canvasLocation" x="-348" y="419"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="ku0-Td-kJz">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
@@ -637,7 +608,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="1Wd-Ve-ePZ" id="f4v-8O-VBX">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ta0-XJ-ipn" customClass="SwipeView">

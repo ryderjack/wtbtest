@@ -112,6 +112,7 @@
         self.firstPull = [PFQuery queryWithClassName:@"supportConvos"];
         [self.firstPull whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
         [self.firstPull whereKey:@"status" equalTo:@"open"];
+        [self.firstPull whereKey:@"totalMessages" greaterThan:@0];
         self.firstPull.limit = 20;
         [self.firstPull orderByDescending:@"lastUpdated"];
     }
@@ -188,6 +189,7 @@
         self.firstInfin = [PFQuery queryWithClassName:@"supportConvos"];
         [self.firstInfin whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
         [self.firstInfin whereKey:@"status" equalTo:@"open"];
+        [self.firstInfin whereKey:@"totalMessages" greaterThan:@0];
         self.firstInfin.limit = 20;
         [self.firstInfin orderByDescending:@"lastUpdated"];
     }
@@ -241,6 +243,7 @@
         self.secondPull = [PFQuery queryWithClassName:@"supportConvos"];
         [self.secondPull whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
         [self.secondPull whereKey:@"status" equalTo:@"closed"];
+        [self.secondPull whereKey:@"totalMessages" greaterThan:@0];
         self.secondPull.limit = 20;
         [self.secondPull orderByDescending:@"lastUpdated"];
     }
@@ -291,7 +294,6 @@
         else{
             NSLog(@"error finding closed tickets %@", error);
             
-            
             [self.tableView.pullToRefreshView stopAnimating];
             [self.tableView.infiniteScrollingView stopAnimating];
             
@@ -316,6 +318,7 @@
         self.secondInfin = [PFQuery queryWithClassName:@"supportConvos"];
         [self.secondInfin whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
         [self.secondInfin whereKey:@"status" equalTo:@"closed"];
+        [self.secondInfin whereKey:@"totalMessages" greaterThan:@0];
         self.secondInfin.limit = 20;
         [self.secondInfin orderByDescending:@"lastUpdated"];
     }
@@ -374,7 +377,7 @@
     if (!self.firstPull) {
         self.firstPull = [PFQuery queryWithClassName:@"saleOrders"];
         [self.firstPull whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
-        [self.firstPull whereKey:@"status" containedIn:@[@"live",@"pending"]];
+        [self.firstPull whereKey:@"status" containedIn:@[@"live",@"pending", @"failed", @"refunded"]];
         self.firstPull.limit = 20;
         [self.firstPull orderByDescending:@"lastUpdated"];
     }
@@ -447,7 +450,7 @@
     if (!self.firstInfin) {
         self.firstInfin = [PFQuery queryWithClassName:@"saleOrders"];
         [self.firstInfin whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
-        [self.firstInfin whereKey:@"status" containedIn:@[@"live",@"pending"]];
+        [self.firstInfin whereKey:@"status" containedIn:@[@"live",@"pending", @"refunded", @"failed"]];
         self.firstInfin.limit = 20;
         [self.firstInfin orderByDescending:@"lastUpdated"];
     }
@@ -510,7 +513,7 @@
     if (!self.secondPull) {
         self.secondPull = [PFQuery queryWithClassName:@"saleOrders"];
         [self.secondPull whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-        [self.secondPull whereKey:@"status" containedIn:@[@"live",@"pending"]];
+        [self.secondPull whereKey:@"status" containedIn:@[@"live", @"refunded"]];
         self.secondPull.limit = 20;
         [self.secondPull orderByDescending:@"lastUpdated"];
     }
@@ -586,7 +589,7 @@
     if (!self.secondInfin) {
         self.secondInfin = [PFQuery queryWithClassName:@"saleOrders"];
         [self.secondInfin whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-        [self.secondInfin whereKey:@"status" containedIn:@[@"live",@"pending"]];
+        [self.secondInfin whereKey:@"status" containedIn:@[@"live", @"refunded"]];
         self.secondInfin.limit = 20;
         [self.secondInfin orderByDescending:@"lastUpdated"];
     }
@@ -799,44 +802,58 @@
         
         cell.middleLabel.text = [self.dateFormat stringFromDate:convoDate];
         
-        //setup next action required by this user (buyer/seller)
-        if ([[order objectForKey:@"buyerId"] isEqualToString:[PFUser currentUser].objectId]) {
-            //user is buyer, to do's:
-            
-            if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
-                cell.bottomLabel.text = @"Leave review";
-                [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
-            }
-            else if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
-                cell.bottomLabel.text = @"Awaiting Shipment";
-                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else if ([[order objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
-                cell.bottomLabel.text = @"Awaiting Feedback";
-                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            else{
-                cell.bottomLabel.text = @"Complete";
-                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-            }
+        if ([[order objectForKey:@"status"] isEqualToString:@"failed"]) {
+            cell.bottomLabel.text = @"Payment Failed";
+            [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+        }
+        else if ([[order objectForKey:@"status"] isEqualToString:@"pending"]) {
+            cell.bottomLabel.text = @"Payment Pending";
+            [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+        }
+        else if ([[order objectForKey:@"status"] isEqualToString:@"refunded"]) {
+            cell.bottomLabel.text = @"Payment Refunded";
+            [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
         }
         else{
-            //user is seller, to do's:
-            if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
-                cell.bottomLabel.text = @"Mark as Shipped";
-                [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
-            }
-            else if ([[order objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
-                cell.bottomLabel.text = @"Leave review";
-                [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
-            }
-            else if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
-                cell.bottomLabel.text = @"Awaiting Feedback";
-                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+            //setup next action required by this user (buyer/seller)
+            if ([[order objectForKey:@"buyerId"] isEqualToString:[PFUser currentUser].objectId]) {
+                //user is buyer, to do's:
+                
+                if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
+                    cell.bottomLabel.text = @"Leave review";
+                    [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+                }
+                else if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
+                    cell.bottomLabel.text = @"Awaiting Shipment";
+                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+                }
+                else if ([[order objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
+                    cell.bottomLabel.text = @"Awaiting Feedback";
+                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+                }
+                else{
+                    cell.bottomLabel.text = @"Complete";
+                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+                }
             }
             else{
-                cell.bottomLabel.text = @"Complete";
-                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+                //user is seller, to do's:
+                if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
+                    cell.bottomLabel.text = @"Mark as Shipped";
+                    [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+                }
+                else if ([[order objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
+                    cell.bottomLabel.text = @"Leave review";
+                    [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+                }
+                else if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
+                    cell.bottomLabel.text = @"Awaiting Feedback";
+                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+                }
+                else{
+                    cell.bottomLabel.text = @"Complete";
+                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+                }
             }
         }
     }

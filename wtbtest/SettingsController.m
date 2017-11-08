@@ -33,7 +33,6 @@
     self.lastNameCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.emailCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.currencyCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.depopCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.contactEmailCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.cmoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.listAsCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -43,8 +42,6 @@
     self.bioCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.currencySwipeCell.selectionStyle = UITableViewCellSelectionStyleNone;
 
-    self.emailFields.delegate = self;
-    self.depopField.delegate = self;
     self.contactEmailField.delegate = self;
     self.firstNameField.delegate = self;
     self.lastNameField.delegate = self;
@@ -54,6 +51,7 @@
     self.currencyArray = @[@"GBP", @"USD", @"EUR", @"AUD"];
     
     self.currentUser = [PFUser currentUser];
+    NSLog(@"current user: %@",self.currentUser);
 
     //currency swipe view
     self.currencySwipeView.delegate = self;
@@ -77,7 +75,7 @@
     
     [self setImageBorder:self.testingView];
     
-    self.currentPaypal = [self.currentUser objectForKey:@"paypal"];
+//    self.currentPaypal = [self.currentUser objectForKey:@"paypal"];
     self.currentContact = [self.currentUser objectForKey:@"email"];
     
     self.usernameLabel.text = [NSString stringWithFormat:@"@%@",self.currentUser.username];
@@ -94,13 +92,15 @@
     }
     
     
-    //check if got paypal email
-    if ([self.currentUser objectForKey:@"paypal"]) {
-        self.emailFields.text = [NSString stringWithFormat:@"%@",self.currentPaypal];
+    //check paypal status
+    if ([[self.currentUser objectForKey:@"paypalEnabled"]isEqualToString:@"YES"]) {
+        self.paypalAccountLabel.text = @"Connected";
+        self.paypalConnected = YES;
     }
     else{
-        self.emailFields.placeholder = @"Enter";
+        self.paypalAccountLabel.text = @"Add Account";
     }
+
     
     //check if got a bio
     if ([self.currentUser objectForKey:@"bio"]) {
@@ -330,14 +330,23 @@
     [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     
     if (indexPath.section == 1) {
-//        if (indexPath.row == 2) {
+        if (indexPath.row == 1) {
 //            //goto shipping controller
 //            ShippingController *vc = [[ShippingController alloc]init];
 //            vc.delegate = self;
 //            vc.settingsMode = YES;
 //            [self.navigationController pushViewController:vc animated:YES];
-//        }
-        if (indexPath.row == 2){
+            if (self.paypalConnected) {
+                [self showPayPalSheet];
+            }
+            else{
+                [Answers logCustomEventWithName:@"Connect PayPal Pressed"
+                               customAttributes:@{}];
+                
+                [self showAlertWithTitle:@"Connect PayPal" andMsg:@"Just enable Instant Buy when you next list an item for sale on BUMP and you'll be prompted to sign into PayPal & grant the relevant permissions. Got any questions? Just send Team BUMP a message from within the app or email hello@sobump.com"];
+            }
+        }
+        else if (indexPath.row == 2){
             if (!self.picker) {
                 self.picker = [[UIImagePickerController alloc] init];
                 self.picker.delegate = self;
@@ -356,6 +365,81 @@
             [self.navigationController pushViewController:vc animated:YES];
         }
     }
+}
+
+-(void)showPayPalSheet{
+    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Disconnect PayPal Account" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Disconnect PayPal Pressed"
+                       customAttributes:@{}];
+        
+        [self disconnectPressed];
+    }]];
+
+    [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+-(void)disconnectPressed{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Disconnect PayPal?" message:@"Tapping Disconnect will switch Instant Buy off for any listings currently active meaning buyers will NOT be able to instantly purchase your items through BUMP. If you'd like to change your linked PayPal account you will have to disconnect and then add your new PayPal account."  preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Disconnect" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        [self showHUD];
+        
+        [self.currentUser setObject:@"NO" forKey:@"paypalEnabled"];
+        [self.currentUser removeObjectForKey:@"paypalMerchantId"];
+        [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            if (succeeded) {
+                
+                PFQuery *listings = [PFQuery queryWithClassName:@"forSaleItems"];
+                [listings whereKey:@"sellerUser" equalTo:self.currentUser];
+                [listings whereKey:@"instantBuy" equalTo:@"YES"];
+                [listings whereKey:@"status" equalTo:@"live"];
+                [listings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                    if (objects) {
+                        
+                        //remove instant buy option
+                        for (PFObject *listingObj in objects) {
+                            [listingObj setObject:@"NO" forKey:@"instantBuy"];
+                            [listingObj saveInBackground];
+                        }
+                        
+                        [Answers logCustomEventWithName:@"Disconnected PayPal in Settings"
+                                       customAttributes:@{}];
+                        
+                        [self hideHUD];
+                        self.paypalConnected = NO;
+                        self.paypalAccountLabel.text = @"Add Account";
+                    }
+                    else{
+                        NSLog(@"error finding listings to disconnect from paypal %@", error);
+                        
+                        [Answers logCustomEventWithName:@"Disconnected PayPal Error finding listings"
+                                       customAttributes:@{}];
+                        
+                        [self hideHUD];
+                        self.paypalConnected = NO;
+                        self.paypalAccountLabel.text = @"Add Account";
+                    }
+                }];
+            }
+            else{
+                NSLog(@"error disconnecting user from paypal %@", error);
+                [self hideHUD];
+                [self showAlertWithTitle:@"Disconnect Error" andMsg:@"Make sure you're connected to the internet and then try again. If the problem persists just message Team BUMP from within the app"];
+                [Answers logCustomEventWithName:@"Disconnect PayPal Error"
+                               customAttributes:@{}];
+            }
+        }];
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
@@ -419,38 +503,38 @@
 -(void)textFieldDidEndEditing:(UITextField *)textField{
 
     //paypal
-    if (textField == self.emailFields && ![textField.text isEqualToString:@""]) {
-        if ([self NSStringIsValidEmail:self.emailFields.text] == YES) {
-            [self.currentUser setObject:self.emailFields.text forKey:@"paypal"];
-            [self.currentUser setObject:@"YES" forKey:@"paypalUpdated"];
-            
-            [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                if (error.code == 203) {
-                    self.emailFields.text = self.currentPaypal;
-                    
-                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"This email address is already in use. Please try another email." preferredStyle:UIAlertControllerStyleAlert];
-                    
-                    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                    }]];
-                    
-                    [self presentViewController:alertView animated:YES completion:^{
-                    }];
-                }
-                else{
-                }
-            }];
-        }
-        else{
-            self.emailFields.text = self.currentPaypal;
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"Please enter a valid email address. If you think this is a mistake please get in touch!" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-            }]];
-            [self presentViewController:alertView animated:YES completion:nil];
-        }
-    }
-    
-    else if (textField == self.contactEmailField && ![textField.text isEqualToString:@""]){
+//    if (textField == self.emailFields && ![textField.text isEqualToString:@""]) {
+//        if ([self NSStringIsValidEmail:self.emailFields.text] == YES) {
+//            [self.currentUser setObject:self.emailFields.text forKey:@"paypal"];
+//            [self.currentUser setObject:@"YES" forKey:@"paypalUpdated"];
+//
+//            [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                if (error.code == 203) {
+//                    self.emailFields.text = self.currentPaypal;
+//
+//                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"This email address is already in use. Please try another email." preferredStyle:UIAlertControllerStyleAlert];
+//
+//                    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+//                    }]];
+//
+//                    [self presentViewController:alertView animated:YES completion:^{
+//                    }];
+//                }
+//                else{
+//                }
+//            }];
+//        }
+//        else{
+//            self.emailFields.text = self.currentPaypal;
+//            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"Please enter a valid email address. If you think this is a mistake please get in touch!" preferredStyle:UIAlertControllerStyleAlert];
+//
+//            [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+//            }]];
+//            [self presentViewController:alertView animated:YES completion:nil];
+//        }
+//    }
+//
+    if (textField == self.contactEmailField && ![textField.text isEqualToString:@""]){
        
         if ([self NSStringIsValidEmail:self.contactEmailField.text] == YES) {
             [self.currentUser setObject:self.contactEmailField.text forKey:@"email"];
@@ -1113,10 +1197,10 @@
 -(void)updateConvoImages{
     //update user's top 20 recent convos to include the user's profile picture
     //query for convos where I'm the buyer then update buyerPicture & same for sellerPicture
-   
+    
     PFQuery *convoQ = [PFQuery queryWithClassName:@"convos"];
     [convoQ whereKey:@"totalMessages" greaterThan:@0];
-//    [convoQ whereKeyExists:@"buyerUser"];
+    //    [convoQ whereKeyExists:@"buyerUser"];
     [convoQ whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
     [convoQ orderByDescending:@"lastSentDate"];
     convoQ.limit = 20;
@@ -1227,4 +1311,5 @@
     
     return self.currencyArray.count;
 }
+
 @end

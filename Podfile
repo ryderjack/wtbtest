@@ -31,4 +31,5 @@ target 'wtbtest' do
     pod 'YLProgressBar', '~> 3.10'
     pod 'Transcontinental', '~> 1.0'
     pod 'CountryPicker', '~> 1.3'
+    pod 'Mixpanel'
 end

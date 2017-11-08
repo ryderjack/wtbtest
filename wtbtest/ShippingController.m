@@ -199,16 +199,9 @@
     NSString *line1 = [self.addressLine1.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     NSString *line2 = [self.addressLine2.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
-    NSString *addressString;
-    
-    if ([line2 isEqualToString:@""]) {
-        addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.addressLine1.text,self.cityField.text,self.postcodeField.text,self.countryField.text];
-    }
-    else{
-        addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.addressLine1.text, self.addressLine2.text,self.cityField.text,self.postcodeField.text,self.countryField.text];
-    }
+    NSString *addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.addressLine1.text, self.addressLine2.text,self.cityField.text,self.postcodeField.text,self.countryField.text];
 
-    if ([name isEqualToString:@""] || [line1 isEqualToString:@""]|| [postcode isEqualToString:@""] || [country isEqualToString:@""] || [city isEqualToString:@""]) {
+    if ([name isEqualToString:@""] || [line1 isEqualToString:@""]|| [line2 isEqualToString:@""]|| [postcode isEqualToString:@""] || [country isEqualToString:@""] || [city isEqualToString:@""]) {
         
         [self.delegate addedAddress:addressString withName:self.nameField.text withLineOne:self.addressLine1.text withLineTwo:self.addressLine2.text withCity:self.cityField.text withCountry:self.picker.selectedCountryCode fullyEntered:NO];
     }
@@ -227,9 +220,6 @@
     
     if (![line2 isEqualToString:@""]) {
         [self.currentUser setObject:[self.addressLine2.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"lineTwo"];
-    }
-    else{
-        [self.currentUser removeObjectForKey:@"lineTwo"];
     }
     
     if (![postcode isEqualToString:@""]) {

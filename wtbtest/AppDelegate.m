@@ -20,6 +20,7 @@
 #import "resetPassController.h"
 #import "MBFingerTipWindow.h"
 #import "OrderSummaryView.h"
+#import "Mixpanel/Mixpanel.h"
 
 @interface AppDelegate ()
 
@@ -49,11 +50,14 @@
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE remove these links for safety reasons from the actual build
         
         //dev server w/ dev DB
-        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
+//        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
+        configuration.server = @"https://dev.bumpapi.com/parse";
+
     }]];
 
 //    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
-    
+//    [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
+
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
 
     if ([PFUser currentUser]) {
@@ -455,13 +459,14 @@
     PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
     [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
     [buyingUnseenQuery whereKey:@"buyerUnseen" greaterThan:@0];
-    
+    [buyingUnseenQuery whereKey:@"status" containedIn:@[@"live",@"failed",@"refunded",@"pending"]];
+
     PFQuery *sellingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
     [sellingUnseenQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
     [sellingUnseenQuery whereKey:@"sellerUnseen" greaterThan:@0];
-    
+    [sellingUnseenQuery whereKey:@"status" containedIn:@[@"live",@"refunded"]];
+
     PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
-    [unseenQuery whereKey:@"status" equalTo:@"live"];
     [unseenQuery orderByDescending:@"lastUpdated"];
     
     [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -838,18 +843,20 @@
         
         NSLog(@"url components: %@", queryStringDictionary);
         
-        //don't check on permissions coz user may just log in and in that case they already granted them the first time
-//        NSString *permissions = [queryStringDictionary valueForKey:@"permissionsGranted"];
-        NSString *consent = [queryStringDictionary valueForKey:@"consentStatus"];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"paypalOnboardingReturn" object:queryStringDictionary];
+    }
+    
+    //when user returns from PayPal order creation e.g. bump://order/
+    else if ([[url host] isEqualToString:@"order"]){
         
-        //also do a check on merchantId to make sure the current user's ID matches this so we're confident the user who initiated PayPal auth is the one who granted it  //CHANGE
-        
-        //depending on URL passed back, we know if user has successfully onboarded & whether to mark them as PayPal enabled - check parameters to know
-        if ([consent isEqualToString:@"true"]) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"paypalOnboardingSuccess" object:queryStringDictionary];
+        NSString *status = [[url path] stringByReplacingOccurrencesOfString:@"/" withString:@""];
+
+        //depending on URL passed back, we know if user has successfully confirmed the order
+        if ([status isEqualToString:@"success"]) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"paypalCreatedOrderSuccess" object:nil];
         }
         else{
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"paypalOnboardingFailed" object:queryStringDictionary];
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"paypalCreatedOrderFailed" object:nil];
         }
     }
     
@@ -1172,6 +1179,9 @@
     //add all together and set tab badge
     if (tabInt == 0) {
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+    }
+    else if(tabInt > 9){
+        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"9+"];
     }
     else{
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d",tabInt]];

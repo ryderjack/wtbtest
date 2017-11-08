@@ -47,10 +47,19 @@
     if (@available(iOS 11.0, *)) {
         //nav bar height will be 56 (coz of bigger search bars)
         //move placeholder view and table view slightly down
+        //was 12
         
-        [self.placeholderView setFrame:CGRectMake(self.placeholderView.frame.origin.x, self.placeholderView.frame.origin.y+12, [UIApplication sharedApplication].keyWindow.frame.size.width,self.placeholderView.frame.size.height)];
+        int adjust = 12;
+        //iPhone X has a bigger status bar - was 20px now 44px
         
-        [self.tableView setContentInset:UIEdgeInsetsMake(12, 0, 0, 0)];
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+            //iPhone X
+            adjust = 34;
+        }
+        
+        [self.placeholderView setFrame:CGRectMake(self.placeholderView.frame.origin.x, self.placeholderView.frame.origin.y+adjust, [UIApplication sharedApplication].keyWindow.frame.size.width,self.placeholderView.frame.size.height)];
+        
+        [self.tableView setContentInset:UIEdgeInsetsMake(adjust, 0, 0, 0)];
     }
     else{
         //nav bar height will be standard 44

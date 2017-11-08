@@ -996,29 +996,17 @@
 
 - (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
     
-//    if (@available(iOS 11.0, *)) {
-//        NSLog(@"LISTING FRAME: %@     view frame %@", NSStringFromCGRect(self.listingView.frame),NSStringFromCGRect(self.view.frame));
-//
-//        //so to calculate height insets we need to return (navigation bar height + status bar height + listing banner height) - adjusted content insets
-//        return UIEdgeInsetsMake(self.listingView.frame.size.height + self.navigationController.navigationBar.frame.size.height + [UIApplication sharedApplication].statusBarFrame.size.height, 0, self.carousel.frame.size.height, 0); // top, left, bottom, right
-//    }
-//    else{
-//        if (self.showingListingBanner == YES) {
-//            return UIEdgeInsetsMake(80, 0, 0, 0);
-//        }
-//        else if (self.showSuggested == YES) {
-//            return UIEdgeInsetsMake(0, 0, 50, 0); // top, left, bottom, right
-//        }
-//        else{
-//            return self.collectionView.layoutMargins;
-//        }
-//    }
-    
-    if (self.showSuggested == YES) {
-        return UIEdgeInsetsMake(0, 0, 50, 0); // top, left, bottom, right
+    if (@available(iOS 11.0, *)) {
+        //so to calculate height insets we need to return (navigation bar height + status bar height + listing banner height) - adjusted content insets
+        return UIEdgeInsetsMake(self.navigationController.navigationBar.frame.size.height + [UIApplication sharedApplication].statusBarFrame.size.height, 0, self.carousel.frame.size.height, 0); // top, left, bottom, right
     }
     else{
-        return self.collectionView.layoutMargins;
+        if (self.showSuggested == YES) {
+            return UIEdgeInsetsMake(0, 0, 50, 0); // top, left, bottom, right
+        }
+        else{
+            return self.collectionView.layoutMargins;
+        }
     }
 }
 
@@ -1759,6 +1747,7 @@
     vc.listingObject = [self.convoObject objectForKey:@"listing"];
     vc.pureWTS = YES;
     vc.fromBuyNow = YES;
+    vc.fromPush = YES; //forces table reload so don't cut off title label cell
     [self.navigationController pushViewController:vc animated:YES];
 }
 

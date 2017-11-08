@@ -15,7 +15,7 @@
 @class FeedbackController;
 
 @protocol feedbackDelegate <NSObject>
-- (void)leftReview;
+- (void)leftReviewWithStars:(int)stars;
 @end
 
 @interface FeedbackController : UITableViewController <UITextViewDelegate>

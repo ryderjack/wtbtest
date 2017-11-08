@@ -12,6 +12,7 @@
 #import "ShippingController.h"
 #import <SpinKit/RTSpinKitView.h>
 #import <MBProgressHUD.h>
+#import <SafariServices/SafariServices.h>
 
 @class CheckoutSummary;
 
@@ -97,5 +98,14 @@
 @property (nonatomic, strong) PFUser *otherUser;
 @property (nonatomic) BOOL fetchedUser;
 @property (nonatomic) BOOL settingUpMessages;
+
+//paypal integration stuff
+@property (nonatomic) BOOL addedPayPalObservers;
+@property (nonatomic, strong) SFSafariViewController *paypalSafariView;
+@property (nonatomic, strong) NSString *paypalOrderId;
+@property (nonatomic) BOOL sellerErrorShowing;
+
+@property (nonatomic) BOOL checkedSellersPPInfo;
+
 
 @end

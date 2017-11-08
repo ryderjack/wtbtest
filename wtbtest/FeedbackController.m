@@ -489,7 +489,7 @@
                                           }];
         
         [feedbackObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            if (!error) {
+            if (succeeded) {
                 
                 NSLog(@"saved fb object");
                 
@@ -497,25 +497,43 @@
                                customAttributes:@{
                                                   @"success":@"YES"
                                                   }];
+                NSDictionary *params;
+                
                 
                 //save review to order object
                 if (self.purchased) {
-                    [self.orderObject setObject:feedbackObject forKey:@"sellerReview"];
-                    [self.orderObject setObject:@"YES" forKey:@"buyerLeftFeedback"];
-                    [self.orderObject setObject:@(self.starNumber) forKey:@"sellerStars"];
+                    params = @{
+                              @"orderId":self.orderObject.objectId,
+                              @"feedbackId":feedbackObject.objectId,
+                              @"buyerLeft":@"YES",
+                              @"stars":@(self.starNumber)
+                              };
+//                    [self.orderObject setObject:feedbackObject forKey:@"sellerReview"];
+//                    [self.orderObject setObject:@"YES" forKey:@"buyerLeftFeedback"];
+//                    [self.orderObject setObject:@(self.starNumber) forKey:@"sellerStars"];
                 }
                 else{
-                    [self.orderObject setObject:feedbackObject forKey:@"buyerReview"]; //this is the review of the buyer NOT the review the buyer left
-                    [self.orderObject setObject:@"YES" forKey:@"sellerLeftFeedback"];
-                    [self.orderObject setObject:@(self.starNumber) forKey:@"buyerStars"];
+                    params = @{
+                               @"orderId":self.orderObject.objectId,
+                               @"feedbackId":feedbackObject.objectId,
+                               @"buyerLeft":@"NO",
+                               @"stars":@(self.starNumber)
+                               };
+//                    [self.orderObject setObject:feedbackObject forKey:@"buyerReview"]; //this is the review of the buyer NOT the review the buyer left
+//                    [self.orderObject setObject:@"YES" forKey:@"sellerLeftFeedback"];
+//                    [self.orderObject setObject:@(self.starNumber) forKey:@"buyerStars"];
                 }
-                [self.orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
+                
+                NSLog(@"params before fb func: %@", params);
+                
+                [PFCloud callFunctionInBackground:@"updateOrderFeedback" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                    if (!error) {
                         [Answers logCustomEventWithName:@"Saved Feedback on Order"
                                        customAttributes:@{
                                                           @"success":@"YES"
                                                           }];
-                        [self.delegate leftReview];
+                        
+                        [self.delegate leftReviewWithStars:self.starNumber];
                         
                         NSLog(@"saved feedback on order");
                         //pop VC will rest saves in BG
@@ -535,6 +553,33 @@
                         [self dismissFeedback];
                     }
                 }];
+                
+//                [self.orderObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                    if (succeeded) {
+//                        [Answers logCustomEventWithName:@"Saved Feedback on Order"
+//                                       customAttributes:@{
+//                                                          @"success":@"YES"
+//                                                          }];
+//                        [self.delegate leftReview];
+//
+//                        NSLog(@"saved feedback on order");
+//                        //pop VC will rest saves in BG
+//                        [self hideHUD];
+//                        [self dismissFeedback];
+//                    }
+//                    else{
+//                        [Answers logCustomEventWithName:@"Saved Feedback on Order"
+//                                       customAttributes:@{
+//                                                          @"success":@"NO",
+//                                                          @"error" : error.description,
+//                                                          @"feedbackId" : feedbackObject.objectId
+//                                                          }];
+//
+//                        //pop VC will rest saves in BG
+//                        [self hideHUD];
+//                        [self dismissFeedback];
+//                    }
+//                }];
                 
                 //decide whether to ask this user to review BUMP
                 [self sendReview]; //CHANGE

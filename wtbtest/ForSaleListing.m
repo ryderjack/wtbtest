@@ -22,6 +22,7 @@
 #import "AppDelegate.h"
 #import "UIImageView+Letters.h"
 #import "SelectViewController.h"
+#import <CLPlacemark+HZContinents.h>
 
 @interface ForSaleListing ()
 
@@ -325,14 +326,16 @@
                 if (!self.setupButtons) {
                     [self decideButtonSetup];
                 }
-                
-                //for when user comes back after switching tabs we need to be able to recreate the bar buttons
-                if (self.buyButtonShowing && !self.buyButton) {
-                    [self setupTwoBarButtons];
+                else{ //TEST this else statement works fine after switching tabs
+                    //for when user comes back after switching tabs we need to be able to recreate the bar buttons
+                    if (self.buyButtonShowing && !self.buyButton) {
+                        [self setupTwoBarButtons];
+                    }
+                    else if (!self.messageButton){
+                        [self setupMessageBarButton];
+                    }
                 }
-                else if (!self.messageButton){
-                    [self setupMessageBarButton];
-                }
+
                 
                 [self showBarButton];
             }
@@ -1423,7 +1426,7 @@
         //check if instant buy is on & if countries are the same - if not, is global shipping enabled to show both anyway
         if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"]) {
             
-            if ([self.listingObject objectForKey:@"countryCode"] && [[PFUser currentUser]objectForKey:@"countryCode"]) {
+            if ([self.listingObject objectForKey:@"countryCode"] && ([[PFUser currentUser]objectForKey:@"countryCode"] || [[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"])) {
                 
                 //we compare country codes to decide on whether purchase is possible
                 NSString *listingCountry = [self.listingObject objectForKey:@"countryCode"];
@@ -1442,13 +1445,15 @@
                 }
             }
             else{
-                //CHANGE add in prompt to get user's country if this fails???
+                if (![[PFUser currentUser]objectForKey:@"countryCode"]) {
+                    //show prompt to get user's country if this fails
+                    [self showAddCountryPrompt];
+                }
             }
         }
         else{
             [self setupMessageBarButton];
         }
-//        [self setupTwoBarButtons]; //CHANGE
     }
     
     self.setupButtons = YES;
@@ -2510,7 +2515,7 @@
                    customAttributes:@{
                                       @"type":@"whatsapp"
                                       }];
-    NSString *shareString = @"Check out Bump on the App Store - Safely Buy & Sell Streetwear with ZERO fees\n\nAvailable here: http://sobump.com";
+    NSString *shareString = @"Check out Bump on the App Store - Safely Buy & Sell Streetwear\n\nAvailable here: http://sobump.com";
     NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
     if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
         [[UIApplication sharedApplication] openURL: whatsappURL];
@@ -2534,7 +2539,7 @@
                                       @"type":@"share sheet"
                                       }];
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out Bump on the App Store - Safely Buy & Sell Streetwear with ZERO fees\n\nAvailable here: http://sobump.com"];
+    [items addObject:@"Check out Bump on the App Store - Safely Buy & Sell Streetwear\n\nAvailable here: http://sobump.com"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     
     [self hideBarButton];
@@ -3261,5 +3266,68 @@
     
     [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
     [self.soldCheckImageVoew setHidden:NO];
+}
+
+-(void)showAddCountryPrompt{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Add Location" message:@"Let us know where you're shopping from so we can show you what items you can instantly buy on BUMP" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Add Location" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Add Location pressed on sale listing"
+                       customAttributes:@{}];
+        
+        LocationView *vc = [[LocationView alloc]init];
+        vc.delegate = self;
+        [self.navigationController pushViewController:vc animated:YES];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+#pragma mark - location view delegates
+
+-(void)addCurrentLocation:(LocationView *)controller didPress:(PFGeoPoint *)geoPoint title:(NSString *)placemark{
+    //do nothing
+}
+
+-(void)addLocation:(LocationView *)controller didFinishEnteringItem:(NSString *)item longi:(CLLocationDegrees)item1 lati:(CLLocationDegrees)item2{
+    //do nothing
+}
+
+-(void)selectedPlacemark:(CLPlacemark *)placemark{
+    
+    NSString *titleString;
+    
+    if (!placemark.locality) {
+        titleString = [NSString stringWithFormat:@"%@",placemark.country];
+    }
+    else{
+        titleString = [NSString stringWithFormat:@"%@, %@", placemark.locality, placemark.country];
+    }
+    
+    if (![titleString containsString:@"(null)"]) { //protect against saving erroneous location
+        
+        [[PFUser currentUser]setObject:titleString forKey:@"profileLocation"];
+        
+        if (![[placemark continent] isEqualToString:@""]) {
+            [[PFUser currentUser]setObject:[placemark continent] forKey:@"continent"];
+        }
+        
+        //get geopoint for new location for this user's listings
+        PFGeoPoint *geopoint = [PFGeoPoint geoPointWithLocation:placemark.location];
+        if (geopoint) {
+            [[PFUser currentUser]setObject:geopoint forKey:@"geopoint"];
+        }
+        
+        if (![[placemark country]isEqualToString:@""]) {
+            [[PFUser currentUser]setObject:[placemark country] forKey:@"country"];
+            [[PFUser currentUser]setObject:[placemark ISOcountryCode] forKey:@"countryCode"];
+            
+            [self decideButtonSetup];
+        }
+        
+        [[PFUser currentUser]saveInBackground];
+    }
+    else{
+        [self showAlertWithTitle:@"Location Error #1" andMsg:@"We couldn't grab your location, make sure you enter a valid location and are connected to the internet"];
+    }
 }
 @end
