@@ -40,7 +40,6 @@
             self.title = @"S E L E C T";
         }
         
-        
         self.selectedSizes = [NSMutableArray array];
         
         if (self.holdingArray.count >0) {

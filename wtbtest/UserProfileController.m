@@ -1856,14 +1856,14 @@
     //small image view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesSmallImage = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesSmallImage.size = self.smallImageView.frame.size;
-    initialLayoutAttributesSmallImage.frame = CGRectMake(55, 25 + adjust, 30, 30);
+    initialLayoutAttributesSmallImage.frame = CGRectMake(105, 25 + adjust, 30, 30);
     initialLayoutAttributesSmallImage.alpha = 0.0f;
     [self.smallImageView addLayoutAttributes:initialLayoutAttributesSmallImage forProgress:0.0];
     
     //small username /loc view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesSmallName = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesSmallName.size = self.smallNameAndLoc.frame.size;
-    initialLayoutAttributesSmallName.frame = CGRectMake(90, 25 + adjust, 200, 30);
+    initialLayoutAttributesSmallName.frame = CGRectMake(140, 25 + adjust, 200, 30);
     initialLayoutAttributesSmallName.alpha = 0.0f;
     [self.smallNameAndLoc addLayoutAttributes:initialLayoutAttributesSmallName forProgress:0.0];
     
@@ -1956,7 +1956,7 @@
     // star view final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesStar = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesStarView];
     finalLayoutAttributesStar.alpha = 0.0;
-    [self.starImageView addLayoutAttributes:finalLayoutAttributesStar forProgress:0.8];
+    [self.starImageView addLayoutAttributes:finalLayoutAttributesStar forProgress:0.6];
     
     // reviews label final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesReviewLabel = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesReviews];
@@ -1966,17 +1966,17 @@
     // name label final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesNameLabel = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesLabel];
     finalLayoutAttributesNameLabel.alpha = 0.0;
-    [self.nameAndLoc addLayoutAttributes:finalLayoutAttributesNameLabel forProgress:0.9];
+    [self.nameAndLoc addLayoutAttributes:finalLayoutAttributesNameLabel forProgress:0.6];
     
     // small username label final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesSmallLabel = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesSmallName];
     finalLayoutAttributesSmallLabel.alpha = 1.0;
-    [self.smallNameAndLoc addLayoutAttributes:finalLayoutAttributesSmallLabel forProgress:0.9];
+    [self.smallNameAndLoc addLayoutAttributes:finalLayoutAttributesSmallLabel forProgress:0.6];
     
     // small image final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesSmallImage = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesSmallImage];
     finalLayoutAttributesSmallImage.alpha = 1.0;
-    [self.smallImageView addLayoutAttributes:finalLayoutAttributesSmallImage forProgress:0.9];
+    [self.smallImageView addLayoutAttributes:finalLayoutAttributesSmallImage forProgress:0.6];
     
     if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
         //profile image button

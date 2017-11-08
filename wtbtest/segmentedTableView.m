@@ -133,10 +133,10 @@
                     
                     [self.noResultsLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
                     [self.noResultsLabel setTextColor:[UIColor lightGrayColor]];
-                    self.noResultsLabel.text = @"No Open Tickets\n\nOpen a support ticket from an order summary page on BUMP";
                     [self.tableView addSubview:self.noResultsLabel];
                 }
                 if (self.segmentedControl.selectedSegmentIndex == 0) {
+                    self.noResultsLabel.text = @"No Open Tickets\n\nOpen a support ticket from an order summary page on BUMP";
                     [self.noResultsLabel setHidden:NO];
                 }
             }
@@ -264,10 +264,10 @@
                     
                     [self.noResultsLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
                     [self.noResultsLabel setTextColor:[UIColor lightGrayColor]];
-                    self.noResultsLabel.text = @"No Closed Tickets\n\nWhen your issues have been resolved, they'll appear here";
                     [self.tableView addSubview:self.noResultsLabel];
                 }
                 if (self.segmentedControl.selectedSegmentIndex == 1) {
+                    self.noResultsLabel.text = @"No Closed Tickets\n\nWhen your issues have been resolved, they'll appear here";
                     [self.noResultsLabel setHidden:NO];
                 }
             }
