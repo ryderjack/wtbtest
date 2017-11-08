@@ -1131,12 +1131,11 @@
     [self.longSendButton setEnabled:NO];
     
     //either send message or dismiss
-    if ([self.longSendButton.titleLabel.text isEqualToString:@"Dismiss"]) {
+    if ([self.longSendButton.titleLabel.text isEqualToString:@"D I S M I S S"]) {
         [Answers logCustomEventWithName:@"Dismissed Send Box"
                        customAttributes:@{
                                           @"where":@"for sale"
                                           }];
-        NSLog(@"dismiss");
         [self hideSendBox];
         [self.longSendButton setEnabled:YES];
     }
@@ -1870,7 +1869,7 @@
     }
     
     //update bar button title
-    [self.longSendButton setTitle:@"Dismiss" forState:UIControlStateNormal];
+    [self.longSendButton setTitle:@"D I S M I S S" forState:UIControlStateNormal];
     [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
     [self.longSendButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
     

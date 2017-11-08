@@ -31,7 +31,7 @@
             self.title = @"C A T E G O R Y";
         }
         else if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]){
-            self.title = @"S I Z E";
+            self.title = @"U S  S I Z E";
         }
         else if ([self.setting isEqualToString:@"clothing"]){
             self.title = @"C L O T H I N G";
@@ -48,6 +48,10 @@
                     NSString *newString = [size stringByReplacingOccurrencesOfString:@"UK " withString:@""];
                     [self.selectedSizes addObject:newString];
                 }
+                else if ([size containsString:@"US "]) {
+                    NSString *newString = [size stringByReplacingOccurrencesOfString:@"US " withString:@""];
+                    [self.selectedSizes addObject:newString];
+                }
                 else{
                     [self.selectedSizes addObject:size];
                 }
@@ -61,24 +65,24 @@
         self.clothingyDescriptionArray = [NSArray arrayWithObjects:@"Long/shortsleeve Tees, Polos, Shirts, Sweatshirts & Hoodies",@"Jeans, Shorts, Swimwear, Sweatpants & Joggers",@"Bombers, Coats, Jackets, Raincoats", nil];
         
         if (self.sellListing == YES) {
-            self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Other", nil];
+            //        self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Other", nil];
             
             self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14",@"Other", nil];
             
-            self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9",@"Other", nil];
+            self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @"1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9",@"Other", nil];
             
-            self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Other", nil];
+            //        self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Other", nil];
             
             self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL",@"Other", nil];
         }
         else{
-            self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Any", nil];
+            //        self.mensSizeArray = [NSArray arrayWithObjects:@"UK 3", @"UK 3.5",@"UK 4", @"UK 4.5", @"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 8.5",@"UK 9", @"UK 9.5", @"UK 10",@"UK 10.5",@"UK 11", @"UK 11.5", @"UK 12",@"UK 12.5",@"UK 13", @"UK 13.5", @"UK 14",@"Any", nil];
             
             self.mensSizeUKArray = [NSArray arrayWithObjects:@"3", @"3.5",@"4", @"4.5", @"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"8.5",@"9", @"9.5", @"10",@"10.5",@"11", @"11.5", @"12",@"12.5",@"13", @"13.5", @"14", @"Any", nil];
             
             self.femaleSizeUKArray =[NSArray arrayWithObjects:@"1", @" 1.5",@"2", @"2.5", @"3", @"3.5", @"4",@"4.5",@"5", @"5.5", @"6",@"6.5",@"7", @"7.5", @"8",@"9", @"Any", nil];
             
-            self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Any", nil];
+            //        self.femaleSizeArray = [NSArray arrayWithObjects:@"UK 1", @"UK 1.5",@"UK 2", @"UK 2.5", @"UK 3", @"UK 3.5", @"UK 4",@"UK 4.5",@"UK 5", @"UK 5.5", @"UK 6",@"UK 6.5",@"UK 7", @"UK 7.5", @"UK 8",@"UK 9",@"Any", nil];
             
             self.clothingyArray = [NSArray arrayWithObjects:@"XXS",@"XS", @"S", @"M", @"L", @"XL", @"XXL", @"Any", nil];
             self.deliveryArray = [NSArray arrayWithObjects:@"Meetup",@"Courier", @"Any", nil];
@@ -161,10 +165,10 @@
     else if ([self.setting isEqualToString:@"sizefoot"]){
        
         if ([self.genderSelected isEqualToString:@"Mens"]) {
-            return self.mensSizeArray.count+1;
+            return self.mensSizeUKArray.count+1;
         }
         else{
-            return self.femaleSizeArray.count+1;
+            return self.femaleSizeUKArray.count+1;
         }
     }
     else if ([self.setting isEqualToString:@"delivery"]){
@@ -287,10 +291,10 @@
             }
             else{
                 if ([self.genderSelected isEqualToString:@"Mens"]) {
-                    self.cell.textLabel.text = [self.mensSizeArray objectAtIndex:indexPath.row-1];
+                    self.cell.textLabel.text = [self.mensSizeUKArray objectAtIndex:indexPath.row-1];
                 }
                 else{
-                    self.cell.textLabel.text = [self.femaleSizeArray objectAtIndex:indexPath.row-1];
+                    self.cell.textLabel.text = [self.femaleSizeUKArray objectAtIndex:indexPath.row-1];
                 }
                 
                 [self.cell.segmentControl setHidden:YES];
@@ -575,10 +579,10 @@
     }
     else if ([self.setting isEqualToString:@"sizefoot"] && indexPath != firstPath) {
         if ([self.genderSelected isEqualToString:@"Mens"]) {
-            selectionString = [self.mensSizeArray objectAtIndex:indexPath.row-1];
+            selectionString = [self.mensSizeUKArray objectAtIndex:indexPath.row-1];
         }
         else{
-            selectionString = [self.femaleSizeArray objectAtIndex:indexPath.row-1];
+            selectionString = [self.femaleSizeUKArray objectAtIndex:indexPath.row-1];
         }
     }
     else if ([self.setting isEqualToString:@"sizeclothing"] && indexPath != firstPath) {
@@ -625,7 +629,7 @@
              NSArray *strings = [stringCheck componentsSeparatedByString:@"|"];
              //get only number from that initial part of the string
              
-             NSString *numberString = [strings[0] stringByReplacingOccurrencesOfString:@"UK" withString:@""];
+             NSString *numberString = [[strings[0] stringByReplacingOccurrencesOfString:@"UK" withString:@""]stringByReplacingOccurrencesOfString:@"US" withString:@""];
              NSString *finalNumberString = [numberString stringByReplacingOccurrencesOfString:@" " withString:@""];
              
              //save that number as a string to the array
@@ -699,7 +703,7 @@
     
     //prompt user that multiple sizes can be selected
     if (self.sellListing == YES) {
-        self.customAlert.messageLabel.text = @"We use UK sizing as standard on BUMP so more buyers can easily find your listing\n\nTap all the UK sizes you're selling!";
+        self.customAlert.messageLabel.text = @"We use US sizing as standard on BUMP so more buyers can easily find your listing\n\nTap all the US sizes you're selling!";
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"seenMultipleSellPrompt1"];
     }
     else{

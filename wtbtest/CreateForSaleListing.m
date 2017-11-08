@@ -1709,11 +1709,11 @@
                         self.chooseSize.text = [NSString stringWithFormat:@"%@",array[0]];
                     }
                     else{
-                        self.chooseSize.text = [NSString stringWithFormat:@"UK %@",array[0]];
+                        self.chooseSize.text = [NSString stringWithFormat:@"US %@",array[0]];
                     }
                 }
                 else{
-                    self.chooseSize.text = [NSString stringWithFormat:@"UK %@",array[0]];
+                    self.chooseSize.text = [NSString stringWithFormat:@"US %@",array[0]];
                 }
             }
             else if (array.count>1){
@@ -1753,7 +1753,7 @@
                     else{
                         //multiple shoe sizes returned
                         NSString *shoeString = [NSString stringWithFormat:@"%@", size];
-                        NSString *shoeSize = [shoeString stringByReplacingOccurrencesOfString:@"UK " withString:@""];
+                        NSString *shoeSize = [[shoeString stringByReplacingOccurrencesOfString:@"UK " withString:@""] stringByReplacingOccurrencesOfString:@"US " withString:@""];
                         NSLog(@"add shoe size to array %@", shoeSize);
                         [placehoderSizesArray addObject:shoeSize];
                     }
@@ -2192,7 +2192,7 @@
             NSString *size = [NSString stringWithFormat:@"%@", self.chooseSize.text];
             if ([self.chooseCategroy.text isEqualToString:@"Footwear"]) {
                 //do extra trimming here to remove 'UK ' from start of shoe size
-                NSString *shoeSize = [size stringByReplacingOccurrencesOfString:@"UK " withString:@""];
+                NSString *shoeSize = [[size stringByReplacingOccurrencesOfString:@"UK " withString:@""]stringByReplacingOccurrencesOfString:@"US " withString:@""];
                 [self.finalSizeArray addObject:shoeSize];
             }
             else{
