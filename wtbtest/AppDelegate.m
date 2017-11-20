@@ -44,14 +44,14 @@
 //        configuration.server = @"http://localhost:1337/parse";
         
         //production
-//        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
+        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
         
         //preproduction
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE remove these links for safety reasons from the actual build
         
         //dev server w/ dev DB
 //        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
-        configuration.server = @"https://dev.bumpapi.com/parse";
+//        configuration.server = @"https://dev.bumpapi.com/parse";
 
     }]];
 
@@ -140,7 +140,7 @@
     
 //    MBFingerTipWindow *finger = [[MBFingerTipWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
 //    finger.alwaysShowTouches = YES;
-//    self.window = finger; 
+//    self.window = finger;
 
     self.window.rootViewController = self.tabBarController;
     [self.window makeKeyAndVisible];
@@ -241,7 +241,7 @@
         NSDictionary *dic = [userInfo objectForKey:@"aps"];
         NSString *strMsg = [dic objectForKey:@"alert"];
         
-        if([strMsg hasSuffix:@"just left you a review ✅"]){
+        if([strMsg hasSuffix:@"just left you a review"]){
             //open order summary page of this order
             [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
                            customAttributes:@{}];
@@ -251,10 +251,9 @@
             vc.orderObject = orderObject;
             
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [nav presentViewController:nav animated:YES completion:nil];
-            
+            [nav pushViewController:vc animated:YES];
         }
-        else if([strMsg hasPrefix:@"Item Sold:"]){
+        else if([strMsg hasPrefix:@"Item Sold"]){
             //open order summary page of this order
             [Answers logCustomEventWithName:@"Opened order after receiving Sold Push"
                            customAttributes:@{}];
@@ -264,12 +263,71 @@
             vc.orderObject = orderObject;
             
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [nav presentViewController:nav animated:YES completion:nil];
+            [nav pushViewController:vc animated:YES];
+        }
+        else if([strMsg hasPrefix:@"Refund Received"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Refund Push"
+                           customAttributes:@{}];
             
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+        }
+        else if([strMsg hasPrefix:@"Refund Requested"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Refund Requested Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+        }
+        else if([strMsg hasPrefix:@"Tracking added"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Tracking added Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+        }
+        else if([strMsg hasPrefix:@"Item Shipped"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Shipped Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+        }
+        else if([strMsg hasPrefix:@"Payment Failed"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Payment Failed Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
         }
         else if([strMsg containsString:@"liked your wanted listing"]){
             //open wanted listing
-            [Answers logCustomEventWithName:@"Opened listing after receiving Bump Push"
+            [Answers logCustomEventWithName:@"Opened wanted listing after receiving Bump Push"
                            customAttributes:@{}];
             
             PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listing];
@@ -557,7 +615,7 @@
 
 -(void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification{
     
-    NSDictionary *localUserInfo = notification.userInfo;
+//    NSDictionary *localUserInfo = notification.userInfo;
 //    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
 //    NSString *itemTitle = [localUserInfo valueForKey:@"itemTitle"];
     
@@ -622,12 +680,103 @@
             [self checkForSupportMessages];
             self.tabBarController.selectedIndex = 3;
         }
+        else if([strMsg hasSuffix:@"just left you a review"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+            
+        }
+        else if([strMsg hasPrefix:@"Item Sold"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Sold Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+        }
+        else if([strMsg hasPrefix:@"Item Shipped"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Shipped Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+        }
+        else if([strMsg hasPrefix:@"Payment Failed"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Payment Failed Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+        }
+        else if([strMsg hasPrefix:@"Refund Received"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Refund Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+        }
+        else if([strMsg hasPrefix:@"Refund Requested"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Refund Requested Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+        }
+        else if([strMsg hasPrefix:@"Tracking added"]){
+            //open order summary page of this order
+            [Answers logCustomEventWithName:@"Opened order after receiving Tracking Added Push"
+                           customAttributes:@{}];
+            
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
+        }
         else if([strMsg containsString:@"liked your wanted listing"]){
+            [Answers logCustomEventWithName:@"Opened wanted listing after receiving Bump Push"
+                           customAttributes:@{}];
+            
             //open wanted listing
             self.tabBarController.selectedIndex = 0;
             [[NSNotificationCenter defaultCenter] postNotificationName:@"listingBumped" object:listing];
         }
         else if([strMsg containsString:@"liked your listing"]){
+            [Answers logCustomEventWithName:@"Opened listing after receiving Bump Push"
+                           customAttributes:@{}];
+            
             //open WTS listing
             self.tabBarController.selectedIndex = 0;
             [[NSNotificationCenter defaultCenter] postNotificationName:@"saleListingBumped" object:listing];

@@ -19,6 +19,7 @@
 #import <SDWebImage/UIImageView+WebCache.h>
 #import "ExplainView.h"
 #import "AppDelegate.h"
+#import "Mixpanel/Mixpanel.h"
 
 @interface RegisterViewController ()
 @end
@@ -844,6 +845,12 @@
              //tracking & deals data setup
              if (self.emailMode) {
                  //setup deals data
+                 Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                 [mixpanel track:@"Signup" properties:@{
+                                                        @"Source": @"Email"
+                                                        }];
+                 [mixpanel registerSuperProperties:@{@"Source": @"Email"}];
+                 
                  [self setupFeedback];
                  
                  [Answers logSignUpWithMethod:@"Email"
@@ -855,6 +862,12 @@
                  
              }
              else{
+                 Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                 [mixpanel track:@"Signup" properties:@{
+                                                        @"Source": @"Facebook"
+                                                        }];
+                 [mixpanel registerSuperProperties:@{@"Source": @"Facebook"}];
+                 
                  [Answers logSignUpWithMethod:@"Facebook"
                                       success:@YES
                              customAttributes:@{}];
@@ -1407,6 +1420,7 @@
         [composeViewController setMailComposeDelegate:self];
         [composeViewController setToRecipients:@[@"hello@sobump.com"]];
         [composeViewController setSubject:@"Bump Registration Help"];
+        [composeViewController setMessageBody:@"Having an issue signing up? Please send us a screenshot of any error you see and fully explain the issue so we can help you asap!\n\n############################" isHTML:NO];
         [self presentViewController:composeViewController animated:YES completion:nil];
     }
 }

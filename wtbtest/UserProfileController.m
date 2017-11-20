@@ -997,34 +997,22 @@
     }
     
     NSString *URLString = [NSString stringWithFormat:@"https://facebook.com/%@", [self.user objectForKey:@"facebookId"]];
-    self.webView = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
-    self.webView.title = @"F A C E B O O K";
-    self.webView.showUrlWhileLoading = YES;
-    self.webView.showPageTitles = NO;
-    self.webView.doneButtonTitle = @"";
-    self.webView.payMode = NO;
-//    self.webView.infoMode = NO;
-    self.webView.delegate = self;
+    SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
+    if (@available(iOS 11.0, *)) {
+        safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+    }
+    safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
     
-    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];
-    [self presentViewController:navigationController animated:YES completion:nil];
-}
-
--(void)cancelWebPressed{
-    NSLog(@"cancel pressed");
-    [self.webView dismissViewControllerAnimated:YES completion:nil];
-}
-
--(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
+//    self.webView = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
+//    self.webView.title = @"F A C E B O O K";
+//    self.webView.showUrlWhileLoading = YES;
+//    self.webView.showPageTitles = NO;
+//    self.webView.doneButtonTitle = @"";
+//    self.webView.payMode = NO;
+////    self.webView.infoMode = NO;
+//    self.webView.delegate = self;
     
-}
-
--(void)cameraPressed{
-    
-}
-
--(void)paidPressed{
-    
+    [self.navigationController presentViewController:safariView animated:YES completion:nil];
 }
 
 -(void)selectedReportReason:(NSString *)reason{
@@ -1656,21 +1644,21 @@
     //nav bar buttons
     
     //back button
-    self.backButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
+    self.backButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 35, 35)];
     if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.tabMode == YES) {
-        [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
+        [self.backButton setImage:[UIImage imageNamed:@"profileCogNew"] forState:UIControlStateNormal];
         [self.backButton addTarget:self action:@selector(profileCogPressed) forControlEvents:UIControlEventTouchUpInside];
     }
     else{
-        [self.backButton setImage:[UIImage imageNamed:@"backArrowThin"] forState:UIControlStateNormal];
+        [self.backButton setImage:[UIImage imageNamed:@"backArrowThinNew"] forState:UIControlStateNormal];
         [self.backButton addTarget:self action:@selector(backPressed) forControlEvents:UIControlEventTouchUpInside];
         
     }
     [self.myBar addSubview:self.backButton];
     
     if (self.tabMode) {
-        self.ordersButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
-        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon"] forState:UIControlStateNormal];
+        self.ordersButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 35, 35)]; //CHANGE
+        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon2"] forState:UIControlStateNormal];
         [self.ordersButton addTarget:self action:@selector(ordersButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     }
     
@@ -1706,7 +1694,7 @@
     [self.myBar addSubview:self.smallImageView];
     
     //small name / loc label
-    self.smallNameAndLoc = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 200, 30)];
+    self.smallNameAndLoc = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 150, 30)];
     self.smallNameAndLoc.numberOfLines = 2;
     self.smallNameAndLoc.font = [UIFont fontWithName:@"PingFangSC-Medium" size:10];
     self.smallNameAndLoc.textColor = [UIColor blackColor];
@@ -1856,14 +1844,14 @@
     //small image view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesSmallImage = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesSmallImage.size = self.smallImageView.frame.size;
-    initialLayoutAttributesSmallImage.frame = CGRectMake(105, 25 + adjust, 30, 30);
+    initialLayoutAttributesSmallImage.frame = CGRectMake(100, 25 + adjust, 30, 30);
     initialLayoutAttributesSmallImage.alpha = 0.0f;
     [self.smallImageView addLayoutAttributes:initialLayoutAttributesSmallImage forProgress:0.0];
     
     //small username /loc view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesSmallName = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesSmallName.size = self.smallNameAndLoc.frame.size;
-    initialLayoutAttributesSmallName.frame = CGRectMake(140, 25 + adjust, 200, 30);
+    initialLayoutAttributesSmallName.frame = CGRectMake(135, 25 + adjust, 150, 30);
     initialLayoutAttributesSmallName.alpha = 0.0f;
     [self.smallNameAndLoc addLayoutAttributes:initialLayoutAttributesSmallName forProgress:0.0];
     
@@ -1875,7 +1863,7 @@
     //back button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesBackButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesBackButton.size = self.backButton.frame.size;
-    initialLayoutAttributesBackButton.frame = CGRectMake(5, 25 + adjust, 30, 30);
+    initialLayoutAttributesBackButton.frame = CGRectMake(5, 20 + adjust, 35, 35); //minus 5 off y due to new height
     
     //fb button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesfbButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
@@ -1890,7 +1878,7 @@
     //orders button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesOrdersButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesOrdersButton.size = self.ordersButton.frame.size;
-    initialLayoutAttributesOrdersButton.frame = CGRectMake(55, 25 + adjust, 30, 30);
+    initialLayoutAttributesOrdersButton.frame = CGRectMake(50, 20 + adjust, 35, 35); //minus 5 off x value and y due to new frame
     
     // This is what we want the bar to look like at its maximum height (progress == 0.0)
     [self.userImageView addLayoutAttributes:initialLayoutAttributes forProgress:0.0];
@@ -2157,7 +2145,7 @@
 
 -(void)newTBMessageReg{
     self.messagesUnseen = 1;
-    [self.backButton setImage:[UIImage imageNamed:@"unreadCog"] forState:UIControlStateNormal];
+    [self.backButton setImage:[UIImage imageNamed:@"profileCogUnreadNew"] forState:UIControlStateNormal];
 }
 
 -(void)TeamBumpInboxTapped{
@@ -2565,14 +2553,20 @@
     //check how user is verified
     if ([self.user objectForKey:@"facebookId"] && [[self.user objectForKey:@"emailIsVerified"]boolValue] == YES) {
         [self.verifiedImageView setImage:[UIImage imageNamed:@"bothVeri"]];
-//        [self.myBar addSubview:self.FBButton];
+        
+        if (!self.tabMode) {
+            [self.myBar addSubview:self.FBButton];
+        }
         
         self.needsFB = NO;
         self.needsEmail = NO;
         
     }
     else if ([self.user objectForKey:@"facebookId"] && [[self.user objectForKey:@"emailIsVerified"]boolValue] != YES ) {
-//        [self.myBar addSubview:self.FBButton];
+
+        if (!self.tabMode) {
+            [self.myBar addSubview:self.FBButton];
+        }
         
         if (self.tabMode) {
             
@@ -3086,19 +3080,19 @@
     
     if (self.supportUnseen > 0 || self.messagesUnseen > 0) {
         tabInt++;
-        [self.backButton setImage:[UIImage imageNamed:@"unreadCog"] forState:UIControlStateNormal];
+        [self.backButton setImage:[UIImage imageNamed:@"profileCogUnreadNew"] forState:UIControlStateNormal];
     }
     else{
-        [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
+        [self.backButton setImage:[UIImage imageNamed:@"profileCogNew"] forState:UIControlStateNormal];
     }
     
     //then get number of unseen orders
     if (self.ordersUnseen > 0) {
         tabInt+= self.ordersUnseen;
-        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon2"] forState:UIControlStateNormal]; //CHANGE
+        [self.ordersButton setImage:[UIImage imageNamed:@"ordersUnreadNew"] forState:UIControlStateNormal];
     }
     else{
-        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon2"] forState:UIControlStateNormal];
+        [self.ordersButton setImage:[UIImage imageNamed:@"ordersNormalNew"] forState:UIControlStateNormal];
     }
     
     //add all together and set tab badge

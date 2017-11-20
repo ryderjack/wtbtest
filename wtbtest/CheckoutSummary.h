@@ -58,6 +58,7 @@
 @property (nonatomic) float totalPrice;
 
 @property (nonatomic) NSString *currencySymbol;
+@property (nonatomic) NSString *currency;
 
 @property (nonatomic) NSString *shippingText;
 @property (nonatomic) NSString *itemPriceText;

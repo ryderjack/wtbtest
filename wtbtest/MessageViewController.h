@@ -154,8 +154,9 @@
 //paypal popup
 @property (nonatomic, strong) NSString *updatedPayPal;
 
-//from latest or search
+//where is VC being pushed from
 @property (nonatomic) BOOL fromLatest;
+@property (nonatomic) BOOL fromOrder;
 
 //for sale listing banner
 @property (nonatomic) BOOL listingBannerShowing;

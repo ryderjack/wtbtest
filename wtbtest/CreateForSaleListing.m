@@ -2501,6 +2501,7 @@
         //already set the country and country code slightly further up if needs be
         
         if (self.buySwitch.isOn) {
+            NSLog(@"merchantId before save: %@", self.merchantId);
             [forSaleItem setObject:self.merchantId forKey:@"paypalMerchantId"];
             [forSaleItem setObject:@"YES" forKey:@"instantBuy"];
             
@@ -5679,15 +5680,15 @@
     
     if (([[[PFUser currentUser] objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]) || self.paypalEnabled) {
         if (self.buySwitch.isOn) {
-            
+
             if (!self.merchantId) {
                 self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
             }
-            
+
             //on
             self.buyRows++;
             [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-            
+
             //scroll to bottom
             [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
         }
@@ -5696,18 +5697,18 @@
             //scroll up slightly
             NSIndexPath *indexPath1 = [NSIndexPath indexPathForRow:0 inSection:3];
             [self.tableView scrollToRowAtIndexPath:indexPath1 atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
-            
+
             self.buyRows--;
             [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
         }
     }
     else{
         NSLog(@"call partner cloud func");
-        
+
         //potentially use params here to pass this user's ID for tracking
         [self showHUD];
         NSDictionary *params;
-        
+
         if (self.editMode) {
             //in edit mode, we trigger this before currency is set - so grab from listing
             params = @{
@@ -5730,12 +5731,12 @@
                 [self hidHUD];
                 urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
                 NSLog(@"URL: %@", urlString);
-                
+
                 if (!self.addedPayPalObservers) {
                     self.addedPayPalObservers = YES;
                     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalURLReturned:) name:@"paypalOnboardingReturn" object:nil];
                 }
-                
+
                 //trigger PayPal sign in
                 if (!self.paypalSafariView) {
                     self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
@@ -5745,7 +5746,7 @@
                     }
                     self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
                 }
-                
+
                 [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:^{
                     //switch off when we goto merchant onboarding and only switch on if we get the signal from custom url scheme triggered observer
                     [self.buySwitch setOn:NO];

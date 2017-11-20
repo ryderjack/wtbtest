@@ -106,7 +106,7 @@
             
             self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
             self.totalPrice = shipping + self.salePrice;
-            self.totalPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,self.totalPrice];
+            self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
             
             //enable pay button
             [self.payButton setEnabled:YES];
@@ -149,6 +149,29 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
+    //check item is still available
+    if (!self.successMode) {
+        PFQuery *statusQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+        [statusQuery whereKey:@"objectId" equalTo:self.listingObject.objectId];
+        [statusQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                if (![[object objectForKey:@"status"]isEqualToString:@"live"]) {
+                    self.sellerErrorShowing = YES;
+                    
+                    [Answers logCustomEventWithName:@"PayPal Error"
+                                   customAttributes:@{
+                                                      @"type":@"item no longer available"
+                                                      }];
+                    
+                    [self showAlertWithTitle:@"Item Unavailable" andMsg:@"This item is no longer available, it may have already been purchased or the seller may have removed it from sale"];
+                }
+            }
+            else{
+                NSLog(@"error checking checkout item's status");
+            }
+        }];
+    }
+    
     if (self.successMode && !self.buttonShowing) {
         [self showBarButton];
     }
@@ -167,7 +190,7 @@
         [self.payButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
         
         if (self.successMode) {
-            [self.payButton setTitle:@"Dismiss" forState:UIControlStateNormal];
+            [self.payButton setTitle:@"D I S M I S S" forState:UIControlStateNormal];
             [self.payButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
             [self.payButton addTarget:self action:@selector(dismissVC) forControlEvents:UIControlEventTouchUpInside];
         }
@@ -395,7 +418,7 @@
     NSString *itemPrice = [self.itemPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
     NSLog(@"%@", itemPrice);
 
-    NSString *totalPrice = [self.totalPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
+    NSString *totalPrice = [[self.totalPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""]stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%@ ",self.currency] withString:@""];
     NSLog(@"%@", totalPrice);
 
     NSString *sellerId = [self.listingObject objectForKey:@"paypalMerchantId"];
@@ -407,7 +430,7 @@
     NSString *itemId = self.listingObject.objectId;
     NSLog(@"%@", itemId);
 
-    NSString *currency = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"currency"]];;
+    NSString *currency = [self.listingObject objectForKey:@"currency"]; //CHANGE this should be the currency from the listing
     NSLog(@"%@", currency);
 
 
@@ -460,6 +483,10 @@
             
             if (![response valueForKey:@"orderId"] || ![response valueForKey:@"actionURL"]) {
                 [self showAlertWithTitle:@"PayPal Error #800" andMsg:@"Please try again, if the error persists send us an email hello@sobump.com"];
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"no orderId or action url in create pp order"
+                                                  }];
                 return;
             }
             
@@ -489,6 +516,10 @@
             [self hideHUD];
             NSLog(@"error grabbing paypal order link %@", error);
             [self showAlertWithTitle:@"PayPal Error #801" andMsg:@"Please try again, if the error persists send us an email hello@sobump.com"];
+            [Answers logCustomEventWithName:@"PayPal Error"
+                           customAttributes:@{
+                                              @"type":@"Couldn't grab order link"
+                                              }];
             return;
         }
     }];
@@ -518,14 +549,14 @@
     
     [self showHUD];
     
-    NSLog(@"adding in params");
+    NSLog(@"adding in params for create bump order %@", self.otherUser.objectId);
     
     float shippingPrice = self.totalPrice - self.salePrice;
     
     NSDictionary *params = @{
                              @"listingId":self.listingObject.objectId,
                              @"paypalOrderId":self.paypalOrderId,
-                             @"merchantId" : [self.listingObject objectForKey:@"merchantId"],
+                             @"merchantId" : [self.listingObject objectForKey:@"paypalMerchantId"],
                              
                              @"buyerId":[PFUser currentUser].objectId,
 
@@ -542,9 +573,10 @@
                              @"itemTitle":self.itemTitleLabel.text,
                              @"itemSize":self.conditionLabel.text,
                              
-                             @"invoiceId":[NSString stringWithFormat:@"invoice_%@%@",self.otherUser.objectId,self.listingObject.objectId],
+                             @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId],
                              
-                             @"lastUpdated":[NSDate date]
+                             @"lastUpdated":[NSDate date],
+                             @"currency" : self.currency
                              };
     
     [PFCloud callFunctionInBackground:@"createBUMPOrder" withParameters:params block:^(NSString *orderId, NSError *error) {
@@ -558,6 +590,20 @@
                 if (object) {
                     
                     [self hideHUD];
+                    
+                    NSString *priceStr = [NSString stringWithFormat:@"%.2f",self.totalPrice];
+                    
+                    if (priceStr != nil && self.currency) {
+                        [Answers logPurchaseWithPrice:[NSDecimalNumber decimalNumberWithString:priceStr]
+                                             currency:self.currency
+                                              success:@YES
+                                             itemName:self.itemTitleLabel.text
+                                             itemType:@""
+                                               itemId:self.listingObject.objectId
+                                     customAttributes:@{
+                                                        @"orderId":orderId
+                                                        }];
+                    }
                     
                     CheckoutSummary *vc = [[CheckoutSummary alloc]init];
                     vc.successMode = YES;
@@ -584,8 +630,21 @@
             }];
         }
         else{
-            NSLog(@"error creating BUMP order %@", error);
-            [self showAlertWithTitle:@"PayPal Error #802" andMsg:@"You haven't been charged as there was an error creating your PayPal order. Please try again and if the error persists just send us an email to hello@sobump.com"];
+            if ([error.description containsString:@"Item no longer available"]) {
+                NSLog(@"error creating BUMP order %@", error);
+                [self showAlertWithTitle:@"Item Unavailable" andMsg:@"This item is no longer available on BUMP - Don't worry, you haven't been charged. Check out what else is for sale on BUMP"];
+                [Answers logCustomEventWithName:@"Item Unavailable warning"
+                               customAttributes:@{}];
+            }
+            else{
+                NSLog(@"error creating BUMP order %@", error);
+                [self showAlertWithTitle:@"PayPal Error #802" andMsg:@"You haven't been charged as there was an error creating your PayPal order. Please try again and if the error persists just send us an email to hello@sobump.com"];
+                
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"Couldn't create bump pp order"
+                                                  }];
+            }
         }
     }];
 }
@@ -614,7 +673,7 @@
         self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
         
         self.totalPrice = shipping + self.salePrice;
-        self.totalPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,self.totalPrice];
+        self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f",self.currency,self.currencySymbol,self.totalPrice];
         
         //enable pay button
         [self.payButton setEnabled:YES];

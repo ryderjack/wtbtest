@@ -646,6 +646,9 @@
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
     if (self.supportMode) {
+        [Answers logCustomEventWithName:@"Viewed Support Tickets"
+                       customAttributes:@{}];
+        
         PFQuery *convosQuery = [PFQuery queryWithClassName:@"supportConvos"];
         [convosQuery whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
         [convosQuery whereKey:@"userUnseen" greaterThan:@0];
@@ -662,6 +665,9 @@
         }];
     }
     else{
+        [Answers logCustomEventWithName:@"Viewed Orders"
+                       customAttributes:@{}];
+        
         if (self.tappedOrder) {
             self.tappedOrder = NO;
             [self loadOrders];
@@ -819,7 +825,11 @@
             if ([[order objectForKey:@"buyerId"] isEqualToString:[PFUser currentUser].objectId]) {
                 //user is buyer, to do's:
                 
-                if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
+                if([[order objectForKey:@"refundStatus"] isEqualToString:@"requested"]){
+                    cell.bottomLabel.text = @"Refund Requested";
+                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+                }
+                else if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
                     cell.bottomLabel.text = @"Leave review";
                     [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
                 }
@@ -838,7 +848,11 @@
             }
             else{
                 //user is seller, to do's:
-                if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
+                if([[order objectForKey:@"refundStatus"] isEqualToString:@"requested"]){
+                    cell.bottomLabel.text = @"Refund Requested";
+                    [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+                }
+                else if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
                     cell.bottomLabel.text = @"Mark as Shipped";
                     [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
                 }

@@ -58,17 +58,15 @@
     
     [self cropProfilePic];
     
-    self.dateFormat = [[NSDateFormatter alloc] init];
-    [self.dateFormat setLocale:[NSLocale currentLocale]];
-    [self.dateFormat setDateFormat:@"dd MMM YYYY"];
-    NSString *orderDateString = [self.dateFormat stringFromDate:self.orderObject.createdAt];
-
-    //don't need to fetch, have all info already - no pointers needed.
-    
     //setup cells
     
     [self.orderObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
+            
+            self.dateFormat = [[NSDateFormatter alloc] init];
+            [self.dateFormat setLocale:[NSLocale currentLocale]];
+            [self.dateFormat setDateFormat:@"dd MMM YYYY"];
+            NSString *orderDateString = [self.dateFormat stringFromDate:self.orderObject.createdAt];
             
             if ([[self.orderObject objectForKey:@"buyerId"]isEqualToString:[PFUser currentUser].objectId]) {
                 self.isBuyer = YES;
@@ -131,7 +129,7 @@
                             transText = [NSString stringWithFormat:@"Order placed on %@ from\n%@\n@%@",orderDateString,[self.otherUser objectForKey:@"fullname"],self.otherUser.username];
                         }
                         else if(self.paymentFailed){
-                            transText = [NSString stringWithFormat:@"Order failed on %@ from\n%@\n@%@",orderDateString,[self.otherUser objectForKey:@"fullname"],self.otherUser.username];
+                            transText = [NSString stringWithFormat:@"Purchase failed on %@ from\n%@\n@%@",orderDateString,[self.otherUser objectForKey:@"fullname"],self.otherUser.username];
                         }
                         else{
                             transText = [NSString stringWithFormat:@"Purchased on %@ from\n%@\n@%@",orderDateString,[self.otherUser objectForKey:@"fullname"],self.otherUser.username];
@@ -192,7 +190,11 @@
             
             self.itemPriceLabel.text = [self.orderObject objectForKey:@"salePriceLabel"];
             self.shippingPriceLabel.text = [self.orderObject objectForKey:@"shippingPriceLabel"];
-            self.totalPriceLabel.text = [self.orderObject objectForKey:@"totalPriceLabel"];
+            
+            NSString *totalString = [self.orderObject objectForKey:@"totalPriceLabel"];
+            NSString *currency = [NSString stringWithFormat:@"%@ ",[self.orderObject objectForKey:@"currency"]];
+            
+            self.totalPriceLabel.text = [totalString stringByReplacingOccurrencesOfString:currency withString:@""];
             
             if (self.isBuyer) {
                 if (self.paymentFailed) {
@@ -293,7 +295,7 @@
                         self.refundRequested = YES;
                         
                         if (![[self.orderObject objectForKey:@"refundRequestSeen"]isEqualToString:@"YES"]) {
-                            [self showAlertWithTitle:@"Refund Requested" andMsg:@"The buyer has requested a refund, issue a PayPal refund from this page or chat to the seller to come to a mutual agreement. If there's any issues please contact support from this page to chat to one of the support team"];
+                            [self showAlertWithTitle:@"Refund Requested" andMsg:@"The buyer has requested a full refund, issue a PayPal refund in full from this page or chat to the seller to come to a mutual agreement. If there's any issues please contact support from this page to chat to one of the team"];
                             NSDictionary *params = @{
                                                      @"orderId":self.orderObject.objectId
                                                      };
@@ -313,7 +315,7 @@
                         self.refundSent = YES;
                     }
                     else{
-                        [self.refundButton setTitle:@"Issue Refund" forState:UIControlStateNormal];
+                        [self.refundButton setTitle:@"Issue Full Refund" forState:UIControlStateNormal];
                     }
                 }
                 
@@ -777,6 +779,7 @@
     vc.fromBuyNow = YES;
     vc.pureWTS = YES;
     vc.fromPush = YES;
+    vc.fromOrder = YES;
     [self.viewListingButton setEnabled:YES];
     [self.navigationController pushViewController:vc animated:YES];
 }
@@ -825,18 +828,11 @@
 }
 
 -(void)showRefundDecisionPopup{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Issue Refund" message:@"The buyer has requested a refund. You can tap to grant a PayPal refund or if you'd like to chat to the buyer to come to a resolution just hit 'Message Buyer' from this page. If you have any issues or concerns please contact support from this page to chat to one of the team" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Issue Full Refund" message:@"The buyer has requested a full refund. You can tap to grant a PayPal refund in full or if you'd like to chat to the buyer to come to a resolution just hit 'Message Buyer' from this page. If you have any issues or concerns please contact support from this page to chat to one of the team" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [alertView addAction:[UIAlertAction actionWithTitle:@"Issue Refund" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-    
-        
-        //CHANGE
-//        self.refundRequested = NO;
-//        self.refundSent = YES;
-//        [self.refundButton setTitle:@"Refund Sent" forState:UIControlStateNormal];
-//        self.nextStepLabel.text = @"Refund Sent";
 
         //CHANGE add in check for return URL first? then can call another cloud func to build the URL ourselves after retrieving the capture_id from a GET account status
         
@@ -844,21 +840,32 @@
                                      @"orderId":self.orderObject.objectId,
                                      @"total":[self.orderObject objectForKey:@"totalPrice"],
                                      @"currency":[self.orderObject objectForKey:@"currency"],
-                                     @"invoiceId":[NSString stringWithFormat:@"invoice_%@%@", [PFUser currentUser].objectId,self.listingObject.objectId],
+                                     @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId],
                                      @"custom":self.listingObject.objectId,
                                      @"refundURL":[self.orderObject objectForKey:@"refundURL"],
-                                     @"payerId":[self.orderObject objectForKey:@"merchantId"],
-                                     @"captureId":[self.orderObject objectForKey:@"captureId"]
-                                 };
-
+                                     @"payerId":[self.orderObject objectForKey:@"merchantId"]
+                                };
+        [self showHUD];
         [PFCloud callFunctionInBackground:@"triggerRefund" withParameters:params block:^(NSDictionary *response, NSError *error) {
             if (!error) {
+                [Answers logCustomEventWithName:@"Refund triggered"
+                               customAttributes:@{
+                                                  @"orderId":self.orderObject.objectId
+                                                  }];
+                
+                [self hideHUD];
                 self.refundRequested = NO;
                 self.refundSent = YES;
                 [self.refundButton setTitle:@"Refund Sent" forState:UIControlStateNormal];
                 self.nextStepLabel.text = @"Refund Sent";
             }
             else{
+                [Answers logCustomEventWithName:@"Refund Error"
+                               customAttributes:@{
+                                                  @"orderId":self.orderObject.objectId
+                                                  }];
+                
+                [self hideHUD];
                 NSLog(@"error issuing refund %@", error);
                 [self showAlertWithTitle:@"Refund Error" andMsg:@"Make sure you're connected to the internet & try again"];
             }
@@ -867,38 +874,35 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 -(void)showRefundConfirmPopup{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Issue Refund" message:@"You can tap to issue a PayPal refund or if you'd like to chat to the buyer to come to a resolution just hit 'Message Buyer' from this page. If you have any issues or concerns please contact support from this page to chat to one of the team" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Issue Full Refund" message:@"You can tap to issue a PayPal refund in full or if you'd like to chat to the buyer to come to a resolution just hit 'Message Buyer' from this page. If you have any issues or concerns please contact support from this page to chat to one of the team" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [alertView addAction:[UIAlertAction actionWithTitle:@"Issue Refund" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-        
-        self.refundRequested = NO;
-        self.refundSent = YES;
-        [self.refundButton setTitle:@"Refund Sent" forState:UIControlStateNormal];
-        self.nextStepLabel.text = @"Refund Sent";
-        
-        //CHANGE find out where custom field fits in
-        //        NSDictionary *params = @{
-        //                                 @"orderId":self.orderObject.objectId,
-        //                                 @"total":[self.orderObject objectForKey:@""],
-        //                                 @"currency":[self.orderObject objectForKey:@"currency"],
-        //                                 @"invoiceNumber":[NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId,self.listingObject.objectId],
-        //                                 @"custom":@"//CHANGE"
-        //                                 };
-        //
-        //        [PFCloud callFunctionInBackground:@"triggerRefund" withParameters:params block:^(NSDictionary *response, NSError *error) {
-        //            if (!error) {
-        //                self.refundRequested = NO;
-        //                self.refundSent = YES;
-        //                [self.refundButton setTitle:@"Refund Sent" forState:UIControlStateNormal];
-        //                self.nextStepLabel.text = @"Refund Sent";
-        //            }
-        //            else{
-        //                NSLog(@"error issuing refund %@", error);
-        //                [self showAlertWithTitle:@"Refund Error" andMsg:@"Make sure you're connected to the internet & try again"];
-        //            }
-        //        }];
+        NSDictionary *params = @{
+                                 @"orderId":self.orderObject.objectId,
+                                 @"total":[self.orderObject objectForKey:@"totalPrice"],
+                                 @"currency":[self.orderObject objectForKey:@"currency"],
+                                 @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId],
+                                 @"custom":self.listingObject.objectId,
+                                 @"refundURL":[self.orderObject objectForKey:@"refundURL"],
+                                 @"payerId":[self.orderObject objectForKey:@"merchantId"]
+                                 };
+        [self showHUD];
+        [PFCloud callFunctionInBackground:@"triggerRefund" withParameters:params block:^(NSDictionary *response, NSError *error) {
+            if (!error) {
+                [self hideHUD];
+                self.refundRequested = NO;
+                self.refundSent = YES;
+                [self.refundButton setTitle:@"Refund Sent" forState:UIControlStateNormal];
+                self.nextStepLabel.text = @"Refund Sent";
+            }
+            else{
+                [self hideHUD];
+                NSLog(@"error issuing refund %@", error);
+                [self showAlertWithTitle:@"Refund Error #2" andMsg:@"Make sure you're connected to the internet & try again"];
+            }
+        }];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -916,11 +920,20 @@
         
         [PFCloud callFunctionInBackground:@"setRefundCancelled" withParameters:params block:^(NSDictionary *response, NSError *error) {
             if (!error) {
+                [Answers logCustomEventWithName:@"Cancelled Refund"
+                               customAttributes:@{
+                                                  @"orderId" : self.orderObject.objectId
+                                                  }];
+                
                 self.refundRequested = NO;
                 [self.refundButton setTitle:@"Request a Refund" forState:UIControlStateNormal];
                 [self calcStatus];
             }
             else{
+                [Answers logCustomEventWithName:@"Cancelled Refund Error"
+                               customAttributes:@{
+                                                  @"orderId" : self.orderObject.objectId
+                                                  }];
                 NSLog(@"error setting refund as requested %@", error);
                 [self showAlertWithTitle:@"Refund Request Cancel Error" andMsg:@"Make sure you're connected to the internet & try again"];
             }
@@ -929,7 +942,7 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 -(void)showRefundPopUp{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Request Refund?" message:@"The seller will be notified of your request, if you have any issues please contact support from this page" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Request Full Refund?" message:@"The seller will be notified of your request, if you have any issues please contact support from this page" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -941,11 +954,21 @@
         
         [PFCloud callFunctionInBackground:@"setRefundRequested" withParameters:params block:^(NSDictionary *response, NSError *error) {
             if (!error) {
+                [Answers logCustomEventWithName:@"Refund Requested"
+                               customAttributes:@{
+                                                  @"orderId" : self.orderObject.objectId
+                                                  }];
+                
                 self.refundRequested = YES;
                 self.nextStepLabel.text = @"Refund Requested";
                 [self.refundButton setTitle:@"Cancel Refund Request" forState:UIControlStateNormal];
             }
             else{
+                [Answers logCustomEventWithName:@"Refund Requested Error"
+                               customAttributes:@{
+                                                  @"orderId" : self.orderObject.objectId
+                                                  }];
+                
                 NSLog(@"error setting refund as requested %@", error);
                 [self showAlertWithTitle:@"Refund Request Error" andMsg:@"Make sure you're connected to the internet & try again"];
             }
@@ -971,6 +994,11 @@
             
             [PFCloud callFunctionInBackground:@"markItemShipped" withParameters:params block:^(NSDictionary *response, NSError *error) {
                 if (!error) {
+                    [Answers logCustomEventWithName:@"Item Shipped"
+                                   customAttributes:@{
+                                                      @"orderId" : self.orderObject.objectId
+                                                      }];
+                    
                     [self hideHUD];
                     self.shipped = YES;
                     
@@ -986,6 +1014,11 @@
                     
                 }
                 else{
+                    [Answers logCustomEventWithName:@"Item Shipped Error"
+                                   customAttributes:@{
+                                                      @"orderId" : self.orderObject.objectId
+                                                      }];
+                    
                     NSLog(@"error marking as shipped %@", error);
                     [self hideHUD];
                     [self showAlertWithTitle:@"Shipping Error" andMsg:@"Make sure you're connected to the internet then try again!"];
@@ -1207,7 +1240,10 @@
             }
         }
         else{
-            self.nextStepLabel.text = @"Respond to Refund Request";
+            NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc]initWithString:@"Respond to Refund Request"];
+            [self.nextStepLabel setAttributedText:[self modifyString:labelText setColorForText:@"Respond to Refund Request" withColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]]];
+            
+//            self.nextStepLabel.text = @"Respond to Refund Request";
             
             int unseen = [[self.orderObject objectForKey:@"sellerUnseen"]intValue];
             if (unseen != 0) {
@@ -1328,6 +1364,7 @@
             }
             
             vc.pureWTS = YES;
+            vc.fromOrder = YES;
             
             [self hideHUD];
             self.settingUpMessages = NO;
@@ -1414,6 +1451,7 @@
                         vc.userIsBuyer = YES;
                     }
                     
+                    vc.fromOrder = YES;
                     vc.pureWTS = YES;
                     
                     [self hideHUD];
@@ -1501,16 +1539,19 @@
             [PFCloud callFunctionInBackground:@"addItemTracking" withParameters:params block:^(NSString *orderId, NSError *error) {
                 if (!error) {
                     NSLog(@"added item tracking!");
+                    [Answers logCustomEventWithName:@"Tracking Added"
+                                   customAttributes:@{
+                                                      @"orderId" : self.orderObject.objectId
+                                                      }];
                 }
                 else{
+                    [Answers logCustomEventWithName:@"Tracking Added Error"
+                                   customAttributes:@{
+                                                      @"orderId" : self.orderObject.objectId
+                                                      }];
                     NSLog(@"error adding tracking %@", error);
                 }
             }];
-            
-//            [self.orderObject setObject:@"YES" forKey:@"trackingAdded"];
-//            [self.orderObject setObject:trackingField.text forKey:@"trackingId"];
-//            [self.orderObject setObject:courierField.text forKey:@"courierName"];
-//            [self.orderObject saveInBackground];
             
             //update UI
             [self.shippingButton setTitle:@"Update Tracking" forState:UIControlStateNormal];

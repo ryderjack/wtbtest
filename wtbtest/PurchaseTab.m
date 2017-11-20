@@ -29,6 +29,7 @@
 #import "AppDelegate.h"
 #import <CLPlacemark+HZContinents.h>
 #import <Transcontinental/HZCountryToContinentDecoder.h>
+#import "Mixpanel/Mixpanel.h"
 
 @interface PurchaseTab ()
 
@@ -2779,6 +2780,9 @@
             [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
                     
+                    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                    [mixpanel track:@"Verified Email" properties:@{}];
+                    
                     //refresh header in home
                     self.pullFinished = YES;
                     [self getLatestForSale];
@@ -3168,6 +3172,9 @@
     
     [self.postingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"Listed an Item" properties:@{}];
+            
             [self.progressBar setProgress:1.0 animated:YES];
             
             //give impression of saving

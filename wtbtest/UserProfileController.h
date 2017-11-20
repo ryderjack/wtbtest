@@ -22,7 +22,7 @@
 #import "ForSaleListing.h"
 #import "ListingController.h"
 
-@interface UserProfileController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, JRWebViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ProfileSettingsDelegate,engageDelegate,FilterDelegate,ForSaleListingDelegate,ListingControllerDelegate>
+@interface UserProfileController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ProfileSettingsDelegate,engageDelegate,FilterDelegate,ForSaleListingDelegate,ListingControllerDelegate>
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray *WTBArray;

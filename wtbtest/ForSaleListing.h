@@ -94,6 +94,8 @@
 
 //mode
 @property (nonatomic) BOOL fromBuyNow;
+@property (nonatomic) BOOL fromOrder;
+
 @property (nonatomic, strong) NSString *source;
 @property (nonatomic) BOOL pureWTS;
 @property (nonatomic) BOOL relatedProduct;

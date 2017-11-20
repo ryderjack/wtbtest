@@ -23,6 +23,7 @@
 #import "UIImageView+Letters.h"
 #import "SelectViewController.h"
 #import <CLPlacemark+HZContinents.h>
+#import "OrderSummaryView.h"
 
 @interface ForSaleListing ()
 
@@ -299,7 +300,7 @@
     
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
-//            NSLog(@"Listing %@", [self.listingObject objectForKey:@"geopoint"]);
+            NSLog(@"Listing %@", self.listingObject);
             self.seller = [self.listingObject objectForKey:@"sellerUser"];
             
             [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -403,7 +404,7 @@
                 [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
                 [self.soldCheckImageVoew setHidden:NO];
             }
-            else if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"deleted"]){
+            else if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"deleted"] && !self.fromOrder){
                 [self showAlertWithTitle:@"Item Deleted" andMsg:@"The seller has removed the item, it may be no longer unavailable - send them a message to find out"];
             }
             
@@ -536,9 +537,12 @@
             [self calcPostedDate];
             
             if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-                [self.messageButton setTitle:@"E D I T" forState:UIControlStateNormal];
-                [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
-                [self.messageButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+                
+                if (![[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]) {
+                    [self.messageButton setTitle:@"E D I T" forState:UIControlStateNormal];
+                    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+                    [self.messageButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+                }
                 
                 //change report button into 'mark as sold'
                 self.markAsSoldMode = YES;
@@ -1118,6 +1122,7 @@
     
     vc.salePrice = self.purchasePrice;
     vc.currencySymbol = self.currencySymbol;
+    vc.currency = self.currency; //we decide at earlier point in listing setup whether this is native to the listing or user
     
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
     [self.navigationController presentViewController:nav animated:YES completion:^{
@@ -1156,6 +1161,45 @@
         [self.longSendButton setEnabled:YES];
     }
     
+}
+
+-(void)viewOrderPressed{
+    [self.messageButton setEnabled:NO];
+    self.anyButtonPressed = YES;
+    
+    [self showHUDForCopy:NO];
+    
+    NSString *orderId = [self.listingObject objectForKey:@"orderId"];
+    if (orderId.length > 1) {
+        PFQuery *orderQ = [PFQuery queryWithClassName:@"saleOrders"];
+        [orderQ whereKey:@"objectId" equalTo:orderId];
+        [orderQ getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                [self hideHUD];
+                
+                OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+                vc.orderObject = object;
+                if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                    //user is seller
+                    vc.isBuyer = NO;
+                }
+                else{
+                    vc.isBuyer = YES;
+                }
+                
+                [self.messageButton setEnabled:YES];
+                [self.navigationController pushViewController:vc animated:YES];
+            }
+            else{
+                [self hideHUD];
+                NSLog(@"error finding order %@", error);
+            }
+        }];
+    }
+    else{
+        //error getting order
+        [self hideHUD];
+    }
 }
 
 -(void)messageBarButtonPressed{
@@ -1418,8 +1462,19 @@
 
 -(void)decideButtonSetup{
     
-    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
+    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
         [self setupMessageBarButton];
+    }
+    else if([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
+        //don't let user edit a listing they've sold through paypal
+        //instead let them view order details
+        [self setupOrderBarButton];
+    }
+    else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
+        //don't let user message someone about a listing thats they've sold
+    }
+    else if(self.fromOrder){
+        //don't let user message the seller if they're viewing from an order summary
     }
     else{
         //check if instant buy is on & if countries are the same - if not, is global shipping enabled to show both anyway
@@ -1456,6 +1511,16 @@
     }
     
     self.setupButtons = YES;
+}
+
+-(void)setupOrderBarButton{
+    self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
+    [self.messageButton setTitle:@"V I E W  O R D E R" forState:UIControlStateNormal];
+    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
+    [self.messageButton addTarget:self action:@selector(viewOrderPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.messageButton.alpha = 0.0f;
+    [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
 }
 
 -(void)setupMessageBarButton{

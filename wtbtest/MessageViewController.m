@@ -23,6 +23,7 @@
 #import "ExplainView.h"
 #import "AppDelegate.h"
 #import "JRMessage.h"
+#import "Mixpanel/Mixpanel.h"
 
 @interface MessageViewController ()
 
@@ -60,7 +61,7 @@
                 if (object) {
                     NSLog(@"user is banned");
                     self.banMode = YES;
-                    [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restrcited this user's account for violating our terms"];
+                    [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restricted this user's account for violating our terms"];
                 }
             }];
         }
@@ -1367,6 +1368,11 @@
     [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded == YES) {
             
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"Sent Message" properties:@{
+                                                         @"type":@"text"
+                                                         }];
+            
             //add last sent message string to nsuserdefaults (only if not a suggested message)
             //then if all 5 in array are the same string ban this user from messaging
             NSMutableArray *sentArray = [NSMutableArray arrayWithArray:[[NSUserDefaults standardUserDefaults] objectForKey:@"sentArray"]];
@@ -1950,6 +1956,11 @@
             
             [self.messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
+                    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                    [mixpanel track:@"Sent Message" properties:@{
+                                                                 @"type":@"Image"
+                                                                 }];
+                    
                     //set as last message sent
                     self.lastMessage = self.messageObject;
                     
@@ -3125,14 +3136,29 @@
     self.paypalView = [[UIView alloc]init];
     [self.paypalView setFrame:CGRectMake(0,0, 300, 200)];    
 
-    //paypal logo
     UIImageView *imgView = [[UIImageView alloc]initWithFrame:CGRectMake(self.paypalView.frame.size.width/2-50,20, 100, 26)];
     [imgView setImage:[UIImage imageNamed:@"paypalLogo"]];
-    [self.paypalView addSubview:imgView];
+    
     
     //paypal message
     UILabel *introLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,imgView.frame.origin.y+20, 300, 180)];
-    introLabel.text = @"Stay protected & build your reputation by purchasing through BUMP\n\nWhen you're ready to Purchase just hit Buy on the listing and pay through PayPal\n\nIf you're still unsure check out our FAQs in Settings";
+    
+    //paypal logo
+    if (!self.fromOrder) {
+        [self.paypalView addSubview:imgView];
+        
+        introLabel.text = @"Stay protected & build your reputation by purchasing through BUMP\n\nWhen you're ready to Purchase just hit Buy on the listing and pay through PayPal\n\nIf you're still unsure check out our FAQs in Settings";
+    }
+    else{
+        //no messages sent previously and order has been created
+        if (self.userIsBuyer) {
+            introLabel.text = @"Order Placed\n\nCongratulations on your purchase, let the seller know if you have any questions about your order\n\nIf you're still unsure of anything check out our FAQs in Settings or Contact Support";
+        }
+        else{
+            introLabel.text = @"Order Placed\n\nCongratulations on your sale, let the buyer know if you have any extra info about the order\n\nIf you're unsure of anything check out our FAQs in Settings or Contact Support";
+        }
+    }
+    
     introLabel.numberOfLines = 0;
     [introLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
     introLabel.textAlignment = NSTextAlignmentCenter;
