@@ -478,108 +478,108 @@
     return 0;
 }
 
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        
-        [Answers logCustomEventWithName:@"Deleted a convo"
-                       customAttributes:@{}];
-        
-        //check if mismatch with index path and datasource
-        //so just force a reload
-        if (self.segmentedControl.selectedSegmentIndex == 0 && indexPath.row >= self.convoObjects.count) {
-            [Answers logCustomEventWithName:@"Deletion mismatch"
-                           customAttributes:@{
-                                              @"tab":@"all"
-                                              }];
-            
-            [self loadAllConvos];
-            return;
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 1 && indexPath.row >= self.buyingConvos.count) {
-            [Answers logCustomEventWithName:@"Deletion mismatch"
-                           customAttributes:@{
-                                              @"tab":@"buying"
-                                              }];
-            [self loadAllConvos];
-            return;
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 2 && indexPath.row >= self.sellingConvos.count) {
-            [Answers logCustomEventWithName:@"Deletion mismatch"
-                           customAttributes:@{
-                                              @"tab":@"selling"
-                                              }];
-            [self loadAllConvos];
-            return;
-        }
-        
-        //now save convo object as deleted on this user's end
-
-        PFObject *convoObject;
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            convoObject = [self.convoObjects objectAtIndex:indexPath.row];
-            
-            if ([[convoObject objectForKey:@"sellerId"] isEqualToString:[PFUser currentUser].objectId]) {
-                [convoObject setObject:@"YES" forKey:@"sellerDeleted"];
-            }
-            else if([[convoObject objectForKey:@"buyerId"] isEqualToString:[PFUser currentUser].objectId]){
-                [convoObject setObject:@"YES" forKey:@"buyerDeleted"];
-            }
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 1) {
-            //load buying messages only
-            convoObject = [self.buyingConvos objectAtIndex:indexPath.row];
-            [convoObject setObject:@"YES" forKey:@"buyerDeleted"];
-
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 2) {
-            //load selling messages only
-            convoObject = [self.sellingConvos objectAtIndex:indexPath.row];
-            [convoObject setObject:@"YES" forKey:@"sellerDeleted"];
-        }
-
-        [convoObject saveInBackground];
-        
-        //update tabs
-
-        if (self.segmentedControl.selectedSegmentIndex == 0 && indexPath.row < self.convoObjects.count) {
-            [self.convoObjects removeObjectAtIndex:indexPath.row];
-            [self.allConvoIds removeObject:convoObject.objectId];
-            
-            //because we're in the main messages segment, need to update sub-segments (if not a profile convo)
-            if ([self.buyingConvoIds containsObject:convoObject.objectId]) {
-                //reload buying convos
-                [self loadBuyingConvos];
-            }
-            else if ([self.sellingConvoIds containsObject:convoObject.objectId]) {
-                //reload buying convos
-                [self loadSellingConvos];
-            }
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 1 && indexPath.row < self.buyingConvos.count) {
-            //remove from buying tab
-            [self.buyingConvos removeObjectAtIndex:indexPath.row];
-            [self.buyingConvoIds removeObject:convoObject.objectId];
-
-            //and remove from all
-            [self loadMessages];
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 2 && indexPath.row < self.sellingConvos.count) {
-            //remove from selling tab
-            [self.sellingConvos removeObjectAtIndex:indexPath.row];
-            [self.sellingConvoIds removeObject:convoObject.objectId];
-
-            //and remove from all
-            [self loadMessages];
-        }
-        
-        [self updateUnseenCount];
-        
-        if (indexPath) {
-            [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-        }
-        
-    }
-}
+//- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+//    if (editingStyle == UITableViewCellEditingStyleDelete) {
+//
+//        [Answers logCustomEventWithName:@"Deleted a convo"
+//                       customAttributes:@{}];
+//
+//        //check if mismatch with index path and datasource
+//        //so just force a reload
+//        if (self.segmentedControl.selectedSegmentIndex == 0 && indexPath.row >= self.convoObjects.count) {
+//            [Answers logCustomEventWithName:@"Deletion mismatch"
+//                           customAttributes:@{
+//                                              @"tab":@"all"
+//                                              }];
+//
+//            [self loadAllConvos];
+//            return;
+//        }
+//        else if (self.segmentedControl.selectedSegmentIndex == 1 && indexPath.row >= self.buyingConvos.count) {
+//            [Answers logCustomEventWithName:@"Deletion mismatch"
+//                           customAttributes:@{
+//                                              @"tab":@"buying"
+//                                              }];
+//            [self loadAllConvos];
+//            return;
+//        }
+//        else if (self.segmentedControl.selectedSegmentIndex == 2 && indexPath.row >= self.sellingConvos.count) {
+//            [Answers logCustomEventWithName:@"Deletion mismatch"
+//                           customAttributes:@{
+//                                              @"tab":@"selling"
+//                                              }];
+//            [self loadAllConvos];
+//            return;
+//        }
+//
+//        //now save convo object as deleted on this user's end
+//
+//        PFObject *convoObject;
+//        if (self.segmentedControl.selectedSegmentIndex == 0) {
+//            convoObject = [self.convoObjects objectAtIndex:indexPath.row];
+//
+//            if ([[convoObject objectForKey:@"sellerId"] isEqualToString:[PFUser currentUser].objectId]) {
+//                [convoObject setObject:@"YES" forKey:@"sellerDeleted"];
+//            }
+//            else if([[convoObject objectForKey:@"buyerId"] isEqualToString:[PFUser currentUser].objectId]){
+//                [convoObject setObject:@"YES" forKey:@"buyerDeleted"];
+//            }
+//        }
+//        else if (self.segmentedControl.selectedSegmentIndex == 1) {
+//            //load buying messages only
+//            convoObject = [self.buyingConvos objectAtIndex:indexPath.row];
+//            [convoObject setObject:@"YES" forKey:@"buyerDeleted"];
+//
+//        }
+//        else if (self.segmentedControl.selectedSegmentIndex == 2) {
+//            //load selling messages only
+//            convoObject = [self.sellingConvos objectAtIndex:indexPath.row];
+//            [convoObject setObject:@"YES" forKey:@"sellerDeleted"];
+//        }
+//
+//        [convoObject saveInBackground];
+//
+//        //update tabs
+//
+//        if (self.segmentedControl.selectedSegmentIndex == 0 && indexPath.row < self.convoObjects.count) {
+//            [self.convoObjects removeObjectAtIndex:indexPath.row];
+//            [self.allConvoIds removeObject:convoObject.objectId];
+//
+//            //because we're in the main messages segment, need to update sub-segments (if not a profile convo)
+//            if ([self.buyingConvoIds containsObject:convoObject.objectId]) {
+//                //reload buying convos
+//                [self loadBuyingConvos];
+//            }
+//            else if ([self.sellingConvoIds containsObject:convoObject.objectId]) {
+//                //reload buying convos
+//                [self loadSellingConvos];
+//            }
+//        }
+//        else if (self.segmentedControl.selectedSegmentIndex == 1 && indexPath.row < self.buyingConvos.count) {
+//            //remove from buying tab
+//            [self.buyingConvos removeObjectAtIndex:indexPath.row];
+//            [self.buyingConvoIds removeObject:convoObject.objectId];
+//
+//            //and remove from all
+//            [self loadMessages];
+//        }
+//        else if (self.segmentedControl.selectedSegmentIndex == 2 && indexPath.row < self.sellingConvos.count) {
+//            //remove from selling tab
+//            [self.sellingConvos removeObjectAtIndex:indexPath.row];
+//            [self.sellingConvoIds removeObject:convoObject.objectId];
+//
+//            //and remove from all
+//            [self loadMessages];
+//        }
+//
+//        [self updateUnseenCount];
+//
+//        if (indexPath) {
+//            [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+//        }
+//
+//    }
+//}
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     self.cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];

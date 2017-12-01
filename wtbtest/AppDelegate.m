@@ -46,7 +46,7 @@
         
         //production
 //        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
-        configuration.server = @"https://live.bumpapi.com/parse";
+//        configuration.server = @"https://live.bumpapi.com/parse";
         
         //preproduction
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE remove these links for safety reasons from the actual build
@@ -54,7 +54,7 @@
 
         //dev server w/ dev DB
 //        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
-//        configuration.server = @"https://dev.bumpapi.com/parse";
+        configuration.server = @"https://dev.bumpapi.com/parse";
 
     }]];
 
@@ -1134,6 +1134,11 @@
     else{
         [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshHome" object:nil];
     }
+    
+    //seems to be a bug, only resets to zero after setting badge to >0 first
+    self.installation.badge = 1;
+    self.installation.badge = 0;
+    [self.installation saveEventually];
     
     [self checkMesages];
 //    [self checkForTBMessages];
