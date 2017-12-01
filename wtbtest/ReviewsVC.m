@@ -175,9 +175,9 @@
         [cell.starImageView setImage:[UIImage imageNamed:@"5star"]];
     }
     
-    if([feedbackObject objectForKey:@"picture"]){
+    if([feedbackObject objectForKey:@"gavePicture"]){
         
-        [cell.userImageView setFile:[feedbackObject objectForKey:@"picture"]];
+        [cell.userImageView setFile:[feedbackObject objectForKey:@"gavePicture"]];
         [cell.userImageView loadInBackground];
     }
     else{

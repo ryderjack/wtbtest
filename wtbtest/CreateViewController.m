@@ -145,7 +145,7 @@
     [[self navigationController] setNavigationBarHidden:NO animated:YES];
     
     //sam & jack code only
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
         
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
             NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:@"listUser"];

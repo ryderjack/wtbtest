@@ -21,6 +21,7 @@
 #import "MBFingerTipWindow.h"
 #import "OrderSummaryView.h"
 #import "Mixpanel/Mixpanel.h"
+#import <Intercom/Intercom.h>
 
 @interface AppDelegate ()
 
@@ -44,11 +45,13 @@
 //        configuration.server = @"http://localhost:1337/parse";
         
         //production
-        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
+//        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
+        configuration.server = @"https://live.bumpapi.com/parse";
         
         //preproduction
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE remove these links for safety reasons from the actual build
-        
+//        configuration.server = @"https://preprod.bumpapi.com/parse";
+
         //dev server w/ dev DB
 //        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
 //        configuration.server = @"https://dev.bumpapi.com/parse";
@@ -58,13 +61,53 @@
 //    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
 //    [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
 
+    [Intercom setApiKey:@"ios_sdk-dcdcb0d85e2a1da18471b8506beb225e5800e7dd" forAppId:@"zjwtufx1"];
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
 
     if ([PFUser currentUser]) {
+        NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
+        [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
+            if (!error) {                
+                [Intercom setUserHash:hash];
+                [Intercom registerUserWithUserId:[PFUser currentUser].objectId];
+                [self setupIntercomListener];
+                
+                //check if user sold before
+                if ([[[PFUser currentUser]objectForKey:@"saleNumber"]intValue] > 0) {
+                    
+                    //now check if we need to notify user of a buyer not being able to purchase their item
+                    //because they still need to verify their paypal email
+                    if ([[[PFUser currentUser]objectForKey:@"checkoutFailed"] isEqualToString:@"YES"]) {
+                        //update intercom then save this to NO so don't keep updating intercom w/ same info
+                        ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+                        userAttributes.customAttributes = @{@"notify_merchant_failed_once" : @YES
+                                                            };
+                        [Intercom updateUser:userAttributes];
+                    }
+                }
+            }
+            else{
+                [Answers logCustomEventWithName:@"Intercom Verify Error"
+                               customAttributes:@{
+                                                  @"where":@"delegate"
+                                                  }];
+            }
+        }];
         [self logUser];
+        
+        //make sure user has currency tracked in mixpanel
+        if ([[PFUser currentUser]objectForKey:@"currency"] != nil) {
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel registerSuperPropertiesOnce:@{
+                                                    @"currency":[[PFUser currentUser]objectForKey:@"currency"]
+                                                    }];
+        }
     }
     else{
         //no current user
+        
+        //listen for when user signs up so we can start to monitor unread intercom messages
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setupIntercomListener) name:@"registerIntercom" object:nil];
     }
     
     [PFFacebookUtils initializeFacebookWithApplicationLaunchOptions:launchOptions];
@@ -174,30 +217,30 @@
         if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications] == NO) {
             NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkMesages) userInfo:nil repeats:YES];
             [timer fire];
-            NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:60.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
-            [timer2 fire];
+//            NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:60.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
+//            [timer2 fire];
 
             if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
-                NSTimer *timer3 = [NSTimer scheduledTimerWithTimeInterval:120.0 target:self selector:@selector(checkForSupportMessages) userInfo:nil repeats:YES];
-                [timer3 fire];
+//                NSTimer *timer3 = [NSTimer scheduledTimerWithTimeInterval:120.0 target:self selector:@selector(checkForSupportMessages) userInfo:nil repeats:YES];
+//                [timer3 fire];
             }
             
-            NSTimer *timer4 = [NSTimer scheduledTimerWithTimeInterval:120.0 target:self selector:@selector(checkForOrders) userInfo:nil repeats:YES];
+            NSTimer *timer4 = [NSTimer scheduledTimerWithTimeInterval:300.0 target:self selector:@selector(checkForOrders) userInfo:nil repeats:YES];
             [timer4 fire];
         }
         else{
             [self checkMesages];
-            [self checkForTBMessages];
+//            [self checkForTBMessages];
             
             if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
-                [self checkForSupportMessages];
+//                [self checkForSupportMessages];
             }
             [self checkForOrders];
         }
     }
     else{
-        NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
-        [timer2 fire];
+//        NSTimer *timer2 = [NSTimer scheduledTimerWithTimeInterval:15.0 target:self selector:@selector(checkForTBMessages) userInfo:nil repeats:YES];
+//        [timer2 fire];
     }
     
     //check for local push trigger
@@ -509,6 +552,7 @@
     }];
 }
 
+//this is unseen orders, not updating user object here
 -(void)checkForOrders{
     if (![PFUser currentUser]) {
         return;
@@ -530,7 +574,7 @@
     [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             int orderCount = (int)objects.count;
-            NSLog(@"orders count %d", orderCount);
+            NSLog(@"unseen orders count %d", orderCount);
             self.profileView.ordersUnseen = orderCount;
 
             if (objects.count > 0) {
@@ -567,6 +611,7 @@
         else{
             if (error.code == 209) {
                 NSLog(@"invalid so logout");
+                [Intercom reset];
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"invalidSessionNotification" object:nil];
             }
             NSLog(@"error finding team bump messages %@", error);
@@ -595,6 +640,7 @@
         else{
             if (error.code == 209) {
                 NSLog(@"invalid so logout");
+                [Intercom reset];
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"invalidSessionNotification" object:nil];
             }
             NSLog(@"error finding support messages %@", error);
@@ -655,8 +701,8 @@
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     [self checkMesages];
-    [self checkForTBMessages];
-    [self checkForSupportMessages];
+//    [self checkForTBMessages];
+//    [self checkForSupportMessages];
     
     NSString *bumpedStatus = [userInfo objectForKey:@"bumpRequest"];
     NSString *listing = [userInfo objectForKey:@"listingID"];
@@ -673,11 +719,11 @@
 //        NSLog(@"userinfo: %@", userInfo);
         
         if ([[strMsg lowercaseString] hasPrefix:@"team bump"]) {
-            [self checkForTBMessages];
+//            [self checkForTBMessages];
             self.tabBarController.selectedIndex = 3;
         }
         else if([[strMsg lowercaseString] hasPrefix:@"bump support"]) {
-            [self checkForSupportMessages];
+//            [self checkForSupportMessages];
             self.tabBarController.selectedIndex = 3;
         }
         else if([strMsg hasSuffix:@"just left you a review"]){
@@ -1090,8 +1136,8 @@
     }
     
     [self checkMesages];
-    [self checkForTBMessages];
-    [self checkForSupportMessages];
+//    [self checkForTBMessages];
+//    [self checkForSupportMessages];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
@@ -1311,12 +1357,34 @@
     return YES;
 }
 
+-(void)setupIntercomListener{
+    int intercomUnread = (int)[Intercom unreadConversationCount];
+    self.profileView.messagesUnseen = intercomUnread;
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateIntercomUnread:)
+                                                 name:IntercomUnreadConversationCountDidChangeNotification
+                                               object:nil];
+}
+
+-(void)updateIntercomUnread:(NSNotification *)not{
+    int intercomUnread = (int)[Intercom unreadConversationCount];
+    NSLog(@"updating intercom unread: %lu", (unsigned long)[Intercom unreadConversationCount]);
+    self.profileView.messagesUnseen = intercomUnread;
+    
+    if (intercomUnread > 0) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"NewTBMessage" object:nil];
+    }
+    
+    [self calcProfileBadge];
+}
+
 -(void)calcProfileBadge{
     
     //check if any support or team bump messages unseen
     int tabInt = 0;
     
-    if (self.profileView.supportUnseen > 0 || self.profileView.messagesUnseen > 0) {
+    if (self.profileView.messagesUnseen > 0) {
         tabInt++;
     }
     
@@ -1341,27 +1409,45 @@
 
 -(void)profileBadgeRefresh{
     NSLog(@"refreshing profile badge in profile");
-    [self checkForTBMessages];
+//    [self checkForTBMessages];
     [self checkForOrders];
-    [self checkForSupportMessages];
+//    [self checkForSupportMessages];
 }
 
 -(void)calcOrderNumber{
-    //query for convos we know this user hasn't seen
-    PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
-    [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
-    
-    PFQuery *sellingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
-    [sellingUnseenQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-    
-    PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
-    [unseenQuery whereKey:@"status" equalTo:@"live"];
-    
-    [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+    PFQuery *buyingQuery = [PFQuery queryWithClassName:@"saleOrders"];
+    [buyingQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+    [buyingQuery whereKey:@"status" equalTo:@"live"];
+    [buyingQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            int count = (int)objects.count;
-            [[PFUser currentUser]setObject:@(count) forKey:@"orderNumber"];
-            [[PFUser currentUser] saveInBackground];
+            int buyCount = (int)objects.count;
+            __block int totalCount = (int)objects.count;
+            
+            PFQuery *sellingQuery = [PFQuery queryWithClassName:@"saleOrders"];
+            [sellingQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+            [sellingQuery whereKey:@"status" equalTo:@"live"];
+            [buyingQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable sales, NSError * _Nullable error) {
+                if (objects) {
+                    int saleCount = (int)sales.count;
+                    totalCount += saleCount;
+
+                    //update Intercom
+                    ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+                    userAttributes.customAttributes = @{@"purchase_number" : @(buyCount),
+                                                        @"sale_number" : @(saleCount),
+                                                        @"order_number" : @(totalCount)
+                                                        };
+                    [Intercom updateUser:userAttributes];
+                    
+                    //if (for some unlikely reason) cloud code didn't update user's order number we re-save it here along w/ buy/sell counts
+                    if ([[[PFUser currentUser]objectForKey:@"orderNumber"]intValue] < totalCount) {
+                        [[PFUser currentUser]setObject:@(totalCount) forKey:@"orderNumber"];
+                        [[PFUser currentUser]setObject:@(saleCount) forKey:@"saleNumber"];
+                        [[PFUser currentUser]setObject:@(buyCount) forKey:@"purchaseNumber"];
+                        [[PFUser currentUser] saveInBackground];
+                    }
+                }
+            }];
         }
     }];
 }

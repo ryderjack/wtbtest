@@ -86,6 +86,7 @@
 
 @property (nonatomic, strong) NSArray *profanityList;
 @property (nonatomic, strong) NSArray *flagWords;
+@property (nonatomic, strong) NSArray *titleFlagWords;
 
 //sizes
 @property (nonatomic, strong) NSArray *multipleSizeArray;

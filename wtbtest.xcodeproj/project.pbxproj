@@ -585,6 +585,18 @@
 		045DF1BA1FC358040017AEBC /* FBFillBlk@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1B71FC358010017AEBC /* FBFillBlk@3x.png */; };
 		045DF1BB1FC358040017AEBC /* FBFillBlk.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1B81FC358030017AEBC /* FBFillBlk.png */; };
 		045DF1BC1FC358040017AEBC /* FBFillBlk@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1B91FC358040017AEBC /* FBFillBlk@2x.png */; };
+		045DF1C61FC85E5F0017AEBC /* modBadge.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1C31FC85E5B0017AEBC /* modBadge.png */; };
+		045DF1C71FC85E5F0017AEBC /* modBadge@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1C41FC85E5D0017AEBC /* modBadge@2x.png */; };
+		045DF1C81FC85E5F0017AEBC /* modBadge@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1C51FC85E5E0017AEBC /* modBadge@3x.png */; };
+		045DF1CC1FC863470017AEBC /* veriBadge.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1C91FC863450017AEBC /* veriBadge.png */; };
+		045DF1CD1FC863470017AEBC /* veriBadge@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1CA1FC863460017AEBC /* veriBadge@2x.png */; };
+		045DF1CE1FC863470017AEBC /* veriBadge@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1CB1FC863470017AEBC /* veriBadge@3x.png */; };
+		045DF1D21FC876280017AEBC /* paypalExplain@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1CF1FC876230017AEBC /* paypalExplain@2x.png */; };
+		045DF1D31FC876280017AEBC /* paypalExplain.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1D01FC876230017AEBC /* paypalExplain.png */; };
+		045DF1D41FC876280017AEBC /* paypalExplain@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1D11FC876260017AEBC /* paypalExplain@3x.png */; };
+		045DF1D81FC8C6840017AEBC /* searchExplain@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1D51FC8C67E0017AEBC /* searchExplain@3x.png */; };
+		045DF1D91FC8C6840017AEBC /* searchExplain.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1D61FC8C67E0017AEBC /* searchExplain.png */; };
+		045DF1DA1FC8C6840017AEBC /* searchExplain@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1D71FC8C6810017AEBC /* searchExplain@2x.png */; };
 		046703121F90EC67009FD451 /* orderStar.png in Resources */ = {isa = PBXBuildFile; fileRef = 0467030F1F90EC5C009FD451 /* orderStar.png */; };
 		046703131F90EC67009FD451 /* orderStar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 046703101F90EC5C009FD451 /* orderStar@2x.png */; };
 		046703141F90EC67009FD451 /* orderStar@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 046703111F90EC5C009FD451 /* orderStar@3x.png */; };
@@ -2170,6 +2182,18 @@
 		045DF1B71FC358010017AEBC /* FBFillBlk@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "FBFillBlk@3x.png"; sourceTree = "<group>"; };
 		045DF1B81FC358030017AEBC /* FBFillBlk.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = FBFillBlk.png; sourceTree = "<group>"; };
 		045DF1B91FC358040017AEBC /* FBFillBlk@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "FBFillBlk@2x.png"; sourceTree = "<group>"; };
+		045DF1C31FC85E5B0017AEBC /* modBadge.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = modBadge.png; sourceTree = "<group>"; };
+		045DF1C41FC85E5D0017AEBC /* modBadge@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "modBadge@2x.png"; sourceTree = "<group>"; };
+		045DF1C51FC85E5E0017AEBC /* modBadge@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "modBadge@3x.png"; sourceTree = "<group>"; };
+		045DF1C91FC863450017AEBC /* veriBadge.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = veriBadge.png; sourceTree = "<group>"; };
+		045DF1CA1FC863460017AEBC /* veriBadge@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "veriBadge@2x.png"; sourceTree = "<group>"; };
+		045DF1CB1FC863470017AEBC /* veriBadge@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "veriBadge@3x.png"; sourceTree = "<group>"; };
+		045DF1CF1FC876230017AEBC /* paypalExplain@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "paypalExplain@2x.png"; sourceTree = "<group>"; };
+		045DF1D01FC876230017AEBC /* paypalExplain.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = paypalExplain.png; sourceTree = "<group>"; };
+		045DF1D11FC876260017AEBC /* paypalExplain@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "paypalExplain@3x.png"; sourceTree = "<group>"; };
+		045DF1D51FC8C67E0017AEBC /* searchExplain@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "searchExplain@3x.png"; sourceTree = "<group>"; };
+		045DF1D61FC8C67E0017AEBC /* searchExplain.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = searchExplain.png; sourceTree = "<group>"; };
+		045DF1D71FC8C6810017AEBC /* searchExplain@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "searchExplain@2x.png"; sourceTree = "<group>"; };
 		0467030F1F90EC5C009FD451 /* orderStar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = orderStar.png; sourceTree = "<group>"; };
 		046703101F90EC5C009FD451 /* orderStar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "orderStar@2x.png"; sourceTree = "<group>"; };
 		046703111F90EC5C009FD451 /* orderStar@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "orderStar@3x.png"; sourceTree = "<group>"; };
@@ -3436,6 +3460,18 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				045DF1D61FC8C67E0017AEBC /* searchExplain.png */,
+				045DF1D71FC8C6810017AEBC /* searchExplain@2x.png */,
+				045DF1D51FC8C67E0017AEBC /* searchExplain@3x.png */,
+				045DF1D01FC876230017AEBC /* paypalExplain.png */,
+				045DF1CF1FC876230017AEBC /* paypalExplain@2x.png */,
+				045DF1D11FC876260017AEBC /* paypalExplain@3x.png */,
+				045DF1C91FC863450017AEBC /* veriBadge.png */,
+				045DF1CA1FC863460017AEBC /* veriBadge@2x.png */,
+				045DF1CB1FC863470017AEBC /* veriBadge@3x.png */,
+				045DF1C31FC85E5B0017AEBC /* modBadge.png */,
+				045DF1C41FC85E5D0017AEBC /* modBadge@2x.png */,
+				045DF1C51FC85E5E0017AEBC /* modBadge@3x.png */,
 				045DF1B81FC358030017AEBC /* FBFillBlk.png */,
 				045DF1B91FC358040017AEBC /* FBFillBlk@2x.png */,
 				045DF1B71FC358010017AEBC /* FBFillBlk@3x.png */,
@@ -5478,6 +5514,7 @@
 				04593AF01F6328600088DE14 /* accSelected.png in Resources */,
 				041C56A11F165F3600772D61 /* stoneyNormal2.png in Resources */,
 				040202F71ED978C80006A5CD /* buyButtonCart.png in Resources */,
+				045DF1D81FC8C6840017AEBC /* searchExplain@3x.png in Resources */,
 				044CF4CD1E62ECDB006DD368 /* sendPicBlue@2x.png in Resources */,
 				040451281C8ED324001D5F3B /* declineButton@3x.png in Resources */,
 				04BEE5511DD76F22004CD8D1 /* offer_2@3x.png in Resources */,
@@ -5491,6 +5528,7 @@
 				0432C0341DF77404000CD9F5 /* NWTSelected.png in Resources */,
 				04BCBFD11F631758000ACC85 /* outIcon@3x.png in Resources */,
 				04477E551E4E0EA30054DFB9 /* bouncingButton.png in Resources */,
+				045DF1C71FC85E5F0017AEBC /* modBadge@2x.png in Resources */,
 				04BEE51D1DD5278D004CD8D1 /* sellerProfile@2x.png in Resources */,
 				04BCBF681F5C451C000ACC85 /* championNormal@3x.png in Resources */,
 				044E724A1E2106A4005D55E5 /* fulfillCheck.png in Resources */,
@@ -5845,6 +5883,7 @@
 				04FD43B61F348BF30068F89D /* asscSelected.png in Resources */,
 				04CD30901D10561300E2850D /* AnyImg@1x.png in Resources */,
 				04DEAE431DDB7FB700449DEC /* settingsOffer@2x.png in Resources */,
+				045DF1C81FC85E5F0017AEBC /* modBadge@3x.png in Resources */,
 				04B9557E1F90C9360042B138 /* 4OrderStars.png in Resources */,
 				0411C1731EE04E5800A5B91B /* legitCheckButtonOff.png in Resources */,
 				04DEAE2B1DDA145900449DEC /* soldCheck@3x.png in Resources */,
@@ -5936,7 +5975,9 @@
 				0411C1D81EEABD8000A5B91B /* purchasedCheck2@3x.png in Resources */,
 				0492A5FC1E799BD80062C28D /* rateStarFilled@3x.png in Resources */,
 				04CD31441D24849400E2850D /* plusIcon@3x.png in Resources */,
+				045DF1D41FC876280017AEBC /* paypalExplain@3x.png in Resources */,
 				041C56C51F16608300772D61 /* palaceSelected2.png in Resources */,
+				045DF1D21FC876280017AEBC /* paypalExplain@2x.png in Resources */,
 				041C56AF1F165F3600772D61 /* nikeNormal2@2x.png in Resources */,
 				04E1D3021E548DFA0045F9D2 /* bumpDemo@2x.png in Resources */,
 				04F105951DAD80FE006CBF26 /* tagFill@2x.png in Resources */,
@@ -6040,6 +6081,7 @@
 				04593AFF1F6328600088DE14 /* topsSelected.png in Resources */,
 				04593B001F6328600088DE14 /* topsSelected@2x.png in Resources */,
 				04A99E7A1F289F0000A698DD /* sendPayPalIcon3@2x.png in Resources */,
+				045DF1C61FC85E5F0017AEBC /* modBadge.png in Resources */,
 				04CD30E81D1C19B000E2850D /* InboxCell.xib in Resources */,
 				048B6F611C90887400F0894A /* checkIcon@2x.png in Resources */,
 				04F7EF7B1E1404BF00061745 /* updateButton@2x.png in Resources */,
@@ -6097,6 +6139,7 @@
 				04A99E7B1F289F0000A698DD /* sendPayPalIcon3@3x.png in Resources */,
 				041D2F9C1ECA124700978231 /* eventbrite@3x.png in Resources */,
 				045DF1B51FC357BB0017AEBC /* FbFriends@2x.png in Resources */,
+				045DF1CD1FC863470017AEBC /* veriBadge@2x.png in Resources */,
 				04DEAE291DDA145900449DEC /* soldCheck@2x.png in Resources */,
 				04FD43DF1F348D7D0068F89D /* placesWelcome@2x.png in Resources */,
 				040E739F1FAF445400CA7984 /* ordersIcon2@2x.png in Resources */,
@@ -6162,6 +6205,7 @@
 				0432C0571DF8446A000CD9F5 /* clothingUnselected.png in Resources */,
 				041D2FC21ED1D52700978231 /* successBoost@3x.png in Resources */,
 				04B6072A1E02B2AF0022D640 /* iPhoneBumped@2x.png in Resources */,
+				045DF1D91FC8C6840017AEBC /* searchExplain.png in Resources */,
 				04F7EFA51E16C00200061745 /* viewMore@2x.png in Resources */,
 				041C56C81F16608300772D61 /* ralphSelected2@3x.png in Resources */,
 				04CBFDD61E088D2600941C46 /* messageBuyer1@2x.png in Resources */,
@@ -6212,6 +6256,7 @@
 				04D9B9A81C89FEE3004AF0F2 /* compose@2x.png in Resources */,
 				04239CB01F3BB75400ACE74C /* taggedEg@3x.png in Resources */,
 				04475CD01FB73E30001E3C26 /* profileCogNew@3x.png in Resources */,
+				045DF1CE1FC863470017AEBC /* veriBadge@3x.png in Resources */,
 				04FD43951F3487DB0068F89D /* placesNormal.png in Resources */,
 				044C49431E42279F0021B447 /* plusIconRound@2x.png in Resources */,
 				049F20271F221C58007C4BE4 /* BumpingIntroVC.xib in Resources */,
@@ -6516,6 +6561,7 @@
 				048715121D9281CE00C51961 /* infoB@2x.png in Resources */,
 				044C49311E421EBF0021B447 /* facebookProfile@2x.png in Resources */,
 				043533D91F152CAC00BC6F56 /* bartImage@2x.png in Resources */,
+				045DF1DA1FC8C6840017AEBC /* searchExplain@2x.png in Resources */,
 				044F823E1DA4EDA20092B1F8 /* msgTutorial.png in Resources */,
 				04FAF9FF1F2F7D9B00EC1904 /* pattaWelcome@2x.png in Resources */,
 				04FD43881F3487DB0068F89D /* balenSelected@3x.png in Resources */,
@@ -6552,6 +6598,7 @@
 				04C6EF7F1F1CFB1F007875EB /* goshaSelected1.png in Resources */,
 				049448A81ED6FC00000B4147 /* boostPaid.png in Resources */,
 				044DA4371E924FB800C5D3ED /* otherCategory.png in Resources */,
+				045DF1D31FC876280017AEBC /* paypalExplain.png in Resources */,
 				044E72601E217EA8005D55E5 /* searchIntro@2x.png in Resources */,
 				048D2B411DE8A4E500A35503 /* featuredCheck@3x.png in Resources */,
 				040047501DFAD34700A54A36 /* cursorIcon@2x.png in Resources */,
@@ -6644,6 +6691,7 @@
 				04FAF9C41F2F7C7E00EC1904 /* offWhiteWelcome@3x.png in Resources */,
 				0411C1A71EE9C03400A5B91B /* boostMessageImg@2x.png in Resources */,
 				049F200F1F216317007C4BE4 /* messageTabIconGrey@2x.png in Resources */,
+				045DF1CC1FC863470017AEBC /* veriBadge.png in Resources */,
 				044F82491DA568C70092B1F8 /* unreadTB@3x.png in Resources */,
 				044C49231E4209F80021B447 /* FBFillIcon.png in Resources */,
 				0403332B1CAADDFC00C59385 /* alertIcon@2x.png in Resources */,
@@ -6847,6 +6895,8 @@
 				"${SRCROOT}/Pods/Target Support Files/Pods-wtbtest/Pods-wtbtest-resources.sh",
 				"${PODS_ROOT}/CountryPicker/CountryPicker/CountryPicker.bundle",
 				"${PODS_ROOT}/FBSDKCoreKit/FacebookSDKStrings.bundle",
+				"${PODS_ROOT}/Intercom/Intercom/Intercom.framework/Versions/A/Resources/Intercom.bundle",
+				"${PODS_ROOT}/Intercom/Intercom/Intercom.framework/Versions/A/Resources/IntercomTranslations.bundle",
 				"${PODS_ROOT}/JSQMessagesViewController/JSQMessagesViewController/Assets/JSQMessagesAssets.bundle",
 				"${PODS_ROOT}/JSQMessagesViewController/JSQMessagesViewController/Controllers/JSQMessagesViewController.xib",
 				"${PODS_ROOT}/JSQMessagesViewController/JSQMessagesViewController/Views/JSQMessagesCollectionViewCellIncoming.xib",
@@ -6901,8 +6951,8 @@
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/en.lproj",
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/fr.lproj",
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/pt-BR.lproj",
-				$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePicker.bundle,
-				$PODS_CONFIGURATION_BUILD_DIR/TOWebViewController/TOWebViewControllerLocalizable.bundle,
+				"$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePicker.bundle",
+				"$PODS_CONFIGURATION_BUILD_DIR/TOWebViewController/TOWebViewControllerLocalizable.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (

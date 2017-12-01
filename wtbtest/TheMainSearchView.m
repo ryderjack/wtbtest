@@ -12,6 +12,7 @@
 #import <Crashlytics/Crashlytics.h>
 #import "SearchCell.h"
 #import "UIImageView+Letters.h"
+#import <Intercom/Intercom.h>
 
 @interface TheMainSearchView ()
 
@@ -517,6 +518,9 @@
         [self gotoListingsInSellingMode:NO];
     }
     else if(self.userSearch == NO && self.sellingSearch == YES){
+        
+        [Intercom logEventWithName:@"searched_listings"];
+        
         [Answers logCustomEventWithName:@"Search"
                        customAttributes:@{
                                           @"type":@"For Sale search",

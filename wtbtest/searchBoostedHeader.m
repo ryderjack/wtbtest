@@ -279,7 +279,10 @@
         cell.transView.alpha = 0.5;
         [bumpArray removeObject:[PFUser currentUser].objectId];
         [listingObject setObject:bumpArray forKey:@"bumpArray"];
-        [listingObject incrementKey:@"bumpCount" byAmount:@-1];
+        
+        if ([[listingObject objectForKey:@"bumpCount"]intValue]>0) {
+            [listingObject incrementKey:@"bumpCount" byAmount:@-1];
+        }
         
         if ([personalBumpArray containsObject:listingObject.objectId]) {
             [personalBumpArray removeObject:listingObject.objectId];

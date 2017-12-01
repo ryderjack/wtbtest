@@ -71,6 +71,8 @@
 //headerview setup
 @property (nonatomic, strong) PFImageView *smallImageView;
 @property (nonatomic, strong) PFImageView *userImageView;
+@property (nonatomic, strong) PFImageView *badgeView;
+
 @property (nonatomic, strong) UILabel *usernameLabel;
 @property (nonatomic, strong) UILabel *nameAndLoc;
 @property (nonatomic, strong) UILabel *smallNameAndLoc;
@@ -80,6 +82,9 @@
 
 @property (nonatomic) BOOL hasBio;
 @property (nonatomic) BOOL setupHeader;
+@property (nonatomic) BOOL hasBadge;
+@property (nonatomic) BOOL modBadge;
+
 
 @property (nonatomic,strong) UIBarButtonItem *doneButton;
 

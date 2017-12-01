@@ -20,6 +20,7 @@
 #import "ExplainView.h"
 #import "AppDelegate.h"
 #import "Mixpanel/Mixpanel.h"
+#import <Intercom/Intercom.h>
 
 @interface RegisterViewController ()
 @end
@@ -260,6 +261,8 @@
          else{
              NSLog(@"error %@", error);
              [PFUser logOut];
+             [Intercom reset];
+
          }
      }];
 }
@@ -816,11 +819,9 @@
     }
     
     self.user[PF_USER_EMAIL] = email;
-    self.user[@"paypal"] = email;
     self.user[PF_USER_USERNAME] = [username lowercaseString];
     self.user[@"currency"] = self.selectedCurrency;
     self.user[@"completedReg"] = @"YES";
-    self.user[@"indexedListings"] = @"YES";
     self.user[@"bumpArray"] = @[];
     [self.user setObject:[NSDate date] forKey:@"lastActive"];
     [self.user addObject:[NSDate date] forKey:@"activeSessions"];
@@ -838,18 +839,28 @@
              
              NSLog(@"saved user: %@", [PFUser currentUser]);
              
+             //update Intercom with user info
+             ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+             userAttributes.name = [name capitalizedString];
+             userAttributes.email = email;
+             userAttributes.signedUpAt = [NSDate date];
+             
              //set user as tabUser
              AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
              appDelegate.profileView.user = self.user;
              
+             Mixpanel *mixpanel = [Mixpanel sharedInstance];
+             [mixpanel identify:self.user.objectId];
+
              //tracking & deals data setup
              if (self.emailMode) {
                  //setup deals data
-                 Mixpanel *mixpanel = [Mixpanel sharedInstance];
-                 [mixpanel track:@"Signup" properties:@{
-                                                        @"Source": @"Email"
-                                                        }];
-                 [mixpanel registerSuperProperties:@{@"Source": @"Email"}];
+                 [mixpanel registerSuperProperties:@{
+                                                     @"Source": @"Email",
+                                                     @"currency": self.selectedCurrency
+                                                     }];
+                 
+                 [mixpanel track:@"Signup" properties:@{}];
                  
                  [self setupFeedback];
                  
@@ -857,16 +868,31 @@
                                       success:@YES
                              customAttributes:@{}];
                  
+                 //finish adding custom intercom attributes
+                 userAttributes.customAttributes = @{@"email_sign_up" : @YES,
+                                                     @"currency": self.selectedCurrency};
+                
+                 [Intercom updateUser:userAttributes];
+                 
                  //send confirmation email
                  [self sendConfirmationEmail];
                  
              }
              else{
-                 Mixpanel *mixpanel = [Mixpanel sharedInstance];
-                 [mixpanel track:@"Signup" properties:@{
-                                                        @"Source": @"Facebook"
-                                                        }];
-                 [mixpanel registerSuperProperties:@{@"Source": @"Facebook"}];
+                 //finish adding custom intercom attributes
+                 userAttributes.customAttributes = @{@"email_sign_up" : @NO,
+                                                     @"currency": self.selectedCurrency};
+                 [Intercom updateUser:userAttributes];
+                 
+                 //add mixpanel info
+                 [mixpanel registerSuperProperties:@{@"Source": @"Facebook",
+                                                     @"currency": self.selectedCurrency
+                                                     }];
+//                 [mixpanel.people set:@{@"email_sign_up" : @NO,
+//                                        @"currency"      : self.selectedCurrency
+//                                        }];
+                 
+                 [mixpanel track:@"Signup" properties:@{}];
                  
                  [Answers logSignUpWithMethod:@"Facebook"
                                       success:@YES
@@ -897,50 +923,50 @@
              [installation saveInBackground];
              
              //create team bump convo
-             PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
-             convoObject[@"otherUser"] = [PFUser currentUser];
-             convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-             convoObject[@"totalMessages"] = @0;
-             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                 if (succeeded) {
-                     NSString *messageString = @"🙌 Welcome to BUMP 🙌\n\nBuying\nBrowse the latest items for sale, search through items by tapping the search bar at the top of the home tab, and create wanted listings so sellers can see what you want\n\nSelling\nList an item by tapping the tag icon or search through wanted listings to sell even faster\n\n💥 Got any questions? Just send us a message\n\nSophie @ Team BUMP";
-                     
-                     //saved, create intro message
-                     PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
-                     messageObject[@"message"] = messageString;
-                     messageObject[@"sender"] = [PFUser currentUser];
-                     messageObject[@"senderId"] = @"BUMP";
-                     messageObject[@"senderName"] = @"Team Bump";
-                     messageObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-                     messageObject[@"status"] = @"sent";
-                     messageObject[@"offer"] = @"NO";
-                     messageObject[@"mediaMessage"] = @"NO";
-                     [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                         if (succeeded == YES) {
-                             
-                             //                                                 NSLog(@"saved message, here it is: %@", messageObject);
-                             
-                             //post notification to display tab bar badge and unseen TB icon
-                             AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-                             [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
-                             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
-                             
-                             //update convo
-                             [convoObject incrementKey:@"totalMessages"];
-                             [convoObject setObject:messageObject forKey:@"lastSent"];
-                             [convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
-                             [convoObject incrementKey:@"userUnseen"];
-                             [convoObject saveInBackground];
-                         }
-                         else{
-                             NSLog(@"error sending message %@", error);
-                         }
-                     }];
-                 }
-                 else{
-                     NSLog(@"error saving convo");
-                 }
-             }];
+//             PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
+//             convoObject[@"otherUser"] = [PFUser currentUser];
+//             convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+//             convoObject[@"totalMessages"] = @0;
+//             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                 if (succeeded) {
+//                     NSString *messageString = @"🙌 Welcome to BUMP 🙌\n\nBuying\nBrowse the latest items for sale, search through items by tapping the search bar at the top of the home tab, and create wanted listings so sellers can see what you want\n\nSelling\nList an item by tapping the tag icon or search through wanted listings to sell even faster\n\n💥 Got any questions? Just send us a message\n\nSophie @ Team BUMP";
+//
+//                     //saved, create intro message
+//                     PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
+//                     messageObject[@"message"] = messageString;
+//                     messageObject[@"sender"] = [PFUser currentUser];
+//                     messageObject[@"senderId"] = @"BUMP";
+//                     messageObject[@"senderName"] = @"Team Bump";
+//                     messageObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+//                     messageObject[@"status"] = @"sent";
+//                     messageObject[@"offer"] = @"NO";
+//                     messageObject[@"mediaMessage"] = @"NO";
+//                     [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                         if (succeeded == YES) {
+//
+//                             //                                                 NSLog(@"saved message, here it is: %@", messageObject);
+//
+//                             //post notification to display tab bar badge and unseen TB icon
+//                             AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+//                             [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
+//                             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
+//
+//                             //update convo
+//                             [convoObject incrementKey:@"totalMessages"];
+//                             [convoObject setObject:messageObject forKey:@"lastSent"];
+//                             [convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
+//                             [convoObject incrementKey:@"userUnseen"];
+//                             [convoObject saveInBackground];
+//                         }
+//                         else{
+//                             NSLog(@"error sending message %@", error);
+//                         }
+//                     }];
+//                 }
+//                 else{
+//                     NSLog(@"error saving convo");
+//                 }
+//             }];
              
              if (self.emailMode != YES) {
                  //save Bumped Obj
@@ -1453,7 +1479,7 @@
     NSDate * combinedDate = [theCalendar dateFromComponents:components3];
     
     UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-    [localNotification setAlertBody:@"Verify your Bump email address now! Remember to check your Junk Folder 📬"];
+    [localNotification setAlertBody:@"Verify your BUMP email address now! Remember to check your Junk Folder 📬"];
     [localNotification setFireDate: combinedDate];
     [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
     [localNotification setRepeatInterval: 0];

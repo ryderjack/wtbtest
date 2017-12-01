@@ -62,7 +62,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSArray *profanityList;
 
 //big button
-@property (nonatomic, strong) UIButton *longButton;
 @property (nonatomic) BOOL buttonShowing;
 
 //delegate
@@ -75,4 +74,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL tappedSupport;
 
 NS_ASSUME_NONNULL_END
+
+@property (nonatomic, strong) UIButton * _Nullable longButton;
+
 @end

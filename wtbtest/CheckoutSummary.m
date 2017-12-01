@@ -15,6 +15,8 @@
 #import "ChatWithBump.h"
 #import "OrderSummaryView.h"
 #import <SafariServices/SafariServices.h>
+#import "Mixpanel/Mixpanel.h"
+#import <Intercom/Intercom.h>
 
 @interface CheckoutSummary ()
 
@@ -97,6 +99,7 @@
             //recalc shipping price & total price based on country
             if ([self.listingCountryCode.lowercaseString isEqualToString:countryCode.lowercaseString]) {
                 //national pricing
+                self.isNational = YES;
                 shipping = [[self.listingObject objectForKey:@"nationalShippingPrice"]floatValue];
             }
             else{
@@ -412,6 +415,10 @@
         return;
     }
     
+    //tracking
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"tapped_pay_checkout" properties:@{}];
+    
     NSString *shippingPrice = [self.shippingPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
     NSLog(@"%@", shippingPrice);
 
@@ -430,7 +437,7 @@
     NSString *itemId = self.listingObject.objectId;
     NSLog(@"%@", itemId);
 
-    NSString *currency = [self.listingObject objectForKey:@"currency"]; //CHANGE this should be the currency from the listing
+    NSString *currency = [self.listingObject objectForKey:@"currency"];
     NSLog(@"%@", currency);
 
 
@@ -574,8 +581,6 @@
                              @"itemSize":self.conditionLabel.text,
                              
                              @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId],
-                             
-                             @"lastUpdated":[NSDate date],
                              @"currency" : self.currency
                              };
     
@@ -605,6 +610,28 @@
                                                         }];
                     }
                     
+                    NSString *category = @"";
+                    category = [self.listingObject objectForKey:@"category"];
+                    
+                    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                    [mixpanel track:@"purchased_item" properties:@{
+                                                                      @"categpry":category,
+                                                                      @"totalPrice":@(self.totalPrice),
+                                                                      @"currency":self.currency,
+                                                                      @"nationalShipping": [NSNumber numberWithBool:self.isNational],
+                                                                      @"itemId":self.listingObject.objectId,
+                                                                      @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId]
+                                                                      }];
+//                    [mixpanel.people trackCharge:@(self.totalPrice)];
+                    
+                    [Intercom logEventWithName:@"order_placed" metaData: @{
+                                                                             @"category":category,
+                                                                             @"totalPrice":@(self.totalPrice),
+                                                                             @"currency":self.currency,
+                                                                             @"nationalShipping": [NSNumber numberWithBool:self.isNational],
+                                                                             @"itemId":self.listingObject.objectId,
+                                                                             @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId]
+                                                                             }];
                     CheckoutSummary *vc = [[CheckoutSummary alloc]init];
                     vc.successMode = YES;
                     vc.listingObject = self.listingObject;
@@ -663,6 +690,7 @@
         //recalc shipping price & total price based on country
         if ([self.listingCountryCode.lowercaseString isEqualToString:country.lowercaseString]) {
             //national pricing
+            self.isNational = YES;
             shipping = [[self.listingObject objectForKey:@"nationalShippingPrice"]floatValue];
         }
         else{

@@ -11,6 +11,8 @@
 #import "resetPassController.h"
 #import <Crashlytics/Crashlytics.h>
 #import "AppDelegate.h"
+#import <Intercom/Intercom.h>
+#import "Mixpanel/Mixpanel.h"
 
 @interface loginEmailController ()
 
@@ -105,18 +107,18 @@
 
                     }
                     else{
-                        //do final check against NSUserDefaults incase user was banned without device token coz didn't enable push
+                        //do final check against NSUserDefaults incase user was banned without device token coz didn't enable push //CHANGE
                         if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"banned"] isEqualToString:@"YES"]) {
                             [Answers logCustomEventWithName:@"Banned user attempted login"
                                            customAttributes:@{
                                                               @"trigger":@"defaults"
                                                               }];
                             [self hideHUD];
-                            
+
                             [self.logInButton setEnabled:YES];
                             [self.facebookLoginButton setEnabled:YES];
                             [self.resetButton setEnabled:YES];
-                            
+
                             [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
                             return;
                         }
@@ -129,6 +131,22 @@
                         //set user as tabUser
                         AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
                         appDelegate.profileView.user = user;
+                        
+                        NSDictionary *params = @{@"userId": user.objectId};
+                        [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
+                            if (!error) {
+                                [Intercom setUserHash:hash];
+                                [Intercom registerUserWithUserId:user.objectId];
+                                [[NSNotificationCenter defaultCenter] postNotificationName:@"registerIntercom" object:nil];
+                            }
+                            else{
+                                [Answers logCustomEventWithName:@"Intercom Verify Error"
+                                               customAttributes:@{
+                                                                  @"where":@"login"
+                                                                  }];
+                            }
+                        }];
+                        
                         
                         [Answers logCustomEventWithName:@"Logged in"
                                        customAttributes:@{
@@ -146,6 +164,9 @@
                             [[PFUser currentUser]setObject:installation.deviceToken forKey:@"deviceToken"];
                             [[PFUser currentUser] saveInBackground];
                         }
+                        
+                        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                        [mixpanel identify:user.objectId];
                         
                         [self hideHUD];
                         [self dismissViewControllerAnimated:YES completion:nil];

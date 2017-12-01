@@ -19,6 +19,7 @@
 #import "AddSizeController.h"
 #import "ExplainView.h"
 #import "AppDelegate.h"
+#import <Intercom/Intercom.h>
 
 @interface ProfileController ()
 
@@ -40,6 +41,8 @@
     if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
         self.showOrderStuff = YES;
     }
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(newIntercomMessage) name:@"NewTBMessage" object:nil];
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -70,17 +73,23 @@
         [self.unreadView setHidden:YES];
     }
     
-    if (self.unseenSupport == YES) {
-        //show unread icon in suport cell
-        [self.unreadSupportView setHidden:NO];
-    }
-    else{
-        [self.unreadSupportView setHidden:YES];
-    }
+//    if (self.unseenSupport == YES) {
+//        //show unread icon in suport cell
+//        [self.unreadSupportView setHidden:NO];
+//    }
+//    else{
+//        [self.unreadSupportView setHidden:YES];
+//    }
     
     //dismiss Invite gesture
     self.tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
     self.tap.numberOfTapsRequired = 1;
+}
+
+//handle new intercom messages here too in case user is on here when new message arrives
+-(void)newIntercomMessage{
+    self.unseenTBMsg = YES;
+    [self.unreadView setHidden:NO];
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{
@@ -128,9 +137,6 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
     if (section == 0) {
-        if (self.showOrderStuff) {
-            return 2;
-        }
         return 1;
     }
     else if (section == 1){
@@ -164,9 +170,9 @@
         if (indexPath.row == 0) {
             return self.feedbackCell;
         }
-        else if (indexPath.row == 1) {
-            return self.orderSupportCell;
-        }
+//        else if (indexPath.row == 1) {
+//            return self.orderSupportCell;
+//        }
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
@@ -239,57 +245,59 @@
         }
         else if (indexPath.row == 0) {
             //chat w/ Bump
-            if (self.tappedTB) {
-                return;
-            }
+//            if (self.tappedTB) {
+//                return;
+//            }
             
-            self.tappedTB = YES;
+//            self.tappedTB = YES;
             
+            //reset profile badges & hide unread icon? or do we still display it after user has tapped & still unseen convo's
+            [self.unreadView setHidden:YES];
+
             [Answers logCustomEventWithName:@"Chat with Bump pressed"
                            customAttributes:@{}];
             
-            //reset profile badges
-            [self.delegate TeamBumpInboxTapped];
+            [Intercom presentMessenger];
             
-            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
-            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-            [convoQuery whereKey:@"convoId" equalTo:convoId];
-            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                if (object) {
-                    //convo exists, go there
-                    ChatWithBump *vc = [[ChatWithBump alloc]init];
-                    vc.convoId = [object objectForKey:@"convoId"];
-                    vc.convoObject = object;
-                    vc.otherUser = [PFUser currentUser];
-                    vc.showSuggested = YES;
-                    [self.unreadView setHidden:YES];
-                    [self.navigationController tabBarItem].badgeValue = nil;
-                    [self.navigationController pushViewController:vc animated:YES];
-                }
-                else{
-                    //create a new one
-                    PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
-                    convoObject[@"otherUser"] = [PFUser currentUser];
-                    convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-                    convoObject[@"totalMessages"] = @0;
-                    [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                        if (succeeded) {
-                            //saved, goto VC
-                            ChatWithBump *vc = [[ChatWithBump alloc]init];
-                            vc.convoId = [convoObject objectForKey:@"convoId"];
-                            vc.convoObject = convoObject;
-                            vc.otherUser = [PFUser currentUser];
-                            vc.showSuggested = YES;
-                            [self.unreadView setHidden:YES];
-                            [self.navigationController tabBarItem].badgeValue = nil;
-                            [self.navigationController pushViewController:vc animated:YES];
-                        }
-                        else{
-                            NSLog(@"error saving convo");
-                        }
-                    }];
-                }
-            }];
+//
+//            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
+//            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+//            [convoQuery whereKey:@"convoId" equalTo:convoId];
+//            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//                if (object) {
+//                    //convo exists, go there
+//                    ChatWithBump *vc = [[ChatWithBump alloc]init];
+//                    vc.convoId = [object objectForKey:@"convoId"];
+//                    vc.convoObject = object;
+//                    vc.otherUser = [PFUser currentUser];
+//                    vc.showSuggested = YES;
+//                    [self.navigationController tabBarItem].badgeValue = nil;
+//                    [self.navigationController pushViewController:vc animated:YES];
+//                }
+//                else{
+//                    //create a new one
+//                    PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
+//                    convoObject[@"otherUser"] = [PFUser currentUser];
+//                    convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+//                    convoObject[@"totalMessages"] = @0;
+//                    [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                        if (succeeded) {
+//                            //saved, goto VC
+//                            ChatWithBump *vc = [[ChatWithBump alloc]init];
+//                            vc.convoId = [convoObject objectForKey:@"convoId"];
+//                            vc.convoObject = convoObject;
+//                            vc.otherUser = [PFUser currentUser];
+//                            vc.showSuggested = YES;
+//                            [self.unreadView setHidden:YES];
+//                            [self.navigationController tabBarItem].badgeValue = nil;
+//                            [self.navigationController pushViewController:vc animated:YES];
+//                        }
+//                        else{
+//                            NSLog(@"error saving convo");
+//                        }
+//                    }];
+//                }
+//            }];
         }
     }
     else if (indexPath.section == 2){
@@ -328,17 +336,13 @@
             [Answers logCustomEventWithName:@"FAQs pressed"
                            customAttributes:@{}];
             
-            NSString *URLString = @"http://sobump.com/FAQ/FAQ";
-            self.webView = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
-            self.webView.showUrlWhileLoading = YES;
-            self.webView.showPageTitles = YES;
-            self.webView.doneButtonTitle = @"";
-            self.webView.payMode = NO;
-//            self.webView.infoMode = NO;
-            self.webView.delegate = self;
-            
-            NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];
-            [self presentViewController:navigationController animated:YES completion:nil];
+            NSString *URLString = @"http://help.sobump.com/";
+            SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
+            if (@available(iOS 11.0, *)) {
+                safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+            }
+            safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+            [self.navigationController presentViewController:safariView animated:YES completion:nil];
         }
         else if (indexPath.row == 4) {
             //terms pressed
@@ -346,16 +350,12 @@
                            customAttributes:@{}];
             
             NSString *URLString = @"http://www.sobump.com/terms";
-            self.webView = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
-            self.webView.title = @"Terms & Conditions";
-            self.webView.showUrlWhileLoading = YES;
-            self.webView.showPageTitles = NO;
-            self.webView.doneButtonTitle = @"";
-            //hide toolbar banner
-//            self.webView.infoMode = NO;
-            self.webView.delegate = self;
-            NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webView];
-            [self presentViewController:navigationController animated:YES completion:nil];
+            SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
+            if (@available(iOS 11.0, *)) {
+                safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+            }
+            safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+            [self.navigationController presentViewController:safariView animated:YES completion:nil];
         }
     }
     else if (indexPath.section == 3){
@@ -376,36 +376,14 @@
     }
 }
 
--(void)paidPressed{
-    //do nothing
-}
-
--(void)cancelWebPressed{
-    [self.webView dismissViewControllerAnimated:YES completion:nil];
-}
-
--(void)cameraPressed{
-    //do nothing
-}
-
--(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
-    //do nothing
-}
-
-- (void)showEmail{
-    NSString *emailTitle = @"Help us make Bump better!";
-    NSString *messageBody = @"Yo\n\n Tell us how we can make Bump even better or any problems you've faced! We promise to reply within an hour.\nPS send us screenshots of anything not working properly!";
-    NSArray *toRecipents = [NSArray arrayWithObject:@"hello@sobump.com"];
-    MFMailComposeViewController *mc = [[MFMailComposeViewController alloc] init];
-    if (!mc) {
-        //no email accounts setup so return
-        return;
+-(void)viewDidDisappear:(BOOL)animated{
+    [super viewDidDisappear:animated];
+    
+    //if intercom unread is 0, reset settings icon on profile
+    int intercomUnread = (int)[Intercom unreadConversationCount];
+    if (intercomUnread == 0) {
+        [self.delegate TeamBumpInboxTapped];
     }
-    mc.mailComposeDelegate = self;
-    [mc setSubject:emailTitle];
-    [mc setMessageBody:messageBody isHTML:NO];
-    [mc setToRecipients:toRecipents];
-    [self presentViewController:mc animated:YES completion:NULL];
 }
 
 - (void) mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
@@ -465,10 +443,10 @@
     
     //manage friends count label
     if (friendsArray.count > 5) {
-        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friendsArray.count];
+        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use BUMP", (unsigned long)friendsArray.count];
     }
     else{
-        self.inviteView.friendsLabel.text = @"Help us grow 🚀";
+        self.inviteView.friendsLabel.text = @"Grow the BUMP Community";
     }
     
     if (friendsArray.count > 0) {
@@ -569,7 +547,7 @@
                    customAttributes:@{
                                       @"type":@"whatsapp"
                                       }];
-    NSString *shareString = @"Check out Bump for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com";
+    NSString *shareString = @"Check out BUMP for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com";
     NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
     if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
         [[UIApplication sharedApplication] openURL: whatsappURL];
@@ -594,7 +572,7 @@
                                       @"type":@"share sheet"
                                       }];
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out Bump for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com"];
+    [items addObject:@"Check out BUMP for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
 }

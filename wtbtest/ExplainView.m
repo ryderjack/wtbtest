@@ -74,7 +74,7 @@
         //set title
         self.titleLabel.text = @"B U Y I N G  O N  B U M P";
         
-        self.welcomeBackLabel.text = @"When you’re ready to purchase something just ask the Seller to send their PayPal email address on Bump\n\nYou can tap that message to be taken to PayPal and pay\n\nRemember to pay PayPal Goods & Services - if you’ve got any questions just send Team Bump a message from Settings!";
+        self.welcomeBackLabel.text = @"When you’re ready to purchase something just ask the Seller to send their PayPal email address on Bump\n\nYou can tap that message to be taken to PayPal and pay\n\nRemember to pay PayPal Goods & Services - if you’ve got any questions just send Support a message from Settings!";
         
         //hide all exlpain stuff
         [self.firstLabel setHidden:YES];

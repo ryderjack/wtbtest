@@ -14,6 +14,7 @@
 #import "WelcomeViewController.h"
 #import "NavigationController.h"
 #import "UIImageView+Letters.h"
+#import <Intercom/Intercom.h>
 
 @interface InboxViewController ()
 
@@ -100,7 +101,7 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    
+        
     [self.navigationController.navigationBar setTranslucent:NO];
     [self.navigationController.navigationBar setHidden:NO];
     
@@ -141,7 +142,6 @@
     //make sure infin is cancelled before loading pull
     [self.tableView.infiniteScrollingView stopAnimating];
     [self.infiniteQuery cancel];
-    
     
     if (!self.pullQuery) {
         PFQuery *buyerConvos = [PFQuery queryWithClassName:@"convos"];
@@ -1276,6 +1276,8 @@
                                               }];
             
             [PFUser logOut];
+            [Intercom reset];
+
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
             [self presentViewController:navController animated:NO completion:nil];

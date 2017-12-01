@@ -123,7 +123,7 @@
     
     self.contactEmailField.text = [NSString stringWithFormat:@"%@",self.currentContact];
     
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
         //CMO switch setup
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"CMOModeOn"]==YES) {
             [self.cmoSwitch setOn:YES];
@@ -239,7 +239,7 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
         return 5;
     }
     else{
@@ -343,7 +343,7 @@
                 [Answers logCustomEventWithName:@"Connect PayPal Pressed"
                                customAttributes:@{}];
                 
-                [self showAlertWithTitle:@"Connect PayPal" andMsg:@"Just enable Instant Buy when you next list an item for sale on BUMP and you'll be prompted to sign into PayPal & grant the relevant permissions. Got any questions? Just send Team BUMP a message from within the app or email hello@sobump.com"];
+                [self showAlertWithTitle:@"Connect PayPal" andMsg:@"Just enable Instant Buy when you next list an item for sale on BUMP and you'll be prompted to sign into PayPal & grant the relevant permissions. Got any questions? Just message Support from within the app or email hello@sobump.com"];
             }
         }
         else if (indexPath.row == 2){

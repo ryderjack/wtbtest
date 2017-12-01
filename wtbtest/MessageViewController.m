@@ -24,6 +24,7 @@
 #import "AppDelegate.h"
 #import "JRMessage.h"
 #import "Mixpanel/Mixpanel.h"
+#import <Intercom/Intercom.h>
 
 @interface MessageViewController ()
 
@@ -1373,6 +1374,9 @@
                                                          @"type":@"text"
                                                          }];
             
+            //update Intercom
+            [Intercom logEventWithName:@"sent_message" metaData: @{}];
+            
             //add last sent message string to nsuserdefaults (only if not a suggested message)
             //then if all 5 in array are the same string ban this user from messaging
             NSMutableArray *sentArray = [NSMutableArray arrayWithArray:[[NSUserDefaults standardUserDefaults] objectForKey:@"sentArray"]];
@@ -1391,8 +1395,22 @@
                                        customAttributes:@{
                                                           @"username":[PFUser currentUser].username
                                                           }];
-                        //calc an expiry date
-                        //then add to restricted messaging list (via cloudcode)
+                        
+                        //auto ban user via cloud code
+                        NSDictionary *params = @{@"userId": [PFUser currentUser].objectId, @"message": messageString};
+                        [PFCloud callFunctionInBackground:@"spamAutoBan" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                            if (!error) {
+                                NSLog(@"spam ban response %@", response);
+                                [Answers logCustomEventWithName:@"Spam Ban Triggered"
+                                               customAttributes:@{
+                                                                  @"text":messageString
+                                                                  }];
+                            }
+                            else{
+                                NSLog(@"spam ban error %@", error);
+                            }
+                        }];
+                        
                     }
                 }
                 else{
@@ -2861,15 +2879,15 @@
         messageLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
         messageLabel.backgroundColor = [UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0];
     }
-    else if ([[self.suggestedMessagesArray objectAtIndex:index] isEqualToString:@"Send PayPal email"]) {
-        messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
-        messageLabel.textColor = [UIColor whiteColor];
-        messageLabel.backgroundColor = [UIColor colorWithRed:0.42 green:0.42 blue:0.84 alpha:1.0];
-    }
+//    else if ([[self.suggestedMessagesArray objectAtIndex:index] isEqualToString:@"Send PayPal email"]) {
+//        messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
+//        messageLabel.textColor = [UIColor whiteColor];
+//        messageLabel.backgroundColor = [UIColor colorWithRed:0.42 green:0.42 blue:0.84 alpha:1.0];
+//    }
     else{
         messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
         messageLabel.textColor = [UIColor whiteColor];
-        messageLabel.backgroundColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+        messageLabel.backgroundColor = [UIColor blackColor];
     }
     
     return view;
@@ -3147,7 +3165,7 @@
     if (!self.fromOrder) {
         [self.paypalView addSubview:imgView];
         
-        introLabel.text = @"Stay protected & build your reputation by purchasing through BUMP\n\nWhen you're ready to Purchase just hit Buy on the listing and pay through PayPal\n\nIf you're still unsure check out our FAQs in Settings";
+        introLabel.text = @"Stay protected & build your reputation by purchasing through BUMP\n\nWhen you're ready to Purchase just hit Buy on the listing and pay through PayPal\n\nIf you're still unsure check out our Help Center from Settings";
     }
     else{
         //no messages sent previously and order has been created
@@ -3165,15 +3183,9 @@
     introLabel.textColor = [UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0];
     [self.paypalView addSubview:introLabel];
     
-//    [self.paypalView setBackgroundColor:[UIColor redColor]];
-
     [self.view addSubview:self.paypalView];
     
     self.paypalView.center = CGPointMake(CGRectGetMidX([[UIScreen mainScreen]bounds]), CGRectGetMidY([[UIScreen mainScreen]bounds])-(50.0+self.inputToolbar.frame.size.height));
-    
-    //TEST ON DIFFERENT SCREEN SIZES!!!!
-
-    
     
     self.shouldShowPayPalView = YES;
 }

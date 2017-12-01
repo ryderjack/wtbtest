@@ -162,8 +162,9 @@
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
     self.profanityList = @[@"cunt", @"wanker", @"nigger", @"penis", @"cock", @"depop", @"grailed"];
-    self.flagWords = @[@"fake", @"replica", @"ua", @"unauthentic"];
-    
+    self.flagWords = @[@"fake", @"replica", @"ua", @"unauthentic", @"scam", @"scammer"];
+    self.titleFlagWords = @[@"fake", @"replica", @"ua", @"unauthentic", @"scam", @"scammer", @"need gone", @"cheapest"];
+
     self.filesArray = [NSMutableArray array];
     self.imagesArray = [NSMutableArray array];
 
@@ -205,7 +206,7 @@
     }
 
     
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
             NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:@"listUser"];
             
@@ -230,30 +231,43 @@
         [self.itemTitleTextField becomeFirstResponder];
     }
     
+    //automatically let everyone sell now
+    self.verified = YES;
+    
+    //check if user is banned
+    PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+    [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+    [bannedQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            self.banMode = YES;
+            [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
+        }
+    }];
+    
     //check if verified by facebook or email, if neither then show verify email flow
-    if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser]objectForKey:@"facebookId"]) {
-        //user isn't verified
-        self.verified = NO;
-        [self showVerifyAlert];
-    }
-    else{
-        self.verified = YES;
-        
-        //check if user is banned
-        PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
-        [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
-        [bannedQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                self.banMode = YES;
-                [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
-            }
-        }];
-    }
+//    if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser]objectForKey:@"facebookId"]) {
+//        //user isn't verified
+//        self.verified = NO;
+//        [self showVerifyAlert];
+//    }
+//    else{
+//        self.verified = YES;
+//
+//        //check if user is banned
+//        PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+//        [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+//        [bannedQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//            if (object) {
+//                self.banMode = YES;
+//                [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
+//            }
+//        }];
+//    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-
+    
     [[self navigationController] setNavigationBarHidden:NO animated:YES];
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
@@ -872,7 +886,7 @@
                 textField.text = @"";
                 return;
             }
-            else if ([self.flagWords containsObject:string.lowercaseString]){
+            else if ([self.titleFlagWords containsObject:string.lowercaseString]){
                 textField.text = @"";
                 [self showAlertWithTitle:@"Authenticity Warning" andMsg:@"BUMP is for buying/selling authentic streetwear, if you're found to be selling fake or replica items we will be forced to ban your account to protect the community"];
                 return;
@@ -2036,13 +2050,13 @@
     }
     
     //this should be protected against in the shipping options VC
-//    else if (self.buySwitch.isOn && ([self.country isEqualToString:@""] || [self.countryCode isEqualToString:@""])){ //CHANGE test this
-//        [Answers logCustomEventWithName:@"No Country listing error"
-//                       customAttributes:@{}];
-//        [self addLocationPrompt];
-//
-//        [self.longButton setEnabled:YES];
-//    }
+    else if (self.buySwitch.isOn && ([self.country isEqualToString:@""] || [self.countryCode isEqualToString:@""])){
+        [Answers logCustomEventWithName:@"No Country listing error"
+                       customAttributes:@{}];
+
+        [self showAlertWithTitle:@"Country Empty" andMsg:@"Make sure you've added your location in the Shipping options"];
+        [self.longButton setEnabled:YES];
+    }
     else if(([self.chooseCategroy.text isEqualToString:@"Accessories"] || [self.chooseCategroy.text isEqualToString:@"Proxy"]) && ([self.chooseCondition.text isEqualToString:@"Select"] || [self.descriptionField.text isEqualToString:@"Describe the item's style, sizing, and any possible flaws"] || (self.photostotal < 2 && self.ignore2Pics != YES) || (self.photostotal == 0 && self.ignore2Pics == YES) || [titleCheck isEqualToString:@""] || [self.payField.text isEqualToString:@""] || [priceCheck isEqualToString:@"0.00"])){
 //        NSLog(@"accessories selected but haven't filled everything else in");
         
@@ -2482,9 +2496,7 @@
             PFFile *imageFile8 = self.filesArray[7];
             [forSaleItem setObject:imageFile8 forKey:@"image8"];
         }
-        
-        [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];
-        
+                
         int quantInt = 1;
         
         if (![self.quantityField.text isEqualToString:@""]) {
@@ -2520,10 +2532,24 @@
             [forSaleItem setObject:@"NO" forKey:@"instantBuy"];
         }
         
+        [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"]; //CHANGE
+
+        
         if (self.editMode || self.listingAsMode) {
             [self showHUD];
             [forSaleItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
+                    
+                    //update listing's lastUpdated property
+                    //use server func so time is correct
+//                    NSDictionary *params = @{@"listingId":forSaleItem.objectId};
+//                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//                        if (error) {
+//                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
+//                                           customAttributes:@{}];
+//                        }
+//                    }];
+                    
                     NSLog(@"saved listing");
                     [Answers logCustomEventWithName:@"Created for sale listing"
                                    customAttributes:@{}];
@@ -2590,7 +2616,7 @@
                     
                     [self hidHUD];
                     [self.longButton setEnabled:YES];
-                    [self showAlertWithTitle:@"Save Error 477" andMsg:@"We couln't save your item! Make sure you have a strong connection\n\nYour listing images may be too big. Try screenshotting the original images and adding the screenshots to the listing instead\n\nSend Team Bump a message from Settings if you need more help"];
+                    [self showAlertWithTitle:@"Save Error 477" andMsg:@"We couln't save your item! Make sure you have a strong connection\n\nYour listing images may be too big. Try screenshotting the original images and adding the screenshots to the listing instead\n\nSend Support a message from Settings if you need more help"];
                     
                     NSLog(@"error saving listing %@", error);
                 }
@@ -2598,20 +2624,56 @@
 
         }
         else{
+            //for creation, last updated is same as created at
+            //editing the listing requires calling a cloud func to update
+            [forSaleItem setObject:forSaleItem.createdAt forKey:@"lastUpdated"];
+
             //pass the saving onto the purchase tab
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne]];
+            int postNumber = [[[PFUser currentUser] objectForKey:@"forSalePostNumber"]intValue];
             
-            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-            appDelegate.tabBarController.selectedIndex = 0;
-            
-            if (self.introMode) {
-                [self.delegate dismissCreateParent];
+            if (postNumber % 3 == 0) {
+                //display an authentic item reminder every 3 listings this user uploads
+                [self showAuthAlertWithItem:forSaleItem andImg:imageOne];
             }
             else{
-                [self dismissViewControllerAnimated:YES completion:nil];
+                //go ahead and save listing in home VC
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne]];
+
+                AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                appDelegate.tabBarController.selectedIndex = 0;
+
+                if (self.introMode) {
+                    [self.delegate dismissCreateParent];
+                }
+                else{
+                    [self dismissViewControllerAnimated:YES completion:nil];
+                }
             }
         }
     }
+}
+
+-(void)showAuthAlertWithItem:(PFObject *)forSaleItem andImg:(UIImage *)imageOne{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Item Authenticity" message:@"By listing this item on BUMP you are agreeing to BUMP's terms & conditions which forbid the listing of counterfeit/fake items" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"I Agree" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne]];
+        
+        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+        appDelegate.tabBarController.selectedIndex = 0;
+        
+        if (self.introMode) {
+            [self.delegate dismissCreateParent];
+        }
+        else{
+            [self dismissViewControllerAnimated:YES completion:nil];
+        }
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
 }
 
 -(void)showHUD{
@@ -5807,7 +5869,7 @@
         [Answers logCustomEventWithName:@"PayPal Return URL Error"
                        customAttributes:@{}];
         
-        [self showAlertWithTitle:@"PayPal Error" andMsg:@"Please try again, if the problem persists just send Team BUMP a message from Settings"];
+        [self showAlertWithTitle:@"PayPal Error" andMsg:@"Please try again, if the problem persists just send Support a message from Settings"];
         return;
     }
     
@@ -5931,7 +5993,7 @@
                 }
                 else{
                     //user hasn't granted correct permissions
-                    [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Ensure you've ticked the box upon PayPal on boarding to grant the relevant permissions to sell on BUMP. If you need any help just send Team BUMP a message from Settings"];
+                    [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Ensure you've ticked the box upon PayPal on boarding to grant the relevant permissions to sell on BUMP. If you need any help just send Support a message from Settings"];
                     
                     [Answers logCustomEventWithName:@"PayPal Error"
                                    customAttributes:@{
@@ -6025,7 +6087,7 @@
                 }
                 else{
                     //user hasn't granted correct permissions
-                    [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Ensure you've ticked the box upon PayPal on boarding to grant the relevant permissions to sell on BUMP. If you need any help just send Team BUMP a message from Settings"];
+                    [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Ensure you've ticked the box upon PayPal on boarding to grant the relevant permissions to sell on BUMP. If you need any help just send Support a message from Settings"];
                     
                     [Answers logCustomEventWithName:@"PayPal Error"
                                    customAttributes:@{

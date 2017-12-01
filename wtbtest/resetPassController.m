@@ -41,7 +41,7 @@
             //userId's don't match, tapped link in someone else's email perhaps
             NSLog(@"reset id's don't match");
             self.dontMatchError = YES;
-            [self showAlertWithTitle:@"Reset Error 1" andMsg:@"Make sure you're tapping the link in the latest Team Bump Password Reset email!"];
+            [self showAlertWithTitle:@"Reset Error 1" andMsg:@"Make sure you're tapping the link in the latest BUMP Customer Service Password Reset email!"];
         }
     }
 }
@@ -112,7 +112,7 @@
                     [Answers logCustomEventWithName:@"Changed Password Failed"
                                    customAttributes:@{}];
                     
-                    [self showAlertWithTitle:@"Error Changing Password" andMsg:@"Please try again! If the problem persists email hello@sobump.com"];
+                    [self showAlertWithTitle:@"Error Changing Password" andMsg: [NSString stringWithFormat:@"Please try again! If the problem persists email hello@sobump.com\n%@",error.description]];
 
                 }
             }];
@@ -385,7 +385,7 @@
 }
 
 -(void)showEmailAlert{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Reset Email Sent" message:@"You've already requested a password reset! Be sure to check your Junk Folder for an email from Team Bump (hello@sobump.com) You can request another password reset email in 5 mins" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Reset Email Sent" message:@"You've already requested a password reset! Be sure to check your Junk Folder for an email from BUMP Customer Service (hello@sobump.com) You can request another password reset email in 5 mins" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];

@@ -24,12 +24,15 @@
 #import "UIImageView+Letters.h"
 #import "AppDelegate.h"
 #import "segmentedTableView.h"
+#import <Intercom/Intercom.h>
 
 @interface UserProfileController ()
 
 @end
 
 @implementation UserProfileController
+
+typedef void(^myCompletion)(BOOL);
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -143,7 +146,7 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    
+        
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NewTBMessageReg"] == YES && self.tabMode == YES) {
         [self newTBMessageReg];
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NewTBMessageReg"];
@@ -159,14 +162,6 @@
     if (self.tabMode && self.setupHeader) {
         [self calcTabBadge];
     }
-//    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId] && self.tabMode == YES) {
-//        if (self.supportUnseen || self.messagesUnseen) { //CHANGE
-//            [self.backButton setImage:[UIImage imageNamed:@"unreadCog"] forState:UIControlStateNormal];
-//        }
-//        else{
-//            [self.backButton setImage:[UIImage imageNamed:@"profileCog"] forState:UIControlStateNormal];
-//        }
-//    }
     
     //refresh listings when user taps on profile tab
     if (self.tabMode == YES && self.user && self.segmentedControl.selectedSegmentIndex == 0) {
@@ -226,6 +221,16 @@
         [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
                 
+                //check if user needs a badge displayed
+                if ([[self.user objectForKey:@"veriUser"] isEqualToString:@"YES"]) {
+                    self.hasBadge = YES;
+                    self.modBadge = NO;
+                }
+                else if([[self.user objectForKey:@"mod"] isEqualToString:@"YES"]){
+                    self.hasBadge = YES;
+                    self.modBadge = YES;
+                }
+                
                 if ([self.user objectForKey:@"bio"]) {
                     if (![[self.user objectForKey:@"bio"]isEqualToString:@""]) {
                         self.hasBio = YES;
@@ -251,7 +256,16 @@
                 
                 if (!self.setupHeader) {
                     self.setupHeader = YES;
-                    [self addHeaderView];
+                    __weak typeof(self) weakSelf = self;
+
+                    [self addHeaderView:^(BOOL finished) {
+                        if (finished) {
+                            if (![weakSelf.usernameLabel.text isEqualToString:weakSelf.user.username]) {
+                                weakSelf.usernameLabel.text = [NSString stringWithFormat:@"@%@", weakSelf.user.username];
+                                [weakSelf.usernameLabel sizeToFit];
+                            }
+                        }
+                    }];
                 }
                 
                 //check if banned - if so show alert (not on tab mode though)
@@ -270,13 +284,9 @@
                     //tab mode
                     if ([[self.user objectForKey:@"orderNumber"]intValue] > 0) {
                         self.showOrderButton = YES;
-//                        [self.myBar addSubview:self.ordersButton];
+                        [self.myBar addSubview:self.ordersButton];
                     }
-                    
-                    [self.myBar addSubview:self.ordersButton]; //CHANGE remove this and uncomment above
-
                 }
-                
                 
                 [self loadBumpedListings];
                 [self loadWTBListings];
@@ -306,8 +316,6 @@
                     [self.smallImageView setFile:img];
                     [self.smallImageView loadInBackground];
                 }
-                
-                self.usernameLabel.text = [NSString stringWithFormat:@"@%@", self.user.username];
                 
                 if ([self.user objectForKey:@"profileLocation"]) {
                     
@@ -423,7 +431,10 @@
                     [self.myBar addSubview:self.reviewsButton];
                     self.noDeals = NO;
                     
-                    if (total == 1) {
+                    if (total == 0) {
+                        [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
+                    }
+                    else if (total == 1) {
                         [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Review",total] forState:UIControlStateNormal];
                     }
                     else{
@@ -509,7 +520,7 @@
     borderShape.path = mask.path;
     borderShape.strokeColor = [UIColor whiteColor].CGColor;
     borderShape.fillColor = nil;
-    [mask setBorderColor: [[UIColor greenColor] CGColor]];
+    [mask setBorderColor: [[UIColor greenColor] CGColor]]; //CHECK
     
     if (imageView == self.userImageView) {
         borderShape.lineWidth = 6;
@@ -1002,30 +1013,38 @@
         safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
     }
     safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
-    
-//    self.webView = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
-//    self.webView.title = @"F A C E B O O K";
-//    self.webView.showUrlWhileLoading = YES;
-//    self.webView.showPageTitles = NO;
-//    self.webView.doneButtonTitle = @"";
-//    self.webView.payMode = NO;
-////    self.webView.infoMode = NO;
-//    self.webView.delegate = self;
-    
     [self.navigationController presentViewController:safariView animated:YES completion:nil];
 }
 
 -(void)selectedReportReason:(NSString *)reason{
-    [Answers logCustomEventWithName:@"Reported User"
-                   customAttributes:@{}];
-
-    //send message from team bump saying we're looking into it
-    [self sendReportMessageWithReason:reason];
     
-    PFObject *reportObject = [PFObject objectWithClassName:@"ReportedUsers"];
-    reportObject[@"reportedUser"] = self.user;
-    reportObject[@"reporter"] = [PFUser currentUser];
-    [reportObject saveInBackground];
+    NSArray *reportedArray = [self.user objectForKey:@"reportersArray"];
+    
+    if (![reportedArray containsObject:[PFUser currentUser].objectId]) {
+        [Answers logCustomEventWithName:@"Reported User"
+                       customAttributes:@{
+                                          @"reason":reason,
+                                          @"reporter":[PFUser currentUser].objectId,
+                                          @"user":self.user.objectId,
+                                          @"date":[NSDate date]
+                                          }];
+        
+        NSString *mod = @"NO";
+        if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
+            mod = @"YES";
+            
+            [Answers logCustomEventWithName:[NSString stringWithFormat:@"Mod Reported Profile %@ %@", [PFUser currentUser].objectId,[PFUser currentUser].username]
+                           customAttributes:@{
+                                              @"reason":reason,
+                                              @"reporter":[PFUser currentUser].objectId,
+                                              @"user":self.user.objectId,
+                                              @"date":[NSDate date]
+                                              }];
+        }
+        
+        NSDictionary *params = @{@"userId": self.user.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod};
+        [PFCloud callFunctionInBackground:@"reportUserFunction" withParameters: params block:nil];
+    }
 }
 
 -(void)sendReportMessageWithReason:(NSString *)reason{
@@ -1034,78 +1053,78 @@
     
     if ([reason isEqualToString:@"Other"]) {
         if ([[PFUser currentUser]objectForKey:@"firstName"]) {
-            messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for helping keep the Bump community safe and reporting user @%@\n\nMind telling us why you reported the user?\n\nSophie\nTeam Bump",[[PFUser currentUser]objectForKey:@"firstName"],self.user.username];
+            messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for helping keep the Bump community safe and reporting user @%@\n\nMind telling us why you reported the user?\n\nSophie\nBUMP Customer Service",[[PFUser currentUser]objectForKey:@"firstName"],self.user.username];
         }
         else{
-            messageString = [NSString stringWithFormat:@"Hey,\n\nThanks for helping keep the Bump community safe and reporting user @%@\n\nMind telling us why you reported the user?\n\nSophie\nTeam Bump",self.user.username];
+            messageString = [NSString stringWithFormat:@"Hey,\n\nThanks for helping keep the Bump community safe and reporting user @%@\n\nMind telling us why you reported the user?\n\nSophie\nBUMP Customer Service",self.user.username];
         }
     }
     else{
         if ([[PFUser currentUser]objectForKey:@"firstName"]) {
-            messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for helping to keep the Bump community safe and reporting user @%@\n\nReason: %@\n\nWe'll get in touch if we have any more questions 👊\n\nSophie\nTeam Bump",[[PFUser currentUser]objectForKey:@"firstName"],self.user.username, reason];
+            messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for helping to keep the Bump community safe and reporting user @%@\n\nReason: %@\n\nWe'll get in touch if we have any more questions 👊\n\nSophie\nBUMP Customer Service",[[PFUser currentUser]objectForKey:@"firstName"],self.user.username, reason];
         }
         else{
-            messageString = [NSString stringWithFormat:@"Hey,\n\nThanks for helping to keep the Bump community safe and reporting user @%@\n\nReason: %@\n\nWe'll get in touch if we have any more questions 👊\n\nSophie\nTeam Bump",self.user.username, reason];
+            messageString = [NSString stringWithFormat:@"Hey,\n\nThanks for helping to keep the Bump community safe and reporting user @%@\n\nReason: %@\n\nWe'll get in touch if we have any more questions 👊\n\nSophie\nBUMP Customer Service",self.user.username, reason];
         }
     }
     
     //now save report message
-    PFObject *messageObject1 = [PFObject objectWithClassName:@"teamBumpMsgs"];
-    messageObject1[@"message"] = messageString;
-    messageObject1[@"sender"] = [PFUser currentUser];
-    messageObject1[@"senderId"] = @"BUMP";
-    messageObject1[@"senderName"] = @"Team Bump";
-    messageObject1[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-    messageObject1[@"status"] = @"sent";
-    messageObject1[@"offer"] = @"NO";
-    messageObject1[@"mediaMessage"] = @"NO";
-    messageObject1[@"boostMessage"] = @"YES";
-    [messageObject1 saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-        if (succeeded) {
-            
-            //update profile tab bar badge
-            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-            [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
-            
-            //update convo
-            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
-            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-            [convoQuery whereKey:@"convoId" equalTo:convoId];
-            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                if (object) {
-                    
-                    //got the convo
-                    [object incrementKey:@"totalMessages"];
-                    [object setObject:messageObject1 forKey:@"lastSent"];
-                    [object setObject:[NSDate date] forKey:@"lastSentDate"];
-                    [object incrementKey:@"userUnseen"];
-                    [object saveInBackground];
-                    
-                    [Answers logCustomEventWithName:@"Sent Report Message"
-                                   customAttributes:@{
-                                                      @"status":@"SENT",
-                                                      @"type":@"User"
-                                                      }];
-                }
-                else{
-                    [Answers logCustomEventWithName:@"Sent Report Message"
-                                   customAttributes:@{
-                                                      @"status":@"Failed getting convo",
-                                                      @"type":@"User"
-                                                      }];
-                }
-            }];
-        }
-        else{
-            NSLog(@"error saving report message %@", error);
-            [Answers logCustomEventWithName:@"Sent Report Message"
-                           customAttributes:@{
-                                              @"status":@"Failed saving message",
-                                              @"type":@"User"
-                                              }];
-        }
-    }];
+//    PFObject *messageObject1 = [PFObject objectWithClassName:@"teamBumpMsgs"];
+//    messageObject1[@"message"] = messageString;
+//    messageObject1[@"sender"] = [PFUser currentUser];
+//    messageObject1[@"senderId"] = @"BUMP";
+//    messageObject1[@"senderName"] = @"Team Bump";
+//    messageObject1[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+//    messageObject1[@"status"] = @"sent";
+//    messageObject1[@"offer"] = @"NO";
+//    messageObject1[@"mediaMessage"] = @"NO";
+//    messageObject1[@"boostMessage"] = @"YES";
+//    [messageObject1 saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//        if (succeeded) {
+//
+//            //update profile tab bar badge
+//            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+//            [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
+//            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
+//
+//            //update convo
+//            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
+//            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+//            [convoQuery whereKey:@"convoId" equalTo:convoId];
+//            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//                if (object) {
+//
+//                    //got the convo
+//                    [object incrementKey:@"totalMessages"];
+//                    [object setObject:messageObject1 forKey:@"lastSent"];
+//                    [object setObject:[NSDate date] forKey:@"lastSentDate"];
+//                    [object incrementKey:@"userUnseen"];
+//                    [object saveInBackground];
+//
+//                    [Answers logCustomEventWithName:@"Sent Report Message"
+//                                   customAttributes:@{
+//                                                      @"status":@"SENT",
+//                                                      @"type":@"User"
+//                                                      }];
+//                }
+//                else{
+//                    [Answers logCustomEventWithName:@"Sent Report Message"
+//                                   customAttributes:@{
+//                                                      @"status":@"Failed getting convo",
+//                                                      @"type":@"User"
+//                                                      }];
+//                }
+//            }];
+//        }
+//        else{
+//            NSLog(@"error saving report message %@", error);
+//            [Answers logCustomEventWithName:@"Sent Report Message"
+//                           customAttributes:@{
+//                                              @"status":@"Failed saving message",
+//                                              @"type":@"User"
+//                                              }];
+//        }
+//    }];
 }
 
 -(void)SetupListing{
@@ -1118,7 +1137,7 @@
 
 -(void)addForSalePressed{
     
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]) {
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
         //sam's upload stock code
         UIAlertController *alertController = [UIAlertController
                                               alertControllerWithTitle:@"Post as User"
@@ -1546,7 +1565,7 @@
     [self.navigationController popViewControllerAnimated:YES];
 }
 
--(void)setupHeaderBar{
+-(void)setupHeaderBar:(myCompletion) block{
     int heightInt = 0;
     
     if (self.hasBio || self.tabMode) {
@@ -1609,11 +1628,13 @@
     [self.myBar addSubview:self.nameAndLoc];
     
     //top username
-    self.usernameLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 300, 50)];
+//    self.usernameLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0,300, 50)];
+    self.usernameLabel = [[UILabel alloc] init];
     self.usernameLabel.numberOfLines = 1;
     self.usernameLabel.font = [UIFont fontWithName:@"PingFangSC-Medium" size:13];
     self.usernameLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
     self.usernameLabel.textAlignment = NSTextAlignmentCenter;
+    
     [self.myBar addSubview:self.usernameLabel];
     
     //verified label
@@ -1657,7 +1678,7 @@
     [self.myBar addSubview:self.backButton];
     
     if (self.tabMode) {
-        self.ordersButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 35, 35)]; //CHANGE
+        self.ordersButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 35, 35)];
         [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon2"] forState:UIControlStateNormal];
         [self.ordersButton addTarget:self action:@selector(ordersButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -1709,6 +1730,9 @@
     
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributes = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributes.size = self.userImageView.frame.size;
+    
+    //this causes user's username to be added to the label & the width calculated before locking in the frame for the header bar
+    block(YES);
     
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesUsernameLabel = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesUsernameLabel.size = self.usernameLabel.frame.size;
@@ -1767,7 +1791,12 @@
         initialLayoutAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-40.0 + adjust);//-25
         
         //top username label
-        initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
+        if (self.hasBadge) {
+            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2)-10.5, CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
+        }
+        else{
+            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
+        }
         
         //verified with
         initialLayoutAttributesVerifiedLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0);//-25
@@ -1818,6 +1847,14 @@
         
         //top username label
         initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+60.0);
+        
+        //top username label
+        if (self.hasBadge) {
+            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2) -10.5, CGRectGetMidY(self.myBar.bounds)+60.0);
+        }
+        else{
+            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+60.0);
+        }
         
         //verified with
         initialLayoutAttributesVerifiedLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+60.0);
@@ -1883,6 +1920,7 @@
     // This is what we want the bar to look like at its maximum height (progress == 0.0)
     [self.userImageView addLayoutAttributes:initialLayoutAttributes forProgress:0.0];
     [self.nameAndLoc addLayoutAttributes:initialLayoutAttributesLabel forProgress:0.0];
+    
     [self.usernameLabel addLayoutAttributes:initialLayoutAttributesUsernameLabel forProgress:0.0];
 
     [self.verifiedWithLabel addLayoutAttributes:initialLayoutAttributesVerifiedLabel forProgress:0.0];
@@ -1897,8 +1935,6 @@
     [self.dividerImgView addLayoutAttributes:initialDividerView forProgress:0.0];
     
     [self.ordersButton addLayoutAttributes:initialLayoutAttributesOrdersButton forProgress:0.0];
-
-
     
     // small mode
     
@@ -1907,9 +1943,10 @@
     finalBgAttributes.alpha = 0.0;
     [self.bgView addLayoutAttributes:finalBgAttributes forProgress:0.4];
     
+    //divider view
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalDividerAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialDividerView];
     finalDividerAttributes.alpha = 0.0;
-    [self.dividerImgView addLayoutAttributes:finalDividerAttributes forProgress:0.4];
+    [self.dividerImgView addLayoutAttributes:finalDividerAttributes forProgress:0.2];
     
     // image view final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributes];
@@ -1929,7 +1966,6 @@
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesVerified = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesVerifiedLabel];
     finalLayoutAttributesVerified.alpha = 0.0;
     [self.verifiedWithLabel addLayoutAttributes:finalLayoutAttributesVerified forProgress:0.2];
-    
     
     //verified img view final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesVerifiedImageView = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesVerifiedImageView];
@@ -2014,6 +2050,8 @@
         //finish on this so we can update button images if any unread upon first tap on user's profile
         [self calcTabBadge];
     }
+    
+    NSLog(@"finished setup header");
 }
 
 -(void)setupTrustedChecks{
@@ -2076,7 +2114,7 @@
         NSLog(@"error with data");
         [self hideHUD];
         [picker dismissViewControllerAnimated:YES completion:nil];
-        [self showAlertWithTitle:@"Image Error" andMsg:@"Woops, something went wrong. Please try again! If this keeps happening please message Team Bump from your profile"];
+        [self showAlertWithTitle:@"Image Error" andMsg:@"Woops, something went wrong. Please try again! If this keeps happening please message Support from Settings"];
         [Answers logCustomEventWithName:@"PFFile Nil Data"
                        customAttributes:@{
                                           @"pageName":@"Profile"
@@ -2131,9 +2169,9 @@
         profile.unseenTBMsg = YES;
     }
     
-    if (self.supportUnseen > 0) {
-        profile.unseenSupport = YES;
-    }
+//    if (self.supportUnseen > 0) {
+//        profile.unseenSupport = YES;
+//    }
     
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:profile];
     [self presentViewController:nav animated:YES completion:nil];
@@ -2249,7 +2287,7 @@
                     [Answers logCustomEventWithName:@"Failed to Link Facebook Account"
                                    customAttributes:@{}];
                     
-                    [self showAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for Bump with your Facebook account\n\nSend Team Bump a message from Settings and we'll get it sorted!"];
+                    [self showAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for Bump with your Facebook account\n\nSend Support a message from Settings and we'll get it sorted!"];
                 }
             }
         }];
@@ -2428,7 +2466,7 @@
 }
 
 -(void)showEarlyAlert{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:@"We've just sent you a confirmation email! Be sure to check your Junk Folder for an email from Team Bump\n\nIf you still can't find it, make sure your email is correct in settings then try again here in 5 mins so we can send another!\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:@"We've just sent you a confirmation email! Be sure to check your Junk Folder for an email from BUMP Customer Service\n\nIf you still can't find it, make sure your email is correct in settings then try again here in 5 mins so we can send another!\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -2445,53 +2483,16 @@
 }
 
 -(void)showMaxAlert{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:@"We've already sent you 3 confirmation emails!\n\nBe sure to check your Junk Folder for an email from Team Bump. If you still can't find it, send Team Bump a message\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:@"We've already sent you 3 confirmation emails!\n\nBe sure to check your Junk Folder for an email from BUMP Customer Service. If you still can't find it, send Support a message from Settings\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Message Team Bump" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Message Support" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [Answers logCustomEventWithName:@"Message Team Bump Pressed from Max Email Alert"
                        customAttributes:@{}];
         
-        //goto Team Bump messages
-        PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
-        NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-        [convoQuery whereKey:@"convoId" equalTo:convoId];
-        [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                //convo exists, go there
-                ChatWithBump *vc = [[ChatWithBump alloc]init];
-                vc.convoId = [object objectForKey:@"convoId"];
-                vc.convoObject = object;
-                vc.otherUser = [PFUser currentUser];
-                
-                //unhide nav bar
-                [self.navigationController pushViewController:vc animated:YES];
-            }
-            else{
-                //create a new one
-                PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
-                convoObject[@"otherUser"] = [PFUser currentUser];
-                convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-                convoObject[@"totalMessages"] = @0;
-                [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-                        //saved, goto VC
-                        ChatWithBump *vc = [[ChatWithBump alloc]init];
-                        vc.convoId = [convoObject objectForKey:@"convoId"];
-                        vc.convoObject = convoObject;
-                        vc.otherUser = [PFUser currentUser];
-                        
-                        //unhide nav bar
-                        [self.navigationController pushViewController:vc animated:YES];
-                    }
-                    else{
-                        NSLog(@"error saving convo");
-                    }
-                }];
-            }
-        }];
+        [Intercom presentMessenger];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -2933,10 +2934,10 @@
     [blockedObject setObject:@"live" forKey:@"status"];
     [blockedObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
-            [self showAlertWithTitle:@"User Blocked" andMsg:@"They can no longer message you on Bump, if you'd like some support just message Team Bump from Settings"];
+            [self showAlertWithTitle:@"User Blocked" andMsg:@"They can no longer message you on BUMP, if you'd like some support just message Support from Settings"];
         }
         else{
-            [self showAlertWithTitle:@"Error Blocking User" andMsg:@"Send Team Bump a message from Settings to get this sorted"];
+            [self showAlertWithTitle:@"Error Blocking User" andMsg:@"Send Support a message from Settings to get this sorted"];
         }
     }];
 }
@@ -2953,15 +2954,20 @@
                     [self showAlertWithTitle:@"User Unblocked" andMsg:nil];
                 }
                 else{
-                    [self showAlertWithTitle:@"Error Unblocking User" andMsg:@"Send Team Bump a message from Settings to get this sorted"];
+                    [self showAlertWithTitle:@"Error Unblocking User" andMsg:@"Send Support a message from Settings to get this sorted"];
                 }
             }];
         }
     }];
 }
 
--(void)addHeaderView{
-    [self setupHeaderBar];
+-(void)addHeaderView:(myCompletion) block{
+    [self setupHeaderBar:^(BOOL finished) {
+        if (finished) {
+            //triggers username to be assigned to label & width calculated
+            block(YES);
+        }
+    }];
     
     self.segmentedControl = [[HMSegmentedControl alloc] init];
     self.segmentedControl.frame = CGRectMake(0, self.myBar.frame.size.height-50,[UIApplication sharedApplication].keyWindow.frame.size.width, 50);
@@ -2998,6 +3004,42 @@
     self.WTBSelected = NO;
     self.WTSSelected = YES;
     self.bumpsSelected = NO;
+    
+    if (!self.badgeView && self.hasBadge) {
+        //badge image view
+        self.badgeView = [[PFImageView alloc]initWithFrame:CGRectMake(0, 0, 15, 15)];
+        
+        if (self.modBadge) {
+            [self.badgeView setImage:[UIImage imageNamed:@"modBadge"]];
+        }
+        else{
+            [self.badgeView setImage:[UIImage imageNamed:@"veriBadge"]];
+        }
+        
+        [self.myBar addSubview:self.badgeView];
+
+        BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesBadgeView = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
+        initialLayoutAttributesBadgeView.size = self.badgeView.frame.size;
+        
+        if (self.hasBio || self.tabMode) {
+            initialLayoutAttributesBadgeView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2) + ((self.usernameLabel.frame.size.width/2) + 3), CGRectGetMidY(self.myBar.bounds)+35.0);
+            
+            // so to ensure we place the badge directly after the username label we do a few things:
+            //1. get the mid point of the username label
+            //2. add half of the username label's width to it
+            //3. minus half of the badgeView's width from the usernameLabel's X origin (at this point the badge is directly after the usernameLabel)
+            //4. we add a gap of 3px here and subtract 3px from the usernameLabel's X origin to create a gap in the centre of the 2 objects
+        }
+        else{
+            initialLayoutAttributesBadgeView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2) + ((self.usernameLabel.frame.size.width/2)), CGRectGetMidY(self.myBar.bounds)+60.0);
+        }
+        
+        [self.badgeView addLayoutAttributes:initialLayoutAttributesBadgeView forProgress:0.0];
+
+        BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesBadgeView = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesBadgeView];
+        finalLayoutAttributesBadgeView.alpha = 0.0;
+        [self.badgeView addLayoutAttributes:finalLayoutAttributesBadgeView forProgress:0.2];
+    }
 }
 
 -(void)addBioTapped{
@@ -3105,5 +3147,9 @@
     else{
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d",tabInt]];
     }
+}
+
+-(void)setupUsernameLabel{
+    
 }
 @end

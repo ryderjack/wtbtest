@@ -699,7 +699,7 @@
     self.customAlert = (customAlertViewClass *)[nib objectAtIndex:0];
     self.customAlert.delegate = self;
     
-    self.customAlert.titleLabel.text = @"UK Sizes";
+    self.customAlert.titleLabel.text = @"US Sizes";
     
     //prompt user that multiple sizes can be selected
     if (self.sellListing == YES) {

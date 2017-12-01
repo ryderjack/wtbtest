@@ -15,6 +15,8 @@
 #import "NavigationController.h"
 #import <Crashlytics/Crashlytics.h>
 #import "AppDelegate.h"
+#import <Intercom/Intercom.h>
+#import "Mixpanel/Mixpanel.h"
 
 @interface WelcomeViewController ()
 
@@ -103,7 +105,8 @@
                     NSLog(@"user is banned");
                     
                     [PFUser logOut];
-                    
+                    [Intercom reset];
+
                     [Answers logCustomEventWithName:@"Logging Banned User Out"
                                    customAttributes:@{
                                                       @"from":@"Welcome"
@@ -111,13 +114,13 @@
                     [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
 
                 }
-                else{
+                else{ //CHANGE
                     //do final check against NSUserDefaults incase user was banned without device token coz didn't enable push
                     if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"banned"] isEqualToString:@"YES"]) {
                         NSLog(@"user is banned");
-                        
+
                         [PFUser logOut];
-                        
+
                         [Answers logCustomEventWithName:@"Logging Banned User Out"
                                        customAttributes:@{
                                                           @"from":@"Welcome",
@@ -148,6 +151,25 @@
                             [[PFUser currentUser] saveInBackground];
                         }
                         
+                        //log user with intercom
+                        NSDictionary *params = @{@"userId": user.objectId};
+                        [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
+                            if (!error) {
+                                [Intercom setUserHash:hash];
+                                [Intercom registerUserWithUserId:user.objectId];
+                                [[NSNotificationCenter defaultCenter] postNotificationName:@"registerIntercom" object:nil];
+                            }
+                            else{
+                                [Answers logCustomEventWithName:@"Intercom Verify Error"
+                                               customAttributes:@{
+                                                                  @"where":@"welcome reg completed"
+                                                                  }];
+                            }
+                        }];
+                        
+                        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                        [mixpanel identify:user.objectId];
+
                         //take to app
                         [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshHome" object:nil];
                         [self.delegate welcomeDismissed];
@@ -157,6 +179,23 @@
                         //haven't completed it take them there
                         RegisterViewController *vc = [[RegisterViewController alloc]init];
                         vc.user = user;
+                        
+                        //log user with intercom
+                        NSDictionary *params = @{@"userId": user.objectId};
+                        [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
+                            if (!error) {
+                                [Intercom setUserHash:hash];
+                                [Intercom registerUserWithUserId:user.objectId];
+                                [[NSNotificationCenter defaultCenter] postNotificationName:@"registerIntercom" object:nil];
+                            }
+                            else{
+                                [Answers logCustomEventWithName:@"Intercom Verify Error"
+                                               customAttributes:@{
+                                                                  @"where":@"welcome"
+                                                                  }];
+                            }
+                        }];
+                        
                         [self.navigationController pushViewController:vc animated:YES];
                     }
                 }

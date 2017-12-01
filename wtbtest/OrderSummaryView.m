@@ -14,6 +14,7 @@
 #import "ChatWithBump.h"
 #import "UIImageView+Letters.h"
 #import "ReviewsVC.h"
+#import <Intercom/Intercom.h>
 
 @interface OrderSummaryView ()
 
@@ -62,6 +63,8 @@
     
     [self.orderObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
+            
+            self.title = [NSString stringWithFormat:@"O R D E R  #%@", [self.orderObject.objectId uppercaseString]];
             
             self.dateFormat = [[NSDateFormatter alloc] init];
             [self.dateFormat setLocale:[NSLocale currentLocale]];
@@ -213,9 +216,7 @@
                 paymentString = [NSString stringWithFormat:@"Payment Received\n%@ sent to your PayPal",[self.orderObject objectForKey:@"totalPriceLabel"]];
             }
             
-            
             self.paymentLabel.text = paymentString;
-            
             
             //setup next steps
             
@@ -239,28 +240,29 @@
                     [self.refundButton setTitle:@"Request a Refund" forState:UIControlStateNormal];
                 }
                 
-                if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
-                    //this user left a review
-                    self.leftFeedback = YES;
-                    
-                    //get number of stars that this user left & set correct image on leftStarImgView
-                    int buyerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
-                    if (buyerStars == 1) {
-                        [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
-                    }
-                    else if (buyerStars == 2){
-                        [self.leftStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
-                    }
-                    else if (buyerStars == 3){
-                        [self.leftStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
-                    }
-                    else if (buyerStars == 4){
-                        [self.leftStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
-                    }
-                    else if (buyerStars == 5){
-                        [self.leftStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
-                    }
-                }
+                //CHANGE remove comments
+//                if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
+//                    //this user left a review
+//                    self.leftFeedback = YES;
+//
+//                    //get number of stars that this user left & set correct image on leftStarImgView
+//                    int buyerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
+//                    if (buyerStars == 1) {
+//                        [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
+//                    }
+//                    else if (buyerStars == 2){
+//                        [self.leftStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
+//                    }
+//                    else if (buyerStars == 3){
+//                        [self.leftStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
+//                    }
+//                    else if (buyerStars == 4){
+//                        [self.leftStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
+//                    }
+//                    else if (buyerStars == 5){
+//                        [self.leftStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
+//                    }
+//                }
                 
                 if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"YES"]) {
                     //other user has left a review
@@ -681,7 +683,7 @@
     }
     self.tappedSupport = YES;
     
-    [self showHUD];
+    [self showHUDForCopy:NO];
     
     //get the support ticket or create a new one if needed
     PFQuery *convoQuery = [PFQuery queryWithClassName:@"supportConvos"];
@@ -786,7 +788,7 @@
 - (IBAction)messagePressed:(id)sender {
     [self setupMessages];
 }
-- (IBAction)refundPressed:(id)sender { //CHANGE add cloud functions
+- (IBAction)refundPressed:(id)sender {
     if (self.isBuyer) {
         //buyer pressed
         if (self.refundRequested) {
@@ -833,8 +835,6 @@
     [alertView addAction:[UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     [alertView addAction:[UIAlertAction actionWithTitle:@"Issue Refund" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-
-        //CHANGE add in check for return URL first? then can call another cloud func to build the URL ourselves after retrieving the capture_id from a GET account status
         
         NSDictionary *params = @{
                                      @"orderId":self.orderObject.objectId,
@@ -845,7 +845,7 @@
                                      @"refundURL":[self.orderObject objectForKey:@"refundURL"],
                                      @"payerId":[self.orderObject objectForKey:@"merchantId"]
                                 };
-        [self showHUD];
+        [self showHUDForCopy:NO];
         [PFCloud callFunctionInBackground:@"triggerRefund" withParameters:params block:^(NSDictionary *response, NSError *error) {
             if (!error) {
                 [Answers logCustomEventWithName:@"Refund triggered"
@@ -888,7 +888,7 @@
                                  @"refundURL":[self.orderObject objectForKey:@"refundURL"],
                                  @"payerId":[self.orderObject objectForKey:@"merchantId"]
                                  };
-        [self showHUD];
+        [self showHUDForCopy:NO];
         [PFCloud callFunctionInBackground:@"triggerRefund" withParameters:params block:^(NSDictionary *response, NSError *error) {
             if (!error) {
                 [self hideHUD];
@@ -979,10 +979,10 @@
 - (IBAction)shippingButtonPressed:(id)sender {
     if (!self.shipped) {
         if (self.isBuyer) {
-            [self helpPressed];
+            [Intercom presentMessenger];
         }
         else{
-            [self showHUD];
+            [self showHUDForCopy:NO];
             
             NSDictionary *params = @{
                                      @"orderId":self.orderObject.objectId,
@@ -1030,7 +1030,7 @@
     else{
         if (self.isBuyer) {
             //report an issue pressed
-            [self helpPressed];
+            [Intercom presentMessenger];
         }
         else{
             //add tracking pressed
@@ -1336,7 +1336,7 @@
     
     self.settingUpMessages = YES;
     
-    [self showHUD];
+    [self showHUDForCopy:NO];
     
     PFQuery *convoQuery = [PFQuery queryWithClassName:@"convos"];
     
@@ -1471,21 +1471,22 @@
 
 #pragma mark - HUD
 
--(void)showHUD{
+-(void)showHUDForCopy:(BOOL)copying{
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
     
-    if (!self.spinner) {
-        self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
-    }
-    
-    [self.spinner startAnimating];
-    
-    if (!self.hud) {
-        self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
-        self.hud.square = YES;
-        self.hud.mode = MBProgressHUDModeCustomView;
+    if (!copying) {
+        if (!self.spinner) {
+            self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
+        }
+        
         self.hud.customView = self.spinner;
+        [self.spinner startAnimating];
     }
-    
+    else{
+        self.hud.labelText = @"Copied";
+    }
 }
 
 -(void)hideHUD{
@@ -1575,7 +1576,25 @@
     }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Contact Support" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [self helpPressed];
+        [Intercom presentMessenger];
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Order #ID" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Copied Order ID"
+                       customAttributes:@{}];
+        
+        UIPasteboard *pb = [UIPasteboard generalPasteboard];
+        [pb setString:[NSString stringWithFormat:@"#%@",[self.orderObject.objectId uppercaseString]]];
+        
+        //show HUD
+        [self showHUDForCopy:YES];
+        
+        double delayInSeconds = 2.0; // number of seconds to wait
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            [self hideHUD];
+            self.hud.labelText = @"";
+        });
     }]];
     
     [self presentViewController:actionSheet animated:YES completion:nil];

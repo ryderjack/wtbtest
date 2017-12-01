@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import <MessageUI/MessageUI.h>
-#import "TOJRWebView.h"
 #import "inviteViewClass.h"
 #import "segmentedTableView.h"
 
@@ -20,7 +19,7 @@
 - (void)snapSeen;
 @end
 
-@interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate, JRWebViewDelegate, inviteDelegate,segmentedViewDelegate>
+@interface ProfileController : UITableViewController <MFMailComposeViewControllerDelegate, inviteDelegate,segmentedViewDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *receivedOffers;
@@ -60,9 +59,6 @@
 
 @property (nonatomic) BOOL showSnapDot;
 @property (nonatomic) BOOL tappedTB;
-
-//web
-@property (nonatomic, strong) TOJRWebView *webView;
 
 //invite pop up
 @property (nonatomic, strong) inviteViewClass *inviteView;

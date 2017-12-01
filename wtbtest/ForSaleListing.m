@@ -24,6 +24,8 @@
 #import "SelectViewController.h"
 #import <CLPlacemark+HZContinents.h>
 #import "OrderSummaryView.h"
+#import "Mixpanel/Mixpanel.h"
+#import <Intercom/Intercom.h>
 
 @interface ForSaleListing ()
 
@@ -169,6 +171,15 @@
         [self.zoomPromptLabel setHidden:NO];
     }
     
+    //tracking - don't track this, would be using up mixpanel resources unnecessarily
+//    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+//    [mixpanel track:@"viewed_listing" properties:@{}];
+    
+    [Answers logCustomEventWithName:@"Viewed page"
+                   customAttributes:@{
+                                      @"pageName":@"Sale Listing"
+                                      }];
+    
 }
 
 -(void)hideZoomPrompt{
@@ -306,7 +317,7 @@
             [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
                     self.fetchedUser = YES; //to help stop messages infinite spinner
-                    
+                                        
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [self.usernameButton setTitle:[NSString stringWithFormat:@"@%@", self.seller.username] forState:UIControlStateNormal];
                     });
@@ -335,9 +346,7 @@
                     else if (!self.messageButton){
                         [self setupMessageBarButton];
                     }
-                }
-
-                
+                }                
                 [self showBarButton];
             }
             
@@ -411,7 +420,7 @@
             if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"proxy"]) {
                 if ([[NSUserDefaults standardUserDefaults]boolForKey:@"seenProxyWarning"] != YES) {
                     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenProxyWarning"];
-                    [self showNormalAlertWithTitle:@"Proxy Warning" andMsg:@"A proxy is when someone is willing to queue up for unreleased items on your behalf, it's like a preorder. Usually, you will pay someone proxying for you the retail price of the item plus a fee for the service.\n\nBe careful, always pay via PayPal Goods & Services and ask the user proxying for references so you can be sure they're legitimate. If a user claims they need the payment to be gifted in order to access the funds faster, it's better to decline and find someone that will accept PayPal Goods & Services.\n\nIf you're ever unsure about a proxy, message Team Bump and we'll help you out 🤝"];
+                    [self showNormalAlertWithTitle:@"Proxy Warning" andMsg:@"A proxy is when someone is willing to queue up for unreleased items on your behalf, it's like a preorder. Usually, you will pay someone proxying for you the retail price of the item plus a fee for the service.\n\nBe careful, always pay via PayPal Goods & Services and ask the user proxying for references so you can be sure they're legitimate. If a user claims they need the payment to be gifted in order to access the funds faster, it's better to decline and find someone that will accept PayPal Goods & Services.\n\nIf you're ever unsure about a proxy, message Support from Settings and we'll help you out 🤝"];
                 }
             }
             
@@ -571,6 +580,16 @@
                 //not the same buyer
                 [self.listingObject incrementKey:@"views"];
                 [self.listingObject saveInBackground];
+                
+                //check if user already reported this item before
+                //we save all reported in an arra, also have an array of the dates too
+                NSArray *reportedArray = [self.listingObject objectForKey:@"reportedArray"];
+
+                if ([reportedArray containsObject:[PFUser currentUser].objectId]) {
+                    //disable report button
+                    [self.reportButton setEnabled:NO];
+                    [self.reportLabel setTitle:@"R E P O R T E D" forState:UIControlStateNormal];
+                }
             }
             
             //setup number of likes
@@ -693,7 +712,7 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-
+    
     //make sure not adding duplicate observers
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
@@ -938,79 +957,8 @@
         [self showBarButton];
     }]];
     
-    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
-        
-//        if ([[self.listingObject objectForKey:@"status"] isEqualToString:@"sold"]) {
-//            
-//            //user's profile tab is listening for this to reload the cell and not scroll up!
-//            [self.delegate changedSoldStatus];
-//            
-//            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unmark as sold" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//                [self showBarButton];
-//                [self.listingObject setObject:@"live" forKey:@"status"];
-//                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                    if (succeeded) {
-//                        //hide label
-//                        self.soldLabel.alpha = 1.0;
-//                        self.soldCheckImageVoew.alpha = 1.0;
-//                        
-//                        [UIView animateWithDuration:0.5
-//                                              delay:0
-//                                            options:UIViewAnimationOptionCurveEaseIn
-//                                         animations:^{
-//                                             if([[self.listingObject objectForKey:@"feature"]isEqualToString:@"YES"]){
-//                                                 self.soldLabel.text = @"Featured";
-//                                                 [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"featuredCheck"]];
-//                                             }
-//                                             else{
-//                                                 self.soldLabel.alpha = 0.0;
-//                                                 self.soldCheckImageVoew.alpha = 0.0;
-//                                             }
-//                                         }
-//                                         completion:^(BOOL finished) {
-//                                             if(![[self.listingObject objectForKey:@"feature"]isEqualToString:@"YES"]){
-//                                                 [self.soldLabel setHidden:YES];
-//                                                 [self.soldCheckImageVoew setHidden:YES];
-//                                             }
-//                                         }];
-//                    }
-//                }];
-//            }]];
-//        }
-//        else{
-//            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Mark as sold" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//                
-//                //user's profile tab is listening for this to reload the cell and not scroll up!
-//                [self.delegate changedSoldStatus];
-//                
-//                [self showBarButton];
-//                [self.listingObject setObject:@"sold" forKey:@"status"];
-//                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                    if (succeeded) {
-//                        //unhide label
-//                        self.soldLabel.alpha = 0.0;
-//                        self.soldCheckImageVoew.alpha = 0.0;
-//                        
-//                        self.soldLabel.text = @"S O L D";
-//                        [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
-//                        
-//                        [self.soldLabel setHidden:NO];
-//                        [self.soldCheckImageVoew setHidden:NO];
-//                        
-//                        [UIView animateWithDuration:0.5
-//                                              delay:0
-//                                            options:UIViewAnimationOptionCurveEaseIn
-//                                         animations:^{
-//                                             self.soldLabel.alpha = 1.0;
-//                                             self.soldCheckImageVoew.alpha = 1.0;
-//                                             
-//                                         }
-//                                         completion:nil];
-//                    }
-//                }];
-//            }]];
-//        }
-//        
+    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
+ 
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
             
@@ -1021,6 +969,13 @@
                 [self.listingObject setObject:@"deleted" forKey:@"status"];
                 [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                     if (succeeded) {
+                        
+                        //decrement forSalePostNumber
+                        if (![[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] && ![[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] && ![[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
+                            [[PFUser currentUser]incrementKey:@"forSalePostNumber" byAmount:@-1];
+                            [[PFUser currentUser] saveInBackground];
+                        }
+                        
                         [self.delegate deletedItem];
                         [self.navigationController popViewControllerAnimated:YES];
                     }
@@ -1040,7 +995,7 @@
         
         
         NSMutableArray *items = [NSMutableArray new];
-        [items addObject:[NSString stringWithFormat:@"For sale on Bump 🏷\n\n'%@'\n\nhttp://sobump.com/p?selling=%@",[self.listingObject objectForKey:@"itemTitle" ],self.listingObject.objectId]];
+        [items addObject:[NSString stringWithFormat:@"For sale on BUMP 🏷\n\n'%@'\n\nhttp://sobump.com/p?selling=%@",[self.listingObject objectForKey:@"itemTitle" ],self.listingObject.objectId]];
         UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
         [self presentViewController:activityController animated:YES completion:nil];
         
@@ -1090,6 +1045,13 @@
     }
 }
 
+-(void)showHUDForReport{
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.labelText = @"Reported";
+}
+
 -(void)hideHUD{
     dispatch_async(dispatch_get_main_queue(), ^{
         [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
@@ -1106,12 +1068,12 @@
     self.anyButtonPressed = YES;
     [self.buyButton setEnabled:NO];
     
+    //tracking
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"tapped_buy_listing" properties:@{}];
+    
     CheckoutSummary *vc = [[CheckoutSummary alloc]init];
     vc.listingObject = self.listingObject;
-    
-//    if (![[PFUser currentUser]objectForKey:@"address"]) {
-//        vc.addAddress = YES;
-//    }
     
     self.anyButtonPressed = YES;
     vc.delegate = self;
@@ -2785,7 +2747,9 @@
         }
         
         [self.listingObject setObject:bumpArray forKey:@"bumpArray"];
-        [self.listingObject incrementKey:@"bumpCount" byAmount:@-1];
+        if ([[self.listingObject objectForKey:@"bumpCount"]intValue]>0) {
+            [self.listingObject incrementKey:@"bumpCount" byAmount:@-1];
+        }
         
         //update personal array of bumped WTS lisitngs by removing this listing's ID
         if ([personalSaleBumpArray containsObject:self.listingObject.objectId]) {
@@ -2798,6 +2762,8 @@
     }
     else{
         NSLog(@"bumped");
+        
+        [Intercom logEventWithName:@"liked_item"];
         
         //update upvote lower label, allow user to see who else has bumped the listing
         
@@ -3046,30 +3012,45 @@
 }
 
 -(void)selectedReportReason:(NSString *)reason{
-    [Answers logCustomEventWithName:@"Reported Listing"
+    
+    [Answers logCustomEventWithName:@"Reported Sale Listing"
                    customAttributes:@{
-                                      @"type":@"For Sale"
+                                      @"reason":reason,
+                                      @"reporter":[PFUser currentUser].objectId,
+                                      @"listingId":self.listingObject.objectId,
+                                      @"date":[NSDate date]
                                       }];
+    
+    NSString *mod = @"NO";
+    //check if user is a mod and not just a fod (fake mod)
+    if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
+        mod = @"YES";
+        
+        [Answers logCustomEventWithName:@"Mod Reported Listing"
+                       customAttributes:@{
+                                          @"reason":reason,
+                                          @"reporter":[PFUser currentUser].objectId,
+                                          @"listingId":self.listingObject.objectId,
+                                          @"date":[NSDate date]
+                                          }];
+        
+        [Answers logCustomEventWithName:[NSString stringWithFormat:@"Mod Reported Listing %@ %@", [PFUser currentUser].objectId,[PFUser currentUser].username]
+                       customAttributes:@{
+                                          @"reason":reason,
+                                          @"reporter":[PFUser currentUser].objectId,
+                                          @"listingId":self.listingObject.objectId,
+                                          @"date":[NSDate date]
+                                          }];
+    }
+    
+    NSDictionary *params = @{@"listingId": self.listingObject.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod};
+    [PFCloud callFunctionInBackground:@"reportListingFunction" withParameters: params block:nil];
     
     [self.reportLabel setTitle:@"R E P O R T E D" forState:UIControlStateNormal];
     [self.reportButton setEnabled:NO];
     [self.reportLabel setAlpha:0.5];
     
     [self showBarButton];
-    
-    //send message from team bump saying we're looking into it
-    [self sendReportMessageWithReason:reason];
-    
-    PFObject *reportObject = [PFObject objectWithClassName:@"Reported"];
-    reportObject[@"reportedUser"] = self.seller;
-    reportObject[@"wtslisting"] = self.listingObject;
-    reportObject[@"reporter"] = [PFUser currentUser];
-    reportObject[@"reason"] = reason;
-    reportObject[@"status"] = @"live"; //CHANGE add this on every reported object created
-    [reportObject saveInBackground];
-    
-    [self.listingObject incrementKey:@"reportedNumber"];
-    [self.listingObject saveInBackground];
 }
 -(void)sendReportMessageWithReason:(NSString *)reason{
     //save message first
@@ -3077,74 +3058,74 @@
     
     if ([reason isEqualToString:@"Other"]) {
         if ([[PFUser currentUser]objectForKey:@"firstName"]) {
-            messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for reporting an issue with the following listing: '%@'\n\nMind telling us why you reported the listing?\n\nSophie\nTeam Bump",[[PFUser currentUser]objectForKey:@"firstName"],[self.listingObject objectForKey:@"itemTitle"]];
+            messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for reporting an issue with the following listing: '%@'\n\nMind telling us why you reported the listing?\n\nSophie\nBUMP Customer Service",[[PFUser currentUser]objectForKey:@"firstName"],[self.listingObject objectForKey:@"itemTitle"]];
         }
         else{
-            messageString = [NSString stringWithFormat:@"Hey,\n\nThanks for reporting an issue with the following listing: '%@'\n\nMind telling us why you reported the listing?\n\nSophie\nTeam Bump",[self.listingObject objectForKey:@"itemTitle"]];
+            messageString = [NSString stringWithFormat:@"Hey,\n\nThanks for reporting an issue with the following listing: '%@'\n\nMind telling us why you reported the listing?\n\nSophie\nBUMP Customer Service",[self.listingObject objectForKey:@"itemTitle"]];
         }
     }
     else{
         if ([[PFUser currentUser]objectForKey:@"firstName"]) {
-            messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for reporting an issue with the following listing: '%@'\n\nReason: %@\n\nWe'll get in touch if we have any more questions 👊\n\nSophie\nTeam Bump",[[PFUser currentUser]objectForKey:@"firstName"],[self.listingObject objectForKey:@"itemTitle"],reason];
+            messageString = [NSString stringWithFormat:@"Hey %@,\n\nThanks for reporting an issue with the following listing: '%@'\n\nReason: %@\n\nWe'll get in touch if we have any more questions 👊\n\nSophie\nBUMP Customer Service",[[PFUser currentUser]objectForKey:@"firstName"],[self.listingObject objectForKey:@"itemTitle"],reason];
         }
         else{
-            messageString = [NSString stringWithFormat:@"Hey,\n\nThanks for reporting an issue with the following listing: '%@'\n\nReason: %@\n\nWe'll get in touch if we have any more questions 👊\n\nSophie\nTeam Bump",[self.listingObject objectForKey:@"itemTitle"],reason];
+            messageString = [NSString stringWithFormat:@"Hey,\n\nThanks for reporting an issue with the following listing: '%@'\n\nReason: %@\n\nWe'll get in touch if we have any more questions 👊\n\nSophie\nBUMP Customer Service",[self.listingObject objectForKey:@"itemTitle"],reason];
         }
     }
 
     
     //now save report message
-    PFObject *messageObject1 = [PFObject objectWithClassName:@"teamBumpMsgs"];
-    messageObject1[@"message"] = messageString;
-    messageObject1[@"sender"] = [PFUser currentUser];
-    messageObject1[@"senderId"] = @"BUMP";
-    messageObject1[@"senderName"] = @"Team Bump";
-    messageObject1[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-    messageObject1[@"status"] = @"sent";
-    messageObject1[@"mediaMessage"] = @"NO";
-    [messageObject1 saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-        if (succeeded) {
-            
-            //update profile tab bar badge
-            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-            [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
-            
-            //update convo
-            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
-            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-            [convoQuery whereKey:@"convoId" equalTo:convoId];
-            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                if (object) {
-                    
-                    //got the convo
-                    [object incrementKey:@"totalMessages"];
-                    [object setObject:messageObject1 forKey:@"lastSent"];
-                    [object setObject:[NSDate date] forKey:@"lastSentDate"];
-                    [object incrementKey:@"userUnseen"];
-                    [object saveInBackground];
-                    
-                    [Answers logCustomEventWithName:@"Sent Report Message"
-                                   customAttributes:@{
-                                                      @"status":@"SENT"
-                                                      }];
-                }
-                else{
-                    [Answers logCustomEventWithName:@"Sent Report Message"
-                                   customAttributes:@{
-                                                      @"status":@"Failed getting convo"
-                                                      }];
-                }
-            }];
-        }
-        else{
-            NSLog(@"error saving report message %@", error);
-            [Answers logCustomEventWithName:@"Sent Report Message"
-                           customAttributes:@{
-                                              @"status":@"Failed saving message"
-                                              }];
-        }
-    }];
+//    PFObject *messageObject1 = [PFObject objectWithClassName:@"teamBumpMsgs"];
+//    messageObject1[@"message"] = messageString;
+//    messageObject1[@"sender"] = [PFUser currentUser];
+//    messageObject1[@"senderId"] = @"BUMP";
+//    messageObject1[@"senderName"] = @"Team Bump";
+//    messageObject1[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+//    messageObject1[@"status"] = @"sent";
+//    messageObject1[@"mediaMessage"] = @"NO";
+//    [messageObject1 saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//        if (succeeded) {
+//
+//            //update profile tab bar badge
+//            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+//            [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
+//            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
+//
+//            //update convo
+//            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
+//            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+//            [convoQuery whereKey:@"convoId" equalTo:convoId];
+//            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//                if (object) {
+//
+//                    //got the convo
+//                    [object incrementKey:@"totalMessages"];
+//                    [object setObject:messageObject1 forKey:@"lastSent"];
+//                    [object setObject:[NSDate date] forKey:@"lastSentDate"];
+//                    [object incrementKey:@"userUnseen"];
+//                    [object saveInBackground];
+//
+//                    [Answers logCustomEventWithName:@"Sent Report Message"
+//                                   customAttributes:@{
+//                                                      @"status":@"SENT"
+//                                                      }];
+//                }
+//                else{
+//                    [Answers logCustomEventWithName:@"Sent Report Message"
+//                                   customAttributes:@{
+//                                                      @"status":@"Failed getting convo"
+//                                                      }];
+//                }
+//            }];
+//        }
+//        else{
+//            NSLog(@"error saving report message %@", error);
+//            [Answers logCustomEventWithName:@"Sent Report Message"
+//                           customAttributes:@{
+//                                              @"status":@"Failed saving message"
+//                                              }];
+//        }
+//    }];
 }
 
 #pragma mark - bumping intro delegate
@@ -3191,7 +3172,7 @@
                                                       @"where":@"sale listing"
                                                       }];
                     
-                    [self showNormalAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for Bump with your Facebook account\n\nSend Team Bump a message from Settings and we'll get it sorted!"];
+                    [self showNormalAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for Bump with your Facebook account\n\nSend Support a message from Settings and we'll get it sorted!"];
                 }
             }
         }];
@@ -3392,6 +3373,24 @@
     }
     else{
         [self showAlertWithTitle:@"Location Error #1" andMsg:@"We couldn't grab your location, make sure you enter a valid location and are connected to the internet"];
+    }
+}
+
+- (BOOL) isDateToday: (NSDate *) aDate
+{
+    NSCalendar *cal = [NSCalendar currentCalendar];
+    NSDateComponents *components = [cal components:(NSCalendarUnitEra | NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay) fromDate:[NSDate date]];
+    NSDate *today = [cal dateFromComponents:components];
+    
+    components = [cal components:(NSCalendarUnitEra | NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay) fromDate:aDate];
+    
+    NSDate *otherDate = [cal dateFromComponents:components];
+    
+    if([today isEqualToDate:otherDate]) {
+        return YES;
+    }
+    else{
+        return NO;
     }
 }
 @end

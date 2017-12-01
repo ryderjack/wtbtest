@@ -30,6 +30,7 @@
 #import <CLPlacemark+HZContinents.h>
 #import <Transcontinental/HZCountryToContinentDecoder.h>
 #import "Mixpanel/Mixpanel.h"
+#import <Intercom/Intercom.h>
 
 @interface PurchaseTab ()
 
@@ -203,6 +204,7 @@
             NSLog(@"invalid fb token in VDL");
             
             //invalid access token
+            [Intercom reset];
             [PFUser logOut];
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             vc.delegate = self;
@@ -217,6 +219,7 @@
                                               @"user":currentUser.username
                                               }];
             [PFUser logOut];
+            [Intercom reset];
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             vc.delegate = self;
             NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
@@ -239,7 +242,8 @@
             currentUser[@"completedReg"] = @"NO";
             [currentUser saveInBackground];
             [PFUser logOut];
-            
+            [Intercom reset];
+
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             vc.delegate = self;
             NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
@@ -263,9 +267,9 @@
             }
             
             //decide whether to show email reminder header
-            if ([[currentUser objectForKey:@"emailIsVerified"]boolValue] != YES && ![currentUser objectForKey:@"facebookId"]) {
-                [self setupEmailHeader];
-            }
+//            if ([[currentUser objectForKey:@"emailIsVerified"]boolValue] != YES && ![currentUser objectForKey:@"facebookId"]) {
+//                [self setupEmailHeader];
+//            }
 
             //user has signed up fine, do final checks & loading
             //get updated friends list if connected with FB
@@ -295,6 +299,8 @@
                         if (error.code == 8) {
                             //invalid access token
                             [PFUser logOut];
+                            [Intercom reset];
+
                             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
                             vc.delegate = self;
                             NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
@@ -363,35 +369,6 @@
                 currentUser[@"fullnameLower"] = [[[PFUser currentUser]objectForKey:@"fullname"]lowercaseString];
                 [currentUser saveInBackground];
             }
-            
-            //check if they have wanted words
-//            if (![currentUser objectForKey:@"wantedWords"]) {
-//                PFQuery *myPosts = [PFQuery queryWithClassName:@"wantobuys"];
-//                [myPosts whereKey:@"postUser" equalTo:currentUser];
-//                [myPosts orderByDescending:@"lastUpdated"];
-//                myPosts.limit = 10;
-//                [myPosts findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//                    if (objects) {
-//                        NSMutableArray *wantedWords = [NSMutableArray array];
-//                        
-//                        for (PFObject *listing in objects) {
-//                            NSArray *keywords = [listing objectForKey:@"searchKeywords"];
-//                            
-//                            for (NSString *word in keywords) {
-//                                if (![wantedWords containsObject:word]) {
-//                                    [wantedWords addObject:word];
-//                                }
-//                            }
-//                        }
-//                        //                        NSLog(@"wanted words: %@", wantedWords);
-//                        [currentUser setObject:wantedWords forKey:@"wantedWords"];
-//                        [currentUser saveInBackground];
-//                    }
-//                    else{
-//                        NSLog(@"nee posts pet");
-//                    }
-//                }];
-//            }
             
             // finally check if they've been banned - put it last because otherwise if logout user from a previous user check this will still run and throw error 'can't do a comparison query for type (null)
             [self checkIfBanned];
@@ -558,11 +535,11 @@
             }
             
             //decide whether to show email reminder header
-            if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser] objectForKey:@"facebookId"]) {
-//                NSLog(@"SETUP EMAIL HEADER CALLED 2");
-
-                [self setupEmailHeader];
-            }
+//            if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser] objectForKey:@"facebookId"]) {
+////                NSLog(@"SETUP EMAIL HEADER CALLED 2");
+//
+//                [self setupEmailHeader];
+//            }
         }
         //if user redownloaded - ask for push/location permissions again
         else if ([[NSUserDefaults standardUserDefaults]boolForKey:@"askedForPushPermission"] == NO && [[[PFUser currentUser] objectForKey:@"completedReg"]isEqualToString:@"YES"] && [[NSUserDefaults standardUserDefaults]boolForKey:@"declinedPushPermissions"] != YES && modalPresent != YES) {
@@ -578,7 +555,23 @@
             [self.navigationController presentViewController:vc animated:YES completion:nil];
         }
         else if (![[PFUser currentUser]objectForKey:@"seenBuyIntro"] && modalPresent != YES) { //CHANGE add in a check for date user was created
-//            [self showBuyIntro];
+            
+            //check if should ignore 2 photos requirement
+            NSDateComponents *components3 = [[NSDateComponents alloc] init];
+            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+            
+            [components3 setYear:2017];
+            [components3 setMonth:12];
+            [components3 setDay:3]; //CHANGE change this to the date we release the paypal update
+            [components3 setHour:00];
+            
+            //generate the start date of 2 pics required in listings
+            NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+            
+            if ([[PFUser currentUser].createdAt compare:combinedDate]==NSOrderedAscending) {
+                //user signed up before paypal update so lets show em the new ting
+//                [self showBuyIntro]; //CHANGE uncomment this
+            }
         }
         else{
             //get location for filter searches only if we don't already have one
@@ -1225,6 +1218,8 @@
                    customAttributes:@{}];
     
     [PFUser logOut];
+    [Intercom reset];
+
     WelcomeViewController *vc = [[WelcomeViewController alloc]init];
     vc.delegate = self;
     NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
@@ -1278,6 +1273,8 @@
             
             
             [PFUser logOut];
+            [Intercom reset];
+
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             vc.delegate = self;
             NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
@@ -1669,48 +1666,50 @@
         [Answers logCustomEventWithName:@"Message Team Bump pressed from Rate prompt"
                        customAttributes:@{}];
         
+        [Intercom presentMessenger];
+        
         //goto Team Bump messages
-        PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
-        NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-        [convoQuery whereKey:@"convoId" equalTo:convoId];
-        [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                //convo exists, go there
-                ChatWithBump *vc = [[ChatWithBump alloc]init];
-                vc.convoId = [object objectForKey:@"convoId"];
-                vc.convoObject = object;
-                vc.otherUser = [PFUser currentUser];
-                NavigationController *nav = (NavigationController*)self.messageNav;
-                
-                //unhide nav bar
-                //                self.navigationController.navigationBarHidden = NO;
-                [nav pushViewController:vc animated:YES];
-            }
-            else{
-                //create a new one
-                PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
-                convoObject[@"otherUser"] = [PFUser currentUser];
-                convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-                convoObject[@"totalMessages"] = @0;
-                [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-                        //saved, goto VC
-                        ChatWithBump *vc = [[ChatWithBump alloc]init];
-                        vc.convoId = [convoObject objectForKey:@"convoId"];
-                        vc.convoObject = convoObject;
-                        vc.otherUser = [PFUser currentUser];
-                        NavigationController *nav = (NavigationController*)self.messageNav;
-                        
-                        //unhide nav bar
-                        //                        self.navigationController.navigationBarHidden = NO;
-                        [nav pushViewController:vc animated:YES];
-                    }
-                    else{
-                        NSLog(@"error saving convo");
-                    }
-                }];
-            }
-        }];
+//        PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
+//        NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+//        [convoQuery whereKey:@"convoId" equalTo:convoId];
+//        [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//            if (object) {
+//                //convo exists, go there
+//                ChatWithBump *vc = [[ChatWithBump alloc]init];
+//                vc.convoId = [object objectForKey:@"convoId"];
+//                vc.convoObject = object;
+//                vc.otherUser = [PFUser currentUser];
+//                NavigationController *nav = (NavigationController*)self.messageNav;
+//
+//                //unhide nav bar
+//                //                self.navigationController.navigationBarHidden = NO;
+//                [nav pushViewController:vc animated:YES];
+//            }
+//            else{
+//                //create a new one
+//                PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
+//                convoObject[@"otherUser"] = [PFUser currentUser];
+//                convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
+//                convoObject[@"totalMessages"] = @0;
+//                [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                    if (succeeded) {
+//                        //saved, goto VC
+//                        ChatWithBump *vc = [[ChatWithBump alloc]init];
+//                        vc.convoId = [convoObject objectForKey:@"convoId"];
+//                        vc.convoObject = convoObject;
+//                        vc.otherUser = [PFUser currentUser];
+//                        NavigationController *nav = (NavigationController*)self.messageNav;
+//
+//                        //unhide nav bar
+//                        //                        self.navigationController.navigationBarHidden = NO;
+//                        [nav pushViewController:vc animated:YES];
+//                    }
+//                    else{
+//                        NSLog(@"error saving convo");
+//                    }
+//                }];
+//            }
+//        }];
     }
     else{
         //push reminder
@@ -1866,7 +1865,7 @@
     
     if (self.lowRating == YES) {
         self.customAlert.titleLabel.text = @"Your Feedback";
-        self.customAlert.messageLabel.text = @"Hit 'Message' to send Team BUMP some quick feedback 💬";
+        self.customAlert.messageLabel.text = @"Hit 'Message' to send us some quick feedback 💬";
         self.customAlert.numberOfButtons = 2;
     }
     
@@ -2767,7 +2766,7 @@
         
         for(UILocalNotification *notification in notificationArray){
             
-            if ([notification.alertBody containsString:@"Verify your Bump email address now!"]) {
+            if ([notification.alertBody containsString:@"Verify your BUMP email address now!"]) {
                 // delete this notification
                 [[UIApplication sharedApplication] cancelLocalNotification:notification];
             }
@@ -2880,6 +2879,9 @@
     
     self.filtersArray = filters;
     if (self.filtersArray.count > 0) {
+        
+        [Intercom logEventWithName:@"filtered_items" metaData: @{@"filters": filters}];
+        
         self.filterSizesArray = sizes;
         self.filterBrandsArray = brands;
         self.filterColoursArray = colours;
@@ -3172,8 +3174,45 @@
     
     [self.postingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
+            
             Mixpanel *mixpanel = [Mixpanel sharedInstance];
-            [mixpanel track:@"Listed an Item" properties:@{}];
+
+            if ([[self.postingItem objectForKey:@"instantBuy"]isEqualToString:@"YES"]) {
+                [Intercom logEventWithName:@"listed_item" metaData: @{
+                                                                      @"instantBuy": @YES,
+                                                                      @"category":[self.postingItem objectForKey:@"category"],
+                                                                      @"currency":[self.postingItem objectForKey:@"currency"],
+                                                                      @"itemId":self.postingItem.objectId,
+                                                                      @"salePrice": @([[self.postingItem objectForKey:@"salePriceUSD"]floatValue]),
+                                                                      @"shippingPrice":@([[self.postingItem objectForKey:@"nationalShippingPrice"]floatValue])
+                                                                      }];
+                
+                [mixpanel track:@"listed_item" properties:@{
+                                                               @"instantBuy": @YES,
+                                                               @"category":[self.postingItem objectForKey:@"category"],
+                                                               @"currency":[self.postingItem objectForKey:@"currency"],
+                                                               @"itemId":self.postingItem.objectId,
+                                                               @"salePrice": @([[self.postingItem objectForKey:@"salePriceUSD"]floatValue]),
+                                                               @"shippingPrice":@([[self.postingItem objectForKey:@"nationalShippingPrice"]floatValue])
+                                                               }];
+            }
+            else{
+                [Intercom logEventWithName:@"listed_item" metaData: @{
+                                                                      @"instantBuy": @NO,
+                                                                      @"category":[self.postingItem objectForKey:@"category"],
+                                                                      @"currency":[self.postingItem objectForKey:@"currency"],
+                                                                      @"itemId":self.postingItem.objectId,
+                                                                      @"salePrice": @([[self.postingItem objectForKey:@"salePriceUSD"]floatValue]),
+                                                                      }];
+                
+                [mixpanel track:@"listed_item" properties:@{
+                                                            @"instantBuy": @NO,
+                                                            @"category":[self.postingItem objectForKey:@"category"],
+                                                            @"currency":[self.postingItem objectForKey:@"currency"],
+                                                            @"itemId":self.postingItem.objectId,
+                                                            @"salePrice": @([[self.postingItem objectForKey:@"salePriceUSD"]floatValue]),
+                                                            }];
+            }
             
             [self.progressBar setProgress:1.0 animated:YES];
             

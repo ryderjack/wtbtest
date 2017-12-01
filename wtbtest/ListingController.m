@@ -1059,8 +1059,11 @@
         }
         
         [self.listingObject setObject:bumpArray forKey:@"bumpArray"];
-        [self.listingObject incrementKey:@"bumpCount" byAmount:@-1];
         
+        if ([[self.listingObject objectForKey:@"bumpCount"]intValue]>0) {
+            [self.listingObject incrementKey:@"bumpCount" byAmount:@-1];
+        }
+                
         if ([personalBumpArray containsObject:self.listingObject.objectId]) {
             [personalBumpArray removeObject:self.listingObject.objectId];
         }
@@ -2493,7 +2496,7 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 - (IBAction)reportPressed:(id)sender {
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"If you feel like this listing is not genuine or has violated our terms let us know so we can take action asap. Send Team Bump a message from Settings if you'd like to chat immediately." preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"If you feel like this listing is not genuine or has violated our terms let us know so we can take action asap. Send Support a message from Settings if you'd like to chat immediately." preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         [self showBarButton];
@@ -2564,7 +2567,7 @@
                                                       @"where":@"listing"
                                                       }];
                     
-                    [self showNormalAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for Bump with your Facebook account\n\nSend Team Bump a message from Settings and we'll get it sorted!"];
+                    [self showNormalAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for Bump with your Facebook account\n\nSend us a message from Settings and we'll get it sorted!"];
                 }
             }
         }];
