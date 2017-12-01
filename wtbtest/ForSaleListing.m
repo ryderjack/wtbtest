@@ -171,10 +171,6 @@
         [self.zoomPromptLabel setHidden:NO];
     }
     
-    //tracking - don't track this, would be using up mixpanel resources unnecessarily
-//    Mixpanel *mixpanel = [Mixpanel sharedInstance];
-//    [mixpanel track:@"viewed_listing" properties:@{}];
-    
     [Answers logCustomEventWithName:@"Viewed page"
                    customAttributes:@{
                                       @"pageName":@"Sale Listing"
