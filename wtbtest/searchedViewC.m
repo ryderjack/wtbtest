@@ -193,10 +193,10 @@
     else if (kind == UICollectionElementKindSectionFooter){
         self.promptFooterView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"Footer" forIndexPath:indexPath];
         if (self.results.count > 0) {
-            self.promptFooterView.footerLabel.text = @"Can't find what you're looking for?\n\nCreate a wanted listing on Bump so sellers can find you and send you a message!";
+            self.promptFooterView.footerLabel.text = @"Can't find what you're looking for?\n\nCreate a wanted listing on BUMP so sellers can find you and send you a message!";
         }
         else{
-            self.promptFooterView.footerLabel.text = @"No results\n\nCreate a wanted listing on Bump so sellers can find you and send you a message!";
+            self.promptFooterView.footerLabel.text = @"No results\n\nCreate a wanted listing on BUMP so sellers can find you and send you a message!";
         }
         
         [self.promptFooterView.footerButton addTarget:self action:@selector(createWantedListingPressed) forControlEvents:UIControlEventTouchUpInside];

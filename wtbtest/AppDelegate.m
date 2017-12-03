@@ -63,8 +63,9 @@
 
     [Intercom setApiKey:@"ios_sdk-dcdcb0d85e2a1da18471b8506beb225e5800e7dd" forAppId:@"zjwtufx1"];
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
-
+    
     if ([PFUser currentUser]) {
+        
         NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
         [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
             if (!error) {                

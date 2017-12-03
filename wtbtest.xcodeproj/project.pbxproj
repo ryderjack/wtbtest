@@ -597,6 +597,15 @@
 		045DF1D81FC8C6840017AEBC /* searchExplain@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1D51FC8C67E0017AEBC /* searchExplain@3x.png */; };
 		045DF1D91FC8C6840017AEBC /* searchExplain.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1D61FC8C67E0017AEBC /* searchExplain.png */; };
 		045DF1DA1FC8C6840017AEBC /* searchExplain@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 045DF1D71FC8C6810017AEBC /* searchExplain@2x.png */; };
+		045DF1DC1FD412E20017AEBC /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 048E1C411ED816DF0027D20C /* Security.framework */; };
+		045DF1DE1FD412F70017AEBC /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1DD1FD412ED0017AEBC /* SystemConfiguration.framework */; };
+		045DF1E01FD413220017AEBC /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1DF1FD413090017AEBC /* CFNetwork.framework */; };
+		045DF1E51FD417870017AEBC /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1E11FD413380017AEBC /* CoreGraphics.framework */; };
+		045DF1E61FD417950017AEBC /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1E21FD4134D0017AEBC /* MessageUI.framework */; };
+		045DF1E71FD417A00017AEBC /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1E31FD413580017AEBC /* CoreLocation.framework */; };
+		045DF1E81FD417AB0017AEBC /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1E41FD413680017AEBC /* Foundation.framework */; };
+		045DF1EA1FD417FF0017AEBC /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1E91FD417F10017AEBC /* AVFoundation.framework */; };
+		045DF1EC1FD418210017AEBC /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1EB1FD418140017AEBC /* Accelerate.framework */; };
 		046703121F90EC67009FD451 /* orderStar.png in Resources */ = {isa = PBXBuildFile; fileRef = 0467030F1F90EC5C009FD451 /* orderStar.png */; };
 		046703131F90EC67009FD451 /* orderStar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 046703101F90EC5C009FD451 /* orderStar@2x.png */; };
 		046703141F90EC67009FD451 /* orderStar@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 046703111F90EC5C009FD451 /* orderStar@3x.png */; };
@@ -2194,6 +2203,14 @@
 		045DF1D51FC8C67E0017AEBC /* searchExplain@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "searchExplain@3x.png"; sourceTree = "<group>"; };
 		045DF1D61FC8C67E0017AEBC /* searchExplain.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = searchExplain.png; sourceTree = "<group>"; };
 		045DF1D71FC8C6810017AEBC /* searchExplain@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "searchExplain@2x.png"; sourceTree = "<group>"; };
+		045DF1DD1FD412ED0017AEBC /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		045DF1DF1FD413090017AEBC /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
+		045DF1E11FD413380017AEBC /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		045DF1E21FD4134D0017AEBC /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
+		045DF1E31FD413580017AEBC /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
+		045DF1E41FD413680017AEBC /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		045DF1E91FD417F10017AEBC /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		045DF1EB1FD418140017AEBC /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		0467030F1F90EC5C009FD451 /* orderStar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = orderStar.png; sourceTree = "<group>"; };
 		046703101F90EC5C009FD451 /* orderStar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "orderStar@2x.png"; sourceTree = "<group>"; };
 		046703111F90EC5C009FD451 /* orderStar@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "orderStar@3x.png"; sourceTree = "<group>"; };
@@ -3223,6 +3240,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				045DF1EC1FD418210017AEBC /* Accelerate.framework in Frameworks */,
+				045DF1EA1FD417FF0017AEBC /* AVFoundation.framework in Frameworks */,
+				045DF1E81FD417AB0017AEBC /* Foundation.framework in Frameworks */,
+				045DF1E71FD417A00017AEBC /* CoreLocation.framework in Frameworks */,
+				045DF1E61FD417950017AEBC /* MessageUI.framework in Frameworks */,
+				045DF1E51FD417870017AEBC /* CoreGraphics.framework in Frameworks */,
+				045DF1E01FD413220017AEBC /* CFNetwork.framework in Frameworks */,
+				045DF1DE1FD412F70017AEBC /* SystemConfiguration.framework in Frameworks */,
+				045DF1DC1FD412E20017AEBC /* Security.framework in Frameworks */,
 				0475A7581C819C360049AD61 /* MapKit.framework in Frameworks */,
 				6C532D51CB461D738C9D4F0D /* libPods-wtbtest.a in Frameworks */,
 			);
@@ -5260,6 +5286,14 @@
 		FC6D56E4CBF9782A0D20F317 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				045DF1EB1FD418140017AEBC /* Accelerate.framework */,
+				045DF1E91FD417F10017AEBC /* AVFoundation.framework */,
+				045DF1E41FD413680017AEBC /* Foundation.framework */,
+				045DF1E31FD413580017AEBC /* CoreLocation.framework */,
+				045DF1E21FD4134D0017AEBC /* MessageUI.framework */,
+				045DF1E11FD413380017AEBC /* CoreGraphics.framework */,
+				045DF1DF1FD413090017AEBC /* CFNetwork.framework */,
+				045DF1DD1FD412ED0017AEBC /* SystemConfiguration.framework */,
 				048E1C411ED816DF0027D20C /* Security.framework */,
 				04679A8A1E02BC93003AF8EA /* QuartzCore.framework */,
 				0475A7571C819C360049AD61 /* MapKit.framework */,
@@ -5279,7 +5313,7 @@
 				049EF4201C776E49000A599F /* Sources */,
 				049EF4211C776E49000A599F /* Frameworks */,
 				049EF4221C776E49000A599F /* Resources */,
-				040052C61D2AB469002D8E1E /* ShellScript */,
+				040052C61D2AB469002D8E1E /* Run Script */,
 				F6DF9274A774848077B1B53B /* [CP] Embed Pods Frameworks */,
 				D97FF0032866A9BCD3232851 /* [CP] Copy Pods Resources */,
 			);
@@ -6855,13 +6889,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		040052C61D2AB469002D8E1E /* ShellScript */ = {
+		040052C61D2AB469002D8E1E /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
+			name = "Run Script";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6951,8 +6986,8 @@
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/en.lproj",
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/fr.lproj",
 				"${PODS_ROOT}/ParseUI/ParseUI/Resources/Localization/pt-BR.lproj",
-				"$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePicker.bundle",
-				"$PODS_CONFIGURATION_BUILD_DIR/TOWebViewController/TOWebViewControllerLocalizable.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePicker.bundle,
+				$PODS_CONFIGURATION_BUILD_DIR/TOWebViewController/TOWebViewControllerLocalizable.bundle,
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
