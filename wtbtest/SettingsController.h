@@ -113,6 +113,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UILabel *paypalAccountLabel;
 @property (nonatomic) BOOL paypalConnected;
 
+//temp
+@property (strong, nonatomic) IBOutlet UITableViewCell *paypalEmailCell;
+@property (weak, nonatomic) IBOutlet UITextField *paypalTextField;
+
 
 NS_ASSUME_NONNULL_END
 @end

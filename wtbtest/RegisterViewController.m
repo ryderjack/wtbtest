@@ -819,6 +819,7 @@
     }
     
     self.user[PF_USER_EMAIL] = email;
+    self.user[@"paypal"] = email;
     self.user[PF_USER_USERNAME] = [username lowercaseString];
     self.user[@"currency"] = self.selectedCurrency;
     self.user[@"completedReg"] = @"YES";

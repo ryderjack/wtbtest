@@ -76,19 +76,24 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
-    [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            self.fetchedUser = YES;
-            [self.longButton setEnabled:YES];
-        }
-        else{
-            [Answers logCustomEventWithName:@"Error fetching feedback user"
-                           customAttributes:@{}];
-            
-            [self showAlertWithTitle:@"Connection Error" andMsg:@"Ensure you're connected to the internet then try again!"];
-            [self dismissFeedback];
-        }
-    }];
+//    [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//        if (object) {
+//            self.fetchedUser = YES;
+//            [self.longButton setEnabled:YES];
+//        }
+//        else{
+//            [Answers logCustomEventWithName:@"Error fetching feedback user"
+//                           customAttributes:@{}];
+//
+//            [self showAlertWithTitle:@"Connection Error" andMsg:@"Ensure you're connected to the internet then try again!"];
+//            [self dismissFeedback];
+//        }
+//    }];
+    
+    if (!self.userId) {
+        [self showAlertWithTitle:@"Connection Error #12" andMsg:@"Ensure you're connected to the internet then try again!"];
+        [self dismissFeedback];
+    }
     
     if (self.editMode) {
         
@@ -475,27 +480,27 @@
         
         if (self.purchased == YES) {
             buyerId = [PFUser currentUser].objectId;
-            sellerId = self.user.objectId;
+            sellerId = self.userId;
         }
         else{
             sellerId = [PFUser currentUser].objectId;
-            buyerId = self.user.objectId;
+            buyerId = self.userId;
         }
         
         NSDictionary *params = @{
                        @"comment":self.commentView.text,
-                       @"gotUserId":self.user.objectId,
+                       @"gotUserId":self.userId,
                        @"leftUserId":[PFUser currentUser].objectId, //user who left the feedback
                        @"stars":@(self.starNumber),
-                       @"orderId":self.orderObject.objectId,
+                       @"convoId":self.convoId,
                        @"buyerId":buyerId,
                        @"sellerId":sellerId,
                    };
         
-        [PFCloud callFunctionInBackground:@"processUserFeedback" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        [PFCloud callFunctionInBackground:@"processUserFeedbackConvo" withParameters:params block:^(NSDictionary *response, NSError *error) {
             if (!error) {
                 //done processing feedback
-                [Answers logCustomEventWithName:@"Saved Feedback on Order"
+                [Answers logCustomEventWithName:@"Saved Feedback on Convo"
                                customAttributes:@{
                                                   @"success":@"YES"
                                                   }];
@@ -513,7 +518,7 @@
             else{
                 NSLog(@"error saving feedback stuff %@", error);
 
-                [Answers logCustomEventWithName:@"Saved Feedback on Order"
+                [Answers logCustomEventWithName:@"Saved Feedback on Convo"
                                customAttributes:@{
                                                   @"success":@"NO",
                                                   @"error" : error.description
@@ -862,7 +867,6 @@
     else{
         //didn't give a 4+ star rating
         if (self.starNumber < 3) {
-            //CHANGE increment something on the user that intercom can track
 //            [self sendPoorFeedbackMessage];
         }
     }

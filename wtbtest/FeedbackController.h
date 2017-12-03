@@ -40,6 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 //order
 @property (nonatomic, strong) PFObject *orderObject;
 
+
 //edit mode
 @property (nonatomic) BOOL editMode;
 @property (nonatomic, strong) PFObject *editFBObject;
@@ -72,6 +73,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 //support
 @property (nonatomic) BOOL tappedSupport;
+
+@property (nonatomic, strong) NSString *convoId;
+@property (nonatomic, strong) NSString *userId;
 
 NS_ASSUME_NONNULL_END
 

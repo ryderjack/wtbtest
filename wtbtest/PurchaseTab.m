@@ -554,25 +554,25 @@
             AddSizeController *vc = [[AddSizeController alloc]init];
             [self.navigationController presentViewController:vc animated:YES completion:nil];
         }
-        else if (![[PFUser currentUser]objectForKey:@"seenBuyIntro"] && modalPresent != YES) { //CHANGE add in a check for date user was created
-            
-            //check if should ignore 2 photos requirement
-            NSDateComponents *components3 = [[NSDateComponents alloc] init];
-            NSCalendar *theCalendar = [NSCalendar currentCalendar];
-            
-            [components3 setYear:2017];
-            [components3 setMonth:12];
-            [components3 setDay:3]; //CHANGE change this to the date we release the paypal update
-            [components3 setHour:00];
-            
-            //generate the start date of 2 pics required in listings
-            NSDate * combinedDate = [theCalendar dateFromComponents:components3];
-            
-            if ([[PFUser currentUser].createdAt compare:combinedDate]==NSOrderedAscending) {
-                //user signed up before paypal update so lets show em the new ting
-//                [self showBuyIntro]; //CHANGE uncomment this
-            }
-        }
+//        else if (![[PFUser currentUser]objectForKey:@"seenBuyIntro"] && modalPresent != YES) { add in a check for date user was created
+//
+//            //check if should ignore 2 photos requirement
+//            NSDateComponents *components3 = [[NSDateComponents alloc] init];
+//            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//
+//            [components3 setYear:2017];
+//            [components3 setMonth:12];
+//            [components3 setDay:3]; change this to the date we release the paypal update
+//            [components3 setHour:00];
+//
+//            //generate the start date of 2 pics required in listings
+//            NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+//
+//            if ([[PFUser currentUser].createdAt compare:combinedDate]==NSOrderedAscending) {
+//                //user signed up before paypal update so lets show em the new ting
+////                [self showBuyIntro]; uncomment this
+//            }
+//        }
         else{
             //get location for filter searches only if we don't already have one
             if (!self.currentLocation) {
@@ -1777,8 +1777,8 @@
     
     [[UIApplication sharedApplication].keyWindow addSubview:self.rateView];
     
-    [UIView animateWithDuration:1.0
-                          delay:1.0
+    [UIView animateWithDuration:0.5
+                          delay:0.5
          usingSpringWithDamping:0.5
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
@@ -1820,7 +1820,7 @@
                          self.searchBgView = nil;
                      }];
     
-    [UIView animateWithDuration:1.0
+    [UIView animateWithDuration:0.5
                           delay:0.0
          usingSpringWithDamping:0.1
           initialSpringVelocity:0.5
@@ -1990,10 +1990,10 @@
     
     //manage friends count label
     if (friendsArray.count > 5) {
-        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friendsArray.count];
+        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use BUMP", (unsigned long)friendsArray.count];
     }
     else{
-        self.inviteView.friendsLabel.text = @"Help us grow 🚀";
+        self.inviteView.friendsLabel.text = @"Grow our community";
     }
     
     if (friendsArray.count > 0) {
@@ -3175,6 +3175,16 @@
     [self.postingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
             
+            NSDictionary *params = @{@"listingId":self.postingItem.objectId};
+            [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                if (error) {
+                    [Answers logCustomEventWithName:@"Error updating lastUpdated"
+                                   customAttributes:@{
+                                                      @"where":@"PurchaseTab"
+                                                      }];
+                }
+            }];
+            
             Mixpanel *mixpanel = [Mixpanel sharedInstance];
 
             if ([[self.postingItem objectForKey:@"instantBuy"]isEqualToString:@"YES"]) {
@@ -3233,7 +3243,7 @@
                 //cancel first listing local push
                 NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
                 for(UILocalNotification *notification in notificationArray){
-                    if ([notification.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on bump"]) {
+                    if ([notification.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on BUMP"]) {
                         // delete this notification
                         [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
                     }

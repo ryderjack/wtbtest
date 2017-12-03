@@ -284,7 +284,7 @@ typedef void(^myCompletion)(BOOL);
                     //tab mode
                     if ([[self.user objectForKey:@"orderNumber"]intValue] > 0) {
                         self.showOrderButton = YES;
-                        [self.myBar addSubview:self.ordersButton];
+//                        [self.myBar addSubview:self.ordersButton];
                     }
                 }
                 

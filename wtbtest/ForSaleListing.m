@@ -307,7 +307,7 @@
     
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
-            NSLog(@"Listing %@", self.listingObject);
+//            NSLog(@"Listing %@", self.listingObject);
             self.seller = [self.listingObject objectForKey:@"sellerUser"];
             
             [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -334,10 +334,10 @@
                 if (!self.setupButtons) {
                     [self decideButtonSetup];
                 }
-                else{ //TEST this else statement works fine after switching tabs
+                else{
                     //for when user comes back after switching tabs we need to be able to recreate the bar buttons
                     if (self.buyButtonShowing && !self.buyButton) {
-                        [self setupTwoBarButtons];
+//                        [self setupTwoBarButtons];
                     }
                     else if (!self.messageButton){
                         [self setupMessageBarButton];
@@ -1420,53 +1420,58 @@
 
 -(void)decideButtonSetup{
     
-    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
-        [self setupMessageBarButton];
+    [self setupMessageBarButton];
+    BOOL seenBuyPopup = [[NSUserDefaults standardUserDefaults] boolForKey:@"seenBuyPopup"];
+    
+    if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"] && ![self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"live"] && !seenBuyPopup) {
+        [self showAlertWithTitle:@"App Update" andMsg:@"The seller has enabled Instant Buy on their item, download the latest update from the App Store to be able to buy/sell instantly on BUMP with PayPal"];
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenBuyPopup"];
     }
-    else if([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
-        //don't let user edit a listing they've sold through paypal
-        //instead let them view order details
-        [self setupOrderBarButton];
-    }
-    else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
-        //don't let user message someone about a listing thats they've sold
-    }
-    else if(self.fromOrder){
-        //don't let user message the seller if they're viewing from an order summary
-    }
-    else{
-        //check if instant buy is on & if countries are the same - if not, is global shipping enabled to show both anyway
-        if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"]) {
-            
-            if ([self.listingObject objectForKey:@"countryCode"] && ([[PFUser currentUser]objectForKey:@"countryCode"] || [[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"])) {
-                
-                //we compare country codes to decide on whether purchase is possible
-                NSString *listingCountry = [self.listingObject objectForKey:@"countryCode"];
-                NSString *userCountry = [[PFUser currentUser]objectForKey:@"countryCode"];
-                
-                //check if countries are the same
-                if ([listingCountry isEqualToString:userCountry]) {
-                    //same so show both
-                    [self setupTwoBarButtons];
-                }
-                else if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]){
-                    [self setupTwoBarButtons];
-                }
-                else{
-                    [self setupMessageBarButton];
-                }
-            }
-            else{
-                if (![[PFUser currentUser]objectForKey:@"countryCode"]) {
-                    //show prompt to get user's country if this fails
-                    [self showAddCountryPrompt];
-                }
-            }
-        }
-        else{
-            [self setupMessageBarButton];
-        }
-    }
+
+//    else if([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
+//        //don't let user edit a listing they've sold through paypal
+//        //instead let them view order details
+//        [self setupOrderBarButton];
+//    }
+//    else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
+//        //don't let user message someone about a listing thats they've sold
+//    }
+//    else if(self.fromOrder){
+//        //don't let user message the seller if they're viewing from an order summary
+//    }
+//    else{
+//        //check if instant buy is on & if countries are the same - if not, is global shipping enabled to show both anyway
+//        if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"]) {
+//
+//            if ([self.listingObject objectForKey:@"countryCode"] && ([[PFUser currentUser]objectForKey:@"countryCode"] || [[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"])) {
+//
+//                //we compare country codes to decide on whether purchase is possible
+//                NSString *listingCountry = [self.listingObject objectForKey:@"countryCode"];
+//                NSString *userCountry = [[PFUser currentUser]objectForKey:@"countryCode"];
+//
+//                //check if countries are the same
+//                if ([listingCountry isEqualToString:userCountry]) {
+//                    //same so show both
+//                    [self setupTwoBarButtons];
+//                }
+//                else if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]){
+//                    [self setupTwoBarButtons];
+//                }
+//                else{
+//                    [self setupMessageBarButton];
+//                }
+//            }
+//            else{
+//                if (![[PFUser currentUser]objectForKey:@"countryCode"]) {
+//                    //show prompt to get user's country if this fails
+//                    [self showAddCountryPrompt];
+//                }
+//            }
+//        }
+//        else{
+//            [self setupMessageBarButton];
+//        }
+//    }
     
     self.setupButtons = YES;
 }
@@ -1680,7 +1685,6 @@
     SendToUserCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.userImageView.image = nil;
     
-    NSLog(@"fb users");
     PFUser *fbUser = [self.facebookUsers objectAtIndex:indexPath.item];
     
     if (![fbUser objectForKey:@"picture"]) {
@@ -1886,7 +1890,7 @@
     }
     else{
         [self.sendBox.smallInviteButton setHidden:YES];
-        [self.sendBox.noFriendsButton setTitle:@"Connect your Facebook to share listings with Friends on Bump!" forState:UIControlStateNormal];
+        [self.sendBox.noFriendsButton setTitle:@"Connect your Facebook to share listings with Friends on BUMP" forState:UIControlStateNormal];
         [self.sendBox.noFriendsButton setHidden:NO];
         [self.sendBox.noFriendsButton addTarget:self action:@selector(connectFacebookPressed) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -2918,8 +2922,22 @@
             [self.reportLabel setTitle:@"M A R K  A S\nS O L D" forState:UIControlStateNormal];
 
             [self.listingObject setObject:@"live" forKey:@"status"];
+            [self.listingObject setObject:[NSDate date] forKey:@"soldDate"];
+
             [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
+                    
+                    //update lastUpdated value
+                    NSDictionary *params = @{@"listingId":self.listingObject.objectId};
+                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                        if (error) {
+                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
+                                           customAttributes:@{
+                                                              @"where":@"listing"
+                                                              }];
+                        }
+                    }];
+                    
                     //hide label
                     self.soldLabel.alpha = 1.0;
                     self.soldCheckImageVoew.alpha = 1.0;

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13174"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -47,6 +47,8 @@
                 <outlet property="nameCell" destination="8IE-Et-7Cd" id="7ef-z6-r5i"/>
                 <outlet property="notificationsCell" destination="YcA-bT-n7s" id="A5I-OL-e28"/>
                 <outlet property="paypalAccountLabel" destination="A2T-07-2Fu" id="ALq-wc-fSN"/>
+                <outlet property="paypalEmailCell" destination="lwA-tp-swV" id="R0g-ot-be7"/>
+                <outlet property="paypalTextField" destination="Nos-11-VRo" id="7iw-mx-hqy"/>
                 <outlet property="pictureCelll" destination="ku0-Td-kJz" id="sWa-Qy-uBg"/>
                 <outlet property="pushStatusButton" destination="yRO-eu-0oh" id="lLh-IL-DT6"/>
                 <outlet property="sellerModeCell" destination="S1h-ms-UzW" id="mFf-t3-A34"/>
@@ -76,14 +78,14 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Enter" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="jiD-Rc-zpL">
-                        <rect key="frame" x="172" y="11" width="140" height="21"/>
+                        <rect key="frame" x="180" y="11" width="124" height="21"/>
                         <color key="tintColor" red="0.24313725489999999" green="0.59215686270000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
                         <textInputTraits key="textInputTraits" autocapitalizationType="words" keyboardType="emailAddress" returnKeyType="done"/>
                     </textField>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="First name" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ddf-Xq-j8e">
-                        <rect key="frame" x="8" y="11" width="123" height="21"/>
+                        <rect key="frame" x="16" y="11" width="123" height="21"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="123" id="3AR-hx-1HH"/>
                         </constraints>
@@ -107,11 +109,11 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="c20-Ec-Pex" id="AAX-3d-N3I">
-                <rect key="frame" x="0.0" y="0.0" width="287" height="43.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="286" height="43.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="PayPal" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Q0q-Sa-sSg">
-                        <rect key="frame" x="8" y="11" width="123" height="21"/>
+                        <rect key="frame" x="16" y="11" width="123" height="21"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="123" id="uJI-wc-KAh"/>
                         </constraints>
@@ -120,7 +122,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Add Account" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="A2T-07-2Fu">
-                        <rect key="frame" x="172" y="11" width="140" height="21"/>
+                        <rect key="frame" x="180" y="11" width="131" height="21"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <nil key="highlightedColor"/>
@@ -140,11 +142,11 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Aqh-7q-75q" id="6fy-z8-Hc5">
-                <rect key="frame" x="0.0" y="0.0" width="287" height="43.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="286" height="43.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Address" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bR0-RE-J9K">
-                        <rect key="frame" x="8" y="11" width="271" height="21"/>
+                        <rect key="frame" x="16" y="14" width="262" height="15"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
@@ -167,7 +169,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="CB9-iH-sRT">
-                        <rect key="frame" x="49" y="7" width="46" height="29"/>
+                        <rect key="frame" x="57" y="10" width="46" height="23"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="46" id="y4a-wi-hre"/>
                         </constraints>
@@ -184,7 +186,7 @@
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="l7z-Yl-wR6">
-                        <rect key="frame" x="137" y="7" width="46" height="29"/>
+                        <rect key="frame" x="145" y="10" width="30" height="23"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
                         <color key="tintColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <state key="normal" title="USD">
@@ -198,7 +200,7 @@
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Jsv-9q-gMW">
-                        <rect key="frame" x="225" y="7" width="46" height="29"/>
+                        <rect key="frame" x="217" y="10" width="46" height="23"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
                         <color key="tintColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <state key="normal" title="EUR">
@@ -234,18 +236,18 @@
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="ku0-Td-kJz">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
-            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="ku0-Td-kJz" id="QX7-5k-LPh">
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" ambiguous="YES" tableViewCell="ku0-Td-kJz" id="QX7-5k-LPh">
                 <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Change profile picture" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c3m-ss-zd7">
-                        <rect key="frame" x="8" y="11" width="159" height="21"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" text="Change profile picture" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c3m-ss-zd7">
+                        <rect key="frame" x="16" y="11" width="159" height="21"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
                         <color key="textColor" red="0.24313725489999999" green="0.59215686270000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="ThM-kz-zvl" customClass="PFImageView">
-                        <rect key="frame" x="272" y="2" width="40" height="40"/>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ThM-kz-zvl" customClass="PFImageView">
+                        <rect key="frame" x="264" y="2" width="40" height="40"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="40" id="LJ6-K5-6IC"/>
                             <constraint firstAttribute="width" constant="40" id="pdO-x6-xHM"/>
@@ -270,14 +272,14 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Enter" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="GcE-lD-fAY">
-                        <rect key="frame" x="172" y="11" width="140" height="21"/>
+                        <rect key="frame" x="180" y="11" width="124" height="21"/>
                         <color key="tintColor" red="0.24313725489999999" green="0.59215686270000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
                         <textInputTraits key="textInputTraits" keyboardType="emailAddress" returnKeyType="done"/>
                     </textField>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Email" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="tjg-eX-K1t">
-                        <rect key="frame" x="8" y="11" width="123" height="21"/>
+                        <rect key="frame" x="16" y="11" width="123" height="21"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="123" id="TwK-xR-AvV"/>
                         </constraints>
@@ -295,7 +297,7 @@
                     <constraint firstItem="tjg-eX-K1t" firstAttribute="centerY" secondItem="Ca3-Bc-Jxv" secondAttribute="centerY" id="xwI-T1-4JS"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-348" y="-178"/>
+            <point key="canvasLocation" x="-470" y="-248"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="MZL-Po-MvA">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
@@ -305,14 +307,14 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Enter" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="ljb-pW-ige">
-                        <rect key="frame" x="172" y="11" width="140" height="21"/>
+                        <rect key="frame" x="180" y="11" width="124" height="21"/>
                         <color key="tintColor" red="0.24313725489999999" green="0.59215686270000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
                         <textInputTraits key="textInputTraits" autocapitalizationType="words" keyboardType="emailAddress" returnKeyType="done"/>
                     </textField>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Last name" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="r8h-ll-GcI">
-                        <rect key="frame" x="8" y="11" width="123" height="21"/>
+                        <rect key="frame" x="16" y="11" width="123" height="21"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="123" id="SbK-dU-hjK"/>
                         </constraints>
@@ -330,7 +332,7 @@
                     <constraint firstItem="ljb-pW-ige" firstAttribute="trailing" secondItem="1CY-yE-j2Z" secondAttribute="trailingMargin" id="oJG-Rn-4x8"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-348" y="60"/>
+            <point key="canvasLocation" x="-445" y="-93"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="JPk-qH-jbp">
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
@@ -340,13 +342,13 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="username" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JyP-XU-TDf">
-                        <rect key="frame" x="172" y="4" width="140" height="35"/>
+                        <rect key="frame" x="180" y="7" width="124" height="29"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Username" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="p5D-Lr-iYZ">
-                        <rect key="frame" x="8" y="11" width="123" height="21"/>
+                        <rect key="frame" x="16" y="11" width="123" height="21"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="123" id="5In-ze-kzg"/>
                         </constraints>
@@ -374,14 +376,14 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="i2O-xf-X5p">
-                        <rect key="frame" x="263" y="6" width="51" height="31"/>
+                        <rect key="frame" x="255" y="6" width="51" height="31"/>
                         <color key="onTintColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
                         <connections>
                             <action selector="cmoSwitchChanged:" destination="-1" eventType="valueChanged" id="fJv-2G-Fhc"/>
                         </connections>
                     </switch>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="CMO mode" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0HO-du-yND">
-                        <rect key="frame" x="8" y="11" width="208" height="21"/>
+                        <rect key="frame" x="16" y="14" width="192" height="15"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="17"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <nil key="highlightedColor"/>
@@ -406,7 +408,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="muS-lP-maD">
-                        <rect key="frame" x="263" y="6" width="51" height="31"/>
+                        <rect key="frame" x="255" y="6" width="51" height="31"/>
                         <color key="onTintColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
                         <connections>
                             <action selector="cmoSwitchChanged:" destination="-1" eventType="valueChanged" id="cJ6-D2-ZW7"/>
@@ -414,7 +416,7 @@
                         </connections>
                     </switch>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="List as X mode" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5VL-07-XUn">
-                        <rect key="frame" x="8" y="11" width="208" height="21"/>
+                        <rect key="frame" x="16" y="14" width="192" height="15"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="17"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <nil key="highlightedColor"/>
@@ -439,7 +441,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gDm-NM-4Pm">
-                        <rect key="frame" x="263" y="6" width="51" height="31"/>
+                        <rect key="frame" x="255" y="6" width="51" height="31"/>
                         <color key="onTintColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
                         <connections>
                             <action selector="cmoSwitchChanged:" destination="-1" eventType="valueChanged" id="Ym8-fz-arj"/>
@@ -448,7 +450,7 @@
                         </connections>
                     </switch>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Seller mode" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hxg-We-P7T">
-                        <rect key="frame" x="8" y="11" width="208" height="21"/>
+                        <rect key="frame" x="16" y="14" width="192" height="15"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="17"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <nil key="highlightedColor"/>
@@ -473,14 +475,14 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fXo-90-Bxu">
-                        <rect key="frame" x="263" y="39" width="51" height="31"/>
+                        <rect key="frame" x="255" y="36.5" width="51" height="31"/>
                         <color key="onTintColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
                         <connections>
                             <action selector="likeSwitchPressed:" destination="-1" eventType="valueChanged" id="3pT-A9-LrF"/>
                         </connections>
                     </switch>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Someone liked your listing" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0nM-q0-d7o">
-                        <rect key="frame" x="8" y="40" width="227" height="29"/>
+                        <rect key="frame" x="16" y="37.5" width="211" height="29"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="29" id="4hA-Bq-KlH"/>
                         </constraints>
@@ -489,14 +491,14 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oux-fF-FDk">
-                        <rect key="frame" x="263" y="87" width="51" height="31"/>
+                        <rect key="frame" x="255" y="84.5" width="51" height="31"/>
                         <color key="onTintColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
                         <connections>
                             <action selector="fbFriendSwitchPressed:" destination="-1" eventType="valueChanged" id="HVP-4j-J1E"/>
                         </connections>
                     </switch>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Facebook Friend listed an item" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cad-FZ-5fx">
-                        <rect key="frame" x="8" y="88" width="227" height="29"/>
+                        <rect key="frame" x="16" y="85.5" width="211" height="29"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="29" id="2ep-yY-ARP"/>
                         </constraints>
@@ -505,7 +507,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="yRO-eu-0oh">
-                        <rect key="frame" x="8" y="5" width="303" height="30"/>
+                        <rect key="frame" x="16" y="8" width="287" height="24.5"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
                         <state key="normal" title="Push Enabled">
                             <color key="titleColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="calibratedRGB"/>
@@ -538,11 +540,11 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="66M-sP-8AR" id="p7i-0y-8Bt">
-                <rect key="frame" x="0.0" y="0.0" width="287" height="43.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="286" height="43.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Location" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HzL-1P-O1R">
-                        <rect key="frame" x="172" y="11" width="121" height="21"/>
+                        <rect key="frame" x="180" y="11" width="121" height="21"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="121" id="BLE-Az-nQh"/>
                         </constraints>
@@ -551,7 +553,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Location" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ai1-cG-thb">
-                        <rect key="frame" x="8" y="11" width="123" height="21"/>
+                        <rect key="frame" x="16" y="11" width="123" height="21"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="123" id="Rb6-N8-oGc"/>
                         </constraints>
@@ -577,7 +579,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Bio" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YNv-S9-8CX">
-                        <rect key="frame" x="8" y="11" width="123" height="21"/>
+                        <rect key="frame" x="16" y="11" width="123" height="21"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="123" id="BpK-19-drp"/>
                         </constraints>
@@ -586,7 +588,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Enter" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="6ap-4C-ggx">
-                        <rect key="frame" x="172" y="8" width="140" height="28"/>
+                        <rect key="frame" x="180" y="11" width="124" height="22"/>
                         <color key="tintColor" red="0.24313725489999999" green="0.59215686270000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
@@ -612,7 +614,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ta0-XJ-ipn" customClass="SwipeView">
-                        <rect key="frame" x="3" y="7" width="317" height="30"/>
+                        <rect key="frame" x="11" y="10" width="309" height="24"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
                 </subviews>
@@ -624,6 +626,41 @@
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-348" y="412"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="lwA-tp-swV">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="lwA-tp-swV" id="lAJ-bo-Qd3">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Enter" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Nos-11-VRo">
+                        <rect key="frame" x="180" y="11" width="124" height="21"/>
+                        <color key="tintColor" red="0.24313725489999999" green="0.59215686270000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
+                        <textInputTraits key="textInputTraits" keyboardType="emailAddress" returnKeyType="done"/>
+                    </textField>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="PayPal Email" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NNp-Mp-sJs">
+                        <rect key="frame" x="16" y="11" width="123" height="21"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="123" id="4Ot-rT-0KT"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="15"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="NNp-Mp-sJs" firstAttribute="leading" secondItem="lAJ-bo-Qd3" secondAttribute="leadingMargin" id="5qy-Qk-scm"/>
+                    <constraint firstItem="NNp-Mp-sJs" firstAttribute="baseline" secondItem="Nos-11-VRo" secondAttribute="baseline" id="NKm-op-Mo8"/>
+                    <constraint firstItem="Nos-11-VRo" firstAttribute="leading" secondItem="NNp-Mp-sJs" secondAttribute="trailing" constant="41" id="OjP-rF-bLE"/>
+                    <constraint firstItem="Nos-11-VRo" firstAttribute="trailing" secondItem="lAJ-bo-Qd3" secondAttribute="trailingMargin" id="c4j-Xv-TaP"/>
+                    <constraint firstItem="NNp-Mp-sJs" firstAttribute="centerY" secondItem="lAJ-bo-Qd3" secondAttribute="centerY" id="kmE-KS-xQB"/>
+                    <constraint firstItem="NNp-Mp-sJs" firstAttribute="centerY" secondItem="Nos-11-VRo" secondAttribute="centerY" id="lZs-Pv-T8Q"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-470" y="-360"/>
         </tableViewCell>
     </objects>
 </document>

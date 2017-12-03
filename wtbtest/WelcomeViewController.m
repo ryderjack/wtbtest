@@ -114,7 +114,7 @@
                     [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
 
                 }
-                else{ //CHANGE
+                else{
                     //do final check against NSUserDefaults incase user was banned without device token coz didn't enable push
                     if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"banned"] isEqualToString:@"YES"]) {
                         NSLog(@"user is banned");

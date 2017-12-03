@@ -50,17 +50,19 @@
 
     self.chosenColour = @"";
     
+    self.hideInstantBuy = YES;
+    
     //add in a way for us to disable instant buy if needs be
-    PFQuery *versions = [PFQuery queryWithClassName:@"versions"];
-    [versions orderByDescending:@"createdAt"];
-    [versions getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-        if (object) {
-            if ([[object objectForKey:@"instantBuy"]isEqualToString:@"NO"]){
-                self.hideInstantBuy = YES;
-                [self.tableView reloadData];
-            }
-        }
-    }];
+//    PFQuery *versions = [PFQuery queryWithClassName:@"versions"];
+//    [versions orderByDescending:@"createdAt"];
+//    [versions getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//        if (object) {
+//            if ([[object objectForKey:@"instantBuy"]isEqualToString:@"NO"]){
+//                self.hideInstantBuy = YES;
+//                [self.tableView reloadData];
+//            }
+//        }
+//    }];
     
     self.chosenColourSArray = [NSMutableArray array];
     
@@ -2532,8 +2534,6 @@
             [forSaleItem setObject:@"NO" forKey:@"instantBuy"];
         }
         
-        [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"]; //CHANGE
-
         
         if (self.editMode || self.listingAsMode) {
             [self showHUD];
@@ -2542,13 +2542,13 @@
                     
                     //update listing's lastUpdated property
                     //use server func so time is correct
-//                    NSDictionary *params = @{@"listingId":forSaleItem.objectId};
-//                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
-//                        if (error) {
-//                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
-//                                           customAttributes:@{}];
-//                        }
-//                    }];
+                    NSDictionary *params = @{@"listingId":forSaleItem.objectId};
+                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                        if (error) {
+                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
+                                           customAttributes:@{}];
+                        }
+                    }];
                     
                     NSLog(@"saved listing");
                     [Answers logCustomEventWithName:@"Created for sale listing"
@@ -2624,10 +2624,8 @@
 
         }
         else{
-            //for creation, last updated is same as created at
-            //editing the listing requires calling a cloud func to update
-            [forSaleItem setObject:forSaleItem.createdAt forKey:@"lastUpdated"];
-
+            [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];
+            
             //pass the saving onto the purchase tab
             int postNumber = [[[PFUser currentUser] objectForKey:@"forSalePostNumber"]intValue];
             

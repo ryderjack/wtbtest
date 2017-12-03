@@ -107,7 +107,7 @@
 
                     }
                     else{
-                        //do final check against NSUserDefaults incase user was banned without device token coz didn't enable push //CHANGE
+                        //do final check against NSUserDefaults incase user was banned without device token coz didn't enable push
                         if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"banned"] isEqualToString:@"YES"]) {
                             [Answers logCustomEventWithName:@"Banned user attempted login"
                                            customAttributes:@{

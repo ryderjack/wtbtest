@@ -22,6 +22,7 @@
 #import "OrderSummaryView.h"
 #import "Mixpanel/Mixpanel.h"
 #import <Intercom/Intercom.h>
+#import "ReviewsVC.h"
 
 @interface AppDelegate ()
 
@@ -46,7 +47,7 @@
         
         //production
 //        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
-//        configuration.server = @"https://live.bumpapi.com/parse";
+        configuration.server = @"https://live.bumpapi.com/parse";
         
         //preproduction
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE remove these links for safety reasons from the actual build
@@ -54,12 +55,12 @@
 
         //dev server w/ dev DB
 //        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
-        configuration.server = @"https://dev.bumpapi.com/parse";
+//        configuration.server = @"https://dev.bumpapi.com/parse";
 
     }]];
 
-//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
-//    [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
+    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+    [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
 
     [Intercom setApiKey:@"ios_sdk-dcdcb0d85e2a1da18471b8506beb225e5800e7dd" forAppId:@"zjwtufx1"];
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
@@ -233,10 +234,10 @@
             [self checkMesages];
 //            [self checkForTBMessages];
             
-            if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
-//                [self checkForSupportMessages];
-            }
-            [self checkForOrders];
+//            if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
+////                [self checkForSupportMessages];
+//            }
+//            [self checkForOrders];
         }
     }
     else{
@@ -253,7 +254,7 @@
         
         self.tabBarController.selectedIndex = 0;
     }
-    else if ([localNotif.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on bump now"]){
+    else if ([localNotif.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on BUMP"]){
         [Answers logCustomEventWithName:@"Opened First Listing Post Reminder Push"
                        customAttributes:@{}];
         
@@ -287,15 +288,18 @@
         
         if([strMsg hasSuffix:@"just left you a review"]){
             //open order summary page of this order
-            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
+//            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
+//                           customAttributes:@{}];
+            
+//            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+//            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+//            vc.orderObject = orderObject;
+            
+            [Answers logCustomEventWithName:@"Opened Reviews after receiving Feedback Push"
                            customAttributes:@{}];
             
-            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
-            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
-            vc.orderObject = orderObject;
-            
-            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [nav pushViewController:vc animated:YES];
+            self.tabBarController.selectedIndex = 3;
+
         }
         else if([strMsg hasPrefix:@"Item Sold"]){
             //open order summary page of this order
@@ -424,8 +428,8 @@
     }
     
     //add observer which can refresh profile tab badge after user places an order
-    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-    [center addObserver:self selector:@selector(profileBadgeRefresh) name:@"orderPlaced" object:nil];
+//    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+//    [center addObserver:self selector:@selector(profileBadgeRefresh) name:@"orderPlaced" object:nil];
 
     //app store observer
     
@@ -434,9 +438,9 @@
     //reset BOOL which limits like drop downs to once per session
     [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"seenLikeDrop"];
     
-    if ([PFUser currentUser]) {
-        [self calcOrderNumber];
-    }
+//    if ([PFUser currentUser]) {
+//        [self calcOrderNumber];
+//    }
     
     return YES;
 }
@@ -521,7 +525,7 @@
                         [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
                     }
                     
-                    //add unseen orders to badge //CHANGE make sure this is bulletproof
+                    //add unseen orders to badge make sure this is bulletproof
 //                    if (self.profileView.ordersUnseen > 0) {
 //                        totalUnseen+= self.profileView.ordersUnseen;
 //                    }
@@ -531,7 +535,7 @@
                 else{
                     [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
                     
-                    //add unseen orders to badge //CHANGE make sure this is bulletproof
+                    //add unseen orders to badge
 //                    if (self.profileView.ordersUnseen > 0) {
 //                        self.installation.badge = self.profileView.ordersUnseen;
 //                    }
@@ -559,36 +563,36 @@
         return;
     }
     //query for convos we know this user hasn't seen
-    PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
-    [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
-    [buyingUnseenQuery whereKey:@"buyerUnseen" greaterThan:@0];
-    [buyingUnseenQuery whereKey:@"status" containedIn:@[@"live",@"failed",@"refunded",@"pending"]];
-
-    PFQuery *sellingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
-    [sellingUnseenQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-    [sellingUnseenQuery whereKey:@"sellerUnseen" greaterThan:@0];
-    [sellingUnseenQuery whereKey:@"status" containedIn:@[@"live",@"refunded"]];
-
-    PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
-    [unseenQuery orderByDescending:@"lastUpdated"];
-    
-    [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            int orderCount = (int)objects.count;
-            NSLog(@"unseen orders count %d", orderCount);
-            self.profileView.ordersUnseen = orderCount;
-
-            if (objects.count > 0) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:@"UnseenOrders" object:@(orderCount)];
-            }
-            
-            [self calcProfileBadge];
-            
-        }
-        else{
-            NSLog(@"error finding orders %@", error);
-        }
-    }];
+//    PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
+//    [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+//    [buyingUnseenQuery whereKey:@"buyerUnseen" greaterThan:@0];
+//    [buyingUnseenQuery whereKey:@"status" containedIn:@[@"live",@"failed",@"refunded",@"pending"]];
+//
+//    PFQuery *sellingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
+//    [sellingUnseenQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+//    [sellingUnseenQuery whereKey:@"sellerUnseen" greaterThan:@0];
+//    [sellingUnseenQuery whereKey:@"status" containedIn:@[@"live",@"refunded"]];
+//
+//    PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
+//    [unseenQuery orderByDescending:@"lastUpdated"];
+//
+//    [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//        if (objects) {
+//            int orderCount = (int)objects.count;
+//            NSLog(@"unseen orders count %d", orderCount);
+//            self.profileView.ordersUnseen = orderCount;
+//
+//            if (objects.count > 0) {
+//                [[NSNotificationCenter defaultCenter] postNotificationName:@"UnseenOrders" object:@(orderCount)];
+//            }
+//
+//            [self calcProfileBadge];
+//
+//        }
+//        else{
+//            NSLog(@"error finding orders %@", error);
+//        }
+//    }];
 }
 
 -(void)checkForTBMessages{
@@ -721,6 +725,7 @@
         
         if ([[strMsg lowercaseString] hasPrefix:@"team bump"]) {
 //            [self checkForTBMessages];
+            
             self.tabBarController.selectedIndex = 3;
         }
         else if([[strMsg lowercaseString] hasPrefix:@"bump support"]) {
@@ -729,15 +734,21 @@
         }
         else if([strMsg hasSuffix:@"just left you a review"]){
             //open order summary page of this order
-            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
+            
+            [Answers logCustomEventWithName:@"Opened Reviews after receiving Feedback Push"
                            customAttributes:@{}];
             
-            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
-            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
-            vc.orderObject = orderObject;
-            
-            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [nav pushViewController:vc animated:YES];
+            self.tabBarController.selectedIndex = 3;
+
+//            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
+//                           customAttributes:@{}];
+//
+//            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+//            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+//            vc.orderObject = orderObject;
+//
+//            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+//            [nav pushViewController:vc animated:YES];
             
         }
         else if([strMsg hasPrefix:@"Item Sold"]){
@@ -1070,36 +1081,36 @@
     //record last active time
     [[NSUserDefaults standardUserDefaults]setValue:[NSDate date] forKey:@"lastActiveTime"];
     
-    if ([[NSUserDefaults standardUserDefaults]boolForKey:@"longTermLocalSeen"] != YES){
-        
-        //schedule 6 day inactivity local notification
-        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-        dayComponent.day = 6;
-        NSCalendar *theCalendar = [NSCalendar currentCalendar];
-        NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-        
-        // Create new date
-        NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
-                                                       fromDate:dateToFire];
-        
-        NSDateComponents *components3 = [[NSDateComponents alloc] init];
-        
-        [components3 setYear:components1.year];
-        [components3 setMonth:components1.month];
-        [components3 setDay:components1.day];
-        
-        [components3 setHour:20];
-        
-        // Generate a new NSDate from components3.
-        NSDate * combinedDate = [theCalendar dateFromComponents:components3];
-        
-        UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-        [localNotification setAlertBody:@"What's your next cop? Find it on Bump 👊"];
-        [localNotification setFireDate: combinedDate];
-        [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
-        [localNotification setRepeatInterval: 0];
-        [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
-    }
+//    if ([[NSUserDefaults standardUserDefaults]boolForKey:@"longTermLocalSeen"] != YES){
+//        
+//        //schedule 6 day inactivity local notification
+//        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+//        dayComponent.day = 6;
+//        NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//        NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+//        
+//        // Create new date
+//        NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
+//                                                       fromDate:dateToFire];
+//        
+//        NSDateComponents *components3 = [[NSDateComponents alloc] init];
+//        
+//        [components3 setYear:components1.year];
+//        [components3 setMonth:components1.month];
+//        [components3 setDay:components1.day];
+//        
+//        [components3 setHour:20];
+//        
+//        // Generate a new NSDate from components3.
+//        NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+//        
+//        UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+//        [localNotification setAlertBody:@"What's your next cop? Find it on BUMP 👊"];
+//        [localNotification setFireDate: combinedDate];
+//        [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+//        [localNotification setRepeatInterval: 0];
+//        [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+//    }
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
@@ -1160,13 +1171,13 @@
     }
     
     //cancel long term local push
-    NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
-    for(UILocalNotification *notification in notificationArray){
-        if ([notification.alertBody.lowercaseString containsString:@"what's your next cop? find it on bump"]) {
-            // delete this notification
-            [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
-        }
-    }
+//    NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+//    for(UILocalNotification *notification in notificationArray){
+//        if ([notification.alertBody.lowercaseString containsString:@"what's your next cop? find it on bump"]) {
+//            // delete this notification
+//            [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
+//        }
+//    }
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {
@@ -1395,9 +1406,9 @@
     }
     
     //then get number of unseen orders
-    if (self.profileView.ordersUnseen > 0) {
-        tabInt += self.profileView.ordersUnseen;
-    }
+//    if (self.profileView.ordersUnseen > 0) {
+//        tabInt += self.profileView.ordersUnseen;
+//    }
     
     //add all together and set tab badge
     if (tabInt == 0) {
@@ -1409,14 +1420,12 @@
     else{
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d",tabInt]];
     }
-    
-    //CHANGE make sure to add the unseen orders number to installation badge as well as messages until an order has been 'read'
 }
 
 -(void)profileBadgeRefresh{
     NSLog(@"refreshing profile badge in profile");
 //    [self checkForTBMessages];
-    [self checkForOrders];
+//    [self checkForOrders];
 //    [self checkForSupportMessages];
 }
 

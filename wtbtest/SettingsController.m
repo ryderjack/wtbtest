@@ -41,12 +41,14 @@
     self.locationLabelCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.bioCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.currencySwipeCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.paypalEmailCell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     self.contactEmailField.delegate = self;
     self.firstNameField.delegate = self;
     self.lastNameField.delegate = self;
     self.bioField.delegate = self;
-    
+    self.paypalTextField.delegate = self;
+
     self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"bump", @"terrible", @"bad", @"depop", @"grailed", @"ebay"];
     self.currencyArray = @[@"GBP", @"USD", @"EUR", @"AUD"];
     
@@ -75,7 +77,7 @@
     
     [self setImageBorder:self.testingView];
     
-//    self.currentPaypal = [self.currentUser objectForKey:@"paypal"];
+    self.currentPaypal = [self.currentUser objectForKey:@"paypal"];
     self.currentContact = [self.currentUser objectForKey:@"email"];
     
     self.usernameLabel.text = [NSString stringWithFormat:@"@%@",self.currentUser.username];
@@ -93,13 +95,13 @@
     
     
     //check paypal status
-    if ([[self.currentUser objectForKey:@"paypalEnabled"]isEqualToString:@"YES"]) {
-        self.paypalAccountLabel.text = @"Connected";
-        self.paypalConnected = YES;
-    }
-    else{
-        self.paypalAccountLabel.text = @"Add Account";
-    }
+//    if ([[self.currentUser objectForKey:@"paypalEnabled"]isEqualToString:@"YES"]) {
+//        self.paypalAccountLabel.text = @"Connected";
+//        self.paypalConnected = YES;
+//    }
+//    else{
+//        self.paypalAccountLabel.text = @"Add Account";
+//    }
 
     
     //check if got a bio
@@ -122,7 +124,8 @@
     }
     
     self.contactEmailField.text = [NSString stringWithFormat:@"%@",self.currentContact];
-    
+    self.paypalTextField.text = [NSString stringWithFormat:@"%@",self.currentPaypal];
+
     if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
         //CMO switch setup
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"CMOModeOn"]==YES) {
@@ -291,7 +294,7 @@
             return self.contactEmailCell;
         }
         else if (indexPath.row == 1) {
-            return self.emailCell;
+            return self.paypalEmailCell;
         }
         else if (indexPath.row == 2) {
             return self.pictureCelll;

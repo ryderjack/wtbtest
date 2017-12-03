@@ -81,7 +81,7 @@
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="searchExplain.png" translatesAutoresizingMaskIntoConstraints="NO" id="NXK-As-fwt">
                         <rect key="frame" x="138" y="291" width="100" height="100"/>
                     </imageView>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Once you find an item you're interested in you can checkout with PayPal and Buyer Protection" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="iob-qp-ktT">
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Once you find an item you're free to complete the deal on your terms. We recommend using PayPal Goods &amp; Services" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="iob-qp-ktT">
                         <rect key="frame" x="64" y="572" width="247" height="83"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="83" id="LvA-Xo-DH4"/>
