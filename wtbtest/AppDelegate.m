@@ -395,7 +395,6 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
-            vc.seller = [listingObject objectForKey:@"sellerUser"];
 
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
             [nav pushViewController:vc animated:YES];
@@ -417,7 +416,6 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
-            vc.seller = [listingObject objectForKey:@"sellerUser"];
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
             [nav pushViewController:vc animated:YES];
         }
@@ -840,7 +838,6 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
-            vc.seller = [listingObject objectForKey:@"sellerUser"];
 
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
 //            [nav pushViewController:vc animated:YES];
@@ -953,7 +950,6 @@
         vc.fromBuyNow = YES;
         vc.pureWTS = YES;
         vc.fromPush = YES;
-        vc.seller = [listingObject objectForKey:@"sellerUser"];
 
         NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
         

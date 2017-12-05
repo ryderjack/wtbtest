@@ -2920,6 +2920,7 @@
             [self.listingObject setObject:@"live" forKey:@"status"];
             [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
+                    
                     //hide label
                     self.soldLabel.alpha = 1.0;
                     self.soldCheckImageVoew.alpha = 1.0;
@@ -2947,6 +2948,8 @@
             [self.reportLabel setTitle:@"U N M A R K  A S\nS O L D" forState:UIControlStateNormal];
 
             [self.listingObject setObject:@"sold" forKey:@"status"];
+            [self.listingObject setObject:[NSDate date] forKey:@"soldDate"];
+
             [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
                     //unhide label

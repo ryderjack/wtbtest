@@ -260,7 +260,11 @@
                         [buttonView loadInBackground];
                     }
                     else{
-                        [buttonView setImage:[UIImage imageNamed:@"empty"]];
+//                        [buttonView setImage:[UIImage imageNamed:@"empty"]];
+                        NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
+                                                        NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+                        
+                        [buttonView setImageWithString:self.buyer.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
                     }
                     
                     if ([[self.buyer objectForKey:@"ignoreLikePushes"]isEqualToString:@"YES"]) {
