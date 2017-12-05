@@ -717,15 +717,15 @@
         
 //        NSLog(@"userinfo: %@", userInfo);
         
-        if ([[strMsg lowercaseString] hasPrefix:@"team bump"]) {
-//            [self checkForTBMessages];
-            self.tabBarController.selectedIndex = 3;
-        }
-        else if([[strMsg lowercaseString] hasPrefix:@"bump support"]) {
-//            [self checkForSupportMessages];
-            self.tabBarController.selectedIndex = 3;
-        }
-        else if([strMsg hasSuffix:@"just left you a review"]){
+//        if ([[strMsg lowercaseString] hasPrefix:@"team bump"]) {
+////            [self checkForTBMessages];
+//            self.tabBarController.selectedIndex = 3;
+//        }
+//        else if([[strMsg lowercaseString] hasPrefix:@"bump support"]) {
+////            [self checkForSupportMessages];
+//            self.tabBarController.selectedIndex = 3;
+//        }
+        if([strMsg hasSuffix:@"just left you a review"]){
             //open order summary page of this order
             [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
                            customAttributes:@{}];
@@ -861,9 +861,14 @@
         }
         else{
             //force refresh of inbox
-            self.tabBarController.selectedIndex = 2;
-
             [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
+
+            self.tabBarController.selectedIndex = 2;
+            
+            //if user is viewing a listing from search then when we switch tabs the message button won't disappear
+            //force it's disappearance via observer (need to grab the navController of the view we're going to)
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"switchedTabs" object:nav];
         }
     }
     else{

@@ -2918,8 +2918,20 @@
             [self.reportLabel setTitle:@"M A R K  A S\nS O L D" forState:UIControlStateNormal];
 
             [self.listingObject setObject:@"live" forKey:@"status"];
+            [self.listingObject removeObjectForKey:@"soldDate"];
             [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
+                    
+                    //update lastUpdated value
+                    NSDictionary *params = @{@"listingId":self.listingObject.objectId};
+                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                        if (error) {
+                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
+                                           customAttributes:@{
+                                                              @"where":@"listing"
+                                                              }];
+                        }
+                    }];
                     
                     //hide label
                     self.soldLabel.alpha = 1.0;
@@ -2949,9 +2961,20 @@
 
             [self.listingObject setObject:@"sold" forKey:@"status"];
             [self.listingObject setObject:[NSDate date] forKey:@"soldDate"];
-
             [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
+                    
+                    //update lastUpdated value
+                    NSDictionary *params = @{@"listingId":self.listingObject.objectId};
+                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                        if (error) {
+                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
+                                           customAttributes:@{
+                                                              @"where":@"listing"
+                                                              }];
+                        }
+                    }];
+                    
                     //unhide label
                     self.soldLabel.alpha = 0.0;
                     self.soldCheckImageVoew.alpha = 0.0;
