@@ -2491,7 +2491,6 @@
                 vc.source = @"share";
                 vc.pureWTS = YES;
                 vc.fromBuyNow = YES;
-                vc.seller = [tappedMessage.sharedListing objectForKey:@"sellerUser"];
                 [self.navigationController pushViewController:vc animated:YES];
             }
         }
@@ -2574,7 +2573,6 @@
         vc.source = @"messages";
         vc.pureWTS = YES;
         vc.fromBuyNow = YES;
-        vc.seller = [self.listing objectForKey:@"sellerUser"];
         [self.navigationController pushViewController:vc animated:YES];
     }
     else{

@@ -738,9 +738,6 @@
     vc.source = @"latest";
     vc.fromBuyNow = YES;
     vc.pureWTS = YES;
-    vc.seller = [itemObject objectForKey:@"sellerUser"];
-    
-    NSLog(@"SELLER FROM BUY NOW: %@", [itemObject objectForKey:@"sellerUser"]);
     
     //switch off hiding nav bar
     self.navigationController.navigationBarHidden = NO;
@@ -2184,7 +2181,6 @@
         vc.fromBuyNow = YES;
         vc.pureWTS = YES;
         vc.fromPush = YES;
-        vc.seller = [listingObj objectForKey:@"sellerUser"];
 
         NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
         //            [nav pushViewController:vc animated:YES];
@@ -2249,7 +2245,6 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
-            vc.seller = [listingObj objectForKey:@"sellerUser"];
 
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
 //            [nav pushViewController:vc animated:YES];
@@ -2291,7 +2286,6 @@
     vc.fromBuyNow = YES;
     vc.pureWTS = YES;
     vc.fromPush = YES;
-    vc.seller = [listingObject objectForKey:@"sellerUser"];
 
     NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
 //    [nav pushViewController:vc animated:YES];
@@ -2352,7 +2346,6 @@
     vc.fromBuyNow = YES;
     vc.pureWTS = YES;
     vc.fromPush = YES;
-    vc.seller = [listingObject objectForKey:@"sellerUser"];
 
     NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
 //    [nav pushViewController:vc animated:YES];

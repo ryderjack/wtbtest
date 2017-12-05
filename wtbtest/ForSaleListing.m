@@ -1407,6 +1407,15 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
+-(void)normalShowAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
 -(void)showNormalAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
     
     [self hideBarButton];
@@ -1424,7 +1433,7 @@
     BOOL seenBuyPopup = [[NSUserDefaults standardUserDefaults] boolForKey:@"seenBuyPopup"];
     
     if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"] && ![self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"live"] && !seenBuyPopup) {
-        [self showAlertWithTitle:@"App Update" andMsg:@"The seller has enabled Instant Buy on their item, download the latest update from the App Store to be able to buy/sell instantly on BUMP with PayPal"];
+        [self normalShowAlertWithTitle:@"App Update" andMsg:@"The seller has enabled Instant Buy on their item, download the latest update from the App Store to be able to buy/sell instantly on BUMP with PayPal"];
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenBuyPopup"];
     }
 
@@ -2922,7 +2931,7 @@
             [self.reportLabel setTitle:@"M A R K  A S\nS O L D" forState:UIControlStateNormal];
 
             [self.listingObject setObject:@"live" forKey:@"status"];
-            [self.listingObject setObject:[NSDate date] forKey:@"soldDate"];
+            [self.listingObject removeObjectForKey:@"soldDate"];
 
             [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
@@ -2965,8 +2974,22 @@
             [self.reportLabel setTitle:@"U N M A R K  A S\nS O L D" forState:UIControlStateNormal];
 
             [self.listingObject setObject:@"sold" forKey:@"status"];
+            [self.listingObject setObject:[NSDate date] forKey:@"soldDate"];
+
             [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
+                    
+                    //update lastUpdated value
+                    NSDictionary *params = @{@"listingId":self.listingObject.objectId};
+                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                        if (error) {
+                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
+                                           customAttributes:@{
+                                                              @"where":@"listing"
+                                                              }];
+                        }
+                    }];
+                    
                     //unhide label
                     self.soldLabel.alpha = 0.0;
                     self.soldCheckImageVoew.alpha = 0.0;

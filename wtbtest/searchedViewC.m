@@ -815,7 +815,6 @@
         vc.source = @"search";
         vc.fromBuyNow = YES;
         vc.pureWTS = YES;
-        vc.seller = [itemObject objectForKey:@"sellerUser"];
 
         //switch off hiding nav bar
         self.navigationController.navigationBarHidden = NO;

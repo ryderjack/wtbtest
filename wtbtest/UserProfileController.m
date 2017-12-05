@@ -926,7 +926,6 @@ typedef void(^myCompletion)(BOOL);
         if (self.tabMode) {
             vc.delegate = self;
         }
-        vc.seller = [selected objectForKey:@"sellerUser"];
 
         [self.navigationController pushViewController:vc animated:YES];
     }
@@ -968,7 +967,6 @@ typedef void(^myCompletion)(BOOL);
             if (self.tabMode) {
                 vc.delegate = self;
             }
-            vc.seller = [selected objectForKey:@"sellerUser"];
 
             [self.navigationController pushViewController:vc animated:YES];
         }

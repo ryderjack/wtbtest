@@ -467,7 +467,6 @@
         vc.source = @"create";
         vc.pureWTS = YES;
         vc.fromCreate = YES;
-        vc.seller = [WTS objectForKey:@"sellerUser"];
 
         NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
         [self presentViewController:nav animated:YES completion:nil];

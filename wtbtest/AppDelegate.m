@@ -47,7 +47,7 @@
         
         //production
 //        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
-        configuration.server = @"https://live.bumpapi.com/parse";
+//        configuration.server = @"https://live.bumpapi.com/parse";
         
         //preproduction
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE remove these links for safety reasons from the actual build
@@ -55,7 +55,7 @@
 
         //dev server w/ dev DB
 //        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
-//        configuration.server = @"https://dev.bumpapi.com/parse";
+        configuration.server = @"https://dev.bumpapi.com/parse";
 
     }]];
 
@@ -399,7 +399,6 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
-            vc.seller = [listingObject objectForKey:@"sellerUser"];
 
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
             [nav pushViewController:vc animated:YES];
@@ -421,7 +420,6 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
-            vc.seller = [listingObject objectForKey:@"sellerUser"];
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
             [nav pushViewController:vc animated:YES];
         }
@@ -723,22 +721,28 @@
         
 //        NSLog(@"userinfo: %@", userInfo);
         
-        if ([[strMsg lowercaseString] hasPrefix:@"team bump"]) {
-//            [self checkForTBMessages];
-            
-            self.tabBarController.selectedIndex = 3;
-        }
-        else if([[strMsg lowercaseString] hasPrefix:@"bump support"]) {
-//            [self checkForSupportMessages];
-            self.tabBarController.selectedIndex = 3;
-        }
-        else if([strMsg hasSuffix:@"just left you a review"]){
+//        if ([[strMsg lowercaseString] hasPrefix:@"team bump"]) {
+////            [self checkForTBMessages];
+//
+//            self.tabBarController.selectedIndex = 3;
+//        }
+//        else if([[strMsg lowercaseString] hasPrefix:@"bump support"]) {
+////            [self checkForSupportMessages];
+//            self.tabBarController.selectedIndex = 3;
+//        }
+        if([strMsg hasSuffix:@"just left you a review"]){
             //open order summary page of this order
             
             [Answers logCustomEventWithName:@"Opened Reviews after receiving Feedback Push"
                            customAttributes:@{}];
             
             self.tabBarController.selectedIndex = 3;
+
+            //if user is viewing a listing from search then when we switch tabs the message button won't disappear
+            //force it's disappearance via observer (need to grab the navController of the view we're going to)
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"switchedTabs" object:nav];
+            
 
 //            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
 //                           customAttributes:@{}];
@@ -851,7 +855,6 @@
             vc.fromBuyNow = YES;
             vc.pureWTS = YES;
             vc.fromPush = YES;
-            vc.seller = [listingObject objectForKey:@"sellerUser"];
 
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
 //            [nav pushViewController:vc animated:YES];
@@ -875,9 +878,13 @@
         }
         else{
             //force refresh of inbox
-            self.tabBarController.selectedIndex = 2;
-
             [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
+            self.tabBarController.selectedIndex = 2;
+            
+            //if user is viewing a listing from search then when we switch tabs the message button won't disappear
+            //force it's disappearance via observer (need to grab the navController of the view we're going to)
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"switchedTabs" object:nav];
         }
     }
     else{
@@ -964,7 +971,6 @@
         vc.fromBuyNow = YES;
         vc.pureWTS = YES;
         vc.fromPush = YES;
-        vc.seller = [listingObject objectForKey:@"sellerUser"];
 
         NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
         
