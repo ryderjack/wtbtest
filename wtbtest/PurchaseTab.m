@@ -519,6 +519,8 @@
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
+
+    
     BOOL modalPresent = (self.presentedViewController);
     if ([PFUser currentUser] && modalPresent != YES) {
         

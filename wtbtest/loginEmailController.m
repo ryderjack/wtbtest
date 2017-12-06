@@ -184,7 +184,8 @@
                 
                 [Answers logCustomEventWithName:@"Log in error"
                                customAttributes:@{
-                                                  @"via":@"email"
+                                                  @"via":@"email",
+                                                  @"error":error.description
                                                   }];
             }
         }];

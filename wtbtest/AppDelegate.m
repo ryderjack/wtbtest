@@ -62,14 +62,19 @@
     [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
     [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
 
-    [Intercom setApiKey:@"ios_sdk-dcdcb0d85e2a1da18471b8506beb225e5800e7dd" forAppId:@"zjwtufx1"];
+    //production
+//    [Intercom setApiKey:@"ios_sdk-dcdcb0d85e2a1da18471b8506beb225e5800e7dd" forAppId:@"zjwtufx1"]; //CHANGE
+    
+    //dev
+    [Intercom setApiKey:@"ios_sdk-67598bd2fc99548a4f157a6c78c00c98da59991f" forAppId:@"bjtqi7s6"];
+
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
     
     if ([PFUser currentUser]) {
         
         NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
         [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
-            if (!error) {                
+            if (!error) {
                 [Intercom setUserHash:hash];
                 [Intercom registerUserWithUserId:[PFUser currentUser].objectId];
                 [self setupIntercomListener];

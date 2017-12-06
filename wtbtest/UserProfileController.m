@@ -220,6 +220,9 @@ typedef void(^myCompletion)(BOOL);
     else if (self.user) {
         [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
+
+//                NSDictionary *params = @{@"userId": self.user.objectId};
+//                [PFCloud callFunctionInBackground:@"reactivateUser" withParameters: params block:nil]; //CHANGE remove this
                 
                 //check if user needs a badge displayed
                 if ([[self.user objectForKey:@"veriUser"] isEqualToString:@"YES"]) {
@@ -421,6 +424,8 @@ typedef void(^myCompletion)(BOOL);
         [dealsQuery whereKey:@"User" equalTo:self.user];
         [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
+                NSLog(@"user delas info: %@", object);//CHANGE remove this
+                
                 int starNumber = [[object objectForKey:@"currentRating"] intValue];
                 int total = [[object objectForKey:@"dealsTotal"]intValue];
                 
@@ -461,6 +466,12 @@ typedef void(^myCompletion)(BOOL);
                     else if (starNumber == 5){
                         [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
                     }
+                }
+                else{
+                    //looking at someone else's profile and they have zero reviews
+                    self.noDeals = YES;
+                    [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
+                    //CHANGE add in a user's location if no stars to show
                 }
                 
                 if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
@@ -1035,8 +1046,7 @@ typedef void(^myCompletion)(BOOL);
                            customAttributes:@{
                                               @"reason":reason,
                                               @"reporter":[PFUser currentUser].objectId,
-                                              @"user":self.user.objectId,
-                                              @"date":[NSDate date]
+                                              @"user":self.user.objectId
                                               }];
         }
         

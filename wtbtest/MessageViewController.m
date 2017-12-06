@@ -1374,7 +1374,7 @@
                                                          }];
             
             //update Intercom
-            [Intercom logEventWithName:@"sent_message" metaData: @{}];
+            [Intercom logEventWithName:@"sent_message"];
             
             //add last sent message string to nsuserdefaults (only if not a suggested message)
             //then if all 5 in array are the same string ban this user from messaging
