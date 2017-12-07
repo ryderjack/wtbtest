@@ -220,9 +220,6 @@ typedef void(^myCompletion)(BOOL);
     else if (self.user) {
         [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
-
-//                NSDictionary *params = @{@"userId": self.user.objectId};
-//                [PFCloud callFunctionInBackground:@"reactivateUser" withParameters: params block:nil]; //CHANGE remove this
                 
                 //check if user needs a badge displayed
                 if ([[self.user objectForKey:@"veriUser"] isEqualToString:@"YES"]) {
@@ -424,7 +421,6 @@ typedef void(^myCompletion)(BOOL);
         [dealsQuery whereKey:@"User" equalTo:self.user];
         [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
-                NSLog(@"user delas info: %@", object);//CHANGE remove this
                 
                 int starNumber = [[object objectForKey:@"currentRating"] intValue];
                 int total = [[object objectForKey:@"dealsTotal"]intValue];
@@ -470,8 +466,8 @@ typedef void(^myCompletion)(BOOL);
                 else{
                     //looking at someone else's profile and they have zero reviews
                     self.noDeals = YES;
+                    [self.myBar addSubview:self.reviewsButton];
                     [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
-                    //CHANGE add in a user's location if no stars to show
                 }
                 
                 if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
@@ -1365,6 +1361,7 @@ typedef void(^myCompletion)(BOOL);
     }]];
     
     if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Message" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
             [self setupMessages];
         }]];
@@ -1391,31 +1388,61 @@ typedef void(^myCompletion)(BOOL);
             });
         }]];
         
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report User" message:@"Why would you like to report this user?" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Ban User" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report User" message:@"Why would you like to ban this user?" preferredStyle:UIAlertControllerStyleAlert];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Selling fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Selling fakes"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive behaviour" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Offensive behaviour"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Spamming"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Other"];
+                }]];
+                
+                [self presentViewController:alertView animated:YES completion:nil];
+                
             }]];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Selling fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self selectedReportReason:@"Selling fakes"];
+        }
+        else{
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report User" message:@"Why would you like to report this user?" preferredStyle:UIAlertControllerStyleAlert];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Selling fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Selling fakes"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive behaviour" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Offensive behaviour"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Spamming"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Other"];
+                }]];
+                
+                [self presentViewController:alertView animated:YES completion:nil];
+                
             }]];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive behaviour" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self selectedReportReason:@"Offensive behaviour"];
-            }]];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self selectedReportReason:@"Spamming"];
-            }]];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self selectedReportReason:@"Other"];
-            }]];
-            
-            [self presentViewController:alertView animated:YES completion:nil];
-            
-        }]];
+        }
+
         
 //        if (self.userBlocked) {
 //            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unblock" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){

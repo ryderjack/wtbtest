@@ -1110,6 +1110,12 @@
         return YES;
     }
     else if(textField == self.itemTitleTextField){
+        //stop people entering emoji's into the item title
+        if (![string canBeConvertedToEncoding:NSASCIIStringEncoding]){
+            return NO;
+        }
+        
+        
         //limit number of characters
         if(range.length + range.location > textField.text.length)
         {
@@ -5190,7 +5196,7 @@
         [finalKeywordArray addObject:@"boxlogo"];
         [finalKeywordArray addObject:@"bogos"];
     }
-    else if ([finalKeywordArray containsObject:@"box logo"]) {
+    else if ([finalKeywordArray containsObject:@"box"] && [finalKeywordArray containsObject:@"logo"]) {
         [finalKeywordArray addObject:@"bogo"];
         [finalKeywordArray addObject:@"boxlogo"];
         [finalKeywordArray addObject:@"bogos"];

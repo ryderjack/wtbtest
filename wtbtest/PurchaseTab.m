@@ -618,7 +618,7 @@
     //set price label if exists
     float price = [[forSaleItem objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
     
-    if (price != 0.00 && price > 0.99) {
+    if (price != 0.00 && price > 0.99 && price != 9999.99) {
         cell.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
     }
     else{

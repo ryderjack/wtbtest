@@ -307,7 +307,7 @@
     
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
-//            NSLog(@"Listing %@", self.listingObject);
+            NSLog(@"Listing %@", self.listingObject);
             self.seller = [self.listingObject objectForKey:@"sellerUser"];
             
             [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -585,6 +585,9 @@
                     //disable report button
                     [self.reportButton setEnabled:NO];
                     [self.reportLabel setTitle:@"R E P O R T E D" forState:UIControlStateNormal];
+                }
+                else if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"]) {
+                    [self.reportLabel setTitle:@"B A N" forState:UIControlStateNormal];
                 }
             }
             
@@ -953,7 +956,51 @@
         [self showBarButton];
     }]];
     
-    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
+    if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"] && ![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete Listing (without banning)" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete this listing?" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
+            }]];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+                
+                NSDictionary *params = @{@"listingId": self.listingObject.objectId, @"deleter":[PFUser currentUser].username};
+                [PFCloud callFunctionInBackground:@"modDeletedListing" withParameters: params block:^(NSDictionary *response, NSError *error) {
+                    if (!error) {
+                        
+                        [Answers logCustomEventWithName:@"Mod Deleted Listing"
+                                       customAttributes:@{
+                                                          @"reporter":[PFUser currentUser].objectId,
+                                                          @"listingId":self.listingObject.objectId
+                                                          }];
+                        
+                        [Answers logCustomEventWithName:[NSString stringWithFormat:@"Mod Deleted Listing %@ %@", [PFUser currentUser].objectId,[PFUser currentUser].username]
+                                       customAttributes:@{
+                                                          @"reporter":[PFUser currentUser].objectId,
+                                                          @"listingId":self.listingObject.objectId
+                                                          }];
+                        
+                    }
+                    else{
+                        NSLog(@"mod delete error %@", error);
+                    }
+                }];
+                
+                if (self.fromCreate != YES) {
+                    [self.navigationController popViewControllerAnimated:YES];
+                }
+                else{
+                    [self dismissVC];
+                }
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
+        }]];
+    }
+    
+    else if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
  
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
@@ -3054,8 +3101,7 @@
                    customAttributes:@{
                                       @"reason":reason,
                                       @"reporter":[PFUser currentUser].objectId,
-                                      @"listingId":self.listingObject.objectId,
-                                      @"date":[NSDate date]
+                                      @"listingId":self.listingObject.objectId
                                       }];
     
     NSString *mod = @"NO";
@@ -3067,16 +3113,14 @@
                        customAttributes:@{
                                           @"reason":reason,
                                           @"reporter":[PFUser currentUser].objectId,
-                                          @"listingId":self.listingObject.objectId,
-                                          @"date":[NSDate date]
+                                          @"listingId":self.listingObject.objectId
                                           }];
         
         [Answers logCustomEventWithName:[NSString stringWithFormat:@"Mod Reported Listing %@ %@", [PFUser currentUser].objectId,[PFUser currentUser].username]
                        customAttributes:@{
                                           @"reason":reason,
                                           @"reporter":[PFUser currentUser].objectId,
-                                          @"listingId":self.listingObject.objectId,
-                                          @"date":[NSDate date]
+                                          @"listingId":self.listingObject.objectId
                                           }];
     }
     
