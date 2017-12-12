@@ -59,16 +59,15 @@
 
     }]];
 
-//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
-//    [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
+    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+    [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
+    [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
 
     //production
     [Intercom setApiKey:@"ios_sdk-dcdcb0d85e2a1da18471b8506beb225e5800e7dd" forAppId:@"zjwtufx1"]; //CHANGE
-    
     //dev
 //    [Intercom setApiKey:@"ios_sdk-67598bd2fc99548a4f157a6c78c00c98da59991f" forAppId:@"bjtqi7s6"];
 
-    [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
     
     if ([PFUser currentUser]) {
         
@@ -619,7 +618,6 @@
         else{
             if (error.code == 209) {
                 NSLog(@"invalid so logout");
-                [Intercom reset];
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"invalidSessionNotification" object:nil];
             }
             NSLog(@"error finding team bump messages %@", error);
@@ -648,7 +646,6 @@
         else{
             if (error.code == 209) {
                 NSLog(@"invalid so logout");
-                [Intercom reset];
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"invalidSessionNotification" object:nil];
             }
             NSLog(@"error finding support messages %@", error);

@@ -405,7 +405,7 @@
                         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
                                                                     @"itms-apps://itunes.apple.com/app/id1096047233"]];
                     }]];
-//                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
+                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
                 }
             }
         }
@@ -1499,7 +1499,7 @@
         [self.searchBgView insertSubview:filterProxy aboveSubview:imgView];
         
         self.pushAlert.titleLabel.text = @"Filter";
-        self.pushAlert.messageLabel.text = @"Tap to filter items by brand, colour, size and more! If you're looking for something in particular hit the search bar at the top of the screen 👟";
+        self.pushAlert.messageLabel.text = @"Tap to filter items by brand, colour, size and more! If you're looking for something in particular hit the search bar at the top of the screen";
         self.pushAlert.numberOfButtons = 1;
         
         delay = 1.5;
@@ -2508,12 +2508,14 @@
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
     
+    [self.collectionView.collectionViewLayout invalidateLayout];
+    [self.collectionView layoutIfNeeded]; //ADDED
+    
     [self.collectionView setCollectionViewLayout:flowLayout];
     
     self.postingMode = NO;
     self.failedPosting = NO;
     
-    [self.collectionView.collectionViewLayout invalidateLayout];
     [self.headerView setNeedsDisplay];
     
     [self.collectionView performBatchUpdates:^{
@@ -3103,6 +3105,11 @@
     self.postingItem = postingItems[0];
     self.bannerImage = postingItems[1];
     
+    if (postingItems.count < 2) {
+        [self showAlertWithTitle:@"Item Error" andMsg:@"Try listing your item again!"];
+        return;
+    }
+    
     NSLog(@"listing item: %@     and got image: %@", self.postingItem, self.bannerImage);
     
     //save listing
@@ -3110,7 +3117,7 @@
     
     //setup header
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
-
+    
     if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
         //iPhone6/7
         [flowLayout setItemSize:CGSizeMake(175,222)];
@@ -3135,10 +3142,13 @@
     flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 60);
     flowLayout.sectionHeadersPinToVisibleBounds = YES;
     
+    [self.collectionView.collectionViewLayout invalidateLayout];
+    [self.collectionView layoutIfNeeded]; //ADDED
+    
     [self.collectionView setCollectionViewLayout:flowLayout];
     
     self.postingMode = YES;
-    [self.collectionView.collectionViewLayout invalidateLayout];
+    
     [self.headerView setNeedsLayout];
     [self.headerView setNeedsDisplay];
     
@@ -3157,7 +3167,7 @@
         
         [self.collectionView setContentOffset:CGPointMake(self.collectionView.contentOffset.x, offsetY - contentInsetY - sectionInsetY) animated:YES];
     }
-
+    
 }
 
 -(void)saveListing{
@@ -3419,8 +3429,10 @@
     [flowLayout setMinimumLineSpacing:8.0];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
     
-    [self.collectionView setCollectionViewLayout:flowLayout];
     [self.collectionView.collectionViewLayout invalidateLayout];
+    [self.collectionView layoutIfNeeded]; //ADDED
+    
+    [self.collectionView setCollectionViewLayout:flowLayout];
     
     self.progressBar = nil;
     [self.headerView setNeedsDisplay]; //is header ever behind cells?
@@ -3470,9 +3482,11 @@
     flowLayout.headerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 60);
     flowLayout.sectionHeadersPinToVisibleBounds = NO;
     
-    [self.collectionView setCollectionViewLayout:flowLayout];
-    
     [self.collectionView.collectionViewLayout invalidateLayout];
+    [self.collectionView layoutIfNeeded]; //ADDED
+    
+    [self.collectionView setCollectionViewLayout:flowLayout]; //this is showing index of array crash, so added the above line ^
+    
     [self.headerView setNeedsDisplay];
     
     [self.collectionView performBatchUpdates:^{

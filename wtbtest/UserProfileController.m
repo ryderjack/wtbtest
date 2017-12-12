@@ -220,7 +220,7 @@ typedef void(^myCompletion)(BOOL);
     else if (self.user) {
         [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
-                
+                                
                 //check if user needs a badge displayed
                 if ([[self.user objectForKey:@"veriUser"] isEqualToString:@"YES"]) {
                     self.hasBadge = YES;
@@ -535,23 +535,8 @@ typedef void(^myCompletion)(BOOL);
     else{
         borderShape.lineWidth = 1.5;
     }
-
     
     [imageView.layer addSublayer:borderShape];
-    
-    
-    
-//    imageView.layer.cornerRadius = imageView.frame.size.width / 2;
-//    imageView.layer.masksToBounds = YES;
-//    imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
-//    [imageView.layer setBorderColor: [[UIColor whiteColor] CGColor]];
-//    if (imageView == self.userImageView) {
-//        [imageView.layer setBorderWidth: 3.5];
-//    }
-//    else{
-//        [imageView.layer setBorderWidth: 1.5];
-//    }
-    
 }
 
 -(void)loadWTBListings{
@@ -1017,7 +1002,11 @@ typedef void(^myCompletion)(BOOL);
     if (@available(iOS 11.0, *)) {
         safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
     }
-    safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+    
+    if (@available(iOS 10.0, *)) {
+        safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+    }
+    
     [self.navigationController presentViewController:safariView animated:YES completion:nil];
 }
 
@@ -1046,7 +1035,7 @@ typedef void(^myCompletion)(BOOL);
                                               }];
         }
         
-        NSDictionary *params = @{@"userId": self.user.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod};
+        NSDictionary *params = @{@"userId": self.user.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod, @"modName":[PFUser currentUser].username};
         [PFCloud callFunctionInBackground:@"reportUserFunction" withParameters: params block:nil];
     }
 }
@@ -1389,33 +1378,14 @@ typedef void(^myCompletion)(BOOL);
         }]];
         
         if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Ban User" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
-                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report User" message:@"Why would you like to ban this user?" preferredStyle:UIAlertControllerStyleAlert];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Selling fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self selectedReportReason:@"Selling fakes"];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive behaviour" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self selectedReportReason:@"Offensive behaviour"];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self selectedReportReason:@"Spamming"];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self selectedReportReason:@"Other"];
-                }]];
-                
-                [self presentViewController:alertView animated:YES completion:nil];
-                
+            //user is a mod so prompt for a reason
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
+                [self enterBanComment];
             }]];
+
         }
         else{
+            //not a mod
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
                 UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report User" message:@"Why would you like to report this user?" preferredStyle:UIAlertControllerStyleAlert];
                 
@@ -1481,6 +1451,59 @@ typedef void(^myCompletion)(BOOL);
     }
     
     [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+-(void)enterBanComment{
+    
+    UIAlertController *alertController = [UIAlertController
+                                          alertControllerWithTitle:@"Reason"
+                                          message:@"Why are you banning this user?\n\nYour reason will be sent to the user so please be polite and factual"
+                                          preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+     {
+         textField.placeholder = @"e.g. Selling a Fake Supreme Bogo";
+     }];
+    
+    UIAlertAction *okAction = [UIAlertAction
+                               actionWithTitle:@"Ban"
+                               style:UIAlertActionStyleDefault
+                               handler:^(UIAlertAction *action)
+                               {
+                                   UITextField *reasonField = alertController.textFields.firstObject;
+                                   
+                                   BOOL acceptableString = YES;
+                                   NSArray *profanityList = @[@"cunt", @"wanker", @"nigger", @"penis", @"cock", @"dick", @"fuck", @"fucking", @"shit", @"fucked"];
+                                   
+                                   for (NSString *badString in profanityList) {
+                                       if ([reasonField.text.lowercaseString containsString:badString]) {
+                                           acceptableString = NO;
+                                           
+                                           [Answers logCustomEventWithName:@"Mod Used bad language"
+                                                          customAttributes:@{
+                                                                             @"text":reasonField.text,
+                                                                             @"mod":[PFUser currentUser].username,
+                                                                             @"where":@"banning from profile"
+                                                                             }];
+                                       }
+                                   }
+                                   
+                                   if (acceptableString == YES && reasonField.text.length > 5) {
+                                       [self selectedReportReason:reasonField.text];
+                                   }
+                               }];
+    
+    UIAlertAction *cancelAction = [UIAlertAction
+                                   actionWithTitle:@"Cancel"
+                                   style:UIAlertActionStyleCancel
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                   }];
+    
+    [alertController addAction:okAction];
+    [alertController addAction:cancelAction];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
 }
 
 -(void)setupMessages{
@@ -1827,7 +1850,7 @@ typedef void(^myCompletion)(BOOL);
         
         //top username label
         if (self.hasBadge) {
-            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2)-10.5, CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
+            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2)-9, CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
         }
         else{
             initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
@@ -1885,7 +1908,7 @@ typedef void(^myCompletion)(BOOL);
         
         //top username label
         if (self.hasBadge) {
-            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2) -10.5, CGRectGetMidY(self.myBar.bounds)+60.0);
+            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2) -9, CGRectGetMidY(self.myBar.bounds)+60.0);
         }
         else{
             initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+60.0);
@@ -3066,7 +3089,7 @@ typedef void(^myCompletion)(BOOL);
             //4. we add a gap of 3px here and subtract 3px from the usernameLabel's X origin to create a gap in the centre of the 2 objects
         }
         else{
-            initialLayoutAttributesBadgeView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2) + ((self.usernameLabel.frame.size.width/2)), CGRectGetMidY(self.myBar.bounds)+60.0);
+            initialLayoutAttributesBadgeView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2) + ((self.usernameLabel.frame.size.width/2) + 3), CGRectGetMidY(self.myBar.bounds)+60.0);
         }
         
         [self.badgeView addLayoutAttributes:initialLayoutAttributesBadgeView forProgress:0.0];
@@ -3182,9 +3205,5 @@ typedef void(^myCompletion)(BOOL);
     else{
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d",tabInt]];
     }
-}
-
--(void)setupUsernameLabel{
-    
 }
 @end

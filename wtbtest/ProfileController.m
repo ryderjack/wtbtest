@@ -341,7 +341,11 @@
             if (@available(iOS 11.0, *)) {
                 safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
             }
-            safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+
+            if (@available(iOS 10.0, *)) {
+                safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+            }
+            
             [self.navigationController presentViewController:safariView animated:YES completion:nil];
         }
         else if (indexPath.row == 4) {
@@ -354,7 +358,11 @@
             if (@available(iOS 11.0, *)) {
                 safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
             }
-            safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+            
+            if (@available(iOS 10.0, *)) {
+                safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+            }
+            
             [self.navigationController presentViewController:safariView animated:YES completion:nil];
         }
     }

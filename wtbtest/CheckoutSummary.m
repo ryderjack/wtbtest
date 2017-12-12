@@ -515,7 +515,10 @@
             if (@available(iOS 11.0, *)) {
                 self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
             }
-            self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+            
+            if (@available(iOS 10.0, *)) {
+                self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+            }
             
             [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:nil];
         }
@@ -628,7 +631,6 @@
                                                                              @"category":category,
                                                                              @"totalPrice":@(self.totalPrice),
                                                                              @"currency":self.currency,
-                                                                             @"nationalShipping": [NSNumber numberWithBool:self.isNational],
                                                                              @"itemId":self.listingObject.objectId,
                                                                              @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId]
                                                                              }];
@@ -789,8 +791,9 @@
     if (@available(iOS 11.0, *)) {
         paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
     }
-    paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
-
+    if (@available(iOS 10.0, *)) {
+        paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+    }
     [self.navigationController presentViewController:paypalSafariView animated:YES completion:nil];
 }
 

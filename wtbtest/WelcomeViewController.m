@@ -105,7 +105,6 @@
                     NSLog(@"user is banned");
                     
                     [PFUser logOut];
-                    [Intercom reset];
 
                     [Answers logCustomEventWithName:@"Logging Banned User Out"
                                    customAttributes:@{
@@ -179,23 +178,6 @@
                         //haven't completed it take them there
                         RegisterViewController *vc = [[RegisterViewController alloc]init];
                         vc.user = user;
-                        
-                        //log user with intercom
-                        NSDictionary *params = @{@"userId": user.objectId};
-                        [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
-                            if (!error) {
-                                [Intercom setUserHash:hash];
-                                [Intercom registerUserWithUserId:user.objectId];
-                                [[NSNotificationCenter defaultCenter] postNotificationName:@"registerIntercom" object:nil];
-                            }
-                            else{
-                                [Answers logCustomEventWithName:@"Intercom Verify Error"
-                                               customAttributes:@{
-                                                                  @"where":@"welcome"
-                                                                  }];
-                            }
-                        }];
-                        
                         [self.navigationController pushViewController:vc animated:YES];
                     }
                 }

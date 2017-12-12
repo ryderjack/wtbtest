@@ -959,44 +959,7 @@
     if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"] && ![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete Listing (without banning)" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete this listing?" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                [self showBarButton];
-            }]];
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-                
-                NSDictionary *params = @{@"listingId": self.listingObject.objectId, @"deleter":[PFUser currentUser].username};
-                [PFCloud callFunctionInBackground:@"modDeletedListing" withParameters: params block:^(NSDictionary *response, NSError *error) {
-                    if (!error) {
-                        
-                        [Answers logCustomEventWithName:@"Mod Deleted Listing"
-                                       customAttributes:@{
-                                                          @"reporter":[PFUser currentUser].objectId,
-                                                          @"listingId":self.listingObject.objectId
-                                                          }];
-                        
-                        [Answers logCustomEventWithName:[NSString stringWithFormat:@"Mod Deleted Listing %@ %@", [PFUser currentUser].objectId,[PFUser currentUser].username]
-                                       customAttributes:@{
-                                                          @"reporter":[PFUser currentUser].objectId,
-                                                          @"listingId":self.listingObject.objectId
-                                                          }];
-                        
-                    }
-                    else{
-                        NSLog(@"mod delete error %@", error);
-                    }
-                }];
-                
-                if (self.fromCreate != YES) {
-                    [self.navigationController popViewControllerAnimated:YES];
-                }
-                else{
-                    [self dismissVC];
-                }
-            }]];
-            
-            [self presentViewController:alertView animated:YES completion:nil];
+            [self enterDeleteComment];
         }]];
     }
     
@@ -1231,6 +1194,16 @@
 }
 -(void)setupMessages{
     
+    if (![PFUser currentUser]) {
+        [Answers logCustomEventWithName:@"No user error setting up messages"
+                       customAttributes:@{
+                                          @"where":@"for sale"
+                                          }];
+        
+        [self showAlertWithTitle:@"User Error" andMsg:@"Check your connection and try again. If the problem persists, try looging out then logging back in again"];
+        return;
+    }
+    
     NSString *descr;
 
     if (![self.listingObject objectForKey:@"itemTitle"]) {
@@ -1459,6 +1432,7 @@
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -1480,7 +1454,10 @@
     BOOL seenBuyPopup = [[NSUserDefaults standardUserDefaults] boolForKey:@"seenBuyPopup"];
     
     if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"] && ![self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"live"] && !seenBuyPopup) {
+        
+        [self hideBarButton];
         [self normalShowAlertWithTitle:@"App Update" andMsg:@"The seller has enabled Instant Buy on their item, download the latest update from the App Store to be able to buy/sell instantly on BUMP with PayPal"];
+        
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenBuyPopup"];
     }
 
@@ -1728,7 +1705,7 @@
                              }];
             
             //title button
-            [self.longSendButton setTitle:@"Send" forState:UIControlStateNormal];
+            [self.longSendButton setTitle:@"S E N D" forState:UIControlStateNormal];
             [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
             [self.longSendButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         }
@@ -3062,40 +3039,192 @@
         
     }
     else{
-        
         [self hideBarButton];
+
         
-        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Why would you like to report this listing?" preferredStyle:UIAlertControllerStyleAlert];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-            [self showBarButton];
-        }]];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Fake" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            [self showBarButton];
-            [self selectedReportReason:@"Fake"];
-        }]];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            [self showBarButton];
-            [self selectedReportReason:@"Offensive listing"];
-        }]];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Spam" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            [self showBarButton];
-            [self selectedReportReason:@"Spam"];
-        }]];
-        
-        [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            [self showBarButton];
-            [self selectedReportReason:@"Other"];
-        }]];
-        
-        [self presentViewController:alertView animated:YES completion:nil];
+        if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
+            //mod
+            [self enterBanComment];
+        }
+        else{
+            //not a mod
+            
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Why would you like to report this listing?" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Fake" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Fake"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Offensive listing"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Spam" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Spam"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Other"];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
+
+        }
     }
 }
 
+-(void)enterBanComment{
+    self.changeKeyboard = NO;
+    
+    UIAlertController *alertController = [UIAlertController
+                                          alertControllerWithTitle:@"Reason"
+                                          message:@"Why are you banning this user?\n\nYour reason will be sent to the user so please be polite and factual"
+                                          preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+     {
+         textField.placeholder = @"e.g. Selling a Fake Supreme Bogo";
+     }];
+    
+    UIAlertAction *okAction = [UIAlertAction
+                               actionWithTitle:@"Ban"
+                               style:UIAlertActionStyleDestructive
+                               handler:^(UIAlertAction *action)
+                               {
+                                   UITextField *reasonField = alertController.textFields.firstObject;
+                                   
+                                   BOOL acceptableString = YES;
+                                   NSArray *profanityList = @[@"cunt", @"wanker", @"nigger", @"penis", @"cock", @"dick", @"fuck", @"fucking", @"shit", @"fucked"];
+
+                                   for (NSString *badString in profanityList) {
+                                       if ([reasonField.text.lowercaseString containsString:badString]) {
+                                           acceptableString = NO;
+                                           [self normalShowAlertWithTitle:@"Language Warning" andMsg:@"Please don't swear, you're representing BUMP"];
+                                          
+                                           [Answers logCustomEventWithName:@"Mod Used bad language"
+                                                          customAttributes:@{
+                                                                             @"text":reasonField.text,
+                                                                             @"mod":[PFUser currentUser].username,
+                                                                             @"where":@"banning from listing"
+                                                                             }];
+                                       }
+                                   }
+                                   
+                                   if (acceptableString == YES && reasonField.text.length > 5) {
+                                       [self showBarButton];
+                                       [self selectedReportReason:reasonField.text];
+                                   }
+                               }];
+    
+    UIAlertAction *cancelAction = [UIAlertAction
+                                   actionWithTitle:@"Cancel"
+                                   style:UIAlertActionStyleCancel
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                       [self showBarButton];
+                                   }];
+    
+    [alertController addAction:okAction];
+    [alertController addAction:cancelAction];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+-(void)enterDeleteComment{
+    self.changeKeyboard = NO;
+    
+    UIAlertController *alertController = [UIAlertController
+                                          alertControllerWithTitle:@"Deleting Listing"
+                                          message:@"Why are you deleting this listing?\n\nYour reason will be sent to the user so please be polite, factual and relatively short"
+                                          preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+     {
+         textField.placeholder = @"e.g. No tagged images";
+     }];
+    
+    UIAlertAction *okAction = [UIAlertAction
+                               actionWithTitle:@"Delete"
+                               style:UIAlertActionStyleDestructive
+                               handler:^(UIAlertAction *action)
+                               {
+                                   UITextField *reasonField = alertController.textFields.firstObject;
+                                   
+                                   BOOL acceptableString = YES;
+                                   NSArray *profanityList = @[@"cunt", @"wanker", @"nigger", @"penis", @"cock", @"dick", @"fuck", @"fucking", @"shit", @"fucked"];
+                                   
+                                   for (NSString *badString in profanityList) {
+                                       if ([reasonField.text.lowercaseString containsString:badString]) {
+                                           acceptableString = NO;
+                                           [self normalShowAlertWithTitle:@"Language Warning" andMsg:@"Please don't swear, you're representing BUMP"];
+                                           
+                                           [Answers logCustomEventWithName:@"Mod Used bad language"
+                                                          customAttributes:@{
+                                                                             @"text":reasonField.text,
+                                                                             @"mod":[PFUser currentUser].username,
+                                                                             @"where":@"deleting listing"
+                                                                             }];
+                                       }
+                                   }
+                                   
+                                   if (acceptableString == YES && reasonField.text.length > 5) {
+                                       
+                                       NSDictionary *params = @{@"listingId": self.listingObject.objectId, @"deleter":[PFUser currentUser].username, @"reason":reasonField.text};
+                                       [PFCloud callFunctionInBackground:@"modDeletedListing" withParameters: params block:^(NSDictionary *response, NSError *error) {
+                                           if (!error) {
+                                               
+                                               [Answers logCustomEventWithName:@"Mod Deleted Listing"
+                                                              customAttributes:@{
+                                                                                 @"reporter":[PFUser currentUser].objectId,
+                                                                                 @"listingId":self.listingObject.objectId
+                                                                                 }];
+                                               
+                                               [Answers logCustomEventWithName:[NSString stringWithFormat:@"Mod Deleted Listing %@ %@", [PFUser currentUser].objectId,[PFUser currentUser].username]
+                                                              customAttributes:@{
+                                                                                 @"reporter":[PFUser currentUser].objectId,
+                                                                                 @"listingId":self.listingObject.objectId
+                                                                                 }];
+                                               
+                                           }
+                                           else{
+                                               NSLog(@"mod delete error %@", error);
+                                           }
+                                       }];
+                                       
+                                       if (self.fromCreate != YES) {
+                                           [self.navigationController popViewControllerAnimated:YES];
+                                       }
+                                       else{
+                                           [self dismissVC];
+                                       }
+                                       
+                                   }
+                               }];
+    
+    UIAlertAction *cancelAction = [UIAlertAction
+                                   actionWithTitle:@"Cancel"
+                                   style:UIAlertActionStyleCancel
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                   }];
+    
+    [alertController addAction:okAction];
+    [alertController addAction:cancelAction];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
 -(void)selectedReportReason:(NSString *)reason{
+    
+    self.changeKeyboard = YES;
     
     [Answers logCustomEventWithName:@"Reported Sale Listing"
                    customAttributes:@{
@@ -3124,7 +3253,7 @@
                                           }];
     }
     
-    NSDictionary *params = @{@"listingId": self.listingObject.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod};
+    NSDictionary *params = @{@"listingId": self.listingObject.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod, @"modName":[PFUser currentUser].username};
     [PFCloud callFunctionInBackground:@"reportListingFunction" withParameters: params block:nil];
     
     [self.reportLabel setTitle:@"R E P O R T E D" forState:UIControlStateNormal];

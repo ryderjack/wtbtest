@@ -261,8 +261,6 @@
          else{
              NSLog(@"error %@", error);
              [PFUser logOut];
-             [Intercom reset];
-
          }
      }];
 }
@@ -841,11 +839,50 @@
              NSLog(@"saved user: %@", [PFUser currentUser]);
              
              //update Intercom with user info
-             ICMUserAttributes *userAttributes = [ICMUserAttributes new];
-             userAttributes.name = [name capitalizedString];
-             userAttributes.email = email;
-             userAttributes.signedUpAt = [NSDate date];
-             
+             NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
+             [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
+                 if (!error) {
+                     [Intercom setUserHash:hash];
+                     [Intercom registerUserWithUserId:[PFUser currentUser].objectId];
+                     
+                     //setup intercom listener
+                     [[NSNotificationCenter defaultCenter] postNotificationName:@"registerIntercom" object:nil];
+                     
+                     //add standard info to user object
+                     ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+                     userAttributes.email = email;
+                     userAttributes.signedUpAt = [NSDate date];
+                     userAttributes.name = [PFUser currentUser][PF_USER_FULLNAME];
+
+                     if (self.emailMode) {
+                         //finish adding custom intercom attributes for email mode
+                         userAttributes.customAttributes = @{@"email_sign_up" : @YES,
+                                                             @"currency": self.selectedCurrency,
+                                                             @"Username":[PFUser currentUser].username
+                                                             };
+                         
+                     }
+                     else{
+                         //and same for facebook mode
+                         userAttributes.customAttributes = @{@"email_sign_up" : @NO,
+                                                             @"currency": self.selectedCurrency,
+                                                             @"Username":[PFUser currentUser].username,
+                                                             @"facebookId": [PFUser currentUser][PF_USER_FACEBOOKID]
+                                                             };
+                     }
+                     
+                     [Intercom updateUser:userAttributes];
+
+                 }
+                 else{
+                     NSLog(@"reg intercom veri error");
+                     [Answers logCustomEventWithName:@"Intercom Verify Error"
+                                    customAttributes:@{
+                                                       @"where":@"registration"
+                                                       }];
+                 }
+             }];
+
              //set user as tabUser
              AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
              appDelegate.profileView.user = self.user;
@@ -869,29 +906,16 @@
                                       success:@YES
                              customAttributes:@{}];
                  
-                 //finish adding custom intercom attributes
-                 userAttributes.customAttributes = @{@"email_sign_up" : @YES,
-                                                     @"currency": self.selectedCurrency};
-                
-                 [Intercom updateUser:userAttributes];
-                 
                  //send confirmation email
                  [self sendConfirmationEmail];
                  
              }
              else{
-                 //finish adding custom intercom attributes
-                 userAttributes.customAttributes = @{@"email_sign_up" : @NO,
-                                                     @"currency": self.selectedCurrency};
-                 [Intercom updateUser:userAttributes];
                  
                  //add mixpanel info
                  [mixpanel registerSuperProperties:@{@"Source": @"Facebook",
                                                      @"currency": self.selectedCurrency
                                                      }];
-//                 [mixpanel.people set:@{@"email_sign_up" : @NO,
-//                                        @"currency"      : self.selectedCurrency
-//                                        }];
                  
                  [mixpanel track:@"Signup" properties:@{}];
                  
@@ -922,52 +946,6 @@
              [installation setObject:[PFUser currentUser] forKey:@"user"];
              [installation setObject:[PFUser currentUser].objectId forKey:@"userId"];
              [installation saveInBackground];
-             
-             //create team bump convo
-//             PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
-//             convoObject[@"otherUser"] = [PFUser currentUser];
-//             convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-//             convoObject[@"totalMessages"] = @0;
-//             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                 if (succeeded) {
-//                     NSString *messageString = @"🙌 Welcome to BUMP 🙌\n\nBuying\nBrowse the latest items for sale, search through items by tapping the search bar at the top of the home tab, and create wanted listings so sellers can see what you want\n\nSelling\nList an item by tapping the tag icon or search through wanted listings to sell even faster\n\n💥 Got any questions? Just send us a message\n\nSophie @ Team BUMP";
-//
-//                     //saved, create intro message
-//                     PFObject *messageObject = [PFObject objectWithClassName:@"teamBumpMsgs"];
-//                     messageObject[@"message"] = messageString;
-//                     messageObject[@"sender"] = [PFUser currentUser];
-//                     messageObject[@"senderId"] = @"BUMP";
-//                     messageObject[@"senderName"] = @"Team Bump";
-//                     messageObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-//                     messageObject[@"status"] = @"sent";
-//                     messageObject[@"offer"] = @"NO";
-//                     messageObject[@"mediaMessage"] = @"NO";
-//                     [messageObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                         if (succeeded == YES) {
-//
-//                             //                                                 NSLog(@"saved message, here it is: %@", messageObject);
-//
-//                             //post notification to display tab bar badge and unseen TB icon
-//                             AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-//                             [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
-//                             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
-//
-//                             //update convo
-//                             [convoObject incrementKey:@"totalMessages"];
-//                             [convoObject setObject:messageObject forKey:@"lastSent"];
-//                             [convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
-//                             [convoObject incrementKey:@"userUnseen"];
-//                             [convoObject saveInBackground];
-//                         }
-//                         else{
-//                             NSLog(@"error sending message %@", error);
-//                         }
-//                     }];
-//                 }
-//                 else{
-//                     NSLog(@"error saving convo");
-//                 }
-//             }];
              
              if (self.emailMode != YES) {
                  //save Bumped Obj

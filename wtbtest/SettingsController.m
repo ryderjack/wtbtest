@@ -506,37 +506,12 @@
 -(void)textFieldDidEndEditing:(UITextField *)textField{
 
     //paypal
-//    if (textField == self.emailFields && ![textField.text isEqualToString:@""]) {
-//        if ([self NSStringIsValidEmail:self.emailFields.text] == YES) {
-//            [self.currentUser setObject:self.emailFields.text forKey:@"paypal"];
-//            [self.currentUser setObject:@"YES" forKey:@"paypalUpdated"];
-//
-//            [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                if (error.code == 203) {
-//                    self.emailFields.text = self.currentPaypal;
-//
-//                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"This email address is already in use. Please try another email." preferredStyle:UIAlertControllerStyleAlert];
-//
-//                    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-//                    }]];
-//
-//                    [self presentViewController:alertView animated:YES completion:^{
-//                    }];
-//                }
-//                else{
-//                }
-//            }];
-//        }
-//        else{
-//            self.emailFields.text = self.currentPaypal;
-//            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"Please enter a valid email address. If you think this is a mistake please get in touch!" preferredStyle:UIAlertControllerStyleAlert];
-//
-//            [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-//            }]];
-//            [self presentViewController:alertView animated:YES completion:nil];
-//        }
-//    }
-//
+    if (textField == self.paypalTextField && ![textField.text isEqualToString:@""]) {
+        [self.currentUser setObject:self.paypalTextField.text forKey:@"paypal"];
+        [self.currentUser setObject:@"YES" forKey:@"paypalUpdated"];
+        [self.currentUser saveInBackground];
+    }
+
     if (textField == self.contactEmailField && ![textField.text isEqualToString:@""]){
        
         if ([self NSStringIsValidEmail:self.contactEmailField.text] == YES) {

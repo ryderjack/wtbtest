@@ -144,8 +144,7 @@
     self.itemTitleTextField.delegate = self;
     self.quantityField.delegate = self;
     
-    [self saleaddDoneButton];
-    [self quantityAddDoneButton];
+    [self addDoneButtons];
     
     self.descriptionCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.payCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -668,7 +667,7 @@
             return 44;
         }
         else if (indexPath.section ==3){
-            return 104;
+            return 160;
         }
         else if (indexPath.section ==5){
             return 60;
@@ -693,7 +692,7 @@
             }
         }
         else if (indexPath.section ==4){
-            return 104;
+            return 160;
         }
         else if (indexPath.section ==6){
             return 60;
@@ -1028,7 +1027,9 @@
     }
 }
 -(void)textViewDidEndEditing:(UITextView *)textView{
-    if ([textView.text isEqualToString:@""]) {
+    NSString *checker = [textView.text stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+    
+    if ([checker isEqualToString:@""]) {
         textView.text = @"Describe the item's style, sizing, and any possible flaws";
         textView.textColor = [UIColor lightGrayColor];
     }
@@ -1043,7 +1044,7 @@
             else if ([self.flagWords containsObject:string.lowercaseString]){
                 textView.text = @"Describe the item's style, sizing, and any possible flaws";
                 
-                [self showAlertWithTitle:@"Authenticity Warning" andMsg:@"Bump is for buying/selling authentic streetwear, if you're found to be selling fake or replica items we will be forced to ban your account to protect the community"];
+                [self showAlertWithTitle:@"Authenticity Warning" andMsg:@"BUMP is for buying/selling authentic streetwear, if you're found to be selling fake or replica items we will be forced to ban your account to protect the community"];
                 return;
             }
         }
@@ -1052,11 +1053,19 @@
 
 //return key removes keyboard in text view
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
-    if([text isEqualToString:@"\n"]) {
-        [textView resignFirstResponder];
+    
+    //limit number of newline characters in a row
+    if([text isEqualToString:@"\n"] && [textView.text hasSuffix:@"\n\n"]) {
         return NO;
     }
-    return YES;
+    
+    //limit total length
+    if(range.length + range.location > textView.text.length)
+    {
+        return NO;
+    }
+    NSUInteger newLength = [textView.text length] + [text length] - range.length;
+    return newLength <= 500;
 }
 
 -(void)removeKeyboard{
@@ -1618,7 +1627,10 @@
     }
 }
 
-- (void)quantityAddDoneButton {
+-(void)tagString:(NSString *)tag{
+}
+
+- (void)addDoneButtons {
     UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
     [keyboardToolbar sizeToFit];
     UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
@@ -1633,26 +1645,9 @@
     
     keyboardToolbar.items = @[flexBarButton, doneBarButton];
     self.quantityField.inputAccessoryView = keyboardToolbar;
-}
-
-- (void)saleaddDoneButton {
-    UIToolbar* keyboardToolbar = [[UIToolbar alloc] init];
-    [keyboardToolbar sizeToFit];
-    UIBarButtonItem *flexBarButton = [[UIBarButtonItem alloc]
-                                      initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
-                                      target:nil action:nil];
-    UIBarButtonItem *doneBarButton = [[UIBarButtonItem alloc]
-                                      initWithBarButtonSystemItem:UIBarButtonSystemItemDone
-                                      target:self.view action:@selector(endEditing:)];
-    
-    [doneBarButton setTintColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1]];
-    keyboardToolbar.barTintColor = [UIColor colorWithRed:1.00 green:1.00 blue:1.00 alpha:1.0];
-    
-    keyboardToolbar.items = @[flexBarButton, doneBarButton];
     self.payField.inputAccessoryView = keyboardToolbar;
-}
-
--(void)tagString:(NSString *)tag{
+    self.descriptionField.inputAccessoryView = keyboardToolbar;
+    
 }
 
 #pragma condition delegate
@@ -5810,9 +5805,12 @@
                     if (@available(iOS 11.0, *)) {
                         self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
                     }
-                    self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+                    
+                    if (@available(iOS 10.0, *)) {
+                        self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+                    }
                 }
-
+                
                 [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:^{
                     //switch off when we goto merchant onboarding and only switch on if we get the signal from custom url scheme triggered observer
                     [self.buySwitch setOn:NO];
