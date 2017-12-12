@@ -64,7 +64,7 @@
     [self.orderObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             
-            self.title = [NSString stringWithFormat:@"O R D E R  #%@", [self.orderObject.objectId uppercaseString]];
+            self.title = [NSString stringWithFormat:@"#%@", [self.orderObject.objectId uppercaseString]];
             
             self.dateFormat = [[NSDateFormatter alloc] init];
             [self.dateFormat setLocale:[NSLocale currentLocale]];
@@ -986,7 +986,6 @@
             
             NSDictionary *params = @{
                                      @"orderId":self.orderObject.objectId,
-                                     @"date":[NSDate date],
                                      @"senderName": [PFUser currentUser].username,
                                      @"otherUserId":self.otherUser.objectId,
                                      @"itemTitle" : [self.orderObject objectForKey:@"itemTitle"]
@@ -1005,7 +1004,7 @@
                     //update shipping cell
                     [self.shippingImageView setImage:[UIImage imageNamed:@"OrderCheck"]];
                     [self.dateFormat setDateFormat:@"dd MMM YYYY"];
-                    NSDate *shippedDate = [self.orderObject objectForKey:@"shippedDate"];
+                    NSDate *shippedDate = [NSDate date];
                     self.shippingMainLabel.text = [NSString stringWithFormat:@"Item Shipped\nSent on %@ to",[self.dateFormat stringFromDate:shippedDate]];
                     [self.shippingButton setTitle:@"Add Tracking" forState:UIControlStateNormal];
                     
