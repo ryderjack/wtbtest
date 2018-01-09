@@ -117,6 +117,7 @@ typedef void(^myCompletion)(BOOL);
         
         //for showing unseen order updates
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateOrderBadge:) name:@"UnseenOrders" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(removeOrderBadge) name:@"clearOrders" object:nil];
 
     }
     
@@ -141,6 +142,14 @@ typedef void(^myCompletion)(BOOL);
     //prompt for pic (ok in load coz its tabMode)
     if (self.tabMode && ![self.user objectForKey:@"picture"] && ![[self.user objectForKey:@"addPicPromptSeen"] isEqualToString:@"YES"]) {
         [self showAddPicView];
+    }
+    
+    //this is to explain to older users why the review system has changed
+    if (self.tabMode && ![self.user objectForKey:@"reviewExplainer"]) {
+        [self.user setObject:@"YES" forKey:@"reviewExplainer"];
+        [self.user saveInBackground];
+        
+        [self showAlertWithTitle:@"Reviews" andMsg:@"With our new PayPal Checkout update you can now only leave reviews for users that you've purchased from/sold to through BUMP.\n\nThis way you know and trust that the reviews on a user's profile relate to real transactions they've completed.\n\nAny previous reviews you have receieved will no longer appear on your profile, however, we will still display your previous star rating."];
     }
 }
 
@@ -276,16 +285,16 @@ typedef void(^myCompletion)(BOOL);
                         if (object){
                             //this user is banned
                             self.banMode = YES;
-                            [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restrcited this user's account for violating our terms"];
+                            [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restricted this user's account for violating our terms"];
                         }
                     }];
                 }
                 else{
                     //tab mode
-                    if ([[self.user objectForKey:@"orderNumber"]intValue] > 0) {
-                        self.showOrderButton = YES;
+//                    if ([[self.user objectForKey:@"orderNumber"]intValue] > 0 || self.ordersUnseen > 0) {
+//                        self.showOrderButton = YES;
 //                        [self.myBar addSubview:self.ordersButton];
-                    }
+//                    }
                 }
                 
                 [self loadBumpedListings];
@@ -421,13 +430,12 @@ typedef void(^myCompletion)(BOOL);
         [dealsQuery whereKey:@"User" equalTo:self.user];
         [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
-                
                 int starNumber = [[object objectForKey:@"currentRating"] intValue];
                 int total = [[object objectForKey:@"dealsTotal"]intValue];
                 
                 //            NSLog(@"total %d and star number %d", total, starNumber);
                 
-                if (total > 0 || self.tabMode == YES) {
+                if (total > 0 || self.tabMode == YES || starNumber > 0) {
                     [self.myBar addSubview:self.starImageView];
                     [self.myBar addSubview:self.reviewsButton];
                     self.noDeals = NO;
@@ -872,7 +880,6 @@ typedef void(^myCompletion)(BOOL);
     }
     [cell.itemImageView loadInBackground];
     
-
     //don't show purchased on bumped listings section
     if ([[listingObject objectForKey:@"status"]isEqualToString:@"purchased"] && self.segmentedControl.selectedSegmentIndex != 2) {
         cell.itemImageView.alpha = 0.5;
@@ -880,9 +887,17 @@ typedef void(^myCompletion)(BOOL);
         [cell.purchasedImageView setHidden:NO];
     }
     else if ([[listingObject objectForKey:@"status"]isEqualToString:@"sold"] && self.segmentedControl.selectedSegmentIndex != 2) {
-        cell.itemImageView.alpha = 0.5;
-        [cell.purchasedImageView setImage:[UIImage imageNamed:@"soldIcon2"]];
-        [cell.purchasedImageView setHidden:NO];
+        
+        if ([[listingObject objectForKey:@"payment"]isEqualToString:@"pending"]) {
+            //listing is pending a successful payment so pretend to seller it hasn't been purchased yet
+            cell.itemImageView.alpha = 1.0;
+            [cell.purchasedImageView setHidden:YES];
+        }
+        else{
+            cell.itemImageView.alpha = 0.5;
+            [cell.purchasedImageView setImage:[UIImage imageNamed:@"soldIcon2"]];
+            [cell.purchasedImageView setHidden:NO];
+        }
     }
     else{
         cell.itemImageView.alpha = 1.0;
@@ -1011,6 +1026,7 @@ typedef void(^myCompletion)(BOOL);
 }
 
 -(void)selectedReportReason:(NSString *)reason{
+    self.hitReport = YES;
     
     NSArray *reportedArray = [self.user objectForKey:@"reportersArray"];
     
@@ -1376,55 +1392,50 @@ typedef void(^myCompletion)(BOOL);
                 self.hud.labelText = @"";
             });
         }]];
-        
-        if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
+                
+        if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"] && !self.hitReport) {
             //user is a mod so prompt for a reason
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Ban" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
                 [self enterBanComment];
             }]];
 
         }
         else{
             //not a mod
-            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
-                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report User" message:@"Why would you like to report this user?" preferredStyle:UIAlertControllerStyleAlert];
+            
+            //do a check to see if user has reported them before
+            NSArray *reportedArray = [self.user objectForKey:@"reportedArray"]; //reportedArray is list of userIds that have reported this user
+            
+            if (![reportedArray containsObject:[PFUser currentUser].objectId] && !self.hitReport) {
+                //user hasn't reported this person before so let them report the user!
                 
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [actionSheet addAction:[UIAlertAction actionWithTitle:@"Report" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
+                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report User" message:@"Why would you like to report this user?" preferredStyle:UIAlertControllerStyleAlert];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    }]];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Selling fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Selling fakes"];
+                    }]];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive behaviour" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Offensive behaviour"];
+                    }]];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Spamming"];
+                    }]];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Other"];
+                    }]];
+                    
+                    [self presentViewController:alertView animated:YES completion:nil];
+                    
                 }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Selling fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self selectedReportReason:@"Selling fakes"];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive behaviour" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self selectedReportReason:@"Offensive behaviour"];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self selectedReportReason:@"Spamming"];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self selectedReportReason:@"Other"];
-                }]];
-                
-                [self presentViewController:alertView animated:YES completion:nil];
-                
-            }]];
+            }
         }
-
-        
-//        if (self.userBlocked) {
-//            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unblock" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
-//                [self unblockUser];
-//            }]];
-//        }
-//        else{
-//            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Block" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
-//                [self blockUser];
-//            }]];
-//        }
-
     }
     else{
         //Copy Link
@@ -1739,6 +1750,7 @@ typedef void(^myCompletion)(BOOL);
         self.ordersButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 35, 35)];
         [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon2"] forState:UIControlStateNormal];
         [self.ordersButton addTarget:self action:@selector(ordersButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+        [self.myBar addSubview:self.ordersButton];
     }
     
     //facebook button
@@ -2864,6 +2876,11 @@ typedef void(^myCompletion)(BOOL);
         else{
             [self.saleQuery orderByDescending:@"lastUpdated"];
         }
+        
+        //instant buy
+        if ([self.filtersArray containsObject:@"instantBuy"]){
+            [self.saleQuery whereKey:@"instantBuy" equalTo:@"YES"];
+        }
 
         //condition
         if ([self.filtersArray containsObject:@"new"]){
@@ -3170,6 +3187,10 @@ typedef void(^myCompletion)(BOOL);
 
 -(void)updateOrderBadge:(NSNotification*)note {
     [self calcTabBadge];
+}
+
+-(void)removeOrderBadge{
+    [self.ordersButton setImage:[UIImage imageNamed:@"ordersNormalNew"] forState:UIControlStateNormal];
 }
 
 -(void)calcTabBadge{

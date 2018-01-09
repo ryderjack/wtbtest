@@ -107,6 +107,7 @@
 @property (nonatomic, strong) UIButton *messageButton;
 @property (nonatomic, strong) UIButton *buyButton;
 @property (nonatomic, strong) UIButton *longSendButton;
+@property (nonatomic, strong) UIView *buttonLine;
 
 @property (nonatomic) BOOL buttonsShowing;
 @property (nonatomic) BOOL anyButtonPressed;
@@ -120,6 +121,7 @@
 @property (nonatomic, strong) NSMutableArray *imageArray;
 @property (weak, nonatomic) IBOutlet UILabel *zoomPromptLabel;
 @property (nonatomic) BOOL zoomPromptShowing;
+@property (weak, nonatomic) IBOutlet UIButton *soldbannerButton;
 
 //buttons cell
 @property (strong, nonatomic) IBOutlet UITableViewCell *sendCell;

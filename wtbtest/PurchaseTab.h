@@ -26,8 +26,11 @@
 #import <YLProgressBar/YLProgressBar.h>
 #import "BrowseLocation.h"
 #import "engageTracker.h"
+#import "ConnectPayPalViewClass.h"
+#import "mediumSizeAlertViewClass.h"
+#import <SafariServices/SafariServices.h>
 
-@interface PurchaseTab : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout,customAlertDelegate,UISearchBarDelegate,TheMainSearchViewDelegate,CLLocationManagerDelegate,dropDelegate,WelcomeDelegate,rateDelegate,FilterDelegate,inviteDelegate, BrowseLocationDelegate>
+@interface PurchaseTab : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout,customAlertDelegate,UISearchBarDelegate,TheMainSearchViewDelegate,CLLocationManagerDelegate,dropDelegate,WelcomeDelegate,rateDelegate,FilterDelegate,inviteDelegate, BrowseLocationDelegate,ConnectPPDelegate,mediumSizeAVDelegate,SFSafariViewControllerDelegate>
 
 //cv
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
@@ -46,6 +49,7 @@
 
 //spinner
 @property (nonatomic, strong) DGActivityIndicatorView *spinner;
+@property (nonatomic, strong) DGActivityIndicatorView *hudSpinner;
 
 //hud
 @property (nonatomic, strong) RTSpinKitView *spinnerHUD;
@@ -159,5 +163,22 @@
 //how to buy intro
 @property (nonatomic, strong) engageTracker *buyIntroView;
 @property (nonatomic) BOOL buyIntroShowing;
+
+//connect paypal intro
+@property (nonatomic) BOOL showConnectPPPopUp;
+
+@property (nonatomic, strong) ConnectPayPalViewClass *connectPPView;
+@property (nonatomic) BOOL connectPPShowing;
+
+@property (nonatomic, strong) mediumSizeAlertViewClass *connectedPPSuccessView;
+@property (nonatomic, strong) mediumSizeAlertViewClass *ppAlertView;
+
+//paypal onboarding
+@property (nonatomic, strong) SFSafariViewController *paypalSafariView;
+@property (nonatomic) BOOL addedPayPalObservers;
+@property (nonatomic) BOOL paypalEnabled;
+@property (nonatomic, strong) NSString *merchantId;
+@property (nonatomic) BOOL existingUserPPAlert;
+@property (nonatomic) BOOL onboardingError;
 
 @end

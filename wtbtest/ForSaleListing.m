@@ -41,6 +41,7 @@
     
     self.navigationItem.title = @"S E L L I N G";
     [self.zoomPromptLabel setHidden:YES];
+    [self.soldbannerButton setHidden:YES];
 
     self.countryLabel.text = @"";
     
@@ -56,6 +57,8 @@
     
     //centre button titles
     self.usernameButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+    self.multipleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+
     self.sendLabel.titleLabel.textAlignment = NSTextAlignmentCenter;
     self.upVoteLabel.titleLabel.textAlignment = NSTextAlignmentCenter;
     self.reportLabel.titleLabel.textAlignment = NSTextAlignmentCenter;
@@ -300,6 +303,7 @@
 
     if (self.anyButtonPressed == YES) {
         self.anyButtonPressed = NO;
+        [self.tableView reloadData];
     }
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, nil];
@@ -335,9 +339,16 @@
                     [self decideButtonSetup];
                 }
                 else{
+                    if([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
+                        //don't let user edit a listing they've sold through paypal
+                        //instead let them view order details
+                        if(![[self.listingObject objectForKey:@"payment"]isEqualToString:@"pending"] && !self.fromOrder){
+                            [self setupOrderBarButton];
+                        }
+                    }
                     //for when user comes back after switching tabs we need to be able to recreate the bar buttons
-                    if (self.buyButtonShowing && !self.buyButton) {
-//                        [self setupTwoBarButtons];
+                    else if (self.buyButtonShowing && !self.buyButton) {
+                        [self setupTwoBarButtons];
                     }
                     else if (!self.messageButton){
                         [self setupMessageBarButton];
@@ -396,18 +407,23 @@
             }
             [self.carouselView reloadData];
             
-            if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
+            if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && ![[self.listingObject objectForKey:@"payment"]isEqualToString:@"pending"]) {
                 
                 if ([[self.listingObject objectForKey:@"buyerId"]isEqualToString:[PFUser currentUser].objectId]) {
-                    self.soldLabel.text = @"P U R C H A S E D";
+//                    self.soldLabel.text = @"P U R C H A S E D";
+//                    [self.soldLabel setHidden:YES];
+//                    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
+//                    [self.soldCheckImageVoew setHidden:YES];
+                    
+                    [self.soldbannerButton setTitle:@"P U R C H A S E D" forState:UIControlStateNormal];
+                    [self.soldbannerButton setHidden:NO];
                 }
                 else{
-                    self.soldLabel.text = @"S O L D";
+//                    self.soldLabel.text = @"S O L D";
+                    [self.soldbannerButton setHidden:NO];
+//                    [self.soldLabel setHidden:YES];
+//                    [self.soldCheckImageVoew setHidden:YES];
                 }
-                [self.soldLabel setHidden:NO];
-                
-                [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
-                [self.soldCheckImageVoew setHidden:NO];
             }
             else if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"deleted"] && !self.fromOrder){
                 [self showAlertWithTitle:@"Item Deleted" andMsg:@"The seller has removed the item, it may be no longer unavailable - send them a message to find out"];
@@ -416,7 +432,7 @@
             if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"proxy"]) {
                 if ([[NSUserDefaults standardUserDefaults]boolForKey:@"seenProxyWarning"] != YES) {
                     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenProxyWarning"];
-                    [self showNormalAlertWithTitle:@"Proxy Warning" andMsg:@"A proxy is when someone is willing to queue up for unreleased items on your behalf, it's like a preorder. Usually, you will pay someone proxying for you the retail price of the item plus a fee for the service.\n\nBe careful, always pay via PayPal Goods & Services and ask the user proxying for references so you can be sure they're legitimate. If a user claims they need the payment to be gifted in order to access the funds faster, it's better to decline and find someone that will accept PayPal Goods & Services.\n\nIf you're ever unsure about a proxy, message Support from Settings and we'll help you out 🤝"];
+                    [self normalShowAlertWithTitle:@"Proxy Warning" andMsg:@"A proxy is when someone is willing to queue up for unreleased items on your behalf, it's like a preorder. Usually, you will pay someone proxying for you the retail price of the item plus a fee for the service.\n\nBe careful, always pay via PayPal Goods & Services and ask the user proxying for references so you can be sure they're legitimate. If a user claims they need the payment to be gifted in order to access the funds faster, it's better to decline and find someone that will accept PayPal Goods & Services.\n\nIf you're ever unsure about a proxy, message Support from Settings and we'll help you out 🤝"];
                 }
             }
             
@@ -453,7 +469,7 @@
             }
             
             
-            if (price != 0.00) {
+            if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
                 priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
                 
                 //we have a price so add onto title label
@@ -545,7 +561,7 @@
                 
                 if (![[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]) {
                     [self.messageButton setTitle:@"E D I T" forState:UIControlStateNormal];
-                    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
+                    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:0.9]];
                     [self.messageButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
                 }
                 
@@ -564,8 +580,19 @@
                     
                     //if listing was sold through BUMP checkout, don't let seller mark as available again
                     if ([[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]) {
-                        [self.reportButton setEnabled:NO];
-                        [self.reportLabel setTitle:@"S O L D" forState:UIControlStateNormal];
+                        
+                        //check if there's a buyer with a payment pending on this listing. If so then don't let seller mark it as sold
+                        if ([[self.listingObject objectForKey:@"payment"]isEqualToString:@"pending"]) {
+                            [self.reportButton setImage:[UIImage imageNamed:@"markSoldButton"] forState:UIControlStateNormal];
+                            [self.reportButton setSelected:NO];
+                            [self.reportLabel setTitle:@"M A R K  A S\nS O L D" forState:UIControlStateNormal];
+                            
+                            [self.sendButton setEnabled:NO];
+                        }
+                        else{
+                            [self.reportButton setEnabled:NO];
+                            [self.reportLabel setTitle:@"S O L D" forState:UIControlStateNormal];
+                        }
                     }
                     else{
                         [self.reportLabel setTitle:@"U N M A R K  A S\nS O L D" forState:UIControlStateNormal];
@@ -578,9 +605,9 @@
                 [self.listingObject saveInBackground];
                 
                 //check if user already reported this item before
-                //we save all reported in an arra, also have an array of the dates too
+                //we save all reporters in an array
                 NSArray *reportedArray = [self.listingObject objectForKey:@"reportedArray"];
-
+                
                 if ([reportedArray containsObject:[PFUser currentUser].objectId]) {
                     //disable report button
                     [self.reportButton setEnabled:NO];
@@ -706,7 +733,8 @@
         self.messageButton = nil;
         self.buyButton = nil;
         self.longSendButton = nil;
-    }
+        self.buttonLine = nil;
+    }    
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -1086,6 +1114,23 @@
 
     if (self.tabBarController.tabBar.frame.size.height == 0) {
         [self hideBarButton];
+        [self hideSendBox];
+        
+        
+        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+        [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+        [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+        [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
+        [center removeObserver:self name:@"showSendBox" object:nil];
+        
+        if (self.tabBarController.tabBar.frame.size.height == 0) {
+            [center removeObserver:self name:@"switchedTabs" object:nil];
+        }
+        
+        if (self.dropShowing == YES) {
+            //make sure its dismissed
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"removeDrop" object:nil];
+        }
     }
     
     vc.salePrice = self.purchasePrice;
@@ -1182,14 +1227,18 @@
     else{
         [self hideBarButton];
         
-        CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
-        vc.editMode = YES;
-        vc.listing = self.listingObject;
-        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-        [self presentViewController:nav animated:YES completion:^{
-            [self.messageButton setEnabled:YES];
-        }];
-        
+        if([[self.listingObject objectForKey:@"payment"]isEqualToString:@"pending"]){
+            [self normalShowAlertWithTitle:@"Sale Pending" andMsg:@"A buyer is currently purchasing your product, we've reserved the item for them and we'll let you know when their payment is successful.\n\nAs a result, you can't edit item information at this time. If you're seeing this message frequently then please message Support from within the app"];
+        }
+        else{
+            CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
+            vc.editMode = YES;
+            vc.listing = self.listingObject;
+            NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+            [self presentViewController:nav animated:YES completion:^{
+                [self.messageButton setEnabled:YES];
+            }];
+        }
     }
 }
 -(void)setupMessages{
@@ -1360,6 +1409,7 @@
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
                      animations:^{
+                         [self.buttonLine setAlpha:0.0];
                          [self.messageButton setAlpha:0.0];
                          [self.buyButton setAlpha:0.0];
                      }
@@ -1373,13 +1423,15 @@
 
     self.messageButton.alpha = 0.0f;
     self.buyButton.alpha = 0.0;
-    
+    [self.buttonLine setAlpha:0.0];
+
     [UIView animateWithDuration:0.2
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
                      animations:^{
                          self.messageButton.alpha = 1.0f;
                          self.buyButton.alpha = 1.0;
+                         [self.buttonLine setAlpha:1.0];
                      }
                      completion:^(BOOL finished) {
                      }];
@@ -1428,17 +1480,6 @@
 }
 
 -(void)normalShowAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
-    
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
-    
-    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        [self showBarButton];
-    }]];
-    [self presentViewController:alertView animated:YES completion:nil];
-}
-
--(void)showNormalAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
-    
     [self hideBarButton];
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
@@ -1450,61 +1491,77 @@
 
 -(void)decideButtonSetup{
     
-    [self setupMessageBarButton];
-    BOOL seenBuyPopup = [[NSUserDefaults standardUserDefaults] boolForKey:@"seenBuyPopup"];
-    
-    if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"] && ![self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"live"] && !seenBuyPopup) {
-        
-        [self hideBarButton];
-        [self normalShowAlertWithTitle:@"App Update" andMsg:@"The seller has enabled Instant Buy on their item, download the latest update from the App Store to be able to buy/sell instantly on BUMP with PayPal"];
-        
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenBuyPopup"];
+    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
+        [self setupMessageBarButton];
     }
+    else if([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"] && ![[self.listingObject objectForKey:@"payment"]isEqualToString:@"pending"] && !self.fromOrder){
+        //don't let user edit a listing they've sold through paypal
+        //instead let them view order details
+        [self setupOrderBarButton];
+    }
+    else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [self.seller.objectId isEqualToString:[PFUser currentUser].objectId]){
+        //don't let user message someone about a listing that they've sold
+//        [self setupMessageBarButton];
+    }
+    else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
+        //don't let user message someone about a listing thats they've sold
+    }
+    else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]){
+        //just show message button if item has been sold
+        [self setupMessageBarButton];
+    }
+    else if(self.fromOrder){
+        //don't let user message the seller if they're viewing from an order summary
+    }
+    else{
+        //check if instant buy is on & if countries are the same - if not, is global shipping enabled to show both anyway
+        if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"]) {
+            
+            if ([self.listingObject objectForKey:@"countryCode"] && ([[PFUser currentUser]objectForKey:@"countryCode"] || [[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"])) {
+                
+                //we compare country codes to decide on whether purchase is possible
+                NSString *listingCountry = [self.listingObject objectForKey:@"countryCode"];
+                NSString *userCountry = [[PFUser currentUser]objectForKey:@"countryCode"];
+                
+                //check if countries are the same
+                if ([listingCountry isEqualToString:userCountry]) {
+                    //same so show both
+                    [self setupTwoBarButtons];
+                }
+                else if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]){
+                    [self setupTwoBarButtons];
+                }
+                else{
+                    NSLog(@"setting up msg button 1");
+                    [self setupMessageBarButton];
+                }
+            }
+            else if(![self.listingObject objectForKey:@"countryCode"]){
+                
+                //CHECK monitor number of errors seen
+                //automate a message to the seller saying there's been an error with the listing?
+                [Answers logCustomEventWithName:@"Country Code listing error"
+                               customAttributes:@{
+                                                  @"listingId":self.listingObject.objectId
+                                                  }];
+                
+                NSLog(@"setting up msg button 2");
 
-//    else if([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
-//        //don't let user edit a listing they've sold through paypal
-//        //instead let them view order details
-//        [self setupOrderBarButton];
-//    }
-//    else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
-//        //don't let user message someone about a listing thats they've sold
-//    }
-//    else if(self.fromOrder){
-//        //don't let user message the seller if they're viewing from an order summary
-//    }
-//    else{
-//        //check if instant buy is on & if countries are the same - if not, is global shipping enabled to show both anyway
-//        if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"]) {
-//
-//            if ([self.listingObject objectForKey:@"countryCode"] && ([[PFUser currentUser]objectForKey:@"countryCode"] || [[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"])) {
-//
-//                //we compare country codes to decide on whether purchase is possible
-//                NSString *listingCountry = [self.listingObject objectForKey:@"countryCode"];
-//                NSString *userCountry = [[PFUser currentUser]objectForKey:@"countryCode"];
-//
-//                //check if countries are the same
-//                if ([listingCountry isEqualToString:userCountry]) {
-//                    //same so show both
-//                    [self setupTwoBarButtons];
-//                }
-//                else if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]){
-//                    [self setupTwoBarButtons];
-//                }
-//                else{
-//                    [self setupMessageBarButton];
-//                }
-//            }
-//            else{
-//                if (![[PFUser currentUser]objectForKey:@"countryCode"]) {
-//                    //show prompt to get user's country if this fails
-//                    [self showAddCountryPrompt];
-//                }
-//            }
-//        }
-//        else{
-//            [self setupMessageBarButton];
-//        }
-//    }
+                [self setupMessageBarButton];
+            }
+            else{
+                if (![[PFUser currentUser]objectForKey:@"countryCode"]) {
+                    //show prompt to get user's country if this fails
+                    [self showAddCountryPrompt];
+                }
+            }
+        }
+        else{
+            NSLog(@"setting up msg button 3");
+
+            [self setupMessageBarButton];
+        }
+    }
     
     self.setupButtons = YES;
 }
@@ -1513,7 +1570,7 @@
     self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
     [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
     [self.messageButton setTitle:@"V I E W  O R D E R" forState:UIControlStateNormal];
-    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
+    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:0.9]];
     [self.messageButton addTarget:self action:@selector(viewOrderPressed) forControlEvents:UIControlEventTouchUpInside];
     self.messageButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
@@ -1523,7 +1580,7 @@
     self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
     [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
     [self.messageButton setTitle:@"M E S S A G E" forState:UIControlStateNormal];
-    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
+    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:0.9]];
     [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.messageButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
@@ -1531,7 +1588,7 @@
 -(void)setupSendBarButton{
     self.longSendButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
     [self.longSendButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
-    [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+    [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:0.9]];
     [self.longSendButton addTarget:self action:@selector(longSendButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.longSendButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.longSendButton];
@@ -1542,8 +1599,8 @@
     
     //setup message button
     self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width/2, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width/2, 50)];
-    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
-    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
+    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:11]];
+    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:0.9]];
     [self.messageButton setTitle:@"M E S S A G E" forState:UIControlStateNormal];
     [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.messageButton.alpha = 0.0f;
@@ -1551,16 +1608,24 @@
     
     //setup buy button
     self.buyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width/2, 50)];
-    [self.buyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
+    [self.buyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:11]];
     [self.buyButton setTitle:@"B U Y" forState:UIControlStateNormal];
-    [self.buyButton setBackgroundColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
+//    self.buyButton.titleLabel.numberOfLines = 2;
+    [self.buyButton setBackgroundColor:[UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:0.9]];
     [self.buyButton addTarget:self action:@selector(buyButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.buyButton.alpha = 0.0f;
     
     //title is set when listing fetched for price
     [self.buyButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    
     [[UIApplication sharedApplication].keyWindow addSubview:self.buyButton];
+
+    //create separating view
+    self.buttonLine = [[UIView alloc]initWithFrame:CGRectMake(self.buyButton.frame.size.width-1, self.buyButton.frame.origin.y, 2, self.buyButton.frame.size.height)];
+    [self.buttonLine setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:0.9]];
+    self.buttonLine.alpha = 0.0f;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.buttonLine];
+
 }
 
 #pragma marl - send box delegates
@@ -1578,7 +1643,7 @@
     
     [self.sendBox.noFriendsButton addTarget:self action:@selector(inviteFriendsPressed) forControlEvents:UIControlEventTouchUpInside];
     
-    self.sendBox.messageField.layer.borderColor = [UIColor colorWithRed:0.86 green:0.86 blue:0.86 alpha:1.0].CGColor;
+    self.sendBox.messageField.layer.borderColor = [UIColor colorWithRed:0.86 green:0.86 blue:0.86 alpha:0.9].CGColor;
     [self.sendBox.messageField setHidden:YES];
     self.sendBox.messageField.delegate = self;
     
@@ -1714,10 +1779,11 @@
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView
                  cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-
+    
     SendToUserCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.userImageView.image = nil;
     
+    NSLog(@"fb users");
     PFUser *fbUser = [self.facebookUsers objectAtIndex:indexPath.item];
     
     if (![fbUser objectForKey:@"picture"]) {
@@ -1932,6 +1998,8 @@
     [self.longSendButton setTitle:@"D I S M I S S" forState:UIControlStateNormal];
     [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
     [self.longSendButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+
+    [self.sendBox.noFriendsButton setTitle:@"Connect your Facebook to share listings with Friends on BUMP" forState:UIControlStateNormal];
     
     //show
     [self.sendBox setAlpha:1.0];
@@ -2657,18 +2725,54 @@
         
         if ([vc.visibleViewController isKindOfClass:[PurchaseTab class]]){
             [self showBarButton];
+            [self addListingObservers];
+            
             if (self.sendButtonShowing) {
                 [self showSendButton];
             }
         }
         else{
+            //pretty much same as view will disappear but for when viewed from search
             [self hideBarButton];
+            [self removeListingObservers];
             
+            [self hideSendBox];
+            
+            if (self.dropShowing == YES) {
+                //make sure its dismissed
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"removeDrop" object:nil];
+            }
+
             if (self.sendButtonShowing) {
                 [self hideSendButton];
             }
         }
     }
+}
+
+-(void)removeListingObservers{
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    
+    //make sure not adding duplicate observers
+    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+    [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
+    [center removeObserver:self name:@"showSendBox" object:nil]; /////adding observers to for sale now for screenshots
+}
+
+-(void)addListingObservers{
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    
+    //make sure not adding duplicate observers
+    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+    [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
+    [center removeObserver:self name:@"showSendBox" object:nil];
+    
+    [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
+    [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+    [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
+    [center addObserver:self selector:@selector(sendPressed:) name:@"showSendBox" object:nil];
 }
 
 #pragma mark - web view delegates
@@ -2727,7 +2831,7 @@
         [Answers logCustomEventWithName:@"Like tapped before item fetched"
                        customAttributes:@{}];
         
-        [self showNormalAlertWithTitle:@"Hang on!" andMsg:@"Make sure your connection is up to scratch! Try liking again in a minute"];
+        [self normalShowAlertWithTitle:@"Hang on!" andMsg:@"Make sure your connection is up to scratch! Try liking again in a minute"];
         
         return;
     }
@@ -2945,8 +3049,11 @@
 - (IBAction)reportButtonPressed:(id)sender {
     if (self.markAsSoldMode) {
         [self.delegate changedSoldStatus];
-
-        if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
+        
+        if([[self.listingObject objectForKey:@"payment"]isEqualToString:@"pending"]){
+            [self normalShowAlertWithTitle:@"Sale Pending" andMsg:@"A buyer is currently purchasing your product, we've reserved the item for them and we'll let you know when their payment is successful.\n\nAs a result, you can't mark the item as sold at this time. If you're seeing this message frequently then please message Support from within the app"];
+        }
+        else if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
             //mark as live again
             [Answers logCustomEventWithName:@"Unmark as sold pressed"
                            customAttributes:@{}];
@@ -2972,19 +3079,24 @@
                     }];
                     
                     //hide label
-                    self.soldLabel.alpha = 1.0;
-                    self.soldCheckImageVoew.alpha = 1.0;
+//                    self.soldLabel.alpha = 1.0;
+//                    self.soldCheckImageVoew.alpha = 1.0;
+                    self.soldbannerButton.alpha = 1.0;
                     
                     [UIView animateWithDuration:0.3
                                           delay:0
                                         options:UIViewAnimationOptionCurveEaseIn
                                      animations:^{
-                                         self.soldLabel.alpha = 0.0;
-                                         self.soldCheckImageVoew.alpha = 0.0;
+                                         self.soldbannerButton.alpha = 0.0;
+
+//                                         self.soldLabel.alpha = 0.0;
+//                                         self.soldCheckImageVoew.alpha = 0.0;
                                      }
                                      completion:^(BOOL finished) {
-                                         [self.soldLabel setHidden:YES];
-                                         [self.soldCheckImageVoew setHidden:YES];
+                                         [self.soldbannerButton setHidden:YES];
+
+//                                         [self.soldLabel setHidden:YES];
+//                                         [self.soldCheckImageVoew setHidden:YES];
                                      }];
                 }
             }];
@@ -3015,21 +3127,26 @@
                     }];
                     
                     //unhide label
-                    self.soldLabel.alpha = 0.0;
-                    self.soldCheckImageVoew.alpha = 0.0;
+//                    self.soldLabel.alpha = 0.0;
+//                    self.soldCheckImageVoew.alpha = 0.0;
                     
-                    self.soldLabel.text = @"S O L D";
-                    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
+//                    self.soldLabel.text = @"S O L D";
+//                    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
+//
+//                    [self.soldLabel setHidden:NO];
+//                    [self.soldCheckImageVoew setHidden:NO];
                     
-                    [self.soldLabel setHidden:NO];
-                    [self.soldCheckImageVoew setHidden:NO];
+                    self.soldbannerButton.alpha = 0.0;
+                    [self.soldbannerButton setHidden:NO];
                     
                     [UIView animateWithDuration:0.3
                                           delay:0
                                         options:UIViewAnimationOptionCurveEaseIn
                                      animations:^{
-                                         self.soldLabel.alpha = 1.0;
-                                         self.soldCheckImageVoew.alpha = 1.0;
+//                                         self.soldLabel.alpha = 1.0;
+//                                         self.soldCheckImageVoew.alpha = 1.0;
+                                         
+                                         self.soldbannerButton.alpha = 1.0;
                                          
                                      }
                                      completion:nil];
@@ -3049,37 +3166,108 @@
         else{
             //not a mod
             
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Why would you like to report this listing?" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                [self showBarButton];
-            }]];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Fake" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self showBarButton];
-                [self selectedReportReason:@"Fake"];
-            }]];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self showBarButton];
-                [self selectedReportReason:@"Offensive listing"];
-            }]];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Spam" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self showBarButton];
-                [self selectedReportReason:@"Spam"];
-            }]];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self showBarButton];
-                [self selectedReportReason:@"Other"];
-            }]];
-            
-            [self presentViewController:alertView animated:YES completion:nil];
+            if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
+                //mod
+                [self enterBanComment];
+            }
+            else{
+                //not a mod
+                
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Why would you like to report this listing?" preferredStyle:UIAlertControllerStyleAlert];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                    [self showBarButton];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Fake" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self showBarButton];
+                    [self selectedReportReason:@"Fake"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Not Streetwear" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self showBarButton];
+                    [self selectedReportReason:@"Not Streetwear"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self showBarButton];
+                    [self selectedReportReason:@"Offensive listing"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Spam" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self showBarButton];
+                    [self selectedReportReason:@"Spam"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self showBarButton];
+                    [self enterReportComment];
+//                    [self selectedReportReason:@"Other"];
+                }]];
+                
+                [self presentViewController:alertView animated:YES completion:nil];
 
+            }
         }
     }
 }
+
+-(void)enterReportComment{
+    self.changeKeyboard = NO;
+    
+    UIAlertController *alertController = [UIAlertController
+                                          alertControllerWithTitle:@"Reason"
+                                          message:@"Tell us why you're reporting this item. Please be polite and factual"
+                                          preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+     {
+         textField.placeholder = @"Write something";
+     }];
+    
+    UIAlertAction *okAction = [UIAlertAction
+                               actionWithTitle:@"Report"
+                               style:UIAlertActionStyleDestructive
+                               handler:^(UIAlertAction *action)
+                               {
+                                   UITextField *reasonField = alertController.textFields.firstObject;
+                                   
+                                   BOOL acceptableString = YES;
+                                   NSArray *profanityList = @[@"cunt", @"wanker", @"nigger", @"penis", @"cock", @"dick", @"fuck", @"fucking", @"shit", @"fucked"];
+                                   
+                                   for (NSString *badString in profanityList) {
+                                       if ([reasonField.text.lowercaseString containsString:badString]) {
+                                           acceptableString = NO;
+                                           [self normalShowAlertWithTitle:@"Language Warning" andMsg:@"Please don't swear, you're representing the community"];
+                                           
+                                           [Answers logCustomEventWithName:@"User Used bad report language"
+                                                          customAttributes:@{
+                                                                             @"text":reasonField.text,
+                                                                             @"where":@"reporting listing"
+                                                                             }];
+                                       }
+                                   }
+                                   
+                                   if (acceptableString == YES && reasonField.text.length > 5) {
+                                       [self showBarButton];
+                                       [self selectedReportReason:reasonField.text];
+                                   }
+                               }];
+    
+    UIAlertAction *cancelAction = [UIAlertAction
+                                   actionWithTitle:@"Cancel"
+                                   style:UIAlertActionStyleCancel
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                       [self showBarButton];
+                                   }];
+    
+    [alertController addAction:okAction];
+    [alertController addAction:cancelAction];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+    
 
 -(void)enterBanComment{
     self.changeKeyboard = NO;
@@ -3103,12 +3291,12 @@
                                    
                                    BOOL acceptableString = YES;
                                    NSArray *profanityList = @[@"cunt", @"wanker", @"nigger", @"penis", @"cock", @"dick", @"fuck", @"fucking", @"shit", @"fucked"];
-
+                                   
                                    for (NSString *badString in profanityList) {
                                        if ([reasonField.text.lowercaseString containsString:badString]) {
                                            acceptableString = NO;
                                            [self normalShowAlertWithTitle:@"Language Warning" andMsg:@"Please don't swear, you're representing BUMP"];
-                                          
+                                           
                                            [Answers logCustomEventWithName:@"Mod Used bad language"
                                                           customAttributes:@{
                                                                              @"text":reasonField.text,
@@ -3152,7 +3340,7 @@
      }];
     
     UIAlertAction *okAction = [UIAlertAction
-                               actionWithTitle:@"Delete"
+                               actionWithTitle:@"Confirm"
                                style:UIAlertActionStyleDestructive
                                handler:^(UIAlertAction *action)
                                {
@@ -3382,7 +3570,7 @@
                                                       @"where":@"sale listing"
                                                       }];
                     
-                    [self showNormalAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for Bump with your Facebook account\n\nSend Support a message from Settings and we'll get it sorted!"];
+                    [self normalShowAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for Bump with your Facebook account\n\nSend Support a message from Settings and we'll get it sorted!"];
                 }
             }
         }];
@@ -3504,6 +3692,25 @@
 -(void)dismissedCheckout{
     NSLog(@"dismiss delegate");
     [self showBarButton];
+    
+    if (self.tabBarController.tabBar.frame.size.height == 0) {
+        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+
+        //these observers are for when user is viewing listing from search, where disappear VC methods aren't called!
+        [center removeObserver:self name:@"switchedTabs" object:nil];
+        [center addObserver:self selector:@selector(showHideLowerButtons:) name:@"switchedTabs" object:nil];
+        
+        //make sure not adding duplicate observers
+        [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+        [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+        [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
+        [center removeObserver:self name:@"showSendBox" object:nil]; /////adding observers to for sale now for screenshots
+        
+        [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
+        [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+        [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
+        [center addObserver:self selector:@selector(sendPressed:) name:@"showSendBox" object:nil];
+    }
 }
 
 -(void)PurchasedItemCheckout{
@@ -3513,14 +3720,19 @@
     
     self.buyButton = nil;
     self.messageButton = nil;
+    self.buttonLine = nil;
+    
 //    [self setupMessageBarButton];
     
     //show purchased icon
-    self.soldLabel.text = @"P U R C H A S E D";
-    [self.soldLabel setHidden:NO];
+//    self.soldLabel.text = @"P U R C H A S E D";
+//    [self.soldLabel setHidden:NO];
     
-    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
-    [self.soldCheckImageVoew setHidden:NO];
+    [self.soldbannerButton setTitle:@"P U R C H A S E D" forState:UIControlStateNormal];
+    [self.soldbannerButton setHidden:NO];
+    
+//    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
+//    [self.soldCheckImageVoew setHidden:NO];
 }
 
 -(void)showAddCountryPrompt{

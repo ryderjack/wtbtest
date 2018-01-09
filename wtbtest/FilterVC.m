@@ -56,7 +56,7 @@
     self.brandCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.colourCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.categoryIconCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.priceSliderCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.priceSliderInstantBuy.selectionStyle = UITableViewCellSelectionStyleNone;
     self.locationContinentsCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     //category swipe view
@@ -153,6 +153,11 @@
             if ([self.filtersArray containsObject:@"lowtohigh"]){
                 [self.lowtoHighButton setSelected:YES];
             }
+            
+            if ([self.filtersArray containsObject:@"instantBuy"]){
+                [self.instantBuySwitch setSelected:YES];
+            }
+            
             if ([self.filtersArray containsObject:@"new"]){
                 [self.conditionNewButton setSelected:YES];
             }
@@ -357,7 +362,15 @@
     }
     
     if (!self.applyButton) {
-        self.applyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+        
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+            //iPhone X
+            self.applyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-80, [UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
+        }
+        else{
+            self.applyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+        }
+        
         [self.applyButton setTitle:@"A P P L Y" forState:UIControlStateNormal];
         [self.applyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
         [self.applyButton.titleLabel setTextAlignment: NSTextAlignmentCenter];
@@ -439,7 +452,7 @@
                 return 131;
             }
             else if (indexPath.row == 5){
-                return 226;
+                return 282;
             }
             else if (indexPath.row == 6){
                 return 139;
@@ -470,7 +483,7 @@
                 return 131;
             }
             else if (indexPath.row == 5){
-                return 226;
+                return 282;
             }
             else if (indexPath.row == 6){
                 return 60;
@@ -528,7 +541,7 @@
                 return self.conditionCell;
             }
             else if (indexPath.row == 5){
-                return self.priceSliderCell;
+                return self.priceSliderInstantBuy;
             }
             else if (indexPath.row == 6){
                 return self.locationContinentsCell;
@@ -559,7 +572,7 @@
                 return self.conditionCell;
             }
             else if (indexPath.row == 5){
-                return self.priceSliderCell;
+                return self.priceSliderInstantBuy;
             }
             else if (indexPath.row == 6){
                 return self.spaceCell;
@@ -665,6 +678,7 @@
 - (IBAction)clearPressed:(id)sender {
     [self.hightolowButton setSelected:NO];
     [self.lowtoHighButton setSelected:NO];
+    [self.instantBuySwitch setSelected:NO];
     
     [self.conditionNewButton setSelected:NO];
     [self.usedButton setSelected:NO];
@@ -725,6 +739,18 @@
         [self.filtersArray addObject:@"lowtohigh"];
         [self.hightolowButton setSelected:NO];
         [self.filtersArray removeObject:@"hightolow"];
+    }
+    [self updateTitle];
+}
+- (IBAction)instantBuyPressed:(id)sender {
+    if(self.instantBuySwitch.selected == YES){
+        [self.instantBuySwitch setSelected:NO];
+        [self.filtersArray removeObject:@"instantBuy"];
+    }
+    else{
+        
+        [self.instantBuySwitch setSelected:YES];
+        [self.filtersArray addObject:@"instantBuy"];
     }
     [self updateTitle];
 }

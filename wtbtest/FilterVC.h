@@ -46,10 +46,12 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *categoryIconCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *priceSliderCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *locationContinentsCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *priceSliderInstantBuy;
 
 //price buttons
 @property (weak, nonatomic) IBOutlet UIButton *hightolowButton;
 @property (weak, nonatomic) IBOutlet UIButton *lowtoHighButton;
+@property (weak, nonatomic) IBOutlet UIButton *instantBuySwitch;
 
 //condition buttons
 @property (weak, nonatomic) IBOutlet UIButton *usedButton;

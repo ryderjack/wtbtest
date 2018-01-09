@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13173"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -53,7 +53,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2EO-bH-aRZ">
-                        <rect key="frame" x="74" y="32" width="173" height="48"/>
+                        <rect key="frame" x="84" y="35" width="153" height="42.5"/>
                         <constraints>
                             <constraint firstAttribute="width" secondItem="2EO-bH-aRZ" secondAttribute="height" multiplier="173:48" id="gMs-gA-wz8"/>
                         </constraints>
@@ -62,7 +62,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="e7V-7d-Bh7">
-                        <rect key="frame" x="30" y="88" width="32" height="32"/>
+                        <rect key="frame" x="40" y="85.5" width="32" height="32"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="32" id="RZp-hh-srE"/>
                             <constraint firstAttribute="height" constant="32" id="cjU-5S-fAb"/>
@@ -74,7 +74,7 @@
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jlm-bU-luc">
-                        <rect key="frame" x="87" y="88" width="32" height="32"/>
+                        <rect key="frame" x="97" y="85.5" width="32" height="32"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="32" id="FvD-Mm-Hts"/>
                             <constraint firstAttribute="height" constant="32" id="eK0-w2-ITv"/>
@@ -86,7 +86,7 @@
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ks2-Km-hxM">
-                        <rect key="frame" x="144" y="88" width="32" height="32"/>
+                        <rect key="frame" x="154" y="85.5" width="32" height="32"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="32" id="0P6-D9-SsF"/>
                             <constraint firstAttribute="width" constant="32" id="tuP-Se-6WA"/>
@@ -98,7 +98,7 @@
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="xNq-MB-hqf">
-                        <rect key="frame" x="201" y="88" width="32" height="32"/>
+                        <rect key="frame" x="211" y="85.5" width="32" height="32"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="32" id="PHC-uy-iug"/>
                             <constraint firstAttribute="width" constant="32" id="Uis-0v-Ivq"/>
@@ -110,7 +110,7 @@
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tIS-Ce-xH0">
-                        <rect key="frame" x="258" y="88" width="32" height="32"/>
+                        <rect key="frame" x="268" y="85.5" width="32" height="32"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="32" id="ERL-QP-aK1"/>
                             <constraint firstAttribute="width" constant="32" id="dUo-fq-vBD"/>
@@ -148,7 +148,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Leave a comment" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Aqz-Wi-vHk">
-                        <rect key="frame" x="20" y="18" width="284" height="48"/>
+                        <rect key="frame" x="28" y="21" width="268" height="48"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="48" id="xdv-lD-6m3"/>
                         </constraints>
@@ -157,9 +157,9 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" text="e.g. Fast shipping? Item as described? Good communication?" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="DNu-gm-99t">
-                        <rect key="frame" x="20" y="74" width="284" height="103"/>
+                        <rect key="frame" x="28" y="77" width="268" height="97.5"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                        <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="tintColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="14"/>
                         <textInputTraits key="textInputTraits" autocapitalizationType="sentences" returnKeyType="done"/>
@@ -204,7 +204,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Contact Support" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yig-aP-YHy">
-                        <rect key="frame" x="115" y="16" width="144" height="28"/>
+                        <rect key="frame" x="115" y="19" width="144" height="22"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="144" id="pl2-Ob-Thv"/>
                         </constraints>

@@ -48,6 +48,7 @@
 @property (nonatomic) BOOL sellListing;
 @property (nonatomic) BOOL multipleAllowed;
 @property (nonatomic) BOOL pushingClothing;
+@property (nonatomic) BOOL dontShowMultipleAlert;
 
 //viewing multiple sizes from a listing
 @property (nonatomic) BOOL viewingMode; //when showing sizes from a lisitng

@@ -34,6 +34,9 @@
     
     self.title = @"O R D E R";
     
+    self.titleLabel.adjustsFontSizeToFitWidth = YES;
+    self.titleLabel.minimumScaleFactor=0.5;
+    
     self.transCellHeight = 213;
     self.titleCellHeight = 198;
     self.gotFBCellHeight = 181;
@@ -86,7 +89,7 @@
                 
                 self.paymentFailed = YES;
                 self.rowNumber = 3;
-                [self showAlertWithTitle:@"Order Cancelled" andMsg:@"PayPal was unable to process your payment so the order was cancelled. You have NOT been charged and the item has been made available for sale again. You can attempt to purchase the item again. If the problem persists please raise a support ticket"];
+                [self showAlertWithTitle:@"Order Cancelled" andMsg:@"PayPal was unable to process your payment so the order was cancelled. You have NOT been charged and the item has been made available for sale again. You can attempt to purchase the item again. If the problem persists please contact supportt"];
                 [self.messageButton setHidden:YES];
                 [self.refundButton setHidden:YES];
             }
@@ -240,29 +243,28 @@
                     [self.refundButton setTitle:@"Request a Refund" forState:UIControlStateNormal];
                 }
                 
-                //CHANGE remove comments
-//                if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
-//                    //this user left a review
-//                    self.leftFeedback = YES;
-//
-//                    //get number of stars that this user left & set correct image on leftStarImgView
-//                    int buyerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
-//                    if (buyerStars == 1) {
-//                        [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
-//                    }
-//                    else if (buyerStars == 2){
-//                        [self.leftStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
-//                    }
-//                    else if (buyerStars == 3){
-//                        [self.leftStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
-//                    }
-//                    else if (buyerStars == 4){
-//                        [self.leftStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
-//                    }
-//                    else if (buyerStars == 5){
-//                        [self.leftStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
-//                    }
-//                }
+                if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
+                    //this user left a review
+                    self.leftFeedback = YES;
+
+                    //get number of stars that this user left & set correct image on leftStarImgView
+                    int buyerStars = [[self.orderObject objectForKey:@"sellerStars"]intValue];
+                    if (buyerStars == 1) {
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"1OrderStars"]];
+                    }
+                    else if (buyerStars == 2){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"2OrderStars"]];
+                    }
+                    else if (buyerStars == 3){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"3OrderStars"]];
+                    }
+                    else if (buyerStars == 4){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"4OrderStars"]];
+                    }
+                    else if (buyerStars == 5){
+                        [self.leftStarImageView setImage:[UIImage imageNamed:@"5OrderStars"]];
+                    }
+                }
                 
                 if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"YES"]) {
                     //other user has left a review
@@ -297,7 +299,7 @@
                         self.refundRequested = YES;
                         
                         if (![[self.orderObject objectForKey:@"refundRequestSeen"]isEqualToString:@"YES"]) {
-                            [self showAlertWithTitle:@"Refund Requested" andMsg:@"The buyer has requested a full refund, issue a PayPal refund in full from this page or chat to the seller to come to a mutual agreement. If there's any issues please contact support from this page to chat to one of the team"];
+                            [self showAlertWithTitle:@"Refund Requested" andMsg:@"The buyer has requested a full refund, issue a PayPal refund in full from this page or chat to the seller to come to a mutual agreement. If there are any issues please contact support from this page to chat to one of the team"];
                             NSDictionary *params = @{
                                                      @"orderId":self.orderObject.objectId
                                                      };
@@ -324,9 +326,9 @@
                 //user is seller, to do's:
                 if ([[self.orderObject objectForKey:@"sellerLeftFeedback"] isEqualToString:@"YES"]) {
                     self.leftFeedback = YES;
-                    
+
                     //user has left a review
-                    
+
                     //get number of stars that this user got & set correct image on leftStarImgView
                     int sellerStars = [[self.orderObject objectForKey:@"buyerStars"]intValue];
                     if (sellerStars == 1) {
@@ -836,6 +838,16 @@
     }]];
     [alertView addAction:[UIAlertAction actionWithTitle:@"Issue Refund" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         
+        NSString *requestId = @"";
+        
+        //check if been a previous refund attempt
+        if ([[self.orderObject objectForKey:@"refundCount"]intValue] > 0 && [self.orderObject objectForKey:@"refundRequest"]) {
+            //to stop refund requests happening with same requestId we keep appending a string to the end
+            requestId = [NSString stringWithFormat:@"%@1",[self.orderObject objectForKey:@"refundRequestString"]];
+            [self.orderObject setObject:requestId forKey:@"refundRequestString"];
+            
+        }
+        
         NSDictionary *params = @{
                                      @"orderId":self.orderObject.objectId,
                                      @"total":[self.orderObject objectForKey:@"totalPrice"],
@@ -891,6 +903,12 @@
         [self showHUDForCopy:NO];
         [PFCloud callFunctionInBackground:@"triggerRefund" withParameters:params block:^(NSDictionary *response, NSError *error) {
             if (!error) {
+                [Answers logCustomEventWithName:@"Refund triggered"
+                               customAttributes:@{
+                                                  @"orderId":self.orderObject.objectId,
+                                                  @"where":@"popup"
+                                                  }];
+                
                 [self hideHUD];
                 self.refundRequested = NO;
                 self.refundSent = YES;
@@ -898,6 +916,12 @@
                 self.nextStepLabel.text = @"Refund Sent";
             }
             else{
+                [Answers logCustomEventWithName:@"Refund Error"
+                               customAttributes:@{
+                                                  @"orderId":self.orderObject.objectId,
+                                                  @"where":@"popup"
+                                                  }];
+                
                 [self hideHUD];
                 NSLog(@"error issuing refund %@", error);
                 [self showAlertWithTitle:@"Refund Error #2" andMsg:@"Make sure you're connected to the internet & try again"];
@@ -927,6 +951,9 @@
                 
                 self.refundRequested = NO;
                 [self.refundButton setTitle:@"Request a Refund" forState:UIControlStateNormal];
+                
+                //allows calcStatus to ignore the status of the orderobject that has been fetched since we're updating the correct one in the cloud func
+                self.refundCancelled = YES;
                 [self calcStatus];
             }
             else{
@@ -1193,6 +1220,9 @@
     //only buyer will be able to see orders that are pending or failed so this code is fine here
     if ([[self.orderObject objectForKey:@"status"]isEqualToString:@"pending"]) {
         self.nextStepLabel.text = @"Payment Pending";
+        
+        //set order as seen
+        [self setBuyerUnseen:YES withIncrement:NO];
         return;
     }
     else if([[self.orderObject objectForKey:@"status"]isEqualToString:@"failed"]) {
@@ -1229,7 +1259,7 @@
         
         return;
     }
-    else if([[self.orderObject objectForKey:@"refundStatus"]isEqualToString:@"requested"]) {
+    else if([[self.orderObject objectForKey:@"refundStatus"]isEqualToString:@"requested"] && !self.refundCancelled) {
         if (self.isBuyer) {
             self.nextStepLabel.text = @"Refund Requested";
             
@@ -1250,6 +1280,10 @@
             }
         }
         return;
+    }
+    
+    if (self.refundCancelled) {
+        self.refundCancelled = NO;
     }
     
     if (self.isBuyer) {
@@ -1378,7 +1412,8 @@
             
             convoObject[@"wtsListing"] = self.listingObject;
             convoObject[@"pureWTS"] = @"YES";
-            
+            convoObject[@"orderConvo"] = @"YES";
+
             convoObject[@"totalMessages"] = @0;
             convoObject[@"buyerUnseen"] = @0;
             convoObject[@"sellerUnseen"] = @0;
@@ -1577,6 +1612,23 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Contact Support" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [Intercom presentMessenger];
     }]];
+
+//    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Check Order Status" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//
+//        //call check order status
+//        //need paypal orderId and bump orderId
+//
+//        NSDictionary *params = @{@"bumpOrderId": self.orderObject.objectId, @"ppOrderId":[self.orderObject objectForKey:@"paypalOrderId"]};
+//        [PFCloud callFunctionInBackground:@"checkOrderStatusFail" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//            if (!error) {
+//                NSLog(@"order status response %@", response);
+//
+//            }
+//            else{
+//                NSLog(@"order status error %@", error);
+//            }
+//        }];
+//    }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Order #ID" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [Answers logCustomEventWithName:@"Copied Order ID"

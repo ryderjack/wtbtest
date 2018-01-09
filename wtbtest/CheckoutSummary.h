@@ -56,6 +56,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *totalPriceLabel;
 @property (nonatomic) float salePrice;
 @property (nonatomic) float totalPrice;
+//@property (nonatomic) float shippingPrice;
 
 @property (nonatomic) NSString *currencySymbol;
 @property (nonatomic) NSString *currency;
@@ -90,6 +91,7 @@
 //checkout success mode
 @property (nonatomic) BOOL successMode;
 @property (nonatomic) BOOL isBuyer;
+@property (nonatomic) BOOL hitPay;
 
 @property (nonatomic, strong) PFObject *orderObject;
 
@@ -99,6 +101,7 @@
 @property (nonatomic, strong) PFUser *otherUser;
 @property (nonatomic) BOOL fetchedUser;
 @property (nonatomic) BOOL settingUpMessages;
+@property (weak, nonatomic) IBOutlet UILabel *congratsHeaderLabel;
 
 //paypal integration stuff
 @property (nonatomic) BOOL addedPayPalObservers;
@@ -107,6 +110,8 @@
 @property (nonatomic) BOOL sellerErrorShowing;
 
 @property (nonatomic) BOOL checkedSellersPPInfo;
+@property (nonatomic) NSString *pairingId;
+
 
 
 @end

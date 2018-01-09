@@ -261,7 +261,9 @@
         
         self.wantedSearchResults = placeholder;
         
-        [[PFUser currentUser] setObject:placeholder forKey:@"searches"];
+        NSArray *arrayToSave = [[placeholder reverseObjectEnumerator] allObjects];
+        
+        [[PFUser currentUser] setObject:arrayToSave forKey:@"searches"];
         [[PFUser currentUser] saveInBackground];
         
         [self.searchBar resignFirstResponder];
@@ -282,14 +284,19 @@
         
         NSMutableArray *placeholder = [NSMutableArray arrayWithArray:self.sellingSearchResults];
         
+        NSLog(@"PLACEHOLDER: %@", placeholder);
+        
         if (![[placeholder firstObject] isEqualToString:searchText]) {
             [placeholder removeObject:searchText];
             [placeholder insertObject:searchText atIndex:0];
         }
         
         self.sellingSearchResults = placeholder;
+        
+        //need to reverse before saving because when we load it we reverse it
+        NSArray *arrayToSave = [[placeholder reverseObjectEnumerator] allObjects];
 
-        [[PFUser currentUser] setObject:placeholder forKey:@"sellingSearches"];
+        [[PFUser currentUser] setObject:arrayToSave forKey:@"sellingSearches"]; //was placeholder
         [[PFUser currentUser] saveInBackground];
 
         [self.searchBar resignFirstResponder];
@@ -408,6 +415,9 @@
                 else if (![searchHistory containsObject:self.searchString]) {
                     [searchHistory addObject:self.searchString];
                 }
+                
+                NSLog(@"SEARCH HISTORY: %@", searchHistory);
+                
                 [[PFUser currentUser] setObject:searchHistory forKey:@"sellingSearches"];
             }
             else{
@@ -465,16 +475,16 @@
         NSString *searchCheck = [self.searchBar.text stringByReplacingOccurrencesOfString:@" " withString:@""];
         
         PFQuery *userQueryForRand = [PFUser query];
-        [userQueryForRand whereKey:@"username" matchesRegex:self.searchBar.text modifiers:@"i"];
+//        [userQueryForRand whereKey:@"username" matchesRegex:self.searchBar.text modifiers:@"i"];
 
-//        [userQueryForRand whereKey:@"username" containsString:[self.searchBar.text lowercaseString]];
+        [userQueryForRand whereKey:@"username" equalTo:[self.searchBar.text lowercaseString]];
         [userQueryForRand whereKey:@"completedReg" equalTo:@"YES"];
         
         PFQuery *facebookNameSearch = [PFUser query];
         
         //if just typed an empty string, don't search for names that contain this
         if (![searchCheck isEqualToString:@""]) {
-            [facebookNameSearch whereKey:@"fullnameLower" containsString:[self.searchBar.text lowercaseString]];
+            [facebookNameSearch whereKey:@"fullnameLower" equalTo:[self.searchBar.text lowercaseString]];
         }
         
         PFQuery *query = [PFQuery orQueryWithSubqueries:@[userQueryForRand,facebookNameSearch]];
@@ -514,6 +524,8 @@
                                           @"newUser": [NSNumber numberWithBool:createdToday]
                                           }];
         
+        [Intercom logEventWithName:@"searched_wanted_listings"];
+
         self.searchString = self.searchBar.text;
         [self gotoListingsInSellingMode:NO];
     }

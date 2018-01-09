@@ -21,8 +21,7 @@
     // Do any additional setup after loading the view from its nib.
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
     self.applicationLeftBarButtonItems = @[cancelButton];
-    
-    self.view.backgroundColor = [UIColor redColor];
+    self.view.backgroundColor = [UIColor whiteColor];
     
     if (self.createMode == YES || self.editMode == YES) {
         self.tapCount = 0;

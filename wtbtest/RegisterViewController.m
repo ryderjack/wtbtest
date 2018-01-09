@@ -21,6 +21,7 @@
 #import "AppDelegate.h"
 #import "Mixpanel/Mixpanel.h"
 #import <Intercom/Intercom.h>
+#import <SafariServices/SafariServices.h>
 
 @interface RegisterViewController ()
 @end
@@ -58,6 +59,7 @@
     tapGesture.numberOfTapsRequired = 1;
     [self.tableView addGestureRecognizer:tapGesture];
     self.warningLabel.text = @"";
+    [self.warningLabel setTextColor:[UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1]];
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
@@ -92,7 +94,14 @@
     self.profanityList = @[@"fuck", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"#", @"?", @"!", @"£", @"/", @"(", @")", @":", @",", @"'", @"$", @" ",@"<", @">", @"+", @"=", @"%", @"[", @"]", @"{", @"}", @"^", @"..fuckfuck"];
     self.currencyArray = @[@"GBP", @"USD", @"EUR", @"AUD"];
     
-    self.longRegButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+        //iPhone X
+        self.longRegButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-80, [UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
+    }
+    else{
+        self.longRegButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+    }
+    
     [self.longRegButton setTitle:@"R E G I S T E R" forState:UIControlStateNormal];
     [self.longRegButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
     [self.longRegButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
@@ -604,8 +613,20 @@
             self.warningLabel.text = @"";
         }
         else if ([self NSStringIsValidEmail:self.emailField.text] == NO) {
-            self.warningLabel.text = @"Enter a valid email";
+            self.warningLabel.text = @"Please enter a valid email";
             self.emailField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
+            
+            //shake text field
+            CABasicAnimation *animation =
+            [CABasicAnimation animationWithKeyPath:@"position"];
+            [animation setDuration:0.05];
+            [animation setRepeatCount:5];
+            [animation setAutoreverses:YES];
+            [animation setFromValue:[NSValue valueWithCGPoint:
+                                     CGPointMake([self.emailField center].x - 6.0f, [self.emailField center].y)]];
+            [animation setToValue:[NSValue valueWithCGPoint:
+                                   CGPointMake([self.emailField center].x + 6.0f, [self.emailField center].y)]];
+            [[self.emailField layer] addAnimation:animation forKey:@"position"];
         }
         else{
             self.warningLabel.text = @"";
@@ -667,10 +688,11 @@
     
     if ([self.profanityList containsObject:self.usernameField.text.lowercaseString]) {
         self.usernameField.text = @"";
-        self.warningLabel.text = @"Invalid username";
+        self.warningLabel.text = @"Please enter a valid username";
         [self.regButton setEnabled:YES];
         [self.helpButton setEnabled:YES];
         [self.cancelCrossButton setEnabled:YES];
+        
         return;
     }
     
@@ -698,16 +720,9 @@
         [self.cancelCrossButton setEnabled:YES];
         [self.helpButton setEnabled:YES];
     }
-//    else if (self.profilePicture.image == nil && self.emailMode != YES){
-//        //haven't added a picture (only required
-//        self.warningLabel.text = @"Add a profile picture";
-//        [self.regButton setEnabled:YES];
-//        [self.cancelCrossButton setEnabled:YES];
-//        [self.helpButton setEnabled:YES];
-//    }
     else{
         if ([self NSStringIsValidEmail:self.emailField.text] == NO) {
-            self.warningLabel.text = @"Enter a valid email";
+            self.warningLabel.text = @"Please enter a valid email";
             self.emailField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
             [self.regButton setEnabled:YES];
             [self.cancelCrossButton setEnabled:YES];
@@ -718,61 +733,182 @@
             [self showHUD];
             [self.spinner startAnimating];
             
-            [Answers logCustomEventWithName:@"Selected currency"
-                           customAttributes:@{
-                                              @"currency":self.selectedCurrency,
-                                              }];
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel timeEvent:@"Signup"];
             
-            //check username entered is unique
-            PFQuery *usernameQuery = [PFQuery queryWithClassName:@"_User"];
-            [usernameQuery whereKey:@"username" equalTo:username];
-            [usernameQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                if (!object) { 
-                    NSLog(@"username is available!");
+            //check email is valid
+            NSString *email = [[self.emailField.text lowercaseString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+            NSDictionary *params = @{@"email": email};
+            [PFCloud callFunctionInBackground:@"validateUsrEmail" withParameters:params block:^(NSString *response, NSError *error) {
+                if (!error) {
                     
-                    //now do saving
-                    if (self.emailMode) {
-                        self.user.password = pass;
-                        self.user.username = [username lowercaseString];
+                    NSLog(@"email validation response: %@", response);
+                    
+                    if([response isEqualToString:@"invalid"]){
+                        //invalid email
+                        [Answers logCustomEventWithName:@"Invalid Email Entered"
+                                       customAttributes:@{
+                                                          @"response":response,
+                                                          @"where":@"Reg"
+                                                          }];
                         
-                        //sign user up first then save stuff
+                        [self hideHUD];
+                        [self.regButton setEnabled:YES];
+                        [self.helpButton setEnabled:YES];
+                        [self.cancelCrossButton setEnabled:YES];
+                        self.warningLabel.text = @"Please enter a valid email";
+                        self.emailField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
                         
-                        [self.user signUpInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                            if (succeeded) {
-                                NSLog(@"signed up!");
-                                [self saveUser];
+                        //shake text field
+                        CABasicAnimation *animation =
+                        [CABasicAnimation animationWithKeyPath:@"position"];
+                        [animation setDuration:0.05];
+                        [animation setRepeatCount:5];
+                        [animation setAutoreverses:YES];
+                        [animation setFromValue:[NSValue valueWithCGPoint:
+                                                 CGPointMake([self.emailField center].x - 6.0f, [self.emailField center].y)]];
+                        [animation setToValue:[NSValue valueWithCGPoint:
+                                               CGPointMake([self.emailField center].x + 6.0f, [self.emailField center].y)]];
+                        [[self.emailField layer] addAnimation:animation forKey:@"position"];
+                        return;
+                    }
+                    else{
+                        //valid email
+                        
+                        [Answers logCustomEventWithName:@"Validate Email Signup success"
+                                       customAttributes:@{}];
+                        
+                        //check username entered is unique
+                        PFQuery *usernameQuery = [PFQuery queryWithClassName:@"_User"];
+                        [usernameQuery whereKey:@"username" equalTo:username];
+                        [usernameQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                            if (!object) {
+                                NSLog(@"username is available!");
+                                
+                                //now do saving
+                                if (self.emailMode) {
+                                    self.user.password = pass;
+                                    self.user.username = [username lowercaseString];
+                                    
+                                    //sign user up first then save stuff
+                                    
+                                    [self.user signUpInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                        if (succeeded) {
+                                            NSLog(@"signed up!");
+                                            [self saveUser];
+                                        }
+                                        else{
+                                            NSLog(@"signup failed %@", error);
+                                            
+                                            [Answers logCustomEventWithName:@"Email Signup error"
+                                                           customAttributes:@{
+                                                                              @"error":error.description
+                                                                              }];
+                                            
+                                            [self hideHUD];
+                                            [self.regButton setEnabled:YES];
+                                            [self.helpButton setEnabled:YES];
+                                            [self.cancelCrossButton setEnabled:YES];
+                                            [self showAlertWithTitle:@"Sign up Error" andMsg:[NSString stringWithFormat:@"%@", error.description]];
+                                        }
+                                    }];
+                                    
+                                }
+                                else{
+                                    //just save, signed up via fb
+                                    [self saveUser];
+                                }
+                                
                             }
                             else{
-                                NSLog(@"signup failed %@", error);
-                                
-                                [Answers logCustomEventWithName:@"Email Signup error"
-                                               customAttributes:@{
-                                                                  @"error":error
-                                                                  }];
-                                
+                                NSLog(@"username taken");
                                 [self hideHUD];
                                 [self.regButton setEnabled:YES];
                                 [self.helpButton setEnabled:YES];
                                 [self.cancelCrossButton setEnabled:YES];
-                                [self showAlertWithTitle:@"Sign up Error" andMsg:[NSString stringWithFormat:@"%@", error]];
+                                self.warningLabel.text = @"Username taken";
+                                self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
+                                
+                                //shake text field
+                                CABasicAnimation *animation =
+                                [CABasicAnimation animationWithKeyPath:@"position"];
+                                [animation setDuration:0.05];
+                                [animation setRepeatCount:5];
+                                [animation setAutoreverses:YES];
+                                [animation setFromValue:[NSValue valueWithCGPoint:
+                                                         CGPointMake([self.usernameField center].x - 6.0f, [self.usernameField center].y)]];
+                                [animation setToValue:[NSValue valueWithCGPoint:
+                                                       CGPointMake([self.usernameField center].x + 6.0f, [self.usernameField center].y)]];
+                                [[self.usernameField layer] addAnimation:animation forKey:@"position"];
                             }
                         }];
-                        
                     }
-                    else{
-                        //just save, signed up via fb
-                        [self saveUser];
-                    }
-                    
                 }
                 else{
-                    NSLog(@"username taken");
-                    [self hideHUD];
-                    [self.regButton setEnabled:YES];
-                    [self.helpButton setEnabled:YES];
-                    [self.cancelCrossButton setEnabled:YES];
-                    self.warningLabel.text = @"Username taken";
-                    self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
+                    //validate email returned an error
+                    //progress with signup so we don't disrupt the flow
+                    
+                    NSLog(@"validate email func error %@", error);
+                    
+                    [Answers logCustomEventWithName:@"Validate Email Signup error"
+                                   customAttributes:@{
+                                                      @"error":error.description
+                                                      }];
+                    
+                    
+                    //check username entered is unique
+                    PFQuery *usernameQuery = [PFQuery queryWithClassName:@"_User"];
+                    [usernameQuery whereKey:@"username" equalTo:username];
+                    [usernameQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                        if (!object) {
+                            NSLog(@"username is available!");
+                            
+                            //now do saving
+                            if (self.emailMode) {
+                                self.user.password = pass;
+                                self.user.username = [username lowercaseString];
+                                
+                                //sign user up first then save stuff
+                                
+                                [self.user signUpInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                    if (succeeded) {
+                                        NSLog(@"signed up!");
+                                        [self saveUser];
+                                    }
+                                    else{
+                                        NSLog(@"signup failed %@", error);
+                                        
+                                        [Answers logCustomEventWithName:@"Email Signup error"
+                                                       customAttributes:@{
+                                                                          @"error":error.description
+                                                                          }];
+                                        
+                                        [self hideHUD];
+                                        [self.regButton setEnabled:YES];
+                                        [self.helpButton setEnabled:YES];
+                                        [self.cancelCrossButton setEnabled:YES];
+                                        [self showAlertWithTitle:@"Sign up Error" andMsg:[NSString stringWithFormat:@"%@", error.description]];
+                                    }
+                                }];
+                                
+                            }
+                            else{
+                                //just save, signed up via fb
+                                [self saveUser];
+                            }
+                            
+                        }
+                        else{
+                            NSLog(@"username taken");
+                            [self hideHUD];
+                            [self.regButton setEnabled:YES];
+                            [self.helpButton setEnabled:YES];
+                            [self.cancelCrossButton setEnabled:YES];
+                            self.warningLabel.text = @"Username taken";
+                            self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
+                        }
+                    }];
                 }
             }];
         }
@@ -817,10 +953,11 @@
     }
     
     self.user[PF_USER_EMAIL] = email;
-    self.user[@"paypal"] = email;
+//    self.user[@"paypal"] = email;
     self.user[PF_USER_USERNAME] = [username lowercaseString];
     self.user[@"currency"] = self.selectedCurrency;
     self.user[@"completedReg"] = @"YES";
+    self.user[@"reviewExplainer"] = @"YES"; //CHECK remove after next update?
     self.user[@"bumpArray"] = @[];
     [self.user setObject:[NSDate date] forKey:@"lastActive"];
     [self.user addObject:[NSDate date] forKey:@"activeSessions"];
@@ -837,6 +974,12 @@
          {
              
              NSLog(@"saved user: %@", [PFUser currentUser]);
+             
+             
+             [Answers logCustomEventWithName:@"Selected currency"
+                            customAttributes:@{
+                                               @"currency":self.selectedCurrency,
+                                               }];
              
              //update Intercom with user info
              NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
@@ -1054,33 +1197,18 @@
     }
 }
 - (IBAction)termsPressed:(id)sender {
-    NSString *URLString = @"http://www.sobump.com/terms";
-    self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
-    self.webViewController.title = @"Terms & Conditions";
-    self.webViewController.showUrlWhileLoading = YES;
-    self.webViewController.showPageTitles = NO;
-    self.webViewController.doneButtonTitle = @"";
-    self.webViewController.delegate = self;
-    //hide toolbar banner
-//    self.webViewController.infoMode = NO;
-    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
-    [self presentViewController:navigationController animated:YES completion:nil];
-}
-
--(void)paidPressed{
-    //do nothing
-}
-
--(void)cancelWebPressed{
-    [self.webViewController dismissViewControllerAnimated:YES completion:nil];
-}
-
--(void)cameraPressed{
-    //do nothing
-}
-
--(void)screeshotPressed:(UIImage *)screenshot withTaps:(int)taps{
-    //do nothing
+    
+    NSString *URLString = @"https://sobump.com/terms";
+    SFSafariViewController *paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
+    if (@available(iOS 11.0, *)) {
+        paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+    }
+    
+    if (@available(iOS 10.0, *)) {
+        paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+    }
+    
+    [self.navigationController presentViewController:paypalSafariView animated:YES completion:nil];
 }
 
 - (IBAction)pressedChoose:(id)sender {

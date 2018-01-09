@@ -15,7 +15,6 @@
 #import <MBProgressHUD.h>
 #import <ParseUI/ParseUI.h>
 #import <CoreLocation/CoreLocation.h>
-#import "TOJRWebView.h"
 #import "AddSizeController.h"
 #import <MessageUI/MessageUI.h>
 #import <SwipeView/SwipeView.h>
@@ -27,7 +26,7 @@
 - (void)RegVCLoginPressed;
 @end
 
-@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,CLLocationManagerDelegate, JRWebViewDelegate,sizeDelegate,MFMailComposeViewControllerDelegate,SwipeViewDelegate,SwipeViewDataSource>
+@interface RegisterViewController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,CLLocationManagerDelegate,sizeDelegate,MFMailComposeViewControllerDelegate,SwipeViewDelegate,SwipeViewDataSource>
 NS_ASSUME_NONNULL_BEGIN
 
 //cells
@@ -99,9 +98,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 //location
 @property (nonatomic, strong) CLLocationManager *locationManager;
-
-//web
-@property (nonatomic, strong) TOJRWebView *webViewController;
 
 //reg mode (email vs facebook)
 @property (nonatomic) BOOL emailMode;

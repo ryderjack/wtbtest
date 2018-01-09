@@ -51,6 +51,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL purchased;
 @property (nonatomic) int starNumber;
 @property (nonatomic) BOOL fetchedUser;
+@property (nonatomic) BOOL proxyMode;
 
 @property (nonatomic) BOOL sentPush;
 

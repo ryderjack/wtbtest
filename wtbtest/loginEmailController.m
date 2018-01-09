@@ -150,7 +150,8 @@
                         
                         [Answers logCustomEventWithName:@"Logged in"
                                        customAttributes:@{
-                                                          @"via":@"email"
+                                                          @"via":@"email",
+                                                          @"username": username
                                                           }];
                         
                         //update installation object w/ current user
@@ -176,7 +177,7 @@
             }
             else{
                 NSLog(@"error logging in %@", error);
-                [self showAlertWithTitle:@"Error Logging In" andMsg:[NSString stringWithFormat:@"%@", error]];
+                [self showAlertWithTitle:@"Error Logging In" andMsg:error.description];
                 [self hideHUD];
                 [self.logInButton setEnabled:YES];
                 [self.facebookLoginButton setEnabled:YES];

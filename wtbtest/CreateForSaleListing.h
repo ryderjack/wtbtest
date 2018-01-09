@@ -22,6 +22,7 @@
 #import <SwipeView/SwipeView.h>
 #import "ShippingOptionsView.h"
 #import <SafariServices/SafariServices.h>
+#import "mediumSizeAlertViewClass.h"
 
 @class CreateForSaleListing;
 
@@ -31,7 +32,7 @@
 
 @end
 
-@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate,UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate,ConditionsDelegate,SwipeViewDelegate, SwipeViewDataSource,UIGestureRecognizerDelegate, shippingDelegate,SFSafariViewControllerDelegate>
+@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate,UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate,ConditionsDelegate,SwipeViewDelegate, SwipeViewDataSource,UIGestureRecognizerDelegate, shippingDelegate,SFSafariViewControllerDelegate,mediumSizeAVDelegate>
 
 //delegate
 @property (nonatomic, weak) id <CreateForSaleDelegate> delegate;
@@ -47,6 +48,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *imagesCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *itemTitleCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *colourCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *firstListingPriceCell;
 
 //purchase cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *instantBuyCell;
@@ -70,6 +72,7 @@
 @property (weak, nonatomic) IBOutlet UITextView *descriptionField;
 @property (weak, nonatomic) IBOutlet UITextField *payField;
 @property (weak, nonatomic) IBOutlet UITextField *quantityField;
+@property (weak, nonatomic) IBOutlet UITextField *firstListingPayField;
 
 //choices
 @property (weak, nonatomic) IBOutlet UILabel *chooseCondition;
@@ -87,6 +90,9 @@
 @property (nonatomic, strong) NSArray *profanityList;
 @property (nonatomic, strong) NSArray *flagWords;
 @property (nonatomic, strong) NSArray *titleFlagWords;
+
+@property (weak, nonatomic) IBOutlet UILabel *quantityLabel;
+@property (weak, nonatomic) IBOutlet UILabel *priceLabel;
 
 //sizes
 @property (nonatomic, strong) NSArray *multipleSizeArray;
@@ -189,6 +195,9 @@
 @property (nonatomic, strong) UIView *imgFooterView;
 @property (strong, nonatomic) UILabel *imgFooterLabel;
 
+@property (strong, nonatomic) UIView *instantBuyFooterView;
+@property (strong, nonatomic) UILabel *instantBuyFooterLabel;
+
 //img analyzer
 @property (nonatomic, strong) NSArray *categories;
 @property (nonatomic) BOOL calledImgAnalyzer;
@@ -199,11 +208,20 @@
 
 @property (weak, nonatomic) IBOutlet UILabel *selectShippingLabel;
 @property (nonatomic) int buyRows;
+@property (nonatomic) int mainRows;
+@property (nonatomic) BOOL sizeCellHidden;
+@property (nonatomic) BOOL priceCellHidden;
 
 //shipping
+@property (nonatomic) BOOL shippingCellHidden;
+
 @property (nonatomic) float nationalPrice;
 @property (nonatomic) float globalPrice;
+
 @property (nonatomic) BOOL globalEnabled;
+@property (nonatomic) BOOL globalFree;
+@property (nonatomic) BOOL nationalFree;
+
 @property (nonatomic, strong) NSString *country;
 @property (nonatomic, strong) NSString *countryCode;
 
@@ -213,5 +231,16 @@
 @property (nonatomic) BOOL paypalEnabled;
 @property (nonatomic, strong) NSString *merchantId;
 @property (nonatomic) BOOL hideInstantBuy;
+@property (nonatomic) BOOL firstListing;
+
+//buy now reminder
+@property (nonatomic, strong, nullable) UIView *bgView;
+@property (nonatomic, strong) mediumSizeAlertViewClass *ppAlertView;
+@property (nonatomic) BOOL alertShowing;
+
+@property (nonatomic) BOOL ppReminderTriggered;
+
+//used for when user enables proxy then goes back to another buy now friendly category
+@property (nonatomic) BOOL buyButtonWasLastOn;
 
 @end

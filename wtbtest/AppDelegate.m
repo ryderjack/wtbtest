@@ -22,7 +22,6 @@
 #import "OrderSummaryView.h"
 #import "Mixpanel/Mixpanel.h"
 #import <Intercom/Intercom.h>
-#import "ReviewsVC.h"
 
 @interface AppDelegate ()
 
@@ -47,7 +46,7 @@
         
         //production
 //        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
-        configuration.server = @"https://live.bumpapi.com/parse";
+//        configuration.server = @"https://live.bumpapi.com/parse";
         
         //preproduction
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE remove these links for safety reasons from the actual build
@@ -55,19 +54,18 @@
 
         //dev server w/ dev DB
 //        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
-//        configuration.server = @"https://dev.bumpapi.com/parse";
+        configuration.server = @"https://dev.bumpapi.com/parse";
 
     }]];
 
-    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
-    [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
+//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+//    [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
 
     //production
     [Intercom setApiKey:@"ios_sdk-dcdcb0d85e2a1da18471b8506beb225e5800e7dd" forAppId:@"zjwtufx1"]; //CHANGE
     //dev
 //    [Intercom setApiKey:@"ios_sdk-67598bd2fc99548a4f157a6c78c00c98da59991f" forAppId:@"bjtqi7s6"];
-
     
     if ([PFUser currentUser]) {
         
@@ -77,20 +75,6 @@
                 [Intercom setUserHash:hash];
                 [Intercom registerUserWithUserId:[PFUser currentUser].objectId];
                 [self setupIntercomListener];
-                
-                //check if user sold before
-                if ([[[PFUser currentUser]objectForKey:@"saleNumber"]intValue] > 0) {
-                    
-                    //now check if we need to notify user of a buyer not being able to purchase their item
-                    //because they still need to verify their paypal email
-                    if ([[[PFUser currentUser]objectForKey:@"checkoutFailed"] isEqualToString:@"YES"]) {
-                        //update intercom then save this to NO so don't keep updating intercom w/ same info
-                        ICMUserAttributes *userAttributes = [ICMUserAttributes new];
-                        userAttributes.customAttributes = @{@"notify_merchant_failed_once" : @YES
-                                                            };
-                        [Intercom updateUser:userAttributes];
-                    }
-                }
             }
             else{
                 [Answers logCustomEventWithName:@"Intercom Verify Error"
@@ -238,10 +222,10 @@
             [self checkMesages];
 //            [self checkForTBMessages];
             
-//            if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
-////                [self checkForSupportMessages];
-//            }
-//            [self checkForOrders];
+            if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
+//                [self checkForSupportMessages];
+            }
+            [self checkForOrders];
         }
     }
     else{
@@ -292,18 +276,15 @@
         
         if([strMsg hasSuffix:@"just left you a review"]){
             //open order summary page of this order
-//            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
-//                           customAttributes:@{}];
-            
-//            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
-//            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
-//            vc.orderObject = orderObject;
-            
-            [Answers logCustomEventWithName:@"Opened Reviews after receiving Feedback Push"
+            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
                            customAttributes:@{}];
             
-            self.tabBarController.selectedIndex = 3;
-
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
+            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+            [nav pushViewController:vc animated:YES];
         }
         else if([strMsg hasPrefix:@"Item Sold"]){
             //open order summary page of this order
@@ -430,8 +411,8 @@
     }
     
     //add observer which can refresh profile tab badge after user places an order
-//    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-//    [center addObserver:self selector:@selector(profileBadgeRefresh) name:@"orderPlaced" object:nil];
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self selector:@selector(profileBadgeRefresh) name:@"orderPlaced" object:nil];
 
     //app store observer
     
@@ -565,36 +546,42 @@
         return;
     }
     //query for convos we know this user hasn't seen
-//    PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
-//    [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
-//    [buyingUnseenQuery whereKey:@"buyerUnseen" greaterThan:@0];
-//    [buyingUnseenQuery whereKey:@"status" containedIn:@[@"live",@"failed",@"refunded",@"pending"]];
-//
-//    PFQuery *sellingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
-//    [sellingUnseenQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-//    [sellingUnseenQuery whereKey:@"sellerUnseen" greaterThan:@0];
-//    [sellingUnseenQuery whereKey:@"status" containedIn:@[@"live",@"refunded"]];
-//
-//    PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
-//    [unseenQuery orderByDescending:@"lastUpdated"];
-//
-//    [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//        if (objects) {
-//            int orderCount = (int)objects.count;
-//            NSLog(@"unseen orders count %d", orderCount);
-//            self.profileView.ordersUnseen = orderCount;
-//
-//            if (objects.count > 0) {
-//                [[NSNotificationCenter defaultCenter] postNotificationName:@"UnseenOrders" object:@(orderCount)];
-//            }
-//
-//            [self calcProfileBadge];
-//
-//        }
-//        else{
-//            NSLog(@"error finding orders %@", error);
-//        }
-//    }];
+    PFQuery *buyingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
+    [buyingUnseenQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+    [buyingUnseenQuery whereKey:@"buyerUnseen" greaterThan:@0];
+    [buyingUnseenQuery whereKey:@"status" containedIn:@[@"live",@"failed",@"refunded",@"pending"]];
+
+    PFQuery *sellingUnseenQuery = [PFQuery queryWithClassName:@"saleOrders"];
+    [sellingUnseenQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+    [sellingUnseenQuery whereKey:@"sellerUnseen" greaterThan:@0];
+    [sellingUnseenQuery whereKey:@"status" containedIn:@[@"live",@"refunded"]];
+
+    PFQuery *unseenQuery = [PFQuery orQueryWithSubqueries:@[buyingUnseenQuery, sellingUnseenQuery]];
+    [unseenQuery orderByDescending:@"lastUpdated"];
+    
+    [unseenQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (objects) {
+            int orderCount = (int)objects.count;
+            NSLog(@"unseen orders count %d", orderCount);
+            
+            //If this is triggered after a user has viewed their orders then the unseen count may have hit zero. If so clear the badge
+            if (self.profileView.ordersUnseen > 0 && orderCount == 0) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"clearOrders" object:nil];
+            }
+            
+            self.profileView.ordersUnseen = orderCount;
+
+            if (objects.count > 0) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"UnseenOrders" object:@(orderCount)];
+            }
+            
+            [self calcProfileBadge];
+            
+        }
+        else{
+            NSLog(@"error finding orders %@", error);
+        }
+    }];
 }
 
 -(void)checkForTBMessages{
@@ -656,6 +643,8 @@
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
     // Store the deviceToken in the current installation and save it to Parse.
     [self.installation setDeviceTokenFromData:deviceToken];
+    [Intercom setDeviceToken:deviceToken];
+
     if ([PFUser currentUser]) {
         [self.installation setObject:[PFUser currentUser] forKey:@"user"];
         [self.installation setObject:[PFUser currentUser].objectId forKey:@"userId"];
@@ -675,18 +664,6 @@
                        customAttributes:@{}];
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
     }
-//    else if([notification.alertBody containsString:@"Reminder: the"] && itemTitle){
-//        [Answers logCustomEventWithName:@"Opened Release Push"
-//                       customAttributes:@{
-//                                          @"itemTitle":itemTitle,
-//                                          @"mode":@"didReceive"
-//                                          }];
-//        
-//        //open Web
-//        NSLog(@"open web view! did receive");
-//        self.tabBarController.selectedIndex = 0;
-//        [[NSNotificationCenter defaultCenter] postNotificationName:@"showRelease" object:itemTitle];
-//    }
     else if ([notification.alertBody.lowercaseString containsString:@"congrats on your first listing! want to sell faster? try searching through wanted listings on bump"]){
         [Answers logCustomEventWithName:@"Opened First Reminder Push"
                        customAttributes:@{}];
@@ -720,42 +697,38 @@
         //opened from a push notification when the app in background
         
        // NSLog(@"dic: %@    and strMsg: %@", dic, strMsg);
-        
-//        NSLog(@"userinfo: %@", userInfo);
-        
-//        if ([[strMsg lowercaseString] hasPrefix:@"team bump"]) {
-////            [self checkForTBMessages];
-//
-//            self.tabBarController.selectedIndex = 3;
-//        }
-//        else if([[strMsg lowercaseString] hasPrefix:@"bump support"]) {
-////            [self checkForSupportMessages];
-//            self.tabBarController.selectedIndex = 3;
-//        }
+
         if([strMsg hasSuffix:@"just left you a review"]){
             //open order summary page of this order
-            
-            [Answers logCustomEventWithName:@"Opened Reviews after receiving Feedback Push"
+            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
                            customAttributes:@{}];
             
-            self.tabBarController.selectedIndex = 3;
-
-            //if user is viewing a listing from search then when we switch tabs the message button won't disappear
-            //force it's disappearance via observer (need to grab the navController of the view we're going to)
+            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
+            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+            vc.orderObject = orderObject;
+            
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"switchedTabs" object:nav];
-            
 
-//            [Answers logCustomEventWithName:@"Opened order after receiving Feedback Push"
-//                           customAttributes:@{}];
-//
-//            PFObject *orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:listing];
-//            OrderSummaryView *vc = [[OrderSummaryView alloc]init];
-//            vc.orderObject = orderObject;
-//
-//            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-//            [nav pushViewController:vc animated:YES];
-            
+            if (nav.presentedViewController) {
+                
+                //nav bar is showing something
+                if ([nav.presentedViewController isKindOfClass:[NavigationController class]]) {
+                    
+                    //2nd nav is showing so push from there instead of tab bar nav
+                    NavigationController *presenter = (NavigationController*)nav.presentedViewController;
+                    [presenter pushViewController:vc animated:YES];
+                }
+            }
+            //if user is looking at mainsearch VC
+            else if(nav.visibleViewController.presentedViewController){
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+            else{
+                //no other VC showing so push!
+                [nav pushViewController:vc animated:YES];
+            }
         }
         else if([strMsg hasPrefix:@"Item Sold"]){
             //open order summary page of this order
@@ -767,7 +740,26 @@
             vc.orderObject = orderObject;
             
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [nav pushViewController:vc animated:YES];
+            if (nav.presentedViewController) {
+                
+                //nav bar is showing something
+                if ([nav.presentedViewController isKindOfClass:[NavigationController class]]) {
+                    
+                    //2nd nav is showing so push from there instead of tab bar nav
+                    NavigationController *presenter = (NavigationController*)nav.presentedViewController;
+                    [presenter pushViewController:vc animated:YES];
+                }
+            }
+            //if user is looking at mainsearch VC
+            else if(nav.visibleViewController.presentedViewController){
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+            else{
+                //no other VC showing so push!
+                [nav pushViewController:vc animated:YES];
+            }
         }
         else if([strMsg hasPrefix:@"Item Shipped"]){
             //open order summary page of this order
@@ -779,7 +771,26 @@
             vc.orderObject = orderObject;
             
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [nav pushViewController:vc animated:YES];
+            if (nav.presentedViewController) {
+                
+                //nav bar is showing something
+                if ([nav.presentedViewController isKindOfClass:[NavigationController class]]) {
+                    
+                    //2nd nav is showing so push from there instead of tab bar nav
+                    NavigationController *presenter = (NavigationController*)nav.presentedViewController;
+                    [presenter pushViewController:vc animated:YES];
+                }
+            }
+            //if user is looking at mainsearch VC
+            else if(nav.visibleViewController.presentedViewController){
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+            else{
+                //no other VC showing so push!
+                [nav pushViewController:vc animated:YES];
+            }
         }
         else if([strMsg hasPrefix:@"Payment Failed"]){
             //open order summary page of this order
@@ -791,7 +802,26 @@
             vc.orderObject = orderObject;
             
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [nav pushViewController:vc animated:YES];
+            if (nav.presentedViewController) {
+                
+                //nav bar is showing something
+                if ([nav.presentedViewController isKindOfClass:[NavigationController class]]) {
+                    
+                    //2nd nav is showing so push from there instead of tab bar nav
+                    NavigationController *presenter = (NavigationController*)nav.presentedViewController;
+                    [presenter pushViewController:vc animated:YES];
+                }
+            }
+            //if user is looking at mainsearch VC
+            else if(nav.visibleViewController.presentedViewController){
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+            else{
+                //no other VC showing so push!
+                [nav pushViewController:vc animated:YES];
+            }
         }
         else if([strMsg hasPrefix:@"Refund Received"]){
             //open order summary page of this order
@@ -803,7 +833,26 @@
             vc.orderObject = orderObject;
             
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [nav pushViewController:vc animated:YES];
+            if (nav.presentedViewController) {
+                
+                //nav bar is showing something
+                if ([nav.presentedViewController isKindOfClass:[NavigationController class]]) {
+                    
+                    //2nd nav is showing so push from there instead of tab bar nav
+                    NavigationController *presenter = (NavigationController*)nav.presentedViewController;
+                    [presenter pushViewController:vc animated:YES];
+                }
+            }
+            //if user is looking at mainsearch VC
+            else if(nav.visibleViewController.presentedViewController){
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+            else{
+                //no other VC showing so push!
+                [nav pushViewController:vc animated:YES];
+            }
         }
         else if([strMsg hasPrefix:@"Refund Requested"]){
             //open order summary page of this order
@@ -815,7 +864,26 @@
             vc.orderObject = orderObject;
             
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [nav pushViewController:vc animated:YES];
+            if (nav.presentedViewController) {
+                
+                //nav bar is showing something
+                if ([nav.presentedViewController isKindOfClass:[NavigationController class]]) {
+                    
+                    //2nd nav is showing so push from there instead of tab bar nav
+                    NavigationController *presenter = (NavigationController*)nav.presentedViewController;
+                    [presenter pushViewController:vc animated:YES];
+                }
+            }
+            //if user is looking at mainsearch VC
+            else if(nav.visibleViewController.presentedViewController){
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+            else{
+                //no other VC showing so push!
+                [nav pushViewController:vc animated:YES];
+            }
         }
         else if([strMsg hasPrefix:@"Tracking added"]){
             //open order summary page of this order
@@ -827,7 +895,26 @@
             vc.orderObject = orderObject;
             
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-            [nav pushViewController:vc animated:YES];
+            if (nav.presentedViewController) {
+                
+                //nav bar is showing something
+                if ([nav.presentedViewController isKindOfClass:[NavigationController class]]) {
+                    
+                    //2nd nav is showing so push from there instead of tab bar nav
+                    NavigationController *presenter = (NavigationController*)nav.presentedViewController;
+                    [presenter pushViewController:vc animated:YES];
+                }
+            }
+            //if user is looking at mainsearch VC
+            else if(nav.visibleViewController.presentedViewController){
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+            else{
+                //no other VC showing so push!
+                [nav pushViewController:vc animated:YES];
+            }
         }
         else if([strMsg containsString:@"liked your wanted listing"]){
             [Answers logCustomEventWithName:@"Opened wanted listing after receiving Bump Push"
@@ -859,24 +946,27 @@
             vc.fromPush = YES;
 
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-//            [nav pushViewController:vc animated:YES];
             
-            if (nav.visibleViewController.presentedViewController) {
+            if (nav.presentedViewController) {
                 
                 //nav bar is showing something
-                if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                if ([nav.presentedViewController isKindOfClass:[NavigationController class]]) {
                     
                     //2nd nav is showing so push from there instead of tab bar nav
-                    NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                    NavigationController *presenter = (NavigationController*)nav.presentedViewController;
                     [presenter pushViewController:vc animated:YES];
                 }
+            }
+            //if user is looking at mainsearch VC
+            else if(nav.visibleViewController.presentedViewController){
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
             }
             else{
                 //no other VC showing so push!
                 [nav pushViewController:vc animated:YES];
             }
-            
-//            [[NSNotificationCenter defaultCenter] postNotificationName:@"showBumpedVC" object:listing];
         }
         else{
             //force refresh of inbox
@@ -1414,9 +1504,9 @@
     }
     
     //then get number of unseen orders
-//    if (self.profileView.ordersUnseen > 0) {
-//        tabInt += self.profileView.ordersUnseen;
-//    }
+    if (self.profileView.ordersUnseen > 0) {
+        tabInt += self.profileView.ordersUnseen;
+    }
     
     //add all together and set tab badge
     if (tabInt == 0) {
@@ -1431,47 +1521,71 @@
 }
 
 -(void)profileBadgeRefresh{
-    NSLog(@"refreshing profile badge in profile");
 //    [self checkForTBMessages];
-//    [self checkForOrders];
+    [self checkForOrders];
 //    [self checkForSupportMessages];
 }
 
--(void)calcOrderNumber{
-    PFQuery *buyingQuery = [PFQuery queryWithClassName:@"saleOrders"];
-    [buyingQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
-    [buyingQuery whereKey:@"status" equalTo:@"live"];
-    [buyingQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            int buyCount = (int)objects.count;
-            __block int totalCount = (int)objects.count;
-            
-            PFQuery *sellingQuery = [PFQuery queryWithClassName:@"saleOrders"];
-            [sellingQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
-            [sellingQuery whereKey:@"status" equalTo:@"live"];
-            [buyingQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable sales, NSError * _Nullable error) {
-                if (objects) {
-                    int saleCount = (int)sales.count;
-                    totalCount += saleCount;
-
-                    //update Intercom
-                    ICMUserAttributes *userAttributes = [ICMUserAttributes new];
-                    userAttributes.customAttributes = @{@"purchase_number" : @(buyCount),
-                                                        @"sale_number" : @(saleCount),
-                                                        @"order_number" : @(totalCount)
-                                                        };
-                    [Intercom updateUser:userAttributes];
-                    
-                    //if (for some unlikely reason) cloud code didn't update user's order number we re-save it here along w/ buy/sell counts
-                    if ([[[PFUser currentUser]objectForKey:@"orderNumber"]intValue] < totalCount) {
-                        [[PFUser currentUser]setObject:@(totalCount) forKey:@"orderNumber"];
-                        [[PFUser currentUser]setObject:@(saleCount) forKey:@"saleNumber"];
-                        [[PFUser currentUser]setObject:@(buyCount) forKey:@"purchaseNumber"];
-                        [[PFUser currentUser] saveInBackground];
-                    }
-                }
-            }];
-        }
-    }];
-}
+//-(void)calcOrderNumber{
+//    PFQuery *buyingQuery = [PFQuery queryWithClassName:@"saleOrders"];
+//    [buyingQuery whereKey:@"buyerUser" equalTo:[PFUser currentUser]];
+//    [buyingQuery whereKey:@"status" containedIn:@[@"live"]];
+//    [buyingQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//        if (objects) {
+////            NSLog(@"calc order number, got objects: %@", objects);
+//
+//            int buyCount = (int)objects.count;
+//            __block int totalCount = (int)objects.count;
+//
+//            PFQuery *sellingQuery = [PFQuery queryWithClassName:@"saleOrders"];
+//            [sellingQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+//            [sellingQuery whereKey:@"status" equalTo:@"live"];
+//            [sellingQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable sales, NSError * _Nullable error) {
+//                if (objects) {
+//                    int saleCount = (int)sales.count;
+//                    totalCount += saleCount;
+//
+////                    int totalEarningsGBP = [[[PFUser currentUser]objectForKey:@"earnTotalGBP"]intValue];
+////                    int totalEarningsUSD = [[[PFUser currentUser]objectForKey:@"earnTotalUSD"]intValue];
+////                    int totalEarningsEUR = [[[PFUser currentUser]objectForKey:@"earnTotalEUR"]intValue];
+////
+////                    int totalSpentGBP = [[[PFUser currentUser]objectForKey:@"spendTotalGBP"]intValue];
+////                    int totalSpentUSD = [[[PFUser currentUser]objectForKey:@"spendTotalUSD"]intValue];
+////                    int totalSpentEUR = [[[PFUser currentUser]objectForKey:@"spendTotalEUR"]intValue];
+////
+////                    //update Intercom
+////                    ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+////                    userAttributes.customAttributes = @{@"purchase_number" : @(buyCount),
+////                                                        @"sale_number" : @(saleCount),
+////                                                        @"order_number" : @(totalCount),
+////                                                        };
+////                    [Intercom updateUser:userAttributes];
+//
+////                    NSLog(@"orders: %d    sales: %d    purchases: %d",[[[PFUser currentUser]objectForKey:@"orderNumber"]intValue],[[[PFUser currentUser]objectForKey:@"saleNumber"]intValue],[[[PFUser currentUser]objectForKey:@"purchaseNumber"]intValue]);
+//
+//
+//                    //if (for some unlikely reason) cloud code didn't update user's order number we re-save it here along w/ buy/sell counts
+////                    if ([[[PFUser currentUser]objectForKey:@"orderNumber"]intValue] != totalCount) {
+////                        [[PFUser currentUser]setObject:@(totalCount) forKey:@"orderNumber"];
+////                        [[PFUser currentUser]setObject:@(saleCount) forKey:@"saleNumber"];
+////                        [[PFUser currentUser]setObject:@(buyCount) forKey:@"purchaseNumber"];
+////                        [[PFUser currentUser] saveInBackground];
+////                    }
+//                }
+//                else{
+//                    [Answers logCustomEventWithName:@"Order Calc Error"
+//                                   customAttributes:@{
+//                                                      @"type":@"sale"
+//                                                      }];
+//                }
+//            }];
+//        }
+//        else{
+//            [Answers logCustomEventWithName:@"Order Calc Error"
+//                           customAttributes:@{
+//                                              @"type":@"buy"
+//                                              }];
+//        }
+//    }];
+//}
 @end

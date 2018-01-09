@@ -17,6 +17,7 @@
 #import <SafariServices/SafariServices.h>
 #import "Mixpanel/Mixpanel.h"
 #import <Intercom/Intercom.h>
+#import "PPRiskComponent.h"
 
 @interface CheckoutSummary ()
 
@@ -31,6 +32,9 @@
     
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
     self.navigationItem.leftBarButtonItem = cancelButton;
+    
+    UIBarButtonItem *helpButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"questionCircle"] style:UIBarButtonItemStylePlain target:self action:@selector(triggerSupport)];
+    self.navigationItem.rightBarButtonItem = helpButton;
     
     self.itemTitleLabel.text = [self.listingObject objectForKey:@"itemTitle"];
     
@@ -80,6 +84,21 @@
         self.itemPriceLabel.text = self.itemPriceText;
         self.shippingPriceLabel.text = self.shippingText;
         self.totalPriceLabel.text = self.totalPriceText;
+        
+        //replace first name in congrats header if we have it
+        NSString *headerString = self.congratsHeaderLabel.text;
+        
+        if ([[PFUser currentUser]objectForKey:@"firstName"]) {
+            headerString = [self.congratsHeaderLabel.text stringByReplacingOccurrencesOfString:@"NAME" withString:[[PFUser currentUser]objectForKey:@"firstName"]];
+        }
+        else{
+            headerString = [self.congratsHeaderLabel.text stringByReplacingOccurrencesOfString:@" NAME" withString:@""];
+        }
+        
+        NSMutableAttributedString *headerText = [[NSMutableAttributedString alloc] initWithString:headerString];
+        [self modifyHeaderString:headerText setFontForText:@"You can leave feedback & track the status of your order from your profile tab"];
+        self.congratsHeaderLabel.attributedText = headerText;
+        
     }
     else{
         self.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol, self.salePrice];
@@ -89,8 +108,20 @@
         if ([[[PFUser currentUser] objectForKey:@"enteredAddress"]isEqualToString:@"YES"] && [[PFUser currentUser] objectForKey:@"shippingCountryCode"]) {
             self.addAddress = NO;
             
-            //now set address label
-            self.addressLabel.text = [[PFUser currentUser] objectForKey:@"addressString"];
+            //now set address label (with bold name)
+            NSString *addressString = [[PFUser currentUser] objectForKey:@"addressString"];
+            NSString *fullname;
+            
+            if ([[PFUser currentUser] objectForKey:@"addressName"]) {
+                fullname = [[PFUser currentUser] objectForKey:@"addressName"];
+            }
+            else{
+                fullname = [[PFUser currentUser] objectForKey:@"fullname"];
+            }
+            
+            NSMutableAttributedString *addressText = [[NSMutableAttributedString alloc] initWithString:addressString];
+            [self modifyString:addressText setFontForText:fullname];
+            self.addressLabel.attributedText = addressText;
             
             NSString *countryCode = [[PFUser currentUser] objectForKey:@"shippingCountryCode"];
             
@@ -107,7 +138,13 @@
                 shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
             }
             
-            self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+            if (shipping == 0.00) {
+                self.shippingPriceLabel.text = @"Free";
+            }
+            else{
+                self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+            }
+            
             self.totalPrice = shipping + self.salePrice;
             self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
             
@@ -154,25 +191,59 @@
     
     //check item is still available
     if (!self.successMode) {
-        PFQuery *statusQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-        [statusQuery whereKey:@"objectId" equalTo:self.listingObject.objectId];
-        [statusQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                if (![[object objectForKey:@"status"]isEqualToString:@"live"]) {
-                    self.sellerErrorShowing = YES;
-                    
-                    [Answers logCustomEventWithName:@"PayPal Error"
-                                   customAttributes:@{
-                                                      @"type":@"item no longer available"
-                                                      }];
-                    
-                    [self showAlertWithTitle:@"Item Unavailable" andMsg:@"This item is no longer available, it may have already been purchased or the seller may have removed it from sale"];
-                }
+        
+        if (!self.pairingId) {
+            NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+            
+            //used to check if Magnes is running correctly
+//            NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+//            [defaults setBool:YES forKey:@"dyson.debug.mode"]; //shows in the logs that this is running properly
+            
+            //initalise the risk library
+            if ([[PFUser currentUser]objectForKey:@"deviceToken"]) {
+                NSDictionary * additionalParams = @{ kRiskManagerNotifToken: [[PFUser currentUser] objectForKey:@"deviceToken"]};
+                
+                PPRiskComponent *component = [PPRiskComponent initWithSourceApp:PPRiskSourceAppUnknown
+                                                           withSourceAppVersion:version
+                                                           withAdditionalParams:additionalParams];
+                
             }
             else{
-                NSLog(@"error checking checkout item's status");
+                //don't pass device token if user hasn't enabled push
+                PPRiskComponent *component = [PPRiskComponent initWithSourceApp:PPRiskSourceAppUnknown
+                                                           withSourceAppVersion:version
+                                                           withAdditionalParams:nil];
             }
-        }];
+
+            //generate a pairing id to pass in payment call
+            NSString * newPairingID = [[PPRiskComponent sharedComponent] generatePairingId:nil];
+            NSLog(@"newpairingId: %@", newPairingID);
+            
+            self.pairingId = newPairingID;
+        }
+        
+        //Need a bool here coz was coming back from paying and svaing so fast that the willappear query thinks someone else has copped it
+        if (!self.hitPay) {
+            PFQuery *statusQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+            [statusQuery whereKey:@"objectId" equalTo:self.listingObject.objectId];
+            [statusQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    if (![[object objectForKey:@"status"]isEqualToString:@"live"]) {
+                        self.sellerErrorShowing = YES;
+                        
+                        [Answers logCustomEventWithName:@"PayPal Error"
+                                       customAttributes:@{
+                                                          @"type":@"item no longer available"
+                                                          }];
+                        
+                        [self showAlertWithTitle:@"Item Unavailable" andMsg:@"This item is no longer available, it may have already been purchased or the seller may have removed it from sale"];
+                    }
+                }
+                else{
+                    NSLog(@"error checking checkout item's status");
+                }
+            }];
+        }
     }
     
     if (self.successMode && !self.buttonShowing) {
@@ -189,12 +260,21 @@
     
     //show pay button but disabled
     if (!self.payButton) {
-        self.payButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
-        [self.payButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
+        
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+            //iPhone X
+            self.payButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-80, [UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
+            [self.payButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
+        }
+        else{
+            self.payButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+            [self.payButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+        }
+        
         
         if (self.successMode) {
             [self.payButton setTitle:@"D I S M I S S" forState:UIControlStateNormal];
-            [self.payButton setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0]];
+            [self.payButton setBackgroundColor:[UIColor colorWithRed:0 green:0 blue:0 alpha:0.9]];
             [self.payButton addTarget:self action:@selector(dismissVC) forControlEvents:UIControlEventTouchUpInside];
         }
         else{
@@ -419,7 +499,9 @@
     Mixpanel *mixpanel = [Mixpanel sharedInstance];
     [mixpanel track:@"tapped_pay_checkout" properties:@{}];
     
-    NSString *shippingPrice = [self.shippingPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
+    float shippingPrice = self.totalPrice - self.salePrice;
+
+//    NSString *shippingPrice = [self.shippingPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
     NSLog(@"%@", shippingPrice);
 
     NSString *itemPrice = [self.itemPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
@@ -441,7 +523,7 @@
     NSLog(@"%@", currency);
 
 
-    NSString *buyerName = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"fullname"]];;
+    NSString *buyerName = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"addressName"]];;
     NSLog(@"%@", buyerName);
 
     NSString *lineOne = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"lineOne"]];
@@ -465,7 +547,7 @@
     NSLog(@"adding in params");
     
     NSDictionary *params = @{
-                             @"shippingPrice":shippingPrice,
+                             @"shippingPrice":@(shippingPrice),
                              @"itemPrice":itemPrice,
                              @"totalPrice":totalPrice,
                              
@@ -509,6 +591,7 @@
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(createOrderFailed) name:@"paypalCreatedOrderFailed" object:nil];
             }
             self.paypalSafariView = nil;
+            self.hitPay = YES;
             
             //trigger PayPal sign in to check order
             self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
@@ -537,7 +620,7 @@
 
 -(void)createOrderFailed{
     NSLog(@"didn't authenticate order");
-    [Answers logCustomEventWithName:@"Cancelled Order"
+    [Answers logCustomEventWithName:@"Create Order Failed"
                    customAttributes:@{}];
     
     [self removePPObservers];
@@ -559,11 +642,22 @@
     
     [self showHUD];
     
-    NSLog(@"adding in params for create bump order %@", self.otherUser.objectId);
     
     float shippingPrice = self.totalPrice - self.salePrice;
     
+    NSLog(@"adding in params for create bump order w/ shipping %.2f", shippingPrice);
+
+    
+    if (!self.pairingId) {
+        [Answers logCustomEventWithName:@"Pairing ID Error"
+                       customAttributes:@{}];
+        
+        //give it a dummy valyue so doesn't crash the app
+        self.pairingId = [PFUser currentUser].objectId;
+    }
+    
     NSDictionary *params = @{
+                             @"pairingId":self.pairingId,
                              @"listingId":self.listingObject.objectId,
                              @"paypalOrderId":self.paypalOrderId,
                              @"merchantId" : [self.listingObject objectForKey:@"paypalMerchantId"],
@@ -618,22 +712,21 @@
                     
                     Mixpanel *mixpanel = [Mixpanel sharedInstance];
                     [mixpanel track:@"purchased_item" properties:@{
-                                                                      @"categpry":category,
+                                                                      @"category":category,
                                                                       @"totalPrice":@(self.totalPrice),
                                                                       @"currency":self.currency,
                                                                       @"nationalShipping": [NSNumber numberWithBool:self.isNational],
                                                                       @"itemId":self.listingObject.objectId,
                                                                       @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId]
                                                                       }];
-//                    [mixpanel.people trackCharge:@(self.totalPrice)];
                     
                     [Intercom logEventWithName:@"order_placed" metaData: @{
-                                                                             @"category":category,
                                                                              @"totalPrice":@(self.totalPrice),
                                                                              @"currency":self.currency,
                                                                              @"itemId":self.listingObject.objectId,
                                                                              @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId]
                                                                              }];
+                                        
                     CheckoutSummary *vc = [[CheckoutSummary alloc]init];
                     vc.successMode = YES;
                     vc.listingObject = self.listingObject;
@@ -661,7 +754,7 @@
         else{
             if ([error.description containsString:@"Item no longer available"]) {
                 NSLog(@"error creating BUMP order %@", error);
-                [self showAlertWithTitle:@"Item Unavailable" andMsg:@"This item is no longer available on BUMP - Don't worry, you haven't been charged. Check out what else is for sale on BUMP"];
+                [self showAlertWithTitle:@"Item Unavailable #2" andMsg:@"This item is no longer available on BUMP - Don't worry, you haven't been charged. Check out what else is for sale on BUMP"];
                 [Answers logCustomEventWithName:@"Item Unavailable warning"
                                customAttributes:@{}];
             }
@@ -687,7 +780,7 @@
 
 -(void)addedAddress:(NSString *)address withName:(NSString *)name withLineOne:(NSString *)one withLineTwo:(NSString *)two withCity:(NSString *)city withCountry:(NSString *)country fullyEntered:(BOOL)complete{
     if (complete) {
-        NSLog(@"done with address");
+        NSLog(@"done with address %@", address);
         float shipping;
         //recalc shipping price & total price based on country
         if ([self.listingCountryCode.lowercaseString isEqualToString:country.lowercaseString]) {
@@ -700,7 +793,12 @@
             shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
         }
         
-        self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+        if (shipping == 0.00) {
+            self.shippingPriceLabel.text = @"Free";
+        }
+        else{
+            self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+        }
         
         self.totalPrice = shipping + self.salePrice;
         self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f",self.currency,self.currencySymbol,self.totalPrice];
@@ -713,13 +811,38 @@
         //refresh table view to address cell is shown
         self.addAddress = NO;
         
-        //update address label
-        self.addressLabel.text = address;
+        //update address label (bold the name)
+        NSMutableAttributedString *addressText = [[NSMutableAttributedString alloc] initWithString:address];
+        [self modifyString:addressText setFontForText:name];
+        self.addressLabel.attributedText = addressText;
+        
         [self.tableView reloadData];
     }
     else{
         NSLog(@"address unfinished");
     }
+}
+
+-(NSMutableAttributedString *)modifyString: (NSMutableAttributedString *)mainString setFontForText:(NSString*) textToFind
+{
+    NSRange range = [mainString.mutableString rangeOfString:textToFind options:NSCaseInsensitiveSearch];
+    
+    if (range.location != NSNotFound) {
+        [mainString addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"PingFangSC-Medium" size:13] range:range];
+    }
+    
+    return mainString;
+}
+
+-(NSMutableAttributedString *)modifyHeaderString: (NSMutableAttributedString *)mainString setFontForText:(NSString*) textToFind
+{
+    NSRange range = [mainString.mutableString rangeOfString:textToFind options:NSCaseInsensitiveSearch];
+    
+    if (range.location != NSNotFound) {
+        [mainString addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"PingFangSC-Medium" size:15] range:range];
+    }
+    
+    return mainString;
 }
 
 #pragma mark - HUD
@@ -787,7 +910,7 @@
     [self.delegate PurchasedItemCheckout];
 }
 - (IBAction)paypalFooterPressed:(id)sender {
-    SFSafariViewController *paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:@"https://www.paypal.com/gb/webapps/mpp/paypal-safety-and-security"]];
+    SFSafariViewController *paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:@"https://www.paypal.com/us/webapps/mpp/paypal-safety-and-security"]];
     if (@available(iOS 11.0, *)) {
         paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
     }
@@ -840,26 +963,49 @@
                     
                     [Answers logCustomEventWithName:@"Buyer shown Merchant email error"
                                    customAttributes:@{}];
+                    
+                    //call server to update seller's intercom user
+                    NSDictionary *params = @{@"sellerId":seller.objectId};
+                    [PFCloud callFunctionInBackground:@"notifySellerPPEmail" withParameters:params block:^(NSString *hash, NSError *error) {
+                        if (error) {
+                            [Answers logCustomEventWithName:@"notifySellerPPEmail Error"
+                                           customAttributes:@{}];
+                        }
+                    }];
                 }
             }
             else{
                 //don't have receivable & merchant Id info in response, log error
-                
                 [Answers logCustomEventWithName:@"PayPal Error"
-                               customAttributes:@{
-                                                  @"type":@"No receivable / merchant ID in response in checkout summary"
-                                                  }];
+                               customAttributes:@{@"type":@"No receivable / merchant ID in response in checkout summary"}];
             }
         }
         else{
 //            [self hidHUD];
             NSLog(@"error getting the account status %@", error);
             
-            [Answers logCustomEventWithName:@"PayPal Error"
-                           customAttributes:@{
-                                              @"type":@"Error getting account status in checkout summary"
-                                              }];
+            if ([error.description isEqualToString:@"onboarding error"]) {
+                [Answers logCustomEventWithName:@"PayPal Onboarding Error"
+                               customAttributes:@{
+                                                  @"type":@"Error getting account status in checkout summary"
+                                                  }];
+                
+                [self showAlertWithTitle:@"Seller PayPal Error" andMsg:@"This seller hasn't finished connecting their PayPal account yet which means they can't accept payments at this time. We've given them a hurry up so the item should be available to purchase soon"];
+            }
+            else{
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"Error getting account status in checkout summary"
+                                                  }];
+            }
         }
     }];
+}
+
+-(void)triggerSupport{
+    [Answers logCustomEventWithName:@"Message Support Pressed Checkout"
+                   customAttributes:@{}];
+    
+    [Intercom presentMessenger];
 }
 @end

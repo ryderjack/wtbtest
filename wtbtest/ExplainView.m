@@ -74,7 +74,7 @@
         //set title
         self.titleLabel.text = @"B U Y I N G  O N  B U M P";
         
-        self.welcomeBackLabel.text = @"When you’re ready to purchase something just ask the Seller to send their PayPal email address on Bump\n\nYou can tap that message to be taken to PayPal and pay\n\nRemember to pay PayPal Goods & Services - if you’ve got any questions just send Support a message from Settings!";
+        self.welcomeBackLabel.text = @"When you’re ready to purchase something just ask the Seller to send their PayPal email address on BUMP\n\nYou can tap that message to be taken to PayPal and pay\n\nRemember to pay PayPal Goods & Services - if you’ve got any questions just send Support a message from Settings!";
         
         //hide all exlpain stuff
         [self.firstLabel setHidden:YES];
@@ -105,7 +105,7 @@
         //set title
         self.titleLabel.text = @"S E L L I N G  O N  B U M P";
         
-        self.welcomeBackLabel.text = @"When you’re ready to sell something on Bump tap the ‘Send PayPal email’ button\n\nThis makes it easy for the buyer to pay you through PayPal without leaving the app\n\nBump never handles any payment information, your transaction is only handled by PayPal, we just make everything easier!";
+        self.welcomeBackLabel.text = @"When you’re ready to sell something on BUMP tap the ‘Send PayPal email’ button\n\nThis makes it easy for the buyer to pay you through PayPal without leaving the app\n\nBump never handles any payment information, your transaction is only handled by PayPal, we just make everything easier!";
         
         //hide all exlpain stuff
         [self.firstLabel setHidden:YES];
@@ -196,15 +196,18 @@
 - (IBAction)nextPressed:(id)sender {
     if (self.introMode) {
         //email intro ends here since user can't create a listing without verified email
-        if (self.emailIntro) {
-            [self emailSignUpDone];
-        }
-        else{
-            //allow a fb signup to create a listing if they want
-            CreateTab *vc = [[CreateTab alloc]init];
-            vc.introMode = YES;
-            [self.navigationController pushViewController:vc animated:YES];
-        }
+        
+        [self completeSignUp];
+        
+//        if (self.emailIntro) {
+//            [self emailSignUpDone];
+//        }
+//        else{
+//            //allow a fb signup to create a listing if they want
+//            CreateTab *vc = [[CreateTab alloc]init];
+//            vc.introMode = YES;
+//            [self.navigationController pushViewController:vc animated:YES];
+//        }
     }
     else if (self.changedMode) {
         [self setupNormalExplain];
@@ -279,7 +282,7 @@
     self.changedMode = NO;
 }
 
--(void)emailSignUpDone{
+-(void)completeSignUp{
     
     //schedule local push reminder to create first listing
     NSDateComponents *dayComponent = [[NSDateComponents alloc] init];

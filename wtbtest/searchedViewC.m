@@ -896,6 +896,11 @@
             [self.pullQuery orderByDescending:@"lastUpdated"];
         }
         
+        //instant buy
+        if ([self.filtersArray containsObject:@"instantBuy"]){
+            [self.pullQuery whereKey:@"instantBuy" equalTo:@"YES"];
+        }
+        
         //condition
         if ([self.filtersArray containsObject:@"new"]){
             [self.pullQuery whereKey:@"condition" containedIn:@[@"New", @"Any", @"BNWT", @"BNWOT",@"Deadstock"]];  //updated as we removed Deastock as an option
@@ -981,6 +986,14 @@
         else if ([self.filtersArray containsObject:@"lowtohigh"]){
             [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThan:@(0.00)];
             [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
+        }
+        else{
+            [self.infiniteQuery orderByDescending:@"lastUpdated"];
+        }
+        
+        //instant buy
+        if ([self.filtersArray containsObject:@"instantBuy"]){
+            [self.infiniteQuery whereKey:@"instantBuy" equalTo:@"YES"];
         }
         
         //location

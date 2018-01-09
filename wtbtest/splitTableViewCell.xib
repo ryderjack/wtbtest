@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -28,7 +28,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="itemTitle" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Xto-gO-QMW">
-                        <rect key="frame" x="93" y="13" width="211" height="17"/>
+                        <rect key="frame" x="93" y="13" width="162" height="17"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
                         <color key="textColor" red="0.14901960780000001" green="0.14901960780000001" blue="0.14901960780000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
@@ -72,12 +72,12 @@
                     <constraint firstItem="Xto-gO-QMW" firstAttribute="top" secondItem="J6V-pT-0ZD" secondAttribute="topMargin" constant="2" id="FpT-4f-LXL"/>
                     <constraint firstItem="xF5-iI-QHv" firstAttribute="leading" secondItem="MVb-ax-ptK" secondAttribute="leading" id="Q2t-Rj-NAJ"/>
                     <constraint firstItem="MVb-ax-ptK" firstAttribute="top" secondItem="gfh-aS-4Lh" secondAttribute="bottom" id="TYR-Hx-zkB"/>
-                    <constraint firstItem="Xto-gO-QMW" firstAttribute="trailing" secondItem="J6V-pT-0ZD" secondAttribute="trailingMargin" id="TjJ-6k-Y6S"/>
+                    <constraint firstItem="Xto-gO-QMW" firstAttribute="trailing" secondItem="J6V-pT-0ZD" secondAttribute="trailingMargin" constant="-49" id="TjJ-6k-Y6S"/>
                     <constraint firstItem="Xto-gO-QMW" firstAttribute="leading" secondItem="O2a-wc-Q9M" secondAttribute="trailing" constant="15" id="Uou-ye-J2L"/>
                     <constraint firstItem="O2a-wc-Q9M" firstAttribute="top" secondItem="J6V-pT-0ZD" secondAttribute="topMargin" constant="9" id="cDf-5V-5Wj"/>
                     <constraint firstItem="O2a-wc-Q9M" firstAttribute="centerY" secondItem="J6V-pT-0ZD" secondAttribute="centerY" id="jA0-tP-i6y"/>
                     <constraint firstItem="xF5-iI-QHv" firstAttribute="firstBaseline" secondItem="gfh-aS-4Lh" secondAttribute="firstBaseline" id="kfV-w8-LpU"/>
-                    <constraint firstItem="Xto-gO-QMW" firstAttribute="trailing" secondItem="gfh-aS-4Lh" secondAttribute="trailing" constant="12" id="pIu-iG-B7M"/>
+                    <constraint firstItem="Xto-gO-QMW" firstAttribute="trailing" secondItem="gfh-aS-4Lh" secondAttribute="trailing" constant="-37" id="pIu-iG-B7M"/>
                     <constraint firstItem="O2a-wc-Q9M" firstAttribute="leading" secondItem="J6V-pT-0ZD" secondAttribute="leadingMargin" constant="12" id="rOp-Rs-7jE"/>
                     <constraint firstAttribute="bottomMargin" secondItem="MVb-ax-ptK" secondAttribute="bottom" constant="3.5" id="sQX-PQ-4RA"/>
                     <constraint firstItem="gfh-aS-4Lh" firstAttribute="trailing" secondItem="MVb-ax-ptK" secondAttribute="trailing" constant="-12" id="uAj-Op-vVJ"/>

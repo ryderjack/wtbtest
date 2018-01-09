@@ -147,67 +147,88 @@
     //set suggested messages
     if (self.userIsBuyer == YES) {
         
-        //should we show?
-        if (![[self.convoObject objectForKey:@"buyerShowSuggested"]isEqualToString:@"NO"]) {
-            self.showSuggested = YES;
-            
-            //load messages left
-            if ([self.convoObject objectForKey:@"buyerSuggestedMessages"]) {
-                [self.suggestedMessagesArray addObjectsFromArray:[self.convoObject objectForKey:@"buyerSuggestedMessages"]];
+        if (self.fromOrder) {
+            //order chat should hold different suggested messages
+            //should we show?
+            if (![[self.convoObject objectForKey:@"buyerShowOrderSuggested"]isEqualToString:@"NO"]) {
+                self.showSuggested = YES;
                 
-                //track when a paypal is sent so we can prompt buyer to ask for the tracking number
-                if ([self.convoObject objectForKey:@"paypalSent"] && ![self.convoObject objectForKey:@"addedTrackingMsg"] && ![self.suggestedMessagesArray containsObject:@"Tracking number?"]) {
-                    [self.convoObject setObject:@"YES" forKey:@"addedTrackingMsg"];
-                    [self.convoObject saveInBackground];
+                //load messages left
+                if ([self.convoObject objectForKey:@"buyerSuggestedOrderMessages"]) {
+                    [self.suggestedMessagesArray addObjectsFromArray:[self.convoObject objectForKey:@"buyerSuggestedOrderMessages"]];
 
-                    [self.suggestedMessagesArray insertObject:@"Tracking number?" atIndex:0];
+                }
+                else{
+                    [self.suggestedMessagesArray addObjectsFromArray:@[@"When can you ship?",@"Added tracking?",@"Left a review?",@"Got the item!", @"Thanks again ✌️",@"Dismiss"]];
                 }
             }
             else{
-                if (self.messageSellerPressed == YES) {
-                [self.suggestedMessagesArray addObjectsFromArray:@[@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks", @"Dismiss"]];
-                }
-                else{
-                    if (self.profileConvo) {
-                        [self.suggestedMessagesArray addObjectsFromArray:@[@"Send PayPal email", @"Dismiss"]];
-                    }
-                    else{
-                        [self.suggestedMessagesArray addObjectsFromArray:@[@"What are you selling?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks", @"Dismiss"]];
-                        
-                        //track when a paypal is sent so we can prompt buyer to ask for the tracking number
-                        if ([self.convoObject objectForKey:@"paypalSent"] && ![self.convoObject objectForKey:@"addedTrackingMsg"]) {
-                            [self.convoObject setObject:@"YES" forKey:@"addedTrackingMsg"];
-                            [self.convoObject saveInBackground];
-                            
-                            [self.suggestedMessagesArray insertObject:@"Tracking number?" atIndex:0];
-                        }
-                    }
-                }
+                self.showSuggested = NO;
             }
         }
         else{
-            self.showSuggested = NO;
+            //should we show?
+            if (![[self.convoObject objectForKey:@"buyerShowSuggested"]isEqualToString:@"NO"]) {
+                self.showSuggested = YES;
+                
+                //load messages left
+                if ([self.convoObject objectForKey:@"buyerSuggestedMessages"]) {
+                    [self.suggestedMessagesArray addObjectsFromArray:[self.convoObject objectForKey:@"buyerSuggestedMessages"]];
+                }
+                else{
+                    if (self.messageSellerPressed == YES) {
+                        [self.suggestedMessagesArray addObjectsFromArray:@[@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price    negotiable?", @"Not interested thanks", @"Dismiss"]];
+                    }
+                    else{
+                        [self.suggestedMessagesArray addObjectsFromArray:@[@"What are you selling?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks", @"Dismiss"]];
+                    }
+                }
+            }
+            else{
+                self.showSuggested = NO;
+            }
         }
     }
     else{
         //seller
-        if (![[self.convoObject objectForKey:@"sellerShowSuggested"]isEqualToString:@"NO"]) {
-            self.showSuggested = YES;
-            
-            if ([self.convoObject objectForKey:@"sellerSuggestedMessages"]) {
-                [self.suggestedMessagesArray addObjectsFromArray:[self.convoObject objectForKey:@"sellerSuggestedMessages"]];
-            }
-            else{
-                if (self.profileConvo) {
-                    [self.suggestedMessagesArray addObjectsFromArray:@[@"Send PayPal email", @"Dismiss"]];
+        if (self.fromOrder) {
+            //order chat should hold different suggested messages
+            //should we show?
+            if (![[self.convoObject objectForKey:@"sellerShowOrderSuggested"]isEqualToString:@"NO"]) {
+                self.showSuggested = YES;
+                
+                //load messages left
+                if ([self.convoObject objectForKey:@"sellerSuggestedOrderMessages"]) {
+                    [self.suggestedMessagesArray addObjectsFromArray:[self.convoObject objectForKey:@"sellerSuggestedOrderMessages"]];
+                    
                 }
                 else{
-                    [self.suggestedMessagesArray addObjectsFromArray:@[@"Send PayPal email", @"It's still available", @"What's your offer?",@"Yes, it's negotiable", @"Sorry, been sold!", @"Dismiss"]];
+                    [self.suggestedMessagesArray addObjectsFromArray:@[@"Just shipped it!",@"Left a review?",@"Enjoy the item 👊", @"Dismiss"]];
                 }
+            }
+            else{
+                self.showSuggested = NO;
             }
         }
         else{
-            self.showSuggested = NO;
+            if (![[self.convoObject objectForKey:@"sellerShowSuggested"]isEqualToString:@"NO"]) {
+                self.showSuggested = YES;
+                
+                if ([self.convoObject objectForKey:@"sellerSuggestedMessages"]) {
+                    [self.suggestedMessagesArray addObjectsFromArray:[self.convoObject objectForKey:@"sellerSuggestedMessages"]];
+                }
+                else{
+                    if (self.profileConvo) {
+                        [self.suggestedMessagesArray addObjectsFromArray:@[@"Hey, nice page ✌️", @"Dismiss"]];
+                    }
+                    else{
+                        [self.suggestedMessagesArray addObjectsFromArray:@[@"Hey, it's still available", @"What's your offer?",@"Yes, it's negotiable", @"Sorry, been sold!", @"Dismiss"]];
+                    }
+                }
+            }
+            else{
+                self.showSuggested = NO;
+            }
         }
     }
     
@@ -683,46 +704,33 @@
         }
     }
     
-    if (messageTotal >= 20) {
-        if (self.userIsBuyer == YES) {
-            if (![self.convoObject objectForKey:@"buyerHasReviewed"]) {
-                //show rate banner
-                if (!self.reviewButton && self.justLeftReview != YES) {
-                    self.reviewButton = [[UIBarButtonItem alloc] initWithTitle:@"Review" style:UIBarButtonItemStylePlain target:self action:@selector(gotoReview)];
-                    [self.reviewButton setTintColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
-                    NSMutableArray *currentItems = [NSMutableArray arrayWithArray:self.navigationItem.rightBarButtonItems];
-                    [currentItems addObject:self.reviewButton];
-                    [self.navigationItem setRightBarButtonItems:currentItems];
-                }
-            }
-
-            //show how to buy prompt
-            if (![[PFUser currentUser]objectForKey:@"buyingIntro2"]) {
-                ExplainView *vc = [[ExplainView alloc]init];
-                vc.buyingIntro = YES;
-                [self presentViewController:vc animated:YES completion:nil];
-            }
-        }
-        else{
-            if (![self.convoObject objectForKey:@"sellerHasReviewed"]) {
-                //show rate banner
-                if (!self.reviewButton && self.justLeftReview != YES) {
-                    self.reviewButton = [[UIBarButtonItem alloc] initWithTitle:@"Review" style:UIBarButtonItemStylePlain target:self action:@selector(gotoReview)];
-                    [self.reviewButton setTintColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
-                    NSMutableArray *currentItems = [NSMutableArray arrayWithArray:self.navigationItem.rightBarButtonItems];
-                    [currentItems addObject:self.reviewButton];
-                    [self.navigationItem setRightBarButtonItems:currentItems];
-                }
-            }
-
-            //show how to sell prompt
-            if (![[PFUser currentUser]objectForKey:@"sellingIntro2"]) {
-                ExplainView *vc = [[ExplainView alloc]init];
-                vc.sellingIntro = YES;
-                [self presentViewController:vc animated:YES completion:nil];
-            }
-        }
-    }
+//    if ([[self.listing objectForKey:@"category"] isEqualToString:@"Proxy"] && messageTotal >= 20) {
+//
+//        if (self.userIsBuyer == YES) {
+//            if (![self.convoObject objectForKey:@"buyerHasReviewed"]) {
+//                //show rate banner
+//                if (!self.reviewButton && self.justLeftReview != YES) {
+//                    self.reviewButton = [[UIBarButtonItem alloc] initWithTitle:@"Review" style:UIBarButtonItemStylePlain target:self action:@selector(gotoReview)];
+//                    [self.reviewButton setTintColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
+//                    NSMutableArray *currentItems = [NSMutableArray arrayWithArray:self.navigationItem.rightBarButtonItems];
+//                    [currentItems addObject:self.reviewButton];
+//                    [self.navigationItem setRightBarButtonItems:currentItems];
+//                }
+//            }
+//        }
+//        else{
+//            if (![self.convoObject objectForKey:@"sellerHasReviewed"]) {
+//                //show rate banner
+//                if (!self.reviewButton && self.justLeftReview != YES) {
+//                    self.reviewButton = [[UIBarButtonItem alloc] initWithTitle:@"Review" style:UIBarButtonItemStylePlain target:self action:@selector(gotoReview)];
+//                    [self.reviewButton setTintColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
+//                    NSMutableArray *currentItems = [NSMutableArray arrayWithArray:self.navigationItem.rightBarButtonItems];
+//                    [currentItems addObject:self.reviewButton];
+//                    [self.navigationItem setRightBarButtonItems:currentItems];
+//                }
+//            }
+//        }
+//    }
 }
 
 - (void)viewDidLayoutSubviews
@@ -1187,6 +1195,7 @@
          senderDisplayName:(NSString *)senderDisplayName
                       date:(NSDate *)date
 {
+    //CHECK check if instant buy is available to this user first before we prompt them to buy on bump
     if (self.promptedBefore != YES && self.paypalMessage != YES) {
         NSArray *checkingforemailarray = [text componentsSeparatedByString:@" "];
         for (NSString *stringer in checkingforemailarray) {
@@ -1201,13 +1210,17 @@
                                                   @"message":text,
                                                   @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                   }];
-                //present 'Send Offer' reminder alert
-                self.promptedBefore = YES;
-                self.offerReminderMode = YES;
-                self.emailReminderMode = YES;
+                
+                [self.convoObject setObject:@"YES" forKey:@"emailExchanged"];
 
-                [self showCustomAlert];
-                return;
+
+                //present 'Send Offer' reminder alert
+//                self.promptedBefore = YES;
+//                self.offerReminderMode = YES;
+//                self.emailReminderMode = YES;
+//
+//                [self showCustomAlert];
+//                return;
             }
 
             //facebook check
@@ -1219,11 +1232,11 @@
                                                   @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                   }];
                 //present 'Send Offer' reminder alert
-                self.promptedBefore = YES;
-                self.offerReminderMode = YES;
-                self.emailReminderMode = YES;
-                [self showCustomAlert];
-                return;
+//                self.promptedBefore = YES;
+//                self.offerReminderMode = YES;
+//                self.emailReminderMode = YES;
+//                [self showCustomAlert];
+//                return;
             }
 
             //check for number
@@ -1240,11 +1253,11 @@
                                                           @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                           }];
                          //present 'Send Offer' reminder alert
-                         self.promptedBefore = YES;
-                         self.offerReminderMode = YES;
-                        self.emailReminderMode = YES;
-                         [self showCustomAlert];
-                        return;
+//                         self.promptedBefore = YES;
+//                         self.offerReminderMode = YES;
+//                        self.emailReminderMode = YES;
+//                         [self showCustomAlert];
+//                        return;
                     }
                 }
             }
@@ -1258,11 +1271,11 @@
                                                   @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                   }];
                 //present 'Send Offer' reminder alert
-                self.promptedBefore = YES;
-                self.offerReminderMode = YES;
-                self.emailReminderMode = YES;
-                [self showCustomAlert];
-                return;
+//                self.promptedBefore = YES;
+//                self.offerReminderMode = YES;
+//                self.emailReminderMode = YES;
+//                [self showCustomAlert];
+//                return;
             }
 
             //instagram
@@ -1274,11 +1287,11 @@
                                                   @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                   }];
                 //present 'Send Offer' reminder alert
-                self.promptedBefore = YES;
-                self.offerReminderMode = YES;
-                self.emailReminderMode = YES;
-                [self showCustomAlert];
-                return;
+//                self.promptedBefore = YES;
+//                self.offerReminderMode = YES;
+//                self.emailReminderMode = YES;
+//                [self showCustomAlert];
+//                return;
             }
 
             //big cartel
@@ -1290,11 +1303,11 @@
                                                   @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                                   }];
                 //present 'Send Offer' reminder alert
-                self.promptedBefore = YES;
-                self.offerReminderMode = YES;
-                self.emailReminderMode = YES;
-                [self showCustomAlert];
-                return;
+//                self.promptedBefore = YES;
+//                self.offerReminderMode = YES;
+//                self.emailReminderMode = YES;
+//                [self showCustomAlert];
+//                return;
             }
         }
         if ([text containsString:@"your number"]) {
@@ -1305,11 +1318,11 @@
                                               @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
                                               }];
             //present 'Send Offer' reminder alert
-            self.promptedBefore = YES;
-            self.offerReminderMode = YES;
-            self.emailReminderMode = YES;
-            [self showCustomAlert];
-            return;
+//            self.promptedBefore = YES;
+//            self.offerReminderMode = YES;
+//            self.emailReminderMode = YES;
+//            [self showCustomAlert];
+//            return;
         }
     }
     
@@ -1389,7 +1402,7 @@
                     [sentArray removeObject:[messageString lowercaseString]];
                     
                     if (sentArray.count == 0) {
-                        //user has sent 5 of the same message! Just track in Fabric for now
+                        //user has sent 5 of the same message so trigger autoban
                         [Answers logCustomEventWithName:@"Spam messages detected"
                                        customAttributes:@{
                                                           @"username":[PFUser currentUser].username
@@ -1429,9 +1442,27 @@
             [self.convoObject setObject:[NSDate date] forKey:@"lastSentDate"];
             
             if (self.userIsBuyer == YES) {
+                
+                //check if this is user's second message
+                if ([self.convoObject objectForKey:@"buyerSentMessage"]) {
+                    [self.convoObject setObject:@"YES" forKey:@"buyerSentTwoMessages"];
+                }
+                else{
+                    [self.convoObject setObject:@"YES" forKey:@"buyerSentMessage"];
+                }
+                
                 [self.convoObject incrementKey:@"sellerUnseen"];
             }
             else{
+                
+                //check if this is user's second message
+                if ([self.convoObject objectForKey:@"sellerSentMessage"]) {
+                    [self.convoObject setObject:@"YES" forKey:@"sellerSentTwoMessages"];
+                }
+                else{
+                    [self.convoObject setObject:@"YES" forKey:@"sellerSentMessage"];
+                }
+                
                 [self.convoObject incrementKey:@"buyerUnseen"];
             }
             
@@ -1441,6 +1472,45 @@
             
             [self.convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded){
+                    
+                    //check if we need to fire mixpanel event for a guess transaction
+                    NSString *emailSent = [self.convoObject objectForKey:@"emailExchanged"];
+                    NSString *sellerMsgd = [self.convoObject objectForKey:@"sellerSentTwoMessages"];
+                    NSString *buyerMsgd = [self.convoObject objectForKey:@"buyerSentTwoMessages"];
+                    NSString *orderConvo = [self.convoObject objectForKey:@"orderConvo"];
+                    int totalMessages = [[self.convoObject objectForKey:@"totalMessages"]intValue];
+                    BOOL transactionHappened = [[self.convoObject objectForKey:@"transactionHappened"]boolValue];
+                    
+                    if ([emailSent isEqualToString:@"YES"] && [sellerMsgd isEqualToString:@"YES"] && [buyerMsgd isEqualToString:@"YES"] && totalMessages > 5 && !transactionHappened && ![orderConvo isEqualToString:@"YES"]) {
+                        
+                        NSLog(@"MARK CONVO AS A TRANSACTION");
+                        
+                        //fire off mixpanel event
+                        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                        
+                        if (self.listing) {
+                            
+                            //if we have the listing, track the price too
+                            float usdPrice = [[self.listing objectForKey:@"salePriceUSD"]floatValue];
+                            NSString *instantBuyMode = [self.convoObject objectForKey:@"instantBuy"];
+                            
+                            [mixpanel track:@"Transaction Happened" properties:@{
+                                                                         @"price":@(usdPrice),
+                                                                         @"category":[self.listing objectForKey:@"category"],
+                                                                         @"currency":[self.listing objectForKey:@"currency"],
+                                                                         @"instantBuy":instantBuyMode
+                                                                         }];
+                        }
+                        else{
+                            [mixpanel track:@"Transaction Happened" properties:nil];
+                        }
+                        
+                        //mark this convo as transaction happened so doesn't fire again
+                        [self.convoObject setObject:@YES forKey:@"transactionHappened"];
+                        [self.convoObject saveInBackground];
+                    }
+                    
+
                     //sent a message so force reload in inbox VC
 //                    [[NSNotificationCenter defaultCenter] postNotificationName:@"NewMessage" object:nil];
 //                    [self.delegate lastMessageInConvo:nil];
@@ -1942,7 +2012,7 @@
         return;
     }
     
-    PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:data];
+    PFFile *filePicture = [PFFile fileWithName:[NSString stringWithFormat:@"messageImg_%@.jpg",self.convoId] data:data]; //was picture.jpg
     
     PFObject *picObject = [PFObject objectWithClassName:@"messageImages"];
     [picObject setObject:filePicture forKey:@"Image"];
@@ -2582,29 +2652,6 @@
     }
 }
 
--(void)showConfirmBanner{
-    if (self.payBannerShowing == YES) {
-        [self.paidView removeFromSuperview];
-        self.payBannerShowing = NO;
-    }
-    else{
-        if (!self.paidView) {
-            self.paidView = [[UIView alloc]initWithFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, self.navigationController.navigationBar.frame.size.width, 30)];
-            [self.paidView setAlpha:1.0];
-            self.paidButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0, self.paidView.frame.size.width, self.paidView.frame.size.height)];
-            [self.paidButton setTitle:@"Tap to confirm you've received payment" forState:UIControlStateNormal];
-//            [self.paidButton addTarget:self action:@selector(markTapped) forControlEvents:UIControlEventTouchUpInside];
-            self.paidButton.backgroundColor = [UIColor colorWithRed:0.314 green:0.89 blue:0.761 alpha:1];
-            [self.paidButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-            self.paidButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
-            [self.paidView addSubview:self.paidButton];
-            [self.paidButton setCenter:CGPointMake(self.paidView.frame.size.width / 2, self.paidView.frame.size.height / 2)];
-        }
-        [self.view addSubview:self.paidView];
-        self.payBannerShowing = YES;
-    }
-}
-
 //for infinite load of messages
 
 //-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
@@ -2876,11 +2923,11 @@
         messageLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
         messageLabel.backgroundColor = [UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0];
     }
-    else if ([[self.suggestedMessagesArray objectAtIndex:index] isEqualToString:@"Send PayPal email"]) {
-        messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
-        messageLabel.textColor = [UIColor whiteColor];
-        messageLabel.backgroundColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
-    }
+//    else if ([[self.suggestedMessagesArray objectAtIndex:index] isEqualToString:@"Send PayPal email"]) {
+//        messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
+//        messageLabel.textColor = [UIColor whiteColor];
+//        messageLabel.backgroundColor = [UIColor colorWithRed:0.42 green:0.42 blue:0.84 alpha:1.0];
+//    }
     else{
         messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
         messageLabel.textColor = [UIColor whiteColor];
@@ -2906,11 +2953,21 @@
     if ([messageString isEqualToString:@"Dismiss"]) {
         
         //set object so not shoed again to this user in this convo
-        if (self.userIsBuyer == YES) {
-            [self.convoObject setObject:@"NO" forKey:@"buyerShowSuggested"];
+        if (self.fromOrder) {
+            if (self.userIsBuyer == YES) {
+                [self.convoObject setObject:@"NO" forKey:@"buyerShowOrderSuggested"];
+            }
+            else{
+                [self.convoObject setObject:@"NO" forKey:@"sellerShowOrderSuggested"];
+            }
         }
         else{
-            [self.convoObject setObject:@"NO" forKey:@"sellerShowSuggested"];
+            if (self.userIsBuyer == YES) {
+                [self.convoObject setObject:@"NO" forKey:@"buyerShowSuggested"];
+            }
+            else{
+                [self.convoObject setObject:@"NO" forKey:@"sellerShowSuggested"];
+            }
         }
         
         [self.convoObject saveInBackground];
@@ -2926,32 +2983,32 @@
                              [self.carousel removeFromSuperview];
                          }];
     }
-    else if ([messageString isEqualToString:@"Send PayPal email"]){
-
-        if (![[[PFUser currentUser]objectForKey:@"paypalUpdated"]isEqualToString:@"YES"]) {
-            //show paypal alert to confirm
-            [self showPayPalAlert];
-        }
-        else{
-            NSString *messageString;
-
-            //this is in case user has updated paypal but for some reason it hasn't saved immediately
-            if (self.updatedPayPal) {
-                messageString = [NSString stringWithFormat:@"@%@ sent their PayPal email %@",[PFUser currentUser].username,self.updatedPayPal];
-            }
-            else{
-                messageString = [NSString stringWithFormat:@"@%@ sent their PayPal email %@",[PFUser currentUser].username,[[PFUser currentUser] objectForKey:@"paypal"]];
-            }
-
-            [self.convoObject setObject:@"YES" forKey:@"paypalSent"];
-            [self.convoObject saveInBackground];
-
-            UIButton *button = [[UIButton alloc]init];
-            self.paypalMessage = YES;
-            self.paypalPush = YES;
-            [self didPressSendButton:button withMessageText:messageString senderId:self.senderId senderDisplayName:self.senderDisplayName date:[NSDate date]];
-        }
-    }
+//    else if ([messageString isEqualToString:@"Send PayPal email"]){
+//
+//        if (![[[PFUser currentUser]objectForKey:@"paypalUpdated"]isEqualToString:@"YES"]) {
+//            //show paypal alert to confirm
+//            [self showPayPalAlert];
+//        }
+//        else{
+//            NSString *messageString;
+//
+//            //this is in case user has updated paypal but for some reason it hasn't saved immediately
+//            if (self.updatedPayPal) {
+//                messageString = [NSString stringWithFormat:@"@%@ sent their PayPal email %@",[PFUser currentUser].username,self.updatedPayPal];
+//            }
+//            else{
+//                messageString = [NSString stringWithFormat:@"@%@ sent their PayPal email %@",[PFUser currentUser].username,[[PFUser currentUser] objectForKey:@"paypal"]];
+//            }
+//
+//            [self.convoObject setObject:@"YES" forKey:@"paypalSent"];
+//            [self.convoObject saveInBackground];
+//
+//            UIButton *button = [[UIButton alloc]init];
+//            self.paypalMessage = YES;
+//            self.paypalPush = YES;
+//            [self didPressSendButton:button withMessageText:messageString senderId:self.senderId senderDisplayName:self.senderDisplayName date:[NSDate date]];
+//        }
+//    }
     else{
         //send message
         UIButton *button = [[UIButton alloc]init];
@@ -2960,12 +3017,23 @@
         //remove from array
         [self.suggestedMessagesArray removeObjectAtIndex:index];
         
-        if (self.userIsBuyer == YES) {
-            [self.convoObject setObject:self.suggestedMessagesArray forKey:@"buyerSuggestedMessages"];
+        if (self.fromOrder) {
+            if (self.userIsBuyer == YES) {
+                [self.convoObject setObject:self.suggestedMessagesArray forKey:@"buyerSuggestedOrderMessages"];
+            }
+            else{
+                [self.convoObject setObject:self.suggestedMessagesArray forKey:@"sellerSuggestedOrderMessages"];
+            }
         }
         else{
-            [self.convoObject setObject:self.suggestedMessagesArray forKey:@"sellerSuggestedMessages"];
+            if (self.userIsBuyer == YES) {
+                [self.convoObject setObject:self.suggestedMessagesArray forKey:@"buyerSuggestedMessages"];
+            }
+            else{
+                [self.convoObject setObject:self.suggestedMessagesArray forKey:@"sellerSuggestedMessages"];
+            }
         }
+        
         [self.convoObject saveInBackground];
         
         if (self.suggestedMessagesArray.count == 1) {
@@ -3156,13 +3224,13 @@
     
     
     //paypal message
-    UILabel *introLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,imgView.frame.origin.y+20, 300, 300)];
+    UILabel *introLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,imgView.frame.origin.y+20, 300, 180)];
     
     //paypal logo
     if (!self.fromOrder) {
         [self.paypalView addSubview:imgView];
         
-        introLabel.text = @"Stay protected & build your reputation by purchasing through BUMP\n\nWhen you're ready to Purchase just ask the seller for their PayPal email address and pay through Goods & Services\n\nIf you're still unsure check out our Help Center from Settings\n\nNote: Trades are NOT protected";
+        introLabel.text = @"Stay protected & build your reputation by purchasing through BUMP\n\nWhen you're ready to Purchase just hit Buy on the listing and pay through PayPal\n\nIf you're still unsure check out our Help Center from Settings";
     }
     else{
         //no messages sent previously and order has been created
@@ -3413,11 +3481,13 @@
     vc.convoId = self.convoObject.objectId;
     vc.userId = self.otherUser.objectId;
     vc.delegate = self;
+    vc.proxyMode = YES;
     [self.navigationController pushViewController:vc animated:YES];
 }
 
 -(void)leftReviewWithStars:(int)stars{
     [self leftReview];
 }
+
 @end
 

@@ -177,6 +177,6 @@
 
 @property (nonatomic) BOOL changedSoldStatusOfListing;
 @property (nonatomic) BOOL deletedListing;
-
+@property (nonatomic) BOOL hitReport;
 
 @end

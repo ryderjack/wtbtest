@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <customFonts key="customFonts">
@@ -31,7 +32,7 @@
                     <rect key="frame" x="16" y="88" width="344" height="42"/>
                     <color key="tintColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="42" id="1N1-64-ded"/>
+                        <constraint firstAttribute="height" constant="42" id="hbf-Ll-PgZ"/>
                     </constraints>
                     <color key="textColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="17"/>
@@ -40,16 +41,16 @@
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bxy-2R-RFn">
                     <rect key="frame" x="16" y="20" width="344" height="21"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="21" id="jqe-ow-wiG"/>
+                        <constraint firstAttribute="height" constant="21" id="yZJ-tH-uYw"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="17"/>
                     <color key="textColor" red="0.31372549020000001" green="0.89019607840000003" blue="0.76078431369999999" alpha="1" colorSpace="calibratedRGB"/>
                     <nil key="highlightedColor"/>
                 </label>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="llH-rY-1zk">
-                    <rect key="frame" x="16" y="20" width="40" height="40"/>
+                    <rect key="frame" x="16" y="30" width="40" height="40"/>
                     <constraints>
-                        <constraint firstAttribute="width" constant="40" id="Dwm-x8-kg6"/>
+                        <constraint firstAttribute="width" constant="40" id="xeH-he-OsP"/>
                     </constraints>
                     <state key="normal" image="cancelCross.png"/>
                     <connections>
@@ -59,15 +60,15 @@
             </subviews>
             <color key="backgroundColor" red="0.96470588235294119" green="0.96862745098039216" blue="0.9882352941176471" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
-                <constraint firstItem="bxy-2R-RFn" firstAttribute="top" secondItem="llH-rY-1zk" secondAttribute="top" id="4Xp-M4-NP4"/>
-                <constraint firstItem="llH-rY-1zk" firstAttribute="leading" secondItem="PeA-Us-ew8" secondAttribute="leading" id="EhY-Uk-XRv"/>
-                <constraint firstItem="bxy-2R-RFn" firstAttribute="leading" secondItem="llH-rY-1zk" secondAttribute="leading" id="OLg-YX-Be3"/>
-                <constraint firstItem="PeA-Us-ew8" firstAttribute="top" secondItem="bxy-2R-RFn" secondAttribute="bottom" constant="47" id="U64-ZS-hI8"/>
-                <constraint firstItem="llH-rY-1zk" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="20" id="YdS-Ai-Kp5"/>
-                <constraint firstItem="bxy-2R-RFn" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="fdZ-PH-nB2"/>
-                <constraint firstItem="bxy-2R-RFn" firstAttribute="trailing" secondItem="PeA-Us-ew8" secondAttribute="trailing" id="xY6-dn-jsb"/>
-                <constraint firstItem="bxy-2R-RFn" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="16" id="yPs-WG-RmF"/>
-                <constraint firstItem="PeA-Us-ew8" firstAttribute="top" secondItem="llH-rY-1zk" secondAttribute="bottom" constant="28" id="yTJ-FD-Tgt"/>
+                <constraint firstItem="llH-rY-1zk" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="30" id="5f7-uS-4cE"/>
+                <constraint firstItem="bxy-2R-RFn" firstAttribute="trailing" secondItem="PeA-Us-ew8" secondAttribute="trailing" id="77A-HM-22P"/>
+                <constraint firstItem="bxy-2R-RFn" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="CPq-FJ-saA"/>
+                <constraint firstItem="bxy-2R-RFn" firstAttribute="leading" secondItem="llH-rY-1zk" secondAttribute="leading" id="e5V-rF-my9"/>
+                <constraint firstItem="llH-rY-1zk" firstAttribute="leading" secondItem="PeA-Us-ew8" secondAttribute="leading" id="kl3-I4-e4X"/>
+                <constraint firstItem="bxy-2R-RFn" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="topMargin" id="lCb-IQ-1RQ"/>
+                <constraint firstItem="PeA-Us-ew8" firstAttribute="top" secondItem="bxy-2R-RFn" secondAttribute="bottom" constant="47" id="lp0-3J-WyX"/>
+                <constraint firstItem="PeA-Us-ew8" firstAttribute="top" secondItem="llH-rY-1zk" secondAttribute="bottom" constant="18" id="nzV-ob-Ch2"/>
+                <constraint firstItem="bxy-2R-RFn" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leadingMargin" id="ofA-Uq-G9g"/>
             </constraints>
             <point key="canvasLocation" x="32.5" y="53.5"/>
         </view>

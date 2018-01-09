@@ -20,6 +20,8 @@
 
 @property (nonatomic, weak) id <ShippingControllerDelegate> delegate;
 
+@property (nonatomic, strong) UIBarButtonItem *cancelButton;
+
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *buildingCell;
@@ -48,6 +50,7 @@
 @property (nonatomic) BOOL settingsMode;
 @property (nonatomic) BOOL somethingChanged;
 @property (nonatomic, strong) CountryPicker *picker;
+@property (nonatomic) BOOL somethingMissing;
 
 
 @end

@@ -200,6 +200,7 @@
     
     if (currentUser) {
         NSLog(@"got a current user");
+        
         if (![FBSDKAccessToken currentAccessToken] && [currentUser objectForKey:@"facebookId"]) {
             NSLog(@"invalid fb token in VDL");
             
@@ -382,30 +383,37 @@
         if (object) {
             NSString *latest = [object objectForKey:@"number"];
             
-            //add in a check if user was created in past 2 days
-            //only show update prompt if created later than that
-            //to protect against the update crossover period
-            
-            NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:currentUser.createdAt];
-            double secondsInADay = 86400;
-            NSInteger daysSinceSigningUp = distanceBetweenDates / secondsInADay;
-            
-            if (daysSinceSigningUp > 2) {
-                //can prompt now
-                if (![appVersion isEqualToString:latest]) {
-                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:nil preferredStyle:UIAlertControllerStyleAlert];
-                    
-                    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                        [Answers logCustomEventWithName:@"Cancel Update pressed"
-                                       customAttributes:@{}];
-                    }]];
-                    [alertView addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                        [Answers logCustomEventWithName:@"Update pressed"
-                                       customAttributes:@{}];
-                        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
-                                                                    @"itms-apps://itunes.apple.com/app/id1096047233"]];
-                    }]];
-                    [self presentViewController:alertView animated:YES completion:nil]; //CHANGE
+            int latestVersion = [latest intValue];
+            int current = [appVersion intValue];
+
+            //if user's version is bigger than what is the latest then don't prompt to uopdate
+            if (current < latestVersion) {
+                //add in a check if user was created in past 2 days
+                //only show update prompt if created later than that
+                //to protect against the update crossover period
+                
+                NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:currentUser.createdAt];
+                double secondsInADay = 86400;
+                NSInteger daysSinceSigningUp = distanceBetweenDates / secondsInADay;
+                
+                if (daysSinceSigningUp > 2) {
+                    //can prompt now
+                    if (![appVersion isEqualToString:latest]) {
+                        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"New update available" message:nil preferredStyle:UIAlertControllerStyleAlert];
+                        
+                        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                            [Answers logCustomEventWithName:@"Cancel Update pressed"
+                                           customAttributes:@{}];
+                        }]];
+                        [alertView addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                            [Answers logCustomEventWithName:@"Update pressed"
+                                           customAttributes:@{}];
+                            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:
+                                                                        @"itms-apps://itunes.apple.com/app/id1096047233"]];
+                        }]];
+
+                        [self presentViewController:alertView animated:YES completion:nil];
+                    }
                 }
             }
         }
@@ -519,8 +527,6 @@
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
-
-    
     BOOL modalPresent = (self.presentedViewController);
     if ([PFUser currentUser] && modalPresent != YES) {
         
@@ -556,25 +562,21 @@
             AddSizeController *vc = [[AddSizeController alloc]init];
             [self.navigationController presentViewController:vc animated:YES completion:nil];
         }
-//        else if (![[PFUser currentUser]objectForKey:@"seenBuyIntro"] && modalPresent != YES) { add in a check for date user was created
-//
-//            //check if should ignore 2 photos requirement
-//            NSDateComponents *components3 = [[NSDateComponents alloc] init];
-//            NSCalendar *theCalendar = [NSCalendar currentCalendar];
-//
-//            [components3 setYear:2017];
-//            [components3 setMonth:12];
-//            [components3 setDay:3]; change this to the date we release the paypal update
-//            [components3 setHour:00];
-//
-//            //generate the start date of 2 pics required in listings
-//            NSDate * combinedDate = [theCalendar dateFromComponents:components3];
-//
-//            if ([[PFUser currentUser].createdAt compare:combinedDate]==NSOrderedAscending) {
-//                //user signed up before paypal update so lets show em the new ting
-////                [self showBuyIntro]; uncomment this
-//            }
-//        }
+        //showPPConnect is for users who created proxy first time around, this added if clause stops these guys being prompted now. They must wait till their next proper listing
+        else if ([[PFUser currentUser]objectForKey:@"forSalePostNumber"] && ![[PFUser currentUser]objectForKey:@"seenConnectPP"] && (![[PFUser currentUser]objectForKey:@"paypalEnabled"] || [[[PFUser currentUser]objectForKey:@"paypalEnabled"] isEqualToString:@"NO"]) && ![[PFUser currentUser]objectForKey:@"showPPConnect"] &&  modalPresent != YES) {
+            
+            NSLog(@"existing user has triggered paypal connect drop down");
+            
+            //user has created a listing
+            //user has NOT seen connect dialog before
+            //user does NOT have paypal already enabled
+            
+            //won't get triggered during a user's first listing coz their forsalepostnumber won't have been updated
+            
+            //do we need to do a signup date check?
+            self.existingUserPPAlert = YES;
+            [self showConnectPayPalDrop];
+        }
         else{
             //get location for filter searches only if we don't already have one
             if (!self.currentLocation) {
@@ -592,6 +594,16 @@
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
     return self.products.count;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didHighlightItemAtIndexPath:(NSIndexPath *)indexPath{
+    detailSellingCell *cell = (detailSellingCell *)[collectionView cellForItemAtIndexPath:indexPath];
+    cell.alpha = 0.5;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didUnhighlightItemAtIndexPath:(NSIndexPath *)indexPath{
+    detailSellingCell *cell = (detailSellingCell *)[collectionView cellForItemAtIndexPath:indexPath];
+    cell.alpha = 1.0;
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -618,7 +630,7 @@
     //set price label if exists
     float price = [[forSaleItem objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
     
-    if (price != 0.00 && price > 0.99 && price != 9999.99) {
+    if (price != 0.00 && price > 0.99 && price != 9999.99 && ![[forSaleItem objectForKey:@"category"] isEqualToString:@"Proxy"]) {
         cell.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
     }
     else{
@@ -726,6 +738,9 @@
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
 
+    detailSellingCell *cell = (detailSellingCell *)[collectionView cellForItemAtIndexPath:indexPath];
+    cell.alpha = 0.5;
+    
     self.tappedItem = YES;
 
     [Answers logCustomEventWithName:@"Tapped Buy Now Item"
@@ -745,6 +760,7 @@
     self.navigationController.navigationBarHidden = NO;
     [self.navigationController pushViewController:vc animated:YES];
     
+    cell.alpha = 1.0;
 }
 
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
@@ -864,9 +880,9 @@
 -(void)showHUD{
     self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
     self.hud.square = YES;
-    self.hud.labelText = @"";
     self.hud.mode = MBProgressHUDModeCustomView;
-    [self.spinner startAnimating];
+    self.hud.customView = self.spinnerHUD;
+    [self.spinnerHUD startAnimating];
 }
 
 -(void)hideHUD{
@@ -1087,6 +1103,11 @@
             [self.pullQuery orderByDescending:@"lastUpdated"];
         }
         
+        //instant buy
+        if ([self.filtersArray containsObject:@"instantBuy"]){
+            [self.pullQuery whereKey:@"instantBuy" equalTo:@"YES"];
+        }
+        
         //condition
         if ([self.filtersArray containsObject:@"new"]){
             [self.pullQuery whereKey:@"condition" containedIn:@[@"New", @"Any", @"BNWT", @"BNWOT",@"Deadstock"]];  //updated as we removed Deastock as an option
@@ -1167,6 +1188,14 @@
             [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThan:@(0.00)];
             [self.infiniteQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
+        else{
+            [self.infiniteQuery orderByDescending:@"lastUpdated"];
+        }
+        
+        //instant buy
+        if ([self.filtersArray containsObject:@"instantBuy"]){
+            [self.infiniteQuery whereKey:@"instantBuy" equalTo:@"YES"];
+        }
         
         //condition
         if ([self.filtersArray containsObject:@"new"]){
@@ -1218,6 +1247,9 @@
     
     [PFUser logOut];
     [Intercom reset];
+    
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel reset];
 
     WelcomeViewController *vc = [[WelcomeViewController alloc]init];
     vc.delegate = self;
@@ -1477,7 +1509,11 @@
         UIImageView *imgView = [[UIImageView alloc]initWithFrame:self.searchBgView.frame];
         [self.searchBgView addSubview:imgView];
         
-        if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+        if([ [ UIScreen mainScreen ] bounds ].size.height == 812){
+            //iPhone X
+            [imgView setImage:[UIImage imageNamed:@"filterTutX"]];
+        }
+        else if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
             //iPhone 7
             [imgView setImage:[UIImage imageNamed:@"filterTut"]];
         }
@@ -1499,7 +1535,7 @@
         [self.searchBgView insertSubview:filterProxy aboveSubview:imgView];
         
         self.pushAlert.titleLabel.text = @"Filter";
-        self.pushAlert.messageLabel.text = @"Tap to filter items by brand, colour, size and more! If you're looking for something in particular hit the search bar at the top of the screen";
+        self.pushAlert.messageLabel.text = @"Tap to filter items by brand, color, size and more. If you're looking for something in particular hit the search bar at the top of the screen";
         self.pushAlert.numberOfButtons = 1;
         
         delay = 1.5;
@@ -3098,6 +3134,16 @@
 
 -(void)showPostingHeader:(NSNotification*)note{
     
+    //if user has searched prior to listing an item, dismiss that so they can see the progress banner
+    BOOL modalPresent = (self.presentedViewController);
+    if (modalPresent) {
+        [self cancellingMainSearch]; //makes sure nav bar is showing
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
+    
+    //if user is viewing listing just pop nav so they see posting header
+    [self.navigationController popToRootViewControllerAnimated:YES];
+    
     NSLog(@"posting header");
     
     //retrieve listing object and image
@@ -3109,6 +3155,15 @@
         [self showAlertWithTitle:@"Item Error" andMsg:@"Try listing your item again!"];
         return;
     }
+    
+    self.showConnectPPPopUp = NO;
+    
+    if (postingItems.count >= 3) {
+        NSLog(@"got a 3rd item passed to save listing");
+        self.showConnectPPPopUp = [postingItems[2]boolValue];
+    }
+    
+    NSLog(self.showConnectPPPopUp ? @"SHOW PP" : @"DONT SHOW");
     
     NSLog(@"listing item: %@     and got image: %@", self.postingItem, self.bannerImage);
     
@@ -3193,20 +3248,22 @@
             Mixpanel *mixpanel = [Mixpanel sharedInstance];
 
             if ([[self.postingItem objectForKey:@"instantBuy"]isEqualToString:@"YES"]) {
+                
+                [Intercom logEventWithName:@"created_instant_buy_listing" metaData: @{}];
+
                 [Intercom logEventWithName:@"listed_item" metaData: @{
                                                                       @"instantBuy": @YES,
                                                                       @"category":[self.postingItem objectForKey:@"category"],
                                                                       @"currency":[self.postingItem objectForKey:@"currency"],
-                                                                      @"itemId":self.postingItem.objectId,
                                                                       @"salePrice": @([[self.postingItem objectForKey:@"salePriceUSD"]floatValue]),
                                                                       @"shippingPrice":@([[self.postingItem objectForKey:@"nationalShippingPrice"]floatValue])
                                                                       }];
                 
-                [mixpanel track:@"listed_item" properties:@{
+                [mixpanel track:@"Listed an Item" properties:@{
                                                                @"instantBuy": @YES,
+                                                               @"globalShippingEnabled" : [self.postingItem objectForKey:@"globalShipping"],
                                                                @"category":[self.postingItem objectForKey:@"category"],
                                                                @"currency":[self.postingItem objectForKey:@"currency"],
-                                                               @"itemId":self.postingItem.objectId,
                                                                @"salePrice": @([[self.postingItem objectForKey:@"salePriceUSD"]floatValue]),
                                                                @"shippingPrice":@([[self.postingItem objectForKey:@"nationalShippingPrice"]floatValue])
                                                                }];
@@ -3216,15 +3273,14 @@
                                                                       @"instantBuy": @NO,
                                                                       @"category":[self.postingItem objectForKey:@"category"],
                                                                       @"currency":[self.postingItem objectForKey:@"currency"],
-                                                                      @"itemId":self.postingItem.objectId,
                                                                       @"salePrice": @([[self.postingItem objectForKey:@"salePriceUSD"]floatValue]),
                                                                       }];
                 
-                [mixpanel track:@"listed_item" properties:@{
+                [mixpanel track:@"Listed an Item" properties:@{
                                                             @"instantBuy": @NO,
+                                                            @"globalShippingEnabled" : @NO,
                                                             @"category":[self.postingItem objectForKey:@"category"],
                                                             @"currency":[self.postingItem objectForKey:@"currency"],
-                                                            @"itemId":self.postingItem.objectId,
                                                             @"salePrice": @([[self.postingItem objectForKey:@"salePriceUSD"]floatValue]),
                                                             }];
             }
@@ -3241,7 +3297,12 @@
             [Answers logCustomEventWithName:@"Created for sale listing"
                            customAttributes:@{}];
             
-
+            //show paypal drop down
+            if (self.showConnectPPPopUp) {
+                NSLog(@"show connect pp pop up after posting item");
+                [self showConnectPayPalDrop];
+            }
+            
             //schedule local notif. for first listing
             if (![[PFUser currentUser] objectForKey:@"forSalePostNumber"]) {
                 
@@ -3254,91 +3315,97 @@
                     }
                 }
                 
-                //local notifications set up
-                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                dayComponent.day = 1;
-                NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-                
-                // Create new date
-                NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
-                                                               fromDate:dateToFire];
-                
-                NSDateComponents *components3 = [[NSDateComponents alloc] init];
-                
-                [components3 setYear:components1.year];
-                [components3 setMonth:components1.month];
-                [components3 setDay:components1.day];
-                
-                [components3 setHour:20];
-                
-                // Generate a new NSDate from components3.
-                NSDate * combinedDate = [theCalendar dateFromComponents:components3];
-                
-                UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-                [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]; //make sure this matches the app delegate local notifications handler method
-                [localNotification setFireDate: combinedDate];
-                [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
-                [localNotification setRepeatInterval: 0];
-                [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+//                //local notifications set up
+//                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+//                dayComponent.day = 1;
+//                NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//                NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+//
+//                // Create new date
+//                NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
+//                                                               fromDate:dateToFire];
+//
+//                NSDateComponents *components3 = [[NSDateComponents alloc] init];
+//
+//                [components3 setYear:components1.year];
+//                [components3 setMonth:components1.month];
+//                [components3 setDay:components1.day];
+//
+//                [components3 setHour:20];
+//
+//                // Generate a new NSDate from components3.
+//                NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+//
+//                UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+//                [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]; //make sure this matches the app delegate local notifications handler method
+//                [localNotification setFireDate: combinedDate];
+//                [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+//                [localNotification setRepeatInterval: 0];
+//                [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
             }
             
-            [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
-            [[PFUser currentUser] saveInBackground];
-            
-            if ([[PFUser currentUser] objectForKey:@"facebookId"]) {
-                //send FB friends a push asking them to Bump listing!
-                NSLog(@"send fb push");
+            if (([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) && [[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
                 
-                NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just listed an item for sale - Like it now 👊", [[PFUser currentUser] objectForKey:@"fullname"]];
+                //just avoid doing anything with a team member's acc
+            }
+            else{
+                [[PFUser currentUser]incrementKey:@"forSalePostNumber"];
+                [[PFUser currentUser] saveInBackground];
                 
-                PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
-                [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
-                [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
-                [bumpedQuery whereKey:@"status" equalTo:@"live"]; //SET make sure update all bump objects (using dash) to have a live property so not using not equal to
-                [bumpedQuery whereKeyExists:@"user"];
-                [bumpedQuery includeKey:@"user"];
-                bumpedQuery.limit = 10;
-                [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                    if (objects) {
-                        //                                NSLog(@"these objects can be pushed to %@", objects);
-                        if (objects.count > 0) {
-                            //create safe date which is 3 days from now
-                            NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                            dayComponent.day = 3;
-                            NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                            NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-                            
-                            for (PFObject *bumpObj in objects) {
-                                [bumpObj setObject:safeDate forKey:@"safeDate"];
-                                [bumpObj incrementKey:@"timesBumped"];
-                                [bumpObj saveInBackground];
-                                PFUser *friendUser = [bumpObj objectForKey:@"user"];
+                if ([[PFUser currentUser] objectForKey:@"facebookId"]) {
+                    //send FB friends a push asking them to Bump listing!
+                    NSLog(@"send fb push");
+                    
+                    NSString *pushText = [NSString stringWithFormat:@"Your Facebook friend %@ just listed an item for sale - Like it now", [[PFUser currentUser] objectForKey:@"fullname"]];
+                    
+                    PFQuery *bumpedQuery = [PFQuery queryWithClassName:@"Bumped"];
+                    [bumpedQuery whereKey:@"facebookId" containedIn:[[PFUser currentUser]objectForKey:@"friends"]];
+                    [bumpedQuery whereKey:@"safeDate" lessThanOrEqualTo:[NSDate date]];
+                    [bumpedQuery whereKey:@"status" equalTo:@"live"]; //SET make sure update all bump objects (using dash) to have a live property so not using not equal to
+                    [bumpedQuery whereKeyExists:@"user"];
+                    [bumpedQuery includeKey:@"user"];
+                    bumpedQuery.limit = 10;
+                    [bumpedQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                        if (objects) {
+                            //                                NSLog(@"these objects can be pushed to %@", objects);
+                            if (objects.count > 0) {
+                                //create safe date which is 3 days from now
+                                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                                dayComponent.day = 3;
+                                NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                                NSDate *safeDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
                                 
-                                NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.postingItem.objectId};
-                                
-                                [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                                    if (!error) {
-                                        //                                                NSLog(@"push response %@", response);
-                                        [Answers logCustomEventWithName:@"Sent FB Friend a Bump Push"
-                                                       customAttributes:@{}];
-                                        [Answers logCustomEventWithName:@"Push Sent"
-                                                       customAttributes:@{
-                                                                          @"Type":@"FB Friend",
-                                                                          @"mode":@"WTS"
-                                                                          }];
-                                    }
-                                    else{
-                                        NSLog(@"push error %@", error);
-                                    }
-                                }];
+                                for (PFObject *bumpObj in objects) {
+                                    [bumpObj setObject:safeDate forKey:@"safeDate"];
+                                    [bumpObj incrementKey:@"timesBumped"];
+                                    [bumpObj saveInBackground];
+                                    PFUser *friendUser = [bumpObj objectForKey:@"user"];
+                                    
+                                    NSDictionary *params = @{@"userId": friendUser.objectId, @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"YES", @"listingID": self.postingItem.objectId};
+                                    
+                                    [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                                        if (!error) {
+                                            //                                                NSLog(@"push response %@", response);
+                                            [Answers logCustomEventWithName:@"Sent FB Friend a Bump Push"
+                                                           customAttributes:@{}];
+                                            [Answers logCustomEventWithName:@"Push Sent"
+                                                           customAttributes:@{
+                                                                              @"Type":@"FB Friend",
+                                                                              @"mode":@"WTS"
+                                                                              }];
+                                        }
+                                        else{
+                                            NSLog(@"push error %@", error);
+                                        }
+                                    }];
+                                }
                             }
                         }
-                    }
-                    else{
-                        NSLog(@"error finding relevant bumped obj's %@", error);
-                    }
-                }];
+                        else{
+                            NSLog(@"error finding relevant bumped obj's %@", error);
+                        }
+                    }];
+                }
             }
         }
         else{
@@ -3863,8 +3930,8 @@
 }
 
 -(void)hideBuyIntro{
-//    [[PFUser currentUser] setObject:@"YES" forKey:@"seenBuyIntro"];
-//    [[PFUser currentUser] saveInBackground];
+    [[PFUser currentUser] setObject:@"YES" forKey:@"seenBuyIntro"];
+    [[PFUser currentUser] saveInBackground];
     
     [UIView animateWithDuration:0.3
                           delay:0
@@ -3888,9 +3955,777 @@
                      completion:^(BOOL finished) {
                          //Completion Block
                          self.alertShowing = NO;
+                         self.buyIntroShowing = NO;
+                         
                          [self.buyIntroView setAlpha:0.0];
                          self.buyIntroView = nil;
                      }];
 }
 
+#pragma mark - paypal drop downs
+
+-(void)showConnectPayPalDrop{
+    
+    //mark this as seen
+    [[PFUser currentUser]setObject:@"YES" forKey:@"seenConnectPP"];
+    
+    //if user initally listed a proxy and have since listed something else then they don't need to see the drop down anymore
+    [[PFUser currentUser]setObject:@"NO" forKey:@"showPPConnect"];
+    [[PFUser currentUser]saveInBackground];
+    
+    [Answers logCustomEventWithName:@"Showing Connect PayPal"
+                   customAttributes:@{}];
+    
+    if (self.alertShowing == YES) {
+        return;
+    }
+    
+    self.alertShowing = YES;
+    self.connectPPShowing = YES;
+
+    self.bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.bgView.alpha = 0.0;
+    [self.bgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.bgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"ConnectPayPalView" owner:self options:nil];
+    self.connectPPView = (ConnectPayPalViewClass *)[nib objectAtIndex:0];
+    self.connectPPView.delegate = self;
+    [self.connectPPView setFrame:CGRectMake(([UIApplication sharedApplication].keyWindow.frame.size.width/2)-150, -400, 300, 395)];
+    
+    self.connectPPView.layer.cornerRadius = 10;
+    self.connectPPView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.connectPPView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            self.connectPPView.center = [UIApplication sharedApplication].keyWindow.center;
+                        }
+                     completion:nil];
+}
+
+-(void)hideConnectPayPal{
+    
+    //only hide the BG if we're not showing another alert
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.bgView = nil;
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.connectPPView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 395)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.connectPPShowing = NO;
+                         
+                         [self.connectPPView setAlpha:0.0];
+                         self.connectPPView = nil;
+                     }];
+}
+
+-(void)connectPressed{
+    [self showHUD];
+    
+    [self hideConnectPayPal];
+    
+    //onboard merchant with paypal
+    NSDictionary *params = @{
+                                   @"email": [[PFUser currentUser]objectForKey:@"email"],
+                                   @"currency":self.currency,
+                                   @"trackingId":[PFUser currentUser].objectId
+                                   };
+    
+    NSLog(@"params going to partner %@", params);
+    [PFCloud callFunctionInBackground:@"callPartnerAPI" withParameters:params block:^(NSString *urlString, NSError *error) {
+        if (!error) {
+            [self hideHUD];
+            urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+            NSLog(@"URL: %@", urlString);
+            
+            if (!self.addedPayPalObservers) {
+                self.addedPayPalObservers = YES;
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalURLReturned:) name:@"paypalOnboardingReturn" object:nil];
+            }
+            
+            //update user's IC profile so they receive auto message about paypal business account
+            ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+            userAttributes.customAttributes = @{@"on_paypal_signin" : @YES};
+            [Intercom updateUser:userAttributes];
+            
+            //trigger PayPal sign in
+            if (!self.paypalSafariView) {
+                self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
+                self.paypalSafariView.delegate = self;
+                if (@available(iOS 11.0, *)) {
+                    self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+                }
+                
+                if (@available(iOS 10.0, *)) {
+                    self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+                }
+            }
+            
+            [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:nil];
+        }
+        else{
+            [self hideHUD];
+            NSLog(@"error grabbing paypal link %@", error);
+        }
+    }];
+}
+
+-(void)remindMePressed{
+    [self hideConnectPayPal];
+}
+
+-(void)showPPConnectedSuccessView{
+    [Answers logCustomEventWithName:@"Showing Connected PayPal Success"
+                   customAttributes:@{}];
+    
+    self.bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.bgView.alpha = 0.0;
+    [self.bgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.bgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"mediumSizeAlert" owner:self options:nil];
+    self.connectedPPSuccessView = (mediumSizeAlertViewClass *)[nib objectAtIndex:0];
+    self.connectedPPSuccessView.delegate = self;
+    [self.connectedPPSuccessView setFrame:CGRectMake(([UIApplication sharedApplication].keyWindow.frame.size.width/2)-150, -350, 300, 339)];
+    
+    self.connectedPPSuccessView.connectedMode = YES;
+    
+    if (self.existingUserPPAlert) {
+        self.connectedPPSuccessView.mainLabel.text = @"Congrats, you've successfully connected your PayPal account!\n\nYou can now add a Buy button to your future & existing listings\n\nJust edit your listings and enable Buy Now";
+    }
+    
+    self.connectedPPSuccessView.layer.cornerRadius = 10;
+    self.connectedPPSuccessView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.connectedPPSuccessView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            self.connectedPPSuccessView.center = [UIApplication sharedApplication].keyWindow.center;
+                        }
+                     completion:nil];
+}
+
+-(void)showPPConnectedErrorView{
+    [Answers logCustomEventWithName:@"Showing Connected PayPal Error"
+                   customAttributes:@{}];
+    
+    self.bgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+    self.bgView.alpha = 0.0;
+    [self.bgView setBackgroundColor:[UIColor blackColor]];
+    [[UIApplication sharedApplication].keyWindow addSubview:self.bgView];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.6f;
+                     }
+                     completion:nil];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"mediumSizeAlert" owner:self options:nil];
+    self.connectedPPSuccessView = (mediumSizeAlertViewClass *)[nib objectAtIndex:0];
+    self.connectedPPSuccessView.delegate = self;
+    [self.connectedPPSuccessView setFrame:CGRectMake(([UIApplication sharedApplication].keyWindow.frame.size.width/2)-150, -350, 300, 339)];
+    
+    if (self.onboardingError) {
+        self.onboardingError = NO;
+        self.connectedPPSuccessView.onboardingError = YES;
+    }
+    else{
+        self.connectedPPSuccessView.connectErrorMode = YES;
+    }
+    
+    self.connectedPPSuccessView.layer.cornerRadius = 10;
+    self.connectedPPSuccessView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.connectedPPSuccessView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            self.connectedPPSuccessView.center = [UIApplication sharedApplication].keyWindow.center;
+                        }
+                     completion:nil];
+}
+
+-(void)showPPConnectBuyNowView{
+    [Answers logCustomEventWithName:@"Showing PayPal Buy Now Alert"
+                   customAttributes:@{}];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"mediumSizeAlert" owner:self options:nil];
+    self.ppAlertView = (mediumSizeAlertViewClass *)[nib objectAtIndex:0];
+    self.ppAlertView.delegate = self;
+    [self.ppAlertView setFrame:CGRectMake(([UIApplication sharedApplication].keyWindow.frame.size.width/2)-150, -350, 300, 339)];
+    
+    self.ppAlertView.alertMode = YES;
+    
+    self.ppAlertView.layer.cornerRadius = 10;
+    self.ppAlertView.layer.masksToBounds = YES;
+    
+    if (self.existingUserPPAlert) {
+        self.ppAlertView.normalAlertLabel.text = @"You must connect a PayPal account in order to use Buy Now\n\nBuy Now lets you add a Buy button to your listings and get paid through PayPal\n\nYou can do this on new & existing listings by enabling Buy Now";
+    }
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.ppAlertView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            self.ppAlertView.center = [UIApplication sharedApplication].keyWindow.center;
+                        }
+                     completion:nil];
+}
+
+-(void)hideMediumAlertAndBG:(BOOL)hide{
+    
+    //only hide the BG if we're not showing another alert
+    if (hide) {
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.bgView.alpha = 0.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.bgView = nil;
+                         }];
+    }
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.connectedPPSuccessView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 339)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.alertShowing = NO;
+                         
+                         [self.connectedPPSuccessView setAlpha:0.0];
+                         self.connectedPPSuccessView = nil;
+                     }];
+}
+
+-(void)hidePPBuyAlert{
+    
+    //only hide the BG if we're not showing another alert
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.bgView.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished) {
+                         self.bgView = nil;
+                     }];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.ppAlertView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 339)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.alertShowing = NO;
+                         
+                         [self.ppAlertView setAlpha:0.0];
+                         self.ppAlertView = nil;
+                     }];
+}
+
+-(void)mediumAlertButtonPressed:(NSString *)mode{
+    
+    //tells us what mode the alert is in when the main button was pressed so we can act accordingly
+    if ([mode isEqualToString:@"error"]) {
+        
+        //hide this alert
+        [self hideMediumAlertAndBG:YES];
+
+        //then retry pp connection
+        [self connectPressed];
+    }
+    else if([mode isEqualToString:@"connected"]){
+        //dismiss
+        [self hideMediumAlertAndBG:YES];
+    }
+    else if([mode isEqualToString:@"normal"]){
+        //dismiss
+        [self hidePPBuyAlert];
+    }
+}
+
+-(void)mediumAlertRemindPressed:(NSString *)mode{
+    if ([mode isEqualToString:@"error"]) {
+        //show buy now alert
+        [self hideMediumAlertAndBG:NO];
+        [self showPPConnectBuyNowView];
+    }
+    else{
+        [self hideMediumAlertAndBG:YES];
+    }
+}
+
+#pragma mark - paypal safari delegate methods
+
+-(void)safariViewControllerDidFinish:(SFSafariViewController *)controller{
+    [self getPPAccountStatus];
+    self.paypalSafariView = nil;
+}
+
+-(void)removePPObservers{
+    self.addedPayPalObservers = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"paypalOnboardingReturn" object:nil];
+}
+
+-(void)paypalURLReturned:(NSNotification *)notif{
+    //user tapped button to return to BUMP
+    
+    [self removePPObservers];
+    
+    NSDictionary *params = [notif object];
+    
+    NSLog(@"paypal url returned with params %@", params);
+    
+    //check if key fields exist then if they're true
+    if ([params valueForKey:@"merchantIdInPayPal"] == nil || [params valueForKey:@"isEmailConfirmed"] == nil || [params valueForKey:@"permissionsGranted"] == nil) {
+        [Answers logCustomEventWithName:@"PayPal Return URL Error"
+                       customAttributes:@{}];
+        
+        [self showPPConnectedErrorView];
+        
+        //dismiss paypal onboarding safari view
+        [self.paypalSafariView dismissViewControllerAnimated:YES completion:nil];
+        
+        return;
+    }
+    
+    NSString *permissions = [params valueForKey:@"permissionsGranted"];
+    NSString *isEmailConfirmed = [params valueForKey:@"isEmailConfirmed"];
+    NSString *merchantId = [params valueForKey:@"merchantIdInPayPal"];
+    self.merchantId = merchantId;
+    
+    if([permissions isEqualToString:@"true"]){
+        //URL is enough to complete user's onboarding
+        if (![isEmailConfirmed isEqualToString:@"true"]) {
+            [Answers logCustomEventWithName:@"PayPal Confirm Email Warning"
+                           customAttributes:@{}];
+            
+            [self showAlertWithTitle:@"PayPal Email Verification" andMsg:@"You must tap the link in the confirmation email PayPal sent you to start accepting payments on BUMP"];
+        }
+        
+        self.paypalEnabled = YES;
+        [self showPPConnectedSuccessView];
+        
+        if (self.existingUserPPAlert) {
+            //this user is just connecting their pp
+            //no listing associalted
+            NSLog(@"just connecting existing user 1");
+        }
+        else if(self.postingItem){
+            //save info onto the listing
+            [self.postingItem setObject:merchantId forKey:@"paypalMerchantId"];
+            [self.postingItem setObject:@"YES" forKey:@"instantBuy"];
+            [self.postingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    [Answers logCustomEventWithName:@"Saved PayPal info on Listing"
+                                   customAttributes:@{
+                                                      @"method":@"PopUP URLParams"
+                                                      }];
+                    
+                }
+                else{
+                    [Answers logCustomEventWithName:@"Error Saving PayPal info on Listing"
+                                   customAttributes:@{
+                                                      @"method":@"PopUP URLParams"
+                                                      }];
+                }
+            }];
+        }
+
+        
+        //save paypal info to user
+        [[PFUser currentUser]setObject:@"YES" forKey:@"paypalEnabled"];
+        [[PFUser currentUser]setObject:merchantId forKey:@"paypalMerchantId"];
+        [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            if (succeeded) {
+                
+                Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                [mixpanel track:@"Connected PayPal" properties:@{
+                                                                 @"where":@"Home",
+                                                                 @"userType":[NSNumber numberWithBool:self.existingUserPPAlert]
+                                                                 }];
+                
+                NSLog(@"saved paypal info on user");
+                [Answers logCustomEventWithName:@"Saved PayPal info on User"
+                               customAttributes:@{
+                                                  @"method":@"PopUP URLParams"
+                                                  }];
+            }
+            else{
+                NSLog(@"error saving paypal info on user %@", error);
+                
+                [self showPPConnectedErrorView];
+                
+//                [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
+                
+                [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
+                               customAttributes:@{
+                                                  @"method":@"PopUP URLParams"
+                                                  }];
+            }
+        }];
+        
+        //dismiss paypal onboarding safari view
+        [self.paypalSafariView dismissViewControllerAnimated:YES completion:nil];
+    }
+    else{
+        //URL doesn't tell the full story
+        //call account status GET func
+        //dismiss paypal onboarding safari view
+        [self.paypalSafariView dismissViewControllerAnimated:YES completion:nil];
+        
+        [self getPPAccountStatusWithMerchId:merchantId];
+    }
+}
+
+-(void)getPPAccountStatusWithMerchId:(NSString *)merchId{
+    //when we have the merchId we call a diff function that only makes one GET to PayPal since we already have the merchantId from the url returned
+    [self showHUD];
+    
+    NSDictionary *params = @{
+                             @"merchantId":merchId
+                             };
+    
+    [PFCloud callFunctionInBackground:@"getAccStatusWithMerchId" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            [self hideHUD];
+            
+            BOOL permissionsGranted = [[response valueForKey:@"recievable"]boolValue];
+            BOOL emailConfirmed = [[response valueForKey:@"email"]boolValue];
+            NSString *merchId = [response valueForKey:@"merchantId"];
+            
+            NSLog(permissionsGranted ? @"pp permissions granted" : @"pp permissions NOT granted");
+            NSLog(emailConfirmed ? @"pp email confirmed" : @"pp email NOT confirmed");
+            NSLog(@"merchant ID: %@", merchId);
+            
+            //now check if response is good to go
+            if ([response valueForKey:@"recievable"] && [response valueForKey:@"merchantId"]) {
+                
+                if (permissionsGranted == YES) {
+                    
+                    if (emailConfirmed != YES) {
+                        [Answers logCustomEventWithName:@"PayPal Confirm Email Warning"
+                                       customAttributes:@{}];
+                        
+                        [self showAlertWithTitle:@"PayPal Email Verification" andMsg:@"You must tap the link in the confirmation email PayPal sent you to start accepting payments on BUMP"];
+                    }
+                    
+                    self.paypalEnabled = YES;
+                    [self showPPConnectedSuccessView];
+                    
+                    if (self.existingUserPPAlert) {
+                        //this user is just connecting their pp
+                        //no listing associalted
+                        NSLog(@"just connecting existing user 2");
+                    }
+                    else if(self.postingItem){
+                        //save info onto the listing
+                        [self.postingItem setObject:merchId forKey:@"paypalMerchantId"];
+                        [self.postingItem setObject:@"YES" forKey:@"instantBuy"];
+                        [self.postingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                            if (succeeded) {
+                                [Answers logCustomEventWithName:@"Saved PayPal info on Listing"
+                                               customAttributes:@{
+                                                                  @"method":@"PopUP URLParams"
+                                                                  }];
+                                
+                            }
+                            else{
+                                [Answers logCustomEventWithName:@"Error Saving PayPal info on Listing"
+                                               customAttributes:@{
+                                                                  @"method":@"PopUP URLParams"
+                                                                  }];
+                            }
+                        }];
+                    }
+
+                    //save paypal info to user
+                    [[PFUser currentUser]setObject:@"YES" forKey:@"paypalEnabled"];
+                    [[PFUser currentUser]setObject:merchId forKey:@"paypalMerchantId"];
+                    [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            
+                            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                            [mixpanel track:@"Connected PayPal" properties:@{
+                                                                             @"where":@"Home",
+                                                                             @"userType":[NSNumber numberWithBool:self.existingUserPPAlert]
+                                                                             }];
+                            
+                            NSLog(@"saved paypal info on user");
+                            [Answers logCustomEventWithName:@"Saved PayPal info on User"
+                                           customAttributes:@{
+                                                              @"method":@"PopUP GETFunc"
+                                                              }];
+                        }
+                        else{
+                            NSLog(@"error saving paypal info on user %@", error);
+                            
+                            [self showPPConnectedErrorView];
+
+//                            [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
+                            
+                            [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
+                                           customAttributes:@{
+                                                              @"method":@"PopUP GETFunc"
+                                                              }];
+                        }
+                    }];
+                }
+                else{
+                    //user hasn't granted correct permissions
+                    [self showPPConnectedErrorView];
+
+//                    [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Ensure you've ticked the box upon PayPal on boarding to grant the relevant permissions to sell on BUMP. If you need any help just send Support a message from Settings"];
+                    
+                    [Answers logCustomEventWithName:@"PayPal Error"
+                                   customAttributes:@{
+                                                      @"type":@"PopUP User hasn't granted permissions"
+                                                      }];
+                }
+            }
+            else{
+                //don't have receivable & merchant Id info in response, ask them to try again
+                [self showPPConnectedErrorView];
+
+//                [self showAlertWithTitle:@"PayPal Error" andMsg:@"We couldn't get your account info, please try enabling Instant Buy again"];
+                
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"No receivable / merchant ID in response"
+                                                  }];
+            }
+        }
+        else{
+            [self hideHUD];
+
+            NSLog(@"error getting the account status %@", error);
+            
+            if ([error.description isEqualToString:@"onboarding error"]) {
+                [Answers logCustomEventWithName:@"PayPal Onboarding Error"
+                               customAttributes:@{
+                                                  @"type":@"PopUP Error getting account status",
+                                                  @"where":@"create 1"
+                                                  }];
+                self.onboardingError = YES;
+                [self showPPConnectedErrorView];
+            }
+            else{
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"PopUP Error getting account status",
+                                                  @"where":@"create 1"
+                                                  }];
+                [self showPPConnectedErrorView];
+            }
+        }
+    }];
+}
+
+
+-(void)getPPAccountStatus{
+    NSLog(@"get pp account status");
+    
+    [self showHUD];
+    
+    NSDictionary *params = @{
+                             @"trackingId":[PFUser currentUser].objectId
+                             };
+    
+    [PFCloud callFunctionInBackground:@"getAccountStatus" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            [self hideHUD];
+            
+            BOOL permissionsGranted = [[response valueForKey:@"recievable"]boolValue];
+            BOOL emailConfirmed = [[response valueForKey:@"email"]boolValue];
+            NSString *merchId = [response valueForKey:@"merchantId"];
+            
+            NSLog(permissionsGranted ? @"pp permissions granted" : @"pp permissions NOT granted");
+            NSLog(emailConfirmed ? @"pp email confirmed" : @"pp email NOT confirmed");
+            NSLog(@"merchant ID: %@", merchId);
+            
+            //now check if response is good to go
+            if ([response valueForKey:@"recievable"] && [response valueForKey:@"merchantId"]) {
+                
+                if (permissionsGranted == YES) {
+                    
+                    if (emailConfirmed != YES) {
+                        [Answers logCustomEventWithName:@"PayPal Confirm Email Warning"
+                                       customAttributes:@{}];
+                        
+                        [self showAlertWithTitle:@"PayPal Warning" andMsg:@"You must tap the link in the confirmation email PayPal sent you to start accepting payments on BUMP"];
+                    }
+                    
+                    self.paypalEnabled = YES;
+                    [self showPPConnectedSuccessView];
+                    
+                    if (self.existingUserPPAlert) {
+                        //this user is just connecting their pp
+                        //no listing associalted
+                        NSLog(@"just connecting existing user 3");
+                    }
+                    else if(self.postingItem){
+                        //save info onto the listing
+                        [self.postingItem setObject:merchId forKey:@"paypalMerchantId"];
+                        [self.postingItem setObject:@"YES" forKey:@"instantBuy"];
+                        [self.postingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                            if (succeeded) {
+                                [Answers logCustomEventWithName:@"Saved PayPal info on Listing"
+                                               customAttributes:@{
+                                                                  @"method":@"PopUP URLParams"
+                                                                  }];
+                                
+                            }
+                            else{
+                                [Answers logCustomEventWithName:@"Error Saving PayPal info on Listing"
+                                               customAttributes:@{
+                                                                  @"method":@"PopUP URLParams"
+                                                                  }];
+                            }
+                        }];
+                    }
+
+                    //save paypal info to user
+                    [[PFUser currentUser]setObject:@"YES" forKey:@"paypalEnabled"];
+                    [[PFUser currentUser]setObject:merchId forKey:@"paypalMerchantId"];
+                    [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            
+                            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                            [mixpanel track:@"Connected PayPal" properties:@{
+                                                                             @"where":@"Home",
+                                                                             @"userType":[NSNumber numberWithBool:self.existingUserPPAlert]
+                                                                             }];
+                            
+                            NSLog(@"saved paypal info on user");
+                            [Answers logCustomEventWithName:@"Saved PayPal info on User"
+                                           customAttributes:@{
+                                                              @"method":@"PopUP GETFunc"
+                                                              }];
+                        }
+                        else{
+                            NSLog(@"error saving paypal info on user %@", error);
+                            
+                            [self showPPConnectedErrorView];
+
+//                            [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
+                            
+                            
+                            [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
+                                           customAttributes:@{
+                                                              @"method":@"PopUP GETFunc"
+                                                              }];
+                        }
+                    }];
+                }
+                else{
+                    //user hasn't granted correct permissions
+                    [self showPPConnectedErrorView];
+
+//                    [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Ensure you've ticked the box upon PayPal on boarding to grant the relevant permissions to sell on BUMP. If you need any help just send Support a message from Settings"];
+                    
+                    [Answers logCustomEventWithName:@"PayPal Error"
+                                   customAttributes:@{
+                                                      @"type":@"PopUP User hasn't granted permissions"
+                                                      }];
+                }
+            }
+            else{
+                //don't have receivable & merchant Id info in response, ask them to try again
+                [self showPPConnectedErrorView];
+
+//                [self showAlertWithTitle:@"PayPal Error" andMsg:@"We couldn't get your account info, please try enabling Instant Buy again"];
+                
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"PopUP No receivable / merchant ID in response"
+                                                  }];
+            }
+        }
+        else{
+            [self hideHUD];
+
+            NSLog(@"error getting the account status %@", error);
+            
+            if ([error.description isEqualToString:@"onboarding error"]) {
+                [Answers logCustomEventWithName:@"PayPal Onboarding Error"
+                               customAttributes:@{
+                                                  @"type":@"PopUP Error getting account status",
+                                                  @"where":@"create 2"
+                                                  }];
+                self.onboardingError = YES;
+                [self showPPConnectedErrorView];
+            }
+            else{
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"PopUP Error getting account status",
+                                                  @"where":@"create 2"
+                                                  }];
+                [self showPPConnectedErrorView];
+            }
+        }
+    }];
+}
 @end

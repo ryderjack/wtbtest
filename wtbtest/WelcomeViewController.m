@@ -50,10 +50,6 @@
 }
 
 - (IBAction)facebookTapped:(id)sender {
-    [Answers logCustomEventWithName:@"Sign up Pressed"
-                   customAttributes:@{
-                                      @"type":@"Facebook"
-                                      }];
     
     self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
     self.hud.square = YES;
@@ -69,6 +65,12 @@
             
         } else if (user.isNew) {
             NSLog(@"New user signed up and logged in through Facebook!");
+            
+            [Answers logCustomEventWithName:@"Sign up Pressed"
+                           customAttributes:@{
+                                              @"type":@"Facebook"
+                                              }];
+            
             //take to reg VC & save data
             RegisterViewController *vc = [[RegisterViewController alloc]init];
             vc.user = user;
@@ -134,6 +136,12 @@
                     
                     if ([[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"] ) { //CHECK
                         
+                        [Answers logCustomEventWithName:@"Logged In"
+                                       customAttributes:@{
+                                                          @"via":@"Facebook",
+                                                          @"username": [PFUser currentUser].username
+                                                          }];
+                        
                         //set user as tabUser
                         AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
                         appDelegate.profileView.user = user;
@@ -176,6 +184,13 @@
                     }
                     else{
                         //haven't completed it take them there
+                        
+                        [Answers logCustomEventWithName:@"Logged In"
+                                       customAttributes:@{
+                                                          @"via":@"Facebook",
+                                                          @"incompleteReg": @"YES"
+                                                          }];
+                        
                         RegisterViewController *vc = [[RegisterViewController alloc]init];
                         vc.user = user;
                         [self.navigationController pushViewController:vc animated:YES];

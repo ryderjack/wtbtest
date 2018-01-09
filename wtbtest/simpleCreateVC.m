@@ -16,6 +16,7 @@
 #import "CreateViewController.h"
 #import "CreateForSaleListing.h"
 #import "mainApprovedSellerController.h"
+#import "Mixpanel/Mixpanel.h"
 
 @interface simpleCreateVC ()
 @end
@@ -956,6 +957,9 @@
         if (succeeded) {
             
             NSLog(@"listing saved! %@", self.listing.objectId);
+            
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"WTB Created" properties:@{}];
             
             self.createdListing = YES;
             self.savingListing = NO;

@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
-        <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <customFonts key="customFonts">
@@ -62,7 +61,7 @@
                     <nil key="highlightedColor"/>
                 </label>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="FEE-8I-U77">
-                    <rect key="frame" x="70" y="108" width="40" height="40"/>
+                    <rect key="frame" x="70" y="107.5" width="40" height="40"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="40" id="cEP-b4-pBl"/>
                         <constraint firstAttribute="width" constant="40" id="w4w-T1-iaB"/>
@@ -75,7 +74,7 @@
                     </connections>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4W8-C1-dLq">
-                    <rect key="frame" x="118" y="108" width="40" height="40"/>
+                    <rect key="frame" x="118" y="107.5" width="40" height="40"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="5IS-dw-4F0"/>
                         <constraint firstAttribute="height" constant="40" id="yYe-lk-Rh5"/>
@@ -88,7 +87,7 @@
                     </connections>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tD0-6C-YOh">
-                    <rect key="frame" x="166" y="108" width="40" height="40"/>
+                    <rect key="frame" x="166" y="107.5" width="40" height="40"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="7H0-uC-WOc"/>
                         <constraint firstAttribute="height" constant="40" id="IPQ-Jv-1sv"/>
@@ -101,7 +100,7 @@
                     </connections>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="SpV-8h-QPB">
-                    <rect key="frame" x="214" y="108" width="40" height="40"/>
+                    <rect key="frame" x="214" y="107.5" width="40" height="40"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="40" id="Vfc-qZ-NhW"/>
                         <constraint firstAttribute="width" constant="40" id="zzq-Gb-mlc"/>
@@ -114,7 +113,7 @@
                     </connections>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="QrE-mD-kH1">
-                    <rect key="frame" x="262" y="108" width="40" height="40"/>
+                    <rect key="frame" x="262" y="107.5" width="40" height="40"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="QiA-EG-hhe"/>
                         <constraint firstAttribute="height" constant="40" id="Qio-bP-vUV"/>
@@ -126,8 +125,8 @@
                         <action selector="fifthStarPressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="grK-j4-2ON"/>
                     </connections>
                 </button>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tell us how you're finding Bump so we can make it even better!" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dCY-dF-9jS">
-                    <rect key="frame" x="38" y="62" width="299" height="37"/>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tell us how you're finding BUMP so we can make it even better" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dCY-dF-9jS">
+                    <rect key="frame" x="38" y="62" width="299" height="36.5"/>
                     <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
                     <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                     <nil key="highlightedColor"/>

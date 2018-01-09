@@ -391,7 +391,7 @@
             if (objects.count == 0) {
                 NSLog(@"no purchased");
                 //show no results label
-                if (!self.noResultsLabel) {
+                if (!self.noResultsLabel && self.segmentedControl.selectedSegmentIndex == 0) {
                     self.noResultsLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.tableView.frame.size.width/2) - 150, (self.tableView.frame.size.height/2) - 150, 300, 300)];
                     self.noResultsLabel.numberOfLines = 0;
                     self.noResultsLabel.textAlignment = NSTextAlignmentCenter;
@@ -400,6 +400,7 @@
                     [self.noResultsLabel setTextColor:[UIColor lightGrayColor]];
                     self.noResultsLabel.text = @"Items you've Purchased on BUMP appear here";
                     [self.tableView addSubview:self.noResultsLabel];
+                    [self.noResultsLabel setHidden:YES];
                 }
                 if (self.segmentedControl.selectedSegmentIndex == 0) {
                     [self.noResultsLabel setHidden:NO];
@@ -527,7 +528,7 @@
             if (objects.count == 0) {
                 NSLog(@"no sold");
                 //show no results label
-                if (!self.noResultsLabel) {
+                if (!self.noResultsLabel && self.segmentedControl.selectedSegmentIndex == 1) {
                     self.noResultsLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.tableView.frame.size.width/2) - 150, (self.tableView.frame.size.height/2) - 150, 300, 300)];
                     self.noResultsLabel.numberOfLines = 0;
                     self.noResultsLabel.textAlignment = NSTextAlignmentCenter;
@@ -536,6 +537,7 @@
                     [self.noResultsLabel setTextColor:[UIColor lightGrayColor]];
                     self.noResultsLabel.text = @"Items you've Sold on BUMP appear here";
                     [self.tableView addSubview:self.noResultsLabel];
+                    [self.noResultsLabel setHidden:YES];
                 }
                 if (self.segmentedControl.selectedSegmentIndex == 1) {
                     [self.noResultsLabel setHidden:NO];
@@ -830,7 +832,7 @@
                     [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
                 }
                 else if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
-                    cell.bottomLabel.text = @"Leave review";
+                    cell.bottomLabel.text = @"Leave Feedback";
                     [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
                 }
                 else if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
@@ -857,7 +859,7 @@
                     [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
                 }
                 else if ([[order objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
-                    cell.bottomLabel.text = @"Leave review";
+                    cell.bottomLabel.text = @"Leave Feedback";
                     [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
                 }
                 else if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
@@ -1007,13 +1009,23 @@
         }
         else{
             //show no results
-            if (self.supportMode) {
-                self.noResultsLabel.text = @"No Open Tickets\n\nOpen a support ticket from an order summary page on BUMP";
+            
+            if (!self.noResultsLabel) {
+                self.noResultsLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.tableView.frame.size.width/2) - 150, (self.tableView.frame.size.height/2) - 150, 300, 300)];
+                self.noResultsLabel.numberOfLines = 0;
+                self.noResultsLabel.textAlignment = NSTextAlignmentCenter;
+                
+                [self.noResultsLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
+                [self.noResultsLabel setTextColor:[UIColor lightGrayColor]];
+                
+                self.noResultsLabel.text = @"Items you've Purchased on BUMP appear here";
+                
+                [self.tableView addSubview:self.noResultsLabel];
             }
             else{
                 self.noResultsLabel.text = @"Items you've Purchased on BUMP appear here";
+                [self.noResultsLabel setHidden:NO];
             }
-            [self.noResultsLabel setHidden:NO];
         }
     }
     else{
@@ -1023,14 +1035,24 @@
             [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UITableViewScrollPositionTop animated:YES];
         }
         else{
-            //show no results
-            if (self.supportMode) {
-                self.noResultsLabel.text = @"No Closed Tickets\n\nWhen your issues have been resolved, they'll appear here";
+            
+            if (!self.noResultsLabel) {
+                self.noResultsLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.tableView.frame.size.width/2) - 150, (self.tableView.frame.size.height/2) - 150, 300, 300)];
+                self.noResultsLabel.numberOfLines = 0;
+                self.noResultsLabel.textAlignment = NSTextAlignmentCenter;
+                
+                [self.noResultsLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
+                [self.noResultsLabel setTextColor:[UIColor lightGrayColor]];
+                
+                self.noResultsLabel.text = @"Items you've Sold on BUMP appear here";
+                
+                [self.tableView addSubview:self.noResultsLabel];
             }
             else{
+                
                 self.noResultsLabel.text = @"Items you've Sold on BUMP appear here";
+                [self.noResultsLabel setHidden:NO];
             }
-            [self.noResultsLabel setHidden:NO];
         }
     }
 }

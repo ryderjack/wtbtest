@@ -20,8 +20,8 @@
     self.navigationItem.title = @"A D D R E S S";
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
-    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"customBack"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
-    self.navigationItem.leftBarButtonItem = cancelButton;
+    self.cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"customBack"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
+    self.navigationItem.leftBarButtonItem = self.cancelButton;
     
     self.nameCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.buildingCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -47,7 +47,12 @@
     
     self.currentUser = [PFUser currentUser];
     
-    self.nameField.text = [self.currentUser objectForKey:@"fullname"];
+    if ([self.currentUser objectForKey:@"addressName"]) {
+        self.nameField.text = [self.currentUser objectForKey:@"addressName"];
+    }
+    else{
+        self.nameField.text = [self.currentUser objectForKey:@"fullname"];
+    }
     
     //add country picker to textfield
     self.picker = [[CountryPicker alloc]init];
@@ -97,8 +102,6 @@
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
-    
-    
 }
 
 -(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
@@ -154,9 +157,6 @@
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
 
-//    if (indexPath.row == 6) {
-//        return 99;
-//    }
     return 44;
 }
 
@@ -199,11 +199,12 @@
     NSString *line1 = [self.addressLine1.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     NSString *line2 = [self.addressLine2.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
-    NSString *addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@\n%@",[self.currentUser objectForKey:@"fullname"], self.addressLine1.text, self.addressLine2.text,self.cityField.text,self.postcodeField.text,self.countryField.text];
+    NSString *addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@\n%@",self.nameField.text, self.addressLine1.text, self.addressLine2.text,self.cityField.text,self.postcodeField.text,self.countryField.text];
 
     if ([name isEqualToString:@""] || [line1 isEqualToString:@""]|| [line2 isEqualToString:@""]|| [postcode isEqualToString:@""] || [country isEqualToString:@""] || [city isEqualToString:@""]) {
         
         [self.delegate addedAddress:addressString withName:self.nameField.text withLineOne:self.addressLine1.text withLineTwo:self.addressLine2.text withCity:self.cityField.text withCountry:self.picker.selectedCountryCode fullyEntered:NO];
+        self.somethingMissing = YES;
     }
     else{
         //pass back & save to current user
@@ -214,6 +215,10 @@
     }
     
     //set what we have on the user object
+    if (![name isEqualToString:@""] && name.length > 3) {
+        [self.currentUser setObject:[self.nameField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"addressName"];
+    }
+    
     if (![line1 isEqualToString:@""]) {
         [self.currentUser setObject:[self.addressLine1.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"lineOne"];
     }
@@ -237,7 +242,12 @@
     
     [self.currentUser saveInBackground];
     
-    [self.navigationController popViewControllerAnimated:YES];
+    if (self.somethingMissing) {
+        [self showMissingAlert];
+    }
+    else{
+        [self.navigationController popViewControllerAnimated:YES];
+    }
 }
 
 -(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
@@ -246,6 +256,22 @@
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)showMissingAlert{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Information missing" message:@"Would you like to leave this page or stay and complete your shipping address?" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Stay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self.cancelButton setEnabled:YES];
+        self.somethingMissing = NO;
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Leave" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self.navigationController popViewControllerAnimated:YES];
+    }]];
+    
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
@@ -265,6 +291,7 @@
 
     self.numberField.inputAccessoryView = keyboardToolbar;
     self.countryField.inputAccessoryView = keyboardToolbar;
+    
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath

@@ -122,12 +122,12 @@
 -(void)viewDidAppear:(BOOL)animated{
     if ([self.setting isEqualToString:@"sizeclothing"]||[self.setting isEqualToString:@"sizefoot"]){
         if (self.sellListing == YES) {
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenMultipleSellPrompt1"] != YES) {
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenMultipleSellPrompt1"] != YES && !self.dontShowMultipleAlert) {
                 [self showMultipleALert];
             }
         }
         else{
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenMultipleWantPrompt"] != YES) {
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenMultipleWantPrompt"] != YES && !self.dontShowMultipleAlert) {
                 [self showMultipleALert];
             }
         }
@@ -208,7 +208,7 @@
         }
         
         if (self.viewingMode) {
-            self.cell.textLabel.text = [self.viewingArray objectAtIndex:indexPath.row];
+            self.cell.textLabel.text = [NSString stringWithFormat:@"%@",[self.viewingArray objectAtIndex:indexPath.row]];//was seeing crash here, since added string with format to ensure its a string
             [self.cell.segmentControl setHidden:YES];
             self.cell.accessoryType = UITableViewCellAccessoryNone;
         }

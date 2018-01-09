@@ -41,20 +41,17 @@
     self.locationLabelCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.bioCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.currencySwipeCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.paypalEmailCell.selectionStyle = UITableViewCellSelectionStyleNone;
-
+    
     self.contactEmailField.delegate = self;
     self.firstNameField.delegate = self;
     self.lastNameField.delegate = self;
     self.bioField.delegate = self;
-    self.paypalTextField.delegate = self;
-
+    
     self.profanityList = @[@"fuck",@"fucking",@"shitting", @"cunt", @"sex", @"wanker", @"nigger", @"penis", @"cock", @"shit", @"dick", @"bastard", @"bump", @"terrible", @"bad", @"depop", @"grailed", @"ebay"];
     self.currencyArray = @[@"GBP", @"USD", @"EUR", @"AUD"];
     
     self.currentUser = [PFUser currentUser];
-    NSLog(@"current user: %@",self.currentUser);
-
+    
     //currency swipe view
     self.currencySwipeView.delegate = self;
     self.currencySwipeView.dataSource = self;
@@ -77,7 +74,7 @@
     
     [self setImageBorder:self.testingView];
     
-    self.currentPaypal = [self.currentUser objectForKey:@"paypal"];
+    //    self.currentPaypal = [self.currentUser objectForKey:@"paypal"];
     self.currentContact = [self.currentUser objectForKey:@"email"];
     
     self.usernameLabel.text = [NSString stringWithFormat:@"@%@",self.currentUser.username];
@@ -95,14 +92,14 @@
     
     
     //check paypal status
-//    if ([[self.currentUser objectForKey:@"paypalEnabled"]isEqualToString:@"YES"]) {
-//        self.paypalAccountLabel.text = @"Connected";
-//        self.paypalConnected = YES;
-//    }
-//    else{
-//        self.paypalAccountLabel.text = @"Add Account";
-//    }
-
+    if ([[self.currentUser objectForKey:@"paypalEnabled"]isEqualToString:@"YES"]) {
+        self.paypalAccountLabel.text = @"Connected";
+        self.paypalConnected = YES;
+    }
+    else{
+        self.paypalAccountLabel.text = @"Add Account";
+    }
+    
     
     //check if got a bio
     if ([self.currentUser objectForKey:@"bio"]) {
@@ -124,8 +121,7 @@
     }
     
     self.contactEmailField.text = [NSString stringWithFormat:@"%@",self.currentContact];
-    self.paypalTextField.text = [NSString stringWithFormat:@"%@",self.currentPaypal];
-
+    
     if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
         //CMO switch setup
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"CMOModeOn"]==YES) {
@@ -164,18 +160,18 @@
     }
     else{
         self.changePictureLabel.text = @"Change profile picture";
-
+        
         [self.testingView setFile:[self.currentUser objectForKey:@"picture"]];
         [self.testingView loadInBackground];
     }
-
+    
     //setup notifications
     
     //check if any push on
     if ([[UIApplication sharedApplication] isRegisteredForRemoteNotifications]) {
         [self.pushStatusButton setEnabled:NO];
         [self.pushStatusButton setTitle:@"Push enabled" forState:UIControlStateNormal];
-
+        
         //push is on
         //check if already ignoring like pushes
         if ([[self.currentUser objectForKey:@"ignoreLikePushes"]isEqualToString:@"YES"]) {
@@ -208,7 +204,7 @@
         [self.likeSwitch setEnabled:NO];
         [self.fbFriendSwitch setEnabled:NO];
     }
-
+    
     
     [Answers logCustomEventWithName:@"Viewed page"
                    customAttributes:@{
@@ -267,7 +263,7 @@
         return 3;
     }
     else{
-       return 0;
+        return 0;
     }
 }
 
@@ -294,7 +290,7 @@
             return self.contactEmailCell;
         }
         else if (indexPath.row == 1) {
-            return self.paypalEmailCell;
+            return self.emailCell;
         }
         else if (indexPath.row == 2) {
             return self.pictureCelll;
@@ -305,11 +301,11 @@
             return self.currencySwipeCell;
         }
     }
-//    else if (indexPath.section == 3){
-//        if (indexPath.row == 0) {
-//            return self.locationCell;
-//        }
-//    }
+    //    else if (indexPath.section == 3){
+    //        if (indexPath.row == 0) {
+    //            return self.locationCell;
+    //        }
+    //    }
     else if (indexPath.section == 3){
         if (indexPath.row == 0) {
             return self.notificationsCell;
@@ -334,11 +330,11 @@
     
     if (indexPath.section == 1) {
         if (indexPath.row == 1) {
-//            //goto shipping controller
-//            ShippingController *vc = [[ShippingController alloc]init];
-//            vc.delegate = self;
-//            vc.settingsMode = YES;
-//            [self.navigationController pushViewController:vc animated:YES];
+            //            //goto shipping controller
+            //            ShippingController *vc = [[ShippingController alloc]init];
+            //            vc.delegate = self;
+            //            vc.settingsMode = YES;
+            //            [self.navigationController pushViewController:vc animated:YES];
             if (self.paypalConnected) {
                 [self showPayPalSheet];
             }
@@ -346,7 +342,7 @@
                 [Answers logCustomEventWithName:@"Connect PayPal Pressed"
                                customAttributes:@{}];
                 
-                [self showAlertWithTitle:@"Connect PayPal" andMsg:@"Just enable Instant Buy when you next list an item for sale on BUMP and you'll be prompted to sign into PayPal & grant the relevant permissions. Got any questions? Just message Support from within the app or email hello@sobump.com"];
+                [self showAlertWithTitle:@"Connect PayPal" andMsg:@"Just enable Buy Now when you next list an item for sale on BUMP and you'll be prompted to sign into PayPal & grant the relevant permissions. Got any questions? Just message Support from within the app or email hello@sobump.com"];
             }
         }
         else if (indexPath.row == 2){
@@ -377,18 +373,18 @@
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Disconnect PayPal Account" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Disconnect PayPal Account" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         [Answers logCustomEventWithName:@"Disconnect PayPal Pressed"
                        customAttributes:@{}];
         
         [self disconnectPressed];
     }]];
-
+    
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
 -(void)disconnectPressed{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Disconnect PayPal?" message:@"Tapping Disconnect will switch Instant Buy off for any listings currently active meaning buyers will NOT be able to instantly purchase your items through BUMP. If you'd like to change your linked PayPal account you will have to disconnect and then add your new PayPal account."  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Disconnect PayPal?" message:@"Tapping Disconnect will switch Buy Now off for any listings currently active meaning buyers will NOT be able to instantly purchase your items through BUMP. If you'd like to change your linked PayPal account you will have to disconnect and then add your new PayPal account."  preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Disconnect" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         [self showHUD];
@@ -448,7 +444,7 @@
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
     self.profileImage = info[UIImagePickerControllerOriginalImage];
     [self showHUD];
-//    UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
+    //    UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
     UIImage *imageToSave = [self.profileImage scaleImageToSize:CGSizeMake(400, 400)];
     
     NSData* data = UIImageJPEGRepresentation(imageToSave, 0.7f);
@@ -463,7 +459,7 @@
                                           }];
     }
     else{
-//        self.testingView.image = nil;
+        //        self.testingView.image = nil;
         PFFile *filePicture = [PFFile fileWithName:@"picture.jpg" data:data];
         [filePicture saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
             if (succeeded) {
@@ -504,35 +500,126 @@
 }
 
 -(void)textFieldDidEndEditing:(UITextField *)textField{
-
+    
     //paypal
-    if (textField == self.paypalTextField && ![textField.text isEqualToString:@""]) {
-        [self.currentUser setObject:self.paypalTextField.text forKey:@"paypal"];
-        [self.currentUser setObject:@"YES" forKey:@"paypalUpdated"];
-        [self.currentUser saveInBackground];
-    }
-
+    //    if (textField == self.emailFields && ![textField.text isEqualToString:@""]) {
+    //        if ([self NSStringIsValidEmail:self.emailFields.text] == YES) {
+    //            [self.currentUser setObject:self.emailFields.text forKey:@"paypal"];
+    //            [self.currentUser setObject:@"YES" forKey:@"paypalUpdated"];
+    //
+    //            [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+    //                if (error.code == 203) {
+    //                    self.emailFields.text = self.currentPaypal;
+    //
+    //                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"This email address is already in use. Please try another email." preferredStyle:UIAlertControllerStyleAlert];
+    //
+    //                    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    //                    }]];
+    //
+    //                    [self presentViewController:alertView animated:YES completion:^{
+    //                    }];
+    //                }
+    //                else{
+    //                }
+    //            }];
+    //        }
+    //        else{
+    //            self.emailFields.text = self.currentPaypal;
+    //            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"Please enter a valid email address. If you think this is a mistake please get in touch!" preferredStyle:UIAlertControllerStyleAlert];
+    //
+    //            [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    //            }]];
+    //            [self presentViewController:alertView animated:YES completion:nil];
+    //        }
+    //    }
+    //
     if (textField == self.contactEmailField && ![textField.text isEqualToString:@""]){
-       
+        
         if ([self NSStringIsValidEmail:self.contactEmailField.text] == YES) {
-            [self.currentUser setObject:self.contactEmailField.text forKey:@"email"];
-            [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                if (error.code == 203) {
-                    self.contactEmailField.text = @"";
+            
+            NSString *email = [[self.contactEmailField.text lowercaseString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            
+            NSDictionary *params = @{@"email": email};
+            [PFCloud callFunctionInBackground:@"validateUsrEmail" withParameters:params block:^(NSString *response, NSError *error) {
+                if (!error) {
+                    
+                    NSLog(@"%@: email validation response %@",email,response);
+                    
+                    if([response isEqualToString:@"invalid"]){
+                        [Answers logCustomEventWithName:@"Invalid Email Entered"
+                                       customAttributes:@{
+                                                          @"response":response,
+                                                          @"where":@"Settings"
+                                                          }];
+                        
+                        self.contactEmailField.text = @"";
+                        
+                        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email #1" message:@"Please enter a valid email address. If you think this is a mistake please send BUMP Customer Service a message" preferredStyle:UIAlertControllerStyleAlert];
+                        
+                        [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                        }]];
+                        [self presentViewController:alertView animated:YES completion:nil];
+                    }
+                    else{
+                        [Answers logCustomEventWithName:@"Validate Email Settings success"
+                                       customAttributes:@{}];
+                        
+                        [self.currentUser setObject:email forKey:@"email"];
+                        [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                            if (error.code == 203) {
+                                self.contactEmailField.text = @"";
+                                
+                                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"This email address is already in use. Please try another email." preferredStyle:UIAlertControllerStyleAlert];
+                                
+                                [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                                }]];
+                                
+                                [self presentViewController:alertView animated:YES completion:nil];
+                            }
+                            else if(error){
+                                NSLog(@"error saving email %@", error);
+                            }
+                            else{
+                                NSLog(@"changed email!");
+                            }
+                        }];
+                    }
+                }
+                else{
+                    NSLog(@"email validator func error %@", email);
 
-                    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"This email address is already in use. Please try another email." preferredStyle:UIAlertControllerStyleAlert];
-                    
-                    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                    }]];
-                    
-                    [self presentViewController:alertView animated:YES completion:nil];
+                    //validator func failed but just continue trying to save email to not slow user down
+                    [Answers logCustomEventWithName:@"Validate Email Settings error"
+                                   customAttributes:@{
+                                                      @"error":error.description
+                                                      }];
+                        
+                    [self.currentUser setObject:email forKey:@"email"];
+                    [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (error.code == 203) {
+                            self.contactEmailField.text = @"";
+                            
+                            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"This email address is already in use. Please try another email." preferredStyle:UIAlertControllerStyleAlert];
+                            
+                            [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                            }]];
+                            
+                            [self presentViewController:alertView animated:YES completion:nil];
+                        }
+                        else if(error){
+                            NSLog(@"error saving email %@", error);
+                        }
+                        else{
+                            NSLog(@"changed email!");
+                        }
+                    }];
                 }
             }];
         }
         else{
             self.contactEmailField.text = @"";
             
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"Please enter a valid email address. If you think this is a mistake please send Team Bump a message!" preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Invalid email" message:@"Please enter a valid email address. If you think this is a mistake please send BUMP Customer Service a message" preferredStyle:UIAlertControllerStyleAlert];
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
             }]];
@@ -562,7 +649,7 @@
         NSString *stringCheck = [self.lastNameField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
         
         if (![stringCheck isEqualToString:@""] && ![[stringCheck lowercaseString] isEqualToString:@"bump"]) {
-
+            
             for (NSString *profan in self.profanityList) {
                 if ([[self.lastNameField.text lowercaseString] containsString:profan]) {
                     self.lastNameField.text = @"";
@@ -597,7 +684,11 @@
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
     
-    //limit chars
+    //limit chars but not for email field
+    if (textField == self.contactEmailField) {
+        return YES;
+    }
+    
     if ([self.profanityList containsObject:string]) {
         return  NO;
     }
@@ -613,7 +704,7 @@
 -(void)viewWillDisappear:(BOOL)animated{
     //fail safe
     [self hideHUD];
-
+    
     if (self.currencyChanged) {
         [self.currentUser  setObject:self.selectedCurrency forKey:@"currency"];
     }
@@ -739,7 +830,7 @@
         textLabel.text = @"Notifications";
     }
     else if (section == 0){
-        textLabel.text = @"Me";
+        textLabel.text = @"Profile";
     }
     
     return header;
@@ -913,6 +1004,7 @@
     [userQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             [[NSUserDefaults standardUserDefaults] setObject:object.objectId forKey:@"listUser"];
+            [self showAlertWithTitle:@"LOADED USER" andMsg:@"✅"];
         }
         else{
             [self.listAsSwitch setOn:NO];
@@ -1055,12 +1147,12 @@
 
 -(void)donePressed{
     //check push status
-//    double delayInSeconds = 5.0;
-//    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-//    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-//        [self checkPushStatus];
-//    });
-//    
+    //    double delayInSeconds = 5.0;
+    //    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    //    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+    //        [self checkPushStatus];
+    //    });
+    //
     [UIView animateWithDuration:0.3
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
@@ -1291,3 +1383,4 @@
 }
 
 @end
+

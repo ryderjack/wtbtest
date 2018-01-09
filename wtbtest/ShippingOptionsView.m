@@ -50,9 +50,15 @@
     if (self.globalPrice > 0.00) {
         self.globalTextfield.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol,self.globalPrice];
     }
+    else if(self.globalFree){
+        self.globalTextfield.text = @"Free";
+    }
     
     if (self.nationalPrice > 0.00) {
         self.nationalTextfield.text = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol,self.nationalPrice];
+    }
+    else if(self.nationalFree){
+        self.nationalTextfield.text = @"Free";
     }
     
     //add country picker to textfield
@@ -77,6 +83,10 @@
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:12],
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
+    
+    self.nationalTextfield.placeholder = [NSString stringWithFormat:@"%@0.00", self.currencySymbol];
+    self.globalTextfield.placeholder = [NSString stringWithFormat:@"%@0.00", self.currencySymbol];
+
 }
 
 - (void)didReceiveMemoryWarning {
@@ -112,7 +122,7 @@
             self.countryFooterLabel.textColor = [UIColor lightGrayColor];
 
             if (self.globalEnabled == NO) {
-                self.countryFooterLabel.text = @"Your item will still be visible to international buyers, but they won't be able to instantly purchase your item";
+                self.countryFooterLabel.text = @"Your item will still be visible to international buyers, but they won't see a Buy button on your item";
             }
             else{
                 self.countryFooterLabel.text = @"";
@@ -261,7 +271,19 @@
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     
-    [self.delegate shippingOptionsWithNational:self.nationalPrice withGlobal:self.globalPrice withGlobalEnabled:self.globalEnabled andCountry:self.country withCountryCode:self.countryCode];
+    //check if any shipping prices are free
+    if ([self.nationalTextfield.text isEqualToString:@"Free"] && [self.globalTextfield.text isEqualToString:@"Free"]) {
+        [self.delegate shippingOptionsWithNational:self.nationalPrice withGlobal:self.globalPrice withGlobalEnabled:self.globalEnabled andCountry:self.country withCountryCode:self.countryCode withFreeNational:YES withFreeGlobal:YES];
+    }
+    else if (![self.nationalTextfield.text isEqualToString:@"Free"] && [self.globalTextfield.text isEqualToString:@"Free"]) {
+        [self.delegate shippingOptionsWithNational:self.nationalPrice withGlobal:self.globalPrice withGlobalEnabled:self.globalEnabled andCountry:self.country withCountryCode:self.countryCode withFreeNational:NO withFreeGlobal:YES];
+    }
+    else if ([self.nationalTextfield.text isEqualToString:@"Free"] && ![self.globalTextfield.text isEqualToString:@"Free"]) {
+        [self.delegate shippingOptionsWithNational:self.nationalPrice withGlobal:self.globalPrice withGlobalEnabled:self.globalEnabled andCountry:self.country withCountryCode:self.countryCode withFreeNational:YES withFreeGlobal:NO];
+    }
+    else{
+        [self.delegate shippingOptionsWithNational:self.nationalPrice withGlobal:self.globalPrice withGlobalEnabled:self.globalEnabled andCountry:self.country withCountryCode:self.countryCode withFreeNational:NO withFreeGlobal:NO];
+    }
 }
 
 #pragma mark - Text field delegate methods
@@ -364,7 +386,7 @@
         if ([priceString isEqualToString:@"0.00"] || [priceString isEqualToString:@""] || [priceString isEqualToString:[NSString stringWithFormat:@".00"]] || [priceString isEqualToString:@"  "]) {
             //invalid price number
             NSLog(@"invalid price number");
-            textField.text = @"";
+            textField.text = @"Free";
             
             if (textField == self.nationalTextfield) {
                 self.nationalPrice =0.00;
@@ -522,5 +544,15 @@
         
         [[PFUser currentUser]saveInBackground];
     }
+}
+
+//disable paste in text fields
+- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
+    if ([self.nationalTextfield isFirstResponder] || [self.globalTextfield isFirstResponder]) {
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [[UIMenuController sharedMenuController] setMenuVisible:NO animated:NO];
+        }];
+    }
+    return [super canPerformAction:action withSender:sender];
 }
 @end

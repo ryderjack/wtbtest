@@ -264,7 +264,6 @@
                                                         NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
                         
                         [buttonView setImageWithString:self.buyer.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
-//                        [buttonView setImage:[UIImage imageNamed:@"empty"]];
                     }
                     
                     if ([[self.buyer objectForKey:@"ignoreLikePushes"]isEqualToString:@"YES"]) {

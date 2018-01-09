@@ -41,6 +41,7 @@
 @property (nonatomic) BOOL refundSent;
 @property (nonatomic) BOOL paymentPending;
 @property (nonatomic) BOOL paymentFailed;
+@property (nonatomic) BOOL refundCancelled;
 
 //cell heights
 @property (nonatomic) int transCellHeight;

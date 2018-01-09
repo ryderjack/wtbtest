@@ -320,6 +320,7 @@
 		042ED6BD1F11054200E55D71 /* whiteCross.png in Resources */ = {isa = PBXBuildFile; fileRef = 042ED6BA1F11054100E55D71 /* whiteCross.png */; };
 		042ED6BE1F11054200E55D71 /* whiteCross@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 042ED6BB1F11054200E55D71 /* whiteCross@2x.png */; };
 		042ED6BF1F11054200E55D71 /* whiteCross@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 042ED6BC1F11054200E55D71 /* whiteCross@3x.png */; };
+		042F7B9B1FE2AD6600E187FE /* libPPRiskComponent.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 042F7B9A1FE2AD6500E187FE /* libPPRiskComponent.a */; };
 		0432C0241DF77157000CD9F5 /* priceLowSelected@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0432C01E1DF77157000CD9F5 /* priceLowSelected@3x.png */; };
 		0432C0251DF77157000CD9F5 /* priceLowSelected@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0432C01F1DF77157000CD9F5 /* priceLowSelected@2x.png */; };
 		0432C0261DF77157000CD9F5 /* priceLowUnselected@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0432C0201DF77157000CD9F5 /* priceLowUnselected@3x.png */; };
@@ -604,8 +605,6 @@
 		045DF1E61FD417950017AEBC /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1E21FD4134D0017AEBC /* MessageUI.framework */; };
 		045DF1E71FD417A00017AEBC /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1E31FD413580017AEBC /* CoreLocation.framework */; };
 		045DF1E81FD417AB0017AEBC /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1E41FD413680017AEBC /* Foundation.framework */; };
-		045DF1EA1FD417FF0017AEBC /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1E91FD417F10017AEBC /* AVFoundation.framework */; };
-		045DF1EC1FD418210017AEBC /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 045DF1EB1FD418140017AEBC /* Accelerate.framework */; };
 		046703121F90EC67009FD451 /* orderStar.png in Resources */ = {isa = PBXBuildFile; fileRef = 0467030F1F90EC5C009FD451 /* orderStar.png */; };
 		046703131F90EC67009FD451 /* orderStar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 046703101F90EC5C009FD451 /* orderStar@2x.png */; };
 		046703141F90EC67009FD451 /* orderStar@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 046703111F90EC5C009FD451 /* orderStar@3x.png */; };
@@ -1161,6 +1160,10 @@
 		04CBFDF91E09865000941C46 /* alreadyShipped@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CBFDF61E09865000941C46 /* alreadyShipped@1x.png */; };
 		04CBFDFA1E09865000941C46 /* alreadyShipped@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CBFDF71E09865000941C46 /* alreadyShipped@2x.png */; };
 		04CBFDFB1E09865000941C46 /* alreadyShipped@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CBFDF81E09865000941C46 /* alreadyShipped@3x.png */; };
+		04CC1AB81FE72B46004F0482 /* filterTutX.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CC1AB71FE72B45004F0482 /* filterTutX.png */; };
+		04CC1AC81FE9617E004F0482 /* questionCircle.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CC1AC51FE9617C004F0482 /* questionCircle.png */; };
+		04CC1AC91FE9617E004F0482 /* questionCircle@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CC1AC61FE9617D004F0482 /* questionCircle@3x.png */; };
+		04CC1ACA1FE9617E004F0482 /* questionCircle@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CC1AC71FE9617D004F0482 /* questionCircle@2x.png */; };
 		04CD307A1D1050D400E2850D /* wtbtoo@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30771D1050D400E2850D /* wtbtoo@3x.png */; };
 		04CD307B1D1050D400E2850D /* wtbtoo@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30781D1050D400E2850D /* wtbtoo@1x.png */; };
 		04CD307C1D1050D400E2850D /* wtbtoo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04CD30791D1050D400E2850D /* wtbtoo@2x.png */; };
@@ -1338,6 +1341,19 @@
 		04DEAE7D1DE1CAAF00449DEC /* crossIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 04DEAE7A1DE1CAAE00449DEC /* crossIcon.png */; };
 		04DEAE7E1DE1CAAF00449DEC /* crossIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04DEAE7B1DE1CAAE00449DEC /* crossIcon@2x.png */; };
 		04DEAE7F1DE1CAAF00449DEC /* crossIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04DEAE7C1DE1CAAF00449DEC /* crossIcon@3x.png */; };
+		04DFD6FC2001651000C6017E /* ConnectPayPalView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04DFD6FB2001651000C6017E /* ConnectPayPalView.xib */; };
+		04DFD6FF2001652F00C6017E /* ConnectPayPalViewClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 04DFD6FE2001652F00C6017E /* ConnectPayPalViewClass.m */; };
+		04DFD70D200170BE00C6017E /* mediumSizeAlert.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04DFD70C200170BE00C6017E /* mediumSizeAlert.xib */; };
+		04DFD7112001732800C6017E /* paypalAlertIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04DFD70E2001732600C6017E /* paypalAlertIcon@2x.png */; };
+		04DFD7122001732800C6017E /* paypalAlertIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04DFD70F2001732700C6017E /* paypalAlertIcon@3x.png */; };
+		04DFD7132001732800C6017E /* paypalAlertIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 04DFD7102001732800C6017E /* paypalAlertIcon.png */; };
+		04DFD7162001735B00C6017E /* mediumSizeAlertViewClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 04DFD7152001735B00C6017E /* mediumSizeAlertViewClass.m */; };
+		04DFD71A2001CFCC00C6017E /* dollarPopupIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04DFD7172001CFC800C6017E /* dollarPopupIcon@3x.png */; };
+		04DFD71B2001CFCC00C6017E /* dollarPopupIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 04DFD7182001CFCA00C6017E /* dollarPopupIcon.png */; };
+		04DFD71C2001CFCC00C6017E /* dollarPopupIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04DFD7192001CFCB00C6017E /* dollarPopupIcon@2x.png */; };
+		04E1B3992003042F00CC6E2F /* bumpxpaypal.png in Resources */ = {isa = PBXBuildFile; fileRef = 04E1B3962003042E00CC6E2F /* bumpxpaypal.png */; };
+		04E1B39A2003042F00CC6E2F /* bumpxpaypal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04E1B3972003042E00CC6E2F /* bumpxpaypal@3x.png */; };
+		04E1B39B2003042F00CC6E2F /* bumpxpaypal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04E1B3982003042F00CC6E2F /* bumpxpaypal@2x.png */; };
 		04E1D3011E548DFA0045F9D2 /* bumpDemo.png in Resources */ = {isa = PBXBuildFile; fileRef = 04E1D2FE1E548DFA0045F9D2 /* bumpDemo.png */; };
 		04E1D3021E548DFA0045F9D2 /* bumpDemo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04E1D2FF1E548DFA0045F9D2 /* bumpDemo@2x.png */; };
 		04E1D3031E548DFA0045F9D2 /* bumpDemo@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04E1D3001E548DFA0045F9D2 /* bumpDemo@3x.png */; };
@@ -1911,6 +1927,8 @@
 		042ED6BA1F11054100E55D71 /* whiteCross.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = whiteCross.png; sourceTree = "<group>"; };
 		042ED6BB1F11054200E55D71 /* whiteCross@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "whiteCross@2x.png"; sourceTree = "<group>"; };
 		042ED6BC1F11054200E55D71 /* whiteCross@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "whiteCross@3x.png"; sourceTree = "<group>"; };
+		042F7B9A1FE2AD6500E187FE /* libPPRiskComponent.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libPPRiskComponent.a; sourceTree = "<group>"; };
+		042F7B9C1FE2AD6E00E187FE /* PPRiskComponent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPRiskComponent.h; sourceTree = "<group>"; };
 		0432C01E1DF77157000CD9F5 /* priceLowSelected@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "priceLowSelected@3x.png"; sourceTree = "<group>"; };
 		0432C01F1DF77157000CD9F5 /* priceLowSelected@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "priceLowSelected@2x.png"; sourceTree = "<group>"; };
 		0432C0201DF77157000CD9F5 /* priceLowUnselected@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "priceLowUnselected@3x.png"; sourceTree = "<group>"; };
@@ -2814,6 +2832,10 @@
 		04CBFDF61E09865000941C46 /* alreadyShipped@1x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alreadyShipped@1x.png"; sourceTree = "<group>"; };
 		04CBFDF71E09865000941C46 /* alreadyShipped@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alreadyShipped@2x.png"; sourceTree = "<group>"; };
 		04CBFDF81E09865000941C46 /* alreadyShipped@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alreadyShipped@3x.png"; sourceTree = "<group>"; };
+		04CC1AB71FE72B45004F0482 /* filterTutX.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filterTutX.png; sourceTree = "<group>"; };
+		04CC1AC51FE9617C004F0482 /* questionCircle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = questionCircle.png; sourceTree = "<group>"; };
+		04CC1AC61FE9617D004F0482 /* questionCircle@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "questionCircle@3x.png"; sourceTree = "<group>"; };
+		04CC1AC71FE9617D004F0482 /* questionCircle@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "questionCircle@2x.png"; sourceTree = "<group>"; };
 		04CD30771D1050D400E2850D /* wtbtoo@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "wtbtoo@3x.png"; sourceTree = "<group>"; };
 		04CD30781D1050D400E2850D /* wtbtoo@1x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "wtbtoo@1x.png"; sourceTree = "<group>"; };
 		04CD30791D1050D400E2850D /* wtbtoo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "wtbtoo@2x.png"; sourceTree = "<group>"; };
@@ -3004,6 +3026,21 @@
 		04DEAE7A1DE1CAAE00449DEC /* crossIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = crossIcon.png; sourceTree = "<group>"; };
 		04DEAE7B1DE1CAAE00449DEC /* crossIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "crossIcon@2x.png"; sourceTree = "<group>"; };
 		04DEAE7C1DE1CAAF00449DEC /* crossIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "crossIcon@3x.png"; sourceTree = "<group>"; };
+		04DFD6FB2001651000C6017E /* ConnectPayPalView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ConnectPayPalView.xib; sourceTree = "<group>"; };
+		04DFD6FD2001652F00C6017E /* ConnectPayPalViewClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ConnectPayPalViewClass.h; sourceTree = "<group>"; };
+		04DFD6FE2001652F00C6017E /* ConnectPayPalViewClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ConnectPayPalViewClass.m; sourceTree = "<group>"; };
+		04DFD70C200170BE00C6017E /* mediumSizeAlert.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = mediumSizeAlert.xib; sourceTree = "<group>"; };
+		04DFD70E2001732600C6017E /* paypalAlertIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "paypalAlertIcon@2x.png"; sourceTree = "<group>"; };
+		04DFD70F2001732700C6017E /* paypalAlertIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "paypalAlertIcon@3x.png"; sourceTree = "<group>"; };
+		04DFD7102001732800C6017E /* paypalAlertIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = paypalAlertIcon.png; sourceTree = "<group>"; };
+		04DFD7142001735B00C6017E /* mediumSizeAlertViewClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mediumSizeAlertViewClass.h; sourceTree = "<group>"; };
+		04DFD7152001735B00C6017E /* mediumSizeAlertViewClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = mediumSizeAlertViewClass.m; sourceTree = "<group>"; };
+		04DFD7172001CFC800C6017E /* dollarPopupIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "dollarPopupIcon@3x.png"; sourceTree = "<group>"; };
+		04DFD7182001CFCA00C6017E /* dollarPopupIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dollarPopupIcon.png; sourceTree = "<group>"; };
+		04DFD7192001CFCB00C6017E /* dollarPopupIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "dollarPopupIcon@2x.png"; sourceTree = "<group>"; };
+		04E1B3962003042E00CC6E2F /* bumpxpaypal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bumpxpaypal.png; sourceTree = "<group>"; };
+		04E1B3972003042E00CC6E2F /* bumpxpaypal@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bumpxpaypal@3x.png"; sourceTree = "<group>"; };
+		04E1B3982003042F00CC6E2F /* bumpxpaypal@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bumpxpaypal@2x.png"; sourceTree = "<group>"; };
 		04E1D2FE1E548DFA0045F9D2 /* bumpDemo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bumpDemo.png; sourceTree = "<group>"; };
 		04E1D2FF1E548DFA0045F9D2 /* bumpDemo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bumpDemo@2x.png"; sourceTree = "<group>"; };
 		04E1D3001E548DFA0045F9D2 /* bumpDemo@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bumpDemo@3x.png"; sourceTree = "<group>"; };
@@ -3240,8 +3277,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				045DF1EC1FD418210017AEBC /* Accelerate.framework in Frameworks */,
-				045DF1EA1FD417FF0017AEBC /* AVFoundation.framework in Frameworks */,
+				042F7B9B1FE2AD6600E187FE /* libPPRiskComponent.a in Frameworks */,
 				045DF1E81FD417AB0017AEBC /* Foundation.framework in Frameworks */,
 				045DF1E71FD417A00017AEBC /* CoreLocation.framework in Frameworks */,
 				045DF1E61FD417950017AEBC /* MessageUI.framework in Frameworks */,
@@ -3456,9 +3492,15 @@
 		046987C61E6C1F6300E11AC5 /* Invite Friends */ = {
 			isa = PBXGroup;
 			children = (
+				04DFD70C200170BE00C6017E /* mediumSizeAlert.xib */,
+				04DFD7142001735B00C6017E /* mediumSizeAlertViewClass.h */,
+				04DFD7152001735B00C6017E /* mediumSizeAlertViewClass.m */,
 				046987C11E6C1F3B00E11AC5 /* inviteView.xib */,
 				046987C31E6C1F5D00E11AC5 /* inviteViewClass.h */,
 				046987C41E6C1F5D00E11AC5 /* inviteViewClass.m */,
+				04DFD6FB2001651000C6017E /* ConnectPayPalView.xib */,
+				04DFD6FD2001652F00C6017E /* ConnectPayPalViewClass.h */,
+				04DFD6FE2001652F00C6017E /* ConnectPayPalViewClass.m */,
 			);
 			name = "Invite Friends";
 			sourceTree = "<group>";
@@ -3486,6 +3528,19 @@
 		0472B61C1C7CC8A800529B2E /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				04E1B3962003042E00CC6E2F /* bumpxpaypal.png */,
+				04E1B3982003042F00CC6E2F /* bumpxpaypal@2x.png */,
+				04E1B3972003042E00CC6E2F /* bumpxpaypal@3x.png */,
+				04DFD7182001CFCA00C6017E /* dollarPopupIcon.png */,
+				04DFD7192001CFCB00C6017E /* dollarPopupIcon@2x.png */,
+				04DFD7172001CFC800C6017E /* dollarPopupIcon@3x.png */,
+				04DFD7102001732800C6017E /* paypalAlertIcon.png */,
+				04DFD70E2001732600C6017E /* paypalAlertIcon@2x.png */,
+				04DFD70F2001732700C6017E /* paypalAlertIcon@3x.png */,
+				04CC1AC51FE9617C004F0482 /* questionCircle.png */,
+				04CC1AC71FE9617D004F0482 /* questionCircle@2x.png */,
+				04CC1AC61FE9617D004F0482 /* questionCircle@3x.png */,
+				04CC1AB71FE72B45004F0482 /* filterTutX.png */,
 				045DF1D61FC8C67E0017AEBC /* searchExplain.png */,
 				045DF1D71FC8C6810017AEBC /* searchExplain@2x.png */,
 				045DF1D51FC8C67E0017AEBC /* searchExplain@3x.png */,
@@ -4871,6 +4926,8 @@
 		049EF4271C776E49000A599F /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				042F7B9C1FE2AD6E00E187FE /* PPRiskComponent.h */,
+				042F7B9A1FE2AD6500E187FE /* libPPRiskComponent.a */,
 				04FD43EA1F36280E0068F89D /* MBFingerTipWindow.h */,
 				04FD43EB1F36280E0068F89D /* MBFingerTipWindow.m */,
 				04DEAE2C1DDA808100449DEC /* UIImage+Resize.h */,
@@ -5559,6 +5616,7 @@
 				046987D21E6C2CF000E11AC5 /* textButton@3x.png in Resources */,
 				04BCBFEE1F63176D000ACC85 /* proxyIcon.png in Resources */,
 				04CD30A41D13FDE000E2850D /* BNWOTgrey@3x.png in Resources */,
+				04E1B39A2003042F00CC6E2F /* bumpxpaypal@3x.png in Resources */,
 				0432C0341DF77404000CD9F5 /* NWTSelected.png in Resources */,
 				04BCBFD11F631758000ACC85 /* outIcon@3x.png in Resources */,
 				04477E551E4E0EA30054DFB9 /* bouncingButton.png in Resources */,
@@ -5612,6 +5670,7 @@
 				044E72481E2106A4005D55E5 /* fulfillCheck@2x.png in Resources */,
 				04235A9B1F41CC8900AAB5A2 /* markSoldButton@2x.png in Resources */,
 				04E8FABE1E93ED740041676C /* iPhoneIntro1.png in Resources */,
+				04CC1AC81FE9617E004F0482 /* questionCircle.png in Resources */,
 				04BEE5651DD76F22004CD8D1 /* offer_6.png in Resources */,
 				04CD30AA1D13FDE000E2850D /* BNWOTgrey@2x.png in Resources */,
 				041FF2321E01DDD100A5E7EE /* bumpArrowGrey@2x.png in Resources */,
@@ -5647,6 +5706,7 @@
 				04F09AE31CB526DD00686D3B /* searchBarIcon.png in Resources */,
 				04A91DBD1C875ABF00035F55 /* shoesgrey.png in Resources */,
 				048D2B511DEB4DD300A35503 /* yeezy@2x.png in Resources */,
+				04CC1ACA1FE9617E004F0482 /* questionCircle@2x.png in Resources */,
 				042146DD1DC15FE900D00DCB /* buy_5.png in Resources */,
 				0492A61A1E7AE2700062C28D /* iPhone3@3x.png in Resources */,
 				04A91DC31C875ABF00035F55 /* clothingorange@2x.png in Resources */,
@@ -5766,6 +5826,7 @@
 				04CD31421D24849400E2850D /* plusIcon@2x.png in Resources */,
 				04F7EF931E15455D00061745 /* successShareButton@2x.png in Resources */,
 				04593AF81F6328600088DE14 /* footSelected@3x.png in Resources */,
+				04DFD71A2001CFCC00C6017E /* dollarPopupIcon@3x.png in Resources */,
 				04C080481C846B2C00B8682C /* expand.png in Resources */,
 				0432C0511DF84443000CD9F5 /* clothingSelected@2x.png in Resources */,
 				04FD43B51F348BF30068F89D /* asscNormal@3x.png in Resources */,
@@ -5800,6 +5861,7 @@
 				0472B6521C7DB21600529B2E /* chooseLibButton.png in Resources */,
 				041C56AD1F165F3600772D61 /* nikeNormal2.png in Resources */,
 				04F7EFB21E1A848A00061745 /* listingPromptBG@3x.png in Resources */,
+				04E1B3992003042F00CC6E2F /* bumpxpaypal.png in Resources */,
 				041D2FE51ED1DE3F00978231 /* boost1Image@2x.png in Resources */,
 				0411C1CE1EEABCF900A5B91B /* soldIcon2@3x.png in Resources */,
 				040052C41D2A70C2002D8E1E /* SellingImg2.png in Resources */,
@@ -5828,6 +5890,7 @@
 				043533DB1F152CAC00BC6F56 /* moneyIcon.png in Resources */,
 				044C49051E40BEBD0021B447 /* crossIconBlk@3x.png in Resources */,
 				04C080401C8469DE00B8682C /* expand@3x.png in Resources */,
+				04CC1AB81FE72B46004F0482 /* filterTutX.png in Resources */,
 				04FAF9FA1F2F7D9B00EC1904 /* nikeWelcome.png in Resources */,
 				044C48D71E3E0B560021B447 /* iPhoneIntro2.2@2x.png in Resources */,
 				0432C07D1DF8473F000CD9F5 /* womensSelected@3x.png in Resources */,
@@ -5855,6 +5918,7 @@
 				04C0803D1C8469DE00B8682C /* plane@2x.png in Resources */,
 				04239C9C1F3B702B00ACE74C /* bumpIntroGrey@2x.png in Resources */,
 				04FA392B1F741E4900C346EB /* filterBGWhite@2x.png in Resources */,
+				04DFD71B2001CFCC00C6017E /* dollarPopupIcon.png in Resources */,
 				04CBFDDD1E088DF100941C46 /* messageSeller2@1x.png in Resources */,
 				04FD43E11F348D7D0068F89D /* rafWelcome.png in Resources */,
 				040047551DFADF5000A54A36 /* messagesiPhone.png in Resources */,
@@ -5988,6 +6052,7 @@
 				041C56E21F17A6F700772D61 /* pattaNormal2.png in Resources */,
 				04CBFDD01E088CA700941C46 /* shareListing@2x.png in Resources */,
 				04477E561E4E0EA30054DFB9 /* bouncingButton@2x.png in Resources */,
+				04DFD7122001732800C6017E /* paypalAlertIcon@3x.png in Resources */,
 				0400529F1D2A6C79002D8E1E /* exploreImg@2x.png in Resources */,
 				0492A60E1E7ADFFC0062C28D /* tutorialButtonBg@2x.png in Resources */,
 				04593B381F67F5FC0088DE14 /* postingCancel.png in Resources */,
@@ -6387,6 +6452,7 @@
 				04DEAE6C1DDE642C00449DEC /* cartBlue.png in Resources */,
 				04F82CAC1C9D8A7F00C4E250 /* cancelbutton@2x.png in Resources */,
 				04D9B9D31C8B8219004AF0F2 /* box@2x.png in Resources */,
+				04CC1AC91FE9617E004F0482 /* questionCircle@3x.png in Resources */,
 				04CD308E1D10561300E2850D /* BNWTImg@1x.png in Resources */,
 				04840D351F7870A1000448AD /* 1024Grey.png in Resources */,
 				04BCBFEF1F63176D000ACC85 /* proxyIcon@3x.png in Resources */,
@@ -6650,6 +6716,7 @@
 				04ECB5F81ED49CAD006A90E6 /* greenBoost.png in Resources */,
 				04FAF9D11F2F7C7E00EC1904 /* stoneyWelcome@3x.png in Resources */,
 				04DEAE4F1DDBDAAA00449DEC /* newOffer.png in Resources */,
+				04DFD6FC2001651000C6017E /* ConnectPayPalView.xib in Resources */,
 				044DA4361E924FB800C5D3ED /* footCategory@3x.png in Resources */,
 				04C080361C8469DE00B8682C /* filter.png in Resources */,
 				04C080461C8469DE00B8682C /* tag@3x.png in Resources */,
@@ -6694,14 +6761,17 @@
 				04BCBFBF1F631152000ACC85 /* questionMarkIcon@3x.png in Resources */,
 				046987D41E6C2CF000E11AC5 /* messenger.png in Resources */,
 				04C080391C8469DE00B8682C /* dots@3x.png in Resources */,
+				04DFD70D200170BE00C6017E /* mediumSizeAlert.xib in Resources */,
 				04FD43AC1F3487DB0068F89D /* vloneSelected@3x.png in Resources */,
 				044F82781DA7CF5B0092B1F8 /* filterOn@3x.png in Resources */,
 				049F200A1F216305007C4BE4 /* CreateIconTagFill@2x.png in Resources */,
 				04A91DC11C875ABF00035F55 /* shoesgrey@2x.png in Resources */,
 				0472B63C1C7CD6ED00529B2E /* fblogin.png in Resources */,
+				04E1B39B2003042F00CC6E2F /* bumpxpaypal@2x.png in Resources */,
 				04FD43B81F348BF30068F89D /* asscSelected@3x.png in Resources */,
 				0411C16C1EE04E5800A5B91B /* legitCheckButtonOn@3x.png in Resources */,
 				048D2B571DF0962800A35503 /* filterBarIcon@2x.png in Resources */,
+				04DFD7132001732800C6017E /* paypalAlertIcon.png in Resources */,
 				04F7EF941E15455D00061745 /* successEditButton@3x.png in Resources */,
 				040052C31D2A70C2002D8E1E /* SellingImg2@2x.png in Resources */,
 				043533F51F1657AC00BC6F56 /* supremeNormal1@2x.png in Resources */,
@@ -6742,6 +6812,7 @@
 				04B955521F8FB46E0042B138 /* OrderCheck@3x.png in Resources */,
 				042274771F48C7210017D3B5 /* emptyStars@3x.png in Resources */,
 				041D2F9A1ECA124700978231 /* eventbrite@2x.png in Resources */,
+				04DFD7112001732800C6017E /* paypalAlertIcon@2x.png in Resources */,
 				040E739D1FAF445400CA7984 /* ordersIcon2@3x.png in Resources */,
 				04FAF9ED1F2F7C9C00EC1904 /* yeezyWelcome@3x.png in Resources */,
 				044DA4441E92AE3E00C5D3ED /* HomeHeaderView.xib in Resources */,
@@ -6820,6 +6891,7 @@
 				04EAC89C1F1250A60014D676 /* filterButtonBgGrey@3x.png in Resources */,
 				0432C0521DF84443000CD9F5 /* clothingSelected@3x.png in Resources */,
 				0475A76A1C81F7D60049AD61 /* done@2x.png in Resources */,
+				04DFD71C2001CFCC00C6017E /* dollarPopupIcon@2x.png in Resources */,
 				04A91D921C87583200035F55 /* lowtohighgrey@3x.png in Resources */,
 				049EF45B1C776E58000A599F /* Podfile in Resources */,
 				04239CB11F3BB75400ACE74C /* taggedEg.png in Resources */,
@@ -7101,6 +7173,7 @@
 				0403A1261E2EC99A00B99C22 /* whoBumpedTableView.m in Sources */,
 				041FF2361E01E5EA00A5E7EE /* BumpVC.m in Sources */,
 				047DE0211F1243D200EDFC37 /* ConditionsOptionsTableView.m in Sources */,
+				04DFD7162001735B00C6017E /* mediumSizeAlertViewClass.m in Sources */,
 				0492A5E81E7996330062C28D /* RateCustomView.m in Sources */,
 				041D2F8B1EC3455D00978231 /* ShippingController.m in Sources */,
 				04E1D3131E54C1520045F9D2 /* SearchCell.m in Sources */,
@@ -7148,6 +7221,7 @@
 				04C0812D1C85BFD600B8682C /* CameraController.m in Sources */,
 				0435AEDF1EB8865E0093C4BE /* AddImageCell.m in Sources */,
 				044F82431DA5581E0092B1F8 /* ChatWithBump.m in Sources */,
+				04DFD6FF2001652F00C6017E /* ConnectPayPalViewClass.m in Sources */,
 				0475A6C71C7E32D10049AD61 /* Tut1ViewController.m in Sources */,
 				04BEE5171DD3CDC8004CD8D1 /* ReviewCell.m in Sources */,
 				04D1EF2B1E4A119F0025DCB0 /* SendToUserCell.m in Sources */,
@@ -7341,6 +7415,10 @@
 				DEVELOPMENT_TEAM = E5T2M36RR8;
 				INFOPLIST_FILE = wtbtest/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/wtbtest",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = ryderjack.wtbtest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "bc3c1afd-954a-4e56-913b-2d3ebc8f29c0";
@@ -7360,6 +7438,10 @@
 				DEVELOPMENT_TEAM = E5T2M36RR8;
 				INFOPLIST_FILE = wtbtest/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/wtbtest",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = ryderjack.wtbtest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "f621504c-db84-45d1-ae21-3cab9131b6eb";

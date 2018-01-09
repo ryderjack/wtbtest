@@ -316,7 +316,6 @@
                                     buyingUnseen = [[convo objectForKey:@"buyerUnseen"] intValue];
                                 }
                             }
-
                         }
                         else{
                             //current user is seller
@@ -577,7 +576,6 @@
 //        if (indexPath) {
 //            [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
 //        }
-//
 //    }
 //}
 

@@ -13,7 +13,7 @@
 @class ShippingOptionsView;
 
 @protocol shippingDelegate <NSObject>
-- (void)shippingOptionsWithNational:(float)nationalPrice withGlobal:(float)globalPrice withGlobalEnabled:(BOOL)globalOn andCountry:(NSString *)country withCountryCode:(NSString *)code;
+- (void)shippingOptionsWithNational:(float)nationalPrice withGlobal:(float)globalPrice withGlobalEnabled:(BOOL)globalOn andCountry:(NSString *)country withCountryCode:(NSString *)code withFreeNational: (BOOL)nationalFree withFreeGlobal: (BOOL)globalFree;
 @end
 
 @interface ShippingOptionsView : UITableViewController <UITextFieldDelegate, LocationViewControllerDelegate>
@@ -30,6 +30,10 @@
 @property (nonatomic) float nationalPrice;
 @property (nonatomic) float globalPrice;
 @property (nonatomic) BOOL globalEnabled;
+
+@property (nonatomic) BOOL globalFree;
+@property (nonatomic) BOOL nationalFree;
+
 
 @property (nonatomic) int rowNumber;
 

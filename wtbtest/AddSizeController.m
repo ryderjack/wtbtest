@@ -162,8 +162,33 @@
         }
     }
     else{
-        [self.ukButton setSelected:YES];
-        self.selectedCountry = @"UK";
+        //use phone data to preselect the local currency
+        NSLocale *locale = [NSLocale currentLocale];
+        NSString *countryCode = [locale objectForKey: NSLocaleCountryCode];
+        
+        if (countryCode) {
+            
+            if ([countryCode isEqualToString:@"GB"]) {
+                [self.ukButton setSelected:YES];
+                self.selectedCountry = @"UK";
+            }
+            else if ([countryCode isEqualToString:@"US"] || [countryCode isEqualToString:@"CA"]) {
+                [self.usButton setSelected:YES];
+                self.selectedCountry = @"US";
+            }
+            else if ([countryCode isEqualToString:@"IT"] ||[countryCode isEqualToString:@"DE"] || [countryCode isEqualToString:@"FR"] || [countryCode isEqualToString:@"NL"] || [countryCode isEqualToString:@"AT"]) {
+                [self.euButton setSelected:YES];
+                self.selectedCountry = @"EU";
+            }
+            else{
+                [self.usButton setSelected:YES];
+                self.selectedCountry = @"US";
+            }
+        }
+        else{
+            [self.usButton setSelected:YES];
+            self.selectedCountry = @"US";
+        }
         
         //scroll to fix bug which populates swipeview with 1 item
         [self.sneakerSwipeView scrollByNumberOfItems:15 duration:0.5];
@@ -171,7 +196,15 @@
     }
     
     if (!self.longButton) {
-        self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+        
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+            //iPhone X
+            self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-80, [UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
+        }
+        else{
+            self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+        }
+        
         [self.longButton setTitle:@"D O N E" forState:UIControlStateNormal];
         [self.longButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
         [self.longButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
