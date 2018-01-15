@@ -228,6 +228,19 @@
             if ([[UIApplication sharedApplication] canOpenURL: instaURL]) {
                 [[UIApplication sharedApplication] openURL: instaURL];
             }
+            else{
+                NSString *URLString = @"http://instagram.com/bump_official";
+                SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
+                if (@available(iOS 11.0, *)) {
+                    safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+                }
+                
+                if (@available(iOS 10.0, *)) {
+                    safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+                }
+                
+                [self.navigationController presentViewController:safariView animated:YES completion:nil];
+            }
         }
     }
     else if (indexPath.section == 0){
@@ -555,7 +568,10 @@
                    customAttributes:@{
                                       @"type":@"whatsapp"
                                       }];
-    NSString *shareString = @"Check out BUMP for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com";
+    
+    [Intercom logEventWithName:@"invite_whatsapp_pressed" metaData: @{}];
+    
+    NSString *shareString = @"Check out BUMP for iOS - Safely Buy & Sell Streetwear\n\nAvailable here: https://sobump.com";
     NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
     if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
         [[UIApplication sharedApplication] openURL: whatsappURL];
@@ -567,7 +583,10 @@
                    customAttributes:@{
                                       @"type":@"messenger"
                                       }];
-    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=http://sobump.com"];
+    
+    [Intercom logEventWithName:@"invite_messenger_pressed" metaData: @{}];
+
+    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=https://sobump.com"];
     if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
         [[UIApplication sharedApplication] openURL: messengerURL];
     }
@@ -579,8 +598,11 @@
                    customAttributes:@{
                                       @"type":@"share sheet"
                                       }];
+    
+    [Intercom logEventWithName:@"invite_text_pressed" metaData: @{}];
+
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out BUMP for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com"];
+    [items addObject:@"Check out BUMP for iOS - Safely Buy & Sell Streetwear\n\nAvailable here: http://sobump.com"];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     [self presentViewController:activityController animated:YES completion:nil];
 }

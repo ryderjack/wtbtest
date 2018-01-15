@@ -9,6 +9,7 @@
 #import "ExplainView.h"
 #import "CreateTab.h"
 #import <Crashlytics/Crashlytics.h>
+#import <Intercom/Intercom.h>
 
 @interface ExplainView ()
 
@@ -373,6 +374,57 @@
 }
 
 -(void)donePressed{
+    
+    //register user's info with Intercom so they get the welcome msg at the correct time
+    //update Intercom with user info
+    NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
+    [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
+        if (!error) {
+            [Intercom setUserHash:hash];
+            [Intercom registerUserWithUserId:[PFUser currentUser].objectId];
+            
+            //setup intercom listener
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"registerIntercom" object:nil];
+            
+            //add standard info to user object
+            ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+            userAttributes.email = [PFUser currentUser][@"email"];
+            userAttributes.signedUpAt = [NSDate date];
+            userAttributes.name = [PFUser currentUser][@"fullname"];
+            
+            if (self.emailIntro) {
+                //finish adding custom intercom attributes for email mode
+                userAttributes.customAttributes = @{@"email_sign_up" : @YES,
+                                                    @"currency": self.currency,
+                                                    @"Username":[PFUser currentUser].username
+                                                    };
+                
+            }
+            else if([PFUser currentUser][@"facebookId"]){
+                //and same for facebook mode
+                userAttributes.customAttributes = @{@"email_sign_up" : @NO,
+                                                    @"currency": self.currency,
+                                                    @"Username":[PFUser currentUser].username,
+                                                    @"facebookId": [PFUser currentUser][@"facebookId"]
+                                                    };
+            }
+            
+            [Intercom updateUser:userAttributes];
+            
+            //use this property so we can know who ended reg early and send them a welcome message the next time they open the app
+            [[PFUser currentUser]setObject:@"YES" forKey:@"sentWelcomeMessage"];
+            [[PFUser currentUser]saveInBackground];
+            
+        }
+        else{
+            NSLog(@"reg intercom veri error");
+            [Answers logCustomEventWithName:@"Intercom Verify Error"
+                           customAttributes:@{
+                                              @"where":@"registration"
+                                              }];
+        }
+    }];
+    
     [UIView animateWithDuration:0.3
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn

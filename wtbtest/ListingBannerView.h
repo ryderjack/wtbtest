@@ -13,12 +13,15 @@
 
 @protocol bannerDelegate <NSObject>
 - (void)bannerTapped;
+- (void)buyButtonBannerTapped;
+
 @end
 
 @interface ListingBannerView : UIView
 @property (weak, nonatomic) IBOutlet UILabel *itemTitleLabel;
 @property (weak, nonatomic) IBOutlet UILabel *priceLabel;
 @property (weak, nonatomic) IBOutlet PFImageView *itemImageView;
+@property (weak, nonatomic) IBOutlet UIButton *buyButton;
 
 //delegate
 @property (nonatomic, weak) id <bannerDelegate> delegate;

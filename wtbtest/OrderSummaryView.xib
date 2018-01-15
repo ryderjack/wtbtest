@@ -406,7 +406,7 @@
                         </connections>
                     </button>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ljo-u1-ozs">
-                        <rect key="frame" x="83" y="139" width="209" height="114.5"/>
+                        <rect key="frame" x="16" y="139" width="343" height="115"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
@@ -416,14 +416,14 @@
                     <constraint firstAttribute="bottomMargin" secondItem="nxf-ez-mfb" secondAttribute="bottom" constant="5.5" id="8s9-PU-8ci"/>
                     <constraint firstItem="nxf-ez-mfb" firstAttribute="top" secondItem="ljo-u1-ozs" secondAttribute="bottom" constant="10" id="NST-jJ-FeF"/>
                     <constraint firstItem="JeR-bD-lcb" firstAttribute="centerX" secondItem="nxf-ez-mfb" secondAttribute="centerX" id="ObT-Cl-odU"/>
-                    <constraint firstItem="QDP-Q2-dSH" firstAttribute="leading" secondItem="ljo-u1-ozs" secondAttribute="leading" id="TfJ-mx-kaP"/>
+                    <constraint firstItem="QDP-Q2-dSH" firstAttribute="leading" secondItem="ljo-u1-ozs" secondAttribute="leading" constant="67" id="TfJ-mx-kaP"/>
                     <constraint firstItem="JeR-bD-lcb" firstAttribute="centerX" secondItem="AWT-IX-ibm" secondAttribute="centerX" id="U3I-0k-uCd"/>
                     <constraint firstItem="JeR-bD-lcb" firstAttribute="top" secondItem="AWT-IX-ibm" secondAttribute="topMargin" constant="4" id="boV-af-DsB"/>
                     <constraint firstItem="ljo-u1-ozs" firstAttribute="top" secondItem="JeR-bD-lcb" secondAttribute="bottom" constant="64" id="lUG-Iu-qA1"/>
                     <constraint firstItem="ljo-u1-ozs" firstAttribute="top" secondItem="QDP-Q2-dSH" secondAttribute="bottom" id="nI5-YC-gXQ"/>
                     <constraint firstItem="QDP-Q2-dSH" firstAttribute="leading" secondItem="AWT-IX-ibm" secondAttribute="leadingMargin" constant="67" id="oFW-ON-f46"/>
                     <constraint firstItem="QDP-Q2-dSH" firstAttribute="top" secondItem="AWT-IX-ibm" secondAttribute="topMargin" constant="61" id="rf6-lU-Ihl"/>
-                    <constraint firstItem="QDP-Q2-dSH" firstAttribute="trailing" secondItem="ljo-u1-ozs" secondAttribute="trailing" id="y3g-Zm-1az"/>
+                    <constraint firstItem="QDP-Q2-dSH" firstAttribute="trailing" secondItem="ljo-u1-ozs" secondAttribute="trailing" constant="-67" id="y3g-Zm-1az"/>
                     <constraint firstItem="JeR-bD-lcb" firstAttribute="centerX" secondItem="QDP-Q2-dSH" secondAttribute="centerX" id="z6F-TJ-KI7"/>
                 </constraints>
             </tableViewCellContentView>

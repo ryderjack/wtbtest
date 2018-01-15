@@ -15,10 +15,10 @@
 #import "customAlertViewClass.h"
 #import "LocationView.h"
 #import <SwipeView/SwipeView.h>
+#import <SafariServices/SafariServices.h>
 
-@interface SettingsController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,customAlertDelegate,LocationViewControllerDelegate,SwipeViewDataSource,SwipeViewDelegate>
+@interface SettingsController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,customAlertDelegate,LocationViewControllerDelegate,SwipeViewDataSource,SwipeViewDelegate,SFSafariViewControllerDelegate>
 
-NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UITableViewCell *addressCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *emailCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
@@ -113,10 +113,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UILabel *paypalAccountLabel;
 @property (nonatomic) BOOL paypalConnected;
 
+//paypal onboarding
+@property (nonatomic, strong) SFSafariViewController *paypalSafariView;
+@property (nonatomic) BOOL addedPayPalObservers;
+@property (nonatomic, strong) NSString *merchantId;
+
 //temp
 @property (strong, nonatomic) IBOutlet UITableViewCell *paypalEmailCell;
 @property (weak, nonatomic) IBOutlet UITextField *paypalTextField;
 
-
-NS_ASSUME_NONNULL_END
 @end

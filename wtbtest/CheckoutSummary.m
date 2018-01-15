@@ -135,6 +135,7 @@
             }
             else{
                 //int. pricing
+                self.isNational = NO;
                 shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
             }
             
@@ -502,7 +503,7 @@
     float shippingPrice = self.totalPrice - self.salePrice;
 
 //    NSString *shippingPrice = [self.shippingPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
-    NSLog(@"%@", shippingPrice);
+//    NSLog(@"%@", shippingPrice);
 
     NSString *itemPrice = [self.itemPriceLabel.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
     NSLog(@"%@", itemPrice);
@@ -656,6 +657,36 @@
         self.pairingId = [PFUser currentUser].objectId;
     }
     
+    NSArray *keywords = [self.listingObject objectForKey:@"keywords"];
+    NSString *brand = @"";
+    if ([keywords containsObject:@"supreme"]) {
+        brand = @"supreme";
+    }
+    else if([keywords containsObject:@"palace"]){
+        brand = @"palace";
+    }
+    else if([keywords containsObject:@"yeezy"]){
+        brand = @"yeezy";
+    }
+    else if([keywords containsObject:@"assc"]){
+        brand = @"assc";
+    }
+    else if([keywords containsObject:@"cdg"]){
+        brand = @"cdg";
+    }
+    else if([keywords containsObject:@"gucci"]){
+        brand = @"gucci";
+    }
+    else if([keywords containsObject:@"bape"]){
+        brand = @"bape";
+    }
+    else if([keywords containsObject:@"kith"]){
+        brand = @"kith";
+    }
+    else if([keywords containsObject:@"stussy"]){
+        brand = @"stussy";
+    }
+    
     NSDictionary *params = @{
                              @"pairingId":self.pairingId,
                              @"listingId":self.listingObject.objectId,
@@ -676,6 +707,7 @@
                              
                              @"itemTitle":self.itemTitleLabel.text,
                              @"itemSize":self.conditionLabel.text,
+                             @"brand":brand,
                              
                              @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId],
                              @"currency" : self.currency
@@ -710,14 +742,15 @@
                     NSString *category = @"";
                     category = [self.listingObject objectForKey:@"category"];
                     
+                    NSArray *keywords = [self.listingObject objectForKey:@"keywords"];
+                    
                     Mixpanel *mixpanel = [Mixpanel sharedInstance];
                     [mixpanel track:@"purchased_item" properties:@{
                                                                       @"category":category,
                                                                       @"totalPrice":@(self.totalPrice),
                                                                       @"currency":self.currency,
                                                                       @"nationalShipping": [NSNumber numberWithBool:self.isNational],
-                                                                      @"itemId":self.listingObject.objectId,
-                                                                      @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId]
+                                                                      @"keywords": keywords
                                                                       }];
                     
                     [Intercom logEventWithName:@"order_placed" metaData: @{
@@ -790,6 +823,7 @@
         }
         else{
             //int. pricing
+            self.isNational = NO;
             shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
         }
         

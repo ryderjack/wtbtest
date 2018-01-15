@@ -15,10 +15,46 @@
 // An empty implementation adversely affects performance during animation.
 - (void)drawRect:(CGRect)rect {
     
-    // create circular image views
-    [self setImageBorder:self.friendImageOne];
-    [self setImageBorder:self.friendImageTwo];
-    [self setImageBorder:self.friendImageThree];
+    if (self.screenshotMode) {
+        [self.friendImageOne setHidden:YES];
+        [self.friendImageTwo setHidden:YES];
+        [self.friendImageThree setHidden:YES];
+        
+        [self.inviteTitleLabel setHidden:YES];
+        [self.friendsLabel setHidden:YES];
+        
+        [self.screenshotLabel setHidden:NO];
+        
+        [self.whatsappSSButton setHidden:NO];
+        [self.whatsAppLabelSS setHidden:NO];
+        
+        [self.messengerSSLabel setHidden:NO];
+        [self.messengerSSLabel setHidden:NO];
+        
+        [self.whatsLabel setHidden:YES];
+        [self.whatsAppButton setHidden:YES];
+        
+        [self.messsengerLabel setHidden:YES];
+        [self.messengerButton setHidden:YES];
+        
+        [self.textButton setHidden:YES];
+        [self.moreLabel setHidden:YES];
+
+    }
+    else{
+        [self.screenshotLabel setHidden:YES];
+        
+        [self.whatsappSSButton setHidden:YES];
+        [self.whatsAppLabelSS setHidden:YES];
+        
+        [self.messengerSSButton setHidden:YES];
+        [self.messengerSSLabel setHidden:YES];
+        
+        // create circular image views
+        [self setImageBorder:self.friendImageOne];
+        [self setImageBorder:self.friendImageTwo];
+        [self setImageBorder:self.friendImageThree];
+    }
 }
 
 - (IBAction)whatsappPressed:(id)sender {

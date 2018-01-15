@@ -241,6 +241,22 @@
             [self.quantityField setHidden:YES];
             [self.priceLabel setHidden:YES];
         }
+        else if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
+            
+            NSLog(@"in the edge case!");
+            
+            self.paypalEnabled = YES;
+            
+            //new user must have connected their PayPal in Settings already
+            [Answers logCustomEventWithName:@"Create Listing PayPal Edge Case"
+                           customAttributes:@{}];
+            
+            if (!self.editMode) {
+                //enable buy now by default since we have all the info
+                self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+                [self.buySwitch setOn:YES];
+            }
+        }
     }
     //put this first so we're not reminding people that already have it on
     //check if user already enabled it, if so (and not edit mode) get it on by default
@@ -3001,7 +3017,7 @@
         }
         else{
             
-            [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];            
+            [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];
             
             if (self.listingAsMode) {
                 //go ahead and save listing in home VC
@@ -3728,6 +3744,9 @@
             if (self.globalPrice == 0.00) {
                 self.globalFree = YES;
             }
+        }
+        else{
+            self.globalEnabled = NO;
         }
         
         self.nationalPrice = [[self.listing objectForKey:@"nationalShippingPrice"]floatValue];
@@ -6363,7 +6382,7 @@
             if (self.buySwitch.isOn) {
                 
                 if (!self.merchantId) {
-                    self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+                    self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"]; //think this is source of error. We're not using a local var after connecting PP and we call this function before setting it on the user so it ends up being null
                 }
                 
                 //on
@@ -6559,6 +6578,9 @@
                                                                  @"fromReminderPrompt":[NSNumber numberWithBool:self.ppReminderTriggered] //also track if the drop down was good for getting ppl to enable
                                                                  }];
                 
+                [Intercom logEventWithName:@"paypal_connected" metaData: @{}];
+
+                
                 [Answers logCustomEventWithName:@"Saved PayPal info on User"
                                customAttributes:@{
                                                   @"method":@"URLParams"
@@ -6624,6 +6646,7 @@
                         [self showAlertWithTitle:@"PayPal Warning" andMsg:@"You must tap the link in the confirmation email PayPal sent you to start accepting payments on BUMP"];
                     }
                     
+                    self.merchantId = merchId;
                     self.paypalEnabled = YES;
                     [self.buySwitch setOn:YES];
                     [self instantBuySwitchChanged:self];
@@ -6640,10 +6663,12 @@
                                                                              @"fromReminderPrompt":[NSNumber numberWithBool:self.ppReminderTriggered] //also track if the drop down was good for getting ppl to enable
                                                                              }];
                             
+                            [Intercom logEventWithName:@"paypal_connected" metaData: @{}];
+                            
                             NSLog(@"saved paypal info on user");
                             [Answers logCustomEventWithName:@"Saved PayPal info on User"
                                            customAttributes:@{
-                                                              @"method":@"GETFunc"
+                                                              @"method":@"getPPAccountStatusWithMerchId Create"
                                                               }];
                         }
                         else{
@@ -6655,7 +6680,7 @@
                             
                             [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
                                            customAttributes:@{
-                                                              @"method":@"GETFunc"
+                                                              @"method":@"getPPAccountStatusWithMerchId Create"
                                                               }];
                         }
                     }];
@@ -6666,7 +6691,7 @@
                     
                     [Answers logCustomEventWithName:@"PayPal Error"
                                    customAttributes:@{
-                                                      @"type":@"User hasn't granted permissions"
+                                                      @"type":@"getPPAccountStatusWithMerchId Create User hasn't granted permissions"
                                                       }];
                 }
             }
@@ -6676,7 +6701,7 @@
                 
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
-                                                  @"type":@"No receivable / merchant ID in response"
+                                                  @"type":@"getPPAccountStatusWithMerchId Create No receivable / merchant ID in response"
                                                   }];
             }
         }
@@ -6684,11 +6709,12 @@
             [self hidHUD];
             NSLog(@"error getting the account status %@", error);
             
+            [Intercom logEventWithName:@"connect_paypal_cancelled" metaData: @{}];
+            
             if ([error.description isEqualToString:@"onboarding error"]) {
                 [Answers logCustomEventWithName:@"PayPal Onboarding Error"
                                customAttributes:@{
-                                                  @"type":@"Error getting account status",
-                                                  @"where":@"create 1"
+                                                  @"type":@"getPPAccountStatusWithMerchId Create Error getting account status"
                                                   }];
                 
                 [self showPayPalAlertWithTitle:@"PayPal Error" andMsg:@"Make sure you have completed the full PayPal Onboarding process"];
@@ -6697,8 +6723,7 @@
             else{
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
-                                                  @"type":@"Error getting account status",
-                                                  @"where":@"create 1"
+                                                  @"type":@"getPPAccountStatusWithMerchId Create Error getting account status"
                                                   }];
                 [self showPayPalAlertWithTitle:@"PayPal Error" andMsg:@"Make sure you have completed the full PayPal Onboarding process and ticked the box to grant BUMP the relevant permissions"];
 
@@ -6739,8 +6764,10 @@
                         
                         [self showAlertWithTitle:@"PayPal Warning" andMsg:@"You must tap the link in the confirmation email PayPal sent you to start accepting payments on BUMP"];
                     }
-
+                    
+                    self.merchantId = merchId;
                     self.paypalEnabled = YES;
+                    
                     [self.buySwitch setOn:YES];
                     [self instantBuySwitchChanged:self];
 
@@ -6755,10 +6782,13 @@
                                                                              @"where":@"Create",
                                                                              @"fromReminderPrompt":[NSNumber numberWithBool:self.ppReminderTriggered] //also track if the drop down was good for getting ppl to enable
                                                                              }];
+                            
+                            [Intercom logEventWithName:@"paypal_connected" metaData: @{}];
+
                             NSLog(@"saved paypal info on user");
                             [Answers logCustomEventWithName:@"Saved PayPal info on User"
                                            customAttributes:@{
-                                                              @"method":@"GETFunc"
+                                                              @"method":@"getPPAccountStatus Create"
                                                               }];
                         }
                         else{
@@ -6770,7 +6800,7 @@
                             
                             [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
                                            customAttributes:@{
-                                                              @"method":@"GETFunc"
+                                                              @"method":@"getPPAccountStatus Create"
                                                               }];
                         }
                     }];
@@ -6781,7 +6811,7 @@
                     
                     [Answers logCustomEventWithName:@"PayPal Error"
                                    customAttributes:@{
-                                                      @"type":@"User hasn't granted permissions"
+                                                      @"type":@"getPPAccountStatus Create User hasn't granted permissions"
                                                       }];
                 }
             }
@@ -6791,7 +6821,7 @@
                 
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
-                                                  @"type":@"No receivable / merchant ID in response"
+                                                  @"type":@"getPPAccountStatus Create No receivable / merchant ID in response"
                                                   }];
             }
         }
@@ -6799,11 +6829,12 @@
             [self hidHUD];
             NSLog(@"error getting the account status %@", error);
             
+            [Intercom logEventWithName:@"connect_paypal_cancelled" metaData: @{}];
+            
             if ([error.description isEqualToString:@"onboarding error"]) {
                 [Answers logCustomEventWithName:@"PayPal Onboarding Error"
                                customAttributes:@{
-                                                  @"type":@"Error getting account status",
-                                                  @"where":@"create 2"
+                                                  @"type":@"getPPAccountStatus Create Error getting account status"
                                                   }];
                 
                 [self showPayPalAlertWithTitle:@"PayPal Error" andMsg:@"Make sure you have completed the full PayPal Onboarding process"];
@@ -6812,8 +6843,7 @@
             else{
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
-                                                  @"type":@"Error getting account status",
-                                                  @"where":@"create 2"
+                                                  @"type":@"getPPAccountStatus Create Error getting account status"
                                                   }];
                 [self showPayPalAlertWithTitle:@"PayPal Error" andMsg:@"Make sure you have completed the full PayPal Onboarding process and ticked the box to grant BUMP the relevant permissions"];
                 
@@ -7002,7 +7032,11 @@
 -(void)enableBuyNow{
     if (([[[PFUser currentUser] objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]) || self.paypalEnabled) {
         NSLog(@"already have user's pp info");
-        self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+        
+        if (!self.merchantId) {
+            self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+        }
+        
         [self.buySwitch setOn:YES];
         [self.buySwitch setEnabled:YES];
         
@@ -7010,6 +7044,12 @@
     }
     else{
         [self showHUD];
+        
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"paypal_connect_pressed" properties:@{
+                                                               @"where":@"Create Listing"
+                                                               }];
+        
         NSDictionary *params = @{
                                  @"email": [[PFUser currentUser]objectForKey:@"email"],
                                  @"currency":self.currency,

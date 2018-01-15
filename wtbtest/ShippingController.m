@@ -199,7 +199,10 @@
     NSString *line1 = [self.addressLine1.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     NSString *line2 = [self.addressLine2.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
-    NSString *addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@\n%@",self.nameField.text, self.addressLine1.text, self.addressLine2.text,self.cityField.text,self.postcodeField.text,self.countryField.text];
+    NSMutableString *postcodeStr = [self.postcodeField.text mutableCopy];
+    CFStringTransform((__bridge CFMutableStringRef)postcodeStr, NULL, kCFStringTransformStripCombiningMarks, NO); //THIS WORKS
+    
+    NSString *addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@\n%@",self.nameField.text, self.addressLine1.text, self.addressLine2.text,self.cityField.text,postcodeStr,self.countryField.text];
 
     if ([name isEqualToString:@""] || [line1 isEqualToString:@""]|| [line2 isEqualToString:@""]|| [postcode isEqualToString:@""] || [country isEqualToString:@""] || [city isEqualToString:@""]) {
         
@@ -228,7 +231,7 @@
     }
     
     if (![postcode isEqualToString:@""]) {
-        [self.currentUser setObject:[self.postcodeField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"postcode"];
+        [self.currentUser setObject:[postcodeStr stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:@"postcode"];
     }
     
     if (![country isEqualToString:@""]) {

@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina5_5" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13173"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <customFonts key="customFonts">
         <array key="PingFang.ttc">
             <string>PingFangSC-Medium</string>
             <string>PingFangSC-Regular</string>
+            <string>PingFangSC-Semibold</string>
         </array>
     </customFonts>
     <objects>
@@ -29,7 +29,7 @@
                     </connections>
                 </button>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="R3i-br-Lbf" customClass="PFImageView">
-                    <rect key="frame" x="18" y="16" width="50" height="50"/>
+                    <rect key="frame" x="18" y="15" width="50" height="50"/>
                     <color key="backgroundColor" red="0.93725490570000003" green="0.93725490570000003" blue="0.95686274770000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="50" id="6WU-0q-AM5"/>
@@ -41,9 +41,9 @@
                     <color key="backgroundColor" red="0.93725490570000003" green="0.93725490570000003" blue="0.95686274770000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                 </view>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="iw5-K6-orA">
-                    <rect key="frame" x="86" y="16" width="255" height="31"/>
+                    <rect key="frame" x="86" y="16" width="208" height="31"/>
                     <constraints>
-                        <constraint firstAttribute="width" constant="255" id="YcN-bp-dJ2"/>
+                        <constraint firstAttribute="width" constant="208" id="YcN-bp-dJ2"/>
                         <constraint firstAttribute="height" constant="31" id="e8k-To-wCk"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
@@ -51,7 +51,7 @@
                     <nil key="highlightedColor"/>
                 </label>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cUA-0l-kSy">
-                    <rect key="frame" x="86" y="49" width="146" height="15"/>
+                    <rect key="frame" x="86" y="48" width="146" height="15"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="146" id="2E0-Q5-LvL"/>
                         <constraint firstAttribute="height" constant="15" id="9yq-L0-U95"/>
@@ -60,29 +60,44 @@
                     <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                     <nil key="highlightedColor"/>
                 </label>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4Ty-xS-ha0">
+                    <rect key="frame" x="301" y="25" width="57" height="30"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="57" id="U1s-kc-mqk"/>
+                        <constraint firstAttribute="height" constant="30" id="lKr-i8-Q7e"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="9"/>
+                    <state key="normal" title="B U Y" backgroundImage="blueBuyChatBg.png"/>
+                    <connections>
+                        <action selector="buyButtonTapped:" destination="iN0-l3-epB" eventType="touchUpInside" id="ki0-mw-mGo"/>
+                    </connections>
+                </button>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
             <constraints>
-                <constraint firstItem="R3i-br-Lbf" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leadingMargin" constant="2" id="0Z8-pX-h6A"/>
                 <constraint firstAttribute="trailing" secondItem="ywl-ap-TaW" secondAttribute="trailing" id="4dm-xU-gKS"/>
-                <constraint firstItem="6PX-Hh-hls" firstAttribute="top" secondItem="R3i-br-Lbf" secondAttribute="bottom" constant="13" id="4iR-bD-cpZ"/>
+                <constraint firstItem="6PX-Hh-hls" firstAttribute="top" secondItem="R3i-br-Lbf" secondAttribute="bottom" constant="14" id="4iR-bD-cpZ"/>
+                <constraint firstItem="4Ty-xS-ha0" firstAttribute="centerY" secondItem="R3i-br-Lbf" secondAttribute="centerY" id="54q-9D-cpQ"/>
                 <constraint firstItem="ywl-ap-TaW" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="7r2-Tc-4Zo"/>
+                <constraint firstItem="4Ty-xS-ha0" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="iw5-K6-orA" secondAttribute="trailing" constant="7" id="E68-QF-sRs"/>
                 <constraint firstItem="ywl-ap-TaW" firstAttribute="bottom" secondItem="6PX-Hh-hls" secondAttribute="bottom" id="GEz-fU-57p"/>
-                <constraint firstItem="cUA-0l-kSy" firstAttribute="top" secondItem="iw5-K6-orA" secondAttribute="bottom" constant="2" id="HXO-Nw-OAg"/>
-                <constraint firstItem="R3i-br-Lbf" firstAttribute="top" secondItem="iw5-K6-orA" secondAttribute="top" id="Jdz-Uq-t5d"/>
+                <constraint firstItem="cUA-0l-kSy" firstAttribute="top" secondItem="iw5-K6-orA" secondAttribute="bottom" constant="1" id="HXO-Nw-OAg"/>
+                <constraint firstItem="4Ty-xS-ha0" firstAttribute="leading" secondItem="ywl-ap-TaW" secondAttribute="trailing" constant="-74" id="IqX-hJ-8KY"/>
+                <constraint firstItem="R3i-br-Lbf" firstAttribute="top" secondItem="iw5-K6-orA" secondAttribute="top" constant="-1" id="Jdz-Uq-t5d"/>
                 <constraint firstItem="ywl-ap-TaW" firstAttribute="leading" secondItem="6PX-Hh-hls" secondAttribute="leading" id="Jww-jE-emP"/>
-                <constraint firstItem="ywl-ap-TaW" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="R3i-br-Lbf" secondAttribute="trailing" constant="-68" id="KeB-n7-6iu"/>
+                <constraint firstItem="ywl-ap-TaW" firstAttribute="leading" secondItem="R3i-br-Lbf" secondAttribute="trailing" constant="-68" id="KeB-n7-6iu"/>
                 <constraint firstItem="ywl-ap-TaW" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="L51-AD-G6K"/>
-                <constraint firstItem="R3i-br-Lbf" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="16" id="VhZ-Zu-iqh"/>
+                <constraint firstItem="R3i-br-Lbf" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="15" id="VhZ-Zu-iqh"/>
                 <constraint firstItem="iw5-K6-orA" firstAttribute="leading" secondItem="cUA-0l-kSy" secondAttribute="leading" id="Xwk-7L-Hin"/>
                 <constraint firstItem="iw5-K6-orA" firstAttribute="leading" secondItem="R3i-br-Lbf" secondAttribute="trailing" constant="18" id="bVn-au-uMW"/>
-                <constraint firstItem="6PX-Hh-hls" firstAttribute="top" secondItem="cUA-0l-kSy" secondAttribute="bottom" constant="15" id="baS-Ke-3Ri"/>
+                <constraint firstItem="6PX-Hh-hls" firstAttribute="top" secondItem="cUA-0l-kSy" secondAttribute="bottom" constant="16" id="baS-Ke-3Ri"/>
                 <constraint firstItem="ywl-ap-TaW" firstAttribute="trailing" secondItem="6PX-Hh-hls" secondAttribute="trailing" id="uWS-AP-wEb"/>
                 <constraint firstAttribute="bottom" secondItem="ywl-ap-TaW" secondAttribute="bottom" id="y9H-EO-sRR"/>
             </constraints>
             <nil key="simulatedStatusBarMetrics"/>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <connections>
+                <outlet property="buyButton" destination="4Ty-xS-ha0" id="wy3-PP-xaz"/>
                 <outlet property="itemImageView" destination="R3i-br-Lbf" id="UPq-7D-JSw"/>
                 <outlet property="itemTitleLabel" destination="iw5-K6-orA" id="x15-Hx-EnG"/>
                 <outlet property="priceLabel" destination="cUA-0l-kSy" id="LPl-iq-UxD"/>
@@ -90,4 +105,7 @@
             <point key="canvasLocation" x="34.5" y="-223"/>
         </view>
     </objects>
+    <resources>
+        <image name="blueBuyChatBg.png" width="57" height="30"/>
+    </resources>
 </document>

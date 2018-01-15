@@ -478,7 +478,6 @@
 //        [userQueryForRand whereKey:@"username" matchesRegex:self.searchBar.text modifiers:@"i"];
 
         [userQueryForRand whereKey:@"username" equalTo:[self.searchBar.text lowercaseString]];
-        [userQueryForRand whereKey:@"completedReg" equalTo:@"YES"];
         
         PFQuery *facebookNameSearch = [PFUser query];
         
@@ -488,6 +487,8 @@
         }
         
         PFQuery *query = [PFQuery orQueryWithSubqueries:@[userQueryForRand,facebookNameSearch]];
+//        [query whereKey:@"banCount" lessThan:@1]; //CHANGE add in protection against finding banned users
+        [query whereKey:@"completedReg" equalTo:@"YES"];
 
         [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
             if (objects) {

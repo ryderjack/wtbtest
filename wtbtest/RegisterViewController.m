@@ -806,11 +806,40 @@
                                                                               @"error":error.description
                                                                               }];
                                             
+                                            if ([[error.description lowercaseString] containsString:@"account already exists for this username"]) {
+                                                [self showAlertWithTitle:@"Sign up Error" andMsg:@"That username is already taken - please try another!"];
+
+                                                [self.cancelCrossButton setEnabled:YES];
+                                                self.warningLabel.text = @"Username taken";
+                                                self.usernameField.textColor = [UIColor colorWithRed:1 green:0.294 blue:0.38 alpha:1];
+
+                                                //shake text field
+                                                CABasicAnimation *animation =
+                                                [CABasicAnimation animationWithKeyPath:@"position"];
+                                                [animation setDuration:0.05];
+                                                [animation setRepeatCount:5];
+                                                [animation setAutoreverses:YES];
+                                                [animation setFromValue:[NSValue valueWithCGPoint:
+                                                                         CGPointMake([self.usernameField center].x - 6.0f, [self.usernameField center].y)]];
+                                                [animation setToValue:[NSValue valueWithCGPoint:
+                                                                       CGPointMake([self.usernameField center].x + 6.0f, [self.usernameField center].y)]];
+                                                [[self.usernameField layer] addAnimation:animation forKey:@"position"];
+
+                                            }
+                                            else if([[error.description lowercaseString] containsString:@"already signed up"]) {
+                                                [self alreadySignedUpAlert];
+                                            }
+                                            else if([[error.description lowercaseString] containsString:@"SSL error"]) {
+                                                [self showAlertWithTitle:@"Sign up Error" andMsg:@"Looks like there was a problem with your connection, please close and reopen the app then try again!"];
+                                            }
+                                            else{
+                                                [self showAlertWithTitle:@"Sign up Error" andMsg:[NSString stringWithFormat:@"%@", error.description]];
+                                            }
+                                            
                                             [self hideHUD];
                                             [self.regButton setEnabled:YES];
                                             [self.helpButton setEnabled:YES];
                                             [self.cancelCrossButton setEnabled:YES];
-                                            [self showAlertWithTitle:@"Sign up Error" andMsg:[NSString stringWithFormat:@"%@", error.description]];
                                         }
                                     }];
                                     
@@ -981,50 +1010,50 @@
                                                @"currency":self.selectedCurrency,
                                                }];
              
-             //update Intercom with user info
-             NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
-             [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
-                 if (!error) {
-                     [Intercom setUserHash:hash];
-                     [Intercom registerUserWithUserId:[PFUser currentUser].objectId];
-                     
-                     //setup intercom listener
-                     [[NSNotificationCenter defaultCenter] postNotificationName:@"registerIntercom" object:nil];
-                     
-                     //add standard info to user object
-                     ICMUserAttributes *userAttributes = [ICMUserAttributes new];
-                     userAttributes.email = email;
-                     userAttributes.signedUpAt = [NSDate date];
-                     userAttributes.name = [PFUser currentUser][PF_USER_FULLNAME];
-
-                     if (self.emailMode) {
-                         //finish adding custom intercom attributes for email mode
-                         userAttributes.customAttributes = @{@"email_sign_up" : @YES,
-                                                             @"currency": self.selectedCurrency,
-                                                             @"Username":[PFUser currentUser].username
-                                                             };
-                         
-                     }
-                     else{
-                         //and same for facebook mode
-                         userAttributes.customAttributes = @{@"email_sign_up" : @NO,
-                                                             @"currency": self.selectedCurrency,
-                                                             @"Username":[PFUser currentUser].username,
-                                                             @"facebookId": [PFUser currentUser][PF_USER_FACEBOOKID]
-                                                             };
-                     }
-                     
-                     [Intercom updateUser:userAttributes];
-
-                 }
-                 else{
-                     NSLog(@"reg intercom veri error");
-                     [Answers logCustomEventWithName:@"Intercom Verify Error"
-                                    customAttributes:@{
-                                                       @"where":@"registration"
-                                                       }];
-                 }
-             }];
+//             //update Intercom with user info
+//             NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
+//             [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
+//                 if (!error) {
+//                     [Intercom setUserHash:hash];
+//                     [Intercom registerUserWithUserId:[PFUser currentUser].objectId];
+//
+//                     //setup intercom listener
+//                     [[NSNotificationCenter defaultCenter] postNotificationName:@"registerIntercom" object:nil];
+//
+//                     //add standard info to user object
+//                     ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+//                     userAttributes.email = email;
+//                     userAttributes.signedUpAt = [NSDate date];
+//                     userAttributes.name = [PFUser currentUser][PF_USER_FULLNAME];
+//
+//                     if (self.emailMode) {
+//                         //finish adding custom intercom attributes for email mode
+//                         userAttributes.customAttributes = @{@"email_sign_up" : @YES,
+//                                                             @"currency": self.selectedCurrency,
+//                                                             @"Username":[PFUser currentUser].username
+//                                                             };
+//
+//                     }
+//                     else{
+//                         //and same for facebook mode
+//                         userAttributes.customAttributes = @{@"email_sign_up" : @NO,
+//                                                             @"currency": self.selectedCurrency,
+//                                                             @"Username":[PFUser currentUser].username,
+//                                                             @"facebookId": [PFUser currentUser][PF_USER_FACEBOOKID]
+//                                                             };
+//                     }
+//
+//                     [Intercom updateUser:userAttributes];
+//
+//                 }
+//                 else{
+//                     NSLog(@"reg intercom veri error");
+//                     [Answers logCustomEventWithName:@"Intercom Verify Error"
+//                                    customAttributes:@{
+//                                                       @"where":@"registration"
+//                                                       }];
+//                 }
+//             }];
 
              //set user as tabUser
              AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -1125,20 +1154,32 @@
 
 -(BOOL)textFieldShouldReturn:(UITextField*)textField
 {
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    
     if (self.emailMode) {
         if (textField == self.nameField) {
+            [mixpanel track:@"first_name_entered" properties:@{}];
+            
             [self.lastNameField becomeFirstResponder];
         }
         else if (textField == self.lastNameField) {
+            [mixpanel track:@"last_name_entered" properties:@{}];
+
             [self.emailField becomeFirstResponder];
         }
         else if (textField == self.emailField) {
+            [mixpanel track:@"email_entered" properties:@{}];
+
             [self.usernameField becomeFirstResponder];
         }
         else if (textField == self.usernameField) {
+            [mixpanel track:@"username_entered" properties:@{}];
+
             [self.passwordField becomeFirstResponder];
         }
         else{
+            [mixpanel track:@"password_entered" properties:@{}];
+
             [textField resignFirstResponder];
         }
 
@@ -1379,6 +1420,7 @@
     ExplainView *vc = [[ExplainView alloc]init];
     vc.introMode = YES;
     vc.emailIntro = self.emailMode;
+    vc.currency = self.selectedCurrency;
     [self.navigationController pushViewController:vc animated:YES];
 }
 
@@ -1432,7 +1474,7 @@
 }
 
 -(void)previousEmailAlert{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Email Already in Use" message:@"Someone is already using that email on Bump! You may have previously logged in via Facebook - try logging in via Facebook now?" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Email Already in Use" message:@"Someone is already using that email on BUMP! You may have previously logged in via Facebook - try logging in via Facebook now?" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Try different email" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         self.emailField.text = @"";
@@ -1446,7 +1488,7 @@
 }
 
 -(void)previousEmailAlertFacebook{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Email Already in Use" message:@"Someone is already using that email on Bump! You may have previously signed up to Bump with a password - Log in with your password and link your accounts!" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Email Already in Use" message:@"Someone is already using that email on BUMP! You may have previously signed up to BUMP with a password - Log in with your password and link your accounts!" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Try different email" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         self.emailField.text = @"";
@@ -1455,6 +1497,23 @@
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Log in with password" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self callLoginWithUsername];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)alreadySignedUpAlert{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Already Signed Up" message:@"Looks like you've already signed up! If you signed up with Facebook hit 'Continue with Facebook' otherwise you can log in with your password" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Continue with Facebook" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self callLoginWithFacebook];
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Log in with Password" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self callLoginWithUsername];
+    }]];
+
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -1552,7 +1611,7 @@
         MFMailComposeViewController *composeViewController = [[MFMailComposeViewController alloc] initWithNibName:nil bundle:nil];
         [composeViewController setMailComposeDelegate:self];
         [composeViewController setToRecipients:@[@"hello@sobump.com"]];
-        [composeViewController setSubject:@"Bump Registration Help"];
+        [composeViewController setSubject:@"BUMP Registration Help"];
         [composeViewController setMessageBody:@"Having an issue signing up? Please send us a screenshot of any error you see and fully explain the issue so we can help you asap!\n\n############################" isHTML:NO];
         [self presentViewController:composeViewController animated:YES completion:nil];
     }

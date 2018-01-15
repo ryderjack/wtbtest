@@ -60,31 +60,30 @@
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="58" id="Cj6-OJ-qkh">
             <rect key="frame" x="0.0" y="0.0" width="320" height="58"/>
             <autoresizingMask key="autoresizingMask"/>
-            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" ambiguous="YES" tableViewCell="Cj6-OJ-qkh" id="yMS-Hp-0gY">
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Cj6-OJ-qkh" id="yMS-Hp-0gY">
                 <rect key="frame" x="0.0" y="0.0" width="320" height="57.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" text="S I G N  U P" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yG8-HO-iiQ">
-                        <rect key="frame" x="106" y="26" width="108" height="21"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="S I G N  U P" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yG8-HO-iiQ">
+                        <rect key="frame" x="125.5" y="26" width="69.5" height="21"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="12"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pbv-9D-tT8">
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pbv-9D-tT8">
                         <rect key="frame" x="26" y="21" width="30" height="30"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="30" id="Mtn-VB-k5R"/>
-                            <constraint firstAttribute="width" constant="30" id="gg7-2d-CJr"/>
+                            <constraint firstAttribute="width" constant="30" id="D07-ws-0Vg"/>
                         </constraints>
                         <state key="normal" image="cancelCross.png"/>
                         <connections>
                             <action selector="cancelPressed:" destination="-1" eventType="touchUpInside" id="mum-aF-uA1"/>
                         </connections>
                     </button>
-                    <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gEf-Gr-skI">
-                        <rect key="frame" x="225" y="20" width="69" height="33"/>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gEf-Gr-skI">
+                        <rect key="frame" x="236" y="20" width="69" height="33"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="33" id="5tT-Re-6fk"/>
-                            <constraint firstAttribute="width" constant="69" id="kLm-bo-wcY"/>
+                            <constraint firstAttribute="height" constant="33" id="Fsq-kW-rRQ"/>
+                            <constraint firstAttribute="width" constant="69" id="Zdq-tm-5W0"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
                         <state key="normal" title="Help">
@@ -96,15 +95,14 @@
                     </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="gEf-Gr-skI" firstAttribute="top" secondItem="pbv-9D-tT8" secondAttribute="top" constant="-1" id="5c6-bL-eSb"/>
-                    <constraint firstItem="yG8-HO-iiQ" firstAttribute="top" secondItem="yMS-Hp-0gY" secondAttribute="topMargin" constant="18" id="NtK-2l-evF"/>
-                    <constraint firstItem="pbv-9D-tT8" firstAttribute="leading" secondItem="yMS-Hp-0gY" secondAttribute="leadingMargin" constant="10" id="VQh-Mi-nLk"/>
-                    <constraint firstItem="yG8-HO-iiQ" firstAttribute="leading" secondItem="yMS-Hp-0gY" secondAttribute="leadingMargin" constant="90" id="XUJ-V8-98Q"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="yG8-HO-iiQ" secondAttribute="bottom" constant="2.5" id="Xjk-R4-fN2"/>
-                    <constraint firstItem="pbv-9D-tT8" firstAttribute="centerY" secondItem="yG8-HO-iiQ" secondAttribute="centerY" id="ePs-Mx-6jl"/>
-                    <constraint firstItem="yG8-HO-iiQ" firstAttribute="centerX" secondItem="yMS-Hp-0gY" secondAttribute="centerX" id="iKK-TJ-Qfg"/>
-                    <constraint firstItem="pbv-9D-tT8" firstAttribute="top" secondItem="yMS-Hp-0gY" secondAttribute="topMargin" constant="13" id="quY-nt-zfD"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="gEf-Gr-skI" secondAttribute="trailing" constant="10" id="ypb-Bq-8le"/>
+                    <constraint firstItem="pbv-9D-tT8" firstAttribute="centerY" secondItem="yG8-HO-iiQ" secondAttribute="centerY" id="6C1-82-JS3"/>
+                    <constraint firstItem="yG8-HO-iiQ" firstAttribute="bottom" secondItem="yMS-Hp-0gY" secondAttribute="bottomMargin" id="9t8-Eg-ekh"/>
+                    <constraint firstItem="pbv-9D-tT8" firstAttribute="leading" secondItem="yMS-Hp-0gY" secondAttribute="leadingMargin" constant="10" id="KRa-Ev-wI2"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="gEf-Gr-skI" secondAttribute="trailing" constant="-1" id="OKl-Vy-28X"/>
+                    <constraint firstItem="pbv-9D-tT8" firstAttribute="top" secondItem="yMS-Hp-0gY" secondAttribute="topMargin" constant="10" id="ZVy-Cg-h4y"/>
+                    <constraint firstItem="yG8-HO-iiQ" firstAttribute="top" secondItem="yMS-Hp-0gY" secondAttribute="topMargin" constant="15" id="gOG-NX-YQr"/>
+                    <constraint firstItem="yG8-HO-iiQ" firstAttribute="centerX" secondItem="yMS-Hp-0gY" secondAttribute="centerX" id="odT-X4-VQB"/>
+                    <constraint firstItem="yG8-HO-iiQ" firstAttribute="centerY" secondItem="gEf-Gr-skI" secondAttribute="centerY" id="x9Q-H1-z8g"/>
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-62" y="-120"/>

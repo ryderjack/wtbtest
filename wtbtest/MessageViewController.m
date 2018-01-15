@@ -177,7 +177,7 @@
                 }
                 else{
                     if (self.messageSellerPressed == YES) {
-                        [self.suggestedMessagesArray addObjectsFromArray:@[@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price    negotiable?", @"Not interested thanks", @"Dismiss"]];
+                        [self.suggestedMessagesArray addObjectsFromArray:@[@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks", @"Dismiss"]];
                     }
                     else{
                         [self.suggestedMessagesArray addObjectsFromArray:@[@"What are you selling?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks", @"Dismiss"]];
@@ -612,6 +612,8 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    
+    NSLog(@"will appear");
     
     [self.navigationController.navigationBar setTranslucent:YES]; //watch out, setting this to no throws the listing banner's constraints off!
     [self.navigationController.navigationBar setHidden:NO];
@@ -1056,6 +1058,8 @@
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     
+    NSLog(@"disappear in msgs called");
+    
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     //clear observers
@@ -1479,22 +1483,31 @@
                     NSString *buyerMsgd = [self.convoObject objectForKey:@"buyerSentTwoMessages"];
                     NSString *orderConvo = [self.convoObject objectForKey:@"orderConvo"];
                     int totalMessages = [[self.convoObject objectForKey:@"totalMessages"]intValue];
-                    BOOL transactionHappened = [[self.convoObject objectForKey:@"transactionHappened"]boolValue];
-                    
-                    if ([emailSent isEqualToString:@"YES"] && [sellerMsgd isEqualToString:@"YES"] && [buyerMsgd isEqualToString:@"YES"] && totalMessages > 5 && !transactionHappened && ![orderConvo isEqualToString:@"YES"]) {
-                        
-                        NSLog(@"MARK CONVO AS A TRANSACTION");
+                    NSString *transactionHappened = [self.convoObject objectForKey:@"dealHappened"];
+
+                    if ([emailSent isEqualToString:@"YES"] && [sellerMsgd isEqualToString:@"YES"] && [buyerMsgd isEqualToString:@"YES"] && totalMessages > 5 && ![transactionHappened isEqualToString:@"YES"] && ![orderConvo isEqualToString:@"YES"]) {
                         
                         //fire off mixpanel event
                         Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                        
+                        if (self.userIsBuyer) {
+                            [Intercom logEventWithName:@"purchased_through_convo"];
+                        }
+                        else{
+                            [Intercom logEventWithName:@"sold_through_convo"];
+                        }
                         
                         if (self.listing) {
                             
                             //if we have the listing, track the price too
                             float usdPrice = [[self.listing objectForKey:@"salePriceUSD"]floatValue];
-                            NSString *instantBuyMode = [self.convoObject objectForKey:@"instantBuy"];
+                            NSString *instantBuyMode = @"NO";
                             
-                            [mixpanel track:@"Transaction Happened" properties:@{
+                            if ([self.listing objectForKey:@"instantBuy"]) {
+                                instantBuyMode = [self.listing objectForKey:@"instantBuy"];
+                            }
+                            
+                            [mixpanel track:@"Convo Transaction" properties:@{
                                                                          @"price":@(usdPrice),
                                                                          @"category":[self.listing objectForKey:@"category"],
                                                                          @"currency":[self.listing objectForKey:@"currency"],
@@ -1502,11 +1515,11 @@
                                                                          }];
                         }
                         else{
-                            [mixpanel track:@"Transaction Happened" properties:nil];
+                            [mixpanel track:@"Convo Transaction" properties:nil];
                         }
                         
                         //mark this convo as transaction happened so doesn't fire again
-                        [self.convoObject setObject:@YES forKey:@"transactionHappened"];
+                        [self.convoObject setObject:@"YES" forKey:@"dealHappened"];
                         [self.convoObject saveInBackground];
                     }
                     
@@ -3300,7 +3313,8 @@
         NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"listingBannerViewFile" owner:self options:nil];
         self.listingView = (ListingBannerView *)[nib objectAtIndex:0];
         self.listingView.delegate = self;
-        
+        [self.listingView.buyButton setHidden:YES];
+
         [self.listing fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
 
@@ -3312,6 +3326,25 @@
                 }
                 else{
                     self.listingView.itemTitleLabel.text = [self.listing objectForKey:@"description"];
+                }
+                
+                if ([[self.listing objectForKey:@"instantBuy"]isEqualToString:@"YES"] && [[self.listing objectForKey:@"status"]isEqualToString:@"live"] && self.userIsBuyer) {
+                    NSLog(@"show buy button");
+                    self.buyButtonOn = YES;
+                    [self.listingView.buyButton setHidden:NO];
+                }
+                else if([[self.listing objectForKey:@"status"]isEqualToString:@"sold"]){
+                    NSLog(@"show sold button");
+                    [self.listingView.buyButton setHidden:NO];
+
+                    //show item as sold
+                    [self.listingView.buyButton setBackgroundImage:[UIImage imageNamed:@"soldChatBg"] forState:UIControlStateNormal];
+                    [self.listingView.buyButton setTitle:@"S O L D" forState:UIControlStateNormal];
+                    
+                    [self.listingView.buyButton setHidden:NO];
+                }
+                else{
+                    [self.listingView.buyButton setHidden:YES];
                 }
                 
                 float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
@@ -3388,6 +3421,39 @@
     vc.fromBuyNow = YES;
     [self.navigationController pushViewController:vc animated:YES];
     
+}
+
+-(void)buyButtonBannerTapped{
+    //take to checkout
+    
+    if (!self.buyButtonOn) {
+        return;
+    }
+    
+    NSLog(@"checkout gonna show in msgs");
+    
+    [self.listingView.buyButton setEnabled:NO];
+    
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"tapped_buy_listing" properties:@{
+                                                       @"source":@"conversation"
+                                                       }];
+    
+    CheckoutSummary *vc = [[CheckoutSummary alloc]init];
+    vc.listingObject = self.listing;
+    
+    vc.delegate = self;
+    
+    float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
+    
+    vc.salePrice = price;
+    vc.currencySymbol = self.currencySymbol;
+    vc.currency = self.currency; //we decide at earlier point in listing setup whether this is native to the listing or user
+    
+    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    [self.navigationController presentViewController:nav animated:YES completion:^{
+        [self.listingView.buyButton setEnabled:YES];
+    }];
 }
 
 -(void)sendDemoMessage{
@@ -3489,5 +3555,17 @@
     [self leftReview];
 }
 
+#pragma mark - checkout VC delegates
+
+-(void)dismissedCheckout{
+    //re-add observers if needs be
+    NSLog(@"appear in msgs called");
+
+}
+
+-(void)PurchasedItemCheckout{
+    [self.listingView.buyButton setBackgroundImage:[UIImage imageNamed:@"soldChatBg"] forState:UIControlStateNormal];
+    [self.listingView.buyButton setTitle:@"S O L D" forState:UIControlStateNormal];
+}
 @end
 

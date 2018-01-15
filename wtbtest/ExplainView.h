@@ -50,4 +50,7 @@
 @property (nonatomic, strong) UIView *searchBgView;
 @property (nonatomic) BOOL shownPushAlert;
 
+//intercom info for onboarding
+@property (nonatomic, strong) NSString *currency;
+
 @end

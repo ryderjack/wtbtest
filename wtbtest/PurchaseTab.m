@@ -267,6 +267,79 @@
                 [currentUser saveInBackground];
             }
             
+            //check if user has been registered with intercom
+            //only do this check for people who signed up with this update / signed up after it was released ~ 13th January
+            //check if should ignore 2 photos requirement
+            NSDateComponents *components = [[NSDateComponents alloc] init];
+            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+            
+            [components setYear:2018];
+            [components setMonth:1];
+            [components setDay:13]; //this is after v2.1.3 went live
+            [components setHour:00];
+            
+            //generate the start date where this should be YES for everyone
+            NSDate * combinedDate = [theCalendar dateFromComponents:components];
+            
+            if (![[currentUser objectForKey:@"sentWelcomeMessage"]isEqualToString:@"YES"] && [currentUser.createdAt compare:combinedDate]==NSOrderedDescending){
+                //user was created later than this date
+                NSLog(@"NEED TO UPDATE THIS USERS INTERCOM STUFF");
+
+                NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
+                [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
+                    if (!error) {
+                        [Intercom setUserHash:hash];
+                        [Intercom registerUserWithUserId:[PFUser currentUser].objectId];
+                        
+                        //setup intercom listener
+                        [[NSNotificationCenter defaultCenter] postNotificationName:@"registerIntercom" object:nil];
+                        
+                        //add standard info to user object
+                        ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+                        userAttributes.email = [PFUser currentUser][@"email"];
+                        userAttributes.signedUpAt = [NSDate date];
+                        userAttributes.name = [PFUser currentUser][@"fullname"];
+                        
+                        NSString *currencyStr = @"USD";
+                        
+                        if ([PFUser currentUser][@"currency"]) {
+                            currencyStr = [PFUser currentUser][@"currency"];
+                        }
+                        
+                        if([PFUser currentUser][@"facebookId"]){
+                            //and same for facebook mode
+                            userAttributes.customAttributes = @{@"email_sign_up" : @NO,
+                                                                @"currency": currencyStr,
+                                                                @"Username":[PFUser currentUser].username,
+                                                                @"facebookId": [PFUser currentUser][@"facebookId"]
+                                                                };
+                        }
+                        else{
+                            //finish adding custom intercom attributes for email mode
+                            userAttributes.customAttributes = @{@"email_sign_up" : @YES,
+                                                                @"currency": currencyStr,
+                                                                @"Username":[PFUser currentUser].username
+                                                                };
+                            
+                        }
+                        
+                        [Intercom updateUser:userAttributes];
+                        
+                        //use this property so we can know who ended reg early and send them a welcome message the next time they open the app
+                        [[PFUser currentUser]setObject:@"YES" forKey:@"sentWelcomeMessage"];
+                        [[PFUser currentUser]saveInBackground];
+                        
+                    }
+                    else{
+                        NSLog(@"reg intercom veri error");
+                        [Answers logCustomEventWithName:@"Intercom Verify Error"
+                                       customAttributes:@{
+                                                          @"where":@"registration"
+                                                          }];
+                    }
+                }];
+            }
+            
             //decide whether to show email reminder header
 //            if ([[currentUser objectForKey:@"emailIsVerified"]boolValue] != YES && ![currentUser objectForKey:@"facebookId"]) {
 //                [self setupEmailHeader];
@@ -335,6 +408,7 @@
             if (![currentUser objectForKey:@"dealsSaved"]) {
                 PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
                 [dealsQuery whereKey:@"User" equalTo:currentUser];
+                [dealsQuery orderByAscending:@"createdAt"];
                 [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                     if (object) {
                         //already have deals info saved
@@ -470,6 +544,7 @@
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
+    
     self.navigationController.navigationBar.barStyle = UIBarStyleBlack;
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:12],
@@ -537,10 +612,17 @@
         //show filter intro
         if (![[[PFUser currentUser] objectForKey:@"filterIntro"] isEqualToString:@"YES"] && [[[PFUser currentUser] objectForKey:@"completedReg"] isEqualToString:@"YES"]) {
             
-            if (modalPresent != YES) {
-                self.filterIntro = YES;
-                [self showPushReminder];
+            if ([[NSUserDefaults standardUserDefaults]boolForKey:@"secondTimeOnHome"]) {
+                if (modalPresent != YES) {
+                    self.filterIntro = YES;
+                    [self showPushReminder];
+                }
             }
+            else{
+                //set this to yes so user sees filter demo next time they visit the home tab
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"secondTimeOnHome"];
+            }
+
             
             //decide whether to show email reminder header
 //            if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser] objectForKey:@"facebookId"]) {
@@ -1505,6 +1587,9 @@
     
     if (self.filterIntro) {
         //draw focus to filter button
+        
+        [[PFUser currentUser]setObject:@"YES" forKey:@"filterIntro"];
+        [[PFUser currentUser]saveInBackground];
         
         UIImageView *imgView = [[UIImageView alloc]initWithFrame:self.searchBgView.frame];
         [self.searchBgView addSubview:imgView];
@@ -4052,6 +4137,12 @@
     
     [self hideConnectPayPal];
     
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"paypal_connect_pressed" properties:@{
+                                                           @"where":@"Home Tab"
+                                                    }];
+
+    
     //onboard merchant with paypal
     NSDictionary *params = @{
                                    @"email": [[PFUser currentUser]objectForKey:@"email"],
@@ -4407,6 +4498,8 @@
                                                                  @"userType":[NSNumber numberWithBool:self.existingUserPPAlert]
                                                                  }];
                 
+                [Intercom logEventWithName:@"paypal_connected" metaData: @{}];
+                
                 NSLog(@"saved paypal info on user");
                 [Answers logCustomEventWithName:@"Saved PayPal info on User"
                                customAttributes:@{
@@ -4513,22 +4606,22 @@
                                                                              @"userType":[NSNumber numberWithBool:self.existingUserPPAlert]
                                                                              }];
                             
+                            [Intercom logEventWithName:@"paypal_connected" metaData: @{}];
+                            
                             NSLog(@"saved paypal info on user");
                             [Answers logCustomEventWithName:@"Saved PayPal info on User"
                                            customAttributes:@{
-                                                              @"method":@"PopUP GETFunc"
+                                                              @"method":@"getAccStatusWithMerchId Home Tab"
                                                               }];
                         }
                         else{
                             NSLog(@"error saving paypal info on user %@", error);
                             
                             [self showPPConnectedErrorView];
-
-//                            [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
                             
                             [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
                                            customAttributes:@{
-                                                              @"method":@"PopUP GETFunc"
+                                                              @"method":@"getAccStatusWithMerchId Home"
                                                               }];
                         }
                     }];
@@ -4536,24 +4629,20 @@
                 else{
                     //user hasn't granted correct permissions
                     [self showPPConnectedErrorView];
-
-//                    [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Ensure you've ticked the box upon PayPal on boarding to grant the relevant permissions to sell on BUMP. If you need any help just send Support a message from Settings"];
                     
                     [Answers logCustomEventWithName:@"PayPal Error"
                                    customAttributes:@{
-                                                      @"type":@"PopUP User hasn't granted permissions"
+                                                      @"type":@"getAccStatusWithMerchId Home User hasn't granted permissions"
                                                       }];
                 }
             }
             else{
                 //don't have receivable & merchant Id info in response, ask them to try again
                 [self showPPConnectedErrorView];
-
-//                [self showAlertWithTitle:@"PayPal Error" andMsg:@"We couldn't get your account info, please try enabling Instant Buy again"];
                 
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
-                                                  @"type":@"No receivable / merchant ID in response"
+                                                  @"type":@"getAccStatusWithMerchId Home No receivable / merchant ID in response"
                                                   }];
             }
         }
@@ -4562,11 +4651,12 @@
 
             NSLog(@"error getting the account status %@", error);
             
+            [Intercom logEventWithName:@"connect_paypal_cancelled" metaData: @{}];
+            
             if ([error.description isEqualToString:@"onboarding error"]) {
                 [Answers logCustomEventWithName:@"PayPal Onboarding Error"
                                customAttributes:@{
-                                                  @"type":@"PopUP Error getting account status",
-                                                  @"where":@"create 1"
+                                                  @"type":@"getAccStatusWithMerchId Home Error getting account status"
                                                   }];
                 self.onboardingError = YES;
                 [self showPPConnectedErrorView];
@@ -4574,8 +4664,7 @@
             else{
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
-                                                  @"type":@"PopUP Error getting account status",
-                                                  @"where":@"create 1"
+                                                  @"type":@"getAccStatusWithMerchId Home Error getting account status"
                                                   }];
                 [self showPPConnectedErrorView];
             }
@@ -4633,14 +4722,14 @@
                             if (succeeded) {
                                 [Answers logCustomEventWithName:@"Saved PayPal info on Listing"
                                                customAttributes:@{
-                                                                  @"method":@"PopUP URLParams"
+                                                                  @"method":@"getPPAccountStatus Home URLParams"
                                                                   }];
                                 
                             }
                             else{
                                 [Answers logCustomEventWithName:@"Error Saving PayPal info on Listing"
                                                customAttributes:@{
-                                                                  @"method":@"PopUP URLParams"
+                                                                  @"method":@"getPPAccountStatus Home URLParams"
                                                                   }];
                             }
                         }];
@@ -4658,23 +4747,22 @@
                                                                              @"userType":[NSNumber numberWithBool:self.existingUserPPAlert]
                                                                              }];
                             
+                            [Intercom logEventWithName:@"paypal_connected" metaData: @{}];
+                            
                             NSLog(@"saved paypal info on user");
                             [Answers logCustomEventWithName:@"Saved PayPal info on User"
                                            customAttributes:@{
-                                                              @"method":@"PopUP GETFunc"
+                                                              @"method":@"getPPAccountStatus Home"
                                                               }];
                         }
                         else{
                             NSLog(@"error saving paypal info on user %@", error);
                             
                             [self showPPConnectedErrorView];
-
-//                            [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
-                            
                             
                             [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
                                            customAttributes:@{
-                                                              @"method":@"PopUP GETFunc"
+                                                              @"method":@"getPPAccountStatus Home"
                                                               }];
                         }
                     }];
@@ -4682,24 +4770,20 @@
                 else{
                     //user hasn't granted correct permissions
                     [self showPPConnectedErrorView];
-
-//                    [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Ensure you've ticked the box upon PayPal on boarding to grant the relevant permissions to sell on BUMP. If you need any help just send Support a message from Settings"];
                     
                     [Answers logCustomEventWithName:@"PayPal Error"
                                    customAttributes:@{
-                                                      @"type":@"PopUP User hasn't granted permissions"
+                                                      @"type":@"getPPAccountStatus Home User hasn't granted permissions"
                                                       }];
                 }
             }
             else{
                 //don't have receivable & merchant Id info in response, ask them to try again
                 [self showPPConnectedErrorView];
-
-//                [self showAlertWithTitle:@"PayPal Error" andMsg:@"We couldn't get your account info, please try enabling Instant Buy again"];
                 
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
-                                                  @"type":@"PopUP No receivable / merchant ID in response"
+                                                  @"type":@"getPPAccountStatus Home No receivable / merchant ID in response"
                                                   }];
             }
         }
@@ -4708,11 +4792,12 @@
 
             NSLog(@"error getting the account status %@", error);
             
+            [Intercom logEventWithName:@"connect_paypal_cancelled" metaData: @{}];
+            
             if ([error.description isEqualToString:@"onboarding error"]) {
                 [Answers logCustomEventWithName:@"PayPal Onboarding Error"
                                customAttributes:@{
-                                                  @"type":@"PopUP Error getting account status",
-                                                  @"where":@"create 2"
+                                                  @"type":@"getPPAccountStatus Home Error getting account status"
                                                   }];
                 self.onboardingError = YES;
                 [self showPPConnectedErrorView];
@@ -4720,8 +4805,7 @@
             else{
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
-                                                  @"type":@"PopUP Error getting account status",
-                                                  @"where":@"create 2"
+                                                  @"type":@"getPPAccountStatus Home Error getting account status" //this is where the most common PP error is happeneing
                                                   }];
                 [self showPPConnectedErrorView];
             }

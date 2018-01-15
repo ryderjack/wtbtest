@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -107,40 +107,110 @@
                     <nil key="textColor"/>
                     <nil key="highlightedColor"/>
                 </label>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" usesAttributedText="YES" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="TfL-jN-DGz">
+                    <rect key="frame" x="49" y="21" width="203" height="171"/>
+                    <attributedString key="attributedText">
+                        <fragment>
+                            <string key="content">Share your Screenshot
+ 
+</string>
+                            <attributes>
+                                <color key="NSColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <font key="NSFont" size="16" name="PingFangSC-Semibold"/>
+                                <paragraphStyle key="NSParagraphStyle" alignment="center" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                            </attributes>
+                        </fragment>
+                        <fragment content="Choose how you'd like to send it">
+                            <attributes>
+                                <color key="NSColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <font key="NSFont" size="14" name="PingFangSC-Medium"/>
+                                <paragraphStyle key="NSParagraphStyle" alignment="center" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                            </attributes>
+                        </fragment>
+                    </attributedString>
+                    <nil key="highlightedColor"/>
+                </label>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="viF-9N-HbG">
+                    <rect key="frame" x="87" y="200" width="45" height="45"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <state key="normal" image="whatsapp.png"/>
+                    <connections>
+                        <action selector="whatsappPressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="nti-xo-H2R"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="K1k-AP-v07">
+                    <rect key="frame" x="170" y="199" width="44" height="45"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="44" id="BiD-Ef-k3o"/>
+                    </constraints>
+                    <state key="normal" image="messenger.png"/>
+                    <connections>
+                        <action selector="messengerPressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="haS-eH-J9h"/>
+                    </connections>
+                </button>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="W H A T S A P P" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xH6-Nf-Lzb">
+                    <rect key="frame" x="68" y="249" width="82" height="21"/>
+                    <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="7"/>
+                    <nil key="textColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="M E S S E N G E R" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VxL-x1-r7R">
+                    <rect key="frame" x="151" y="249" width="82" height="21"/>
+                    <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="7"/>
+                    <nil key="textColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
+                <constraint firstItem="xH6-Nf-Lzb" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="68" id="4TM-PU-1gQ"/>
+                <constraint firstItem="viF-9N-HbG" firstAttribute="top" secondItem="1ZB-hn-0dY" secondAttribute="top" id="4hB-SL-arc"/>
+                <constraint firstItem="K1k-AP-v07" firstAttribute="centerX" secondItem="VxL-x1-r7R" secondAttribute="centerX" id="5GG-eL-jfp"/>
                 <constraint firstAttribute="trailing" secondItem="pJi-iQ-QcV" secondAttribute="trailing" id="6Ba-0g-aP8"/>
+                <constraint firstItem="K1k-AP-v07" firstAttribute="bottom" secondItem="Y6e-5F-meA" secondAttribute="bottom" id="7nY-xc-14p"/>
+                <constraint firstItem="viF-9N-HbG" firstAttribute="centerX" secondItem="xH6-Nf-Lzb" secondAttribute="centerX" id="81M-Dn-3B1"/>
                 <constraint firstItem="1ZB-hn-0dY" firstAttribute="top" secondItem="JxZ-ql-rf1" secondAttribute="bottom" constant="29" id="8LP-K6-FW5"/>
                 <constraint firstItem="baJ-8V-i5p" firstAttribute="baseline" secondItem="pna-HY-yCr" secondAttribute="baseline" id="9Qj-t4-RdV"/>
+                <constraint firstItem="xH6-Nf-Lzb" firstAttribute="baseline" secondItem="baJ-8V-i5p" secondAttribute="baseline" id="9X7-Fg-WNz"/>
                 <constraint firstAttribute="trailing" secondItem="pna-HY-yCr" secondAttribute="trailing" constant="26" id="A7C-WE-bY2"/>
                 <constraint firstItem="1ZB-hn-0dY" firstAttribute="centerX" secondItem="sR0-q8-KfD" secondAttribute="centerX" id="AWg-l4-YtH"/>
+                <constraint firstItem="xH6-Nf-Lzb" firstAttribute="firstBaseline" secondItem="baJ-8V-i5p" secondAttribute="firstBaseline" id="Cc3-Rv-Lrr"/>
                 <constraint firstItem="sR0-q8-KfD" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="26" id="DZB-12-xfw"/>
                 <constraint firstItem="sR0-q8-KfD" firstAttribute="top" secondItem="1ZB-hn-0dY" secondAttribute="bottom" constant="4" id="EmP-rz-sjf"/>
                 <constraint firstItem="IVq-kN-fXH" firstAttribute="bottom" secondItem="qp4-N3-BX5" secondAttribute="bottom" id="FQv-Ko-rm2"/>
                 <constraint firstItem="qp4-N3-BX5" firstAttribute="leading" secondItem="HLY-P7-Loi" secondAttribute="trailing" constant="22" id="Fbf-O7-jrD"/>
                 <constraint firstItem="Y6e-5F-meA" firstAttribute="top" secondItem="gih-o4-Tfi" secondAttribute="top" id="Fvp-0g-JYA"/>
                 <constraint firstItem="gih-o4-Tfi" firstAttribute="centerX" secondItem="pna-HY-yCr" secondAttribute="centerX" id="H1Q-FY-zCZ"/>
+                <constraint firstItem="TfL-jN-DGz" firstAttribute="centerX" secondItem="IVq-kN-fXH" secondAttribute="centerX" id="KOm-QB-xAV"/>
                 <constraint firstItem="IVq-kN-fXH" firstAttribute="centerX" secondItem="pJi-iQ-QcV" secondAttribute="centerX" id="KpW-ZI-heJ"/>
                 <constraint firstItem="HLY-P7-Loi" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="89" id="L9c-Bv-pVn"/>
                 <constraint firstItem="HLY-P7-Loi" firstAttribute="top" secondItem="IVq-kN-fXH" secondAttribute="top" id="QEN-PY-XOq"/>
                 <constraint firstItem="Y6e-5F-meA" firstAttribute="baseline" secondItem="gih-o4-Tfi" secondAttribute="baseline" id="QtX-7R-yyA"/>
+                <constraint firstItem="VxL-x1-r7R" firstAttribute="firstBaseline" secondItem="pna-HY-yCr" secondAttribute="firstBaseline" id="Rgg-yp-KMr"/>
                 <constraint firstItem="pna-HY-yCr" firstAttribute="leading" secondItem="baJ-8V-i5p" secondAttribute="trailing" constant="1" id="SRp-er-d46"/>
                 <constraint firstItem="Y6e-5F-meA" firstAttribute="top" secondItem="JxZ-ql-rf1" secondAttribute="bottom" constant="28" id="Svh-hS-KXN"/>
                 <constraint firstItem="JxZ-ql-rf1" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="71" id="Ulb-uX-eBI"/>
                 <constraint firstAttribute="bottom" secondItem="sR0-q8-KfD" secondAttribute="bottom" constant="30" id="Uwy-lp-gZh"/>
                 <constraint firstAttribute="trailing" secondItem="qp4-N3-BX5" secondAttribute="trailing" constant="89" id="V6g-Xr-2AU"/>
                 <constraint firstItem="IVq-kN-fXH" firstAttribute="top" secondItem="qp4-N3-BX5" secondAttribute="top" id="WO5-IA-iwr"/>
+                <constraint firstItem="VxL-x1-r7R" firstAttribute="baseline" secondItem="pna-HY-yCr" secondAttribute="baseline" id="Xf0-48-VTC"/>
                 <constraint firstItem="baJ-8V-i5p" firstAttribute="leading" secondItem="sR0-q8-KfD" secondAttribute="trailing" constant="1" id="aTm-qR-0MA"/>
+                <constraint firstItem="TfL-jN-DGz" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="21" id="b1u-dM-M32"/>
                 <constraint firstItem="sR0-q8-KfD" firstAttribute="firstBaseline" secondItem="baJ-8V-i5p" secondAttribute="firstBaseline" id="b8Z-NX-aDb"/>
+                <constraint firstItem="K1k-AP-v07" firstAttribute="top" secondItem="Y6e-5F-meA" secondAttribute="top" id="bcy-yk-hXf"/>
                 <constraint firstItem="pJi-iQ-QcV" firstAttribute="centerX" secondItem="JxZ-ql-rf1" secondAttribute="centerX" id="bno-5c-1gK"/>
+                <constraint firstItem="1ZB-hn-0dY" firstAttribute="top" secondItem="TfL-jN-DGz" secondAttribute="bottom" constant="8" symbolic="YES" id="c3y-R8-txc"/>
                 <constraint firstItem="sR0-q8-KfD" firstAttribute="baseline" secondItem="baJ-8V-i5p" secondAttribute="baseline" id="cAk-zD-gcJ"/>
                 <constraint firstItem="Y6e-5F-meA" firstAttribute="bottom" secondItem="gih-o4-Tfi" secondAttribute="bottom" id="cOS-1s-Dqh"/>
+                <constraint firstItem="viF-9N-HbG" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="87" id="cjP-Sf-9xi"/>
                 <constraint firstItem="JxZ-ql-rf1" firstAttribute="centerX" secondItem="Y6e-5F-meA" secondAttribute="centerX" id="e6p-no-gJG"/>
                 <constraint firstItem="JxZ-ql-rf1" firstAttribute="top" secondItem="pJi-iQ-QcV" secondAttribute="bottom" constant="23" id="fvC-rW-iDj"/>
                 <constraint firstItem="HLY-P7-Loi" firstAttribute="bottom" secondItem="IVq-kN-fXH" secondAttribute="bottom" id="i4P-yw-Bcq"/>
+                <constraint firstItem="K1k-AP-v07" firstAttribute="leading" secondItem="viF-9N-HbG" secondAttribute="trailing" constant="38" id="iJ3-mT-mwN"/>
                 <constraint firstItem="baJ-8V-i5p" firstAttribute="top" secondItem="Y6e-5F-meA" secondAttribute="bottom" constant="5" id="jAG-zB-BiW"/>
                 <constraint firstItem="baJ-8V-i5p" firstAttribute="firstBaseline" secondItem="pna-HY-yCr" secondAttribute="firstBaseline" id="jHV-zu-dIp"/>
+                <constraint firstItem="VxL-x1-r7R" firstAttribute="leading" secondItem="xH6-Nf-Lzb" secondAttribute="trailing" constant="1" id="jT7-1C-J4z"/>
                 <constraint firstItem="Y6e-5F-meA" firstAttribute="centerX" secondItem="baJ-8V-i5p" secondAttribute="centerX" id="kMX-ls-iLe"/>
                 <constraint firstItem="pJi-iQ-QcV" firstAttribute="top" secondItem="HLY-P7-Loi" secondAttribute="bottom" constant="20" id="kb9-Of-O0E"/>
                 <constraint firstItem="1ZB-hn-0dY" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="45" id="mcz-QW-yhz"/>
@@ -149,6 +219,7 @@
                 <constraint firstItem="pJi-iQ-QcV" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="r6u-wR-QuJ"/>
                 <constraint firstItem="gih-o4-Tfi" firstAttribute="leading" secondItem="Y6e-5F-meA" secondAttribute="trailing" constant="38" id="rcI-Cn-tep"/>
                 <constraint firstItem="Y6e-5F-meA" firstAttribute="leading" secondItem="1ZB-hn-0dY" secondAttribute="trailing" constant="38" id="sbq-xu-pWC"/>
+                <constraint firstItem="TfL-jN-DGz" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="49" id="ubN-XH-L2U"/>
             </constraints>
             <nil key="simulatedStatusBarMetrics"/>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
@@ -157,9 +228,18 @@
                 <outlet property="friendImageThree" destination="qp4-N3-BX5" id="ENu-c5-zhU"/>
                 <outlet property="friendImageTwo" destination="IVq-kN-fXH" id="mLp-RU-PlC"/>
                 <outlet property="friendsLabel" destination="pJi-iQ-QcV" id="moF-Na-E8Q"/>
+                <outlet property="inviteTitleLabel" destination="JxZ-ql-rf1" id="Tgy-jt-DxU"/>
                 <outlet property="messengerButton" destination="Y6e-5F-meA" id="amB-LD-mbN"/>
+                <outlet property="messengerSSButton" destination="K1k-AP-v07" id="QfC-16-cmq"/>
+                <outlet property="messengerSSLabel" destination="VxL-x1-r7R" id="3ZH-ZX-dKg"/>
+                <outlet property="messsengerLabel" destination="baJ-8V-i5p" id="7Te-qR-cKu"/>
+                <outlet property="moreLabel" destination="pna-HY-yCr" id="mUT-vn-t9Z"/>
+                <outlet property="screenshotLabel" destination="TfL-jN-DGz" id="oy9-i1-i0M"/>
                 <outlet property="textButton" destination="gih-o4-Tfi" id="s8E-SI-fKE"/>
                 <outlet property="whatsAppButton" destination="1ZB-hn-0dY" id="ZJy-wn-SLM"/>
+                <outlet property="whatsAppLabelSS" destination="xH6-Nf-Lzb" id="1O1-PX-3ne"/>
+                <outlet property="whatsLabel" destination="sR0-q8-KfD" id="J6b-UP-Lfb"/>
+                <outlet property="whatsappSSButton" destination="viF-9N-HbG" id="2M8-4Z-RTq"/>
             </connections>
             <point key="canvasLocation" x="33" y="-141"/>
         </view>

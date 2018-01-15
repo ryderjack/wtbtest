@@ -12,6 +12,8 @@
 #import "AppConstant.h"
 #import "UIImageView+Letters.h"
 #import <CLPlacemark+HZContinents.h>
+#import <Intercom/Intercom.h>
+#import "Mixpanel/Mixpanel.h"
 
 @interface SettingsController ()
 
@@ -342,7 +344,9 @@
                 [Answers logCustomEventWithName:@"Connect PayPal Pressed"
                                customAttributes:@{}];
                 
-                [self showAlertWithTitle:@"Connect PayPal" andMsg:@"Just enable Buy Now when you next list an item for sale on BUMP and you'll be prompted to sign into PayPal & grant the relevant permissions. Got any questions? Just message Support from within the app or email hello@sobump.com"];
+                [self enableBuyNow];
+                
+//                [self showAlertWithTitle:@"Connect PayPal" andMsg:@"Just enable Buy Now when you next list an item for sale on BUMP and you'll be prompted to sign into PayPal & grant the relevant permissions. Got any questions? Just message Support from within the app or email hello@sobump.com"];
             }
         }
         else if (indexPath.row == 2){
@@ -389,51 +393,72 @@
     [alertView addAction:[UIAlertAction actionWithTitle:@"Disconnect" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         [self showHUD];
         
-        [self.currentUser setObject:@"NO" forKey:@"paypalEnabled"];
-        [self.currentUser removeObjectForKey:@"paypalMerchantId"];
-        [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-            if (succeeded) {
+        NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
+        [PFCloud callFunctionInBackground:@"disconnectPayPal" withParameters:params block:^(NSString *response, NSError *error) {
+            if (!error) {
+                [Answers logCustomEventWithName:@"Disconnected PayPal in Settings"
+                               customAttributes:@{}];
                 
-                PFQuery *listings = [PFQuery queryWithClassName:@"forSaleItems"];
-                [listings whereKey:@"sellerUser" equalTo:self.currentUser];
-                [listings whereKey:@"instantBuy" equalTo:@"YES"];
-                [listings whereKey:@"status" equalTo:@"live"];
-                [listings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                    if (objects) {
-                        
-                        //remove instant buy option
-                        for (PFObject *listingObj in objects) {
-                            [listingObj setObject:@"NO" forKey:@"instantBuy"];
-                            [listingObj saveInBackground];
-                        }
-                        
-                        [Answers logCustomEventWithName:@"Disconnected PayPal in Settings"
-                                       customAttributes:@{}];
-                        
-                        [self hideHUD];
-                        self.paypalConnected = NO;
-                        self.paypalAccountLabel.text = @"Add Account";
-                    }
-                    else{
-                        NSLog(@"error finding listings to disconnect from paypal %@", error);
-                        
-                        [Answers logCustomEventWithName:@"Disconnected PayPal Error finding listings"
-                                       customAttributes:@{}];
-                        
-                        [self hideHUD];
-                        self.paypalConnected = NO;
-                        self.paypalAccountLabel.text = @"Add Account";
-                    }
-                }];
+                //need to also do this locally since this user is cached on the device
+                [[PFUser currentUser]setObject:@"NO" forKey:@"paypalEnabled"];
+                [[PFUser currentUser]removeObjectForKey:@"paypalMerchantId"];
+                [[PFUser currentUser]saveInBackground];
+                
+                [self hideHUD];
+                self.paypalConnected = NO;
+                self.paypalAccountLabel.text = @"Add Account";
             }
             else{
-                NSLog(@"error disconnecting user from paypal %@", error);
+                NSLog(@"error trying to disconnect paypal %@", error);
                 [self hideHUD];
                 [self showAlertWithTitle:@"Disconnect Error" andMsg:@"Make sure you're connected to the internet and then try again. If the problem persists just message Team BUMP from within the app"];
                 [Answers logCustomEventWithName:@"Disconnect PayPal Error"
-                               customAttributes:@{}];
+                               customAttributes:@{
+                                                  @"error":error.description
+                                                  }];
             }
         }];
+        
+//        [self.currentUser setObject:@"NO" forKey:@"paypalEnabled"];
+//        [self.currentUser removeObjectForKey:@"paypalMerchantId"];
+//        [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//            if (succeeded) {
+//
+//                PFQuery *listings = [PFQuery queryWithClassName:@"forSaleItems"];
+//                [listings whereKey:@"sellerUser" equalTo:self.currentUser];
+//                [listings whereKey:@"instantBuy" equalTo:@"YES"];
+//                [listings whereKey:@"status" equalTo:@"live"];
+//                [listings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//                    if (objects) {
+//
+//                        //remove instant buy option
+//                        for (PFObject *listingObj in objects) {
+//                            [listingObj setObject:@"NO" forKey:@"instantBuy"];
+//                            [listingObj saveInBackground];
+//                        }
+//
+//
+//                    }
+//                    else{
+//                        NSLog(@"error finding listings to disconnect from paypal %@", error);
+//
+//                        [Answers logCustomEventWithName:@"Disconnected PayPal Error finding listings"
+//                                       customAttributes:@{}];
+//
+//                        [self hideHUD];
+//                        self.paypalConnected = NO;
+//                        self.paypalAccountLabel.text = @"Add Account";
+//                    }
+//                }];
+//            }
+//            else{
+//                NSLog(@"error disconnecting user from paypal %@", error);
+//                [self hideHUD];
+//                [self showAlertWithTitle:@"Disconnect Error" andMsg:@"Make sure you're connected to the internet and then try again. If the problem persists just message Team BUMP from within the app"];
+//                [Answers logCustomEventWithName:@"Disconnect PayPal Error"
+//                               customAttributes:@{}];
+//            }
+//        }];
     }]];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -1203,7 +1228,7 @@
         //push reminder
         [Answers logCustomEventWithName:@"Accepted Push Permissions"
                        customAttributes:@{
-                                          @"mode":@"seller application",
+                                          @"mode":@"Settings",
                                           @"username":[PFUser currentUser].username
                                           }];
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"askedForPushPermission"];
@@ -1382,5 +1407,410 @@
     return self.currencyArray.count;
 }
 
+#pragma mark - paypal methods
+
+-(void)safariViewControllerDidFinish:(SFSafariViewController *)controller{
+    [self getPPAccountStatus];
+    self.paypalSafariView = nil;
+}
+
+-(void)removePPObservers{
+    self.addedPayPalObservers = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"paypalOnboardingReturn" object:nil];
+}
+
+-(void)paypalURLReturned:(NSNotification *)notif{
+    //user tapped button to return to BUMP
+    
+    [self removePPObservers];
+    
+    NSDictionary *params = [notif object];
+    
+    //check if key fields exist then if they're true
+    if ([params valueForKey:@"merchantIdInPayPal"] == nil || [params valueForKey:@"isEmailConfirmed"] == nil || [params valueForKey:@"permissionsGranted"] == nil) {
+        [Answers logCustomEventWithName:@"PayPal Return URL Error"
+                       customAttributes:@{}];
+        
+        [self showAlertWithTitle:@"PayPal Error" andMsg:@"Please try again, if the problem persists just send Support a message from Settings"];
+        
+        //dismiss paypal onboarding safari view
+        [self.paypalSafariView dismissViewControllerAnimated:YES completion:nil];
+        
+        return;
+    }
+    
+    NSString *permissions = [params valueForKey:@"permissionsGranted"];
+    NSString *isEmailConfirmed = [params valueForKey:@"isEmailConfirmed"];
+    NSString *merchantId = [params valueForKey:@"merchantIdInPayPal"];
+    self.merchantId = merchantId;
+    
+    if([permissions isEqualToString:@"true"]){
+        //URL is enough to complete user's onboarding
+        if (![isEmailConfirmed isEqualToString:@"true"]) {
+            [Answers logCustomEventWithName:@"PayPal Confirm Email Warning"
+                           customAttributes:@{}];
+            
+            [self showAlertWithTitle:@"PayPal Warning" andMsg:@"You must tap the link in the confirmation email PayPal sent you to start accepting payments on BUMP"];
+        }
+        
+        self.paypalAccountLabel.text = @"Connected";
+        self.paypalConnected = YES;
+        
+        //save paypal info to user
+        [[PFUser currentUser]setObject:@"YES" forKey:@"paypalEnabled"];
+        [[PFUser currentUser]setObject:merchantId forKey:@"paypalMerchantId"];
+        [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+            if (succeeded) {
+                NSLog(@"saved paypal info on user");
+                
+                Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                [mixpanel track:@"Connected PayPal" properties:@{
+                                                                 @"where":@"Settings"
+                                                                 }];
+                
+                [Intercom logEventWithName:@"paypal_connected" metaData: @{}];
+                
+                
+                [Answers logCustomEventWithName:@"Saved PayPal info on User"
+                               customAttributes:@{
+                                                  @"method":@"URLParams"
+                                                  }];
+            }
+            else{
+                NSLog(@"error saving paypal info on user %@", error);
+                
+                [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
+                
+                
+                [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
+                               customAttributes:@{
+                                                  @"method":@"URLParams"
+                                                  }];
+            }
+        }];
+        
+        //dismiss paypal onboarding safari view
+        [self.paypalSafariView dismissViewControllerAnimated:YES completion:nil];
+    }
+    else{
+        //URL doesn't tell the full story
+        //call account status GET func
+        //dismiss paypal onboarding safari view
+        [self.paypalSafariView dismissViewControllerAnimated:YES completion:nil];
+        
+        [self getPPAccountStatusWithMerchId:merchantId];
+    }
+}
+
+-(void)getPPAccountStatusWithMerchId:(NSString *)merchId{
+    //when we have the merchId we call a diff function that only makes one GET to PayPal since we already have the merchantId from the url returned
+    [self showHUD];
+    
+    NSDictionary *params = @{
+                             @"merchantId":merchId
+                             };
+    
+    [PFCloud callFunctionInBackground:@"getAccStatusWithMerchId" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            [self hideHUD];
+            
+            BOOL permissionsGranted = [[response valueForKey:@"recievable"]boolValue];
+            BOOL emailConfirmed = [[response valueForKey:@"email"]boolValue];
+            NSString *merchId = [response valueForKey:@"merchantId"];
+            
+            NSLog(permissionsGranted ? @"pp permissions granted" : @"pp permissions NOT granted");
+            NSLog(emailConfirmed ? @"pp email confirmed" : @"pp email NOT confirmed");
+            NSLog(@"merchant ID: %@", merchId);
+            
+            //now check if response is good to go
+            if ([response valueForKey:@"recievable"] && [response valueForKey:@"merchantId"]) {
+                
+                if (permissionsGranted == YES) {
+                    
+                    if (emailConfirmed != YES) {
+                        [Answers logCustomEventWithName:@"PayPal Confirm Email Warning"
+                                       customAttributes:@{}];
+                        
+                        [self showAlertWithTitle:@"PayPal Warning" andMsg:@"You must tap the link in the confirmation email PayPal sent you to start accepting payments on BUMP"];
+                    }
+                    
+                    self.merchantId = merchId;
+                    self.paypalAccountLabel.text = @"Connected";
+                    self.paypalConnected = YES;
+                    
+                    //save paypal info to user
+                    [[PFUser currentUser]setObject:@"YES" forKey:@"paypalEnabled"];
+                    [[PFUser currentUser]setObject:merchId forKey:@"paypalMerchantId"];
+                    [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            
+                            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                            [mixpanel track:@"Connected PayPal" properties:@{
+                                                                             @"where":@"Settings"
+                                                                             }];
+                            
+                            [Intercom logEventWithName:@"paypal_connected" metaData: @{}];
+                            
+                            NSLog(@"saved paypal info on user");
+                            [Answers logCustomEventWithName:@"Saved PayPal info on User"
+                                           customAttributes:@{
+                                                              @"method":@"getPPAccountStatusWithMerchId Settings"
+                                                              }];
+                        }
+                        else{
+                            NSLog(@"error saving paypal info on user %@", error);
+                            [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
+                            
+                            [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
+                                           customAttributes:@{
+                                                              @"method":@"getPPAccountStatusWithMerchId Settings"
+                                                              }];
+                        }
+                    }];
+                }
+                else{
+                    //user hasn't granted correct permissions
+                    [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Ensure you've ticked the box upon PayPal on boarding to grant the relevant permissions to sell on BUMP. If you need any help just send Support a message from Settings"];
+                    
+                    [Answers logCustomEventWithName:@"PayPal Error"
+                                   customAttributes:@{
+                                                      @"type":@"getPPAccountStatusWithMerchId Settings User hasn't granted permissions"
+                                                      }];
+                }
+            }
+            else{
+                //don't have receivable & merchant Id info in response, ask them to try again
+                [self showAlertWithTitle:@"PayPal Error" andMsg:@"We couldn't get your account info, please try enabling Buy Now again"];
+                
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"getPPAccountStatusWithMerchId Settings No receivable / merchant ID in response"
+                                                  }];
+            }
+        }
+        else{
+            [self hideHUD];
+            NSLog(@"error getting the account status %@", error);
+            
+            [Intercom logEventWithName:@"connect_paypal_cancelled" metaData: @{}];
+            
+            if ([error.description isEqualToString:@"onboarding error"]) {
+                [Answers logCustomEventWithName:@"PayPal Onboarding Error"
+                               customAttributes:@{
+                                                  @"type":@"getPPAccountStatusWithMerchId Settings Error getting account status"
+                                                  }];
+                
+                [self showPayPalAlertWithTitle:@"PayPal Error" andMsg:@"Make sure you have completed the full PayPal Onboarding process"];
+                
+            }
+            else{
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"getPPAccountStatusWithMerchId Settings Error getting account status"
+                                                  }];
+                [self showPayPalAlertWithTitle:@"PayPal Error" andMsg:@"Make sure you have completed the full PayPal Onboarding process and ticked the box to grant BUMP the relevant permissions"];
+                
+            }
+        }
+    }];
+}
+
+-(void)getPPAccountStatus{
+    NSLog(@"get pp account status");
+    
+    [self showHUD];
+    
+    NSDictionary *params = @{
+                             @"trackingId":[PFUser currentUser].objectId
+                             };
+    
+    [PFCloud callFunctionInBackground:@"getAccountStatus" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            [self hideHUD];
+            
+            BOOL permissionsGranted = [[response valueForKey:@"recievable"]boolValue];
+            BOOL emailConfirmed = [[response valueForKey:@"email"]boolValue];
+            NSString *merchId = [response valueForKey:@"merchantId"];
+            
+            NSLog(permissionsGranted ? @"pp permissions granted" : @"pp permissions NOT granted");
+            NSLog(emailConfirmed ? @"pp email confirmed" : @"pp email NOT confirmed");
+            NSLog(@"merchant ID: %@", merchId);
+            
+            //now check if response is good to go
+            if ([response valueForKey:@"recievable"] && [response valueForKey:@"merchantId"]) {
+                
+                if (permissionsGranted == YES) {
+                    
+                    if (emailConfirmed != YES) {
+                        [Answers logCustomEventWithName:@"PayPal Confirm Email Warning"
+                                       customAttributes:@{}];
+                        
+                        [self showAlertWithTitle:@"PayPal Warning" andMsg:@"You must tap the link in the confirmation email PayPal sent you to start accepting payments on BUMP"];
+                    }
+                    
+                    self.merchantId = merchId;
+                    self.paypalAccountLabel.text = @"Connected";
+                    self.paypalConnected = YES;
+                    
+                    //save paypal info to user
+                    [[PFUser currentUser]setObject:@"YES" forKey:@"paypalEnabled"];
+                    [[PFUser currentUser]setObject:merchId forKey:@"paypalMerchantId"];
+                    [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                        if (succeeded) {
+                            
+                            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                            [mixpanel track:@"Connected PayPal" properties:@{
+                                                                             @"where":@"Settings"
+                                                                             }];
+                            
+                            [Intercom logEventWithName:@"paypal_connected" metaData: @{}];
+                            
+                            NSLog(@"saved paypal info on user");
+                            [Answers logCustomEventWithName:@"Saved PayPal info on User"
+                                           customAttributes:@{
+                                                              @"method":@"getPPAccountStatus Settings"
+                                                              }];
+                        }
+                        else{
+                            NSLog(@"error saving paypal info on user %@", error);
+                            [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
+                            
+                            [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
+                                           customAttributes:@{
+                                                              @"method":@"getPPAccountStatus Settings"
+                                                              }];
+                        }
+                    }];
+                }
+                else{
+                    //user hasn't granted correct permissions
+                    [self showAlertWithTitle:@"PayPal Permissions" andMsg:@"Ensure you've ticked the box upon PayPal on boarding to grant the relevant permissions to sell on BUMP. If you need any help just send Support a message from Settings"];
+                    
+                    [Answers logCustomEventWithName:@"PayPal Error"
+                                   customAttributes:@{
+                                                      @"type":@"getPPAccountStatus Settings User hasn't granted permissions"
+                                                      }];
+                }
+            }
+            else{
+                //don't have receivable & merchant Id info in response, ask them to try again
+                [self showAlertWithTitle:@"PayPal Error" andMsg:@"We couldn't get your account info, please try enabling Buy Now again"];
+                
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"getPPAccountStatus Settings No receivable / merchant ID in response"
+                                                  }];
+            }
+        }
+        else{
+            [self hideHUD];
+            NSLog(@"error getting the account status %@", error);
+            
+            [Intercom logEventWithName:@"connect_paypal_cancelled" metaData: @{}];
+            
+            if ([error.description isEqualToString:@"onboarding error"]) {
+                [Answers logCustomEventWithName:@"PayPal Onboarding Error"
+                               customAttributes:@{
+                                                  @"type":@"getPPAccountStatus Settings Error getting account status"
+                                                  }];
+                
+                [self showPayPalAlertWithTitle:@"PayPal Error" andMsg:@"Make sure you have completed the full PayPal Onboarding process"];
+                
+            }
+            else{
+                [Answers logCustomEventWithName:@"PayPal Error"
+                               customAttributes:@{
+                                                  @"type":@"getPPAccountStatus Settings Error getting account status"
+                                                  }];
+                [self showPayPalAlertWithTitle:@"PayPal Error" andMsg:@"Make sure you have completed the full PayPal Onboarding process and ticked the box to grant BUMP the relevant permissions"];
+                
+            }
+        }
+    }];
+}
+
+-(void)enableBuyNow{
+    if (([[[PFUser currentUser] objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]) || self.paypalConnected) {
+        NSLog(@"already have user's pp info");
+        
+        if (!self.merchantId) {
+            self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+        }
+        self.paypalAccountLabel.text = @"Connected";
+        self.paypalConnected = YES;
+    }
+    else{
+        [self showHUD];
+        
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"paypal_connect_pressed" properties:@{
+                                                               @"where":@"Settings"
+                                                               }];
+        
+        if ([self.selectedCurrency isEqualToString:@""]) {
+            self.selectedCurrency = @"USD";
+        }
+        
+        NSDictionary *params = @{
+                                 @"email": [[PFUser currentUser]objectForKey:@"email"],
+                                 @"currency":self.selectedCurrency,
+                                 @"trackingId":[PFUser currentUser].objectId
+                                 };
+        
+        NSLog(@"params going to partner %@", params);
+        [PFCloud callFunctionInBackground:@"callPartnerAPI" withParameters:params block:^(NSString *urlString, NSError *error) {
+            if (!error) {
+                [self hideHUD];
+                urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+                NSLog(@"URL: %@", urlString);
+                
+                if (!self.addedPayPalObservers) {
+                    self.addedPayPalObservers = YES;
+                    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalURLReturned:) name:@"paypalOnboardingReturn" object:nil];
+                }
+                
+                //update user's IC profile so they receive auto message about paypal business account
+                ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+                userAttributes.customAttributes = @{@"on_paypal_signin" : @YES};
+                [Intercom updateUser:userAttributes];
+                
+                //trigger PayPal sign in
+                if (!self.paypalSafariView) {
+                    self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
+                    self.paypalSafariView.delegate = self;
+                    if (@available(iOS 11.0, *)) {
+                        self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+                    }
+                    
+                    if (@available(iOS 10.0, *)) {
+                        self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+                    }
+                }
+                
+                [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:^{
+                    //switch off when we goto merchant onboarding and only switch on if we get the signal from custom url scheme triggered observer
+                }];
+            }
+            else{
+                [self hideHUD];
+                NSLog(@"error grabbing paypal link %@", error);
+                [self showAlertWithTitle:@"PayPal Onboarding Error" andMsg:@"Please check your connection and try again"];
+            }
+        }];
+    }
+}
+
+-(void)showPayPalAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Retry" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self enableBuyNow];
+    }]];
+    
+    [self presentViewController:alertView animated:YES completion:nil];
+}
 @end
 

@@ -78,32 +78,42 @@
 }
 
 -(void)setupBumping{
-    [UIView animateKeyframesWithDuration:2.0 delay:0.0 options:UIViewKeyframeAnimationOptionCalculationModeLinear | UIViewKeyframeAnimationOptionRepeat animations:^{
-        [self.cursorImageView setAlpha:0.0f];
-        self.selectedMainImageView.alpha = 0.0;
-        self.mainImageView.alpha = 1.0;
-        self.cursorImageView.transform = CGAffineTransformMakeTranslation(0, 0);
-
-        //1.1 cursor appears
-        [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.025 animations:^{
-            self.cursorImageView.alpha = 1.0f;
-        }];
-        
-        //1.2 cursor moves up
-        [UIView addKeyframeWithRelativeStartTime:0.02 relativeDuration:0.4 animations:^{
-            self.cursorImageView.transform = CGAffineTransformMakeTranslation(0,-170);
-        }];
-
-        //1.3 show bumped listing
-        [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.2 animations:^{
-            [self.cursorImageView setAlpha:0.0f];
-            self.mainImageView.alpha = 0.0;
-            self.selectedMainImageView.alpha = 1.0;
-        }];
-        
-    } completion:^(BOOL finished) {
-        [self.cursorImageView setAlpha:0.0f];
-        self.selectedMainImageView.alpha = 0.0;
-    }];
+//    [UIView animateKeyframesWithDuration:2.0 delay:0.0 options:UIViewKeyframeAnimationOptionCalculationModeLinear | UIViewKeyframeAnimationOptionRepeat animations:^{
+//        [self.cursorImageView setAlpha:0.0f];
+//        self.selectedMainImageView.alpha = 0.0;
+//        self.mainImageView.alpha = 1.0;
+//        self.cursorImageView.transform = CGAffineTransformMakeTranslation(0, 0);
+//
+//        //1.1 cursor appears
+//        [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.025 animations:^{
+//            self.cursorImageView.alpha = 1.0f;
+//        }];
+//
+//        //1.2 cursor moves up
+//        [UIView addKeyframeWithRelativeStartTime:0.02 relativeDuration:0.4 animations:^{
+//            self.cursorImageView.transform = CGAffineTransformMakeTranslation(0,-170);
+//        }];
+//
+//        //1.3 show bumped listing
+//        [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.2 animations:^{
+//            [self.cursorImageView setAlpha:0.0f];
+//            self.mainImageView.alpha = 0.0;
+//            self.selectedMainImageView.alpha = 1.0;
+//        }];
+//
+//    } completion:^(BOOL finished) {
+//        [self.cursorImageView setAlpha:0.0f];
+//        self.selectedMainImageView.alpha = 0.0;
+//    }];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0.2
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                        self.mainImageView.alpha = 0.0;
+                        self.selectedMainImageView.alpha = 1.0;
+                     }
+                     completion:nil];
+    
 }
 @end

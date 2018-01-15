@@ -15,10 +15,15 @@
     // Drawing code
     self.itemTitleLabel.adjustsFontSizeToFitWidth = YES;
     self.itemTitleLabel.minimumScaleFactor=0.5;
+    
+//    [self.buyButton setHidden:YES];
 }
 
 - (IBAction)bannerButtonTapped:(id)sender {
     [self.delegate bannerTapped];
+}
+- (IBAction)buyButtonTapped:(id)sender {
+    [self.delegate buyButtonBannerTapped];
 }
 
 @end

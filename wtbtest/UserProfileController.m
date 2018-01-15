@@ -277,6 +277,73 @@ typedef void(^myCompletion)(BOOL);
                     }];
                 }
                 
+                PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+                [dealsQuery whereKey:@"User" equalTo:self.user];
+                [dealsQuery orderByAscending:@"createdAt"];
+                [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                    if (object) {
+                        int starNumber = [[object objectForKey:@"currentRating"] intValue];
+                        int total = [[object objectForKey:@"dealsTotal"]intValue];
+                        
+                        NSLog(@"total %d and star number %d", total, starNumber);
+                        
+                        if (total > 0 || self.tabMode == YES || starNumber > 0) {
+                            NSLog(@"yoyo");
+                            
+                            NSLog(@"starview: %@", self.starImageView);
+                            
+                            [self.myBar addSubview:self.starImageView];
+                            [self.myBar addSubview:self.reviewsButton];
+                            self.noDeals = NO;
+                            
+                            [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
+
+                            
+                            if (total == 0) {
+                                [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
+                                self.noDeals = YES;
+                            }
+                            else if (total == 1) {
+                                [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Review",total] forState:UIControlStateNormal];
+                            }
+                            else{
+                                [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Reviews",total] forState:UIControlStateNormal];
+                            }
+                            
+                            if (self.tabMode == YES && starNumber == 0) {
+                                NSLog(@"no deals in tab mode");
+                                [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
+                            }
+                            
+                            if (starNumber == 1){
+                                [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
+                            }
+                            else if (starNumber == 2){
+                                [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
+                            }
+                            else if (starNumber == 3){
+                                [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
+                            }
+                            else if (starNumber == 4){
+                                [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
+                            }
+                            else if (starNumber == 5){
+                                [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
+                            }
+                        }
+                        else{
+                            NSLog(@"zero reviews");
+                            //looking at someone else's profile and they have zero reviews
+                            self.noDeals = YES;
+                            [self.myBar addSubview:self.reviewsButton];
+                            [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
+                        }
+                    }
+                    else{
+                        NSLog(@"error getting deals data!");
+                    }
+                }];
+                
                 //check if banned - if so show alert (not on tab mode though)
                 if (self.tabMode != YES) {
                     PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
@@ -419,64 +486,6 @@ typedef void(^myCompletion)(BOOL);
                 
                 //check how user is verified
                 [self refreshVeri];
-            }
-            else{
-                NSLog(@"couldn't fetch user");
-                [self showError];
-            }
-        }];
-        
-        PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
-        [dealsQuery whereKey:@"User" equalTo:self.user];
-        [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                int starNumber = [[object objectForKey:@"currentRating"] intValue];
-                int total = [[object objectForKey:@"dealsTotal"]intValue];
-                
-                //            NSLog(@"total %d and star number %d", total, starNumber);
-                
-                if (total > 0 || self.tabMode == YES || starNumber > 0) {
-                    [self.myBar addSubview:self.starImageView];
-                    [self.myBar addSubview:self.reviewsButton];
-                    self.noDeals = NO;
-                    
-                    if (total == 0) {
-                        [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
-                    }
-                    else if (total == 1) {
-                        [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Review",total] forState:UIControlStateNormal];
-                    }
-                    else{
-                        [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Reviews",total] forState:UIControlStateNormal];
-                    }
-                    
-                    if (total == 0 && self.tabMode == YES) {
-                        self.noDeals = YES;
-                        [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
-                        [self.reviewsButton setHidden:YES];
-                    }
-                    if (starNumber == 1){
-                        [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
-                    }
-                    else if (starNumber == 2){
-                        [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
-                    }
-                    else if (starNumber == 3){
-                        [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
-                    }
-                    else if (starNumber == 4){
-                        [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
-                    }
-                    else if (starNumber == 5){
-                        [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
-                    }
-                }
-                else{
-                    //looking at someone else's profile and they have zero reviews
-                    self.noDeals = YES;
-                    [self.myBar addSubview:self.reviewsButton];
-                    [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
-                }
                 
                 if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
                     // looking at other user's profile
@@ -487,9 +496,75 @@ typedef void(^myCompletion)(BOOL);
                 }
             }
             else{
-                NSLog(@"error getting deals data!");
+                NSLog(@"couldn't fetch user");
+                [self showError];
             }
         }];
+        
+//        PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+//        [dealsQuery whereKey:@"User" equalTo:self.user];
+//        [dealsQuery orderByDescending:@"createdAt"];
+//        [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//            if (object) {
+//                int starNumber = [[object objectForKey:@"currentRating"] intValue];
+//                int total = [[object objectForKey:@"dealsTotal"]intValue];
+//
+//                NSLog(@"total %d and star number %d", total, starNumber);
+//
+//                if (total > 0 || self.tabMode == YES || starNumber > 0) {
+//                    NSLog(@"yoyo");
+//
+//                    NSLog(@"starview: %@", self.starImageView);
+//
+//                    [self.myBar addSubview:self.starImageView];
+//                    [self.myBar addSubview:self.reviewsButton];
+//                    self.noDeals = NO;
+//
+//                    if (total == 0) {
+//                        [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
+//                    }
+//                    else if (total == 1) {
+//                        [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Review",total] forState:UIControlStateNormal];
+//                    }
+//                    else{
+//                        [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Reviews",total] forState:UIControlStateNormal];
+//                    }
+//
+//                    if (total == 0 && self.tabMode == YES && starNumber == 0) {
+//                        NSLog(@"no deals in tab mode");
+//                        self.noDeals = YES;
+//                        [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
+//                        [self.reviewsButton setHidden:YES];
+//                    }
+//
+//                    if (starNumber == 1){
+//                        [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
+//                    }
+//                    else if (starNumber == 2){
+//                        [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
+//                    }
+//                    else if (starNumber == 3){
+//                        [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
+//                    }
+//                    else if (starNumber == 4){
+//                        [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
+//                    }
+//                    else if (starNumber == 5){
+//                        [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
+//                    }
+//                }
+//                else{
+//                    NSLog(@"zero reviews");
+//                    //looking at someone else's profile and they have zero reviews
+//                    self.noDeals = YES;
+//                    [self.myBar addSubview:self.reviewsButton];
+//                    [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
+//                }
+//            }
+//            else{
+//                NSLog(@"error getting deals data!");
+//            }
+//        }];
         
         self.currency = [[PFUser currentUser]objectForKey:@"currency"];
         if ([self.currency isEqualToString:@"GBP"]) {
@@ -1478,7 +1553,7 @@ typedef void(^myCompletion)(BOOL);
     
     UIAlertAction *okAction = [UIAlertAction
                                actionWithTitle:@"Ban"
-                               style:UIAlertActionStyleDefault
+                               style:UIAlertActionStyleDestructive
                                handler:^(UIAlertAction *action)
                                {
                                    UITextField *reasonField = alertController.textFields.firstObject;

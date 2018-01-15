@@ -311,7 +311,7 @@
     
     [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (!error) {
-            NSLog(@"Listing %@", self.listingObject);
+//            NSLog(@"Listing %@", self.listingObject);
             self.seller = [self.listingObject objectForKey:@"sellerUser"];
             
             [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
@@ -327,6 +327,8 @@
                     else{
                         self.dontLikePush = NO;
                     }
+                    
+
                 }
                 else{
                     NSLog(@"seller error %@", error);
@@ -468,7 +470,6 @@
 
             }
             
-            
             if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
                 priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
                 
@@ -574,6 +575,8 @@
                 if (![[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
                     [self.reportButton setSelected:NO];
                     [self.reportLabel setTitle:@"M A R K  A S\nS O L D" forState:UIControlStateNormal];
+                    
+//                    [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
                 }
                 else{
                     [self.reportButton setSelected:YES];
@@ -739,6 +742,8 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    
+    [Intercom hideMessenger];
     
     //make sure not adding duplicate observers
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -2500,7 +2505,11 @@
                                       @"where":@"For sale"
                                       }];
     
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"screenshotDropDown" object:[self.listingObject objectForKey:@"image1"]];
+    [Intercom logEventWithName:@"screenshot_taken" metaData: @{}];
+    
+    [self showInviteView];
+    
+//    [[NSNotificationCenter defaultCenter] postNotificationName:@"screenshotDropDown" object:[self.listingObject objectForKey:@"image1"]];
 }
 
 #pragma mark - invite view delegates
@@ -2533,60 +2542,62 @@
     self.inviteView = (inviteViewClass *)[nib objectAtIndex:0];
     self.inviteView.delegate = self;
     
-    //setup images
-    NSMutableArray *friendsArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"friends"]];
+    self.inviteView.screenshotMode = YES;
     
-    //manage friends count label
-    if (friendsArray.count > 5) {
-        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friendsArray.count];
-    }
-    else{
-        self.inviteView.friendsLabel.text = @"Help us grow 🚀";
-    }
-    
-    if (friendsArray.count > 0) {
-        [self shuffle:friendsArray];
-        if (friendsArray.count >2) {
-            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
-            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-            
-            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
-            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-            
-            NSURL *picUrl3 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[2]]];
-            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-        }
-        else if (friendsArray.count == 2){
-            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
-            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-            
-            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
-            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-            
-            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
-            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-        }
-        else if (friendsArray.count == 1){
-            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
-            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-            
-            NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
-            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-            
-            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
-            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-        }
-    }
-    else{
-        NSURL *picUrl = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image
-        [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-        
-        NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
-        [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-        
-        NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
-        [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-    }
+//    //setup images
+//    NSMutableArray *friendsArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"friends"]];
+//
+//    //manage friends count label
+//    if (friendsArray.count > 5) {
+//        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friendsArray.count];
+//    }
+//    else{
+//        self.inviteView.friendsLabel.text = @"Help us grow 🚀";
+//    }
+//
+//    if (friendsArray.count > 0) {
+//        [self shuffle:friendsArray];
+//        if (friendsArray.count >2) {
+//            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+//            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+//
+//            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
+//            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+//
+//            NSURL *picUrl3 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[2]]];
+//            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+//        }
+//        else if (friendsArray.count == 2){
+//            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+//            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+//
+//            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
+//            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+//
+//            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
+//            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+//        }
+//        else if (friendsArray.count == 1){
+//            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+//            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+//
+//            NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
+//            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+//
+//            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
+//            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+//        }
+//    }
+//    else{
+//        NSURL *picUrl = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image
+//        [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+//
+//        NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
+//        [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+//
+//        NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
+//        [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+//    }
     
     [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -300, 300, 300)];
     
@@ -2638,26 +2649,30 @@
 }
 
 -(void)whatsappPressed{
-    [Answers logCustomEventWithName:@"Share Pressed"
+    [Answers logCustomEventWithName:@"Share Screenshot Pressed"
                    customAttributes:@{
                                       @"type":@"whatsapp"
                                       }];
-    NSString *shareString = @"Check out Bump on the App Store - Safely Buy & Sell Streetwear\n\nAvailable here: http://sobump.com";
-    NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
+
+    NSURL *whatsappURL = [NSURL URLWithString:@"whatsapp://"];
     if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
         [[UIApplication sharedApplication] openURL: whatsappURL];
     }
+    
+    [self hideInviteView];
 }
 
 -(void)messengerPressed{
-    [Answers logCustomEventWithName:@"Share Pressed"
+    [Answers logCustomEventWithName:@"Share Screenshot Pressed"
                    customAttributes:@{
                                       @"type":@"messenger"
                                       }];
-    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=http://sobump.com"];
+    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://"];
     if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
         [[UIApplication sharedApplication] openURL: messengerURL];
     }
+    
+    [self hideInviteView];
 }
 
 -(void)textPressed{
@@ -2666,7 +2681,7 @@
                                       @"type":@"share sheet"
                                       }];
     NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out Bump on the App Store - Safely Buy & Sell Streetwear\n\nAvailable here: http://sobump.com"];
+    [items addObject:[NSString stringWithFormat:@"For sale on BUMP 🏷\n\n'%@'\n\nhttps://sobump.com/p?selling=%@",[self.listingObject objectForKey:@"itemTitle" ],self.listingObject.objectId]];
     UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
     
     [self hideBarButton];
@@ -3161,6 +3176,7 @@
         
         if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
             //mod
+            NSLog(@"mod entering ban comment");
             [self enterBanComment];
         }
         else{
@@ -3270,6 +3286,8 @@
     
 
 -(void)enterBanComment{
+    NSLog(@"enter ban comment");
+    
     self.changeKeyboard = NO;
     
     UIAlertController *alertController = [UIAlertController
@@ -3411,6 +3429,8 @@
 }
 
 -(void)selectedReportReason:(NSString *)reason{
+    
+    NSLog(@"selected report reason");
     
     self.changeKeyboard = YES;
     

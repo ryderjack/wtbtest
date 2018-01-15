@@ -18,6 +18,7 @@
 #import "FeedbackController.h"
 #import <DGActivityIndicatorView.h>
 #import "ListingBannerView.h"
+#import "CheckoutSummary.h"
 
 @class MessageViewController;
 
@@ -25,7 +26,7 @@
 - (void)lastMessageInConvo:(NSString *)message incomingMsg:(BOOL)incoming;
 @end
 
-@interface MessageViewController : JSQMessagesViewController < CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,JRWebViewDelegate, customAlertDelegate,QBImagePickerControllerDelegate, SwipeViewDelegate, SwipeViewDataSource, feedbackDelegate,bannerDelegate, JSQMessagesComposerTextViewPasteDelegate>
+@interface MessageViewController : JSQMessagesViewController < CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,JRWebViewDelegate, customAlertDelegate,QBImagePickerControllerDelegate, SwipeViewDelegate, SwipeViewDataSource, feedbackDelegate,bannerDelegate, JSQMessagesComposerTextViewPasteDelegate, CheckoutDelegate>
 
 //basic setup
 @property (nonatomic, strong) NSString *convoId;
@@ -162,6 +163,7 @@
 @property (nonatomic) BOOL listingBannerShowing;
 @property (nonatomic, strong) ListingBannerView *listingView;
 @property (nonatomic) BOOL showingListingBanner;
+@property (nonatomic) BOOL buyButtonOn;
 
 @property (nonatomic) BOOL demoMode;
 @property (nonatomic) int demoMessageNumber;

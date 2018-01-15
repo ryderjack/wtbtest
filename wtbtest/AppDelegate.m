@@ -46,20 +46,20 @@
         
         //production
 //        configuration.server = @"http://parseserver-3q4w2-env.us-east-1.elasticbeanstalk.com/parse";
-//        configuration.server = @"https://live.bumpapi.com/parse";
+        configuration.server = @"https://live.bumpapi.com/parse";
         
         //preproduction
 //        configuration.server = @"http://bump-preprod.us-east-1.elasticbeanstalk.com/parse"; //CHANGE remove these links for safety reasons from the actual build
 //        configuration.server = @"https://preprod.bumpapi.com/parse";
 
         //dev server w/ dev DB
-//        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";
-        configuration.server = @"https://dev.bumpapi.com/parse";
+//        configuration.server = @"http://bump-staging-s3fa.us-east-1.elasticbeanstalk.com/parse";  9LMVXA4Y4DGT6
+//        configuration.server = @"https://dev.bumpapi.com/parse";
 
     }]];
 
-//    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
-//    [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
+    [Fabric with:@[[Crashlytics class]]]; ////////////////////CHANGE
+    [Mixpanel sharedInstanceWithToken:@"f83619c7bc4c4710bf87d892c0c170df"]; //CHANGE
     [HNKGooglePlacesAutocompleteQuery setupSharedQueryWithAPIKey:@"AIzaSyC812pR1iegUl3UkzqY0rwYlRmrvAAUbgw"];
 
     //production
@@ -1003,8 +1003,6 @@
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
 
     NSLog(@"url %@", url);
-    
-    //for profile share links e.g. bump://profile/USERNAME
 
     if ([[url host] isEqualToString:@"profile"]) {
         NSLog(@"got a profile url for this profile:%@", [url path]);
