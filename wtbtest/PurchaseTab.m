@@ -168,15 +168,26 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showPostingHeader:) name:@"postingItem" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(finishListing) name:@"justPostedSaleListing" object:nil];
     
-    //drop down
+    //boosted an item
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(addBoostedListing:) name:@"justBoostedListing" object:nil];
+
+    //someone liked your listing drop down
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBumpDrop:) name:@"showBumpedDropDown" object:nil];
 
+    //message sent drop down
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(messageSentDrop:) name:@"messageSentDropDown" object:nil];
 
+    //screenshot taken
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showScreenShot:) name:@"screenshotDropDown" object:nil];
+    
+    //dismiss current notification drop down
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dismissDrop) name:@"removeDrop" object:nil];
 
+    //fb friend just listed an item
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDrop:) name:@"showDropDown" object:nil];
+    
+    //boost just became available
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBOOSTDrop:) name:@"showBOOSTDropDown" object:nil];
     
     //pop up triggers
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setUpRateViewWithNav:) name:@"showRate" object:nil];
@@ -2270,7 +2281,7 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.dropDown setFrame:CGRectMake(0, -300, self.view.frame.size.width, 119)];
+                            [self.dropDown setFrame:CGRectMake(0, -300, self.view.frame.size.width, 75)];
                         }
                      completion:^(BOOL finished) {
                          //Completion Block
@@ -2288,6 +2299,41 @@
     }
     else if (self.justAMessage == YES){
         //do nothing
+    }
+    //boost is now available
+    else if (self.justABOOST == YES) {
+        
+        if (!self.boostListing) {
+            NSLog(@"no boost listing so return");
+            return;
+        }
+        
+        ForSaleListing *vc = [[ForSaleListing alloc]init];
+        vc.listingObject = self.boostListing;
+        vc.source = @"boost";
+        vc.fromBuyNow = YES;
+        vc.pureWTS = YES;
+        vc.fromPush = YES;
+        vc.fromBoostPush = YES;
+        
+        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+        
+        if (nav.visibleViewController.presentedViewController) {
+            
+            //nav bar is showing something
+            if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                
+                [presenter pushViewController:vc animated:YES];
+            }
+        }
+        else{
+
+            //no other VC showing so push!
+            [nav pushViewController:vc animated:YES];
+        }
     }
     //fb friend posted
     else if (self.justABump == NO) {
@@ -2504,7 +2550,7 @@
     UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
     swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
     [self.dropDown addGestureRecognizer:swipeGesture];
-    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+    [self.dropDown setFrame:CGRectMake(0, -75, self.view.frame.size.width, 75)];
     
     PFQuery *listingQ = [PFQuery queryWithClassName:@"forSaleItems"];
     [listingQ whereKey:@"objectId" equalTo:listingID];
@@ -2513,34 +2559,41 @@
         if (object) {
             PFObject *listing = object;
             self.dropDown.listing = listing;
-            [self.dropDown.imageView setFile:[object objectForKey:@"thumbnail"]];
-            [self.dropDown.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
-                if (image) {
-                    PFUser *postUser = [listing objectForKey:@"sellerUser"];
-                    self.dropDown.mainLabel.text = [NSString stringWithFormat:@"Your Facebook friend %@ just listed an item for sale - Tap to like it", [postUser objectForKey:@"fullname"]];
-                    self.justABump = NO;
-                    self.justAMessage = NO;
-                    self.sendMode = NO;
-                    
-                    //animate down
-                    [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
-                    
-                    [UIView animateWithDuration:1.0
-                                          delay:0.0
-                         usingSpringWithDamping:0.5
-                          initialSpringVelocity:0.5
-                                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                                            //Animations
-                                            [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
-                                        }
-                                     completion:^(BOOL finished) {
-                                         //schedule auto dismiss
-                                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                                             [self dismissDrop];
-                                         });
-                                     }];
-                }
-            }];
+            
+            PFUser *postUser = [listing objectForKey:@"sellerUser"];
+            self.dropDown.mainLabel.text = [NSString stringWithFormat:@"%@ just listed an item for sale", [postUser objectForKey:@"fullname"]];
+            [self.dropDown.smallImageView setImage:[UIImage imageNamed:@"notifFacebook"]];
+            self.justABump = NO;
+            self.justAMessage = NO;
+            self.sendMode = NO;
+            self.justABOOST = NO;
+
+            //animate down
+            [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+            
+            [UIView animateWithDuration:1.0
+                                  delay:0.0
+                 usingSpringWithDamping:0.5
+                  initialSpringVelocity:0.5
+                                options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                    
+                                    //Animations
+                                    int adjust = 17;
+                                    //iPhone X has a bigger status bar - was 20px now 44px
+                                    
+                                    if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+                                        //iPhone X
+                                        adjust = 37;
+                                    }
+                                    
+                                    [self.dropDown setFrame:CGRectMake(0, adjust, self.view.frame.size.width, 75)];
+                                }
+                             completion:^(BOOL finished) {
+                                 //schedule auto dismiss
+                                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                     [self dismissDrop];
+                                 });
+                             }];
         }
         else{
             NSLog(@"error finding listing");
@@ -2556,7 +2609,7 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.dropDown setFrame:CGRectMake(0, -300, self.view.frame.size.width, 119)];
+                            [self.dropDown setFrame:CGRectMake(0, -300, self.view.frame.size.width, 75)];
                         }
                      completion:^(BOOL finished) {
                          //Completion Block
@@ -2594,6 +2647,22 @@
         self.pullFinished = YES;
         [self getLatestForSale];
     }
+}
+
+//when user boosts their listing we simulate it being top of the feed
+-(void)addBoostedListing:(NSNotification*)note{
+    
+    PFObject *listing = [note object];
+    
+    if (self.filtersArray.count == 0) {
+        [self.products insertObject:listing atIndex:0];
+        [self.productIds addObject:listing.objectId];
+    }
+    
+    [self.collectionView performBatchUpdates:^{
+        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+    } completion:^(BOOL finished) {}];
+    
 }
 
 -(void)finishListing{
@@ -2669,7 +2738,7 @@
     UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
     swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
     [self.dropDown addGestureRecognizer:swipeGesture];
-    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+    [self.dropDown setFrame:CGRectMake(0, -75, self.view.frame.size.width, 75)];
     
     if ([message containsString:@"wanted listing"]) {
         PFQuery *listingQ = [PFQuery queryWithClassName:@"wantobuys"];
@@ -2678,34 +2747,41 @@
             if (object) {
                 PFObject *listing = object;
                 self.dropDown.listing = listing;
-                [self.dropDown.imageView setFile:[object objectForKey:@"image1"]];
-                [self.dropDown.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
-                    if (image) {
-                        self.dropDown.mainLabel.text = message;
-                        self.justABump = YES;
-                        self.justAMessage = NO;
-                        self.sendMode = NO;
-                        self.wantedListing = YES;
+                
+                self.dropDown.mainLabel.text = message;
+                [self.dropDown.smallImageView setImage:[UIImage imageNamed:@"notifLike"]];
+                
+                self.justABump = YES;
+                self.justAMessage = NO;
+                self.sendMode = NO;
+                self.wantedListing = YES;
+                self.justABOOST = NO;
 
-                        //animate down
-                        [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
-                        
-                        [UIView animateWithDuration:1.0
-                                              delay:0.0
-                             usingSpringWithDamping:0.5
-                              initialSpringVelocity:0.5
-                                            options:UIViewAnimationOptionCurveEaseIn animations:^{
-                                                //Animations
-                                                [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
-                                            }
-                                         completion:^(BOOL finished) {
-                                             //schedule auto dismiss
-                                             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                                                 [self dismissDrop];
-                                             });
-                                         }];
-                    }
-                }];
+                //animate down
+                [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+                
+                [UIView animateWithDuration:1.0
+                                      delay:0.0
+                     usingSpringWithDamping:0.5
+                      initialSpringVelocity:0.5
+                                    options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                        //Animations
+                                        int adjust = 17;
+                                        //iPhone X has a bigger status bar - was 20px now 44px
+                                        
+                                        if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+                                            //iPhone X
+                                            adjust = 37;
+                                        }
+                                        
+                                        [self.dropDown setFrame:CGRectMake(0, adjust, self.view.frame.size.width, 75)];
+                                    }
+                                 completion:^(BOOL finished) {
+                                     //schedule auto dismiss
+                                     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                         [self dismissDrop];
+                                     });
+                                 }];
             }
             else{
                 NSLog(@"error finding listing");
@@ -2722,34 +2798,41 @@
             if (object) {
                 PFObject *listing = object;
                 self.dropDown.listing = listing;
-                [self.dropDown.imageView setFile:[object objectForKey:@"image1"]];
-                [self.dropDown.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
-                    if (image) {
-                        self.dropDown.mainLabel.text = message;
-                        self.justABump = YES;
-                        self.justAMessage = NO;
-                        self.sendMode = NO;
-                        self.wantedListing = NO;
-                        
-                        //animate down
-                        [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
-                        
-                        [UIView animateWithDuration:1.0
-                                              delay:0.0
-                             usingSpringWithDamping:0.5
-                              initialSpringVelocity:0.5
-                                            options:UIViewAnimationOptionCurveEaseIn animations:^{
-                                                //Animations
-                                                [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
-                                            }
-                                         completion:^(BOOL finished) {
-                                             //schedule auto dismiss
-                                             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                                                 [self dismissDrop];
-                                             });
-                                         }];
-                    }
-                }];
+                
+                self.dropDown.mainLabel.text = message;
+                [self.dropDown.smallImageView setImage:[UIImage imageNamed:@"notifLike"]];
+                
+                self.justABump = YES;
+                self.justAMessage = NO;
+                self.sendMode = NO;
+                self.wantedListing = NO;
+                self.justABOOST = NO;
+
+                //animate down
+                [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+                
+                [UIView animateWithDuration:1.0
+                                      delay:0.0
+                     usingSpringWithDamping:0.5
+                      initialSpringVelocity:0.5
+                                    options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                        //Animations
+                                        int adjust = 17;
+                                        //iPhone X has a bigger status bar - was 20px now 44px
+                                        
+                                        if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+                                            //iPhone X
+                                            adjust = 37;
+                                        }
+                                        
+                                        [self.dropDown setFrame:CGRectMake(0, adjust, self.view.frame.size.width, 75)];
+                                    }
+                                 completion:^(BOOL finished) {
+                                     //schedule auto dismiss
+                                     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                         [self dismissDrop];
+                                     });
+                                 }];
             }
             else{
                 NSLog(@"error finding listing");
@@ -2768,37 +2851,43 @@
     self.dropDown = (notificatView *)[nib objectAtIndex:0];
     self.dropDown.delegate = self;
     self.dropDown.sentMode = YES;
-    [self setImageBorder:self.dropDown.imageView];
+    
+    [self.dropDown setFrame:CGRectMake(0, -75, self.view.frame.size.width, 75)];
     
     [friend fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
-            [self.dropDown.imageView setFile:[friend objectForKey:@"picture"]];
-            [self.dropDown.imageView loadInBackground:^(UIImage * _Nullable image, NSError * _Nullable error) {
-                if (image) {
-                    self.dropDown.mainLabel.text = [NSString stringWithFormat:@"Message sent to %@", friend.username];
-                    
-                    //setup what happens when user taps notification
-                    self.justAMessage = YES;
-                    
-                    //animate down
-                    [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
-                    
-                    [UIView animateWithDuration:1.0
-                                          delay:0.0
-                         usingSpringWithDamping:0.5
-                          initialSpringVelocity:0.5
-                                        options:UIViewAnimationOptionCurveEaseIn animations:^{
-                                            //Animations
-                                            [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
-                                        }
-                                     completion:^(BOOL finished) {
-                                         //schedule auto dismiss
-                                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                                             [self dismissDrop];
-                                         });
-                                     }];
-                }
-            }];
+            self.dropDown.mainLabel.text = [NSString stringWithFormat:@"Message sent to @%@", friend.username];
+            [self.dropDown.smallImageView setImage:[UIImage imageNamed:@"notifSend"]];
+            
+            //setup what happens when user taps notification
+            self.justAMessage = YES;
+            self.justABOOST = NO;
+
+            //animate down
+            [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+            
+            [UIView animateWithDuration:1.0
+                                  delay:0.0
+                 usingSpringWithDamping:0.5
+                  initialSpringVelocity:0.5
+                                options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                    //Animations
+                                    int adjust = 17;
+                                    //iPhone X has a bigger status bar - was 20px now 44px
+                                    
+                                    if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+                                        //iPhone X
+                                        adjust = 37;
+                                    }
+                                    
+                                    [self.dropDown setFrame:CGRectMake(0, adjust, self.view.frame.size.width, 75)];
+                                }
+                             completion:^(BOOL finished) {
+                                 //schedule auto dismiss
+                                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                     [self dismissDrop];
+                                 });
+                             }];
         }
         else{
             NSLog(@"error fetching user %@", error);
@@ -2808,7 +2897,117 @@
     UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
     swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
     [self.dropDown addGestureRecognizer:swipeGesture];
-    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+}
+
+-(void)handleBOOSTDrop:(NSNotification*)note {
+    NSArray *info = [note object];
+    
+    if (![PFUser currentUser] || info.count < 1) {
+        //no user or listing id so return
+        [Answers logCustomEventWithName:@"BOOST Drop Error"
+                       customAttributes:@{}];
+        return;
+    }
+    
+    NSString *listingId = info[0];
+
+    //check if this listing is on the screen before we show drop down
+    NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+    if (nav.visibleViewController.presentedViewController) {
+        //nav bar is showing something
+        if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+            //2nd nav is showing so push from there instead of tab bar nav
+            NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+            if ([presenter.visibleViewController isKindOfClass:[ForSaleListing class]]) {
+                ForSaleListing *vc = (ForSaleListing *)nav.visibleViewController;
+                if ([listingId isEqualToString:vc.listingObject.objectId]) {
+                    //don't show drop down as user already looking at it
+                    NSLog(@"don't show as already looking at this listing 1");
+                    return;
+                }
+            }
+        }
+    }
+    else{
+        if ([nav.visibleViewController isKindOfClass:[ForSaleListing class]]) {
+            ForSaleListing *vc = (ForSaleListing *)nav.visibleViewController;
+            if ([listingId isEqualToString:vc.listingObject.objectId]) {
+                //don't show drop down as user already looking at it
+                NSLog(@"don't show as already looking at this listing");
+                return;
+            }
+        }
+    }
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
+    self.dropDown = (notificatView *)[nib objectAtIndex:0];
+    self.dropDown.delegate = self;
+    self.dropDown.sentMode = YES;
+    
+    [self.dropDown setFrame:CGRectMake(0, -75, self.view.frame.size.width, 75)];
+    
+    self.boostListing = nil;
+    
+    PFQuery *listingQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    [listingQuery whereKey:@"status" equalTo:@"live"];
+    [listingQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+    
+    //use the itemId to query this users listings
+    [listingQuery whereKey:@"objectId" equalTo:listingId];
+    
+    [listingQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            self.dropDown.mainLabel.text = @"Your BOOST is now available";
+            [self.dropDown.smallImageView setImage:[UIImage imageNamed:@"notifBolt"]];
+            self.dropDown.listing = object;
+            
+            //setup what happens when user taps notification
+            self.justABump = NO;
+            self.justAMessage = NO;
+            self.sendMode = NO;
+            self.wantedListing = NO;
+            self.justABOOST = YES;
+            self.boostListing = object;
+            
+            [Answers logCustomEventWithName:@"Showing Boost Available Drop"
+                           customAttributes:@{}];
+            
+            //animate down
+            [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+            
+            [UIView animateWithDuration:1.0
+                                  delay:0.0
+                 usingSpringWithDamping:0.5
+                  initialSpringVelocity:0.5
+                                options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                    //Animations
+                                    int adjust = 17;
+                                    //iPhone X has a bigger status bar - was 20px now 44px
+                                    
+                                    if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+                                        //iPhone X
+                                        adjust = 37;
+                                    }
+                                    
+                                    [self.dropDown setFrame:CGRectMake(0, adjust, self.view.frame.size.width, 75)];
+                                }
+                             completion:^(BOOL finished) {
+                                 //schedule auto dismiss
+                                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                     [self dismissDrop];
+                                 });
+                             }];
+        }
+        else{
+            NSLog(@"error getting listing %@", error);
+            [Answers logCustomEventWithName:@"Finding BOOST Listing Error"
+                           customAttributes:@{}];
+        }
+    }];
+    
+    UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.dropDown addGestureRecognizer:swipeGesture];
 }
 
 -(void)showScreenShot:(NSNotification*)note {
@@ -2836,9 +3035,10 @@
     //setup what happens when user taps notification
     self.justAMessage = YES;
     self.sendMode = YES;
+    self.justABOOST = NO;
     
     //animate down
-    [self.dropDown setFrame:CGRectMake(0, -119, self.view.frame.size.width, 119)];
+    [self.dropDown setFrame:CGRectMake(0, -75, self.view.frame.size.width, 75)];
     [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
     
     [UIView animateWithDuration:1.0
@@ -2847,7 +3047,16 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.dropDown setFrame:CGRectMake(0, 0, self.view.frame.size.width, 119)];
+                            
+                            int adjust = 17;
+                            //iPhone X has a bigger status bar - was 20px now 44px
+                            
+                            if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+                                //iPhone X
+                                adjust = 37;
+                            }
+                            
+                            [self.dropDown setFrame:CGRectMake(0, adjust, self.view.frame.size.width, 75)];
                         }
                      completion:^(BOOL finished) {
                          //schedule auto dismiss
@@ -2960,8 +3169,27 @@
     
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }]];
+    if (self.emailMode) {
+        self.emailMode = NO;
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Settings" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Connect PP Settings pressed"
+                           customAttributes:@{}];
+            
+            SettingsController *vc = [[SettingsController alloc]init];
+            vc.delegate = self;
+            [self.navigationController pushViewController:vc animated:YES];
+        }]];
+        
+        [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Cancelled Connect PP without email"
+                           customAttributes:@{}];
+        }]];
+    }
+    else{
+        [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }]];
+    }
+    
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
@@ -3391,13 +3619,42 @@
             //schedule local notif. for first listing
             if (![[PFUser currentUser] objectForKey:@"forSalePostNumber"]) {
                 
-                //cancel first listing local push
+                [self.postingItem setObject:@"YES" forKey:@"firstListing"];
+                [self.postingItem saveInBackground];
+                
+                //cancel each local push before we add more!
                 NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
                 for(UILocalNotification *notification in notificationArray){
-                    if ([notification.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on BUMP"]) {
-                        // delete this notification
-                        [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
+                    
+                    if ([[notification userInfo]valueForKey:@"listingId"]) {
+                        NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                        if ([listingId isEqualToString:self.postingItem.objectId]) {
+                            // delete this notification
+                            [[UIApplication sharedApplication] cancelLocalNotification:notification];
+                        }
                     }
+                }
+                
+                //CHANGE remove this when boost available
+                if([[[PFUser currentUser]objectForKey:@"boostMode"]isEqualToString:@"YES"]){
+                    //boost is not on globally but this user is a test user
+                    //schedule local push for first BOOST in 5 hours time
+                    [self scheduleBoostPush];
+                }
+                else{
+                    //check if boost is available globally yet
+                    PFQuery *boostQuery = [PFQuery queryWithClassName:@"versions"];
+                    [boostQuery orderByDescending:@"createdAt"];
+                    [boostQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                        if (object) {
+                            
+                            if ([[object objectForKey:@"boostEnabled"]isEqualToString:@"YES"]) {
+                                //we've enabled boost globally
+                                [self scheduleBoostPush];
+                                
+                            }
+                        }
+                    }];
                 }
                 
 //                //local notifications set up
@@ -3537,6 +3794,26 @@
     });
     
     [self saveListing];
+}
+
+-(void)scheduleBoostPush{
+    //schedule local push for first BOOST in 5 hours time
+    NSDateComponents *hourComponent = [[NSDateComponents alloc] init];
+    hourComponent.second = 25;
+
+    NSCalendar *theCalendar = [NSCalendar currentCalendar];
+    NSDate *nextBoostDate = [theCalendar dateByAddingComponents:hourComponent toDate:[NSDate date] options:0];
+    
+    UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+    [localNotification setAlertBody:@"Congrats on your first listing - your BOOST is now available"];
+    [localNotification setFireDate: nextBoostDate];
+    
+    //set listingId so we can find listing when it returns to the app
+    [localNotification setUserInfo:@{@"listingId":self.postingItem.objectId}];
+    
+    [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+    [localNotification setRepeatInterval: 0];
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
 }
 
 -(void)cancelListingPressed{
@@ -3858,106 +4135,6 @@
     [self hideLocationFilterView];
 }
 
--(void)setContinentsOnListings{
-    PFQuery *listingsQ = [PFQuery queryWithClassName:@"forSaleItems"];
-    [listingsQ whereKeyExists:@"location"];
-    [listingsQ whereKeyDoesNotExist:@"continent"];
-    listingsQ.limit = 500;
-    listingsQ.skip = self.skipNumb;
-    [listingsQ orderByDescending:@"lastUpdated"];
-    [listingsQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            
-            NSLog(@"objects %ld", objects.count);
-            
-            for (PFObject *listing in objects) {
-                
-                NSLog(@"location: %@", [listing objectForKey:@"location"]);
-                
-                NSString *continentToSave = @"";
-                
-                if ([listing objectForKey:@"location"]) {
-                    
-                    NSArray *locStrings = [[listing objectForKey:@"location"] componentsSeparatedByString:@", "];
-                    
-                    if (locStrings.count > 1) {
-                        //get the second object
-                        NSString *code = [locStrings lastObject];
-                        
-                        if (code.length == 2) {
-                            
-                            if (code!= NULL) {
-                                HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
-                                NSString *expectedContinent = [continentDecoder continentForCountryCode:code];
-                                
-                                if (expectedContinent != NULL) {
-                                    NSLog(@"CONTINENT 1: %@", expectedContinent);
-                                    continentToSave = expectedContinent;
-                                }
-                                
-                            }
-                            
-                        }
-                        else{
-                            //not as expected so use device
-                            NSLog(@"not as expected: %@", locStrings);
-                        }
-                    }
-                    else if(locStrings.count == 1){
-                        //get the first object as the user must have just selected a country
-                        NSString *code = locStrings[0];
-                        
-                        if (code.length == 2) {
-                            NSLog(@"country code 2: %@", code);
-                            
-                            if (code!= NULL) {
-                                HZCountryToContinentDecoder *continentDecoder = [[HZCountryToContinentDecoder alloc] init];
-                                NSString *expectedContinent = [continentDecoder continentForCountryCode:code];
-                                
-                                if (expectedContinent != NULL) {
-                                    NSLog(@"CONTINENT 2: %@", expectedContinent);
-                                    continentToSave = expectedContinent;
-                                }
-                                
-                            }
-                            
-                        }
-                        else{
-                            //not as expected so use device
-                            NSLog(@"not as expected 2: %@", locStrings);
-                            
-                        }
-                    }
-                    else{
-                        //not as expected so use device
-                        NSLog(@"not as expected 3");
-                    }
-                    
-                }
-                else{
-                    NSLog(@"no location on listing");
-                }
-                
-                if (![continentToSave isEqualToString:@""]) {
-                    [listing setObject:continentToSave forKey:@"continent"];
-                    [listing saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                        if (succeeded) {
-                            NSLog(@"saved");
-                        }
-                    }];
-                }
-            }
-            
-            if (objects.count == 500) {
-                NSLog(@"load more");
-                self.skipNumb+=500;
-                //                [self setContinentsOnListings];
-            }
-            
-        }
-    }];
-}
-
 #pragma mark - instant buy intro delegates
 
 -(void)showBuyIntro{
@@ -4143,6 +4320,13 @@
                                                     }];
 
     
+    if(![[PFUser currentUser]objectForKey:@"email"]){
+        [self hideHUD];
+        self.emailMode = YES;
+        [self showAlertWithTitle:@"Email needed" andMsg:@"Please first add your email address in Settings before we can connect your PayPal"];
+        return;
+    }
+    
     //onboard merchant with paypal
     NSDictionary *params = @{
                                    @"email": [[PFUser currentUser]objectForKey:@"email"],
@@ -4150,7 +4334,6 @@
                                    @"trackingId":[PFUser currentUser].objectId
                                    };
     
-    NSLog(@"params going to partner %@", params);
     [PFCloud callFunctionInBackground:@"callPartnerAPI" withParameters:params block:^(NSString *urlString, NSError *error) {
         if (!error) {
             [self hideHUD];
@@ -4811,5 +4994,11 @@
             }
         }
     }];
+}
+
+
+#pragma mark - Settings delegate
+-(void)dismissedSettings{
+    [self connectPressed];
 }
 @end

@@ -1330,6 +1330,10 @@
         }
     }
     
+    if ([text.lowercaseString containsString:@"trade"]) {
+        [Intercom logEventWithName:@"trade_mentioned_in_convo" metaData: @{}];
+    }
+    
     //for instant reload in inbox after tapping send, pass the sent message back to inboxVC
     if (self.paypalMessage) {
         [self.delegate lastMessageInConvo:@"You sent your PayPal 💰" incomingMsg:NO];
@@ -2165,6 +2169,7 @@
 
 - (id<JSQMessageData>)collectionView:(JSQMessagesCollectionView *)collectionView messageDataForItemAtIndexPath:(NSIndexPath *)indexPath
 {
+    //CRASH here when have less messages than rows
     return [self.messages objectAtIndex:indexPath.item];
 }
 

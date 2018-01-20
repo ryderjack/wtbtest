@@ -33,4 +33,5 @@ target 'wtbtest' do
     pod 'CountryPicker', '~> 1.3'
     pod 'Mixpanel'
     pod 'Intercom'
+    pod 'MZTimerLabel'
 end

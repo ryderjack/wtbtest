@@ -69,6 +69,9 @@
     
     if ([PFUser currentUser]) {
         
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel identify:[PFUser currentUser].objectId];
+        
         NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
         [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
             if (!error) {
@@ -252,6 +255,72 @@
         [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
                        customAttributes:@{}];
         [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
+    }
+    else if ([localNotif.alertBody.lowercaseString containsString:@"congrats on your first listing - your boost is now available"] || [localNotif.alertBody.lowercaseString containsString:@"your boost is now available for "]){
+        NSLog(@"opening boost local push from close ");
+        
+        if ([localNotif.alertBody.lowercaseString containsString:@"congrats on your first listing - your boost is now available"]) {
+            [Answers logCustomEventWithName:@"Opened First BOOST Reminder"
+                           customAttributes:@{}];
+        }
+        else{
+            [Answers logCustomEventWithName:@"Opened BOOST Reminder"
+                           customAttributes:@{}];
+        }
+        
+        if ([[localNotif userInfo]valueForKey:@"listingId"]) {
+
+            NSString *listingId = [[localNotif userInfo]valueForKey:@"listingId"];
+            
+            if ([PFUser currentUser]) {
+                PFQuery *listingQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+                [listingQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+                [listingQuery whereKey:@"status" equalTo:@"live"];
+                [listingQuery whereKey:@"objectId" equalTo:listingId];
+                [listingQuery orderByAscending:@"nextBoostDate"];
+                [listingQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                    if (object) {
+                        
+                        PFObject *listingObject = object;
+                        
+                        ForSaleListing *vc = [[ForSaleListing alloc]init];
+                        vc.listingObject = listingObject;
+                        vc.source = @"boost";
+                        vc.fromBuyNow = YES;
+                        vc.pureWTS = YES;
+                        vc.fromPush = YES;
+                        vc.fromBoostPush = YES;
+                        
+                        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+                        
+                        if (nav.presentedViewController) {
+                            
+                            //nav bar is showing something
+                            if ([nav.presentedViewController isKindOfClass:[NavigationController class]]) {
+                                
+                                //2nd nav is showing so push from there instead of tab bar nav
+                                NavigationController *presenter = (NavigationController*)nav.presentedViewController;
+                                [presenter pushViewController:vc animated:YES];
+                            }
+                        }
+                        //if user is looking at mainsearch VC
+                        else if(nav.visibleViewController.presentedViewController){
+                            //2nd nav is showing so push from there instead of tab bar nav
+                            NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                            [presenter pushViewController:vc animated:YES];
+                        }
+                        else{
+                            //no other VC showing so push!
+                            [nav pushViewController:vc animated:YES];
+                        }
+                    }
+                    else{
+                        NSLog(@"error finding first listing 1 %@", error);
+                    }
+                }];
+            }
+            
+        }
     }
     else{
         //no local release alert so check for remote
@@ -659,25 +728,127 @@
 //    NSString *releaseLink = [localUserInfo valueForKey:@"link"];
 //    NSString *itemTitle = [localUserInfo valueForKey:@"itemTitle"];
     
-    if ([notification.alertBody containsString:@"What's your next cop? Find it on Bump 👊"]){
-        [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
-                       customAttributes:@{}];
-        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
-    }
-    else if ([notification.alertBody.lowercaseString containsString:@"congrats on your first listing! want to sell faster? try searching through wanted listings on bump"]){
-        [Answers logCustomEventWithName:@"Opened First Reminder Push"
-                       customAttributes:@{}];
-        
-        self.tabBarController.selectedIndex = 0;
-    }
-    else if ([notification.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on bump now!"]){
-        [Answers logCustomEventWithName:@"Opened First Listing Post Reminder Push"
-                       customAttributes:@{}];
-        
-        self.tabBarController.selectedIndex = 1;
+    if ( application.applicationState == UIApplicationStateInactive || application.applicationState == UIApplicationStateBackground  )
+    {
+        if ([notification.alertBody containsString:@"What's your next cop? Find it on Bump 👊"]){
+            [Answers logCustomEventWithName:@"Opened 6 day Reminder Push"
+                           customAttributes:@{}];
+            [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"longTermLocalSeen"];
+        }
+        else if ([notification.alertBody.lowercaseString containsString:@"congrats on your first listing! want to sell faster? try searching through wanted listings on bump"]){
+            [Answers logCustomEventWithName:@"Opened First Reminder Push"
+                           customAttributes:@{}];
+            
+            self.tabBarController.selectedIndex = 0;
+        }
+        else if ([notification.alertBody.lowercaseString containsString:@"what are you selling? list your first item for sale on bump now!"]){
+            [Answers logCustomEventWithName:@"Opened First Listing Post Reminder Push"
+                           customAttributes:@{}];
+            
+            self.tabBarController.selectedIndex = 1;
+        }
+        else if ([notification.alertBody.lowercaseString containsString:@"your boost is now available for "] || [notification.alertBody.lowercaseString containsString:@"congrats on your first listing - your boost is now available"]){
+            
+            if ([notification.alertBody.lowercaseString containsString:@"your boost is now available for "] ) {
+                [Answers logCustomEventWithName:@"Opened BOOST Reminder"
+                               customAttributes:@{
+                                                  @"method":@"did receive local push"
+                                                  }];
+            }
+            else{
+                [Answers logCustomEventWithName:@"Opened BOOST Reminder"
+                               customAttributes:@{
+                                                  @"method":@"did receive local push"
+                                                  }];
+            }
+            
+            if ([[notification userInfo]valueForKey:@"listingId"]) {
+                //parse out the listingId
+                NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                
+                if ([PFUser currentUser]) {
+                    PFQuery *listingQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+                    [listingQuery whereKey:@"sellerUser" equalTo:[PFUser currentUser]];
+                    [listingQuery whereKey:@"status" equalTo:@"live"];
+                    [listingQuery whereKey:@"objectId" equalTo:listingId];
+                    [listingQuery orderByDescending:@"nextBoostDate"];
+                    [listingQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                        if (object) {
+                            
+                            PFObject *listingObject = object;
+                            
+                            ForSaleListing *vc = [[ForSaleListing alloc]init];
+                            vc.listingObject = listingObject;
+                            vc.source = @"boost";
+                            vc.fromBuyNow = YES;
+                            vc.pureWTS = YES;
+                            vc.fromPush = YES;
+                            vc.fromBoostPush = YES;
+                            
+                            NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+                            
+                            if (nav.presentedViewController) {
+                                
+                                //nav bar is showing something
+                                if ([nav.presentedViewController isKindOfClass:[NavigationController class]]) {
+                                    
+                                    //2nd nav is showing so push from there instead of tab bar nav
+                                    NavigationController *presenter = (NavigationController*)nav.presentedViewController;
+                                    [presenter pushViewController:vc animated:YES];
+                                }
+                            }
+                            //if user is looking at mainsearch VC
+                            else if(nav.visibleViewController.presentedViewController){
+                                //2nd nav is showing so push from there instead of tab bar nav
+                                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                                [presenter pushViewController:vc animated:YES];
+                            }
+                            else{
+                                //no other VC showing so push!
+                                [nav pushViewController:vc animated:YES];
+                            }
+                        }
+                        else{
+                            NSLog(@"error finding boost available listing %@", error);
+                        }
+                    }];
+                }
+            }
+        }
+        else{
+            //fail safe - if local push doesn't match anything
+        }
     }
     else{
-        //fail safe
+        NSLog(@"local push received in-app");
+
+        //local push received whilst app was open
+        if ([notification.alertBody.lowercaseString containsString:@"congrats on your first listing - your boost is now available"]){
+            
+            NSLog(@"local first boost push received in-app");
+
+            [Answers logCustomEventWithName:@"Received First BOOST Push in-app"
+                           customAttributes:@{}];
+            
+            if ([[notification userInfo]valueForKey:@"listingId"]) {
+                NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"showBOOSTDropDown" object:@[listingId]];
+            }
+        }
+        else if ([notification.alertBody.lowercaseString containsString:@"your boost is now available for "]){
+            
+            NSLog(@"local normal boost push received in-app");
+            
+            [Answers logCustomEventWithName:@"Received normal BOOST Push in-app"
+                           customAttributes:@{}];
+            
+            if ([[notification userInfo]valueForKey:@"listingId"]) {
+                NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"showBOOSTDropDown" object:@[listingId]];
+            }
+        }
     }
 }
 

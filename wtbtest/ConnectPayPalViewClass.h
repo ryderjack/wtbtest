@@ -12,7 +12,6 @@
 @protocol ConnectPPDelegate <NSObject>
 - (void)connectPressed;
 - (void)remindMePressed;
-
 @end
 
 @interface ConnectPayPalViewClass : UIView

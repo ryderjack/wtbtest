@@ -23,6 +23,7 @@
 #import "ShippingOptionsView.h"
 #import <SafariServices/SafariServices.h>
 #import "mediumSizeAlertViewClass.h"
+#import "SettingsController.h"
 
 @class CreateForSaleListing;
 
@@ -32,7 +33,7 @@
 
 @end
 
-@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate,UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate,ConditionsDelegate,SwipeViewDelegate, SwipeViewDataSource,UIGestureRecognizerDelegate, shippingDelegate,SFSafariViewControllerDelegate,mediumSizeAVDelegate>
+@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate,UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate,ConditionsDelegate,SwipeViewDelegate, SwipeViewDataSource,UIGestureRecognizerDelegate, shippingDelegate,SFSafariViewControllerDelegate,mediumSizeAVDelegate,SettingsDelegate>
 
 //delegate
 @property (nonatomic, weak) id <CreateForSaleDelegate> delegate;
@@ -118,6 +119,8 @@
 @property (nonatomic, strong) NSString *usernameToCheck;
 @property (nonatomic, strong) PFUser *cabin;
 @property (nonatomic) BOOL somethingChanged;
+
+@property (nonatomic, strong) NSString *previousItemTitle;
 
 //big button
 @property (nonatomic, strong) UIButton *longButton;
@@ -232,6 +235,7 @@
 @property (nonatomic, strong) NSString *merchantId;
 @property (nonatomic) BOOL hideInstantBuy;
 @property (nonatomic) BOOL firstListing;
+@property (nonatomic) BOOL boostModeEnabled;
 
 //buy now reminder
 @property (nonatomic, strong, nullable) UIView *bgView;

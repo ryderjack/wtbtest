@@ -64,6 +64,26 @@
 //        }
 //    }];
     
+    //CHANGE remove this when boost is global
+    if([[[PFUser currentUser]objectForKey:@"boostMode"]isEqualToString:@"YES"]){
+        //boost is not on globally but this user is a test user
+        self.boostModeEnabled = YES;
+    }
+    else{
+        //check if boost is available globally yet
+        PFQuery *boostQuery = [PFQuery queryWithClassName:@"versions"];
+        [boostQuery orderByDescending:@"createdAt"];
+        [boostQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                
+                if ([[object objectForKey:@"boostEnabled"]isEqualToString:@"YES"]) {
+                    //we've enabled boost globally
+                    self.boostModeEnabled = YES;
+                }
+            }
+        }];
+    }
+    
     //protection against scammers abusing instant buy
     if ([[[PFUser currentUser]objectForKey:@"banInstantBuy"]isEqualToString:@"YES"]) {
         self.hideInstantBuy = YES;
@@ -246,14 +266,15 @@
             NSLog(@"in the edge case!");
             
             self.paypalEnabled = YES;
-            
+            self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+
             //new user must have connected their PayPal in Settings already
             [Answers logCustomEventWithName:@"Create Listing PayPal Edge Case"
                            customAttributes:@{}];
             
+            
             if (!self.editMode) {
                 //enable buy now by default since we have all the info
-                self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
                 [self.buySwitch setOn:YES];
             }
         }
@@ -263,6 +284,7 @@
     else if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
         
         self.paypalEnabled = YES;
+        self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
         
         if (!self.editMode) {
             //enable buy now by default since we have all the info
@@ -388,6 +410,16 @@
     }
     else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
         self.currencySymbol = @"$";
+    }
+    else{
+        //fallback
+        if (![[PFUser currentUser]objectForKey:@"currency"]) {
+            [[PFUser currentUser] setObject:@"USD" forKey:@"currency"];
+            [[PFUser currentUser]saveInBackground];
+        }
+        
+        self.currencySymbol = @"$";
+
     }
     self.payField.placeholder = [NSString stringWithFormat:@"%@0.00", self.currencySymbol];
     
@@ -1050,6 +1082,24 @@
                 [self showAlertWithTitle:@"Authenticity Warning" andMsg:@"BUMP is for buying/selling authentic streetwear, if you're found to be selling fake or replica items we will be forced to ban your account to protect the community"];
                 return;
             }
+            else if ([string.lowercaseString isEqualToString:@"bot"]){
+                textField.text = @"";
+
+                [self showAlertWithTitle:@"Bot Warning" andMsg:@"For legal and safety reasons, bots are not permitted to be sold on BUMP"];
+                return;
+            }
+            else if ([string.lowercaseString isEqualToString:@"raffle"]){
+                textField.text = @"";
+                
+                [self showAlertWithTitle:@"Raffle Warning" andMsg:@"For legal and safety reasons, raffles are not permitted to be held on BUMP"];
+                return;
+            }
+            else if ([textField.text.lowercaseString containsString:@"mystery box"]){
+                textField.text = @"";
+                
+                [self showAlertWithTitle:@"Warning" andMsg:@"For legal and safety reasons, mystery boxes are not permitted to be sold on BUMP"];
+                return;
+            }
             else if([autoColourCheck containsObject:string.lowercaseString] && self.chosenColourSArray.count < 2 && ![self.chosenColourSArray containsObject:string.capitalizedString]){
                 
                 //if already have navy don't add blue again
@@ -1211,6 +1261,18 @@
                 textView.text = @"Describe the item's style, sizing, and any possible flaws";
                 
                 [self showAlertWithTitle:@"Authenticity Warning" andMsg:@"BUMP is for buying/selling authentic streetwear, if you're found to be selling fake or replica items we will be forced to ban your account to protect the community"];
+                return;
+            }
+            else if ([string.lowercaseString isEqualToString:@"bot"]){
+                textView.text = @"Describe the item's style, sizing, and any possible flaws";
+                
+                [self showAlertWithTitle:@"Bot Warning" andMsg:@"For legal and safety reasons, bots are not permitted to be sold on BUMP"];
+                return;
+            }
+            else if ([string.lowercaseString isEqualToString:@"raffle"]){
+                textView.text = @"Describe the item's style, sizing, and any possible flaws";
+
+                [self showAlertWithTitle:@"Raffle Warning" andMsg:@"For legal and safety reasons, raffles are not permitted to be held on BUMP"];
                 return;
             }
         }
@@ -2934,13 +2996,26 @@
                     [Intercom logEventWithName:@"bumped_listing" metaData: @{}];
                     //update listing's lastUpdated property
                     //use server func so time is correct
-                    NSDictionary *params = @{@"listingId":forSaleItem.objectId};
-                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                        if (error) {
-                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
-                                           customAttributes:@{}];
-                        }
-                    }];
+                    
+                    if (self.listingAsMode) {
+                        NSDictionary *params = @{@"listingId":forSaleItem.objectId};
+                        [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                            if (error) {
+                                [Answers logCustomEventWithName:@"Error updating lastUpdated"
+                                               customAttributes:@{}];
+                            }
+                        }];
+                    }
+                    else{
+                        //update lastEdited value not lastUpdated so we don't BUMP it
+                        NSDictionary *params = @{@"listingId":forSaleItem.objectId};
+                        [PFCloud callFunctionInBackground:@"updateLastEdited" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                            if (error) {
+                                [Answers logCustomEventWithName:@"Error updating lastEdited"
+                                               customAttributes:@{}];
+                            }
+                        }];
+                    }
                     
                     NSLog(@"saved listing");
                     [Answers logCustomEventWithName:@"Edited for sale listing"
@@ -2964,33 +3039,33 @@
                                 }
                             }
                             
-                            //local notifications set up
-                            NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-                            dayComponent.day = 1;
-                            NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                            NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-                            
-                            // Create new date
-                            NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
-                                                                           fromDate:dateToFire];
-                            
-                            NSDateComponents *components3 = [[NSDateComponents alloc] init];
-                            
-                            [components3 setYear:components1.year];
-                            [components3 setMonth:components1.month];
-                            [components3 setDay:components1.day];
-                            
-                            [components3 setHour:20];
-                            
-                            // Generate a new NSDate from components3.
-                            NSDate * combinedDate = [theCalendar dateFromComponents:components3];
-                            
-                            UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-                            [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]; //make sure this matches the app delegate local notifications handler method
-                            [localNotification setFireDate: combinedDate];
-                            [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
-                            [localNotification setRepeatInterval: 0];
-                            [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+//                            //local notifications set up
+//                            NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+//                            dayComponent.day = 1;
+//                            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//                            NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+//
+//                            // Create new date
+//                            NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
+//                                                                           fromDate:dateToFire];
+//
+//                            NSDateComponents *components3 = [[NSDateComponents alloc] init];
+//
+//                            [components3 setYear:components1.year];
+//                            [components3 setMonth:components1.month];
+//                            [components3 setDay:components1.day];
+//
+//                            [components3 setHour:20];
+//
+//                            // Generate a new NSDate from components3.
+//                            NSDate * combinedDate = [theCalendar dateFromComponents:components3];
+//
+//                            UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+//                            [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]; //make sure this matches the app delegate local notifications handler method
+//                            [localNotification setFireDate: combinedDate];
+//                            [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+//                            [localNotification setRepeatInterval: 0];
+//                            [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
                         }
 
                     }
@@ -3019,6 +3094,17 @@
             
             [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];
             
+            if (self.boostModeEnabled) {
+                //set the date when the listing can be boosted
+                NSDateComponents *hourComponent = [[NSDateComponents alloc] init];
+                hourComponent.hour = 6;
+
+                NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                NSDate *nextBoostDate = [theCalendar dateByAddingComponents:hourComponent toDate:[NSDate date] options:0];
+                
+                [forSaleItem setObject:nextBoostDate forKey:@"nextBoostDate"];
+            }
+
             if (self.listingAsMode) {
                 //go ahead and save listing in home VC
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne]];
@@ -3069,6 +3155,7 @@
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Item Authenticity" message:@"By listing this item on BUMP you are agreeing to BUMP's terms & conditions which forbid the listing of counterfeit/fake items" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self.longButton setEnabled:YES];
     }]];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"I Agree" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -3506,6 +3593,9 @@
     
     if ([self.listing objectForKey:@"itemTitle"]) {
         self.itemTitleTextField.text = [self.listing objectForKey:@"itemTitle"];
+        
+        //this is to check if we need to change any boost reminders this listing may have pending
+        self.previousItemTitle = [self.listing objectForKey:@"itemTitle"];
     }
     
     if ([self.listing objectForKey:@"condition"]) {
@@ -7050,6 +7140,12 @@
                                                                @"where":@"Create Listing"
                                                                }];
         
+        if (![[PFUser currentUser]objectForKey:@"email"]) {
+            [self hidHUD];
+            [self showSettingsAlertWithTitle:@"Email needed" andMsg:@"Please first add your email address in Settings before we can connect your PayPal"];
+            return;
+        }
+        
         NSDictionary *params = @{
                                  @"email": [[PFUser currentUser]objectForKey:@"email"],
                                  @"currency":self.currency,
@@ -7170,4 +7266,33 @@
     self.nationalPrice = 0.00;
 }
 
+#pragma mark - Settings delegate
+-(void)dismissedSettings{
+    [self enableBuyNow];
+}
+
+-(void)showSettingsAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Settings" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Connect PP Settings pressed"
+                       customAttributes:@{
+                                          @"where":@"create"
+                                          }];
+        
+        SettingsController *vc = [[SettingsController alloc]init];
+        vc.delegate = self;
+        [self.navigationController pushViewController:vc animated:YES];
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Cancelled Connect PP without email"
+                       customAttributes:@{
+                                          @"where":@"create"
+                                          }];
+    }]];
+    
+    [self presentViewController:alertView animated:YES completion:nil];
+}
 @end

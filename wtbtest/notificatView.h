@@ -23,6 +23,7 @@
 @property (nonatomic, weak) id <dropDelegate> delegate;
 @property (nonatomic, strong) NSString *listingID;
 @property (nonatomic, strong) PFObject *listing;
+@property (weak, nonatomic) IBOutlet UIImageView *smallImageView;
 
 //imgview
 @property (nonatomic) BOOL sentMode;

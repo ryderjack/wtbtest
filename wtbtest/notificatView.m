@@ -14,10 +14,10 @@
     self.mainLabel.adjustsFontSizeToFitWidth = YES;
     self.mainLabel.minimumScaleFactor=0.5;
     
-    if (self.sentMode != YES) {
-        self.imageView.layer.cornerRadius = 4;
-        self.imageView.layer.masksToBounds = YES;
-    }
+//    if (self.sentMode != YES) {
+//        self.imageView.layer.cornerRadius = 4;
+//        self.imageView.layer.masksToBounds = YES;
+//    }
 
 }
 - (IBAction)buttonTapped:(id)sender {

@@ -98,16 +98,6 @@
     self.carouselCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.extraInfoCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
-    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
-    if ([self.currency isEqualToString:@"GBP"]) {
-        self.currencySymbol = @"£";
-    }
-    else if ([self.currency isEqualToString:@"EUR"]) {
-        self.currencySymbol = @"€";
-    }
-    else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-        self.currencySymbol = @"$";
-    }
     self.sizeLabel.adjustsFontSizeToFitWidth = YES;
     self.sizeLabel.minimumScaleFactor=0.5;
     
@@ -164,6 +154,9 @@
     //dismiss Invite gesture
     self.inviteTap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
     self.inviteTap.numberOfTapsRequired = 1;
+    
+    self.boostDismissTap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(generalHideBoost)];
+    self.boostDismissTap.numberOfTapsRequired = 1;
     
     //prompt user to tap image to zoom
     if (![[NSUserDefaults standardUserDefaults]boolForKey:@"seenZoomPrompt"]) {
@@ -298,6 +291,8 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     
+    NSLog(@"WILL APPEAR");
+    
     [self.navigationController.navigationBar setHidden:NO];
     [self.navigationController.navigationBar setBarTintColor: nil];
 
@@ -314,6 +309,31 @@
 //            NSLog(@"Listing %@", self.listingObject);
             self.seller = [self.listingObject objectForKey:@"sellerUser"];
             
+            if ([[self.listingObject objectForKey:@"boostReminderSet"]isEqualToString:@"YES"]) {
+                
+                //check if this listing has a reminder setup and cancel if set
+                NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+                for(UILocalNotification *notification in notificationArray){
+                    if ([[notification userInfo]valueForKey:@"listingId"]) {
+                        NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                        if ([listingId isEqualToString:self.listingObject.objectId]) {
+                            // we deffs have a notification
+                            self.reminderSet = YES;
+                        }
+                        else{
+                            self.reminderSet = NO;
+                        }
+                    }
+                    else{
+                        self.reminderSet = NO;
+                    }
+                }
+                
+            }
+            else{
+                self.reminderSet = NO;
+            }
+            
             [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
                     self.fetchedUser = YES; //to help stop messages infinite spinner
@@ -327,8 +347,6 @@
                     else{
                         self.dontLikePush = NO;
                     }
-                    
-
                 }
                 else{
                     NSLog(@"seller error %@", error);
@@ -448,9 +466,9 @@
             //do we need to show native currency?
             if(self.buyButtonShowing) {
                 self.currency = [self.listingObject objectForKey:@"currency"];
-                
+
                 price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
-                
+
                 if ([self.currency isEqualToString:@"GBP"]) {
                     self.currencySymbol = @"£";
                 }
@@ -462,13 +480,26 @@
                 }
                 priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
                 self.purchasePrice = price;
-                
+
 //                [self.buyButton setTitle:[NSString stringWithFormat:@"Purchase for %@", priceText] forState:UIControlStateNormal];
             }
             else{
+                self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+                
+                if ([self.currency isEqualToString:@"GBP"]) {
+                    self.currencySymbol = @"£";
+                }
+                else if ([self.currency isEqualToString:@"EUR"]) {
+                    self.currencySymbol = @"€";
+                }
+                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+                    self.currencySymbol = @"$";
+                }
+                
                 price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
 
             }
+
             
             if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
                 priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
@@ -560,6 +591,96 @@
             
             if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
                 
+                NSDate *safeDate = [self.listingObject objectForKey:@"nextBoostDate"];
+                
+                if (self.fromBoostPush) {
+                    self.boostModeEnabled = YES;
+
+                    if(![[PFUser currentUser]objectForKey:@"seenBoostIntro"] ){
+                        [[PFUser currentUser] setObject:@"YES" forKey:@"seenBoostIntro"];
+                        [[PFUser currentUser]saveInBackground];
+                    }
+                    
+                    [self showIntroBoostViewWithBg:YES];
+                    
+                    [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
+                    [self.listingObject saveInBackground];
+                    
+                    //show boost button if seller viewing item AND item not sold
+                    if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
+                        [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
+                        [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal];
+                        self.boostMode = YES;
+                    }
+                }
+                else if([[[PFUser currentUser]objectForKey:@"boostMode"]isEqualToString:@"YES"]){
+                    self.boostModeEnabled = YES;
+                    
+                    //seen boost intro?
+                    //check if current time is after the next boost date first
+                    if (([[NSDate date] compare:safeDate]==NSOrderedDescending)) {
+                        
+                        NSLog(@"current time is after next boost date so boost is available");
+                        
+                        if (![[PFUser currentUser]objectForKey:@"seenBoostIntro"] || self.fromBoostPush) {
+                            [[PFUser currentUser] setObject:@"YES" forKey:@"seenBoostIntro"];
+                            [[PFUser currentUser]saveInBackground];
+                            
+                            [self showIntroBoostViewWithBg:YES];
+                        }
+                        
+                        [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
+                        [self.listingObject saveInBackground];
+                    }
+                    
+                    //show boost button if seller viewing item AND item not sold
+                    if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
+                        [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
+                        [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal];
+                        self.boostMode = YES;
+                    }
+                }
+                else{
+                    PFQuery *boostQuery = [PFQuery queryWithClassName:@"versions"]; //CHANGE remove this and simplify when boost is available to all
+                    [boostQuery orderByDescending:@"createdAt"];
+                    [boostQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                        if (object) {
+                            
+                            if ([[object objectForKey:@"boostEnabled"]isEqualToString:@"YES"]) {
+                                //we've enabled boost globally
+                                self.boostModeEnabled = YES;
+                                
+                                //seen boost intro?
+                                //check if current time is after the next boost date first
+                                if (([[NSDate date] compare:safeDate]==NSOrderedDescending) || self.fromBoostPush) {
+                                    
+                                    NSLog(@"current time is after next boost date so boost is available");
+                                    
+                                    if (![[PFUser currentUser]objectForKey:@"seenBoostIntro"] || self.fromBoostPush) {
+                                        [[PFUser currentUser] setObject:@"YES" forKey:@"seenBoostIntro"];
+                                        [[PFUser currentUser]saveInBackground];
+                                        
+                                        [self showIntroBoostViewWithBg:YES];
+                                    }
+                                    
+                                    [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
+                                    [self.listingObject saveInBackground];
+                                }
+                                
+                                //show boost button if seller viewing item AND item not sold
+                                if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
+                                    [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
+                                    [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal];
+                                    self.boostMode = YES;
+                                }
+                            }
+                            else{
+                                self.boostModeEnabled = NO;
+                            }
+                        }
+                    }];
+                }
+                
                 if (![[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]) {
                     [self.messageButton setTitle:@"E D I T" forState:UIControlStateNormal];
                     [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:0.9]];
@@ -577,8 +698,11 @@
                     [self.reportLabel setTitle:@"M A R K  A S\nS O L D" forState:UIControlStateNormal];
                     
 //                    [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
+//                    [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal]; //CHANGE uncomment when globally available
+//                    self.boostMode = YES;
                 }
                 else{
+                    self.boostMode = NO;
                     [self.reportButton setSelected:YES];
                     
                     //if listing was sold through BUMP checkout, don't let seller mark as available again
@@ -603,7 +727,18 @@
                 }
             }
             else{
-                //not the same buyer
+                //only show like tutorial if user isn't seller
+                if (![[PFUser currentUser]objectForKey:@"seenBumpingIntro"]) {
+                    //show bumping tutorial
+                    [self hideBarButton];
+                    
+                    BumpingIntroVC *vc = [[BumpingIntroVC alloc]init];
+                    vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
+                    vc.delegate = self;
+                    [self presentViewController:vc animated:YES completion:nil];
+                }
+                
+                //not the seller
                 [self.listingObject incrementKey:@"views"];
                 [self.listingObject saveInBackground];
                 
@@ -708,7 +843,6 @@
     
     [self hideBarButton];
     [self hideSendBox];
-
     
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
@@ -724,7 +858,6 @@
         //make sure its dismissed
         [[NSNotificationCenter defaultCenter] postNotificationName:@"removeDrop" object:nil];
     }
-
 }
 
 -(void)viewDidDisappear:(BOOL)animated{
@@ -737,13 +870,18 @@
         self.buyButton = nil;
         self.longSendButton = nil;
         self.buttonLine = nil;
-    }    
+    }
+    
+    //in case any boost pop up is showing
+    [self generalHideBoost];
+    
+    self.introBoostView = nil;
+    self.counterBoostView = nil;
+    self.successBoostView = nil;
 }
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    
-    [Intercom hideMessenger];
     
     //make sure not adding duplicate observers
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -755,22 +893,12 @@
     [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
     [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
     [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
-    [center addObserver:self selector:@selector(sendPressed:) name:@"showSendBox" object:nil];
+    [center addObserver:self selector:@selector(sendFBPressed) name:@"showSendBox" object:nil];
     
     if (self.tabBarController.tabBar.frame.size.height == 0) {
         //these observers are for when user is viewing listing from search, where disappear VC methods aren't called!
         [center removeObserver:self name:@"switchedTabs" object:nil];
         [center addObserver:self selector:@selector(showHideLowerButtons:) name:@"switchedTabs" object:nil];
-    }
-    
-    if (![[PFUser currentUser]objectForKey:@"seenBumpingIntro"]) {
-        //show bumping tutorial
-        [self hideBarButton];
-        
-        BumpingIntroVC *vc = [[BumpingIntroVC alloc]init];
-        vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
-        vc.delegate = self;
-        [self presentViewController:vc animated:YES completion:nil];
     }
 }
 
@@ -923,7 +1051,16 @@
 //}
 
 -(void) calcPostedDate{
+    
+    //check if editDate is more recent that lastUpdated - if so use that date
     NSDate *createdDate = [self.listingObject objectForKey:@"lastUpdated"];
+    NSDate *editedDate = [self.listingObject objectForKey:@"lastEdited"];
+    
+    if([editedDate compare:createdDate]==NSOrderedDescending){
+        //edited date is before lastUpdated so display that on listing
+        createdDate = editedDate;
+    }
+
     NSDate *now = [NSDate date];
     NSTimeInterval distanceBetweenDates = [now timeIntervalSinceDate:createdDate];
     double secondsInAnHour = 3600;
@@ -995,6 +1132,47 @@
             [self enterDeleteComment];
         }]];
     }
+    if ([[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
+            }]];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+                [self.listingObject setObject:@"deleted" forKey:@"status"];
+                [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
+                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        
+                        //check if this listing has a reminder setup and cancel if set
+                        NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+                        for(UILocalNotification *notification in notificationArray){
+                            if ([[notification userInfo]valueForKey:@"listingId"]) {
+                                NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                                if ([listingId isEqualToString:self.listingObject.objectId]) {
+                                    // delete this notification
+                                    [[UIApplication sharedApplication] cancelLocalNotification:notification];
+                                }
+                            }
+                        }
+                        
+                        //decrement forSalePostNumber
+                        if (![[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] && ![[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] && ![[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
+                            [[PFUser currentUser]incrementKey:@"forSalePostNumber" byAmount:@-1];
+                            [[PFUser currentUser] saveInBackground];
+                        }
+                        
+                        [self.delegate deletedItem];
+                        [self.navigationController popViewControllerAnimated:YES];
+                    }
+                }];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
+        }]];
+    }
+    
     
     else if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
  
@@ -1006,8 +1184,21 @@
             }]];
             [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
                 [self.listingObject setObject:@"deleted" forKey:@"status"];
+                [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
                 [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                     if (succeeded) {
+                        
+                        //check if this listing has a reminder setup and cancel if set
+                        NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+                        for(UILocalNotification *notification in notificationArray){
+                            if ([[notification userInfo]valueForKey:@"listingId"]) {
+                                    NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                                    if ([listingId isEqualToString:self.listingObject.objectId]) {
+                                        // delete this notification
+                                        [[UIApplication sharedApplication] cancelLocalNotification:notification];
+                                    }
+                                }
+                        }
                         
                         //decrement forSalePostNumber
                         if (![[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] && ![[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] && ![[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
@@ -1057,13 +1248,12 @@
         
         //show HUD
 
-        [self showHUDForCopy:YES];
+        [self showHUDInMode:@"copy"];
         
-        double delayInSeconds = 2.0; // number of seconds to wait
+        double delayInSeconds = 1.0; // number of seconds to wait
         dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
         dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
             [self hideHUD];
-            self.hud.labelText = @"";
         });
         [self showBarButton];
     }]];
@@ -1071,24 +1261,26 @@
     [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
--(void)showHUDForCopy:(BOOL)copying{
+-(void)showHUDInMode:(NSString *)mode{
     self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
     self.hud.square = YES;
     self.hud.mode = MBProgressHUDModeCustomView;
-    if (!copying) {
+    if (!mode) {
         self.hud.customView = self.spinner;
         [self.spinner startAnimating];
     }
-    else{
+    else if([mode isEqualToString:@"copy"]){
         self.hud.labelText = @"Copied";
     }
-}
-
--(void)showHUDForReport{
-    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
-    self.hud.square = YES;
-    self.hud.mode = MBProgressHUDModeCustomView;
-    self.hud.labelText = @"Reported";
+    else if([mode isEqualToString:@"reminder"]){
+        self.hud.labelText = @"Scheduled";
+    }
+    else if([mode isEqualToString:@"cancelled"]){
+        self.hud.labelText = @"Cancelled";
+    }
+    else if([mode isEqualToString:@"reported"]){
+        self.hud.labelText = @"Reported";
+    }
 }
 
 -(void)hideHUD{
@@ -1121,7 +1313,6 @@
         [self hideBarButton];
         [self hideSendBox];
         
-        
         NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
         [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
         [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
@@ -1135,6 +1326,22 @@
         if (self.dropShowing == YES) {
             //make sure its dismissed
             [[NSNotificationCenter defaultCenter] postNotificationName:@"removeDrop" object:nil];
+        }
+    }
+    
+    if (!self.currency) {
+        self.currency = [self.listingObject objectForKey:@"currency"];
+    }
+    
+    if (!self.currencySymbol) {
+        if ([self.currency isEqualToString:@"GBP"]) {
+            self.currencySymbol = @"£";
+        }
+        else if ([self.currency isEqualToString:@"EUR"]) {
+            self.currencySymbol = @"€";
+        }
+        else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+            self.currencySymbol = @"$";
         }
     }
     
@@ -1185,8 +1392,8 @@
     [self.messageButton setEnabled:NO];
     self.anyButtonPressed = YES;
     
-    [self showHUDForCopy:NO];
-    
+    [self showHUDInMode:nil];
+
     NSString *orderId = [self.listingObject objectForKey:@"orderId"];
     if (orderId.length > 1) {
         PFQuery *orderQ = [PFQuery queryWithClassName:@"saleOrders"];
@@ -1226,7 +1433,7 @@
     self.anyButtonPressed = YES;
     
     if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        [self showHUDForCopy:NO];
+        [self showHUDInMode:nil];
         [self setupMessages];
     }
     else{
@@ -1505,7 +1712,7 @@
         [self setupOrderBarButton];
     }
     else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [self.seller.objectId isEqualToString:[PFUser currentUser].objectId]){
-        //don't let user message someone about a listing that they've sold
+        //don't let user edit a listing that they've sold
 //        [self setupMessageBarButton];
     }
     else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
@@ -1520,7 +1727,7 @@
     }
     else{
         //check if instant buy is on & if countries are the same - if not, is global shipping enabled to show both anyway
-        if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"]) {
+        if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"] && [self.listingObject objectForKey:@"currency"]) {
             
             if ([self.listingObject objectForKey:@"countryCode"] && ([[PFUser currentUser]objectForKey:@"countryCode"] || [[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"])) {
                 
@@ -1537,7 +1744,6 @@
                     [self setupTwoBarButtons];
                 }
                 else{
-                    NSLog(@"setting up msg button 1");
                     [self setupMessageBarButton];
                 }
             }
@@ -1666,6 +1872,54 @@
     
 }
 - (IBAction)sendPressed:(id)sender {
+    
+    NSLog(@"SEND PRESSED");
+    
+    if (self.boostMode) {
+        
+        [Answers logCustomEventWithName:@"BOOST Button Tapped"
+                       customAttributes:@{}];
+        
+        if([self.listingObject objectForKey:@"nextBoostDate"]){
+            
+            //prevents people boosting then using an old next boost date to trigger another boost straight away
+            if (!self.nextBoostDate) {
+                self.nextBoostDate = [self.listingObject objectForKey:@"nextBoostDate"];
+            }
+            
+            if([[NSDate date] compare:self.nextBoostDate]==NSOrderedAscending){
+                //current time is before next safe boost time
+                //show countdown timer
+                [self showCountdownBoostViewWithBg:YES];
+            }
+            else{
+                //let user boost
+                [self triggerBoost];
+                [self showSuccessBoostViewWithBg:YES];
+            }
+        }
+        else{
+            //has user seen boost intro before?
+            if (![[PFUser currentUser]objectForKey:@"seenBoostIntro"]) {
+                
+                [[PFUser currentUser] setObject:@"YES" forKey:@"seenBoostIntro"];
+                [[PFUser currentUser]saveInBackground];
+                
+                [self showIntroBoostViewWithBg:YES];
+            }
+            else{
+                //let user boost
+                [self triggerBoost];
+                [self showSuccessBoostViewWithBg:YES];
+            }
+        }
+    }
+    else{
+        [self sendFBPressed];
+    }
+}
+
+-(void)sendFBPressed{
     [Answers logCustomEventWithName:@"Pressed send listing button"
                    customAttributes:@{
                                       @"where":@"for sale"
@@ -2507,6 +2761,7 @@
     
     [Intercom logEventWithName:@"screenshot_taken" metaData: @{}];
     
+    self.screenshotMode = YES;
     [self showInviteView];
     
 //    [[NSNotificationCenter defaultCenter] postNotificationName:@"screenshotDropDown" object:[self.listingObject objectForKey:@"image1"]];
@@ -2542,62 +2797,64 @@
     self.inviteView = (inviteViewClass *)[nib objectAtIndex:0];
     self.inviteView.delegate = self;
     
-    self.inviteView.screenshotMode = YES;
-    
-//    //setup images
-//    NSMutableArray *friendsArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"friends"]];
-//
-//    //manage friends count label
-//    if (friendsArray.count > 5) {
-//        self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use Bump", (unsigned long)friendsArray.count];
-//    }
-//    else{
-//        self.inviteView.friendsLabel.text = @"Help us grow 🚀";
-//    }
-//
-//    if (friendsArray.count > 0) {
-//        [self shuffle:friendsArray];
-//        if (friendsArray.count >2) {
-//            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
-//            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-//
-//            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
-//            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-//
-//            NSURL *picUrl3 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[2]]];
-//            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-//        }
-//        else if (friendsArray.count == 2){
-//            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
-//            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-//
-//            NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
-//            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-//
-//            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
-//            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-//        }
-//        else if (friendsArray.count == 1){
-//            NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
-//            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-//
-//            NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
-//            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-//
-//            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image to fill gap
-//            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-//        }
-//    }
-//    else{
-//        NSURL *picUrl = [NSURL URLWithString:@"https://graph.facebook.com/10153952930083234/picture?type=large"]; //use my image
-//        [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
-//
-//        NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/10153368584907077/picture?type=large"]; //use sam's image
-//        [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
-//
-//        NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
-//        [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
-//    }
+    if (self.screenshotMode) {
+        self.inviteView.screenshotMode = YES;
+    }
+    else{
+        //setup images
+        NSMutableArray *friendsArray = [NSMutableArray arrayWithArray:[[PFUser currentUser] objectForKey:@"friends"]];
+        
+        //manage friends count label
+        if (friendsArray.count > 5) {
+            self.inviteView.friendsLabel.text = [NSString stringWithFormat:@"%lu friends use BUMP", (unsigned long)friendsArray.count];
+        }
+        else{
+            self.inviteView.friendsLabel.text = @"Grow our community";
+        }
+        
+        if (friendsArray.count > 0) {
+            [self shuffle:friendsArray];
+            if (friendsArray.count >2) {
+                NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+                [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+                
+                NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
+                [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+                
+                NSURL *picUrl3 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[2]]];
+                [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+            }
+            else if (friendsArray.count == 2){
+                NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+                [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+                
+                NSURL *picUrl2 = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large",friendsArray[1]]];
+                [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+                
+                NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/781237282045226/picture?type=large"]; //use viv's image to fill gap
+                [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+            }
+            else if (friendsArray.count == 1){
+                NSURL *picUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", friendsArray[0]]];
+                [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+                
+                NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/781237282045226/picture?type=large"]; //use viv's image
+                [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+                
+                NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
+                [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+            }
+        }
+        else{
+            NSURL *picUrl = [NSURL URLWithString:@"https://graph.facebook.com/10207070036095375/picture?type=large"]; //use matsisland's image
+            [self.inviteView.friendImageOne sd_setImageWithURL:picUrl];
+            
+            NSURL *picUrl2 = [NSURL URLWithString:@"https://graph.facebook.com/781237282045226/picture?type=large"]; //use viv's image
+            [self.inviteView.friendImageTwo sd_setImageWithURL:picUrl2];
+            NSURL *picUrl3 = [NSURL URLWithString:@"https://graph.facebook.com/10154993039808844/picture?type=large"]; //use tayler's image to fill gap
+            [self.inviteView.friendImageThree sd_setImageWithURL:picUrl3];
+        }
+    }
     
     [self.inviteView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -300, 300, 300)];
     
@@ -2643,6 +2900,7 @@
                      completion:^(BOOL finished) {
                          //Completion Block
                          self.inviteAlertShowing = NO;
+                         self.screenshotMode = NO;
                          [self.inviteView setAlpha:0.0];
                          self.inviteView = nil;
                      }];
@@ -2787,7 +3045,7 @@
     [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
     [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
     [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
-    [center addObserver:self selector:@selector(sendPressed:) name:@"showSendBox" object:nil];
+    [center addObserver:self selector:@selector(sendFBPressed) name:@"showSendBox" object:nil];
 }
 
 #pragma mark - web view delegates
@@ -2946,7 +3204,7 @@
         }
         
         //send push to the seller notifying them of the Bump
-        NSString *pushText = [NSString stringWithFormat:@"%@ just liked your listing", [PFUser currentUser].username];
+        NSString *pushText = [NSString stringWithFormat:@"@%@ just liked your listing", [PFUser currentUser].username];
         
         if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
             
@@ -3082,11 +3340,21 @@
             [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
                     
-                    //update lastUpdated value
-                    NSDictionary *params = @{@"listingId":self.listingObject.objectId};
-                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                    NSDictionary *params1 = @{@"listingId":self.listingObject.objectId};
+                    [PFCloud callFunctionInBackground:@"updateLiveDate" withParameters:params1 block:^(NSDictionary *response, NSError *error) {
                         if (error) {
-                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
+                            [Answers logCustomEventWithName:@"Error updating liveDate"
+                                           customAttributes:@{
+                                                              @"where":@"listing"
+                                                              }];
+                        }
+                    }];
+                    
+                    //update lastEdited value
+                    NSDictionary *params = @{@"listingId":self.listingObject.objectId};
+                    [PFCloud callFunctionInBackground:@"updateLastEdited" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                        if (error) {
+                            [Answers logCustomEventWithName:@"Error updating lastEdited"
                                            customAttributes:@{
                                                               @"where":@"listing"
                                                               }];
@@ -3094,8 +3362,6 @@
                     }];
                     
                     //hide label
-//                    self.soldLabel.alpha = 1.0;
-//                    self.soldCheckImageVoew.alpha = 1.0;
                     self.soldbannerButton.alpha = 1.0;
                     
                     [UIView animateWithDuration:0.3
@@ -3103,16 +3369,28 @@
                                         options:UIViewAnimationOptionCurveEaseIn
                                      animations:^{
                                          self.soldbannerButton.alpha = 0.0;
-
-//                                         self.soldLabel.alpha = 0.0;
-//                                         self.soldCheckImageVoew.alpha = 0.0;
                                      }
                                      completion:^(BOOL finished) {
                                          [self.soldbannerButton setHidden:YES];
-
-//                                         [self.soldLabel setHidden:YES];
-//                                         [self.soldCheckImageVoew setHidden:YES];
                                      }];
+                    
+                    //show boost button
+                    [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
+                    [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal];
+                    self.boostMode = YES;
+                    
+                    //show edit button again
+                    self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+                    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
+                    
+                    [self.messageButton setTitle:@"E D I T" forState:UIControlStateNormal];
+                    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:0.9]];
+                    [self.messageButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+                    [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+                    self.messageButton.alpha = 0.0f;
+                    [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
+                    
+                    [self showBarButton];
                 }
             }];
         }
@@ -3130,27 +3408,29 @@
             [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
                     
-                    //update lastUpdated value
+                    //update lastEdited value
                     NSDictionary *params = @{@"listingId":self.listingObject.objectId};
-                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                    [PFCloud callFunctionInBackground:@"updateLastEdited" withParameters:params block:^(NSDictionary *response, NSError *error) {
                         if (error) {
-                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
+                            [Answers logCustomEventWithName:@"Error updating lastEdited"
                                            customAttributes:@{
                                                               @"where":@"listing"
                                                               }];
                         }
                     }];
                     
-                    //unhide label
-//                    self.soldLabel.alpha = 0.0;
-//                    self.soldCheckImageVoew.alpha = 0.0;
+                    //update lastUpdated value
+//                    NSDictionary *params = @{@"listingId":self.listingObject.objectId};
+//                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//                        if (error) {
+//                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
+//                                           customAttributes:@{
+//                                                              @"where":@"listing"
+//                                                              }];
+//                        }
+//                    }];
                     
-//                    self.soldLabel.text = @"S O L D";
-//                    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
-//
-//                    [self.soldLabel setHidden:NO];
-//                    [self.soldCheckImageVoew setHidden:NO];
-                    
+                    //unhide sold banner
                     self.soldbannerButton.alpha = 0.0;
                     [self.soldbannerButton setHidden:NO];
                     
@@ -3158,13 +3438,15 @@
                                           delay:0
                                         options:UIViewAnimationOptionCurveEaseIn
                                      animations:^{
-//                                         self.soldLabel.alpha = 1.0;
-//                                         self.soldCheckImageVoew.alpha = 1.0;
-                                         
                                          self.soldbannerButton.alpha = 1.0;
                                          
                                      }
                                      completion:nil];
+                    
+                    //hide boost button
+                    [self.sendLabel setTitle:@"S H A R E  O N\nB U M P" forState:UIControlStateNormal];
+                    [self.sendButton setImage:[UIImage imageNamed:@"envelopeSend"] forState:UIControlStateNormal];
+                    self.boostMode = NO;
                 }
             }];
         }
@@ -3590,7 +3872,7 @@
                                                       @"where":@"sale listing"
                                                       }];
                     
-                    [self normalShowAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for Bump with your Facebook account\n\nSend Support a message from Settings and we'll get it sorted!"];
+                    [self normalShowAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for BUMP with your Facebook account\n\nSend Support a message from Settings and we'll get it sorted!"];
                 }
             }
         }];
@@ -3729,7 +4011,7 @@
         [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
         [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
         [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
-        [center addObserver:self selector:@selector(sendPressed:) name:@"showSendBox" object:nil];
+        [center addObserver:self selector:@selector(sendFBPressed) name:@"showSendBox" object:nil];
     }
 }
 
@@ -3834,5 +4116,508 @@
     else{
         return NO;
     }
+}
+
+#pragma mark - boost popup delegates
+
+-(void)showIntroBoostViewWithBg:(BOOL)showBg{
+    [Answers logCustomEventWithName:@"Boost Showing"
+                   customAttributes:@{
+                                      @"where": @"listing"
+                                      }];
+    
+    NSLog(@"SHOW INTRO VIEW");
+    
+    if (self.inviteAlertShowing == YES || self.showingIntroBoostView == YES ) {
+        return;
+    }
+    self.inviteAlertShowing = YES;
+    self.showingIntroBoostView = YES;
+
+
+    if (showBg) {
+        self.inviteBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+        self.inviteBgView.alpha = 0.0;
+        [self.inviteBgView setBackgroundColor:[UIColor blackColor]];
+        [[UIApplication sharedApplication].keyWindow addSubview:self.inviteBgView];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.inviteBgView.alpha = 0.8f;
+                         }
+                         completion:nil];
+    }
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"BoostView" owner:self options:nil];
+    self.introBoostView = (BoostViewController *)[nib objectAtIndex:0];
+    self.introBoostView.delegate = self;
+    [self.introBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -337, 300, 337)];
+    
+    self.boostViewMode = @"boost";
+    self.introBoostView.mode = @"boost";
+    
+    self.introBoostView.layer.cornerRadius = 10;
+    self.introBoostView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.introBoostView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.introBoostView setFrame:CGRectMake(0, 0, 300, 337)];
+                            self.introBoostView.center = self.view.center;
+                        }
+                     completion:^(BOOL finished) {
+                         if (showBg) {
+                             [self.inviteBgView addGestureRecognizer:self.boostDismissTap];
+                         }
+                     }];
+}
+
+-(void)hideIntroBoostViewWithBg:(BOOL)hideBg{
+    
+    //reset if needs be to stop drop down appearing on every VC will appear
+    if (self.fromBoostPush) {
+        self.fromBoostPush = NO;
+    }
+    
+    if (hideBg) {
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.inviteBgView.alpha = 0.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.inviteBgView = nil;
+                             [self.inviteBgView removeGestureRecognizer:self.boostDismissTap];
+                         }];
+    }
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.introBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 337)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.showingIntroBoostView = NO;
+                         
+                         self.inviteAlertShowing = NO;
+                         [self.introBoostView setAlpha:0.0];
+                         self.introBoostView = nil;
+                     }];
+}
+
+-(void)showCountdownBoostViewWithBg:(BOOL)showBg{
+    [Answers logCustomEventWithName:@"Boost Showing"
+                   customAttributes:@{
+                                      @"where": @"listing"
+                                      }];
+    
+    if (self.inviteAlertShowing == YES) {
+        return;
+    }
+    
+    self.inviteAlertShowing = YES;
+
+    if (showBg) {
+        self.inviteBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+        self.inviteBgView.alpha = 0.0;
+        [self.inviteBgView setBackgroundColor:[UIColor blackColor]];
+        [[UIApplication sharedApplication].keyWindow addSubview:self.inviteBgView];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.inviteBgView.alpha = 0.8f;
+                         }
+                         completion:nil];
+    }
+
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"BoostView" owner:self options:nil];
+    self.counterBoostView = (BoostViewController *)[nib objectAtIndex:0];
+    self.counterBoostView.delegate = self;
+    [self.counterBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -337, 300, 337)];
+    
+    self.counterBoostView.mode = @"countdown";
+    self.boostViewMode = @"countdown";
+    
+    if (self.reminderSet == YES) {
+        [self.counterBoostView.mainButton setTitle:@"C A N C E L  R E M I N D E R" forState:UIControlStateNormal];
+    }
+    else{
+        [self.counterBoostView.mainButton setTitle:@"S E T  R E M I N D E R" forState:UIControlStateNormal];
+    }
+    
+    self.counterBoostView.timerLabel.delegate = nil;
+    self.counterBoostView.timerLabel.delegate = self;
+    
+    self.counterBoostView.timerLabel.timerType = MZTimerLabelTypeTimer;
+    [self.counterBoostView.timerLabel setCountDownToDate:self.nextBoostDate];
+    [self.counterBoostView.timerLabel start];
+    
+    self.counterBoostView.layer.cornerRadius = 10;
+    self.counterBoostView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.counterBoostView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.counterBoostView setFrame:CGRectMake(0, 0, 300, 337)];
+                            self.counterBoostView.center = self.view.center;
+                        }
+                     completion:^(BOOL finished) {
+                         if (showBg) {
+                             [self.inviteBgView addGestureRecognizer:self.boostDismissTap];
+                         }
+                     }];
+}
+
+-(void)hideCountdownBoostViewWithBg:(BOOL)hideBg{
+    
+    if (hideBg) {
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.inviteBgView.alpha = 0.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.inviteBgView = nil;
+                             [self.inviteBgView removeGestureRecognizer:self.boostDismissTap];
+                         }];
+    }
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.counterBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 337)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.inviteAlertShowing = NO;
+                         [self.counterBoostView setAlpha:0.0];
+                         
+                         self.counterBoostView.timerLabel.delegate = nil;
+                         self.counterBoostView = nil;
+                     }];
+}
+
+-(void)showSuccessBoostViewWithBg:(BOOL)showBg{
+    [Answers logCustomEventWithName:@"Boost Showing"
+                   customAttributes:@{
+                                      @"where": @"listing"
+                                      }];
+    
+    if (self.inviteAlertShowing == YES) {
+        return;
+    }
+    self.inviteAlertShowing = YES;
+
+    if (showBg) {
+        self.inviteBgView = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.frame];
+        self.inviteBgView.alpha = 0.0;
+        [self.inviteBgView setBackgroundColor:[UIColor blackColor]];
+        [[UIApplication sharedApplication].keyWindow addSubview:self.inviteBgView];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.inviteBgView.alpha = 0.8f;
+                         }
+                         completion:nil];
+    }
+    
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"BoostView" owner:self options:nil];
+    self.successBoostView = (BoostViewController *)[nib objectAtIndex:0];
+    self.successBoostView.delegate = self;
+    [self.successBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -337, 300, 337)];
+    
+    self.boostViewMode = @"success";
+    self.successBoostView.mode = @"success";
+
+    self.successBoostView.lowerTimerLabel.timerType = MZTimerLabelTypeTimer;
+    [self.successBoostView.lowerTimerLabel setCountDownToDate:self.nextBoostDate];
+    [self.successBoostView.lowerTimerLabel start];
+    
+    self.successBoostView.layer.cornerRadius = 10;
+    self.successBoostView.layer.masksToBounds = YES;
+    
+    [[UIApplication sharedApplication].keyWindow addSubview:self.successBoostView];
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.5
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.successBoostView setFrame:CGRectMake(0, 0, 300, 337)];
+                            self.successBoostView.center = self.view.center;
+                        }
+                     completion:^(BOOL finished) {
+                         if (showBg) {
+                             [self.inviteBgView addGestureRecognizer:self.boostDismissTap];
+                         }
+                     }];
+}
+
+-(void)hideSuccessBoostViewWithBg:(BOOL)hideBg{
+    
+    if (hideBg) {
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.inviteBgView.alpha = 0.0f;
+                         }
+                         completion:^(BOOL finished) {
+                             self.inviteBgView = nil;
+                             [self.inviteBgView removeGestureRecognizer:self.boostDismissTap];
+                         }];
+    }
+    
+    [UIView animateWithDuration:1.0
+                          delay:0.0
+         usingSpringWithDamping:0.1
+          initialSpringVelocity:0.5
+                        options:UIViewAnimationOptionCurveEaseIn animations:^{
+                            //Animations
+                            [self.successBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 337)];
+                        }
+                     completion:^(BOOL finished) {
+                         //Completion Block
+                         self.inviteAlertShowing = NO;
+                         [self.successBoostView setAlpha:0.0];
+                         self.successBoostView = nil;
+                     }];
+}
+
+-(void)BoostMainButtonPressedRemindMode:(BOOL)remind{
+
+    if (remind) {
+        
+        if (self.reminderSet == YES) {
+            
+            //do check first then create new local push
+            if ([self.boostViewMode isEqualToString:@"success"]) {
+                [Answers logCustomEventWithName:@"Pressed Cancel Boost Reminder"
+                               customAttributes:@{
+                                                  @"from":@"success"
+                                                  }];
+                [self hideSuccessBoostViewWithBg:YES];
+            }
+            else{
+                //scheduling reminder from countdown
+                [Answers logCustomEventWithName:@"Pressed Cancel Boost Reminder"
+                               customAttributes:@{
+                                                  @"from":@"countdown"
+                                                  }];
+                [self hideCountdownBoostViewWithBg:YES];
+            }
+            
+            //cancel boost reminder pressed
+            self.reminderSet = NO;
+            
+            [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
+            
+            if ([[self.listingObject objectForKey:@"boostReminderCount"]intValue] > 0) {
+                [self.listingObject incrementKey:@"boostReminderCount" byAmount:@-1];
+            }
+            
+            [self.listingObject saveInBackground];
+            
+            //show HUD
+            [self showHUDInMode:@"cancelled"];
+            
+            double delayInSeconds = 1.0; // number of seconds to wait
+            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                [self hideHUD];
+            });
+            
+            //check if this listing has a reminder setup and cancel if set
+            NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+            for(UILocalNotification *notification in notificationArray){
+                if ([[notification userInfo]valueForKey:@"listingId"]) {
+                    NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                    if ([listingId isEqualToString:self.listingObject.objectId]) {
+                        // delete this notification
+                        [[UIApplication sharedApplication] cancelLocalNotification:notification];
+                    }
+                }
+            }
+            
+        }
+        else{
+            //show HUD
+            [self showHUDInMode:@"reminder"];
+            
+            [Intercom logEventWithName:@"boost_reminder_scheduled" metaData: @{}];
+            
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"BOOST Reminder Set" properties:@{}];
+            
+            [Answers logCustomEventWithName:@"BOOST Reminder Set"
+                           customAttributes:@{}];
+            
+            self.reminderSet = YES;
+            
+            double delayInSeconds = 1.0; // number of seconds to wait
+            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                [self hideHUD];
+            });
+            
+            //do check first then create new local push
+            if ([self.boostViewMode isEqualToString:@"success"]) {
+                [Answers logCustomEventWithName:@"Pressed Schedule Boost Reminder"
+                               customAttributes:@{
+                                                  @"from":@"success"
+                                                  }];
+                [self hideSuccessBoostViewWithBg:YES];
+            }
+            else{
+                //scheduling reminder from countdown
+                [Answers logCustomEventWithName:@"Pressed Schedule Boost Reminder"
+                               customAttributes:@{
+                                                  @"from":@"countdown"
+                                                  }];
+                [self hideCountdownBoostViewWithBg:YES];
+            }
+            
+            //make sure to check for the same push to cancel first
+            //cancel listing local push
+            NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+            for(UILocalNotification *notification in notificationArray){
+                if ([[notification userInfo]valueForKey:@"listingId"]) {
+                    NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                    if ([listingId isEqualToString:self.listingObject.objectId]) {
+                        // delete this notification
+                        [[UIApplication sharedApplication] cancelLocalNotification:notification];
+                    }
+                }
+            }
+            
+            [self.listingObject setObject:@"YES" forKey:@"boostReminderSet"];
+            [self.listingObject incrementKey:@"boostReminderCount"];
+            [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                if (succeeded) {
+                    
+                    UILocalNotification *localNotification = [[UILocalNotification alloc]init];
+                    [localNotification setAlertBody:[NSString stringWithFormat:@"Your BOOST is now available for '%@'",[self.listingObject objectForKey:@"itemTitle"]]];
+                    
+                    //set listingId so we can find listing when it returns to the app
+                    [localNotification setUserInfo:@{@"listingId":self.listingObject.objectId}];
+                    
+                    [localNotification setFireDate: self.nextBoostDate];
+                    [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
+                    [localNotification setRepeatInterval: 0];
+                    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+                }
+                else{
+                    [self normalShowAlertWithTitle:@"Reminder Error" andMsg:@"Ensure you have a strong Internet connection and try again"];
+                    
+                    [Answers logCustomEventWithName:@"Error Setting Boost Reminder"
+                                   customAttributes:@{}];
+                }
+            }];
+        }
+    }
+    else{
+        //boost triggered
+        [self hideIntroBoostViewWithBg:NO];
+        
+        [self triggerBoost];
+        self.inviteAlertShowing = NO;
+        [self showSuccessBoostViewWithBg:NO];
+    }
+}
+
+-(void)generalHideBoost{
+    if ([self.boostViewMode isEqualToString:@"countdown"]) {
+        [self hideCountdownBoostViewWithBg:YES];
+    }
+    else if ([self.boostViewMode isEqualToString:@"boost"]) {
+        [self hideIntroBoostViewWithBg:YES];
+    }
+    else if ([self.boostViewMode isEqualToString:@"success"]) {
+        [self hideSuccessBoostViewWithBg:YES];
+    }
+}
+
+-(void)triggerBoost{
+
+    [Intercom logEventWithName:@"boost_triggered" metaData: @{}];
+    
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"BOOST triggered" properties:@{}];
+    
+    [Answers logCustomEventWithName:@"BOOST Reminder Set"
+                   customAttributes:@{}];
+    
+    //place listing at the top of the home feed
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"justBoostedListing" object:self.listingObject];
+
+    //save new boost date 6 hours away
+    NSDateComponents *hourComponent = [[NSDateComponents alloc] init];
+    hourComponent.hour = 6;
+
+    NSCalendar *theCalendar = [NSCalendar currentCalendar];
+    NSDate *nextBoostDate = [theCalendar dateByAddingComponents:hourComponent toDate:[NSDate date] options:0];
+    self.nextBoostDate = nextBoostDate;
+    
+    //update lastUpdated
+    NSDictionary *params = @{@"listingId":self.listingObject.objectId, @"date":nextBoostDate};
+    [PFCloud callFunctionInBackground:@"triggerBoost" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (error) {
+            [self normalShowAlertWithTitle:@"BOOST Error" andMsg:@"Ensure you have a strong Internet connection and try again"];
+            
+            [Answers logCustomEventWithName:@"Error triggering Boost"
+                           customAttributes:@{}];
+        }
+    }];
+}
+
+-(void)timerLabel:(MZTimerLabel*)timerLabel finshedCountDownTimerWithTime:(NSTimeInterval)countTime{
+    
+    if (!self.timerDelegateCalled) {
+        self.timerDelegateCalled = YES;
+
+        [Answers logCustomEventWithName:@"Waiting for BOOST Countdown"
+                       customAttributes:@{}];
+
+        //BOOST countdown finished
+        self.reminderSet = NO;
+        
+        //only auto trigger intro boost view if we know this is still showing
+        if (self.counterBoostView) {
+            [self hideCountdownBoostViewWithBg:NO];
+            
+            self.inviteAlertShowing = NO;
+            [self showIntroBoostViewWithBg:NO];
+        }
+        self.timerDelegateCalled = NO;
+    }
+
 }
 @end

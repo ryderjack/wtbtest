@@ -200,17 +200,45 @@
     NSString *line2 = [self.addressLine2.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
     NSMutableString *postcodeStr = [self.postcodeField.text mutableCopy];
-    CFStringTransform((__bridge CFMutableStringRef)postcodeStr, NULL, kCFStringTransformStripCombiningMarks, NO); //THIS WORKS
+    CFStringTransform((__bridge CFMutableStringRef)postcodeStr, NULL, kCFStringTransformStripCombiningMarks, NO); //remove accents from postcodes
     
-    NSString *addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@\n%@",self.nameField.text, self.addressLine1.text, self.addressLine2.text,self.cityField.text,postcodeStr,self.countryField.text];
 
-    if ([name isEqualToString:@""] || [line1 isEqualToString:@""]|| [line2 isEqualToString:@""]|| [postcode isEqualToString:@""] || [country isEqualToString:@""] || [city isEqualToString:@""]) {
+    //check if line 2 is empty
+    if ([name isEqualToString:@""] || [line1 isEqualToString:@""]|| [postcode isEqualToString:@""] || [country isEqualToString:@""] || [city isEqualToString:@""]) {
+        
+        NSString *addressString;
+        
+        if ([line2 isEqualToString:@""]) {
+            addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@",self.nameField.text, self.addressLine1.text,self.cityField.text,postcodeStr,self.countryField.text];
+            
+            //user hasn't entered a line 2 so delete if exists
+            if ([self.currentUser objectForKey:@"lineTwo"]) {
+                [self.currentUser removeObjectForKey:@"lineTwo"];
+            }
+        }
+        else{
+            addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@\n%@",self.nameField.text, self.addressLine1.text, self.addressLine2.text,self.cityField.text,postcodeStr,self.countryField.text];
+        }
         
         [self.delegate addedAddress:addressString withName:self.nameField.text withLineOne:self.addressLine1.text withLineTwo:self.addressLine2.text withCity:self.cityField.text withCountry:self.picker.selectedCountryCode fullyEntered:NO];
         self.somethingMissing = YES;
     }
     else{
         //pass back & save to current user
+        NSString *addressString;
+        
+        if ([line2 isEqualToString:@""]) {
+            addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@",self.nameField.text, self.addressLine1.text,self.cityField.text,postcodeStr,self.countryField.text];
+            
+            //user hasn't entered a line 2 so delete if exists
+            if ([self.currentUser objectForKey:@"lineTwo"]) {
+                [self.currentUser removeObjectForKey:@"lineTwo"];
+            }
+        }
+        else{
+            addressString = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%@\n%@",self.nameField.text, self.addressLine1.text, self.addressLine2.text,self.cityField.text,postcodeStr,self.countryField.text];
+        }
+        
         [self.delegate addedAddress:addressString withName:self.nameField.text withLineOne:self.addressLine1.text withLineTwo:self.addressLine2.text withCity:self.cityField.text withCountry:self.picker.selectedCountryCode fullyEntered:YES];
         
         [self.currentUser setObject:@"YES" forKey:@"enteredAddress"];
@@ -246,7 +274,28 @@
     [self.currentUser saveInBackground];
     
     if (self.somethingMissing) {
-        [self showMissingAlert];
+        if ([name isEqualToString:@""] || name.length < 3) {
+            [self showMissingAlertWithTitle:@"Name Missing" andMessage:@"Please make sure you completely enter your full name"];
+        }
+        
+        else if ([line1 isEqualToString:@""]) {
+            [self showMissingAlertWithTitle:@"Address Line 1 Missing" andMessage:@"Please make sure you completely enter line 1 of your shipping address"];
+        }
+        
+        else if ([postcode isEqualToString:@""]) {
+            [self showMissingAlertWithTitle:@"Zipcode/postcode Missing" andMessage:@"Please make sure you completely enter your full zipcode/postcode"];
+        }
+        
+        else if ([country isEqualToString:@""]) {
+            [self showMissingAlertWithTitle:@"Country Missing" andMessage:@"Please select a shipping country"];
+        }
+        
+        else if ([city isEqualToString:@""]) {
+            [self showMissingAlertWithTitle:@"City Missing" andMessage:@"Please make sure you completely enter the city field of your shipping address"];
+        }
+        else{
+            [self showMissingAlertWithTitle:@"Information Missing" andMessage:@"Please make sure you completely enter your full shipping address"];
+        }
     }
     else{
         [self.navigationController popViewControllerAnimated:YES];
@@ -262,9 +311,9 @@
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
--(void)showMissingAlert{
+-(void)showMissingAlertWithTitle:(NSString *)title andMessage:(NSString *)message{
     
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Information missing" message:@"Would you like to leave this page or stay and complete your shipping address?" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Stay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         [self.cancelButton setEnabled:YES];

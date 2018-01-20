@@ -285,19 +285,13 @@ typedef void(^myCompletion)(BOOL);
                         int starNumber = [[object objectForKey:@"currentRating"] intValue];
                         int total = [[object objectForKey:@"dealsTotal"]intValue];
                         
-                        NSLog(@"total %d and star number %d", total, starNumber);
+                        NSLog(@"deals total: %d", total);
                         
                         if (total > 0 || self.tabMode == YES || starNumber > 0) {
-                            NSLog(@"yoyo");
-                            
-                            NSLog(@"starview: %@", self.starImageView);
                             
                             [self.myBar addSubview:self.starImageView];
                             [self.myBar addSubview:self.reviewsButton];
                             self.noDeals = NO;
-                            
-                            [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
-
                             
                             if (total == 0) {
                                 [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
@@ -332,7 +326,6 @@ typedef void(^myCompletion)(BOOL);
                             }
                         }
                         else{
-                            NSLog(@"zero reviews");
                             //looking at someone else's profile and they have zero reviews
                             self.noDeals = YES;
                             [self.myBar addSubview:self.reviewsButton];
@@ -631,13 +624,13 @@ typedef void(^myCompletion)(BOOL);
     PFQuery *wtbQuery = [PFQuery queryWithClassName:@"wantobuys"];
     [wtbQuery whereKey:@"postUser" equalTo:self.user];
     [wtbQuery whereKey:@"status" containedIn:@[@"live",@"purchased"]];
-    [wtbQuery orderByDescending:@"lastUpdated"];
+    [wtbQuery orderByDescending:@"createdAt"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
             //put the sold listings at the end
             NSSortDescriptor *sortDescriptorStatus = [[NSSortDescriptor alloc]
                                                       initWithKey: @"status" ascending: YES];
-            NSSortDescriptor *sortDescriptorUpdated = [[NSSortDescriptor alloc] initWithKey:@"lastUpdated" ascending:NO];
+            NSSortDescriptor *sortDescriptorUpdated = [[NSSortDescriptor alloc] initWithKey:@"createdAt" ascending:NO];
             NSArray *sortedArray = [objects sortedArrayUsingDescriptors: [NSArray arrayWithObjects:sortDescriptorStatus,sortDescriptorUpdated,nil]];
             
             [self.WTBArray removeAllObjects];
@@ -825,7 +818,7 @@ typedef void(^myCompletion)(BOOL);
         }
     }
     else{
-        [self.saleQuery orderByDescending:@"lastUpdated"];
+        [self.saleQuery orderByDescending:@"createdAt"];
     }
     
     [self.saleQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
@@ -834,7 +827,7 @@ typedef void(^myCompletion)(BOOL);
             //put the sold listings at the end
             NSSortDescriptor *sortDescriptorStatus = [[NSSortDescriptor alloc]
                                                 initWithKey: @"status" ascending: YES];
-            NSSortDescriptor *sortDescriptorUpdated = [[NSSortDescriptor alloc] initWithKey:@"lastUpdated" ascending:NO];
+            NSSortDescriptor *sortDescriptorUpdated = [[NSSortDescriptor alloc] initWithKey:@"createdAt" ascending:NO];
             NSArray *sortedArray = [objects sortedArrayUsingDescriptors: [NSArray arrayWithObjects:sortDescriptorStatus,sortDescriptorUpdated,nil]];
             
             [self.forSaleArray removeAllObjects];
@@ -2949,7 +2942,7 @@ typedef void(^myCompletion)(BOOL);
             [self.saleQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
         }
         else{
-            [self.saleQuery orderByDescending:@"lastUpdated"];
+            [self.saleQuery orderByDescending:@"createdAt"];
         }
         
         //instant buy
@@ -2993,7 +2986,7 @@ typedef void(^myCompletion)(BOOL);
         
     }
     else{
-        [self.saleQuery orderByDescending:@"lastUpdated"];
+        [self.saleQuery orderByDescending:@"createdAt"];
     }
 }
 

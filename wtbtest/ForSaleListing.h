@@ -21,6 +21,8 @@
 #import "BumpingIntroVC.h"
 #import "CheckoutSummary.h"
 #import "LocationView.h"
+#import "BoostViewController.h"
+#import <MZTimerLabel/MZTimerLabel.h>
 
 @class ForSaleListing;
 
@@ -32,7 +34,7 @@
 
 @end
 
-@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate, UIGestureRecognizerDelegate, CheckoutDelegate, LocationViewControllerDelegate>
+@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate, UIGestureRecognizerDelegate, CheckoutDelegate, LocationViewControllerDelegate,BOOSTViewDelegate,MZTimerLabelDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
 
@@ -143,6 +145,7 @@
 @property (nonatomic) BOOL hidingSendBox;
 @property (nonatomic) BOOL changeKeyboard;
 @property (nonatomic) BOOL wasShowing;
+@property (nonatomic) BOOL boostModeEnabled;
 
 //invite pop up
 @property (nonatomic, strong, nullable) inviteViewClass *inviteView;
@@ -150,6 +153,7 @@
 @property (nonatomic, strong, nullable) UIView *inviteBgView;
 @property (nonatomic, strong) UITapGestureRecognizer *inviteTap;
 @property (nonatomic) int tabBarHeightInt;
+@property (nonatomic) BOOL screenshotMode;
 
 //affiliate
 @property (nonatomic, strong) PFObject *affiliateObject;
@@ -176,5 +180,21 @@
 //purchase
 @property (nonatomic) float purchasePrice;
 @property (nonatomic) BOOL purchased;
+
+//boost
+@property (nonatomic) BOOL boostMode;
+@property (nonatomic, strong, nullable) BoostViewController *introBoostView;
+@property (nonatomic, strong, nullable) BoostViewController *counterBoostView;
+@property (nonatomic, strong, nullable) BoostViewController *successBoostView;
+
+@property (nonatomic, strong) UITapGestureRecognizer *boostDismissTap;
+@property (nonatomic, strong) NSString *boostViewMode;
+@property (nonatomic, strong) NSDate *nextBoostDate;
+@property (nonatomic) BOOL fromBoostPush;
+@property (nonatomic) BOOL reminderSet;
+@property (nonatomic) BOOL timerDelegateCalled;
+
+@property (nonatomic) BOOL showingIntroBoostView;
+
 
 @end

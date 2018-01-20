@@ -726,6 +726,12 @@
     return newLength <= 30;
 }
 
+-(void)viewDidDisappear:(BOOL)animated{
+    [super viewDidDisappear:animated];
+    
+    [self.delegate dismissedSettings];
+}
+
 -(void)viewWillDisappear:(BOOL)animated{
     //fail safe
     [self hideHUD];
@@ -1749,6 +1755,12 @@
         
         if ([self.selectedCurrency isEqualToString:@""]) {
             self.selectedCurrency = @"USD";
+        }
+        
+        if (![[PFUser currentUser]objectForKey:@"email"]) {
+            [self hideHUD];
+            [self showAlertWithTitle:@"Email needed" andMsg:@"Please first add your email address before we can connect your PayPal"];
+            return;
         }
         
         NSDictionary *params = @{

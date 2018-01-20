@@ -17,6 +17,12 @@
 #import <SwipeView/SwipeView.h>
 #import <SafariServices/SafariServices.h>
 
+@class SettingsController;
+
+@protocol SettingsDelegate <NSObject>
+- (void)dismissedSettings;
+@end
+
 @interface SettingsController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,customAlertDelegate,LocationViewControllerDelegate,SwipeViewDataSource,SwipeViewDelegate,SFSafariViewControllerDelegate>
 
 @property (strong, nonatomic) IBOutlet UITableViewCell *addressCell;
@@ -121,5 +127,8 @@
 //temp
 @property (strong, nonatomic) IBOutlet UITableViewCell *paypalEmailCell;
 @property (weak, nonatomic) IBOutlet UITextField *paypalTextField;
+
+//delegate
+@property (nonatomic, weak) id <SettingsDelegate> delegate;
 
 @end

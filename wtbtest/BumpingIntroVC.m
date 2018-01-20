@@ -24,7 +24,7 @@
     //animate in dismiss button after read text
     [self.dismissButton setAlpha:0.0];
     
-    double delayInSeconds = 2.0;
+    double delayInSeconds = 1.5;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         [UIView animateWithDuration:0.5

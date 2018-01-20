@@ -218,7 +218,6 @@
 
             //generate a pairing id to pass in payment call
             NSString * newPairingID = [[PPRiskComponent sharedComponent] generatePairingId:nil];
-            NSLog(@"newpairingId: %@", newPairingID);
             
             self.pairingId = newPairingID;
         }
@@ -523,14 +522,18 @@
     NSString *currency = [self.listingObject objectForKey:@"currency"];
     NSLog(@"%@", currency);
 
-
     NSString *buyerName = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"addressName"]];;
     NSLog(@"%@", buyerName);
 
     NSString *lineOne = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"lineOne"]];
     NSLog(@"%@", lineOne);
-
-    NSString *lineTwo = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"lineTwo"]];;
+    
+    //line 2 of address is optional
+    NSString *lineTwo = @"";
+    
+    if ([[PFUser currentUser] objectForKey:@"lineTwo"]) {
+        lineTwo = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"lineTwo"]];;
+    }
     NSLog(@"%@", lineTwo);
 
     NSString *city = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"city"]];
@@ -642,7 +645,6 @@
                    customAttributes:@{}];
     
     [self showHUD];
-    
     
     float shippingPrice = self.totalPrice - self.salePrice;
     

@@ -29,8 +29,9 @@
 #import "ConnectPayPalViewClass.h"
 #import "mediumSizeAlertViewClass.h"
 #import <SafariServices/SafariServices.h>
+#import "SettingsController.h"
 
-@interface PurchaseTab : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout,customAlertDelegate,UISearchBarDelegate,TheMainSearchViewDelegate,CLLocationManagerDelegate,dropDelegate,WelcomeDelegate,rateDelegate,FilterDelegate,inviteDelegate, BrowseLocationDelegate,ConnectPPDelegate,mediumSizeAVDelegate,SFSafariViewControllerDelegate>
+@interface PurchaseTab : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout,customAlertDelegate,UISearchBarDelegate,TheMainSearchViewDelegate,CLLocationManagerDelegate,dropDelegate,WelcomeDelegate,rateDelegate,FilterDelegate,inviteDelegate, BrowseLocationDelegate,ConnectPPDelegate,mediumSizeAVDelegate,SFSafariViewControllerDelegate,SettingsDelegate>
 
 //cv
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
@@ -124,6 +125,10 @@
 @property (nonatomic) BOOL justABump;
 @property (nonatomic) BOOL justAMessage;
 
+//boost
+@property (nonatomic) BOOL justABOOST;
+@property (nonatomic, strong) PFObject *boostListing;
+
 @property (nonatomic) NSArray *wantedWords;
 @property (nonatomic) NSArray *searchWords;
 @property (nonatomic) BOOL sendMode;
@@ -180,5 +185,6 @@
 @property (nonatomic, strong) NSString *merchantId;
 @property (nonatomic) BOOL existingUserPPAlert;
 @property (nonatomic) BOOL onboardingError;
+@property (nonatomic) BOOL emailMode;
 
 @end

@@ -237,15 +237,18 @@
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     
     if (self.userSearch == YES) {
-        PFUser *user = [self.userResults objectAtIndex:indexPath.row];
-        
-        if ([user.objectId isEqualToString:[PFUser currentUser].objectId]) {
-            //do something? //CHECK
+        //prevent crashing with empty user array
+        if (self.userResults.count >=indexPath.row+1) {
+            PFUser *user = [self.userResults objectAtIndex:indexPath.row];
+            
+            if ([user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                //do something? //CHECK
+            }
+            UserProfileController *vc = [[UserProfileController alloc]init];
+            vc.user = user;
+            vc.fromSearch = YES;
+            [self.navigationController pushViewController:vc animated:YES];
         }
-        UserProfileController *vc = [[UserProfileController alloc]init];
-        vc.user = user;
-        vc.fromSearch = YES;
-        [self.navigationController pushViewController:vc animated:YES];
     }
     else if(self.userSearch == NO && self.sellingSearch == NO){
         //wanted selected
@@ -487,7 +490,7 @@
         }
         
         PFQuery *query = [PFQuery orQueryWithSubqueries:@[userQueryForRand,facebookNameSearch]];
-//        [query whereKey:@"banCount" lessThan:@1]; //CHANGE add in protection against finding banned users
+//        [query whereKey:@"banCount" lessThan:@1]; //CHECK add in protection against finding banned users
         [query whereKey:@"completedReg" equalTo:@"YES"];
 
         [query findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
