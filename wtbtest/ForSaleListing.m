@@ -3427,17 +3427,6 @@
                         }
                     }];
                     
-                    //update lastUpdated value
-//                    NSDictionary *params = @{@"listingId":self.listingObject.objectId};
-//                    [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
-//                        if (error) {
-//                            [Answers logCustomEventWithName:@"Error updating lastUpdated"
-//                                           customAttributes:@{
-//                                                              @"where":@"listing"
-//                                                              }];
-//                        }
-//                    }];
-                    
                     //unhide sold banner
                     self.soldbannerButton.alpha = 0.0;
                     [self.soldbannerButton setHidden:NO];
@@ -3703,6 +3692,9 @@
                                        }
                                        
                                    }
+                                   else{
+                                       [self showAlertWithTitle:@"Enter Longer Reason" andMsg:nil];
+                                   }
                                }];
     
     UIAlertAction *cancelAction = [UIAlertAction
@@ -3752,7 +3744,14 @@
     }
     
     NSDictionary *params = @{@"listingId": self.listingObject.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod, @"modName":[PFUser currentUser].username};
-    [PFCloud callFunctionInBackground:@"reportListingFunction" withParameters: params block:nil];
+    [PFCloud callFunctionInBackground:@"reportListingFunction" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+        if (error) {
+            [Answers logCustomEventWithName:@"Error Reporting Listing"
+                           customAttributes:@{
+                                              @"error":error.description
+                                              }];
+        }
+    }];
     
     [self.reportLabel setTitle:@"R E P O R T E D" forState:UIControlStateNormal];
     [self.reportButton setEnabled:NO];

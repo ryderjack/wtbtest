@@ -1373,6 +1373,15 @@
     PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
     [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
     
+    //check if this user has a merchantId and if its banned before
+    PFQuery *merchantIdQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+    if ([[PFUser currentUser]objectForKey:@"paypalMerchantId"]) {
+        [merchantIdQuery whereKey:@"merchantId" equalTo:[[PFUser currentUser]objectForKey:@"paypalMerchantId"]];
+    }
+    else{
+        [merchantIdQuery whereKey:@"merchantId" equalTo:@"thisIsNothing"];
+    }
+    
     //also check if device is banned to prevent creating new accounts
     PFInstallation *installation = [PFInstallation currentInstallation];
     PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
@@ -1385,7 +1394,7 @@
         [bannedInstallsQuery whereKey:@"deviceToken" equalTo:@"thisISNothing"];
     }
     
-    PFQuery *megaBanQuery = [PFQuery orQueryWithSubqueries:@[bannedQuery]];
+    PFQuery *megaBanQuery = [PFQuery orQueryWithSubqueries:@[bannedQuery,merchantIdQuery,bannedInstallsQuery]];
     [megaBanQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //user is banned - log them out

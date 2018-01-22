@@ -1120,8 +1120,39 @@ typedef void(^myCompletion)(BOOL);
         }
         
         NSDictionary *params = @{@"userId": self.user.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod, @"modName":[PFUser currentUser].username};
-        [PFCloud callFunctionInBackground:@"reportUserFunction" withParameters: params block:nil];
+        [PFCloud callFunctionInBackground:@"reportUserFunction" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+            if (error) {
+                NSLog(@"error reporting user: %@", error);
+                
+                [Answers logCustomEventWithName:@"Error Reporting User"
+                               customAttributes:@{
+                                                  @"error":error.description
+                                                  }];
+            }
+        }];
     }
+    else if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
+        
+        [Answers logCustomEventWithName:[NSString stringWithFormat:@"Mod Reported Profile %@ %@", [PFUser currentUser].objectId,[PFUser currentUser].username]
+                       customAttributes:@{
+                                          @"reason":reason,
+                                          @"reporter":[PFUser currentUser].objectId,
+                                          @"user":self.user.objectId
+                                          }];
+        
+        NSDictionary *params = @{@"userId": self.user.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":@"YES", @"modName":[PFUser currentUser].username};
+        [PFCloud callFunctionInBackground:@"reportUserFunction" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+            if (error) {
+                NSLog(@"error reporting user 1: %@", error);
+
+                [Answers logCustomEventWithName:@"Error Reporting User"
+                               customAttributes:@{
+                                                  @"error":error.description
+                                                  }];
+            }
+        }];
+    }
+
 }
 
 -(void)sendReportMessageWithReason:(NSString *)reason{
@@ -1569,6 +1600,9 @@ typedef void(^myCompletion)(BOOL);
                                    
                                    if (acceptableString == YES && reasonField.text.length > 5) {
                                        [self selectedReportReason:reasonField.text];
+                                   }
+                                   else{
+                                       [self showAlertWithTitle:@"Enter Longer Reason" andMsg:nil];
                                    }
                                }];
     
