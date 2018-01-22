@@ -132,26 +132,56 @@
                 //national pricing
                 self.isNational = YES;
                 shipping = [[self.listingObject objectForKey:@"nationalShippingPrice"]floatValue];
+                
+                if (shipping == 0.00) {
+                    self.shippingPriceLabel.text = @"Free";
+                }
+                else{
+                    self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+                }
+                
+                self.totalPrice = shipping + self.salePrice;
+                self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
+                
+                //enable pay button
+                [self.payButton setEnabled:YES];
+                self.payButton.alpha = 1;
             }
             else{
-                //int. pricing
-                self.isNational = NO;
-                shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
+                
+                //now check if international shipping is even allowed
+                if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]) {
+                    
+                    //if so, use int. pricing
+                    self.isNational = NO;
+                    shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
+                    
+                    if (shipping == 0.00) {
+                        self.shippingPriceLabel.text = @"Free";
+                    }
+                    else{
+                        self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+                    }
+                    
+                    self.totalPrice = shipping + self.salePrice;
+                    self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
+                    
+                    //enable pay button
+                    [self.payButton setEnabled:YES];
+                    self.payButton.alpha = 1;
+                }
+                else{
+                    //int shipping is not enabled
+                    self.addAddress = YES;
+                    self.shippingPriceLabel.text = @"-";
+                    self.totalPriceLabel.text = @"-";
+                    
+                    [self.payButton setEnabled:NO];
+                    self.payButton.alpha = 0.5;
+                    
+                    [self showAlertWithTitle:@"National Shipping Only" andMsg:[NSString stringWithFormat:@"The seller is only willing to ship their item within %@. If you have a shipping address within this country, please enter it now", [self.listingObject objectForKey:@"country"]]];
+                }
             }
-            
-            if (shipping == 0.00) {
-                self.shippingPriceLabel.text = @"Free";
-            }
-            else{
-                self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
-            }
-            
-            self.totalPrice = shipping + self.salePrice;
-            self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
-            
-            //enable pay button
-            [self.payButton setEnabled:YES];
-            self.payButton.alpha = 1;
         }
         else{
             self.addAddress = YES;
@@ -187,6 +217,15 @@
     self.paypalLabel.titleLabel.textAlignment = NSTextAlignmentCenter;
 }
 
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+    
+    if (self.showNationalShippingOnly) {
+        [self showAlertWithTitle:@"National Shipping Only" andMsg:[NSString stringWithFormat:@"The seller is only willing to ship their item within %@. If you have a shipping address within this country, please enter it now", [self.listingObject objectForKey:@"country"]]];
+        self.showNationalShippingOnly = NO;
+    }
+    
+}
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
@@ -545,7 +584,6 @@
     NSString *postCode = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"postcode"]];;
     NSLog(@"%@", postCode);
 
-
     //potentially use params here to pass this user's ID for tracking
     [self showHUD];
     NSLog(@"adding in params");
@@ -817,42 +855,84 @@
     if (complete) {
         NSLog(@"done with address %@", address);
         float shipping;
+        
         //recalc shipping price & total price based on country
         if ([self.listingCountryCode.lowercaseString isEqualToString:country.lowercaseString]) {
+            
             //national pricing
             self.isNational = YES;
             shipping = [[self.listingObject objectForKey:@"nationalShippingPrice"]floatValue];
+            
+            if (shipping == 0.00) {
+                self.shippingPriceLabel.text = @"Free";
+            }
+            else{
+                self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+            }
+            
+            self.totalPrice = shipping + self.salePrice;
+            self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f",self.currency,self.currencySymbol,self.totalPrice];
+            
+            //enable pay button
+            [self.payButton setEnabled:YES];
+            self.payButton.alpha = 1.0;
+            
+            //refresh table view to address cell is shown
+            self.addAddress = NO;
+            
+            //update address label (bold the name)
+            NSMutableAttributedString *addressText = [[NSMutableAttributedString alloc] initWithString:address];
+            [self modifyString:addressText setFontForText:name];
+            self.addressLabel.attributedText = addressText;
+            
+            [self.tableView reloadData];
         }
         else{
-            //int. pricing
-            self.isNational = NO;
-            shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
+            //now check if international shipping is even allowed
+            if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]) {
+                
+                //if so, use int. pricing
+                self.isNational = NO;
+                shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
+                
+                if (shipping == 0.00) {
+                    self.shippingPriceLabel.text = @"Free";
+                }
+                else{
+                    self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+                }
+                
+                self.totalPrice = shipping + self.salePrice;
+                self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f",self.currency,self.currencySymbol,self.totalPrice];
+                
+                //enable pay button
+                [self.payButton setEnabled:YES];
+                self.payButton.alpha = 1.0;
+                
+                //refresh table view to address cell is shown
+                self.addAddress = NO;
+                
+                //update address label (bold the name)
+                NSMutableAttributedString *addressText = [[NSMutableAttributedString alloc] initWithString:address];
+                [self modifyString:addressText setFontForText:name];
+                self.addressLabel.attributedText = addressText;
+                
+                [self.tableView reloadData];
+            }
+            else{
+                //int shipping is not enabled
+                self.addAddress = YES;
+                self.shippingPriceLabel.text = @"-";
+                self.totalPriceLabel.text = @"-";
+                
+                [self.payButton setEnabled:NO];
+                self.payButton.alpha = 0.5;
+                
+                [self.tableView reloadData];
+                
+                self.showNationalShippingOnly = YES;
+            }
         }
-        
-        if (shipping == 0.00) {
-            self.shippingPriceLabel.text = @"Free";
-        }
-        else{
-            self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
-        }
-        
-        self.totalPrice = shipping + self.salePrice;
-        self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f",self.currency,self.currencySymbol,self.totalPrice];
-        
-        //enable pay button
-        [self.payButton setEnabled:YES];
-        self.payButton.alpha = 1.0;
-
-        
-        //refresh table view to address cell is shown
-        self.addAddress = NO;
-        
-        //update address label (bold the name)
-        NSMutableAttributedString *addressText = [[NSMutableAttributedString alloc] initWithString:address];
-        [self modifyString:addressText setFontForText:name];
-        self.addressLabel.attributedText = addressText;
-        
-        [self.tableView reloadData];
     }
     else{
         NSLog(@"address unfinished");

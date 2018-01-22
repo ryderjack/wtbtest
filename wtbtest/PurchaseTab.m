@@ -3548,15 +3548,16 @@
     [self.postingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
             
-            NSDictionary *params = @{@"listingId":self.postingItem.objectId};
-            [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                if (error) {
-                    [Answers logCustomEventWithName:@"Error updating lastUpdated"
-                                   customAttributes:@{
-                                                      @"where":@"PurchaseTab"
-                                                      }];
-                }
-            }];
+            //CHANGE
+//            NSDictionary *params = @{@"listingId":self.postingItem.objectId};
+//            [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//                if (error) {
+//                    [Answers logCustomEventWithName:@"Error updating lastUpdated"
+//                                   customAttributes:@{
+//                                                      @"where":@"PurchaseTab"
+//                                                      }];
+//                }
+//            }];
             
             Mixpanel *mixpanel = [Mixpanel sharedInstance];
 

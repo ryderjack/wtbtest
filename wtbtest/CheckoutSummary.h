@@ -65,6 +65,8 @@
 @property (nonatomic) NSString *itemPriceText;
 @property (nonatomic) NSString *totalPriceText;
 
+@property (nonatomic) BOOL showNationalShippingOnly;
+
 //listing
 @property (nonatomic, strong) PFObject *listingObject;
 @property (nonatomic) NSString *listingCountryCode;

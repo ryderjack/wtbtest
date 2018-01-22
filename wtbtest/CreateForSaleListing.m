@@ -3092,7 +3092,8 @@
         }
         else{
             
-            [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];
+            //CHANGE
+//            [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];
             
             if (self.boostModeEnabled) {
                 //set the date when the listing can be boosted

@@ -309,31 +309,6 @@
 //            NSLog(@"Listing %@", self.listingObject);
             self.seller = [self.listingObject objectForKey:@"sellerUser"];
             
-            if ([[self.listingObject objectForKey:@"boostReminderSet"]isEqualToString:@"YES"]) {
-                
-                //check if this listing has a reminder setup and cancel if set
-                NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
-                for(UILocalNotification *notification in notificationArray){
-                    if ([[notification userInfo]valueForKey:@"listingId"]) {
-                        NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
-                        if ([listingId isEqualToString:self.listingObject.objectId]) {
-                            // we deffs have a notification
-                            self.reminderSet = YES;
-                        }
-                        else{
-                            self.reminderSet = NO;
-                        }
-                    }
-                    else{
-                        self.reminderSet = NO;
-                    }
-                }
-                
-            }
-            else{
-                self.reminderSet = NO;
-            }
-            
             [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
                     self.fetchedUser = YES; //to help stop messages infinite spinner
@@ -375,6 +350,30 @@
                     }
                 }                
                 [self showBarButton];
+            }
+            
+            if ([[self.listingObject objectForKey:@"boostReminderSet"]isEqualToString:@"YES"]) {
+                
+                //check if this listing has a reminder setup and cancel if set
+                NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+                for(UILocalNotification *notification in notificationArray){
+                    if ([[notification userInfo]valueForKey:@"listingId"]) {
+                        NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                        if ([listingId isEqualToString:self.listingObject.objectId]) {
+                            // we deffs have a notification
+                            self.reminderSet = YES;
+                        }
+                        else{
+                            self.reminderSet = NO;
+                        }
+                    }
+                    else{
+                        self.reminderSet = NO;
+                    }
+                }
+            }
+            else{
+                self.reminderSet = NO;
             }
             
             self.fetchedListing = YES;
@@ -499,7 +498,6 @@
                 price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
 
             }
-
             
             if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
                 priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
@@ -594,6 +592,8 @@
                 NSDate *safeDate = [self.listingObject objectForKey:@"nextBoostDate"];
                 
                 if (self.fromBoostPush) {
+                    [self removeSendBoxKeyboardObservers];
+                    
                     self.boostModeEnabled = YES;
 
                     if(![[PFUser currentUser]objectForKey:@"seenBoostIntro"] ){
@@ -614,6 +614,8 @@
                     }
                 }
                 else if([[[PFUser currentUser]objectForKey:@"boostMode"]isEqualToString:@"YES"]){
+                    [self removeSendBoxKeyboardObservers];
+                    
                     self.boostModeEnabled = YES;
                     
                     //seen boost intro?
@@ -649,7 +651,8 @@
                             if ([[object objectForKey:@"boostEnabled"]isEqualToString:@"YES"]) {
                                 //we've enabled boost globally
                                 self.boostModeEnabled = YES;
-                                
+                                [self removeSendBoxKeyboardObservers];
+
                                 //seen boost intro?
                                 //check if current time is after the next boost date first
                                 if (([[NSDate date] compare:safeDate]==NSOrderedDescending) || self.fromBoostPush) {
@@ -890,8 +893,11 @@
     [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center removeObserver:self name:@"showSendBox" object:nil]; /////adding observers to for sale now for screenshots
     
-    [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
-    [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+    if(!self.boostModeEnabled){
+        [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
+        [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+    }
+    
     [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center addObserver:self selector:@selector(sendFBPressed) name:@"showSendBox" object:nil];
     
@@ -1733,10 +1739,13 @@
                 
                 //we compare country codes to decide on whether purchase is possible
                 NSString *listingCountry = [self.listingObject objectForKey:@"countryCode"];
+                
+                //check the listing's country code against a user's country code (from their profile) and their shipping country code (if they have entered it before)
                 NSString *userCountry = [[PFUser currentUser]objectForKey:@"countryCode"];
+                NSString *userShippingCountry = [[PFUser currentUser]objectForKey:@"shippingCountryCode"];
                 
                 //check if countries are the same
-                if ([listingCountry isEqualToString:userCountry]) {
+                if ([listingCountry isEqualToString:userCountry] || [listingCountry isEqualToString:userShippingCountry]) {
                     //same so show both
                     [self setupTwoBarButtons];
                 }
@@ -1756,8 +1765,6 @@
                                                   @"listingId":self.listingObject.objectId
                                                   }];
                 
-                NSLog(@"setting up msg button 2");
-
                 [self setupMessageBarButton];
             }
             else{
@@ -1768,8 +1775,6 @@
             }
         }
         else{
-            NSLog(@"setting up msg button 3");
-
             [self setupMessageBarButton];
         }
     }
@@ -3042,8 +3047,11 @@
     [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center removeObserver:self name:@"showSendBox" object:nil];
     
-    [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
-    [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+    if (!self.boostModeEnabled) {
+        [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
+        [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+    }
+    
     [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center addObserver:self selector:@selector(sendFBPressed) name:@"showSendBox" object:nil];
 }
@@ -4619,5 +4627,11 @@
         self.timerDelegateCalled = NO;
     }
 
+}
+
+-(void)removeSendBoxKeyboardObservers{
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+    [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
 }
 @end
