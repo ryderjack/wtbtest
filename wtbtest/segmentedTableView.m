@@ -8,7 +8,7 @@
 //
 
 #import "segmentedTableView.h"
-#import <SVPullToRefresh/SVPullToRefresh.h>
+//#import <SVPullToRefresh/SVPullToRefresh.h>
 #import <Crashlytics/Crashlytics.h>
 #import <DGActivityIndicatorView.h>
 #import "splitTableViewCell.h"
@@ -29,6 +29,20 @@
     [self.tableView registerNib:[UINib nibWithNibName:@"splitTableViewCell" bundle:nil] forCellReuseIdentifier:@"Cell"];
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+    
+    //setup refresh control with custom view
+    self.refreshControl = [[UIRefreshControl alloc]init];
+    self.refreshControl.backgroundColor = [UIColor clearColor];
+    self.refreshControl.tintColor = [UIColor lightGrayColor];
+    [self.refreshControl addTarget:self action:@selector(pullTarget) forControlEvents:UIControlEventAllEvents];
+    
+    //implement pull to refresh
+    if (@available(iOS 10.0, *)) {
+        self.tableView.refreshControl = self.refreshControl;
+    }
+    else{
+        [self.tableView addSubview:self.refreshControl];
+    }
 
     if (!self.supportMode) {
         UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
@@ -54,32 +68,63 @@
     }
 }
 
--(void)didMoveToParentViewController:(UIViewController *)parent {
-    [super didMoveToParentViewController:parent];
+//-(void)didMoveToParentViewController:(UIViewController *)parent {
+//    [super didMoveToParentViewController:parent];
+//    
+//    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
+//    __weak typeof(self) weakSelf = self;
+//    [self.tableView addPullToRefreshWithActionHandler:^{
+//        if (weakSelf.supportMode) {
+//            [weakSelf loadTickets];
+//        }
+//        else{
+//            [weakSelf loadOrders];
+//        }
+//    }];
+//    
+//    DGActivityIndicatorView *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+//    [self.tableView.pullToRefreshView setCustomView:spinner forState:SVPullToRefreshStateAll];
+//    [spinner startAnimating];
+//    
+//    [self.tableView addInfiniteScrollingWithActionHandler:^{
+//        if (weakSelf.supportMode) {
+//            [weakSelf loadMoreTickets];
+//        }
+//        else{
+//            [weakSelf loadMoreOrders];
+//        }
+//    }];
+//}
+
+-(void)pullTarget{
+    if (self.supportMode) {
+        [self loadTickets];
+    }
+    else{
+        [self loadOrders];
+    }
+}
+
+#pragma mark - infinite scrolling
+
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
     
-    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-    __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefreshWithActionHandler:^{
-        if (weakSelf.supportMode) {
-            [weakSelf loadTickets];
+    float bottom = scrollView.contentSize.height - scrollView.frame.size.height;
+    float buffer = 84 * 4;
+    float scrollPosition = scrollView.contentOffset.y;
+    
+    // Reached the bottom of the list
+    if (scrollPosition > (bottom - buffer)) {
+        // Add more dates to the bottom
+        
+        //infinity query
+        if (self.supportMode) {
+            [self loadMoreTickets];
         }
         else{
-            [weakSelf loadOrders];
+            [self loadMoreOrders];
         }
-    }];
-    
-    DGActivityIndicatorView *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-    [self.tableView.pullToRefreshView setCustomView:spinner forState:SVPullToRefreshStateAll];
-    [spinner startAnimating];
-    
-    [self.tableView addInfiniteScrollingWithActionHandler:^{
-        if (weakSelf.supportMode) {
-            [weakSelf loadMoreTickets];
-        }
-        else{
-            [weakSelf loadMoreOrders];
-        }
-    }];
+    }
 }
 
 -(void)loadTickets{
@@ -105,7 +150,8 @@
     self.firstPullFinished = NO;
     
     //make sure infin is cancelled before loading pull
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
+    
     [self.firstInfin cancel];
     
     if (!self.firstPull) {
@@ -153,8 +199,10 @@
             if (self.segmentedControl.selectedSegmentIndex == 0) {
                 [self.tableView reloadData];
             }
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstPullFinished = YES;
             
@@ -162,8 +210,11 @@
         else{
             NSLog(@"error finding purchased orders %@", error);
             
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstPullFinished = YES;
         }
@@ -174,7 +225,7 @@
     if(self.firstPullFinished != YES || ![PFUser currentUser] || self.firstInfinFinished != YES || self.purchased.count == 0){
         
         if (self.firstPullFinished == YES) {
-            [self.tableView.infiniteScrollingView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
         }
         return;
     }
@@ -182,7 +233,7 @@
     self.firstInfinFinished = NO;
     
     //make sure infin is cancelled before loading pull
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.firstInfin cancel];
     
     if (!self.firstInfin) {
@@ -211,17 +262,20 @@
             self.firstSkipped += count;
             
             [self.tableView reloadData];
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstInfinFinished = YES;
             
         }
         else{
             NSLog(@"error finding more purchased orders %@", error);
-            
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstInfinFinished = YES;
         }
@@ -236,7 +290,7 @@
     self.secondPullFinished = NO;
     
     //make sure infin is cancelled before loading pull
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.secondInfin cancel];
     
     if (!self.secondPull) {
@@ -285,17 +339,20 @@
                 [self.tableView reloadData];
             }
             
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondPullFinished = YES;
             
         }
         else{
             NSLog(@"error finding closed tickets %@", error);
-            
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondPullFinished = YES;
         }
@@ -304,14 +361,14 @@
 
 -(void)loadMoreClosed{
     if(self.secondPullFinished != YES || ![PFUser currentUser] || self.secondInfinFinished != YES || self.sold.count == 0){
-        [self.tableView.infiniteScrollingView stopAnimating];
+//        [self.tableView.infiniteScrollingView stopAnimating];
         return;
     }
     
     self.secondInfinFinished = NO;
     
     //make sure infin is cancelled before loading pull
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.secondInfin cancel];
     
     if (!self.secondInfin) {
@@ -340,17 +397,20 @@
             self.secondSkipped += count;
             
             [self.tableView reloadData];
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondInfinFinished = YES;
             
         }
         else{
             NSLog(@"error finding more closed tickets %@", error);
-            
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondInfinFinished = YES;
         }
@@ -371,7 +431,7 @@
     self.firstPullFinished = NO;
     
     //make sure infin is cancelled before loading pull
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.firstInfin cancel];
     
     if (!self.firstPull) {
@@ -419,17 +479,20 @@
             if (self.segmentedControl.selectedSegmentIndex == 0) {
                 [self.tableView reloadData];
             }
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstPullFinished = YES;
             
         }
         else{
             NSLog(@"error finding purchased orders %@", error);
-            
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstPullFinished = YES;
         }
@@ -438,14 +501,14 @@
 
 -(void)loadMorePurchased{
     if(self.firstPullFinished != YES || ![PFUser currentUser] || self.firstInfinFinished != YES || self.purchased.count < 20){
-        [self.tableView.infiniteScrollingView stopAnimating];
+//        [self.tableView.infiniteScrollingView stopAnimating];
         return;
     }
     
     self.firstInfinFinished = NO;
     
     //make sure infin is cancelled before loading pull
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.firstInfin cancel];
     
     if (!self.firstInfin) {
@@ -473,17 +536,20 @@
             self.firstSkipped += count;
             
             [self.tableView reloadData];
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstInfinFinished = YES;
             
         }
         else{
             NSLog(@"error finding more purchased orders %@", error);
-            
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstInfinFinished = YES;
         }
@@ -508,7 +574,7 @@
     self.secondPullFinished = NO;
     
     //make sure infin is cancelled before loading pull
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.secondInfin cancel];
     
     if (!self.secondPull) {
@@ -557,19 +623,21 @@
             if (self.segmentedControl.selectedSegmentIndex == 1) {
                 [self.tableView reloadData];
             }
-            
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondPullFinished = YES;
             
         }
         else{
             NSLog(@"error finding sold orders %@", error);
+            [self.refreshControl endRefreshing];
+
             
-            
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondPullFinished = YES;
         }
@@ -578,14 +646,14 @@
 
 -(void)loadMoreSold{
     if(self.secondPullFinished != YES || ![PFUser currentUser] || self.secondInfinFinished != YES || self.sold.count < 20){
-        [self.tableView.infiniteScrollingView stopAnimating];
+//        [self.tableView.infiniteScrollingView stopAnimating];
         return;
     }
     
     self.secondInfinFinished = NO;
     
     //make sure infin is cancelled before loading pull
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.secondInfin cancel];
     
     if (!self.secondInfin) {
@@ -613,17 +681,20 @@
             self.secondSkipped += count;
             
             [self.tableView reloadData];
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondInfinFinished = YES;
             
         }
         else{
             NSLog(@"error finding more sold orders %@", error);
-            
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.pullToRefreshView stopAnimating];
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondInfinFinished = YES;
         }

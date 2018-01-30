@@ -92,5 +92,6 @@
 
 //header
 @property (nonatomic, strong) simpleBannerHeader *bannerHeaderView;
+@property (nonatomic) int cellHeight;
 
 @end

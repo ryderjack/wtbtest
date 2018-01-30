@@ -7,7 +7,6 @@
 //
 
 #import "ExploreVC.h"
-#import <SVPullToRefresh/SVPullToRefresh.h>
 #import "NavigationController.h"
 #import <Crashlytics/Crashlytics.h>
 #import <ParseFacebookUtilsV4/PFFacebookUtils.h>
@@ -533,25 +532,25 @@
     [super didReceiveMemoryWarning];
 }
 
--(void)didMoveToParentViewController:(UIViewController *)parent {
-    [super didMoveToParentViewController:parent];
-    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-    [self.tableView addPullToRefreshWithActionHandler:^{
-        if (self.pullFinished == YES) {
-//            [self queryParsePullWithRecall:NO];
-        }
-    }];
-    
-     self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-    [self.tableView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
-    [self.spinner startAnimating];
-//    
-//    [self.tableView addInfiniteScrollingWithActionHandler:^{
-//        if (self.infinFinished == YES) {
-////            [self queryParseInfinite];
+//-(void)didMoveToParentViewController:(UIViewController *)parent {
+//    [super didMoveToParentViewController:parent];
+//    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
+//    [self.tableView addPullToRefreshWithActionHandler:^{
+//        if (self.pullFinished == YES) {
+////            [self queryParsePullWithRecall:NO];
 //        }
 //    }];
-}
+//
+//     self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+//    [self.tableView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
+//    [self.spinner startAnimating];
+////
+////    [self.tableView addInfiniteScrollingWithActionHandler:^{
+////        if (self.infinFinished == YES) {
+//////            [self queryParseInfinite];
+////        }
+////    }];
+//}
 
 //- (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
 //    return UIEdgeInsetsMake(8, 8, 8, 8); // top, left, bottom, right
@@ -602,7 +601,7 @@ referenceSizeForHeaderInSection:(NSInteger)section {
     }
     
     [self.infiniteQuery cancel];
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
     self.infinFinished = YES;
     
     if (self.listingTapped == YES) {

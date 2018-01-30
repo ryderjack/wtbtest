@@ -10,7 +10,6 @@
 #import <Crashlytics/Crashlytics.h>
 #import "UIImage+Resize.h"
 #import "DetailImageController.h"
-#import <SVPullToRefresh/SVPullToRefresh.h>
 #import "NavigationController.h"
 #import "JRMessage.h"
 #import "ForSaleListing.h"
@@ -155,37 +154,37 @@
 
 }
 
--(void)didMoveToParentViewController:(UIViewController *)parent {
-    [super didMoveToParentViewController:parent];
-    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-    
-    if (self.showPull) {
-        [self.collectionView addPullToRefreshWithActionHandler:^{
-            if (self.infiniteLoading != YES && self.moreToLoad == YES) {
-                
-                self.infiniteLoading = YES;
-                self.earlierPressed = YES;
-                
-                if (self.supportMode) {
-                    [self loadSupportMessages];
-                }
-                else{
-                    [self loadMessages];
-                }
-            }
-            else{
-                [self.collectionView.pullToRefreshView stopAnimating];
-            }
-        }];
-        
-        //we need the spinner so init
-        if (!self.spinner) {
-            self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-            [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
-            [self.spinner startAnimating];
-        }
-    }
-}
+//-(void)didMoveToParentViewController:(UIViewController *)parent {
+//    [super didMoveToParentViewController:parent];
+//    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
+//    
+//    if (self.showPull) {
+//        [self.collectionView addPullToRefreshWithActionHandler:^{
+//            if (self.infiniteLoading != YES && self.moreToLoad == YES) {
+//                
+//                self.infiniteLoading = YES;
+//                self.earlierPressed = YES;
+//                
+//                if (self.supportMode) {
+//                    [self loadSupportMessages];
+//                }
+//                else{
+//                    [self loadMessages];
+//                }
+//            }
+//            else{
+//                [self.collectionView.pullToRefreshView stopAnimating];
+//            }
+//        }];
+//        
+//        //we need the spinner so init
+//        if (!self.spinner) {
+//            self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+//            [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
+//            [self.spinner startAnimating];
+//        }
+//    }
+//}
 
 - (void)viewDidLayoutSubviews
 {
@@ -218,7 +217,7 @@
                     NSLog(@"HIDE IT");
 
                     self.moreToLoad = NO;
-                    self.collectionView.showsPullToRefresh = NO;
+//                    self.collectionView.showsPullToRefresh = NO;
                     
                     //save memory
                     [self.spinner stopAnimating];
@@ -227,7 +226,7 @@
                 else{
                     NSLog(@"SHOW IT");
                     self.moreToLoad = YES;
-                    self.collectionView.showsPullToRefresh = YES;
+//                    self.collectionView.showsPullToRefresh = YES;
                 }
                 
                 int count = (int)[objects count];
@@ -346,7 +345,7 @@
                     }
                 }
                 else{
-                    [self.collectionView.pullToRefreshView stopAnimating];
+//                    [self.collectionView.pullToRefreshView stopAnimating];
 
                     self.earlierPressed = NO;
                     //NB: the last object in the messages array is the msg at the top of the CV
@@ -1487,7 +1486,7 @@
                     NSLog(@"HIDE IT");
                     
                     self.moreToLoad = NO;
-                    self.collectionView.showsPullToRefresh = NO;
+//                    self.collectionView.showsPullToRefresh = NO;
                     
                     //save memory
                     [self.spinner stopAnimating];
@@ -1496,7 +1495,7 @@
                 else{
                     NSLog(@"SHOW IT");
                     self.moreToLoad = YES;
-                    self.collectionView.showsPullToRefresh = YES;
+//                    self.collectionView.showsPullToRefresh = YES;
                 }
                 
                 int count = (int)[objects count];
@@ -1615,7 +1614,7 @@
                     }
                 }
                 else{
-                    [self.collectionView.pullToRefreshView stopAnimating];
+//                    [self.collectionView.pullToRefreshView stopAnimating];
                     
                     self.earlierPressed = NO;
                     //NB: the last object in the messages array is the msg at the top of the CV

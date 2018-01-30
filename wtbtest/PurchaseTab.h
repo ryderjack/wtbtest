@@ -187,4 +187,7 @@
 @property (nonatomic) BOOL onboardingError;
 @property (nonatomic) BOOL emailMode;
 
+//refresh control
+@property (nonatomic, strong) UIRefreshControl *refreshControl;
+@property (nonatomic) int cellHeight;
 @end

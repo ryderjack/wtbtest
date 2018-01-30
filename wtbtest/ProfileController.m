@@ -42,6 +42,153 @@
         self.showOrderStuff = YES;
     }
     
+    self.modPerformanceCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    if ([[[PFUser currentUser]objectForKey:@"paidMod"]isEqualToString:@"YES"]) {
+        self.paidMod = YES;
+        [self.tableView reloadData];
+        
+        [Answers logCustomEventWithName:@"Mod Checking Performance"
+                       customAttributes:@{
+                                          @"modName":[PFUser currentUser].username,
+                                          @"modId":[PFUser currentUser].objectId
+                                          }];
+    
+        //find out their performance this month
+        
+        //get difference between start date and now
+        PFQuery *modQuery = [PFQuery queryWithClassName:@"modUsers"];
+        [modQuery whereKey:@"status" equalTo:@"live"];
+        [modQuery whereKey:@"user" equalTo:[PFUser currentUser]];
+        [modQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+            if (object) {
+                
+                //setup progress bar
+                self.progressBarNew.type               = YLProgressBarTypeFlat;
+                self.progressBarNew.progressTintColor  = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+                self.progressBarNew.hideStripes        = YES;
+                self.progressBarNew.uniformTintColor = YES;
+                self.progressBarNew.trackTintColor = [UIColor colorWithRed:0.86 green:0.93 blue:1.00 alpha:1.0];
+                [self.progressBarNew setProgress:0.00];
+                
+                NSDate *startDate = [object objectForKey:@"startDate"];
+                
+                NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:startDate];
+                double secondsInAMonth = 2620800;
+
+                //months are calculated by 7 x 52 weeks then / 12 for an average
+                float monthsSinceSigningUp = distanceBetweenDates / secondsInAMonth;
+                
+                //round the float down to nearest int to get the start of the month we need
+                int startMonth = floor(monthsSinceSigningUp);
+                
+                //now use this number to calc the start date (by incrementing when they started by the startMonth var) & end dates to query performance from
+                NSDateComponents *component = [[NSDateComponents alloc] init];
+                component.month = startMonth;
+                NSCalendar *theCalendar = [NSCalendar currentCalendar];
+                NSDate *newStartDate = [theCalendar dateByAddingComponents:component toDate:startDate options:0];
+                
+                NSDateComponents *endComponent = [[NSDateComponents alloc] init];
+                endComponent.month = 1;
+                NSDate *endDate = [theCalendar dateByAddingComponents:endComponent toDate:newStartDate options:0];
+
+                PFQuery *modPerformance = [PFQuery queryWithClassName:@"ModPerformance"];
+                [modPerformance whereKey:@"status" equalTo:@"live"];
+                modPerformance.limit = 2000;
+                [modPerformance whereKey:@"createdAt" greaterThanOrEqualTo:newStartDate];
+                [modPerformance whereKey:@"createdAt" lessThan:endDate];
+                [modPerformance whereKey:@"unbanned" equalTo:@"NO"];
+                [modPerformance whereKey:@"modId" equalTo:[PFUser currentUser].objectId];
+                [modPerformance findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+                    if (objects) {
+                        int currentScore = (int)objects.count;
+                        int earnings = 0;
+                        
+                        //goals
+                        int nextGoal = 100;
+                        int goalEarnings = 50;
+
+                        
+                        //now calc what pay bracket that's in
+                        if (currentScore >= 100 && currentScore <= 200) {
+                            earnings = 50;
+                            nextGoal = 200;
+                            goalEarnings = 75;
+                        }
+                        else if(currentScore >= 201 && currentScore <= 450) {
+                            earnings = 75;
+                            nextGoal = 450;
+                            goalEarnings = 125;
+                        }
+                        else if(currentScore >= 451 && currentScore <= 650) {
+                            earnings = 125;
+                            nextGoal = 650;
+                            goalEarnings = 200;
+                        }
+                        else if(currentScore >= 651 && currentScore <= 1500) {
+                            earnings = 200;
+                            nextGoal = 1500;
+                            goalEarnings = 350;
+                        }
+                        else if(currentScore >= 1500) {
+                            earnings = 350;
+                            nextGoal = 1500;
+                        }
+                        else{
+                            //below 100
+                        }
+                        
+                        //setup current progress
+                        if (currentScore < 100) {
+                            self.currentProgressLabel.text = [NSString stringWithFormat:@"%d\nPoints\n⚡️", currentScore];
+                        }
+                        else{
+                            self.currentProgressLabel.text = [NSString stringWithFormat:@"%d\nPoints\nEarnings £%d", currentScore, earnings];
+                        }
+                        
+                        //setup goal side of things
+                        if (currentScore >= 1500) {
+                            self.goalLabel.text = @"🤑";
+                            
+                            //give slight delay
+                            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                [self.progressBarNew setProgress:1.0 animated:YES];
+                            });
+                        }
+                        else{
+                            //calc remaining
+                            int remaining = nextGoal - currentScore;
+                            self.remainingLabel.text = [NSString stringWithFormat:@"%d\nRemaining", remaining];
+                            
+                            self.goalLabel.text = [NSString stringWithFormat:@"%d\nNext Goal\n£%d", nextGoal, goalEarnings];
+                            
+                            
+                            //setup progress bar
+                            float scoreFloat = (float)currentScore;
+                            float goalFloat = (float)nextGoal;
+
+                            float progress = (scoreFloat/goalFloat);
+                            
+                            NSLog(@"%.2f progress   %.2f   %.2f", progress, scoreFloat, goalFloat);
+                            
+                            
+                            //give slight delay
+                            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                [self.progressBarNew setProgress:progress animated:YES];
+                            });
+                        }
+                    }
+                    else{
+                        NSLog(@"error grabbing performance data %@", error);
+                    }
+                }];
+            }
+            else{
+                NSLog(@"error finding user's mod profile %@", error);
+            }
+        }];
+    }
+    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(newIntercomMessage) name:@"NewTBMessage" object:nil];
     
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
@@ -131,6 +278,9 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    if (self.paidMod) {
+        return 5;
+    }
     return 4;
 }
 
@@ -146,6 +296,9 @@
         return 5;
     }
     else if (section == 3){
+        return 1;
+    }
+    else if (section == 4){
         return 1;
     }
     else{
@@ -196,11 +349,56 @@
             return self.logOutCell;
         }
     }
+    else if (indexPath.section == 4){
+        if (indexPath.row == 0) {
+            return self.modPerformanceCell;
+        }
+    }
     return nil;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (indexPath.section == 4){
+        return 190;
+    }
     return 44;
+}
+
+-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+    if (section == 4) {
+        UIView *header;
+        
+        if (@available(iOS 11.0, *)) {
+            if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+                //iPhone6/7
+                header = [[UIView alloc]initWithFrame:CGRectMake(16, -5, self.tableView.frame.size.width, 15)];
+            }
+            else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
+                //iPhone 6 plus
+                header = [[UIView alloc]initWithFrame:CGRectMake(20, -5, self.tableView.frame.size.width, 15)];
+            }
+            else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
+                //iPhone 4/5
+                header = [[UIView alloc]initWithFrame:CGRectMake(16, -5, self.tableView.frame.size.width, 15)];
+            }
+            else{
+                //fall back
+                header = [[UIView alloc]initWithFrame:CGRectMake(16, -5, self.tableView.frame.size.width, 15)];
+            }
+        }
+        else{
+            header = [[UIView alloc]initWithFrame:CGRectMake(8, 0, self.tableView.frame.size.width, 32)];
+        }
+        UILabel *textLabel = [[UILabel alloc]initWithFrame:header.frame];
+        textLabel.textColor = [UIColor grayColor];
+        textLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
+        header.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+        
+        [header addSubview:textLabel];
+        textLabel.text = @"Mod Performance";
+        return header;
+    }
+    return nil;
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{

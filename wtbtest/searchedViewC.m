@@ -7,10 +7,11 @@
 //
 
 #import "searchedViewC.h"
-#import <SVPullToRefresh/SVPullToRefresh.h>
 #import "NavigationController.h"
 #import <Crashlytics/Crashlytics.h>
 #import "detailSellingCell.h"
+#import "Mixpanel/Mixpanel.h"
+#import <Intercom/Intercom.h>
 
 @interface searchedViewC ()
 
@@ -22,6 +23,7 @@
     [super viewDidLoad];
 
     [self.noWantedResultsLabel setHidden:YES];
+    
 
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
     self.navigationItem.rightBarButtonItem = cancelButton;
@@ -54,6 +56,8 @@
         self.navigationItem.titleView = self.searchBar;
     }
     
+    //add pull to refresh
+    
 //    //force cancel button to be enabled
 //    UIButton *btnCancel = [self.searchBar valueForKey:@"_cancelButton"];
 //    [btnCancel setEnabled:YES];
@@ -74,18 +78,22 @@
         if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
             //iPhone6/7
             [flowLayout setItemSize:CGSizeMake(175,222)];
+            self.cellHeight = 222;
         }
         else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
             //iPhone 6 plus
             [flowLayout setItemSize:CGSizeMake(195, 247)];
+            self.cellHeight = 247;
         }
         else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
             //iPhone SE
             [flowLayout setItemSize:CGSizeMake(148, 188)];
+            self.cellHeight = 188;
         }
         else{
             //fall back
             [flowLayout setItemSize:CGSizeMake(175,222)];
+            self.cellHeight = 222;
         }
         
         [flowLayout setMinimumInteritemSpacing:8.0];
@@ -247,27 +255,27 @@
     }
 }
 
--(void)didMoveToParentViewController:(UIViewController *)parent {
-    [super didMoveToParentViewController:parent];
-    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-//    [self.collectionView addPullToRefreshWithActionHandler:^{
-//        if (self.pullFinished == YES) {
-//            [self queryParsePull];
-////            [self getBoostedSearchListings];
+//-(void)didMoveToParentViewController:(UIViewController *)parent {
+//    [super didMoveToParentViewController:parent];
+//    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
+////    [self.collectionView addPullToRefreshWithActionHandler:^{
+////        if (self.pullFinished == YES) {
+////            [self queryParsePull];
+//////            [self getBoostedSearchListings];
+////        }
+////    }];
+//
+//    self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+//    [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
+//    [self.spinner startAnimating];
+//
+//    [self.collectionView addInfiniteScrollingWithActionHandler:^{
+//        self.infiniteQuery.skip = self.lastInfinSkipped;
+//        if (self.infinFinished == YES) {
+//            [self queryParseInfinite];
 //        }
 //    }];
-    
-    self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-    [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
-    [self.spinner startAnimating];
-    
-    [self.collectionView addInfiniteScrollingWithActionHandler:^{
-        self.infiniteQuery.skip = self.lastInfinSkipped;
-        if (self.infinFinished == YES) {
-            [self queryParseInfinite];
-        }
-    }];
-}
+//}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -364,11 +372,11 @@
     
     if (self.results.count < 20) {
         //no point loading
-        [self.collectionView.infiniteScrollingView stopAnimating];
+//        [self.collectionView.infiniteScrollingView stopAnimating];
         return;
     }
     
-    [self hideFilterButton];
+//    [self hideFilterButton];
     
     self.infinFinished = NO;
     self.showFooter = NO;
@@ -427,17 +435,17 @@
             self.lastInfinSkipped = self.lastInfinSkipped + count;
             [self.results addObjectsFromArray:objects];
             [self.collectionView reloadData];
-            [self.collectionView.infiniteScrollingView stopAnimating];
+//            [self.collectionView.infiniteScrollingView stopAnimating];
             self.infinFinished = YES;
             
-            [self showFilterButton];
+//            [self showFilterButton];
         }
         else{
             NSLog(@"error %@", error);
             self.infinFinished = YES;
             [self showError];
             
-            [self showFilterButton];
+//            [self showFilterButton];
         }
     }];
 }
@@ -1114,6 +1122,11 @@
     
     self.filtersArray = filters;
     if (self.filtersArray.count > 0) {
+        
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"filtered_items" properties:@{@"filters": filters}];
+        [Intercom logEventWithName:@"filtered_items" metaData: @{@"filters": filters}];
+
         self.filterSizesArray = sizes;
         self.filterBrandsArray = brands;
         self.filterColoursArray = colours;
@@ -1333,6 +1346,24 @@
 -(void)scrollTop{
     if (self.results.count != 0) {
         [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
+    }
+}
+
+#pragma mark - infinite scrolling
+
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    
+    float bottom = scrollView.contentSize.height - scrollView.frame.size.height;
+    float buffer = self.cellHeight * 3;
+    float scrollPosition = scrollView.contentOffset.y;
+    
+    // Reached the bottom of the list
+    if (scrollPosition > (bottom - buffer)) {
+        // Add more dates to the bottom
+        
+        if (self.infinFinished == YES) {
+            [self queryParseInfinite];
+        }
     }
 }
 @end

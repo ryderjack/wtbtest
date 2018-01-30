@@ -8,7 +8,6 @@ target 'wtbtest' do
     pod 'FBSDKLoginKit', '~> 4.26.0'
     pod 'ParseUI', '1.2.0'
     pod 'ParseFacebookUtilsV4', '1.11.1'
-    pod 'SVPullToRefresh', '0.4.1'
     pod 'FastttCamera', '0.3.4'
     pod 'SpinKit', '~> 1.1'
     pod 'MBProgressHUD', '~> 0.9.1'

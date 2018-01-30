@@ -13,6 +13,7 @@
 #import "SearchCell.h"
 #import "UIImageView+Letters.h"
 #import <Intercom/Intercom.h>
+#import "Mixpanel/Mixpanel.h"
 
 @interface TheMainSearchView ()
 
@@ -236,6 +237,8 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+
     if (self.userSearch == YES) {
         //prevent crashing with empty user array
         if (self.userResults.count >=indexPath.row+1) {
@@ -244,6 +247,8 @@
             if ([user.objectId isEqualToString:[PFUser currentUser].objectId]) {
                 //do something? //CHECK
             }
+            [mixpanel track:@"searched_user" properties:@{}];
+
             UserProfileController *vc = [[UserProfileController alloc]init];
             vc.user = user;
             vc.fromSearch = YES;
@@ -252,33 +257,37 @@
     }
     else if(self.userSearch == NO && self.sellingSearch == NO){
         //wanted selected
-        NSString *searchText = [NSString stringWithFormat:@"%@",[self.wantedSearchResults objectAtIndex:indexPath.row]];
-        self.searchString = searchText;
-        
-        NSMutableArray *placeholder = [NSMutableArray arrayWithArray:self.wantedSearchResults];
-        
-        if (![[placeholder firstObject] isEqualToString:searchText]) {
-            [placeholder removeObject:searchText];
-            [placeholder insertObject:searchText atIndex:0];
+        if (self.wantedSearchResults.count >=indexPath.row+1) {
+            NSString *searchText = [NSString stringWithFormat:@"%@",[self.wantedSearchResults objectAtIndex:indexPath.row]];
+            self.searchString = searchText;
+            
+            NSMutableArray *placeholder = [NSMutableArray arrayWithArray:self.wantedSearchResults];
+            
+            if (![[placeholder firstObject] isEqualToString:searchText]) {
+                [placeholder removeObject:searchText];
+                [placeholder insertObject:searchText atIndex:0];
+            }
+            
+            [mixpanel track:@"searched_wanted_listings" properties:@{}];
+            
+            self.wantedSearchResults = placeholder;
+            
+            NSArray *arrayToSave = [[placeholder reverseObjectEnumerator] allObjects];
+            
+            [[PFUser currentUser] setObject:arrayToSave forKey:@"searches"];
+            [[PFUser currentUser] saveInBackground];
+            
+            [self.searchBar resignFirstResponder];
+            searchedViewC *vc = [[searchedViewC alloc]init];
+            vc.searchString = searchText;
+            vc.currencySymbol = self.currencySymbol;
+            vc.currency = self.currency;
+            vc.delegate = self;
+            vc.currentLocation = self.geoPoint;
+            vc.tabBarHeight = self.tabBarHeight;
+            vc.sellingSearch = self.sellingSearch;
+            [self.navigationController pushViewController:vc animated:YES];
         }
-        
-        self.wantedSearchResults = placeholder;
-        
-        NSArray *arrayToSave = [[placeholder reverseObjectEnumerator] allObjects];
-        
-        [[PFUser currentUser] setObject:arrayToSave forKey:@"searches"];
-        [[PFUser currentUser] saveInBackground];
-        
-        [self.searchBar resignFirstResponder];
-        searchedViewC *vc = [[searchedViewC alloc]init];
-        vc.searchString = searchText;
-        vc.currencySymbol = self.currencySymbol;
-        vc.currency = self.currency;
-        vc.delegate = self;
-        vc.currentLocation = self.geoPoint;
-        vc.tabBarHeight = self.tabBarHeight;
-        vc.sellingSearch = self.sellingSearch;
-        [self.navigationController pushViewController:vc animated:YES];
     }
     else if(self.userSearch == NO && self.sellingSearch == YES){
         //selling selected
@@ -287,8 +296,8 @@
         
         NSMutableArray *placeholder = [NSMutableArray arrayWithArray:self.sellingSearchResults];
         
-        NSLog(@"PLACEHOLDER: %@", placeholder);
-        
+        [mixpanel track:@"searched_sale_listings" properties:@{}];
+
         if (![[placeholder firstObject] isEqualToString:searchText]) {
             [placeholder removeObject:searchText];
             [placeholder insertObject:searchText atIndex:0];
@@ -468,6 +477,9 @@
     else{
         createdToday = NO;
     }
+    
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+
     if (self.userSearch == YES){
         
         [Answers logCustomEventWithName:@"Search"
@@ -529,6 +541,7 @@
                                           }];
         
         [Intercom logEventWithName:@"searched_wanted_listings"];
+        [mixpanel track:@"searched_wanted_listings" properties:@{}];
 
         self.searchString = self.searchBar.text;
         [self gotoListingsInSellingMode:NO];
@@ -536,6 +549,7 @@
     else if(self.userSearch == NO && self.sellingSearch == YES){
         
         [Intercom logEventWithName:@"searched_listings"];
+        [mixpanel track:@"searched_sale_listings" properties:@{}];
         
         [Answers logCustomEventWithName:@"Search"
                        customAttributes:@{

@@ -19,7 +19,7 @@
 #import "CustomMessagesCollectionViewCell.h"
 #import "CustomMessagesCollectionViewCellIncoming.h"
 #import "ForSaleListing.h"
-#import <SVPullToRefresh/SVPullToRefresh.h>
+//#import <SVPullToRefresh/SVPullToRefresh.h>
 #import "ExplainView.h"
 #import "AppDelegate.h"
 #import "JRMessage.h"
@@ -297,32 +297,45 @@
                                       }];
 }
 
--(void)didMoveToParentViewController:(UIViewController *)parent {
-    [super didMoveToParentViewController:parent];
-    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-    
-    if (self.showPull) {
-        //only show pull if there's enough messages otherwise it's a watse of resources
-        [self.collectionView addPullToRefreshWithActionHandler:^{
-            if (self.infiniteLoading != YES && self.finishedFirstScroll == YES && self.moreToLoad == YES) {
-
-                self.infiniteLoading = YES;
-                self.earlierPressed = YES;
-                [self loadMessages];
-            }
-            else{
-                [self.collectionView.pullToRefreshView stopAnimating];
-            }
-        }];
-
-        //we need the spinner so init
-        if (!self.spinner) {
-            self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-            [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
-            [self.spinner startAnimating];
-        }
+-(void)pullTarget{
+    //only show pull if there's enough messages otherwise it's a watse of resources
+    if (self.infiniteLoading != YES && self.finishedFirstScroll == YES && self.moreToLoad == YES) {
+        
+        self.infiniteLoading = YES;
+        self.earlierPressed = YES;
+        [self loadMessages];
+    }
+    else{
+        [self.refreshControl endRefreshing];
     }
 }
+
+//-(void)didMoveToParentViewController:(UIViewController *)parent {
+//    [super didMoveToParentViewController:parent];
+//    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
+//    
+//    if (self.showPull) {
+//        //only show pull if there's enough messages otherwise it's a watse of resources
+//        [self.collectionView addPullToRefreshWithActionHandler:^{
+//            if (self.infiniteLoading != YES && self.finishedFirstScroll == YES && self.moreToLoad == YES) {
+//
+//                self.infiniteLoading = YES;
+//                self.earlierPressed = YES;
+//                [self loadMessages];
+//            }
+//            else{
+//                [self.collectionView.pullToRefreshView stopAnimating];
+//            }
+//        }];
+//
+//        //we need the spinner so init
+//        if (!self.spinner) {
+//            self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+//            [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
+//            [self.spinner startAnimating];
+//        }
+//    }
+//}
 
 - (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
     
@@ -376,7 +389,7 @@
                 
                 if (objects.count < 10) {
                     self.moreToLoad = NO;
-                    self.collectionView.showsPullToRefresh = NO;
+//                    self.collectionView.showsPullToRefresh = NO;
                     
                     //save memory
                     [self.spinner stopAnimating];
@@ -384,7 +397,7 @@
                 }
                 else{
                     self.moreToLoad = YES;
-                    self.collectionView.showsPullToRefresh = YES;
+//                    self.collectionView.showsPullToRefresh = YES;
                 }
                 
                 int count = (int)[objects count];
@@ -586,7 +599,9 @@
                     }
                 }
                 else{
-                    [self.collectionView.pullToRefreshView stopAnimating];
+//                    [self.collectionView.pullToRefreshView stopAnimating];
+                    [self.refreshControl endRefreshing];
+
 
                     self.earlierPressed = NO;
                     //NB: the last object in the messages array is the msg at the top of the CV
@@ -675,6 +690,22 @@
     
     if (messageTotal > 10) {
         self.showPull = YES;
+        
+        if (!self.refreshControl) {
+            //setup refresh control with custom view
+            self.refreshControl = [[UIRefreshControl alloc]init];
+            self.refreshControl.backgroundColor = [UIColor clearColor];
+            self.refreshControl.tintColor = [UIColor lightGrayColor];
+            [self.refreshControl addTarget:self action:@selector(pullTarget) forControlEvents:UIControlEventAllEvents];
+            
+            //implement pull to refresh
+            if (@available(iOS 10.0, *)) {
+                self.collectionView.refreshControl = self.refreshControl;
+            }
+            else{
+                [self.collectionView addSubview:self.refreshControl];
+            }
+        }
     }
     
     if (self.checkPayPalTapped == YES) {
@@ -2080,7 +2111,7 @@
                     NSDictionary *params = @{@"userId": self.otherUser.objectId, @"message": pushString, @"sender": [PFUser currentUser].username};
                     [PFCloud callFunctionInBackground:@"sendPush" withParameters: params block:^(NSDictionary *response, NSError *error) {
                         if (!error) {
-                            NSLog(@"response %@", response);
+//                            NSLog(@"response %@", response);
                             [Answers logCustomEventWithName:@"Push Sent"
                                            customAttributes:@{
                                                               @"Type":@"Image Message"
@@ -3337,23 +3368,35 @@
                     NSLog(@"show buy button");
                     self.buyButtonOn = YES;
                     [self.listingView.buyButton setHidden:NO];
+                    
+                    NSString *listingCurrency = [self.listing objectForKey:@"currency"];
+                    
+                    float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@",listingCurrency]]floatValue];
+                    self.listingView.priceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
                 }
                 else if([[self.listing objectForKey:@"status"]isEqualToString:@"sold"]){
                     NSLog(@"show sold button");
                     [self.listingView.buyButton setHidden:NO];
 
                     //show item as sold
+                    NSString *listingCurrency = [self.listing objectForKey:@"currency"];
+
                     [self.listingView.buyButton setBackgroundImage:[UIImage imageNamed:@"soldChatBg"] forState:UIControlStateNormal];
                     [self.listingView.buyButton setTitle:@"S O L D" forState:UIControlStateNormal];
                     
                     [self.listingView.buyButton setHidden:NO];
+                    
+                    float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", listingCurrency]]floatValue];
+                    self.listingView.priceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
                 }
                 else{
                     [self.listingView.buyButton setHidden:YES];
+                    
+                    float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
+                    self.listingView.priceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
                 }
                 
-                float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
-                self.listingView.priceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
+                
             }
             else{
                 [self showAlertWithTitle:@"Error fetching listing" andMsg:@"Make sure you have a good internet connection!"];

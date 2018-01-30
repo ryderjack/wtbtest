@@ -10,7 +10,6 @@
 #import "ProfileItemCell.h"
 #import "ForSaleListing.h"
 #import "NavigationController.h"
-#import <SVPullToRefresh/SVPullToRefresh.h>
 #import "PurchaseTabHeader.h"
 #import "droppingTodayView.h"
 #import "droppingCell.h"
@@ -46,37 +45,6 @@
     [self.locationBut setHidden:YES];
     [self.noResultsLabel setHidden:YES];
     
-    //setup search bar
-//    self.navSearchbar = [[UISearchBar alloc]init];
-//    self.navSearchbar.placeholder = @"Search";
-//    self.navSearchbar.delegate = self;
-//    UITextField *txfSearchField = [self.navSearchbar valueForKey:@"searchField"];
-////    txfSearchField.backgroundColor =[UIColor colorWithRed:0.18 green:0.17 blue:0.18 alpha:1.0];
-//    txfSearchField.backgroundColor =[UIColor clearColor];
-//
-//    if (@available(iOS 11.0, *)) {
-//        NSMutableParagraphStyle *paragraphStyle = [NSMutableParagraphStyle new];
-//        paragraphStyle.alignment = NSTextAlignmentCenter;
-//
-//        [txfSearchField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:@"Search" attributes:@{NSForegroundColorAttributeName: [UIColor whiteColor],NSFontAttributeName: [UIFont fontWithName:@"PingFangSC-Medium" size:16], NSParagraphStyleAttributeName:paragraphStyle}]];
-//
-//        UIView *container = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 300, 44)];
-//        [self.navSearchbar setFrame:CGRectMake(0, 0, 300, 44)];
-//
-//        [container addSubview:self.navSearchbar];
-//        self.navigationItem.titleView = container;
-//    }
-//    else{
-//        [txfSearchField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:@"Search" attributes:@{NSForegroundColorAttributeName: [UIColor whiteColor]}]];
-//
-//        self.navigationItem.titleView = self.navSearchbar;
-//
-//    }
-//
-//    UIImageView *imgView = (UIImageView*)txfSearchField.leftView;
-//    imgView.image = [imgView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-//    imgView.tintColor = [UIColor whiteColor];
-    
     UIView *container = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 300, 44)];
     UIButton *searchButton = [[UIButton alloc]initWithFrame:container.frame];
     
@@ -92,6 +60,7 @@
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     //collection view setup
+    
     // Register cell classes
     [self.collectionView registerClass:[detailSellingCell class] forCellWithReuseIdentifier:@"Cell"];
     UINib *cellNib = [UINib nibWithNibName:@"detailSellingCell" bundle:nil];
@@ -103,18 +72,22 @@
     if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
         //iPhone6/7
         [flowLayout setItemSize:CGSizeMake(175,222)];
+        self.cellHeight = 222;
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
         //iPhone 6 plus
         [flowLayout setItemSize:CGSizeMake(195, 247)];
+        self.cellHeight = 247;
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
         //iPhone 4/5
         [flowLayout setItemSize:CGSizeMake(148, 188)];
+        self.cellHeight = 188;
     }
     else{
         //fall back
         [flowLayout setItemSize:CGSizeMake(175,222)];
+        self.cellHeight = 222;
     }
     
     [flowLayout setMinimumInteritemSpacing:8.0];
@@ -150,7 +123,20 @@
     
     self.spinnerHUD = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
-//    self.navigationController.hidesBarsOnSwipe = YES;
+    //setup refresh control with custom view
+    self.refreshControl = [[UIRefreshControl alloc]init];
+    self.refreshControl.backgroundColor = [UIColor clearColor];
+    self.refreshControl.tintColor = [UIColor lightGrayColor];
+    [self.refreshControl addTarget:self action:@selector(pullTarget) forControlEvents:UIControlEventAllEvents];
+
+    //implement pull to refresh
+    if (@available(iOS 10.0, *)) {
+        self.collectionView.refreshControl = self.refreshControl;
+        
+    }
+    else{
+        [self.collectionView addSubview:self.refreshControl];
+    }
     
     //OBSERVERS
     //navigation
@@ -268,9 +254,6 @@
             if (![currentUser objectForKey:@"geopoint"]) {
                 [self saveGeoPoint];
             }
-            
-            //decide whether user has been active enough to send a message asking why they like bump
-            [self sendFeedbackMessage];
             
             //convert old style emailVerified key to new one so we can update it on the client
             if ([[currentUser objectForKey:@"emailVerified"]boolValue] == YES && [[currentUser objectForKey:@"emailIsVerified"]boolValue] != YES){
@@ -527,26 +510,35 @@
     // Dispose of any resources that can be recreated.
 }
 
--(void)didMoveToParentViewController:(UIViewController *)parent {
-    [super didMoveToParentViewController:parent];
-    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-    [self.collectionView addPullToRefreshWithActionHandler:^{
-        if (self.pullFinished == YES) {
-            [self getLatestForSale];
-        }
-    }];
-    
-    self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-    [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
-    [self.spinner startAnimating];
-    
-    [self.collectionView addInfiniteScrollingWithActionHandler:^{
-        if (self.infinFinished == YES) {
-            //infinity query
-            [self infinLatestForSale];
-        }
-    }];
+-(void)pullTarget{
+    NSLog(@"pull target");
+    if (self.pullFinished == YES) {
+        NSLog(@"get latest for sale");
+
+        [self getLatestForSale];
+    }
 }
+
+//-(void)didMoveToParentViewController:(UIViewController *)parent {
+//    [super didMoveToParentViewController:parent];
+//    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
+//    [self.collectionView addPullToRefreshWithActionHandler:^{
+//        if (self.pullFinished == YES) {
+//            [self getLatestForSale];
+//        }
+//    }];
+//
+//    self.spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+//    [self.collectionView.pullToRefreshView setCustomView:self.spinner forState:SVPullToRefreshStateAll];
+//    [self.spinner startAnimating];
+//
+//    [self.collectionView addInfiniteScrollingWithActionHandler:^{
+//        if (self.infinFinished == YES) {
+//            //infinity query
+//            [self infinLatestForSale];
+//        }
+//    }];
+//}
 
 - (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
     return UIEdgeInsetsMake(8, 8, 8, 8); // top, left, bottom, right
@@ -601,7 +593,7 @@
     
     //to make sure infin not always spinning
     [self.infiniteQuery cancel];
-    [self.collectionView.infiniteScrollingView stopAnimating];
+//    [self.collectionView.infiniteScrollingView stopAnimating];
     self.infinFinished = YES;
 }
 
@@ -1022,12 +1014,14 @@
         return;
     }
     
+    NSLog(@"getting latest for sale");
+    
     //make sure infin is cancelled before loading pull
-    [self.collectionView.infiniteScrollingView stopAnimating];
+//    [self.collectionView.infiniteScrollingView stopAnimating];
     [self.infiniteQuery cancel];
     
     self.pullFinished = NO;
-    [self showFilter];
+//    [self showFilter];
     
     self.pullQuery = nil;
     self.pullQuery = [PFQuery queryWithClassName:@"forSaleItems"];
@@ -1059,7 +1053,9 @@
                 [self showAlertWithTitle:@"Bad Connection" andMsg:@"Make sure you're connected to the internet"];
             }
             
-            [self.collectionView.pullToRefreshView stopAnimating];
+//            [self.collectionView.pullToRefreshView stopAnimating];
+            [self.refreshControl endRefreshing];
+
             self.pullFinished = YES;
             
         }
@@ -1085,7 +1081,9 @@
                 [self.productIds addObject:listing.objectId];
             }
             
-            [self.collectionView.pullToRefreshView stopAnimating];
+//            [self.collectionView.pullToRefreshView stopAnimating];
+            [self.refreshControl endRefreshing];
+
             self.pullFinished = YES;
         }
     }];
@@ -1098,11 +1096,13 @@
     
     if (self.products.count < 20) {
         //no point loading
-        [self.collectionView.infiniteScrollingView stopAnimating];
+//        [self.collectionView.infiniteScrollingView stopAnimating];
         return;
     }
     
-    [self hideFilter];
+    NSLog(@"infin loading");
+    
+//    [self hideFilter];
 
     self.infinFinished = NO;
     
@@ -1127,20 +1127,20 @@
     [self.infiniteQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (error) {
             NSLog(@"error getting for sale items infin %@", error);
-            [self showFilter];
+//            [self showFilter];
             
-            [self.collectionView.infiniteScrollingView stopAnimating];
+//            [self.collectionView.infiniteScrollingView stopAnimating];
             self.infinFinished = YES;
         }
         else{
-            [self showFilter];
+//            [self showFilter];
 
             self.skipped = self.skipped + (int)objects.count;
 
             [self.products addObjectsFromArray:objects];
             [self.collectionView reloadData];
             
-            [self.collectionView.infiniteScrollingView stopAnimating];
+//            [self.collectionView.infiniteScrollingView stopAnimating];
             self.infinFinished = YES;
             
             //update tracking of objectIds to avoid duplication
@@ -3235,6 +3235,8 @@
     self.filtersArray = filters;
     if (self.filtersArray.count > 0) {
         
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"filtered_items" properties:@{@"filters": filters}];
         [Intercom logEventWithName:@"filtered_items" metaData: @{@"filters": filters}];
         
         self.filterSizesArray = sizes;
@@ -3354,106 +3356,6 @@
 //    }
 //}
 
--(void)sendFeedbackMessage{
-    //check how long user has had Bump
-    NSCalendar *gregorianCalendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-
-    NSDateComponents *components = [gregorianCalendar components:NSCalendarUnitDay
-                                                         fromDate:[PFUser currentUser].createdAt
-                                                           toDate:[NSDate date]
-                                                          options:0];
-    NSString *sentSevenDayFeedback = [PFUser currentUser][@"sevenDayFBSent"];
-    
-    //now check if current user is highly active enough
-    
-    //number of sessions
-    NSArray *sessionArray = [[PFUser currentUser]objectForKey:@"activeSessions"];
-    
-    //listings for sale
-    int postNumber = [[[PFUser currentUser]objectForKey:@"forSalePostNumber"]intValue];
-    
-    if ([components day] >= 7 && ![sentSevenDayFeedback isEqualToString:@"YES"] && postNumber > 2 && sessionArray.count > 4) {
-        //user had the app for over 7 days and now they're on it!
-        //send them a feedback message from Team Bump
-        [self sendTeamBumpFeedbackMessage];
-    }
-}
-
--(void)sendTeamBumpFeedbackMessage{
-    
-    //get latest message text from DB - updated remotely
-    PFQuery *messageStringQuery = [PFQuery queryWithClassName:@"feedbackMessageString"];
-    [messageStringQuery orderByDescending:@"createdAt"];
-    [messageStringQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-       
-        if (object) {
-            NSString *messageString = [object objectForKey:@"messageText"];
-            
-            //customize with current user's name
-            messageString = [messageString stringByReplacingOccurrencesOfString:@"USER" withString:[PFUser currentUser][@"firstName"]];
-            
-            //now save report message
-            PFObject *messageObject1 = [PFObject objectWithClassName:@"teamBumpMsgs"];
-            messageObject1[@"message"] = messageString;
-            messageObject1[@"sender"] = [PFUser currentUser];
-            messageObject1[@"senderId"] = @"BUMP";
-            messageObject1[@"senderName"] = @"Team Bump";
-            messageObject1[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-            messageObject1[@"status"] = @"sent";
-            messageObject1[@"mediaMessage"] = @"NO";
-            [messageObject1 saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                if (succeeded) {
-                    
-                    //update profile tab bar badge
-                    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-                    [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
-                    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
-                    
-                    //update user to avoid duplicate sends
-                    [[PFUser currentUser]setObject:@"YES" forKey:@"sevenDayFBSent"];
-                    [[PFUser currentUser]saveInBackground];
-                    
-                    //update convo
-                    PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
-                    NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-                    [convoQuery whereKey:@"convoId" equalTo:convoId];
-                    [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                        if (object) {
-                            
-                            //got the convo
-                            [object incrementKey:@"totalMessages"];
-                            [object setObject:messageObject1 forKey:@"lastSent"];
-                            [object setObject:[NSDate date] forKey:@"lastSentDate"];
-                            [object incrementKey:@"userUnseen"];
-                            [object saveInBackground];
-                            
-                            [Answers logCustomEventWithName:@"Sent 7 day Feedback Message"
-                                           customAttributes:@{
-                                                              @"status":@"SENT"
-                                                              }];
-                        }
-                        else{
-                            [Answers logCustomEventWithName:@"Sent 7 day Feedback Message"
-                                           customAttributes:@{
-                                                              @"status":@"Failed getting convo"
-                                                              }];
-                        }
-                    }];
-                }
-                else{
-                    NSLog(@"error saving report message %@", error);
-                    [Answers logCustomEventWithName:@"Sent 7 day Feedback Message"
-                                   customAttributes:@{
-                                                      @"status":@"Failed saving message"
-                                                      }];
-                }
-            }];
-            
-        }
-        
-    }];
-}
-
 -(void)showPostingHeader:(NSNotification*)note{
     
     //if user has searched prior to listing an item, dismiss that so they can see the progress banner
@@ -3557,16 +3459,15 @@
     [self.postingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
             
-            //CHANGE
-//            NSDictionary *params = @{@"listingId":self.postingItem.objectId};
-//            [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
-//                if (error) {
-//                    [Answers logCustomEventWithName:@"Error updating lastUpdated"
-//                                   customAttributes:@{
-//                                                      @"where":@"PurchaseTab"
-//                                                      }];
-//                }
-//            }];
+            NSDictionary *params = @{@"listingId":self.postingItem.objectId};
+            [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                if (error) {
+                    [Answers logCustomEventWithName:@"Error updating lastUpdated"
+                                   customAttributes:@{
+                                                      @"where":@"PurchaseTab"
+                                                      }];
+                }
+            }];
             
             Mixpanel *mixpanel = [Mixpanel sharedInstance];
 
@@ -3645,55 +3546,8 @@
                     }
                 }
                 
-                //CHANGE remove this when boost available
-                if([[[PFUser currentUser]objectForKey:@"boostMode"]isEqualToString:@"YES"]){
-                    //boost is not on globally but this user is a test user
-                    //schedule local push for first BOOST in 5 hours time
-                    [self scheduleBoostPush];
-                }
-                else{
-                    //check if boost is available globally yet
-                    PFQuery *boostQuery = [PFQuery queryWithClassName:@"versions"];
-                    [boostQuery orderByDescending:@"createdAt"];
-                    [boostQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                        if (object) {
-                            
-                            if ([[object objectForKey:@"boostEnabled"]isEqualToString:@"YES"]) {
-                                //we've enabled boost globally
-                                [self scheduleBoostPush];
-                                
-                            }
-                        }
-                    }];
-                }
-                
-//                //local notifications set up
-//                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-//                dayComponent.day = 1;
-//                NSCalendar *theCalendar = [NSCalendar currentCalendar];
-//                NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-//
-//                // Create new date
-//                NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
-//                                                               fromDate:dateToFire];
-//
-//                NSDateComponents *components3 = [[NSDateComponents alloc] init];
-//
-//                [components3 setYear:components1.year];
-//                [components3 setMonth:components1.month];
-//                [components3 setDay:components1.day];
-//
-//                [components3 setHour:20];
-//
-//                // Generate a new NSDate from components3.
-//                NSDate * combinedDate = [theCalendar dateFromComponents:components3];
-//
-//                UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-//                [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]; //make sure this matches the app delegate local notifications handler method
-//                [localNotification setFireDate: combinedDate];
-//                [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
-//                [localNotification setRepeatInterval: 0];
-//                [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+                [self scheduleBoostPush];
+
             }
             
             if (([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) && [[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
@@ -3809,8 +3663,7 @@
 -(void)scheduleBoostPush{
     //schedule local push for first BOOST in 5 hours time
     NSDateComponents *hourComponent = [[NSDateComponents alloc] init];
-    hourComponent.second = 25;
-
+    hourComponent.hour = 6;
     NSCalendar *theCalendar = [NSCalendar currentCalendar];
     NSDate *nextBoostDate = [theCalendar dateByAddingComponents:hourComponent toDate:[NSDate date] options:0];
     
@@ -5011,4 +4864,28 @@
 -(void)dismissedSettings{
     [self connectPressed];
 }
+
+#pragma mark - infinite scrolling
+
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
+
+    float bottom = scrollView.contentSize.height - scrollView.frame.size.height;
+    float buffer = self.cellHeight * 3;
+    float scrollPosition = scrollView.contentOffset.y;
+    
+    // Reached the bottom of the list
+    if (scrollPosition > (bottom - buffer)) {
+        // Add more dates to the bottom
+        
+        if (self.infinFinished == YES) {
+            //infinity query
+            [self infinLatestForSale];
+        }
+    }
+}
+
+
+
+
+
 @end

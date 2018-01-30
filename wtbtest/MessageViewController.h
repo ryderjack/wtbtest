@@ -177,4 +177,7 @@
 //blocked mode
 @property (nonatomic) int paypalSentCounter;
 
+//refresh
+@property (nonatomic, strong) UIRefreshControl *refreshControl;
+
 @end

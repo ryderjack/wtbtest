@@ -1753,7 +1753,7 @@
                                                                @"where":@"Settings"
                                                                }];
         
-        if ([self.selectedCurrency isEqualToString:@""]) {
+        if ([self.selectedCurrency isEqualToString:@""] || !self.selectedCurrency) {
             self.selectedCurrency = @"USD";
         }
         

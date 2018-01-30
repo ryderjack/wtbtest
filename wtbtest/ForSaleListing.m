@@ -291,8 +291,6 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     
-    NSLog(@"WILL APPEAR");
-    
     [self.navigationController.navigationBar setHidden:NO];
     [self.navigationController.navigationBar setBarTintColor: nil];
 
@@ -312,9 +310,11 @@
             [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
                     self.fetchedUser = YES; //to help stop messages infinite spinner
+                    
+                    NSString *username = self.seller.username;
                                         
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        [self.usernameButton setTitle:[NSString stringWithFormat:@"@%@", self.seller.username] forState:UIControlStateNormal];
+                        [self.usernameButton setTitle:[NSString stringWithFormat:@"@%@", username] forState:UIControlStateNormal];
                     });
                     if ([[self.seller objectForKey:@"ignoreLikePushes"]isEqualToString:@"YES"]) {
                         self.dontLikePush = YES;
@@ -455,61 +455,61 @@
                 }
             }
             
-            //set title label
-            NSString *titleString = [self.listingObject objectForKey:@"itemTitle"];
-            NSString *titleLabelText = [NSString stringWithFormat:@"%@\n",titleString];
-            
-            float price;
-            NSString *priceText = @"";
-
-            //do we need to show native currency?
-            if(self.buyButtonShowing) {
-                self.currency = [self.listingObject objectForKey:@"currency"];
-
-                price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
-
-                if ([self.currency isEqualToString:@"GBP"]) {
-                    self.currencySymbol = @"£";
-                }
-                else if ([self.currency isEqualToString:@"EUR"]) {
-                    self.currencySymbol = @"€";
-                }
-                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-                    self.currencySymbol = @"$";
-                }
-                priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
-                self.purchasePrice = price;
-
-//                [self.buyButton setTitle:[NSString stringWithFormat:@"Purchase for %@", priceText] forState:UIControlStateNormal];
-            }
-            else{
-                self.currency = [[PFUser currentUser]objectForKey:@"currency"];
-                
-                if ([self.currency isEqualToString:@"GBP"]) {
-                    self.currencySymbol = @"£";
-                }
-                else if ([self.currency isEqualToString:@"EUR"]) {
-                    self.currencySymbol = @"€";
-                }
-                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-                    self.currencySymbol = @"$";
-                }
-                
-                price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
-
-            }
-            
-            if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
-                priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
-                
-                //we have a price so add onto title label
-                titleLabelText = [NSString stringWithFormat:@"%@%@", titleLabelText, priceText];
-            }
-            
-            //bold the title
-            NSMutableAttributedString *titleTxt = [[NSMutableAttributedString alloc] initWithString:titleLabelText];
-            [self modifyString:titleTxt setFontForText:titleString];
-            self.itemTitle.attributedText = titleTxt;
+//            //set title label
+//            NSString *titleString = [self.listingObject objectForKey:@"itemTitle"];
+//            NSString *titleLabelText = [NSString stringWithFormat:@"%@\n",titleString];
+//
+//            float price;
+//            NSString *priceText = @"";
+//
+//            //do we need to show native currency?
+//            if(self.buyButtonShowing) {
+//                self.currency = [self.listingObject objectForKey:@"currency"];
+//
+//                price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
+//
+//                if ([self.currency isEqualToString:@"GBP"]) {
+//                    self.currencySymbol = @"£";
+//                }
+//                else if ([self.currency isEqualToString:@"EUR"]) {
+//                    self.currencySymbol = @"€";
+//                }
+//                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+//                    self.currencySymbol = @"$";
+//                }
+//                priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+//                self.purchasePrice = price;
+//
+////                [self.buyButton setTitle:[NSString stringWithFormat:@"Purchase for %@", priceText] forState:UIControlStateNormal];
+//            }
+//            else{
+//                self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+//
+//                if ([self.currency isEqualToString:@"GBP"]) {
+//                    self.currencySymbol = @"£";
+//                }
+//                else if ([self.currency isEqualToString:@"EUR"]) {
+//                    self.currencySymbol = @"€";
+//                }
+//                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+//                    self.currencySymbol = @"$";
+//                }
+//
+//                price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
+//
+//            }
+//
+//            if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
+//                priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+//
+//                //we have a price so add onto title label
+//                titleLabelText = [NSString stringWithFormat:@"%@%@", titleLabelText, priceText];
+//            }
+//
+//            //bold the title
+//            NSMutableAttributedString *titleTxt = [[NSMutableAttributedString alloc] initWithString:titleLabelText];
+//            [self modifyString:titleTxt setFontForText:titleString];
+//            self.itemTitle.attributedText = titleTxt;
             
             NSString *descLabelText = [NSString stringWithFormat:@"Details %@",[self.listingObject objectForKey:@"description"]];
             
@@ -591,97 +591,24 @@
                 
                 NSDate *safeDate = [self.listingObject objectForKey:@"nextBoostDate"];
                 
-                if (self.fromBoostPush) {
+                //seen boost intro?
+                //check if current time is after the next boost date first
+                if (([[NSDate date] compare:safeDate]==NSOrderedDescending) || self.fromBoostPush) {
+                    
+                    //remove observers to stop sendbox appearing when shouldn't
                     [self removeSendBoxKeyboardObservers];
                     
-                    self.boostModeEnabled = YES;
-
-                    if(![[PFUser currentUser]objectForKey:@"seenBoostIntro"] ){
+                    NSLog(@"current time is after next boost date so boost is available or we're from a boost push");
+                    
+                    if (![[PFUser currentUser]objectForKey:@"seenBoostIntro"] || self.fromBoostPush) {
                         [[PFUser currentUser] setObject:@"YES" forKey:@"seenBoostIntro"];
                         [[PFUser currentUser]saveInBackground];
+                        
+                        [self showIntroBoostViewWithBg:YES];
                     }
-                    
-                    [self showIntroBoostViewWithBg:YES];
                     
                     [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
                     [self.listingObject saveInBackground];
-                    
-                    //show boost button if seller viewing item AND item not sold
-                    if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
-                        [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
-                        [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal];
-                        self.boostMode = YES;
-                    }
-                }
-                else if([[[PFUser currentUser]objectForKey:@"boostMode"]isEqualToString:@"YES"]){
-                    [self removeSendBoxKeyboardObservers];
-                    
-                    self.boostModeEnabled = YES;
-                    
-                    //seen boost intro?
-                    //check if current time is after the next boost date first
-                    if (([[NSDate date] compare:safeDate]==NSOrderedDescending)) {
-                        
-                        NSLog(@"current time is after next boost date so boost is available");
-                        
-                        if (![[PFUser currentUser]objectForKey:@"seenBoostIntro"] || self.fromBoostPush) {
-                            [[PFUser currentUser] setObject:@"YES" forKey:@"seenBoostIntro"];
-                            [[PFUser currentUser]saveInBackground];
-                            
-                            [self showIntroBoostViewWithBg:YES];
-                        }
-                        
-                        [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
-                        [self.listingObject saveInBackground];
-                    }
-                    
-                    //show boost button if seller viewing item AND item not sold
-                    if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
-                        [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
-                        [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal];
-                        self.boostMode = YES;
-                    }
-                }
-                else{
-                    PFQuery *boostQuery = [PFQuery queryWithClassName:@"versions"]; //CHANGE remove this and simplify when boost is available to all
-                    [boostQuery orderByDescending:@"createdAt"];
-                    [boostQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                        if (object) {
-                            
-                            if ([[object objectForKey:@"boostEnabled"]isEqualToString:@"YES"]) {
-                                //we've enabled boost globally
-                                self.boostModeEnabled = YES;
-                                [self removeSendBoxKeyboardObservers];
-
-                                //seen boost intro?
-                                //check if current time is after the next boost date first
-                                if (([[NSDate date] compare:safeDate]==NSOrderedDescending) || self.fromBoostPush) {
-                                    
-                                    NSLog(@"current time is after next boost date so boost is available");
-                                    
-                                    if (![[PFUser currentUser]objectForKey:@"seenBoostIntro"] || self.fromBoostPush) {
-                                        [[PFUser currentUser] setObject:@"YES" forKey:@"seenBoostIntro"];
-                                        [[PFUser currentUser]saveInBackground];
-                                        
-                                        [self showIntroBoostViewWithBg:YES];
-                                    }
-                                    
-                                    [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
-                                    [self.listingObject saveInBackground];
-                                }
-                                
-                                //show boost button if seller viewing item AND item not sold
-                                if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
-                                    [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
-                                    [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal];
-                                    self.boostMode = YES;
-                                }
-                            }
-                            else{
-                                self.boostModeEnabled = NO;
-                            }
-                        }
-                    }];
                 }
                 
                 if (![[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]) {
@@ -700,9 +627,9 @@
                     [self.reportButton setSelected:NO];
                     [self.reportLabel setTitle:@"M A R K  A S\nS O L D" forState:UIControlStateNormal];
                     
-//                    [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
-//                    [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal]; //CHANGE uncomment when globally available
-//                    self.boostMode = YES;
+                    [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
+                    [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal];
+                    self.boostMode = YES;
                 }
                 else{
                     self.boostMode = NO;
@@ -893,7 +820,7 @@
     [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center removeObserver:self name:@"showSendBox" object:nil]; /////adding observers to for sale now for screenshots
     
-    if(!self.boostModeEnabled){
+    if(!self.boostMode){
         [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
         [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
     }
@@ -1124,6 +1051,33 @@
     self.IDLabel.attributedText = sizeString;
 }
 
+-(void)deleteListingForReason:(NSString *)reason{
+    
+    NSDictionary *params = @{@"listingId": self.listingObject.objectId, @"deleter":[PFUser currentUser].username, @"reason":reason ,@"modId":[PFUser currentUser].objectId};
+    [PFCloud callFunctionInBackground:@"modDeletedListing" withParameters: params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            
+            [Answers logCustomEventWithName:@"Mod Deleted Listing"
+                           customAttributes:@{
+                                              @"reporter":[PFUser currentUser].objectId,
+                                              @"listingId":self.listingObject.objectId,
+                                              @"reason":reason
+                                              }];
+            
+            [Answers logCustomEventWithName:[NSString stringWithFormat:@"Mod Deleted Listing %@ %@", [PFUser currentUser].objectId,[PFUser currentUser].username]
+                           customAttributes:@{
+                                              @"reporter":[PFUser currentUser].objectId,
+                                              @"listingId":self.listingObject.objectId,
+                                              @"reason":reason
+                                              }];
+            
+        }
+        else{
+            NSLog(@"mod delete error %@", error);
+        }
+    }];
+}
+
 -(void)showAlertView{
     [self hideBarButton];
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
@@ -1135,7 +1089,68 @@
     if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"] && ![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete Listing (without banning)" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-            [self enterDeleteComment];
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete listing" message:@"Why would you like to delete this listing? (reason will be sent to the user)" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Bots/Software" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self deleteListingForReason:@"Non digital items (e.g. Bots) are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Descriptive Title Needed" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self deleteListingForReason:@"Please use a descriptive title when listing your items"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self deleteListingForReason:@"Selling a counterfeit/fake item"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Legit Checks" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self deleteListingForReason:@"Legit Checks are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Mystery Box" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self deleteListingForReason:@"Mystery boxes are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Not Streetwear" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self deleteListingForReason:@"Selling a non-streetwear item"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self deleteListingForReason:@"Offensive listing"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Raffle" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self deleteListingForReason:@"Raffles are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self deleteListingForReason:@"Spamming"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Tagged Images Needed" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self deleteListingForReason:@"Please add tagged images to your listing. Visit https://help.sobump.com for more info"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self enterDeleteComment];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
+            
         }]];
     }
     if ([[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
@@ -1180,7 +1195,7 @@
     }
     
     
-    else if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
+    else if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
  
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
@@ -1207,7 +1222,7 @@
                         }
                         
                         //decrement forSalePostNumber
-                        if (![[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] && ![[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] && ![[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
+                        if (![[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] && ![[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
                             [[PFUser currentUser]incrementKey:@"forSalePostNumber" byAmount:@-1];
                             [[PFUser currentUser] saveInBackground];
                         }
@@ -1335,25 +1350,25 @@
         }
     }
     
-    if (!self.currency) {
-        self.currency = [self.listingObject objectForKey:@"currency"];
-    }
+//    if (!self.currency) {
+//        self.currency = [self.listingObject objectForKey:@"currency"];
+//    }
+//
+//    if (!self.currencySymbol) {
+//        if ([self.currency isEqualToString:@"GBP"]) {
+//            self.currencySymbol = @"£";
+//        }
+//        else if ([self.currency isEqualToString:@"EUR"]) {
+//            self.currencySymbol = @"€";
+//        }
+//        else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+//            self.currencySymbol = @"$";
+//        }
+//    }
     
-    if (!self.currencySymbol) {
-        if ([self.currency isEqualToString:@"GBP"]) {
-            self.currencySymbol = @"£";
-        }
-        else if ([self.currency isEqualToString:@"EUR"]) {
-            self.currencySymbol = @"€";
-        }
-        else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-            self.currencySymbol = @"$";
-        }
-    }
-    
-    vc.salePrice = self.purchasePrice;
-    vc.currencySymbol = self.currencySymbol;
-    vc.currency = self.currency; //we decide at earlier point in listing setup whether this is native to the listing or user
+//    vc.salePrice = self.purchasePrice;
+//    vc.currencySymbol = self.currencySymbol;
+//    vc.currency = self.currency; //we decide at earlier point in listing setup whether this is native to the listing or user
     
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
     [self.navigationController presentViewController:nav animated:YES completion:^{
@@ -1800,6 +1815,42 @@
     [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.messageButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
+    
+    //set title label
+    NSString *titleString = [self.listingObject objectForKey:@"itemTitle"];
+    NSString *titleLabelText = [NSString stringWithFormat:@"%@\n",titleString];
+
+    float price;
+    NSString *priceText = @"";
+
+    //show in buyer's currency
+    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+    
+    if ([self.currency isEqualToString:@"GBP"]) {
+        self.currencySymbol = @"£";
+    }
+    else if ([self.currency isEqualToString:@"EUR"]) {
+        self.currencySymbol = @"€";
+    }
+    else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+        self.currencySymbol = @"$";
+    }
+    
+    price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
+
+    if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
+        priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+
+        //we have a price so add onto title label
+        titleLabelText = [NSString stringWithFormat:@"%@%@", titleLabelText, priceText];
+    }
+
+    //bold the title
+    NSMutableAttributedString *titleTxt = [[NSMutableAttributedString alloc] initWithString:titleLabelText];
+    [self modifyString:titleTxt setFontForText:titleString];
+    self.itemTitle.attributedText = titleTxt;
+    
+    
 }
 -(void)setupSendBarButton{
     self.longSendButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
@@ -1826,12 +1877,10 @@
     self.buyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width/2, 50)];
     [self.buyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:11]];
     [self.buyButton setTitle:@"B U Y" forState:UIControlStateNormal];
-//    self.buyButton.titleLabel.numberOfLines = 2;
     [self.buyButton setBackgroundColor:[UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:0.9]];
     [self.buyButton addTarget:self action:@selector(buyButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.buyButton.alpha = 0.0f;
     
-    //title is set when listing fetched for price
     [self.buyButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [[UIApplication sharedApplication].keyWindow addSubview:self.buyButton];
 
@@ -1841,6 +1890,42 @@
     self.buttonLine.alpha = 0.0f;
     
     [[UIApplication sharedApplication].keyWindow addSubview:self.buttonLine];
+    
+    //set title label
+    NSString *titleString = [self.listingObject objectForKey:@"itemTitle"];
+    NSString *titleLabelText = [NSString stringWithFormat:@"%@\n",titleString];
+    
+    float price;
+    NSString *priceText = @"";
+    
+    //show the correct currency in title
+    self.currency = [self.listingObject objectForKey:@"currency"];
+    
+    price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
+    
+    if ([self.currency isEqualToString:@"GBP"]) {
+        self.currencySymbol = @"£";
+    }
+    else if ([self.currency isEqualToString:@"EUR"]) {
+        self.currencySymbol = @"€";
+    }
+    else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+        self.currencySymbol = @"$";
+    }
+    priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+    self.purchasePrice = price;
+    
+    if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
+        priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+        
+        //we have a price so add onto title label
+        titleLabelText = [NSString stringWithFormat:@"%@%@", titleLabelText, priceText];
+    }
+    
+    //bold the title
+    NSMutableAttributedString *titleTxt = [[NSMutableAttributedString alloc] initWithString:titleLabelText];
+    [self modifyString:titleTxt setFontForText:titleString];
+    self.itemTitle.attributedText = titleTxt;
 
 }
 
@@ -2047,7 +2132,6 @@
     SendToUserCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"Cell" forIndexPath:indexPath];
     cell.userImageView.image = nil;
     
-    NSLog(@"fb users");
     PFUser *fbUser = [self.facebookUsers objectAtIndex:indexPath.item];
     
     if (![fbUser objectForKey:@"picture"]) {
@@ -3047,7 +3131,7 @@
     [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center removeObserver:self name:@"showSendBox" object:nil];
     
-    if (!self.boostModeEnabled) {
+    if (!self.boostMode) {
         [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
         [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
     }
@@ -3456,53 +3540,117 @@
         if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
             //mod
             NSLog(@"mod entering ban comment");
-            [self enterBanComment];
+            
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Ban User" message:@"Why would you like to ban this user? (this reason will be sent to the user)" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Bots/Software" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                
+                [self selectedReportReason:@"Non digital items (e.g. Bots) are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                
+                [self selectedReportReason:@"Selling a counterfeit/fake item"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Legit Checks" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Legit Checks are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Mystery Box" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Mystery boxes are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Not Streetwear" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Selling a non-streetwear item"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Offensive listing"];
+            }]];
+
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Raffle" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Raffles are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Spamming"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self enterBanComment];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
         }
         else{
             //not a mod
             
-            if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
-                //mod
-                [self enterBanComment];
-            }
-            else{
-                //not a mod
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Why would you like to report this listing?" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Bots/Software" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
                 
-                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Report listing" message:@"Why would you like to report this listing?" preferredStyle:UIAlertControllerStyleAlert];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                    [self showBarButton];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Fake" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self showBarButton];
-                    [self selectedReportReason:@"Fake"];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Not Streetwear" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self showBarButton];
-                    [self selectedReportReason:@"Not Streetwear"];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self showBarButton];
-                    [self selectedReportReason:@"Offensive listing"];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Spam" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self showBarButton];
-                    [self selectedReportReason:@"Spam"];
-                }]];
-                
-                [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    [self showBarButton];
-                    [self enterReportComment];
-//                    [self selectedReportReason:@"Other"];
-                }]];
-                
-                [self presentViewController:alertView animated:YES completion:nil];
-
-            }
+                [self selectedReportReason:@"Non digital items (e.g. Bots) are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Selling a counterfeit/fake item"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Legit Checks" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Legit Checks are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Mystery Box" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Mystery boxes are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Not Streetwear" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Selling a non-streetwear item"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Offensive listing"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Raffle" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Raffles are not permitted"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self selectedReportReason:@"Spamming"];
+            }]];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showBarButton];
+                [self enterReportComment];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
         }
     }
 }
@@ -3662,7 +3810,7 @@
                                    
                                    if (acceptableString == YES && reasonField.text.length > 5) {
                                        
-                                       NSDictionary *params = @{@"listingId": self.listingObject.objectId, @"deleter":[PFUser currentUser].username, @"reason":reasonField.text};
+                                       NSDictionary *params = @{@"listingId": self.listingObject.objectId, @"deleter":[PFUser currentUser].username, @"reason":reasonField.text,@"modId":[PFUser currentUser].objectId};
                                        [PFCloud callFunctionInBackground:@"modDeletedListing" withParameters: params block:^(NSDictionary *response, NSError *error) {
                                            if (!error) {
                                                

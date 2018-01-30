@@ -64,25 +64,25 @@
 //        }
 //    }];
     
-    //CHANGE remove this when boost is global
-    if([[[PFUser currentUser]objectForKey:@"boostMode"]isEqualToString:@"YES"]){
-        //boost is not on globally but this user is a test user
-        self.boostModeEnabled = YES;
-    }
-    else{
-        //check if boost is available globally yet
-        PFQuery *boostQuery = [PFQuery queryWithClassName:@"versions"];
-        [boostQuery orderByDescending:@"createdAt"];
-        [boostQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                
-                if ([[object objectForKey:@"boostEnabled"]isEqualToString:@"YES"]) {
-                    //we've enabled boost globally
-                    self.boostModeEnabled = YES;
-                }
-            }
-        }];
-    }
+    //CHECK remove this when boost is global
+//    if([[[PFUser currentUser]objectForKey:@"boostMode"]isEqualToString:@"YES"]){
+//        //boost is not on globally but this user is a test user
+//        self.boostModeEnabled = YES;
+//    }
+//    else{
+//        //check if boost is available globally yet
+//        PFQuery *boostQuery = [PFQuery queryWithClassName:@"versions"];
+//        [boostQuery orderByDescending:@"createdAt"];
+//        [boostQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//            if (object) {
+//
+//                if ([[object objectForKey:@"boostEnabled"]isEqualToString:@"YES"]) {
+//                    //we've enabled boost globally
+//                    self.boostModeEnabled = YES;
+//                }
+//            }
+//        }];
+//    }
     
     //protection against scammers abusing instant buy
     if ([[[PFUser currentUser]objectForKey:@"banInstantBuy"]isEqualToString:@"YES"]) {
@@ -413,6 +413,8 @@
     }
     else{
         //fallback
+        NSLog(@"fallback");
+        
         if (![[PFUser currentUser]objectForKey:@"currency"]) {
             [[PFUser currentUser] setObject:@"USD" forKey:@"currency"];
             [[PFUser currentUser]saveInBackground];
@@ -1082,7 +1084,7 @@
                 [self showAlertWithTitle:@"Authenticity Warning" andMsg:@"BUMP is for buying/selling authentic streetwear, if you're found to be selling fake or replica items we will be forced to ban your account to protect the community"];
                 return;
             }
-            else if ([string.lowercaseString isEqualToString:@"bot"]){
+            else if ([string.lowercaseString isEqualToString:@"bot"] || [string.lowercaseString isEqualToString:@"bots"] || [string.lowercaseString isEqualToString:@"forcecop"]){
                 textField.text = @"";
 
                 [self showAlertWithTitle:@"Bot Warning" andMsg:@"For legal and safety reasons, bots are not permitted to be sold on BUMP"];
@@ -2612,6 +2614,7 @@
         }
         
 //        NSLog(@"finalSizeArray: %@", self.finalSizeArray);
+        
         [forSaleItem setObject:self.finalSizeArray forKey:@"sizeArray"];
         
         //calc keywords
@@ -3092,19 +3095,15 @@
         }
         else{
             
-            //CHANGE
-//            [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];
+            [forSaleItem setObject:[NSDate date] forKey:@"lastUpdated"];
             
-            if (self.boostModeEnabled) {
-                //set the date when the listing can be boosted
-                NSDateComponents *hourComponent = [[NSDateComponents alloc] init];
-                hourComponent.hour = 6;
-
-                NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                NSDate *nextBoostDate = [theCalendar dateByAddingComponents:hourComponent toDate:[NSDate date] options:0];
-                
-                [forSaleItem setObject:nextBoostDate forKey:@"nextBoostDate"];
-            }
+            //set the date when the listing can be boosted
+            NSDateComponents *hourComponent = [[NSDateComponents alloc] init];
+            hourComponent.hour = 6;
+            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+            NSDate *nextBoostDate = [theCalendar dateByAddingComponents:hourComponent toDate:[NSDate date] options:0];
+            
+            [forSaleItem setObject:nextBoostDate forKey:@"nextBoostDate"];
 
             if (self.listingAsMode) {
                 //go ahead and save listing in home VC

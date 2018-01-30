@@ -54,10 +54,10 @@
     self.catTap.numberOfTapsRequired = 1;
     
     //check if verified by facebook or email, if neither then show verify email flow
-    if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser]objectForKey:@"facebookId"] && self.introMode != YES) {
-        //user isn't verified
-        [self showVerifyAlert];
-    }
+//    if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser]objectForKey:@"facebookId"] && self.introMode != YES) {
+//        //user isn't verified
+//        [self showVerifyAlert];
+//    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -901,6 +901,11 @@
     [self.listing setObject:[NSDate date] forKey:@"lastUpdated"];
     [self.listing setObject:@0 forKey:@"views"];
     [self.listing setObject:@0 forKey:@"bumpCount"];
+    
+    if (!self.currency) {
+        self.currency = @"USD";
+    }
+    
     [self.listing setObject:self.currency forKey:@"currency"];
     
     if (self.listingAsMode != YES) {

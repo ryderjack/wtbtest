@@ -75,6 +75,7 @@
 @property (nonatomic, strong) UIButton *payButton;
 @property (nonatomic) BOOL buttonShowing;
 @property (nonatomic) BOOL isNational;
+@property (nonatomic) BOOL gotoShipping;
 
 @property (weak, nonatomic) IBOutlet UIButton *paypalLabel;
 

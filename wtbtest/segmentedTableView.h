@@ -57,5 +57,6 @@
 //support unseen total
 @property (nonatomic) int supportUnseen;
 
-
+//refresh
+@property (nonatomic, strong) UIRefreshControl *refreshControl;
 @end

@@ -80,6 +80,8 @@
 @property (nonatomic, strong) UIView *buyingBadge;
 @property (nonatomic, strong) UIView *sellingBadge;
 
+//refresh control
+@property (nonatomic, strong) UIRefreshControl *refreshControl;
 
 -(void)doubleTapScroll;
 

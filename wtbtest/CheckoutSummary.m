@@ -101,98 +101,129 @@
         
     }
     else{
-        self.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol, self.salePrice];
-        
-        self.listingCountryCode = [self.listingObject objectForKey:@"countryCode"];
-        
-        if ([[[PFUser currentUser] objectForKey:@"enteredAddress"]isEqualToString:@"YES"] && [[PFUser currentUser] objectForKey:@"shippingCountryCode"]) {
-            self.addAddress = NO;
+        //add in this call to double check we have the listing info
+        [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             
-            //now set address label (with bold name)
-            NSString *addressString = [[PFUser currentUser] objectForKey:@"addressString"];
-            NSString *fullname;
-            
-            if ([[PFUser currentUser] objectForKey:@"addressName"]) {
-                fullname = [[PFUser currentUser] objectForKey:@"addressName"];
-            }
-            else{
-                fullname = [[PFUser currentUser] objectForKey:@"fullname"];
-            }
-            
-            NSMutableAttributedString *addressText = [[NSMutableAttributedString alloc] initWithString:addressString];
-            [self modifyString:addressText setFontForText:fullname];
-            self.addressLabel.attributedText = addressText;
-            
-            NSString *countryCode = [[PFUser currentUser] objectForKey:@"shippingCountryCode"];
-            
-            //now calc shipping based on this address
-            float shipping;
-            //recalc shipping price & total price based on country
-            if ([self.listingCountryCode.lowercaseString isEqualToString:countryCode.lowercaseString]) {
-                //national pricing
-                self.isNational = YES;
-                shipping = [[self.listingObject objectForKey:@"nationalShippingPrice"]floatValue];
+            if (object) {
+                self.currency = [self.listingObject objectForKey:@"currency"];
                 
-                if (shipping == 0.00) {
-                    self.shippingPriceLabel.text = @"Free";
+                if ([self.currency isEqualToString:@"GBP"]) {
+                    self.currencySymbol = @"£";
+                }
+                else if ([self.currency isEqualToString:@"EUR"]) {
+                    self.currencySymbol = @"€";
+                }
+                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+                    self.currencySymbol = @"$";
                 }
                 else{
-                    self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+                    self.sellerErrorShowing = YES;
+                    [self showAlertWithTitle:@"Price Error" andMsg:@"Please let the seller know they need to reenter a price for their listing before you can purchase"];
+                    [self.payButton setEnabled:NO];
+                    self.payButton.alpha = 0.5;
                 }
                 
-                self.totalPrice = shipping + self.salePrice;
-                self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
+                self.salePrice = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
+                self.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol, self.salePrice];
+                self.listingCountryCode = [self.listingObject objectForKey:@"countryCode"];
                 
-                //enable pay button
-                [self.payButton setEnabled:YES];
-                self.payButton.alpha = 1;
-            }
-            else{
-                
-                //now check if international shipping is even allowed
-                if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]) {
+                if ([[[PFUser currentUser] objectForKey:@"enteredAddress"]isEqualToString:@"YES"] && [[PFUser currentUser] objectForKey:@"shippingCountryCode"]) {
+                    self.addAddress = NO;
                     
-                    //if so, use int. pricing
-                    self.isNational = NO;
-                    shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
+                    //now set address label (with bold name)
+                    NSString *addressString = [[PFUser currentUser] objectForKey:@"addressString"];
+                    NSString *fullname;
                     
-                    if (shipping == 0.00) {
-                        self.shippingPriceLabel.text = @"Free";
+                    if ([[PFUser currentUser] objectForKey:@"addressName"]) {
+                        fullname = [[PFUser currentUser] objectForKey:@"addressName"];
                     }
                     else{
-                        self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+                        fullname = [[PFUser currentUser] objectForKey:@"fullname"];
                     }
                     
-                    self.totalPrice = shipping + self.salePrice;
-                    self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
+                    NSMutableAttributedString *addressText = [[NSMutableAttributedString alloc] initWithString:addressString];
+                    [self modifyString:addressText setFontForText:fullname];
+                    self.addressLabel.attributedText = addressText;
                     
-                    //enable pay button
-                    [self.payButton setEnabled:YES];
-                    self.payButton.alpha = 1;
+                    NSString *countryCode = [[PFUser currentUser] objectForKey:@"shippingCountryCode"];
+                    
+                    //now calc shipping based on this address
+                    float shipping;
+                    //recalc shipping price & total price based on country
+                    if ([self.listingCountryCode.lowercaseString isEqualToString:countryCode.lowercaseString]) {
+                        //national pricing
+                        self.isNational = YES;
+                        shipping = [[self.listingObject objectForKey:@"nationalShippingPrice"]floatValue];
+                        
+                        if (shipping == 0.00) {
+                            self.shippingPriceLabel.text = @"Free";
+                        }
+                        else{
+                            self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+                        }
+                        
+                        self.totalPrice = shipping + self.salePrice;
+                        self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
+                        
+                        //enable pay button
+                        [self.payButton setEnabled:YES];
+                        self.payButton.alpha = 1;
+                    }
+                    else{
+                        
+                        //now check if international shipping is even allowed
+                        if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]) {
+                            
+                            //if so, use int. pricing
+                            self.isNational = NO;
+                            shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
+                            
+                            if (shipping == 0.00) {
+                                self.shippingPriceLabel.text = @"Free";
+                            }
+                            else{
+                                self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+                            }
+                            
+                            self.totalPrice = shipping + self.salePrice;
+                            self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
+                            
+                            //enable pay button
+                            [self.payButton setEnabled:YES];
+                            self.payButton.alpha = 1;
+                        }
+                        else{
+                            //int shipping is not enabled
+                            self.addAddress = YES;
+                            self.shippingPriceLabel.text = @"-";
+                            self.totalPriceLabel.text = @"-";
+                            
+                            [self.payButton setEnabled:NO];
+                            self.payButton.alpha = 0.5;
+                            
+                            [self showAlertWithTitle:@"National Shipping Only" andMsg:[NSString stringWithFormat:@"The seller is only willing to ship their item within %@. If you have a shipping address within this country, please enter it now", [self.listingObject objectForKey:@"country"]]];
+                        }
+                    }
                 }
                 else{
-                    //int shipping is not enabled
                     self.addAddress = YES;
                     self.shippingPriceLabel.text = @"-";
                     self.totalPriceLabel.text = @"-";
                     
                     [self.payButton setEnabled:NO];
                     self.payButton.alpha = 0.5;
-                    
-                    [self showAlertWithTitle:@"National Shipping Only" andMsg:[NSString stringWithFormat:@"The seller is only willing to ship their item within %@. If you have a shipping address within this country, please enter it now", [self.listingObject objectForKey:@"country"]]];
                 }
+                
+                [self.tableView reloadData];
             }
-        }
-        else{
-            self.addAddress = YES;
-            self.shippingPriceLabel.text = @"-";
-            self.totalPriceLabel.text = @"-";
-            
-            [self.payButton setEnabled:NO];
-            self.payButton.alpha = 0.5;
-        }
-        
-        [self.tableView reloadData];
+            else{
+                NSLog(@"error finding listing at checkout %@", error);
+                [Answers logCustomEventWithName:@"Checkout listing Error"
+                               customAttributes:@{}];
+                self.sellerErrorShowing = YES;
+                [self showAlertWithTitle:@"Listing Error" andMsg:@"Make sure you're connected to the internet and try again!"];
+            }
+        }];
     }
 
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
@@ -530,6 +561,7 @@
     self.paypalOrderId = @"";
     
     if (self.addAddress == YES) {
+        self.gotoShipping = YES;
         [self showAlertWithTitle:@"Shipping Address" andMsg:@"Make sure to add your full shipping address"];
         return;
     }
@@ -1010,6 +1042,13 @@
         if (self.sellerErrorShowing) {
             self.sellerErrorShowing = NO;
             [self dismissVC];
+        }
+        else if(self.gotoShipping){
+            ShippingController *vc = [[ShippingController alloc]init];
+            vc.delegate = self;
+            
+            [self hideBarButton];
+            [self.navigationController pushViewController:vc animated:YES];
         }
     }]];
     [self presentViewController:alertView animated:YES completion:nil];

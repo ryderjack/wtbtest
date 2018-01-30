@@ -194,7 +194,8 @@
     }
     cell.userImageView.image = nil;
     cell.itemImageView.image = nil;
-    
+    cell.userImageView.file = nil;
+
     [self setImageBorder:cell.userImageView withNumber:30];
     
     PFObject *feedbackObject;
@@ -238,7 +239,7 @@
         [cell.userImageView setFile:[feedbackObject objectForKey:@"gavePicture"]];
         [cell.userImageView loadInBackground];
     }
-    else{
+    else if([feedbackObject objectForKey:@"gaveUsername"]){
         NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
                                         NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
         

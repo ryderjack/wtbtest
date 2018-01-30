@@ -8,7 +8,7 @@
 
 #import "InboxViewController.h"
 #import "MessageViewController.h"
-#import <SVPullToRefresh/SVPullToRefresh.h>
+//#import <SVPullToRefresh/SVPullToRefresh.h>
 #import <Crashlytics/Crashlytics.h>
 #import <DGActivityIndicatorView.h>
 #import "WelcomeViewController.h"
@@ -67,6 +67,21 @@
     self.lastConvoIndex = [[NSIndexPath alloc]init];
     self.lastBuyingIndex = [[NSIndexPath alloc]init];
     self.lastSellingIndex = [[NSIndexPath alloc]init];
+    
+    //setup refresh control with custom view
+    self.refreshControl = [[UIRefreshControl alloc]init];
+    self.refreshControl.backgroundColor = [UIColor clearColor];
+    self.refreshControl.tintColor = [UIColor lightGrayColor];
+    [self.refreshControl addTarget:self action:@selector(pullTarget) forControlEvents:UIControlEventAllEvents];
+    
+    //implement pull to refresh
+    if (@available(iOS 10.0, *)) {
+        self.tableView.refreshControl = self.refreshControl;
+        
+    }
+    else{
+        [self.tableView addSubview:self.refreshControl];
+    }
     
     self.currentInstallation = [PFInstallation currentInstallation];
     
@@ -128,7 +143,7 @@
     self.lastConvo = nil;
 
     [self.infiniteQuery cancel];
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
     self.infinFinished = YES;
 }
 
@@ -140,7 +155,7 @@
     self.pullFinished = NO;
     
     //make sure infin is cancelled before loading pull
-    [self.tableView.infiniteScrollingView stopAnimating];
+//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.infiniteQuery cancel];
     
     if (!self.pullQuery) {
@@ -197,8 +212,10 @@
                         [self.convoObjects removeAllObjects];
                         
                         [self.tableView reloadData];
-                        [self.tableView.pullToRefreshView stopAnimating];
-                        [self.tableView.infiniteScrollingView stopAnimating];
+//                        [self.tableView.pullToRefreshView stopAnimating];
+                        [self.refreshControl endRefreshing];
+
+//                        [self.tableView.infiniteScrollingView stopAnimating];
                     }
 
                     self.pullFinished = YES;
@@ -232,8 +249,10 @@
                         NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
                         [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
                         
-                        [self.tableView.pullToRefreshView stopAnimating];
-                        [self.tableView.infiniteScrollingView stopAnimating];
+//                        [self.tableView.pullToRefreshView stopAnimating];
+                        [self.refreshControl endRefreshing];
+
+//                        [self.tableView.infiniteScrollingView stopAnimating];
                     }
 
                     self.pullFinished = YES;
@@ -242,8 +261,10 @@
             else{
 //                NSLog(@"no convo objects");
                 
-                [self.tableView.pullToRefreshView stopAnimating];
-                [self.tableView.infiniteScrollingView stopAnimating];
+//                [self.tableView.pullToRefreshView stopAnimating];
+                [self.refreshControl endRefreshing];
+
+//                [self.tableView.infiniteScrollingView stopAnimating];
                 
                 self.pullFinished = YES;
 
@@ -251,8 +272,10 @@
         }
         else{
             NSLog(@"error getting convos %@", error);
-            [self.tableView.pullToRefreshView stopAnimating];
-            [self.tableView.infiniteScrollingView stopAnimating];
+//            [self.tableView.pullToRefreshView stopAnimating];
+            [self.refreshControl endRefreshing];
+
+//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.pullFinished = YES;
 
@@ -413,7 +436,7 @@
 
             if (self.segmentedControl.selectedSegmentIndex == 0) {
                 [self.tableView reloadData];
-                [self.tableView.infiniteScrollingView stopAnimating];
+//                [self.tableView.infiniteScrollingView stopAnimating];
             }
 
             self.infinFinished = YES;
@@ -421,30 +444,34 @@
         else{
             NSLog(@"error on infin %@", error);
             if (self.segmentedControl.selectedSegmentIndex == 0) {
-                [self.tableView.infiniteScrollingView stopAnimating];
+//                [self.tableView.infiniteScrollingView stopAnimating];
             }
             self.infinFinished = YES;
         }
     }];
 }
 
--(void)didMoveToParentViewController:(UIViewController *)parent {
-    [super didMoveToParentViewController:parent];
-    
-    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-    __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefreshWithActionHandler:^{
-        [weakSelf loadAllConvos];
-    }];
-    
-    DGActivityIndicatorView *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-    [self.tableView.pullToRefreshView setCustomView:spinner forState:SVPullToRefreshStateAll];
-    [spinner startAnimating];
-    
-    [self.tableView addInfiniteScrollingWithActionHandler:^{
-        [weakSelf generalInfinQuery]; //CHECK removed the if here - test
-    }];
+-(void)pullTarget{
+    [self loadAllConvos];
 }
+
+//-(void)didMoveToParentViewController:(UIViewController *)parent {
+//    [super didMoveToParentViewController:parent];
+//    
+//    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
+//    __weak typeof(self) weakSelf = self;
+//    [self.tableView addPullToRefreshWithActionHandler:^{
+//        [weakSelf loadAllConvos];
+//    }];
+//    
+//    DGActivityIndicatorView *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
+//    [self.tableView.pullToRefreshView setCustomView:spinner forState:SVPullToRefreshStateAll];
+//    [spinner startAnimating];
+//    
+//    [self.tableView addInfiniteScrollingWithActionHandler:^{
+//        [weakSelf generalInfinQuery]; //CHECK removed the if here - test
+//    }];
+//}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -1543,7 +1570,8 @@
                         [self.sellingConvos removeAllObjects];
 
                         [self.tableView reloadData];
-                        [self.tableView.pullToRefreshView stopAnimating];
+//                        [self.tableView.pullToRefreshView stopAnimating];
+                        [self.refreshControl endRefreshing];
                     }
 
                     self.sellingPullFinished = YES;
@@ -1576,7 +1604,9 @@
                         NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
                         [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
                         
-                        [self.tableView.pullToRefreshView stopAnimating];
+//                        [self.tableView.pullToRefreshView stopAnimating];
+                        [self.refreshControl endRefreshing];
+
                     }
                 
                     self.sellingPullFinished = YES;
@@ -1631,7 +1661,7 @@
             
             if (self.segmentedControl.selectedSegmentIndex == 2) {
                 [self.tableView reloadData];
-                [self.tableView.infiniteScrollingView stopAnimating];
+//                [self.tableView.infiniteScrollingView stopAnimating];
             }
 
             self.sellingInfinFinished = YES;
@@ -1640,7 +1670,7 @@
             NSLog(@"error on infin %@", error);
             
             if (self.segmentedControl.selectedSegmentIndex == 2) {
-                [self.tableView.infiniteScrollingView stopAnimating];
+//                [self.tableView.infiniteScrollingView stopAnimating];
             }
             self.sellingInfinFinished = YES;
         }
@@ -1703,7 +1733,9 @@
                         [self.buyingConvos removeAllObjects];
 
                         [self.tableView reloadData];
-                        [self.tableView.pullToRefreshView stopAnimating];
+//                        [self.tableView.pullToRefreshView stopAnimating];
+                        [self.refreshControl endRefreshing];
+
                     }
 
                     self.buyingPullFinished = YES;
@@ -1736,7 +1768,9 @@
                         NSIndexSet *sections = [NSIndexSet indexSetWithIndexesInRange:range];
                         [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationAutomatic];
                         
-                        [self.tableView.pullToRefreshView stopAnimating];
+//                        [self.tableView.pullToRefreshView stopAnimating];
+                        [self.refreshControl endRefreshing];
+
                     }
 
                     self.buyingPullFinished = YES;
@@ -1788,7 +1822,7 @@
             
             if (self.segmentedControl.selectedSegmentIndex == 1) {
                 [self.tableView reloadData];
-                [self.tableView.infiniteScrollingView stopAnimating];
+//                [self.tableView.infiniteScrollingView stopAnimating];
             }
 
             self.buyingInfinFinished = YES;
@@ -1796,7 +1830,7 @@
         else{
             NSLog(@"error on buying infin %@", error);
             if (self.segmentedControl.selectedSegmentIndex == 1) {
-                [self.tableView.infiniteScrollingView stopAnimating];
+//                [self.tableView.infiniteScrollingView stopAnimating];
             }
             self.buyingInfinFinished = YES;
         }
@@ -1847,5 +1881,20 @@
         }
     }
     return NO;
+}
+
+#pragma mark - infinite scrolling
+
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    
+    float bottom = scrollView.contentSize.height - scrollView.frame.size.height;
+    float buffer = 84 * 4;
+    float scrollPosition = scrollView.contentOffset.y;
+    
+    // Reached the bottom of the list
+    if (scrollPosition > (bottom - buffer)) {
+        //infin query
+        [self generalInfinQuery];
+    }
 }
 @end

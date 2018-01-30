@@ -7,7 +7,7 @@
 //
 
 #import "UserProfileController.h"
-#import <SVPullToRefresh/SVPullToRefresh.h>
+//#import <SVPullToRefresh/SVPullToRefresh.h>
 #import "CreateForSaleListing.h"
 #import "NavigationController.h"
 #import "ProfileItemCell.h"
@@ -155,7 +155,8 @@ typedef void(^myCompletion)(BOOL);
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-        
+
+    
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NewTBMessageReg"] == YES && self.tabMode == YES) {
         [self newTBMessageReg];
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NewTBMessageReg"];
@@ -229,7 +230,7 @@ typedef void(^myCompletion)(BOOL);
     else if (self.user) {
         [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
-                                
+                
                 //check if user needs a badge displayed
                 if ([[self.user objectForKey:@"veriUser"] isEqualToString:@"YES"]) {
                     self.hasBadge = YES;
@@ -1144,6 +1145,8 @@ typedef void(^myCompletion)(BOOL);
         [PFCloud callFunctionInBackground:@"reportUserFunction" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
             if (error) {
                 NSLog(@"error reporting user 1: %@", error);
+                
+                self.hitReport = NO;
 
                 [Answers logCustomEventWithName:@"Error Reporting User"
                                customAttributes:@{
@@ -1470,6 +1473,12 @@ typedef void(^myCompletion)(BOOL);
             [self setupMessages];
         }]];
         
+        //CHANGE remove this
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"REACTIVATE" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+            NSDictionary *params = @{@"userId": self.user.objectId};
+            [PFCloud callFunctionInBackground:@"reactivateUser" withParameters: params block:nil];
+        }]];
+        
         //Copy Link
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Profile Link" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [Answers logCustomEventWithName:@"Copied Link"
@@ -1495,7 +1504,49 @@ typedef void(^myCompletion)(BOOL);
         if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"] && !self.hitReport) {
             //user is a mod so prompt for a reason
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Ban" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
-                [self enterBanComment];
+                
+                UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Ban User" message:@"Why would you like to ban this user? (this reason will be sent to the user)" preferredStyle:UIAlertControllerStyleAlert];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Bots/Software" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Non digital items (e.g. Bots) are not permitted"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Selling a counterfeit/fake item"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Legit Checks" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Legit Checks are not permitted"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Mystery Box" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Mystery boxes are not permitted"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Not Streetwear" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Selling a non-streetwear item"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Offensive listing"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Raffle" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Raffles are not permitted"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self selectedReportReason:@"Spamming"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self enterBanComment];
+                }]];
+                
+                [self presentViewController:alertView animated:YES completion:nil];
             }]];
 
         }
@@ -1514,12 +1565,32 @@ typedef void(^myCompletion)(BOOL);
                     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
                     }]];
                     
-                    [alertView addAction:[UIAlertAction actionWithTitle:@"Selling fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                        [self selectedReportReason:@"Selling fakes"];
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Selling Bots/Software" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Non digital items (e.g. Bots) are not permitted"];
                     }]];
                     
-                    [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive behaviour" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                        [self selectedReportReason:@"Offensive behaviour"];
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Selling Fakes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Selling a counterfeit/fake item"];
+                    }]];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Selling Legit Checks" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Legit Checks are not permitted"];
+                    }]];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Selling Mystery Boxes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Mystery boxes are not permitted"];
+                    }]];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Selling Non-Streetwear" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Selling a non-streetwear item"];
+                    }]];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Offensive Behaviour" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Offensive listing"];
+                    }]];
+                    
+                    [alertView addAction:[UIAlertAction actionWithTitle:@"Raffles" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        [self selectedReportReason:@"Raffles are not permitted"];
                     }]];
                     
                     [alertView addAction:[UIAlertAction actionWithTitle:@"Spamming" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {

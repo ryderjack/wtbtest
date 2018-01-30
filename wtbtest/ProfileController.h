@@ -10,6 +10,7 @@
 #import <MessageUI/MessageUI.h>
 #import "inviteViewClass.h"
 #import "segmentedTableView.h"
+#import <YLProgressBar/YLProgressBar.h>
 
 @class ProfileController;
 
@@ -33,6 +34,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *savedLaterCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *inviteCell;
 
+@property (strong, nonatomic) IBOutlet UITableViewCell *modPerformanceCell;
 @property (weak, nonatomic) IBOutlet UIImageView *unreadView;
 @property (weak, nonatomic) IBOutlet UIImageView *unreadSupportView;
 
@@ -65,5 +67,12 @@
 @property (nonatomic, strong) UIView *bgView;
 @property (nonatomic) BOOL alertShowing;
 @property (nonatomic, strong) UITapGestureRecognizer *tap;
+
+//mod performance cell
+@property (weak, nonatomic) IBOutlet UILabel *currentProgressLabel;
+@property (weak, nonatomic) IBOutlet UILabel *goalLabel;
+@property (weak, nonatomic) IBOutlet UILabel *remainingLabel;
+@property (nonatomic) BOOL paidMod;
+@property (weak, nonatomic) IBOutlet YLProgressBar *progressBarNew;
 
 @end
