@@ -33,19 +33,19 @@
                 <outlet property="conditionNewButton" destination="ycP-gR-WhC" id="LHJ-dT-xFQ"/>
                 <outlet property="distanceButton" destination="0V5-Yg-f4f" id="idj-Hb-ldh"/>
                 <outlet property="distanceCell" destination="9oS-Kf-oLz" id="Jkg-4r-0Aq"/>
-                <outlet property="doubleSlider" destination="Kwa-9f-hnd" id="M2K-b2-0I9"/>
+                <outlet property="doubleSlider" destination="Qp0-QG-jAh" id="MWv-rl-mVz"/>
                 <outlet property="footButton" destination="d4J-KJ-BPQ" id="N3s-fu-RPi"/>
-                <outlet property="hightolowButton" destination="Npu-1l-CpJ" id="krQ-8e-pC5"/>
+                <outlet property="hightolowButton" destination="su8-pU-vtu" id="HSO-7n-y6y"/>
                 <outlet property="instantBuySwitch" destination="g3w-eD-Qdi" id="aoK-pd-2BK"/>
                 <outlet property="locationContinentsCell" destination="NsF-8v-GQO" id="JgO-LV-3wh"/>
                 <outlet property="locationSwipeView" destination="pQC-Av-tgU" id="YTy-V7-5Ga"/>
-                <outlet property="lowtoHighButton" destination="SJW-h8-kbt" id="ug9-AD-QMw"/>
+                <outlet property="lowtoHighButton" destination="uq7-Qx-iMv" id="ayF-Vx-qSg"/>
                 <outlet property="menButton" destination="YJJ-aH-eS4" id="qsh-xg-g76"/>
                 <outlet property="priceCell" destination="YYe-Gz-39n" id="N8I-c9-F4J"/>
                 <outlet property="priceSliderCell" destination="nIC-Sj-IB1" id="Y8H-13-Pmk"/>
                 <outlet property="priceSliderInstantBuy" destination="oah-rL-wjT" id="dH2-zw-qJz"/>
                 <outlet property="sizeCell" destination="Tyx-NG-nBY" id="IZh-OX-vr2"/>
-                <outlet property="sliderLabel" destination="SRW-0R-Gba" id="Jkx-vN-OOZ"/>
+                <outlet property="sliderLabel" destination="DKS-rG-W4U" id="Clt-18-KaM"/>
                 <outlet property="spaceCell" destination="FK5-QS-l9n" id="wHM-gy-aH3"/>
                 <outlet property="swipeView" destination="kUw-xF-gLP" id="Fc5-hQ-Nd6"/>
                 <outlet property="titleCell" destination="2Qb-lu-ryI" id="XFo-St-PNQ"/>

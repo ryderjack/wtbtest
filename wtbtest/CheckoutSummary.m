@@ -105,6 +105,12 @@
         [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             
             if (object) {
+                
+                //check if listing is fee free
+                if(![self.listingObject objectForKey:@"chargeFee"] || [[self.listingObject objectForKey:@"chargeFee"]isEqualToString:@"NO"]){
+                    self.feeFree = YES;
+                }
+                
                 self.currency = [self.listingObject objectForKey:@"currency"];
                 
                 if ([self.currency isEqualToString:@"GBP"]) {
@@ -557,6 +563,11 @@
                      }];
 }
 
+#pragma mark - paypal safari delegate method
+-(void)safariViewControllerDidFinish:(SFSafariViewController *)controller{
+    self.paypalSafariView = nil;
+}
+
 -(void)payPressed{
     self.paypalOrderId = @"";
     
@@ -615,6 +626,14 @@
 
     NSString *postCode = [NSString stringWithFormat:@"%@",[[PFUser currentUser] objectForKey:@"postcode"]];;
     NSLog(@"%@", postCode);
+    
+    //fee?
+    NSString *chargeFee = @"YES";
+    
+    if (self.feeFree) {
+        chargeFee = @"NO";
+        NSLog(@"fee free");
+    }
 
     //potentially use params here to pass this user's ID for tracking
     [self showHUD];
@@ -635,7 +654,9 @@
                              @"lineTwo":lineTwo,
                              @"city":city,
                              @"countryCode":countryCode,
-                             @"postCode":postCode
+                             @"postCode":postCode,
+                             
+                             @"chargeFee":chargeFee
                          };
     
     [PFCloud callFunctionInBackground:@"createPPOrder" withParameters:params block:^(NSDictionary *response, NSError *error) {
@@ -664,11 +685,12 @@
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(createOrder) name:@"paypalCreatedOrderSuccess" object:nil];
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(createOrderFailed) name:@"paypalCreatedOrderFailed" object:nil];
             }
-            self.paypalSafariView = nil;
             self.hitPay = YES;
             
             //trigger PayPal sign in to check order
             self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
+            self.paypalSafariView.delegate = self;
+            
             if (@available(iOS 11.0, *)) {
                 self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
             }

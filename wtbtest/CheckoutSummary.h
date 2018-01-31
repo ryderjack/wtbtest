@@ -21,7 +21,7 @@
 - (void)PurchasedItemCheckout;
 @end
 
-@interface CheckoutSummary : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate, CheckoutDelegate>
+@interface CheckoutSummary : UITableViewController <ShippingControllerDelegate, UITextFieldDelegate, CheckoutDelegate, SFSafariViewControllerDelegate>
 
 //cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *addShippingAddressCell;
@@ -115,6 +115,7 @@
 @property (nonatomic) BOOL checkedSellersPPInfo;
 @property (nonatomic) NSString *pairingId;
 
-
+//fees
+@property (nonatomic) BOOL feeFree;
 
 @end

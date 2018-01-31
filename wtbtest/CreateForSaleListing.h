@@ -50,6 +50,8 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *itemTitleCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *colourCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *firstListingPriceCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *sizeQuantityCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *paymentMethodCell;
 
 //purchase cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *instantBuyCell;
@@ -80,6 +82,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *chooseCategroy;
 @property (weak, nonatomic) IBOutlet UILabel *chooseSize;
 @property (weak, nonatomic) IBOutlet UILabel *chooseLocation;
+@property (weak, nonatomic) IBOutlet UILabel *choosePaymentMethod;
 
 //other
 @property (nonatomic) int camButtonTapped;
@@ -94,6 +97,12 @@
 
 @property (weak, nonatomic) IBOutlet UILabel *quantityLabel;
 @property (weak, nonatomic) IBOutlet UILabel *priceLabel;
+
+//this is for toggling between accessory & other category
+@property (weak, nonatomic) IBOutlet UILabel *quantityTextLabel;
+@property (weak, nonatomic) IBOutlet UILabel *sizeTextLabel;
+@property (weak, nonatomic) IBOutlet UITextField *secondQuantityField;
+@property (weak, nonatomic) IBOutlet UIImageView *sizeQuantityCellDisclosureView;
 
 //sizes
 @property (nonatomic, strong) NSArray *multipleSizeArray;
@@ -206,12 +215,12 @@
 @property (nonatomic) BOOL calledImgAnalyzer;
 
 //instant buy cells
-@property (weak, nonatomic) IBOutlet UISwitch *buySwitch;
 @property (nonatomic) BOOL forcedOff;
 
 @property (weak, nonatomic) IBOutlet UILabel *selectShippingLabel;
 @property (nonatomic) int buyRows;
 @property (nonatomic) int mainRows;
+@property (nonatomic) int totalSections;
 @property (nonatomic) BOOL sizeCellHidden;
 @property (nonatomic) BOOL priceCellHidden;
 
@@ -233,8 +242,6 @@
 @property (nonatomic) BOOL addedPayPalObservers;
 @property (nonatomic) BOOL paypalEnabled;
 @property (nonatomic, strong) NSString *merchantId;
-@property (nonatomic) BOOL hideInstantBuy;
-@property (nonatomic) BOOL firstListing;
 @property (nonatomic) BOOL boostModeEnabled;
 
 //buy now reminder
@@ -246,5 +253,14 @@
 
 //used for when user enables proxy then goes back to another buy now friendly category
 @property (nonatomic) BOOL buyButtonWasLastOn;
+@property (weak, nonatomic) IBOutlet UIButton *sizeButton;
+
+//edit mode
+@property (nonatomic) BOOL listingSetup;
+@property (nonatomic) BOOL oldSystemListing;
+@property (nonatomic) BOOL hideFeeFooter;
+
+@property (nonatomic) int quantityEntered;
+@property (nonatomic) BOOL feeFree;
 
 @end

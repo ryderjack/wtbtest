@@ -3382,15 +3382,6 @@
     
     self.showConnectPPPopUp = NO;
     
-    if (postingItems.count >= 3) {
-        NSLog(@"got a 3rd item passed to save listing");
-        self.showConnectPPPopUp = [postingItems[2]boolValue];
-    }
-    
-    NSLog(self.showConnectPPPopUp ? @"SHOW PP" : @"DONT SHOW");
-    
-    NSLog(@"listing item: %@     and got image: %@", self.postingItem, self.bannerImage);
-    
     //save listing
     [self saveListing];
     
@@ -3522,10 +3513,10 @@
                            customAttributes:@{}];
             
             //show paypal drop down
-            if (self.showConnectPPPopUp) {
-                NSLog(@"show connect pp pop up after posting item");
-                [self showConnectPayPalDrop];
-            }
+//            if (self.showConnectPPPopUp) {
+//                NSLog(@"show connect pp pop up after posting item");
+//                [self showConnectPayPalDrop];
+//            }
             
             //schedule local notif. for first listing
             if (![[PFUser currentUser] objectForKey:@"forSalePostNumber"]) {
@@ -3550,7 +3541,7 @@
 
             }
             
-            if (([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) && [[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
+            if (([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) && [[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
                 
                 //just avoid doing anything with a team member's acc
             }

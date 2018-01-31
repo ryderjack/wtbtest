@@ -452,7 +452,7 @@
                 return 131;
             }
             else if (indexPath.row == 5){
-                return 282;
+                return 226;
             }
             else if (indexPath.row == 6){
                 return 139;
@@ -483,7 +483,7 @@
                 return 131;
             }
             else if (indexPath.row == 5){
-                return 282;
+                return 226;
             }
             else if (indexPath.row == 6){
                 return 60;
@@ -541,7 +541,7 @@
                 return self.conditionCell;
             }
             else if (indexPath.row == 5){
-                return self.priceSliderInstantBuy;
+                return self.priceSliderCell;
             }
             else if (indexPath.row == 6){
                 return self.locationContinentsCell;
@@ -572,7 +572,7 @@
                 return self.conditionCell;
             }
             else if (indexPath.row == 5){
-                return self.priceSliderInstantBuy;
+                return self.priceSliderCell;
             }
             else if (indexPath.row == 6){
                 return self.spaceCell;

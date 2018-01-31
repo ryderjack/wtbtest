@@ -42,7 +42,7 @@
     self.gotFBCellHeight = 181;
     self.leftFBCellHeight = 181;
     self.leaveFBCellHeight = 195;
-    self.paymentCellHeight = 320;
+    self.paymentCellHeight = 366;
     self.shippingCellHeight =326;
     
     self.rowNumber = 5;
@@ -59,7 +59,8 @@
     self.leftFeedbackCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.leaveFeedbackCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.transactionCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    
+    self.buyerPaymentCell.selectionStyle = UITableViewCellSelectionStyleNone;
+
     [self cropProfilePic];
     
     //setup cells
@@ -76,6 +77,10 @@
             
             if ([[self.orderObject objectForKey:@"buyerId"]isEqualToString:[PFUser currentUser].objectId]) {
                 self.isBuyer = YES;
+                
+                //show buyer simplified payment cell
+                self.paymentCellHeight = 326;
+                [self.tableView reloadData]; //CHANGE need this here? we reload after fetching user too
             }
             
             if ([[self.orderObject objectForKey:@"status"] isEqualToString:@"pending"]) {
@@ -84,6 +89,7 @@
                 [self showAlertWithTitle:@"Payment Pending" andMsg:@"PayPal is busy processing your payment. In the meantime we've reserved the item for you - check back here shortly for order updates. If the payment is pending for over 15 minutes then please contact support from this page and we'll quickly sort it out"];
                 [self.messageButton setHidden:YES];
                 [self.refundButton setHidden:YES];
+                [self.buyerRefundButton setHidden:YES];
             }
             else if ([[self.orderObject objectForKey:@"status"] isEqualToString:@"failed"]) {
                 
@@ -92,6 +98,7 @@
                 [self showAlertWithTitle:@"Order Cancelled" andMsg:@"PayPal was unable to process your payment so the order was cancelled. You have NOT been charged and the item has been made available for sale again. You can attempt to purchase the item again. If the problem persists please contact supportt"];
                 [self.messageButton setHidden:YES];
                 [self.refundButton setHidden:YES];
+                [self.buyerRefundButton setHidden:YES];
             }
             
             //listing cell
@@ -193,33 +200,64 @@
             
             //setup payment info
             NSString *paymentString;
-            
-            self.itemPriceLabel.text = [self.orderObject objectForKey:@"salePriceLabel"];
-            self.shippingPriceLabel.text = [self.orderObject objectForKey:@"shippingPriceLabel"];
-            
-            NSString *totalString = [self.orderObject objectForKey:@"totalPriceLabel"];
             NSString *currency = [NSString stringWithFormat:@"%@ ",[self.orderObject objectForKey:@"currency"]];
             
-            self.totalPriceLabel.text = [totalString stringByReplacingOccurrencesOfString:currency withString:@""];
-            
             if (self.isBuyer) {
+                //setup buyer cell
+                
+                self.buyerItemPriceLabel.text = [self.orderObject objectForKey:@"salePriceLabel"];
+                self.buyerShippingPriceLabel.text = [self.orderObject objectForKey:@"shippingPriceLabel"];
+                
+                NSString *totalString = [self.orderObject objectForKey:@"totalPriceLabel"];
+                self.buyerTotalPriceLabel.text = [totalString stringByReplacingOccurrencesOfString:currency withString:@""];
+                
                 if (self.paymentFailed) {
-                    [self.paymentImageView setImage:[UIImage imageNamed:@"OrderCards"]];
+                    [self.buyerPaymentImageView setImage:[UIImage imageNamed:@"OrderCards"]];
                     paymentString = [NSString stringWithFormat:@"Payment Failed\n%@ failed to send",[self.orderObject objectForKey:@"totalPriceLabel"]];
                 }
                 else if(self.paymentPending){
-                    [self.paymentImageView setImage:[UIImage imageNamed:@"OrderCards"]];
+                    [self.buyerPaymentImageView setImage:[UIImage imageNamed:@"OrderCards"]];
                     paymentString = [NSString stringWithFormat:@"Payment Pending\n%@ sending via PayPal",[self.orderObject objectForKey:@"totalPriceLabel"]];
                 }
                 else{
+                    //order is LIVE
                     paymentString = [NSString stringWithFormat:@"Payment Sent\n%@ sent using PayPal",[self.orderObject objectForKey:@"totalPriceLabel"]];
                 }
+                
+                self.buyerPaymentLabel.text = paymentString;
+
             }
             else{
-                paymentString = [NSString stringWithFormat:@"Payment Received\n%@ sent to your PayPal",[self.orderObject objectForKey:@"totalPriceLabel"]];
+                //setup seller cell
+                
+                self.itemPriceLabel.text = [self.orderObject objectForKey:@"salePriceLabel"];
+                self.shippingPriceLabel.text = [self.orderObject objectForKey:@"shippingPriceLabel"];
+                
+                NSString *totalString;
+                
+                //firstly check if we have a fee otherwise just show same info as buyer except have FREE fees
+                if ([[self.orderObject objectForKey:@"chargedFee"]isEqualToString:@"YES"]) {
+                    
+                    paymentString = [NSString stringWithFormat:@"Payment Received\n%@ sent to your PayPal",[self.orderObject objectForKey:@"totalSellerPriceLabel"]];
+                    
+                    self.feePriceLabel.text = [self.orderObject objectForKey:@"feePriceLabel"];
+                    
+                    totalString = [self.orderObject objectForKey:@"totalSellerPriceLabel"];
+                    self.totalPriceLabel.text = [totalString stringByReplacingOccurrencesOfString:currency withString:@""];
+                }
+                else{
+                    //no fee for the seller
+                    paymentString = [NSString stringWithFormat:@"Payment Received\n%@ sent to your PayPal",[self.orderObject objectForKey:@"totalPriceLabel"]];
+
+                    self.feePriceLabel.text = @"Free";
+                    totalString = [self.orderObject objectForKey:@"totalPriceLabel"];
+                    self.totalPriceLabel.text = [totalString stringByReplacingOccurrencesOfString:currency withString:@""];
+
+                }
+                
+                self.paymentLabel.text = paymentString;
             }
             
-            self.paymentLabel.text = paymentString;
             
             //setup next steps
             
@@ -228,19 +266,19 @@
                 
                 if ([self.orderObject objectForKey:@"refundStatus"]) {
                     if ([[self.orderObject objectForKey:@"refundStatus"] isEqualToString:@"requested"]) {
-                        [self.refundButton setTitle:@"Cancel Refund Request" forState:UIControlStateNormal];
+                        [self.buyerRefundButton setTitle:@"Cancel Refund Request" forState:UIControlStateNormal];
                         self.refundRequested = YES;
                     }
                     else if ([[self.orderObject objectForKey:@"refundStatus"] isEqualToString:@"sent"]) {
-                        [self.refundButton setTitle:@"Refund Received" forState:UIControlStateNormal];
+                        [self.buyerRefundButton setTitle:@"Refund Received" forState:UIControlStateNormal];
                         self.refundSent = YES;
                     }
                     else{
-                        [self.refundButton setTitle:@"Request a Refund" forState:UIControlStateNormal];
+                        [self.buyerRefundButton setTitle:@"Request a Refund" forState:UIControlStateNormal];
                     }
                 }
                 else{
-                    [self.refundButton setTitle:@"Request a Refund" forState:UIControlStateNormal];
+                    [self.buyerRefundButton setTitle:@"Request a Refund" forState:UIControlStateNormal];
                 }
                 
                 if ([[self.orderObject objectForKey:@"buyerLeftFeedback"] isEqualToString:@"YES"]) {
@@ -461,8 +499,11 @@
     }
     
     if (self.paymentFailed || self.paymentPending) {
-        if (indexPath.row == 1) {
+        if (indexPath.row == 1 && !self.isBuyer) {
             return self.paymentCell;
+        }
+        else if (indexPath.row == 1 && self.isBuyer) {
+            return self.buyerPaymentCell;
         }
         else if (indexPath.row == 2) {
             return self.transactionCell;
@@ -477,8 +518,11 @@
         else if (indexPath.row == 2) {
             return self.shippingCell;
         }
-        else if (indexPath.row == 3) {
+        else if (indexPath.row == 3 && !self.isBuyer) {
             return self.paymentCell;
+        }
+        else if (indexPath.row == 3 && self.isBuyer) {
+            return self.buyerPaymentCell;
         }
         else if (indexPath.row == 4) {
             return self.transactionCell;
@@ -494,8 +538,11 @@
         else if (indexPath.row == 2) {
             return self.shippingCell;
         }
-        else if (indexPath.row == 3) {
+        else if (indexPath.row == 3 && !self.isBuyer) {
             return self.paymentCell;
+        }
+        else if (indexPath.row == 3 && self.isBuyer) {
+            return self.buyerPaymentCell;
         }
         else if (indexPath.row == 4) {
             return self.transactionCell;
@@ -514,8 +561,11 @@
         else if (indexPath.row == 3) {
             return self.shippingCell;
         }
-        else if (indexPath.row == 4) {
+        else if (indexPath.row == 4 && !self.isBuyer) {
             return self.paymentCell;
+        }
+        else if (indexPath.row == 4 && self.isBuyer) {
+            return self.buyerPaymentCell;
         }
         else if (indexPath.row == 5) {
             return self.transactionCell;
@@ -534,8 +584,11 @@
         else if (indexPath.row == 3) {
             return self.shippingCell;
         }
-        else if (indexPath.row == 4) {
+        else if (indexPath.row == 4 && !self.isBuyer) {
             return self.paymentCell;
+        }
+        else if (indexPath.row == 4 && self.isBuyer) {
+            return self.buyerPaymentCell;
         }
         else if (indexPath.row == 5) {
             return self.transactionCell;
@@ -950,7 +1003,7 @@
                                                   }];
                 
                 self.refundRequested = NO;
-                [self.refundButton setTitle:@"Request a Refund" forState:UIControlStateNormal];
+                [self.buyerRefundButton setTitle:@"Request a Refund" forState:UIControlStateNormal];
                 
                 //allows calcStatus to ignore the status of the orderobject that has been fetched since we're updating the correct one in the cloud func
                 self.refundCancelled = YES;
@@ -988,7 +1041,7 @@
                 
                 self.refundRequested = YES;
                 self.nextStepLabel.text = @"Refund Requested";
-                [self.refundButton setTitle:@"Cancel Refund Request" forState:UIControlStateNormal];
+                [self.buyerRefundButton setTitle:@"Cancel Refund Request" forState:UIControlStateNormal];
             }
             else{
                 [Answers logCustomEventWithName:@"Refund Requested Error"
@@ -1613,22 +1666,23 @@
         [Intercom presentMessenger];
     }]];
 
-//    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Check Order Status" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//
-//        //call check order status
-//        //need paypal orderId and bump orderId
-//
-//        NSDictionary *params = @{@"bumpOrderId": self.orderObject.objectId, @"ppOrderId":[self.orderObject objectForKey:@"paypalOrderId"]};
-//        [PFCloud callFunctionInBackground:@"checkOrderStatusFail" withParameters:params block:^(NSDictionary *response, NSError *error) {
-//            if (!error) {
-//                NSLog(@"order status response %@", response);
-//
-//            }
-//            else{
-//                NSLog(@"order status error %@", error);
-//            }
-//        }];
-//    }]];
+    //CHANGE
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Check Order Status" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+
+        //call check order status
+        //need paypal orderId and bump orderId
+
+        NSDictionary *params = @{@"bumpOrderId": self.orderObject.objectId, @"ppOrderId":[self.orderObject objectForKey:@"paypalOrderId"]};
+        [PFCloud callFunctionInBackground:@"checkOrderStatus" withParameters:params block:^(NSDictionary *response, NSError *error) {
+            if (!error) {
+                NSLog(@"order status response %@", response);
+
+            }
+            else{
+                NSLog(@"order status error %@", error);
+            }
+        }];
+    }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Order #ID" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [Answers logCustomEventWithName:@"Copied Order ID"

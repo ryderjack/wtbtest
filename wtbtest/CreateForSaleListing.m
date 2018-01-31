@@ -33,12 +33,16 @@
     
     self.navigationItem.title = @"S E L L";
     
+    self.quantityEntered = 1;
+    
     //buy now/shipping setup
     self.globalEnabled = YES;
+    [self.secondQuantityField setHidden:YES];
     
     self.nationalPrice = 0.00;
     self.globalPrice = 0.00;
-    self.mainRows = 4;
+    self.totalSections = 7;
+    self.mainRows = 3;
     
     self.countryCode = @"";
     self.country = @"";
@@ -51,45 +55,7 @@
     self.categories = @[@"footwear", @"clothing", @"accessories",@"shirt", @"tshirt", @"shoes", @"shoe", @"trouser"];
 
     self.chosenColour = @"";
-    
-    //add in a way for us to disable instant buy if needs be
-//    PFQuery *versions = [PFQuery queryWithClassName:@"versions"];
-//    [versions orderByDescending:@"createdAt"];
-//    [versions getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-//        if (object) {
-//            if ([[object objectForKey:@"instantBuy"]isEqualToString:@"NO"]){
-//                self.hideInstantBuy = YES;
-//                [self.tableView reloadData];
-//            }
-//        }
-//    }];
-    
-    //CHECK remove this when boost is global
-//    if([[[PFUser currentUser]objectForKey:@"boostMode"]isEqualToString:@"YES"]){
-//        //boost is not on globally but this user is a test user
-//        self.boostModeEnabled = YES;
-//    }
-//    else{
-//        //check if boost is available globally yet
-//        PFQuery *boostQuery = [PFQuery queryWithClassName:@"versions"];
-//        [boostQuery orderByDescending:@"createdAt"];
-//        [boostQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-//            if (object) {
-//
-//                if ([[object objectForKey:@"boostEnabled"]isEqualToString:@"YES"]) {
-//                    //we've enabled boost globally
-//                    self.boostModeEnabled = YES;
-//                }
-//            }
-//        }];
-//    }
-    
-    //protection against scammers abusing instant buy
-    if ([[[PFUser currentUser]objectForKey:@"banInstantBuy"]isEqualToString:@"YES"]) {
-        self.hideInstantBuy = YES;
-        [self.tableView reloadData];
-    }
-    
+
     self.chosenColourSArray = [NSMutableArray array];
     
     self.chosenColourImageView.alpha = 0.0;
@@ -170,6 +136,7 @@
     self.payField.delegate = self;
     self.itemTitleTextField.delegate = self;
     self.quantityField.delegate = self;
+    self.secondQuantityField.delegate = self;
     
     [self addDoneButtons];
     
@@ -180,7 +147,8 @@
     self.imagesCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.colourCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.instantBuyCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    self.shippingCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.sizeQuantityCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.firstListingPriceCell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
@@ -233,6 +201,7 @@
     }
     
     if (self.editMode != YES) {
+        self.listingSetup = YES;
         [self.itemTitleTextField becomeFirstResponder];
     }
     
@@ -247,79 +216,123 @@
     
     //check if this is first listing and that they haven't already been asked to connect their PP.
     //for users that create a proxy with their first listing we need to set a showPPConnect property so next time they list they can get asked too
-    if ((![[PFUser currentUser]objectForKey:@"forSalePostNumber"] && ![[PFUser currentUser]objectForKey:@"seenConnectPP"]) || [[[PFUser currentUser]objectForKey:@"showPPConnect"] isEqualToString:@"YES"]) {
+//    if ((![[PFUser currentUser]objectForKey:@"forSalePostNumber"] && ![[PFUser currentUser]objectForKey:@"seenConnectPP"]) || [[[PFUser currentUser]objectForKey:@"showPPConnect"] isEqualToString:@"YES"]) {
+//
+//        //we only want to show the drop down if a user doesn't have paypal connected so do final check
+//        if ((![[PFUser currentUser]objectForKey:@"paypalEnabled"] || [[[PFUser currentUser]objectForKey:@"paypalEnabled"] isEqualToString:@"NO"])) {
+//
+//            //hide buy now switch & ensure shipping is showing
+//            self.buyRows = 1;
+//
+//            //edit price cell to disable user entering multiple quantities
+//            self.quantityLabel.text = @"Price";
+//            [self.quantityField setHidden:YES];
+//            [self.priceLabel setHidden:YES];
+//        }
+//        else if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
+//
+//            NSLog(@"in the edge case!");
+//
+//            self.paypalEnabled = YES;
+//            self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+//
+//            //new user must have connected their PayPal in Settings already
+//            [Answers logCustomEventWithName:@"Create Listing PayPal Edge Case"
+//                           customAttributes:@{}];
+//
+//
+//            if (!self.editMode) {
+//                //enable buy now by default since we have all the info
+//                [self.buySwitch setOn:YES];
+//            }
+//        }
+//    }
+//    //put this first so we're not reminding people that already have it on
+//    //check if user already enabled it, if so (and not edit mode) get it on by default
+//    else if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
+//
+//        self.paypalEnabled = YES;
+//        self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+//
+//        if (!self.editMode) {
+//            //enable buy now by default since we have all the info
+//            self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+//            [self.buySwitch setOn:YES];
+//        }
+//    }
+    //check if user needs to see buy now pop up reminder since they still don't have it on
+//    else if([[PFUser currentUser]objectForKey:@"forSalePostNumber"] && [[PFUser currentUser]objectForKey:@"seenConnectPP"] && (![[PFUser currentUser]objectForKey:@"paypalEnabled"] || [[[PFUser currentUser]objectForKey:@"paypalEnabled"] isEqualToString:@"NO"]) && (![[PFUser currentUser]objectForKey:@"seenListingBuyNowReminder"] || [[[PFUser currentUser]objectForKey:@"seenListingBuyNowReminder"] isEqualToString:@"NO"])){
+//        NSLog(@"need to show user buy now reminder");
+//        [self removeKeyboard];
+//        [self showBuyNowReminder];
+//
+//    }
+    
+    if (self.editMode == YES) {
+        [self saleListingSetup];
+        [self.longButton setTitle:@"U P D A T E" forState:UIControlStateNormal];
         
-        //we only want to show the drop down if a user doesn't have paypal connected so do final check
-        if ((![[PFUser currentUser]objectForKey:@"paypalEnabled"] || [[[PFUser currentUser]objectForKey:@"paypalEnabled"] isEqualToString:@"NO"])) {
+        [Answers logCustomEventWithName:@"Viewed page"
+                       customAttributes:@{
+                                          @"pageName":@"Create For Sale Listing",
+                                          @"mode":@"Edit"
+                                          }];
+    }
+    else{
+        
+        //first check if this user is eligible for free fees
+        NSDateComponents *components = [[NSDateComponents alloc] init];
+        NSCalendar *theCalendar = [NSCalendar currentCalendar];
+        
+        [components setYear:2018];
+        [components setMonth:1];
+        [components setDay:31];
+        [components setHour:00];
+        
+        //generate the start date where this should be YES for everyone
+        NSDate * combinedDate = [theCalendar dateFromComponents:components];
+        
+        if([[PFUser currentUser].createdAt compare:combinedDate]==NSOrderedAscending){
+            //user created before this date so check if fees are being charged
             
-            //hide buy now switch & ensure shipping is showing
-            self.firstListing = YES;
-            self.buyRows = 1;
-            
-            //edit price cell to disable user entering multiple quantities
-            self.quantityLabel.text = @"Price";
-            [self.quantityField setHidden:YES];
-            [self.priceLabel setHidden:YES];
+            PFQuery *versionQuery = [PFQuery queryWithClassName:@"versions"];
+            [versionQuery orderByDescending:@"createdAt"];
+            [versionQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    if ([[object objectForKey:@"chargeFee"]isEqualToString:@"YES"]) { //CHANGE make sure this is setup server side
+                        self.feeFree = YES;
+                    }
+                }
+            }];
         }
-        else if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
-            
-            NSLog(@"in the edge case!");
+        else if([[[PFUser currentUser] objectForKey:@"feeFree"]isEqualToString:@"YES"]){
+            self.feeFree = YES;
+        }
+
+        
+        //don't reset a previous location when editing so just get loc when creating
+        [self.longButton setTitle:@"C R E A T E" forState:UIControlStateNormal];
+        
+        [Answers logCustomEventWithName:@"Viewed page"
+                       customAttributes:@{
+                                          @"pageName":@"Create For Sale Listing",
+                                          @"mode":@"New listing"
+                                          }];
+        
+        //if user is editing a listing just never show PayPal account cell
+        if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
             
             self.paypalEnabled = YES;
             self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
-
-            //new user must have connected their PayPal in Settings already
-            [Answers logCustomEventWithName:@"Create Listing PayPal Edge Case"
-                           customAttributes:@{}];
+            self.choosePaymentMethod.text = @"Connected";
             
-            
-            if (!self.editMode) {
-                //enable buy now by default since we have all the info
-                [self.buySwitch setOn:YES];
-            }
-        }
-    }
-    //put this first so we're not reminding people that already have it on
-    //check if user already enabled it, if so (and not edit mode) get it on by default
-    else if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
-        
-        self.paypalEnabled = YES;
-        self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
-        
-        if (!self.editMode) {
-            //enable buy now by default since we have all the info
-            self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
-            [self.buySwitch setOn:YES];
-        }
-    }
-    //check if user needs to see buy now pop up reminder since they still don't have it on
-    else if([[PFUser currentUser]objectForKey:@"forSalePostNumber"] && [[PFUser currentUser]objectForKey:@"seenConnectPP"] && (![[PFUser currentUser]objectForKey:@"paypalEnabled"] || [[[PFUser currentUser]objectForKey:@"paypalEnabled"] isEqualToString:@"NO"]) && (![[PFUser currentUser]objectForKey:@"seenListingBuyNowReminder"] || [[[PFUser currentUser]objectForKey:@"seenListingBuyNowReminder"] isEqualToString:@"NO"])){
-        NSLog(@"need to show user buy now reminder");
-        [self removeKeyboard];
-        [self showBuyNowReminder];
-        
-    }
-    
-    if (self.introMode != YES) {
-        if (self.editMode == YES) {
-            [self saleListingSetup];
-            [self.longButton setTitle:@"U P D A T E" forState:UIControlStateNormal];
-            
-            [Answers logCustomEventWithName:@"Viewed page"
-                           customAttributes:@{
-                                              @"pageName":@"Create For Sale Listing",
-                                              @"mode":@"Edit"
-                                              }];
         }
         else{
-            //don't reset a previous location when editing so just get loc when creating
-            [self.longButton setTitle:@"C R E A T E" forState:UIControlStateNormal];
+            self.choosePaymentMethod.text = @"Add";
             
-            [Answers logCustomEventWithName:@"Viewed page"
-                           customAttributes:@{
-                                              @"pageName":@"Create For Sale Listing",
-                                              @"mode":@"New listing"
-                                              }];
+            //show the connect PayPal cell
+            self.buyRows = 3;
+            [self.tableView reloadData];
         }
     }
 
@@ -336,26 +349,6 @@
             [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
         }
     }];
-    
-    //check if verified by facebook or email, if neither then show verify email flow
-//    if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser]objectForKey:@"facebookId"]) {
-//        //user isn't verified
-//        self.verified = NO;
-//        [self showVerifyAlert];
-//    }
-//    else{
-//        self.verified = YES;
-//
-//        //check if user is banned
-//        PFQuery *bannedQuery = [PFQuery queryWithClassName:@"bannedUsers"];
-//        [bannedQuery whereKey:@"user" equalTo:[PFUser currentUser]];
-//        [bannedQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-//            if (object) {
-//                self.banMode = YES;
-//                [self showAlertWithTitle:@"Account Restricted" andMsg:@"If you feel you're seeing this as a mistake then let us know hello@sobump.com"];
-//            }
-//        }];
-//    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -435,69 +428,51 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    if (self.hideInstantBuy) {
-        return 6;
-    }
-    else{
-        return 7;
-    }
+    return self.totalSections;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
-    if (self.hideInstantBuy) {
-        if (section == 0){
-            return 1;
-        }
-        else if (section == 1){
-            return 1;
-        }
-        else if (section == 2){
-            return self.mainRows;
-        }
-        else if (section == 4){
-            return 1;
-        }
-        else if (section == 3){
-            return 1;
-        }
-        else if (section == 5){
-            return 1;
-        }
-        else{
-            return 0;
-        }
+    if (section == 0){
+        return 1;
+    }
+    else if (section == 1){
+        return 1;
+    }
+    else if (section == 2){
+        return self.mainRows;
     }
     else{
-        if (section == 0){
-            return 1;
-        }
-        else if (section == 1){
-            return 1;
-        }
-        else if (section == 2){
-            return self.mainRows;
-        }
-        else if (section == 5){
-            return 1;
-        }
-        else if (section == 4){
-            return 1;
-        }
-        else if (section == 3){
-            if (self.firstListing) {
-                return self.buyRows;
+        if (self.totalSections != 7) {
+            if (section == 3){
+                return 1;
+            }
+            else if (section == 4){
+                return 1;
+            }
+            else if (section == 5){
+                return 1;
             }
             else{
-                return self.buyRows; //always show shipping cell so users now buy now involves setting your shipping info
+                return 0;
             }
-//            return self.buyRows;
-        }
-        else if (section == 6){
-            return 1;
         }
         else{
-            return 0;
+            if (section == 3){
+                return self.buyRows;
+            }
+            else if (section == 4){
+                return 1;
+            }
+            else if (section == 5){
+                return 1;
+            }
+            else if (section == 6){
+                return 1;
+            }
+            else{
+                return 0;
+            }
         }
     }
 
@@ -506,94 +481,161 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     
-    if (self.hideInstantBuy) {
-        if (indexPath.section == 0){
-            if (indexPath.row == 0) {
-                return self.itemTitleCell;
-            }
+    if (indexPath.section == 0){
+        if (indexPath.row == 0) {
+            return self.itemTitleCell;
         }
-        else if (indexPath.section == 1){
-            if (indexPath.row == 0) {
-                return self.imagesCell;
-            }
+    }
+    else if (indexPath.section == 1){
+        if (indexPath.row == 0) {
+            return self.imagesCell;
         }
-        else if (indexPath.section ==2){
-            if(indexPath.row == 0){
-                return self.conditionCell;
-            }
-            else if(indexPath.row == 1){
-                return self.categoryCell;
-            }
-            else if(indexPath.row == 2){
-                return self.sizeCell;
-            }
-            else if(indexPath.row == 3){
-                return self.payCell;
-            }
+    }
+    else if (indexPath.section ==2){
+        if(indexPath.row == 0){
+            return self.conditionCell;
         }
-        else if (indexPath.section ==4){
-            return self.descriptionCell;
+        else if(indexPath.row == 1){
+            return self.categoryCell;
         }
-        else if (indexPath.section ==3){
-            return self.colourCell;
-        }
-        else if (indexPath.section ==5){
-            return self.spaceCell;
+        else if(indexPath.row == 2){
+            return self.sizeQuantityCell;
         }
     }
     else{
-        if (indexPath.section == 0){
-            if (indexPath.row == 0) {
-                return self.itemTitleCell;
+        //for when we hide the payments section
+        if (self.totalSections != 7) {
+            if (indexPath.section ==3){
+                return self.colourCell;
+            }
+            else if (indexPath.section ==4){
+                return self.descriptionCell;
+            }
+            else if (indexPath.section ==5){
+                return self.spaceCell;
             }
         }
-        else if (indexPath.section == 1){
-            if (indexPath.row == 0) {
-                return self.imagesCell;
-            }
-        }
-        else if (indexPath.section ==2){
-            if(indexPath.row == 0){
-                return self.conditionCell;
-            }
-            else if(indexPath.row == 1){
-                return self.categoryCell;
-            }
-            else if(indexPath.row == 2){
-                return self.sizeCell;
-            }
-            else if(indexPath.row == 3){
-                return self.payCell;
-            }
-        }
-        else if (indexPath.section ==3){
-            if (self.firstListing) {
-                if(indexPath.row == 0){
-                    return self.shippingCell;
+        else{
+            if (indexPath.section ==3){
+                if (self.buyRows == 2) {
+                    if(indexPath.row == 0){
+                        return self.shippingCell;
+                    }
+                    else if(indexPath.row == 1){
+                        return self.firstListingPriceCell;
+                    }
+                }
+                else{
+                    if(indexPath.row == 0){
+                        return self.shippingCell;
+                    }
+                    else if(indexPath.row == 1){
+                        return self.paymentMethodCell;
+                    }
+                    else if(indexPath.row == 2){
+                        return self.firstListingPriceCell;
+                    }
                 }
             }
-            else{
-                if(indexPath.row == 0){
-                    return self.instantBuyCell;
-                }
-                else if(indexPath.row == 1){
-                    return self.shippingCell;
-                }
+            else if (indexPath.section ==4){
+                return self.colourCell;
             }
-        }
-        else if (indexPath.section ==5){
-            return self.descriptionCell;
-        }
-        else if (indexPath.section ==4){
-            return self.colourCell;
-        }
-        else if (indexPath.section ==6){
-            return self.spaceCell;
+            else if (indexPath.section ==5){
+                return self.descriptionCell;
+            }
+            else if (indexPath.section ==6){
+                return self.spaceCell;
+            }
         }
     }
     return nil;
 }
 
+- (IBAction)sizeButtonPressed:(id)sender {
+    self.somethingChanged = YES;
+    NSLog(@"size button pressed");
+
+    if ([self.chooseCategroy.text isEqualToString:@"Select"]) {
+        [self sizePopUp];
+    }
+    else if ([self.chooseCategroy.text isEqualToString:@"Footwear"]) {
+        SelectViewController *vc = [[SelectViewController alloc]init];
+        vc.delegate = self;
+        vc.setting = @"sizefoot";
+        vc.sellListing = YES;
+        vc.multipleAllowed = NO;
+        
+        vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+        
+        // setup previously selected
+        if (![self.chooseSize.text isEqualToString:@"Select"] && ![self.chooseSize.text isEqualToString:@"Multiple"]) {
+            NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+            NSLog(@"selected already %@", selectedArray);
+            vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+            vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+        }
+        else if ([self.chooseSize.text isEqualToString:@"Multiple"]){
+            NSMutableArray *placeholder = [NSMutableArray array];
+            
+            for (id object in self.multipleSizeArray) { //pass sizes back in the shortened version they came in
+                NSString *string = [NSString stringWithFormat:@"%@", object];
+                [placeholder addObject:string];
+            }
+            vc.holdingArray = placeholder;
+        }
+        else{
+            vc.holdingGender = @"";
+        }
+        
+        self.selection = @"size";
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else if ([self.chooseCategroy.text isEqualToString:@"Clothing"] || [self.chooseCategroy.text isEqualToString:@"Tops"] || [self.chooseCategroy.text isEqualToString:@"Bottoms"] || [self.chooseCategroy.text isEqualToString:@"Outerwear"]){
+        SelectViewController *vc = [[SelectViewController alloc]init];
+        vc.delegate = self;
+        vc.setting = @"sizeclothing";
+        vc.sellListing = YES;
+        
+        vc.multipleAllowed = NO;
+        
+        vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+        
+        // setup previously selected
+        if (![self.chooseSize.text isEqualToString:@"Select"] && ![self.chooseSize.text isEqualToString:@"Multiple"]) {
+            NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+            vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+        }
+        else if ([self.chooseSize.text isEqualToString:@"Multiple"]){
+            NSMutableArray *placeholder = [NSMutableArray array];
+            
+            for (id object in self.multipleSizeAcronymArray) {
+                NSString *string = [NSString stringWithFormat:@"%@", object];
+                [placeholder addObject:string];
+            }
+            vc.holdingArray = placeholder;
+        }
+        
+        self.selection = @"size";
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else if ([self.chooseCategroy.text isEqualToString:@"Accessories"] || [self.chooseCategroy.text isEqualToString:@"Proxy"]){
+        // can't select accessory sizing for now or for proxies either
+    }
+    else{
+        SelectViewController *vc = [[SelectViewController alloc]init];
+        vc.delegate = self;
+        vc.setting = @"sizeclothing";
+        vc.sellListing = NO;
+        // setup previously selected
+        if (![self.chooseSize.text isEqualToString:@"Select"]) {
+            NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+            vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+        }
+        
+        self.selection = @"size";
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+}
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
@@ -656,228 +698,156 @@
             
             [self.navigationController pushViewController:vc animated:YES];
         }
-        else if(indexPath.row == 2){
-            if ([self.chooseCategroy.text isEqualToString:@"Select"]) {
-                [self sizePopUp];
-                [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
-                
-            }
-            else{
-                if ([self.chooseCategroy.text isEqualToString:@"Footwear"]) {
-                    SelectViewController *vc = [[SelectViewController alloc]init];
-                    vc.delegate = self;
-                    vc.setting = @"sizefoot";
-                    vc.sellListing = YES;
-                    
-                    if (!self.firstListing) {
-                        vc.multipleAllowed = YES;
-                    }
-                    else{
-                        vc.dontShowMultipleAlert = YES;
-                    }
-                    
-                    vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
-
-                    // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"Select"] && ![self.chooseSize.text isEqualToString:@"Multiple"]) {
-                        NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
-                        NSLog(@"selected already %@", selectedArray);
-                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
-                        vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
-                    }
-                    else if ([self.chooseSize.text isEqualToString:@"Multiple"]){
-                        NSMutableArray *placeholder = [NSMutableArray array];
-                        
-                        for (id object in self.multipleSizeArray) { //pass sizes back in the shortened version they came in
-                            NSString *string = [NSString stringWithFormat:@"%@", object];
-                            [placeholder addObject:string];
-                        }
-                        vc.holdingArray = placeholder;
-                    }
-                    else{
-                        vc.holdingGender = @"";
-                    }
-                    
-                    self.selection = @"size";
-                    [self.navigationController pushViewController:vc animated:YES];
-                }
-                else if ([self.chooseCategroy.text isEqualToString:@"Clothing"] || [self.chooseCategroy.text isEqualToString:@"Tops"] || [self.chooseCategroy.text isEqualToString:@"Bottoms"] || [self.chooseCategroy.text isEqualToString:@"Outerwear"]){
-                    SelectViewController *vc = [[SelectViewController alloc]init];
-                    vc.delegate = self;
-                    vc.setting = @"sizeclothing";
-                    vc.sellListing = YES;
-                    
-                    if (!self.firstListing) {
-                        vc.multipleAllowed = YES;
-                    }
-                    else{
-                        vc.dontShowMultipleAlert = YES;
-                    }
-                    
-                    vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
-
-                    // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"Select"] && ![self.chooseSize.text isEqualToString:@"Multiple"]) {
-                        NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
-                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
-                    }
-                    else if ([self.chooseSize.text isEqualToString:@"Multiple"]){
-                        NSMutableArray *placeholder = [NSMutableArray array];
-                        
-                        for (id object in self.multipleSizeAcronymArray) {
-                            NSString *string = [NSString stringWithFormat:@"%@", object];
-                            [placeholder addObject:string];
-                        }
-                        vc.holdingArray = placeholder;
-                    }
-                    
-                    self.selection = @"size";
-                    [self.navigationController pushViewController:vc animated:YES];
-                }
-                else if ([self.chooseCategroy.text isEqualToString:@"Accessories"] || [self.chooseCategroy.text isEqualToString:@"Proxy"]){
-                    // can't select accessory sizing for now or for proxies either
-                }
-                else{
-                    SelectViewController *vc = [[SelectViewController alloc]init];
-                    vc.delegate = self;
-                    vc.setting = @"sizeclothing";
-                    vc.sellListing = YES;
-                    // setup previously selected
-                    if (![self.chooseSize.text isEqualToString:@"Select"]) {
-                        NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
-                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
-                    }
-                    
-                    self.selection = @"size";
-                    [self.navigationController pushViewController:vc animated:YES];
-                }
-            }
-        }
+//        else if(indexPath.row == 2){
+//            if ([self.chooseCategroy.text isEqualToString:@"Select"]) {
+//                [self sizePopUp];
+//                [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
+//
+//            }
+//            else{
+//                if ([self.chooseCategroy.text isEqualToString:@"Footwear"]) {
+//                    SelectViewController *vc = [[SelectViewController alloc]init];
+//                    vc.delegate = self;
+//                    vc.setting = @"sizefoot";
+//                    vc.sellListing = YES;
+//                    vc.multipleAllowed = YES;
+//
+//                    vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+//
+//                    // setup previously selected
+//                    if (![self.chooseSize.text isEqualToString:@"Select"] && ![self.chooseSize.text isEqualToString:@"Multiple"]) {
+//                        NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+//                        NSLog(@"selected already %@", selectedArray);
+//                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+//                        vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+//                    }
+//                    else if ([self.chooseSize.text isEqualToString:@"Multiple"]){
+//                        NSMutableArray *placeholder = [NSMutableArray array];
+//
+//                        for (id object in self.multipleSizeArray) { //pass sizes back in the shortened version they came in
+//                            NSString *string = [NSString stringWithFormat:@"%@", object];
+//                            [placeholder addObject:string];
+//                        }
+//                        vc.holdingArray = placeholder;
+//                    }
+//                    else{
+//                        vc.holdingGender = @"";
+//                    }
+//
+//                    self.selection = @"size";
+//                    [self.navigationController pushViewController:vc animated:YES];
+//                }
+//                else if ([self.chooseCategroy.text isEqualToString:@"Clothing"] || [self.chooseCategroy.text isEqualToString:@"Tops"] || [self.chooseCategroy.text isEqualToString:@"Bottoms"] || [self.chooseCategroy.text isEqualToString:@"Outerwear"]){
+//                    SelectViewController *vc = [[SelectViewController alloc]init];
+//                    vc.delegate = self;
+//                    vc.setting = @"sizeclothing";
+//                    vc.sellListing = YES;
+//
+//                    vc.multipleAllowed = YES;
+//
+//                    vc.holdingGender = [[NSString alloc]initWithString:self.genderSize];
+//
+//                    // setup previously selected
+//                    if (![self.chooseSize.text isEqualToString:@"Select"] && ![self.chooseSize.text isEqualToString:@"Multiple"]) {
+//                        NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+//                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+//                    }
+//                    else if ([self.chooseSize.text isEqualToString:@"Multiple"]){
+//                        NSMutableArray *placeholder = [NSMutableArray array];
+//
+//                        for (id object in self.multipleSizeAcronymArray) {
+//                            NSString *string = [NSString stringWithFormat:@"%@", object];
+//                            [placeholder addObject:string];
+//                        }
+//                        vc.holdingArray = placeholder;
+//                    }
+//
+//                    self.selection = @"size";
+//                    [self.navigationController pushViewController:vc animated:YES];
+//                }
+//                else if ([self.chooseCategroy.text isEqualToString:@"Accessories"] || [self.chooseCategroy.text isEqualToString:@"Proxy"]){
+//                    // can't select accessory sizing for now or for proxies either
+//                }
+//                else{
+//                    SelectViewController *vc = [[SelectViewController alloc]init];
+//                    vc.delegate = self;
+//                    vc.setting = @"sizeclothing";
+//                    vc.sellListing = YES;
+//                    // setup previously selected
+//                    if (![self.chooseSize.text isEqualToString:@"Select"]) {
+//                        NSArray *selectedArray = [self.chooseSize.text componentsSeparatedByString:@"/"];
+//                        vc.holdingArray = [NSArray arrayWithArray:selectedArray];
+//                    }
+//
+//                    self.selection = @"size";
+//                    [self.navigationController pushViewController:vc animated:YES];
+//                }
+//            }
+//        }
     }
     
-    if (self.hideInstantBuy) {
-        if(indexPath.section == 3){
-            [self addColourPressed:self];
+    if(indexPath.section == 4){
+        [self addColourPressed:self];
+    }
+    else if(indexPath.section == 3){
+        if (indexPath.row == 0) {
+            ShippingOptionsView *vc = [[ShippingOptionsView alloc]init];
+            vc.nationalPrice = self.nationalPrice;
+            vc.globalPrice = self.globalPrice;
+            vc.globalEnabled = self.globalEnabled;
+            
+            vc.currencySymbol = self.currencySymbol;
+            
+            vc.globalFree = self.globalFree;
+            vc.nationalFree = self.nationalFree;
+            vc.delegate = self;
+            
+            [self.navigationController pushViewController:vc animated:YES];
         }
-        else {
-            [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
+        else if (self.buyRows == 3 && indexPath.row == 1) {
+            
+            //connect paypal tapped
+            if ([self.choosePaymentMethod.text isEqualToString:@"Add"]) {
+                [self enableBuyNow];
+            }
         }
     }
-    else{
-        if(indexPath.section == 4){
-            [self addColourPressed:self];
-        }
-        else if(indexPath.section == 3){
-            if (self.firstListing) {
-                if (indexPath.row == 0) {
-                    ShippingOptionsView *vc = [[ShippingOptionsView alloc]init];
-                    vc.nationalPrice = self.nationalPrice;
-                    vc.globalPrice = self.globalPrice;
-                    vc.globalEnabled = self.globalEnabled;
-                    
-                    vc.currencySymbol = self.currencySymbol;
-                    
-                    vc.globalFree = self.globalFree;
-                    vc.nationalFree = self.nationalFree;
-                    vc.delegate = self;
-                    
-                    [self.navigationController pushViewController:vc animated:YES];
-                }
-            }
-            else{
-                if (indexPath.row == 1) {
-                    if (!self.buySwitch.isOn && !self.paypalEnabled) {
-                        [self showShippingAlertWithTitle:@"Buy Now & Shipping Pricing" andMsg:@"Shipping prices are only displayed to buyers when they hit the Buy button on your listing\n\nEnable Buy Now to add a Buy button to your listing and enter your shipping prices"];
-                    }
-                    else if(!self.buySwitch.isOn && self.paypalEnabled){
-                        //user tapped shipping but buy now wasn't enabled
-                        [self.buySwitch setOn:YES];
-                        
-                        ShippingOptionsView *vc = [[ShippingOptionsView alloc]init];
-                        vc.nationalPrice = self.nationalPrice;
-                        vc.globalPrice = self.globalPrice;
-                        vc.globalEnabled = self.globalEnabled;
-                        
-                        vc.currencySymbol = self.currencySymbol;
-                        
-                        vc.globalFree = self.globalFree;
-                        vc.nationalFree = self.nationalFree;
-                        vc.delegate = self;
-                        
-                        [self.navigationController pushViewController:vc animated:YES];
-                    }
-                    else{
-                        ShippingOptionsView *vc = [[ShippingOptionsView alloc]init];
-                        vc.nationalPrice = self.nationalPrice;
-                        vc.globalPrice = self.globalPrice;
-                        vc.globalEnabled = self.globalEnabled;
-                        
-                        vc.currencySymbol = self.currencySymbol;
-                        
-                        vc.globalFree = self.globalFree;
-                        vc.nationalFree = self.nationalFree;
-                        vc.delegate = self;
-                        
-                        [self.navigationController pushViewController:vc animated:YES];
-                    }
-                }
-            }
-
-        }
-        else {
-            [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
-        }
+    else {
+        [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
     }
 
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     
-    if (self.hideInstantBuy) {
-        if (indexPath.section == 0){
-            return 69;
-        }
-        else if (indexPath.section == 1){
-            return 104;
-        }
-        else if (indexPath.section ==2 || indexPath.section == 3){
-            return 44;
-        }
-        else if (indexPath.section ==4){
-            return 160;
-        }
-        else if (indexPath.section ==5){
-            return 60;
-        }
+    if (indexPath.section == 0){
+        return 69;
     }
-    else{
-        if (indexPath.section == 0){
-            return 69;
+    else if (indexPath.section == 1){
+        return 104;
+    }
+    else if (indexPath.section ==2 || indexPath.section == 3){
+        return 44;
+    }
+    else {
+        if (self.totalSections != 7) {
+            if (indexPath.section ==4){
+                return 160;
+            }
+            else if (indexPath.section ==5){
+                return 60;
+            }
         }
-        else if (indexPath.section == 1){
-            return 104;
-        }
-        else if (indexPath.section ==2 || indexPath.section == 4){
-            return 44;
-        }
-        else if (indexPath.section ==3){
-            if (self.firstListing) {
+        else{
+            if (indexPath.section ==4){
                 return 44;
             }
-            else{
-                if (indexPath.row == 0) {
-                    return 115;
-                }
-                else{
-                    return 44;
-                }
+            else if (indexPath.section ==5){
+                return 160;
             }
-        }
-        else if (indexPath.section ==5){
-            return 160;
-        }
-        else if (indexPath.section ==6){
-            return 60;
+            else if (indexPath.section ==6){
+                return 60;
+            }
         }
     }
 
@@ -1222,7 +1192,7 @@
                              completion:nil];
         }
     }
-    else if (textField == self.quantityField){
+    else if (textField == self.quantityField || textField == self.secondQuantityField){
         NSString *check = [textField.text stringByReplacingOccurrencesOfString:@"0" withString:@""];
         
         if ([check isEqualToString:@""] || [check isEqualToString:@"1"]) {
@@ -1233,15 +1203,25 @@
         if (([textField.text intValue] == 1 || [textField.text isEqualToString:@""]) && [self.chooseSize.text isEqualToString:@"Multiple"]) {
             self.chooseSize.text = @"Select";
         }
+        else if ([textField.text intValue] != 1 && ![textField.text isEqualToString:@""] && !self.oldSystemListing) {
+            [self showAlertWithTitle:@"Multiple Quantities" andMsg:@"Right now you can only advertise 1 item per listing\n\nWe're working on adding support for multiple sizes & quantities on one listing in the next couple of weeks\n\nIn the meantime please create another listing for your other item"];
+            textField.text = @"";
+        }
+        
+        //update the global quantity number
+        if ([textField.text isEqualToString:@""]) {
+            self.quantityEntered = 1;
+        }
+        else{
+            self.quantityEntered = [textField.text intValue];
+        }
         
         //check if we should reenable instant buy
-        if ([textField.text intValue] == 1 || [textField.text isEqualToString:@""]) {
-            [self reenableBuyNow];
-        }
-        else if(!self.firstListing){
-            self.instantBuyFooterLabel.text = @"Buy Now unavailable for multiple quantities";
-            [self disableBuyNow];
-        }
+//        if ([textField.text intValue] == 1 || [textField.text isEqualToString:@""]) {
+//            [self reenableBuyNow];
+//        }
+//        self.instantBuyFooterLabel.text = @"Buy Now unavailable for multiple quantities";
+//        [self disableBuyNow];
     }
 }
 -(void)textViewDidEndEditing:(UITextView *)textView{
@@ -1303,6 +1283,7 @@
     [self.payField resignFirstResponder];
     [self.itemTitleTextField resignFirstResponder];
     [self.quantityField resignFirstResponder];
+    [self.secondQuantityField resignFirstResponder];
 }
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
@@ -1881,6 +1862,7 @@
     self.quantityField.inputAccessoryView = keyboardToolbar;
     self.payField.inputAccessoryView = keyboardToolbar;
     self.descriptionField.inputAccessoryView = keyboardToolbar;
+    self.secondQuantityField.inputAccessoryView = keyboardToolbar;
     
 }
 
@@ -1905,118 +1887,18 @@
     
     if ([self.selection isEqualToString:@"category"]){
         
-        [self.instantBuyFooterLabel setHidden:YES];
-        
         //reset quantity field so buy now can be switched on if poss
         self.quantityField.text = @"";
+        self.quantityEntered = 1;
         
-        
-        //if we're hiding shipping cell from a previous Proxy selection
-        //unhide it and tell vc its not hidden anymore
-        //and add it back in w/ animation or reload table view
-        
-        //reset hidden cells - shipping, price & size
-        if (self.shippingCellHidden) {
-            self.shippingCellHidden = NO;
-            self.buyRows++;
-            NSIndexPath *indexPath;
-
-            if (self.firstListing) {
-                indexPath = [NSIndexPath indexPathForRow:0 inSection:3];
-            }
-            else{
-                indexPath = [NSIndexPath indexPathForRow:1 inSection:3];
-            }
-            [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-        }
-        
-        if (self.sizeCellHidden) {
-            self.sizeCellHidden = NO;
-            self.mainRows++;
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:2];
-            [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-        }
-        
-        if (self.priceCellHidden) {
-            
-            if (self.mainRows == 2) {
-                self.priceCellHidden = NO;
-                self.mainRows++;
-                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:2];
-                [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-            }
-            else if (self.mainRows == 3){
-                self.priceCellHidden = NO;
-                self.mainRows++;
-                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:3 inSection:2];
-                [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-            }
-        }
-
-        if ([selectionString isEqualToString:@"Accessories"] || [selectionString isEqualToString:@"Proxy"]) {
-            self.chooseSize.text = @"";
-            
-            if (!self.sizeCellHidden) {
-                self.sizeCellHidden = YES;
-                self.mainRows--;
-                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:2];
-                [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-            }
-            
-            if ([selectionString isEqualToString:@"Proxy"]) {
-                
-                if (!self.shippingCellHidden) {
-                    //hide shipping cell regardless but
-                    //1) for first listing its at a different index path
-                    //2) when not first listing also need to show a label in footer
-                    self.shippingCellHidden = YES;
-                    
-                    if (self.firstListing) {
-                        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:3];
-                        self.buyRows--;
-                        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-                    }
-                    else{
-                        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:3];
-                        self.buyRows--;
-                        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-                        
-                        self.instantBuyFooterLabel.text = @"Buy Now unavailable for Proxies";
-                        [self.instantBuyFooterLabel setHidden:NO];
-                    }
-                }
-                
-                //hide price too
-                if (!self.priceCellHidden) {
-                    
-                    if (self.mainRows == 3) {
-                        self.priceCellHidden = YES;
-                        self.mainRows--;
-                        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:2];
-                        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-                    }
-                    else if (self.mainRows == 4){
-                        self.priceCellHidden = YES;
-                        self.mainRows--;
-                        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:3 inSection:2];
-                        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-                    }
-                }
-            }
-        }
-        else{
-            self.chooseSize.text = @"Select";
-        }
+        self.chooseSize.text = @"";
         
         //don't require 2 images for a proxy
         if ([selectionString isEqualToString:@"Proxy"]) {
-            self.ignore2Pics = YES;
+            [self setupProxyCells];
             
-            //disable instant buy for proxy category
-            if (!self.firstListing) {
-                self.instantBuyFooterLabel.text = @"Buy Now unavailable for Proxies";
-                [self disableBuyNow];
-            }
+            //setup images cell
+            self.ignore2Pics = YES;
         
             if (self.photostotal >= 2) {
                 self.imgFooterLabel.text = @"Pro tip: Hold down on images to rearrange";
@@ -2027,13 +1909,14 @@
             [self.imgFooterView setNeedsDisplay];
             
         }
+        else if ([selectionString isEqualToString:@"Accessories"]){
+            [self setupAccessoryCells];
+        }
         else{
-            self.ignore2Pics = NO;
-            [self.buySwitch setEnabled:YES];
+            [self setupClothingFootwearCells];
             
-            if (self.buyButtonWasLastOn) {
-                [self.buySwitch setOn:YES];
-            }
+            //setup pics cell
+            self.ignore2Pics = NO;
             
             if (self.photostotal >= 2) {
                 self.imgFooterLabel.text = @"Pro tip: Hold down on images to rearrange";
@@ -2041,7 +1924,6 @@
             else{
                 self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
             }
-            
             [self.imgFooterView setNeedsDisplay];
         }
         
@@ -2056,7 +1938,7 @@
         
         if (array) {
             if (array.count == 1) {
-                [self reenableBuyNow];
+//                [self reenableBuyNow];
                 
                 if ([array[0] isKindOfClass:[NSString class]]) {
                     if ([array[0] isEqualToString:@"Other"]) {
@@ -2077,56 +1959,53 @@
             }
             else if (array.count>1){
                 //disable buy now
-                if (!self.firstListing) {
-                    self.instantBuyFooterLabel.text = @"Buy Now unavailable for multiple quantities";
-                    [self disableBuyNow];
-                }
-                
-                self.chooseSize.text = @"Multiple";
-                self.multipleSizeAcronymArray = array;
-                
-                NSMutableArray *placehoderSizesArray = [NSMutableArray array];
-                
-                //remove the UK and convert to longer text if clothing size
-                for (id size in array) {
-                    if ([size isKindOfClass:[NSString class]]) {
-                        if ([size isEqualToString:@"XXS"]){
-                            [placehoderSizesArray addObject:@"XXSmall"];
-                        }
-                        else if ([size isEqualToString:@"XS"]){
-                            [placehoderSizesArray addObject:@"XSmall"];
-                        }
-                        else if ([size isEqualToString:@"S"]){
-                            [placehoderSizesArray addObject:@"Small"];
-                        }
-                        else if ([size isEqualToString:@"M"]){
-                            [placehoderSizesArray addObject:@"Medium"];
-                        }
-                        else if ([size isEqualToString:@"L"]){
-                            [placehoderSizesArray addObject:@"Large"];
-                        }
-                        else if ([size isEqualToString:@"XL"]){
-                            [placehoderSizesArray addObject:@"XLarge"];
-                        }
-                        else if ([size isEqualToString:@"XXL"]){
-                            [placehoderSizesArray addObject:@"XXLarge"];
-                        }
-                        else{
-                            [placehoderSizesArray addObject:size];
-                        }
-                    }
-                    else{
-                        //multiple shoe sizes returned
-                        NSString *shoeString = [NSString stringWithFormat:@"%@", size];
-                        NSString *shoeSize = [[shoeString stringByReplacingOccurrencesOfString:@"UK " withString:@""] stringByReplacingOccurrencesOfString:@"US " withString:@""];
-                        NSLog(@"add shoe size to array %@", shoeSize);
-                        [placehoderSizesArray addObject:shoeSize];
-                    }
-                }
-                
-                NSLog(@"placeholder sizes array %@", placehoderSizesArray);
-                
-                self.multipleSizeArray = placehoderSizesArray;
+//                self.instantBuyFooterLabel.text = @"Buy Now unavailable for multiple quantities";
+//
+//                self.chooseSize.text = @"Multiple";
+//                self.multipleSizeAcronymArray = array;
+//
+//                NSMutableArray *placehoderSizesArray = [NSMutableArray array];
+//
+//                //remove the UK and convert to longer text if clothing size
+//                for (id size in array) {
+//                    if ([size isKindOfClass:[NSString class]]) {
+//                        if ([size isEqualToString:@"XXS"]){
+//                            [placehoderSizesArray addObject:@"XXSmall"];
+//                        }
+//                        else if ([size isEqualToString:@"XS"]){
+//                            [placehoderSizesArray addObject:@"XSmall"];
+//                        }
+//                        else if ([size isEqualToString:@"S"]){
+//                            [placehoderSizesArray addObject:@"Small"];
+//                        }
+//                        else if ([size isEqualToString:@"M"]){
+//                            [placehoderSizesArray addObject:@"Medium"];
+//                        }
+//                        else if ([size isEqualToString:@"L"]){
+//                            [placehoderSizesArray addObject:@"Large"];
+//                        }
+//                        else if ([size isEqualToString:@"XL"]){
+//                            [placehoderSizesArray addObject:@"XLarge"];
+//                        }
+//                        else if ([size isEqualToString:@"XXL"]){
+//                            [placehoderSizesArray addObject:@"XXLarge"];
+//                        }
+//                        else{
+//                            [placehoderSizesArray addObject:size];
+//                        }
+//                    }
+//                    else{
+//                        //multiple shoe sizes returned
+//                        NSString *shoeString = [NSString stringWithFormat:@"%@", size];
+//                        NSString *shoeSize = [[shoeString stringByReplacingOccurrencesOfString:@"UK " withString:@""] stringByReplacingOccurrencesOfString:@"US " withString:@""];
+//                        NSLog(@"add shoe size to array %@", shoeSize);
+//                        [placehoderSizesArray addObject:shoeSize];
+//                    }
+//                }
+//
+//                NSLog(@"placeholder sizes array %@", placehoderSizesArray);
+//
+//                self.multipleSizeArray = placehoderSizesArray;
             }
         }
         else{
@@ -2137,12 +2016,13 @@
     //only change the quantity if it hasn't been entered already
     if ((self.multipleSizeArray.count > 0 && [self.quantityField.text isEqualToString:@""]) || [self.quantityField.text intValue] < self.multipleSizeArray.count) {
         self.quantityField.text = [NSString stringWithFormat:@"%lu", (unsigned long)self.multipleSizeArray.count];
+        self.quantityEntered = [self.quantityField.text intValue];
     }
 }
 
 - (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    if (section == 0 || section == 2) {
+    if (section == 0 || section == 2 || section == 4) {
         return 0.01;
     }
     else if (section == 1) {
@@ -2153,22 +2033,22 @@
 
 - (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
     
-    if (self.hideInstantBuy) {
-        if (section != 1 && section != 4) {
-            UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
-            header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
-        }
-    }
-    else{
-        if (section != 1 && section != 5 && section != 4) {
-            UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
-            header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
-        }
+    if (section != 1 && section != 5 && section != 4) {
+        UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
+        header.contentView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
     }
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
     if (section == 1) {
+        return 32;
+    }
+    //if we're hiding the prices cell then we don't need a slightly bigger footer!
+    else if (section == 3 && self.totalSections == 7){
+        //when a user is editing a listing made with old system we can't enforce fees so don't mention them
+        return 50;
+    }
+    else if (section == 3 && self.totalSections != 7){
         return 32;
     }
     else{
@@ -2211,7 +2091,48 @@
         
         return self.imgFooterView;
     }
+    else if (section == 3) {
+        UIView *containerView = [[UIView alloc]initWithFrame:CGRectMake(10, 0, self.view.frame.size.width-20, 45)];
+        
+        //tap to explain what a tagged pic is to bottom half of header
+        UIButton *tagButton = [[UIButton alloc]initWithFrame:CGRectMake(10, 0,containerView.frame.size.width, 35)];
+        [tagButton addTarget:self action:@selector(learnMoreFees) forControlEvents:UIControlEventTouchUpInside];
+        [containerView addSubview:tagButton];
+        
+        containerView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+        
+        UILabel *lblSectionName = [[UILabel alloc] initWithFrame:CGRectMake(0, 0,containerView.frame.size.width, 30)];
+        lblSectionName.font = [UIFont fontWithName:@"PingFangSC-Medium" size:12];
+        lblSectionName.textColor = [UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0];
+        
+        NSMutableAttributedString *labelString = [[NSMutableAttributedString alloc] initWithString:@"Learn more about our Seller Protection and fees"];
+        
+        lblSectionName.attributedText = labelString;
+        
+        lblSectionName.numberOfLines = 1;
+        lblSectionName.textAlignment = NSTextAlignmentCenter;
+        lblSectionName.lineBreakMode = NSLineBreakByWordWrapping;
+        lblSectionName.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+
+        [lblSectionName sizeToFit];
+        [containerView addSubview:lblSectionName];
+        
+        lblSectionName.center = containerView.center;
+        
+        return containerView;
+    }
     return nil;
+}
+
+-(NSMutableAttributedString *)modifyHeaderString: (NSMutableAttributedString *)mainString setFontForText:(NSString*) textToFind
+{
+    NSRange range = [mainString.mutableString rangeOfString:textToFind options:NSCaseInsensitiveSearch];
+    
+    if (range.location != NSNotFound) {
+        [mainString addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"PingFangSC-Medium" size:12] range:range];
+    }
+    
+    return mainString;
 }
 
 -(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
@@ -2232,6 +2153,7 @@
         
         NSMutableAttributedString *labelString = [[NSMutableAttributedString alloc] initWithString:@"BUMP encourages tagged photos to keep buyers safe, untagged items may be removed\nWhat's a tagged photo?"];
         [self modifyString:labelString setColorForText:@"What's a tagged photo?" withColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+        [self modifyHeaderString:labelString setFontForText:@"What's a tagged photo?"];
         
         lblSectionName.attributedText = labelString;
         
@@ -2246,71 +2168,47 @@
         
         return containerView;
     }
-    else if (!self.hideInstantBuy && section == 4){
-        
-        if (!self.instantBuyFooterView) {
-            self.instantBuyFooterView = [[UIView alloc]initWithFrame:CGRectMake(10, 0, self.view.frame.size.width-20, 32)];
-            self.instantBuyFooterView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
 
-            
-            self.instantBuyFooterLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0,self.instantBuyFooterView.frame.size.width, 32)];
-            self.instantBuyFooterLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
-            self.instantBuyFooterLabel.textColor = [UIColor lightGrayColor];
-            self.instantBuyFooterLabel.text = @"Buy Now unavailable for Proxies";
-            
-            self.instantBuyFooterLabel.numberOfLines = 1;
-            self.instantBuyFooterLabel.textAlignment = NSTextAlignmentCenter;
-            self.instantBuyFooterLabel.lineBreakMode = NSLineBreakByWordWrapping;
-            self.instantBuyFooterLabel.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
-//            [self.instantBuyFooterLabel sizeToFit];
-            
-            //this is for when we're setting up a listing
-            if ([self.chooseCategroy.text isEqualToString:@"Proxy"] && !self.firstListing) {
-                [self.instantBuyFooterLabel setHidden:NO];
-            }
-            else if([[self.listing objectForKey:@"quantity"]intValue] > 1){
-                self.instantBuyFooterLabel.text = @"Buy Now unavailable for multiple quantities";
-                [self.instantBuyFooterLabel setHidden:NO];
+//    else if (section == 4){
+//
+//        if (!self.instantBuyFooterView) {
+//            self.instantBuyFooterView = [[UIView alloc]initWithFrame:CGRectMake(10, 0, self.view.frame.size.width-20, 32)];
+//            self.instantBuyFooterView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+//
+//
+//            self.instantBuyFooterLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0,self.instantBuyFooterView.frame.size.width, 32)];
+//            self.instantBuyFooterLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
+//            self.instantBuyFooterLabel.textColor = [UIColor lightGrayColor];
+//            self.instantBuyFooterLabel.text = @"Buy Now unavailable for Proxies";
+//
+//            self.instantBuyFooterLabel.numberOfLines = 1;
+//            self.instantBuyFooterLabel.textAlignment = NSTextAlignmentCenter;
+//            self.instantBuyFooterLabel.lineBreakMode = NSLineBreakByWordWrapping;
+//            self.instantBuyFooterLabel.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+////            [self.instantBuyFooterLabel sizeToFit];
+//
+//            //this is for when we're setting up a listing
+//            if ([self.chooseCategroy.text isEqualToString:@"Proxy"]) {
+//                [self.instantBuyFooterLabel setHidden:NO];
+//            }
+//            else if([[self.listing objectForKey:@"quantity"]intValue] > 1){
+//                self.instantBuyFooterLabel.text = @"Buy Now unavailable for multiple quantities";
+//                [self.instantBuyFooterLabel setHidden:NO];
+//
+//            }
+//            else{
+//                [self.instantBuyFooterLabel setHidden:YES];
+//            }
+//
+//            [self.instantBuyFooterView addSubview:self.instantBuyFooterLabel];
+//            self.instantBuyFooterLabel.center = self.instantBuyFooterView.center;
+//        }
+//
+//        return self.instantBuyFooterView;
+//
+//    }
 
-            }
-            else{
-                [self.instantBuyFooterLabel setHidden:YES];
-            }
-            
-            [self.instantBuyFooterView addSubview:self.instantBuyFooterLabel];
-            self.instantBuyFooterLabel.center = self.instantBuyFooterView.center;
-        }
-        
-        return self.instantBuyFooterView;
-        
-    }
-    else if (self.hideInstantBuy && section == 4){
-
-        if (!self.colourContainerView) {
-            self.colourContainerView = [[UIView alloc]initWithFrame:CGRectMake(10, 0, self.view.frame.size.width-20, 32)];
-            self.colourContainerView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
-
-            if (!self.dismissColourButton) {
-                //            NSLog(@"dismiss colour button");
-                self.dismissColourButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0,self.colourContainerView.frame.size.width, 32)];
-                [self.dismissColourButton addTarget:self action:@selector(dismissColour) forControlEvents:UIControlEventTouchUpInside];
-                self.dismissColourButton.alpha = 0.0;
-
-                self.dismissColourButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:12];
-
-                [self.dismissColourButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
-
-                [self.dismissColourButton setTitle:@"Dismiss" forState:UIControlStateNormal];
-                self.dismissColourButton.titleLabel.numberOfLines = 1;
-                self.dismissColourButton.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
-                [self.colourContainerView addSubview:self.dismissColourButton];
-                self.dismissColourButton.center = self.colourContainerView.center;
-            }
-        }
-
-        return self.colourContainerView;
-    }
-    else if (!self.hideInstantBuy && section == 5){
+    else if (section == 5){
         
         if (!self.colourContainerView) {
             self.colourContainerView = [[UIView alloc]initWithFrame:CGRectMake(10, 0, self.view.frame.size.width-20, 32)];
@@ -2424,22 +2322,29 @@
         [self showAlertWithTitle:@"2 Photos Needed" andMsg:@"To help fight scammers and strengthen the community please add at least 2 tagged photos to your listing"];
         [self.longButton setEnabled:YES];
     }
-    else if ((self.firstListing || self.buySwitch.isOn) && [self.selectShippingLabel.text isEqualToString:@"Select"] && ![self.chooseCategroy.text isEqualToString:@"Proxy"]){
+    else if ([self.selectShippingLabel.text isEqualToString:@"Select"] && ![self.chooseCategroy.text isEqualToString:@"Proxy"]){
         [self showAlertWithTitle:@"Shipping Prices" andMsg:@"Add Shipping prices to your listing"];
         [self.longButton setEnabled:YES];
     }
-    else if (self.buySwitch.isOn && (!self.merchantId || [self.merchantId isEqualToString:@"(null)"])){
+    else if ([self.choosePaymentMethod.text isEqualToString:@"Add"] && ![self.chooseCategroy.text isEqualToString:@"Proxy"] && self.buyRows == 3 && !self.oldSystemListing){
+        [Answers logCustomEventWithName:@"No payment method listing error"
+                       customAttributes:@{}];
+        
+        [self showAlertWithTitle:@"Connect PayPal" andMsg:@"Please connect your PayPal account to get paid quickly & securely when your item sells"];
+        [self.longButton setEnabled:YES];
+    }
+    else if ((!self.merchantId || [self.merchantId isEqualToString:@"(null)"] ) && ![self.chooseCategroy.text isEqualToString:@"Proxy"]  && !self.oldSystemListing){
         [self showAlertWithTitle:@"PayPal Error" andMsg:@"Please close the listing and try to list your item again. If this happens again please message Support and we'll resolve it asap"];
         [self.longButton setEnabled:YES];
         
         [Answers logCustomEventWithName:@"No merchantId listing error"
                        customAttributes:@{}];
     }
-    else if ((self.firstListing || self.buySwitch.isOn) && ([self.country isEqualToString:@""] || [self.countryCode isEqualToString:@""]) && ![self.chooseCategroy.text isEqualToString:@"Proxy"]){
+    else if (([self.country isEqualToString:@""] || [self.countryCode isEqualToString:@""]) && ![self.chooseCategroy.text isEqualToString:@"Proxy"]){
         [Answers logCustomEventWithName:@"No Country listing error"
                        customAttributes:@{}];
 
-        [self showAlertWithTitle:@"Country Empty" andMsg:@"Make sure you've added your location in the Shipping options"];
+        [self showAlertWithTitle:@"Country Missing" andMsg:@"Make sure you've added your location in the Shipping options"];
         [self.longButton setEnabled:YES];
     }
     //separated out accessory & proxy listings since proxies don't need a price now
@@ -2940,11 +2845,11 @@
             [forSaleItem setObject:imageFile8 forKey:@"image8"];
         }
                 
-        int quantInt = 1;
+        int quantInt = self.quantityEntered;
         
-        if (![self.quantityField.text isEqualToString:@""]) {
-            quantInt = (int)[self.quantityField.text intValue];
-        }
+//        if (![self.quantityField.text isEqualToString:@""]) {
+//            quantInt = (int)[self.quantityField.text intValue];
+//        }
         
         [forSaleItem setObject:@(quantInt) forKey:@"quantity"];
         
@@ -2955,39 +2860,42 @@
         //global postage price
         //already set the country and country code slightly further up if needs be
         
-        if (self.firstListing) {
-            //don't have merchantId yet - save everything else so we're able to turn this instant buy on if user connects pp in next step
-            [forSaleItem setObject:@"NO" forKey:@"instantBuy"];
+        //first check if this is an old style listing where buy now was not mandatory
+        //if it is we can check if the user has connected their paypal since creating and save that to the listing
+        
+        if (self.oldSystemListing && [self.choosePaymentMethod.text isEqualToString:@"Connected"] && self.merchantId && self.editMode) {
             
-            [forSaleItem setObject:self.selectShippingLabel.text forKey:@"shippingSummary"];
-            [forSaleItem setObject:@(self.nationalPrice) forKey:@"nationalShippingPrice"];
-            
-            if (self.globalEnabled) {
-                [forSaleItem setObject:@"YES" forKey:@"globalShipping"];
-                [forSaleItem setObject:@(self.globalPrice) forKey:@"globalShippingPrice"];
-            }
-            else{
-                [forSaleItem setObject:@"NO" forKey:@"globalShipping"];
-            }
-        }
-        else if (self.buySwitch.isOn) {
-            NSLog(@"merchantId before save: %@", self.merchantId);
+            NSLog(@"merchantId before save for old style listing thats been updated: %@", self.merchantId);
+
             [forSaleItem setObject:self.merchantId forKey:@"paypalMerchantId"];
             [forSaleItem setObject:@"YES" forKey:@"instantBuy"];
             
-            [forSaleItem setObject:self.selectShippingLabel.text forKey:@"shippingSummary"];
-            [forSaleItem setObject:@(self.nationalPrice) forKey:@"nationalShippingPrice"];
-            
-            if (self.globalEnabled) {
-                [forSaleItem setObject:@"YES" forKey:@"globalShipping"];
-                [forSaleItem setObject:@(self.globalPrice) forKey:@"globalShippingPrice"];
-            }
-            else{
-                [forSaleItem setObject:@"NO" forKey:@"globalShipping"];
+            if (!self.feeFree) {
+                [forSaleItem setObject:@"YES" forKey:@"chargeFee"];
             }
         }
+        else if(!self.oldSystemListing){
+            
+            //just auto save as instant buy
+            NSLog(@"merchantId before save for normal instant buy listing: %@", self.merchantId);
+            [forSaleItem setObject:self.merchantId forKey:@"paypalMerchantId"];
+            [forSaleItem setObject:@"YES" forKey:@"instantBuy"];
+            
+            if (!self.feeFree) {
+                [forSaleItem setObject:@"YES" forKey:@"chargeFee"];
+            }
+        }
+        
+        //shipping is now compulsary for old & new so save here
+        [forSaleItem setObject:self.selectShippingLabel.text forKey:@"shippingSummary"];
+        [forSaleItem setObject:@(self.nationalPrice) forKey:@"nationalShippingPrice"];
+        
+        if (self.globalEnabled) {
+            [forSaleItem setObject:@"YES" forKey:@"globalShipping"];
+            [forSaleItem setObject:@(self.globalPrice) forKey:@"globalShippingPrice"];
+        }
         else{
-            [forSaleItem setObject:@"NO" forKey:@"instantBuy"];
+            [forSaleItem setObject:@"NO" forKey:@"globalShipping"];
         }
         
         
@@ -3041,34 +2949,6 @@
                                     [[UIApplication sharedApplication] cancelLocalNotification:notification] ;
                                 }
                             }
-                            
-//                            //local notifications set up
-//                            NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-//                            dayComponent.day = 1;
-//                            NSCalendar *theCalendar = [NSCalendar currentCalendar];
-//                            NSDate *dateToFire = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
-//
-//                            // Create new date
-//                            NSDateComponents *components1 = [theCalendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
-//                                                                           fromDate:dateToFire];
-//
-//                            NSDateComponents *components3 = [[NSDateComponents alloc] init];
-//
-//                            [components3 setYear:components1.year];
-//                            [components3 setMonth:components1.month];
-//                            [components3 setDay:components1.day];
-//
-//                            [components3 setHour:20];
-//
-//                            // Generate a new NSDate from components3.
-//                            NSDate * combinedDate = [theCalendar dateFromComponents:components3];
-//
-//                            UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-//                            [localNotification setAlertBody:@"Congrats on your first listing! Want to sell faster? Try searching through wanted listings on BUMP"]; //make sure this matches the app delegate local notifications handler method
-//                            [localNotification setFireDate: combinedDate];
-//                            [localNotification setTimeZone: [NSTimeZone defaultTimeZone]];
-//                            [localNotification setRepeatInterval: 0];
-//                            [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
                         }
 
                     }
@@ -3125,15 +3005,7 @@
                 else{
                     //go ahead and save listing in home VC
                     
-                    //turn off connect paypal pop up if user is listing a proxy since wont be able to add instant buy to it
-                    if ([self.chooseCategroy.text isEqualToString:@"Proxy"] && self.firstListing) {
-                        NSLog(@"listing a proxy, turn off paypal connect prompt");
-                        self.firstListing = NO;
-                        [[PFUser currentUser]setObject:@"YES" forKey:@"showPPConnect"];
-                        [[PFUser currentUser]saveInBackground];
-                    }
-                    
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne,[NSNumber numberWithBool:self.firstListing]]];
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne]];
                     
                     AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
                     appDelegate.tabBarController.selectedIndex = 0;
@@ -3160,14 +3032,7 @@
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"I Agree" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         
-        if ([self.chooseCategroy.text isEqualToString:@"Proxy"] && self.firstListing) {
-            NSLog(@"listing a proxy, turn off paypal connect prompt");
-            self.firstListing = NO;
-            [[PFUser currentUser]setObject:@"YES" forKey:@"showPPConnect"]; //this means next time we'll attempt to setup the connect dialog
-            [[PFUser currentUser]saveInBackground];
-        }
-        
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne,[NSNumber numberWithBool:self.firstListing]]];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne]];
         
         AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
         appDelegate.tabBarController.selectedIndex = 0;
@@ -3712,60 +3577,33 @@
     if ([self.chooseCategroy.text isEqualToString:@"Proxy"]) {
         self.ignore2Pics = YES;
         
-        [self.buySwitch setOn:NO];
-        [self.buySwitch setEnabled:NO];
-        
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            self.shippingCellHidden = YES;
+            [self setupProxyCells];
             
-            NSIndexPath *indexPath;
-            
-            if (self.firstListing) {
-                indexPath = [NSIndexPath indexPathForRow:0 inSection:3];
-            }
-            else{
-                indexPath = [NSIndexPath indexPathForRow:1 inSection:3];
-            }
-            
-            self.buyRows--;
-            [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+            //so we don't reset info when setting up the cells
+            self.listingSetup = YES;
         });
-        
-        //usually it isn't setup by now but in case it is, unhide it
-        if (self.instantBuyFooterView && self.instantBuyFooterLabel) {
-            [self.instantBuyFooterLabel setHidden:NO];
-        }
-        
-        //hide price too
-        if (!self.priceCellHidden) {
-            
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                if (self.mainRows == 3) {
-                    self.priceCellHidden = YES;
-                    self.mainRows--;
-                    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:2];
-                    [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-                }
-                else if (self.mainRows == 4){
-                    self.priceCellHidden = YES;
-                    self.mainRows--;
-                    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:3 inSection:2];
-                    [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-                }
-            });
-        }
     }
     
-    if([self.chooseCategroy.text isEqualToString:@"Accessories"] || [self.chooseCategroy.text isEqualToString:@"Proxy"]){
+    else if([self.chooseCategroy.text isEqualToString:@"Accessories"]){
         
         //need to delay until table view is loaded
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            if (!self.sizeCellHidden) {
-                self.sizeCellHidden = YES;
-                self.mainRows--;
-                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:2];
-                [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-            }
+            [self setupAccessoryCells];
+            
+            //so we don't reset info when setting up the cells
+            self.listingSetup = YES;
+        });
+    }
+    
+    else{
+        
+        //need to delay until table view is loaded
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            [self setupClothingFootwearCells];
+            
+            //so we don't reset info when setting up the cells
+            self.listingSetup = YES;
         });
     }
     
@@ -3778,6 +3616,26 @@
         if ([self.chooseCategroy.text isEqualToString:@"Tops"] || [self.chooseCategroy.text isEqualToString:@"Bottoms"] || [self.chooseCategroy.text isEqualToString:@"Outerwear"]) {
             self.multipleSizeAcronymArray = [self.listing objectForKey:@"sizeArray"];
         }
+        
+        //don't show option to add payment method
+        //also hide seller protection footer
+        
+        self.buyRows = 3;
+        self.oldSystemListing = YES;
+        
+        //check if user has enabled Buy Now and whether this listing has it on too
+        if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
+            
+            self.paypalEnabled = YES;
+            self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+            self.choosePaymentMethod.text = @"Connected";
+            
+        }
+        else{
+            self.choosePaymentMethod.text = @"Add";
+        }
+        
+        [self.tableView reloadData];
     }
 
     self.chooseSize.text = sizeLabel;
@@ -3795,10 +3653,35 @@
     if ([self.listing objectForKey:@"quantity"]) {
         int quant = [[self.listing objectForKey:@"quantity"]intValue];
         
+        self.quantityEntered = quant;
+        
         //otherwise just use 1 as the placeholder so can change if user adds multiple sizes
         if (quant > 1) {
             self.quantityField.text = [NSString stringWithFormat:@"%@",[self.listing objectForKey:@"quantity"]];
-            [self disableBuyNow];
+            self.quantityEntered = [[self.listing objectForKey:@"quantity"]intValue];
+            
+            if (!self.oldSystemListing) {
+                //don't show option to add payment method
+                //also hide seller protection footer
+                
+                self.buyRows = 3;
+                self.oldSystemListing = YES;
+                
+                //check if user has enabled Buy Now and whether this listing has it on too
+                if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
+                    
+                    self.paypalEnabled = YES;
+                    self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+                    self.choosePaymentMethod.text = @"Connected";
+                    
+                }
+                else{
+                    self.choosePaymentMethod.text = @"Add";
+                }
+                
+                [self.tableView reloadData];
+            }
+
         }
     }
     
@@ -3819,14 +3702,9 @@
         self.ignore2Pics = YES;
     }
     
-    if ([[self.listing objectForKey:@"instantBuy"]isEqualToString:@"YES"] && [self.listing objectForKey:@"paypalMerchantId"]) {
-        
-        //setup buy part of the listing
-        [self.buySwitch setOn:YES];
-        [self instantBuySwitchChanged:self];
+    //shipping info id required even for old style listings
+    if ([self.listing objectForKey:@"shippingSummary"]) {
         self.selectShippingLabel.text = [self.listing objectForKey:@"shippingSummary"];
-        
-        self.merchantId = [self.listing objectForKey:@"paypalMerchantId"];
         
         if ([[self.listing objectForKey:@"globalShipping"]isEqualToString:@"YES"]) {
             self.globalPrice = [[self.listing objectForKey:@"globalShippingPrice"]floatValue];
@@ -3844,32 +3722,53 @@
         if (self.nationalPrice == 0.00) {
             self.nationalFree = YES;
         }
-        
+    }
+    
+    if ([self.listing objectForKey:@"country"] && [self.listing objectForKey:@"countryCode"]) {
         self.country = [self.listing objectForKey:@"country"];
         self.countryCode = [self.listing objectForKey:@"countryCode"];
     }
-    //user may be editing the listing they first made which was a proxy, if so prefill shipping info
-    else if(self.firstListing){
-        self.selectShippingLabel.text = [self.listing objectForKey:@"shippingSummary"];
+    
+    if ([[self.listing objectForKey:@"instantBuy"]isEqualToString:@"YES"] && [self.listing objectForKey:@"paypalMerchantId"] && [[[PFUser currentUser] objectForKey:@"paypalEnabled"]isEqualToString:@"YES"]) {
         
-        if ([[self.listing objectForKey:@"globalShipping"]isEqualToString:@"YES"]) {
-            self.globalPrice = [[self.listing objectForKey:@"globalShippingPrice"]floatValue];
+        //setup buy part of the listing
+//        [self.buySwitch setOn:YES];
+//        [self instantBuySwitchChanged:self];
+        
+        self.merchantId = [self.listing objectForKey:@"paypalMerchantId"];
+        
+    }
+    else{
+        //buy now not enabled on this listing and its being edited
+        //don't ask user to add a payment method to update the listing
+        //MUST be from the old system as all new listings have instant buy on
+        
+        if (!self.oldSystemListing) {
+            //don't show option to add payment method
+            //also hide seller protection footer
             
-            if (self.globalPrice == 0.00) {
-                self.globalFree = YES;
+            self.buyRows = 3;
+            self.oldSystemListing = YES;
+            
+            //check if user has enabled Buy Now and whether this listing has it on too
+            if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
+                
+                self.paypalEnabled = YES;
+                self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+                self.choosePaymentMethod.text = @"Connected";
+                
             }
+            else{
+                self.choosePaymentMethod.text = @"Add";
+            }
+            
+            [self.tableView reloadData];
         }
-        
-        self.nationalPrice = [[self.listing objectForKey:@"nationalShippingPrice"]floatValue];
-        
-        if (self.nationalPrice == 0.00) {
-            self.nationalFree = YES;
-        }
-        
-        self.country = [self.listing objectForKey:@"country"];
-        self.countryCode = [self.listing objectForKey:@"countryCode"];
-        
-        NSLog(@"here: %@   %@  %@", [self.listing objectForKey:@"shippingSummary"],[self.listing objectForKey:@"nationalShippingPrice"],[self.listing objectForKey:@"globalShippingPrice"]);
+    }
+    
+    //check if fee free
+    if(![self.listing objectForKey:@"chargeFee"] || [[self.listing objectForKey:@"chargeFee"]isEqualToString:@"NO"]){
+        self.feeFree = YES;
     }
 }
 
@@ -3911,7 +3810,7 @@
     }]];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Retry" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [self instantBuySwitchChanged:self];
+        [self enableBuyNow];
     }]];
     
     [self presentViewController:alertView animated:YES completion:nil];
@@ -6357,49 +6256,15 @@
     vc.mainLabelText = @"To prove to buyers that you own the photographed item, simply place something to identify yourself in the photo\n\nThis could be your BUMP username written on a piece of paper, an ID card with your name on it or anything that identifies yourself as the person that took the photo";
     [self presentViewController:vc animated:YES completion:nil];
 }
-- (IBAction)instantBuySwitchChanged:(id)sender {
-    self.somethingChanged = YES;
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:3];
-    
-    if ([self.quantityField.text intValue] > 1) {
-        [self showAlertWithTitle:@"Buy Now Quantity" andMsg:@"Buy Now is currently only available for single quantity listings. If you're selling multiple items please create another listing. We're working on adding support for multiple quantities asap!"];
-        [self.buySwitch setOn:NO];
-        
-        [Answers logCustomEventWithName:@"Instant Buy Alert shown for multiple Quantity listing"
-                       customAttributes:@{}];
-        
-        return;
-    }
-    
-    if (self.cabin && self.listingAsMode) {
-        if (([[self.cabin objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [self.cabin objectForKey:@"paypalMerchantId"]) || self.paypalEnabled) {
-            if (self.buySwitch.isOn) {
-                
-                if (!self.merchantId) {
-                    self.merchantId = [self.cabin objectForKey:@"paypalMerchantId"];
-                }
-                
-                //on
-                if (self.shippingCellHidden) {
-                    self.buyRows++;
-                    [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-                    
-                    //scroll to bottom
-                    [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
-                }
-                
-            }
-            else{
-                //off
-                self.selectShippingLabel.text = @"Select";
 
-                //scroll up slightly
-//                NSIndexPath *indexPath1 = [NSIndexPath indexPathForRow:0 inSection:3];
-//                [self.tableView scrollToRowAtIndexPath:indexPath1 atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
-//
-//                self.buyRows--;
-//                [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+-(void)enableBuyNow{
+    if (self.cabin && self.listingAsMode) {
+        if (([[self.cabin objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [self.cabin objectForKey:@"paypalMerchantId"])) {
+            if (!self.merchantId) {
+                self.merchantId = [self.cabin objectForKey:@"paypalMerchantId"];
             }
+            self.choosePaymentMethod.text = @"Connected";
+            
         }
         else{
             NSLog(@"call partner cloud func");
@@ -6454,64 +6319,32 @@
                         }
                     }
                     
-                    [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:^{
-                        //switch off when we goto merchant onboarding and only switch on if we get the signal from custom url scheme triggered observer
-                        [self.buySwitch setOn:NO];
-                    }];
+                    [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:nil];
                 }
                 else{
                     [self hidHUD];
-                    [self.buySwitch setOn:NO];
                     NSLog(@"error grabbing paypal link %@", error);
                 }
             }];
         }
     }
     else{
-        if (([[[PFUser currentUser] objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]) || self.paypalEnabled) {
-            if (self.buySwitch.isOn) {
-                
-                if (!self.merchantId) {
-                    self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"]; //think this is source of error. We're not using a local var after connecting PP and we call this function before setting it on the user so it ends up being null
-                }
-                
-                //on
-                if (self.shippingCellHidden) {
-                    self.buyRows++;
-                    [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-                    
-                    //scroll to bottom
-                    [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
-                }
+        if ([[[PFUser currentUser] objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]) {
+            
+            //check if user already has PayPal connected (could be editing an old style listing after they'd connected PayPal in Settings)
+            if (!self.merchantId) {
+                self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"]; //think this is source of error. We're not using a local var after connecting PP and we call this function before setting it on the user so it ends up being null
             }
-            else{
-                //off
-
-                if (![[PFUser currentUser]objectForKey:@"seenDisableBuyNow"]) {
-                    [self.buySwitch setOn:YES];
-                    [self showDisablePopup];
-                }
-                else{
-                    //reset shipping prices
-                    self.selectShippingLabel.text = @"Select";
-                    
-                    self.globalFree = NO;
-                    self.nationalFree = NO;
-                    
-                    self.globalPrice = 0.00;
-                    self.nationalPrice = 0.00;
-                }
-                
-//                //scroll up slightly
-//                NSIndexPath *indexPath1 = [NSIndexPath indexPathForRow:0 inSection:3];
-//                [self.tableView scrollToRowAtIndexPath:indexPath1 atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
-//
-//                self.buyRows--;
-//                [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-            }
+            self.choosePaymentMethod.text = @"Connected";
+            
         }
         else{
             NSLog(@"call partner cloud func");
+            
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"paypal_connect_pressed" properties:@{
+                                                                   @"where":@"Create Listing"
+                                                                   }];
             
             //potentially use params here to pass this user's ID for tracking
             [self showHUD];
@@ -6547,7 +6380,7 @@
                     
                     //update user's IC profile so they receive auto message about paypal business account
                     ICMUserAttributes *userAttributes = [ICMUserAttributes new];
-                    userAttributes.customAttributes = @{@"on_paypal_signin" : @YES};
+                    userAttributes.customAttributes = @{@"on_paypal_signin_casual" : @YES};
                     [Intercom updateUser:userAttributes];
                     
                     //trigger PayPal sign in
@@ -6563,21 +6396,238 @@
                         }
                     }
                     
-                    [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:^{
-                        //switch off when we goto merchant onboarding and only switch on if we get the signal from custom url scheme triggered observer
-                        [self.buySwitch setOn:NO];
-                    }];
+                    [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:nil];
                 }
                 else{
                     [self hidHUD];
-                    [self.buySwitch setOn:NO];
                     NSLog(@"error grabbing paypal link %@", error);
                 }
             }];
         }
-
     }
 }
+
+//- (IBAction)instantBuySwitchChanged:(id)sender {
+//    self.somethingChanged = YES;
+//    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:3];
+//
+//    if ([self.quantityField.text intValue] > 1) {
+//        [self showAlertWithTitle:@"Buy Now Quantity" andMsg:@"Buy Now is currently only available for single quantity listings. If you're selling multiple items please create another listing. We're working on adding support for multiple quantities asap!"];
+//        [self.buySwitch setOn:NO];
+//
+//        [Answers logCustomEventWithName:@"Instant Buy Alert shown for multiple Quantity listing"
+//                       customAttributes:@{}];
+//
+//        return;
+//    }
+//
+//    if (self.cabin && self.listingAsMode) {
+//        if (([[self.cabin objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [self.cabin objectForKey:@"paypalMerchantId"]) || self.paypalEnabled) {
+//            if (self.buySwitch.isOn) {
+//
+//                if (!self.merchantId) {
+//                    self.merchantId = [self.cabin objectForKey:@"paypalMerchantId"];
+//                }
+//
+//                //on
+//                if (self.shippingCellHidden) {
+//                    self.buyRows++;
+//                    [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+//
+//                    //scroll to bottom
+//                    [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+//                }
+//
+//            }
+//            else{
+//                //off
+//                self.selectShippingLabel.text = @"Select";
+//
+//                //scroll up slightly
+////                NSIndexPath *indexPath1 = [NSIndexPath indexPathForRow:0 inSection:3];
+////                [self.tableView scrollToRowAtIndexPath:indexPath1 atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+////
+////                self.buyRows--;
+////                [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+//            }
+//        }
+//        else{
+//            NSLog(@"call partner cloud func");
+//
+//            //potentially use params here to pass this user's ID for tracking
+//            [self showHUD];
+//            NSDictionary *params;
+//
+//            if (self.editMode) {
+//                //in edit mode, we trigger this before currency is set - so grab from listing
+//                params = @{
+//                           @"email": [self.cabin objectForKey:@"email"],
+//                           @"currency":[self.listing objectForKey:@"currency"],
+//                           @"trackingId":self.cabin.objectId
+//                           };
+//            }
+//            else{
+//                params = @{
+//                           @"email": [self.cabin objectForKey:@"email"],
+//                           @"currency":self.currency,
+//                           @"trackingId":self.cabin.objectId
+//                           };
+//            }
+//
+//            NSLog(@"params going to partner %@", params);
+//            [PFCloud callFunctionInBackground:@"callPartnerAPI" withParameters:params block:^(NSString *urlString, NSError *error) {
+//                if (!error) {
+//                    [self hidHUD];
+//                    urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+//                    NSLog(@"URL: %@", urlString);
+//
+//                    if (!self.addedPayPalObservers) {
+//                        self.addedPayPalObservers = YES;
+//                        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalURLReturned:) name:@"paypalOnboardingReturn" object:nil];
+//                    }
+//
+//                    //update user's IC profile so they receive auto message about paypal business account
+//                    ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+//                    userAttributes.customAttributes = @{@"on_paypal_signin" : @YES};
+//                    [Intercom updateUser:userAttributes];
+//
+//                    //trigger PayPal sign in
+//                    if (!self.paypalSafariView) {
+//                        self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
+//                        self.paypalSafariView.delegate = self;
+//                        if (@available(iOS 11.0, *)) {
+//                            self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+//                        }
+//
+//                        if (@available(iOS 10.0, *)) {
+//                            self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+//                        }
+//                    }
+//
+//                    [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:^{
+//                        //switch off when we goto merchant onboarding and only switch on if we get the signal from custom url scheme triggered observer
+//                        [self.buySwitch setOn:NO];
+//                    }];
+//                }
+//                else{
+//                    [self hidHUD];
+//                    [self.buySwitch setOn:NO];
+//                    NSLog(@"error grabbing paypal link %@", error);
+//                }
+//            }];
+//        }
+//    }
+//    else{
+//        if (([[[PFUser currentUser] objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]) || self.paypalEnabled) {
+//            if (self.buySwitch.isOn) {
+//
+//                if (!self.merchantId) {
+//                    self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"]; //think this is source of error. We're not using a local var after connecting PP and we call this function before setting it on the user so it ends up being null
+//                }
+//
+//                //on
+//                if (self.shippingCellHidden) {
+//                    self.buyRows++;
+//                    [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+//
+//                    //scroll to bottom
+//                    [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+//                }
+//            }
+//            else{
+//                //off
+//
+//                if (![[PFUser currentUser]objectForKey:@"seenDisableBuyNow"]) {
+//                    [self.buySwitch setOn:YES];
+//                    [self showDisablePopup];
+//                }
+//                else{
+//                    //reset shipping prices
+//                    self.selectShippingLabel.text = @"Select";
+//
+//                    self.globalFree = NO;
+//                    self.nationalFree = NO;
+//
+//                    self.globalPrice = 0.00;
+//                    self.nationalPrice = 0.00;
+//                }
+//
+////                //scroll up slightly
+////                NSIndexPath *indexPath1 = [NSIndexPath indexPathForRow:0 inSection:3];
+////                [self.tableView scrollToRowAtIndexPath:indexPath1 atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+////
+////                self.buyRows--;
+////                [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+//            }
+//        }
+//        else{
+//            NSLog(@"call partner cloud func");
+//
+//            //potentially use params here to pass this user's ID for tracking
+//            [self showHUD];
+//            NSDictionary *params;
+//
+//            if (self.editMode) {
+//                //in edit mode, we trigger this before currency is set - so grab from listing
+//                params = @{
+//                           @"email": [[PFUser currentUser]objectForKey:@"email"],
+//                           @"currency":[self.listing objectForKey:@"currency"],
+//                           @"trackingId":[PFUser currentUser].objectId
+//                           };
+//            }
+//            else{
+//                params = @{
+//                           @"email": [[PFUser currentUser]objectForKey:@"email"],
+//                           @"currency":self.currency,
+//                           @"trackingId":[PFUser currentUser].objectId
+//                           };
+//            }
+//
+//            NSLog(@"params going to partner %@", params);
+//            [PFCloud callFunctionInBackground:@"callPartnerAPI" withParameters:params block:^(NSString *urlString, NSError *error) {
+//                if (!error) {
+//                    [self hidHUD];
+//                    urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+//                    NSLog(@"URL: %@", urlString);
+//
+//                    if (!self.addedPayPalObservers) {
+//                        self.addedPayPalObservers = YES;
+//                        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalURLReturned:) name:@"paypalOnboardingReturn" object:nil];
+//                    }
+//
+//                    //update user's IC profile so they receive auto message about paypal business account
+//                    ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+//                    userAttributes.customAttributes = @{@"on_paypal_signin" : @YES};
+//                    [Intercom updateUser:userAttributes];
+//
+//                    //trigger PayPal sign in
+//                    if (!self.paypalSafariView) {
+//                        self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
+//                        self.paypalSafariView.delegate = self;
+//                        if (@available(iOS 11.0, *)) {
+//                            self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+//                        }
+//
+//                        if (@available(iOS 10.0, *)) {
+//                            self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+//                        }
+//                    }
+//
+//                    [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:^{
+//                        //switch off when we goto merchant onboarding and only switch on if we get the signal from custom url scheme triggered observer
+//                        [self.buySwitch setOn:NO];
+//                    }];
+//                }
+//                else{
+//                    [self hidHUD];
+//                    [self.buySwitch setOn:NO];
+//                    NSLog(@"error grabbing paypal link %@", error);
+//                }
+//            }];
+//        }
+//
+//    }
+//}
 
 #pragma mark - shipping delegate
 -(void)shippingOptionsWithNational:(float)nationalPrice withGlobal:(float)globalPrice withGlobalEnabled:(BOOL)globalOn andCountry:(NSString *)country withCountryCode:(NSString *)code withFreeNational:(BOOL)nationalFree withFreeGlobal:(BOOL)globalFree{
@@ -6652,8 +6702,8 @@
         }
         
         self.paypalEnabled = YES;
-        [self.buySwitch setOn:YES];
-        [self instantBuySwitchChanged:self];
+        self.choosePaymentMethod.text = @"Connected";
+        
         
         //save paypal info to user
         [[PFUser currentUser]setObject:@"YES" forKey:@"paypalEnabled"];
@@ -6682,7 +6732,7 @@
                 [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
                 
                 //reset instant buy section of table view
-                [self resetInstantBuyCells];
+                self.choosePaymentMethod.text = @"Add";
                 
                 [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
                                customAttributes:@{
@@ -6738,8 +6788,8 @@
                     
                     self.merchantId = merchId;
                     self.paypalEnabled = YES;
-                    [self.buySwitch setOn:YES];
-                    [self instantBuySwitchChanged:self];
+                    self.choosePaymentMethod.text = @"Connected";
+                    
                     
                     //save paypal info to user
                     [[PFUser currentUser]setObject:@"YES" forKey:@"paypalEnabled"];
@@ -6766,8 +6816,8 @@
                             [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
                             
                             //reset instant buy section of table view
-                            [self resetInstantBuyCells];
-                            
+                            self.choosePaymentMethod.text = @"Add";
+
                             [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
                                            customAttributes:@{
                                                               @"method":@"getPPAccountStatusWithMerchId Create"
@@ -6857,9 +6907,8 @@
                     
                     self.merchantId = merchId;
                     self.paypalEnabled = YES;
-                    
-                    [self.buySwitch setOn:YES];
-                    [self instantBuySwitchChanged:self];
+                    self.choosePaymentMethod.text = @"Connected";
+                
 
                     //save paypal info to user
                     [[PFUser currentUser]setObject:@"YES" forKey:@"paypalEnabled"];
@@ -6886,8 +6935,8 @@
                             [self showAlertWithTitle:@"Error Saving PayPal Info" andMsg:@"Make sure you're connected to the internet then try again"];
                             
                             //reset instant buy section of table view
-                            [self resetInstantBuyCells];
-                            
+                            self.choosePaymentMethod.text = @"Add";
+
                             [Answers logCustomEventWithName:@"Error Saving PayPal info on User"
                                            customAttributes:@{
                                                               @"method":@"getPPAccountStatus Create"
@@ -6942,16 +6991,16 @@
     }];
 }
 
--(void)resetInstantBuyCells{
-    //reset instant buy section of table view
-    self.paypalEnabled = NO;
-    [self.buySwitch setOn:NO];
-    NSIndexPath *indexPath1 = [NSIndexPath indexPathForRow:0 inSection:3];
-    [self.tableView scrollToRowAtIndexPath:indexPath1 atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
-    self.buyRows--;
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:3];
-    [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-}
+//-(void)resetInstantBuyCells{
+//    //reset instant buy section of table view
+//    self.paypalEnabled = NO;
+//    [self.buySwitch setOn:NO];
+//    NSIndexPath *indexPath1 = [NSIndexPath indexPathForRow:0 inSection:3];
+//    [self.tableView scrollToRowAtIndexPath:indexPath1 atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+//    self.buyRows--;
+//    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:3];
+//    [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+//}
 
 #pragma mark - buy now reminder pop up delegates
 
@@ -7070,7 +7119,6 @@
     self.globalPrice = 0.00;
     self.nationalPrice = 0.00;
     
-    [self.buySwitch setOn:NO];
     
     [self hideBuyNowReminder];
 }
@@ -7119,152 +7167,76 @@
     
 }
 
--(void)enableBuyNow{
-    if (([[[PFUser currentUser] objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]) || self.paypalEnabled) {
-        NSLog(@"already have user's pp info");
-        
-        if (!self.merchantId) {
-            self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
-        }
-        
-        [self.buySwitch setOn:YES];
-        [self.buySwitch setEnabled:YES];
-        
-        [self.instantBuyFooterLabel setHidden:YES];
-    }
-    else{
-        [self showHUD];
-        
-        Mixpanel *mixpanel = [Mixpanel sharedInstance];
-        [mixpanel track:@"paypal_connect_pressed" properties:@{
-                                                               @"where":@"Create Listing"
-                                                               }];
-        
-        if (![[PFUser currentUser]objectForKey:@"email"]) {
-            [self hidHUD];
-            [self showSettingsAlertWithTitle:@"Email needed" andMsg:@"Please first add your email address in Settings before we can connect your PayPal"];
-            return;
-        }
-        
-        NSDictionary *params = @{
-                                 @"email": [[PFUser currentUser]objectForKey:@"email"],
-                                 @"currency":self.currency,
-                                 @"trackingId":[PFUser currentUser].objectId
-                                 };
-        
-        NSLog(@"params going to partner %@", params);
-        [PFCloud callFunctionInBackground:@"callPartnerAPI" withParameters:params block:^(NSString *urlString, NSError *error) {
-            if (!error) {
-                [self hidHUD];
-                urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
-                NSLog(@"URL: %@", urlString);
-                
-                if (!self.addedPayPalObservers) {
-                    self.addedPayPalObservers = YES;
-                    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalURLReturned:) name:@"paypalOnboardingReturn" object:nil];
-                }
-                
-                //update user's IC profile so they receive auto message about paypal business account
-                ICMUserAttributes *userAttributes = [ICMUserAttributes new];
-                userAttributes.customAttributes = @{@"on_paypal_signin" : @YES};
-                [Intercom updateUser:userAttributes];
-                
-                //trigger PayPal sign in
-                if (!self.paypalSafariView) {
-                    self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
-                    self.paypalSafariView.delegate = self;
-                    if (@available(iOS 11.0, *)) {
-                        self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
-                    }
-                    
-                    if (@available(iOS 10.0, *)) {
-                        self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
-                    }
-                }
-                
-                [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:^{
-                    //switch off when we goto merchant onboarding and only switch on if we get the signal from custom url scheme triggered observer
-                    [self.buySwitch setOn:NO];
-                }];
-            }
-            else{
-                self.ppReminderTriggered = NO;
-                [self hidHUD];
-                [self.buySwitch setOn:NO];
-                NSLog(@"error grabbing paypal link %@", error);
-            }
-        }];
-    }
-}
-
--(void)reenableBuyNow{
-    //use this after changing the quantity number back to 1
-    //this just enables the switch
-    //turns it on if poss
-    
-    if (self.buyButtonWasLastOn) {
-        [self.buySwitch setOn:YES];
-    }
-
-    [self.buySwitch setEnabled:YES];
-    [self.instantBuyFooterLabel setHidden:YES];
-
-    //shows shipping cell if needs be
-    if (self.shippingCellHidden) {
-        self.shippingCellHidden = NO;
-        self.buyRows++;
-        NSIndexPath *indexPath;
-        
-        if (self.firstListing) {
-            indexPath = [NSIndexPath indexPathForRow:0 inSection:3];
-        }
-        else{
-            indexPath = [NSIndexPath indexPathForRow:1 inSection:3];
-        }
-        [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    }
-}
-
--(void)disableBuyNow{
-    if (self.buySwitch.isOn) {
-        self.buyButtonWasLastOn = YES;
-    }
-    else{
-        self.buyButtonWasLastOn = NO;
-    }
-    
-    [self.buySwitch setOn:NO];
-    [self.buySwitch setEnabled:NO];
-    
-    [self.instantBuyFooterLabel setHidden:NO];
-    
-    if (!self.shippingCellHidden) {
-        //hide shipping cell regardless but
-        //1) for first listing its at a different index path
-        //2) when not first listing also need to show a label in footer
-        self.shippingCellHidden = YES;
-        
-        if (self.firstListing) {
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:3];
-            self.buyRows--;
-            [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-        }
-        else{
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:3];
-            self.buyRows--;
-            [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-            [self.instantBuyFooterLabel setHidden:NO];
-        }
-    }
-    
-    self.selectShippingLabel.text = @"Select";
-    
-    self.globalFree = NO;
-    self.nationalFree = NO;
-    
-    self.globalPrice = 0.00;
-    self.nationalPrice = 0.00;
-}
+//-(void)enableBuyNowNew{
+//    if ([[[PFUser currentUser] objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]) {
+//        NSLog(@"already have user's pp info");
+//
+//        if (!self.merchantId) {
+//            self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
+//        }
+//
+//        self.choosePaymentMethod.text = @"Connected";
+//    }
+//    else{
+//        [self showHUD];
+//
+//        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+//        [mixpanel track:@"paypal_connect_pressed" properties:@{
+//                                                               @"where":@"Create Listing"
+//                                                               }];
+//
+//        if (![[PFUser currentUser]objectForKey:@"email"]) {
+//            [self hidHUD];
+//            [self showSettingsAlertWithTitle:@"Email needed" andMsg:@"Please first add your email address in Settings before we can connect your PayPal"];
+//            return;
+//        }
+//
+//        NSDictionary *params = @{
+//                                 @"email": [[PFUser currentUser]objectForKey:@"email"],
+//                                 @"currency":self.currency,
+//                                 @"trackingId":[PFUser currentUser].objectId
+//                                 };
+//
+//        NSLog(@"params going to partner %@", params);
+//        [PFCloud callFunctionInBackground:@"callPartnerAPI" withParameters:params block:^(NSString *urlString, NSError *error) {
+//            if (!error) {
+//                [self hidHUD];
+//                urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+//                NSLog(@"URL: %@", urlString);
+//
+//                if (!self.addedPayPalObservers) {
+//                    self.addedPayPalObservers = YES;
+//                    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalURLReturned:) name:@"paypalOnboardingReturn" object:nil];
+//                }
+//
+//                //update user's IC profile so they receive auto message about paypal business account
+//                ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+//                userAttributes.customAttributes = @{@"on_paypal_signin_casual" : @YES};
+//                [Intercom updateUser:userAttributes];
+//
+//                //trigger PayPal sign in
+//                if (!self.paypalSafariView) {
+//                    self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
+//                    self.paypalSafariView.delegate = self;
+//                    if (@available(iOS 11.0, *)) {
+//                        self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+//                    }
+//
+//                    if (@available(iOS 10.0, *)) {
+//                        self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+//                    }
+//                }
+//
+//                [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:nil];
+//            }
+//            else{
+//                self.ppReminderTriggered = NO;
+//                [self hidHUD];
+//                NSLog(@"error grabbing paypal link %@", error);
+//            }
+//        }];
+//    }
+//}
 
 #pragma mark - Settings delegate
 -(void)dismissedSettings{
@@ -7294,5 +7266,142 @@
     }]];
     
     [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)learnMoreFees{
+    NSString *URLString = @"https://help.sobump.com"; //CHANGE fill in here
+    SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
+    if (@available(iOS 11.0, *)) {
+        safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+    }
+    
+    if (@available(iOS 10.0, *)) {
+        safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+    }
+    
+    [self.navigationController presentViewController:safariView animated:YES completion:nil];
+}
+
+-(void)setupAccessoryCells{
+    
+    //setup the quantity/size cell
+    [self.sizeQuantityCellDisclosureView setHidden:YES];
+    self.sizeQuantityCell.accessoryType = UITableViewCellAccessoryNone;
+
+    [self.secondQuantityField setHidden:NO];
+    [self.quantityField setHidden:YES];
+    
+    [self.chooseSize setHidden:YES];
+    [self.sizeTextLabel setHidden:YES];
+    [self.sizeButton setHidden:YES];
+    
+    if (self.listingSetup) {
+        self.quantityField.text = @"";
+        self.quantityEntered = 1;
+    }
+    
+    if (self.mainRows != 3) {
+        self.mainRows = 3;
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:2];
+        [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+    }
+    
+    //make sure section 4 is showing with payment info
+    if (self.totalSections != 7) {
+        
+        if (self.listingSetup) {
+            //reset shipping info & price
+            self.payField.text = @"";
+            
+            self.selectShippingLabel.text = @"Select";
+            self.nationalPrice = 0.00;
+            self.globalPrice = 0.00;
+            self.globalFree = NO;
+            self.nationalFree = NO;
+        }
+        
+        if (self.paypalEnabled) {
+            self.choosePaymentMethod.text = @"Connected";
+        }
+        else{
+            self.choosePaymentMethod.text = @"Add";
+        }
+        
+        self.totalSections = 7;
+        [self.tableView insertSections:[NSIndexSet indexSetWithIndex:3] withRowAnimation:UITableViewRowAnimationFade];
+    }
+}
+
+-(void)setupProxyCells{
+    
+    //remove size/quantity cell from main rows in section 3
+    if (self.mainRows == 3) {
+        self.mainRows = 2;
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:2];
+        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+    }
+    
+    //make sure section 4 is showing with payment info
+    if (self.totalSections == 7) {
+        self.choosePaymentMethod.text = @"n/a";
+        self.totalSections = 6;
+
+        [self.tableView deleteSections:[NSIndexSet indexSetWithIndex:3] withRowAnimation:UITableViewRowAnimationFade];
+    }
+    
+}
+
+-(void)setupClothingFootwearCells{
+    
+    //setup the quantity/size cell
+    [self.secondQuantityField setHidden:YES];
+    [self.quantityField setHidden:NO];
+    [self.sizeTextLabel setHidden:NO];
+    
+    [self.sizeQuantityCellDisclosureView setHidden:NO];
+    
+    self.sizeQuantityCell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+
+    [self.chooseSize setHidden:NO];
+    [self.quantityTextLabel setHidden:NO];
+    [self.sizeButton setHidden:NO];
+    
+    if (self.listingSetup) {
+        self.chooseSize.text = @"Select";
+        
+        self.quantityField.text = @"";
+        self.quantityEntered = 1;
+    }
+    
+    if (self.mainRows != 3) {
+        self.mainRows = 3;
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:2];
+        [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+    }
+    
+    //make sure section 4 is showing with payment info
+    if (self.totalSections != 7) {
+        
+        if (self.listingSetup) {
+            //reset shipping info & price
+            self.payField.text = @"";
+            
+            self.selectShippingLabel.text = @"Select";
+            self.nationalPrice = 0.00;
+            self.globalPrice = 0.00;
+            self.globalFree = NO;
+            self.nationalFree = NO;
+        }
+        
+        if (self.paypalEnabled) {
+            self.choosePaymentMethod.text = @"Connected";
+        }
+        else{
+            self.choosePaymentMethod.text = @"Add";
+        }
+        
+        self.totalSections = 7;
+        [self.tableView insertSections:[NSIndexSet indexSetWithIndex:3] withRowAnimation:UITableViewRowAnimationFade];
+    }
 }
 @end

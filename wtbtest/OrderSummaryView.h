@@ -75,6 +75,16 @@
 @property (weak, nonatomic) IBOutlet UILabel *itemPriceLabel;
 @property (strong, nonatomic) IBOutlet UITableViewCell *paymentCell;
 @property (weak, nonatomic) IBOutlet PFImageView *paymentImageView;
+@property (weak, nonatomic) IBOutlet UILabel *feePriceLabel;
+
+//buyer's payment cell
+@property (strong, nonatomic) IBOutlet UITableViewCell *buyerPaymentCell;
+@property (weak, nonatomic) IBOutlet UILabel *buyerPaymentLabel;
+@property (weak, nonatomic) IBOutlet UILabel *buyerItemPriceLabel;
+@property (weak, nonatomic) IBOutlet UILabel *buyerShippingPriceLabel;
+@property (weak, nonatomic) IBOutlet UILabel *buyerTotalPriceLabel;
+@property (weak, nonatomic) IBOutlet UIButton *buyerRefundButton;
+@property (weak, nonatomic) IBOutlet PFImageView *buyerPaymentImageView;
 
 //shipping cell
 @property (weak, nonatomic) IBOutlet UILabel *addressLabel;

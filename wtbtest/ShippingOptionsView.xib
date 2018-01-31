@@ -48,8 +48,11 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Shipping price" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c8C-6X-7xb">
-                        <rect key="frame" x="28" y="11" width="89" height="21"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Shipping Price" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c8C-6X-7xb">
+                        <rect key="frame" x="28" y="11" width="112" height="21"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="112" id="b5U-93-vih"/>
+                        </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
                         <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
@@ -67,11 +70,11 @@
                 </subviews>
                 <constraints>
                     <constraint firstItem="6lZ-0P-czn" firstAttribute="top" secondItem="wEP-qC-RHG" secondAttribute="topMargin" constant="3" id="1lx-BE-5iM"/>
+                    <constraint firstItem="c8C-6X-7xb" firstAttribute="top" secondItem="wEP-qC-RHG" secondAttribute="topMargin" id="2Je-Wi-gn4"/>
                     <constraint firstAttribute="trailingMargin" secondItem="6lZ-0P-czn" secondAttribute="trailing" constant="25" id="9vv-qb-7X4"/>
-                    <constraint firstItem="c8C-6X-7xb" firstAttribute="centerY" secondItem="wEP-qC-RHG" secondAttribute="centerY" id="Bx7-uG-dbi"/>
-                    <constraint firstItem="c8C-6X-7xb" firstAttribute="centerY" secondItem="6lZ-0P-czn" secondAttribute="centerY" id="eQq-PI-zlL"/>
-                    <constraint firstItem="c8C-6X-7xb" firstAttribute="leading" secondItem="wEP-qC-RHG" secondAttribute="leadingMargin" constant="12" id="iQt-Lk-bHv"/>
-                    <constraint firstItem="c8C-6X-7xb" firstAttribute="top" secondItem="wEP-qC-RHG" secondAttribute="topMargin" id="oPz-tL-kSA"/>
+                    <constraint firstItem="c8C-6X-7xb" firstAttribute="leading" secondItem="wEP-qC-RHG" secondAttribute="leadingMargin" constant="12" id="Qse-h0-XSR"/>
+                    <constraint firstItem="c8C-6X-7xb" firstAttribute="centerY" secondItem="6lZ-0P-czn" secondAttribute="centerY" id="X3J-4x-Vde"/>
+                    <constraint firstItem="c8C-6X-7xb" firstAttribute="centerY" secondItem="wEP-qC-RHG" secondAttribute="centerY" id="q30-n2-RVf"/>
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-433" y="337"/>
@@ -118,8 +121,11 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Shipping price" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4FG-Py-fCA">
-                        <rect key="frame" x="28" y="11" width="89" height="21"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Shipping Price" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4FG-Py-fCA">
+                        <rect key="frame" x="28" y="11" width="114" height="21"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="114" id="jYT-I1-fei"/>
+                        </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
                         <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>
@@ -136,11 +142,11 @@
                     </textField>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="4FG-Py-fCA" firstAttribute="centerY" secondItem="9d6-cu-DKk" secondAttribute="centerY" id="2QD-nI-KZi"/>
                     <constraint firstAttribute="trailingMargin" secondItem="gka-oL-GFc" secondAttribute="trailing" constant="25" id="9yu-qj-iaE"/>
-                    <constraint firstItem="4FG-Py-fCA" firstAttribute="centerY" secondItem="gka-oL-GFc" secondAttribute="centerY" id="Ca0-Hi-WVa"/>
-                    <constraint firstItem="4FG-Py-fCA" firstAttribute="top" secondItem="9d6-cu-DKk" secondAttribute="topMargin" id="uus-Pm-zSu"/>
-                    <constraint firstItem="4FG-Py-fCA" firstAttribute="leading" secondItem="9d6-cu-DKk" secondAttribute="leadingMargin" constant="12" id="wNV-3x-GFB"/>
+                    <constraint firstItem="4FG-Py-fCA" firstAttribute="centerY" secondItem="9d6-cu-DKk" secondAttribute="centerY" id="JOf-K2-jEv"/>
+                    <constraint firstItem="4FG-Py-fCA" firstAttribute="centerY" secondItem="gka-oL-GFc" secondAttribute="centerY" id="ei7-Mu-qJJ"/>
+                    <constraint firstItem="4FG-Py-fCA" firstAttribute="top" secondItem="9d6-cu-DKk" secondAttribute="topMargin" id="kDN-bg-dZR"/>
+                    <constraint firstItem="4FG-Py-fCA" firstAttribute="leading" secondItem="9d6-cu-DKk" secondAttribute="leadingMargin" constant="12" id="ri7-Z2-gmu"/>
                     <constraint firstItem="gka-oL-GFc" firstAttribute="top" secondItem="9d6-cu-DKk" secondAttribute="topMargin" constant="3" id="xIP-Td-5t4"/>
                 </constraints>
             </tableViewCellContentView>
@@ -153,8 +159,8 @@
                 <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="International shipping" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Q60-HW-brl">
-                        <rect key="frame" x="28" y="11" width="133" height="21"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="International Shipping" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Q60-HW-brl">
+                        <rect key="frame" x="28" y="11" width="135" height="21"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="13"/>
                         <color key="textColor" red="0.2254687548" green="0.2254619598" blue="0.22546583410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <nil key="highlightedColor"/>

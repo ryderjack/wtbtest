@@ -22,7 +22,15 @@
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="OrderSummaryView">
             <connections>
                 <outlet property="addressLabel" destination="ljo-u1-ozs" id="Enm-LZ-jyH"/>
+                <outlet property="buyerItemPriceLabel" destination="w2I-Bn-upK" id="cdd-U0-S5x"/>
+                <outlet property="buyerPaymentCell" destination="xOV-eG-0aL" id="dDx-93-qvk"/>
+                <outlet property="buyerPaymentImageView" destination="Y1W-51-u0g" id="jxX-sA-o6P"/>
+                <outlet property="buyerPaymentLabel" destination="RQs-Qa-7gI" id="fHe-5K-avC"/>
+                <outlet property="buyerRefundButton" destination="o3m-Nb-A96" id="6Qg-t2-eQR"/>
+                <outlet property="buyerShippingPriceLabel" destination="zlU-fs-5vC" id="UZ6-iQ-3Vn"/>
+                <outlet property="buyerTotalPriceLabel" destination="osQ-7i-m6D" id="D88-dW-t7h"/>
                 <outlet property="dealLabel" destination="Oms-gK-R4B" id="XUD-ES-yCE"/>
+                <outlet property="feePriceLabel" destination="9MA-kg-hve" id="fr4-1h-j8k"/>
                 <outlet property="gotFeedbackCell" destination="3zD-CG-x5o" id="UbM-hl-0Gl"/>
                 <outlet property="gotFeedbackLabel" destination="all-w6-Vm1" id="KQ9-HR-9kh"/>
                 <outlet property="gotStarImageView" destination="bGC-NB-2sv" id="DkM-VU-MSu"/>
@@ -68,6 +76,7 @@
                 <outlet property="dataSource" destination="-1" id="Tng-2m-Rnh"/>
                 <outlet property="delegate" destination="-1" id="9aC-8N-iBw"/>
             </connections>
+            <point key="canvasLocation" x="398" y="597"/>
         </tableView>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="198" id="gEV-ni-33E">
             <rect key="frame" x="0.0" y="0.0" width="375" height="198"/>
@@ -218,18 +227,17 @@
             </tableViewCellContentView>
             <point key="canvasLocation" x="-533.5" y="76.5"/>
         </tableViewCell>
-        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="375" id="nro-8Q-OyI">
-            <rect key="frame" x="0.0" y="0.0" width="375" height="326"/>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="435" id="nro-8Q-OyI">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="366"/>
             <autoresizingMask key="autoresizingMask"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="nro-8Q-OyI" id="Abe-N3-g33">
-                <rect key="frame" x="0.0" y="0.0" width="375" height="325.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="375" height="365.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="OrderCheck.png" translatesAutoresizingMaskIntoConstraints="NO" id="ORI-PE-hvD" customClass="PFImageView">
                         <rect key="frame" x="157" y="15" width="60" height="60"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="60" id="1ZG-Dv-MO6"/>
-                            <constraint firstAttribute="height" constant="60" id="8E2-WC-oxH"/>
+                            <constraint firstAttribute="width" constant="60" id="p7K-4a-43y"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="rKr-ac-885">
@@ -241,7 +249,7 @@
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" usesAttributedText="YES" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6uP-KJ-4zU">
                         <rect key="frame" x="38" y="147" width="226" height="38"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="38" id="TRm-2J-O5S"/>
+                            <constraint firstAttribute="height" constant="38" id="gfs-4l-75D"/>
                         </constraints>
                         <attributedString key="attributedText">
                             <fragment content="Item price  ">
@@ -263,7 +271,7 @@
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7KO-nG-rQw">
                         <rect key="frame" x="268" y="147" width="70" height="38"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="70" id="NgD-1z-5WJ"/>
+                            <constraint firstAttribute="width" constant="70" id="ePo-63-K9I"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
                         <nil key="textColor"/>
@@ -272,7 +280,7 @@
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" usesAttributedText="YES" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Nyh-aj-by2">
                         <rect key="frame" x="38" y="187" width="226" height="38"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="38" id="hMS-Dh-zB0"/>
+                            <constraint firstAttribute="height" constant="38" id="9rF-mz-AMB"/>
                         </constraints>
                         <attributedString key="attributedText">
                             <fragment content="Shipping ">
@@ -292,12 +300,12 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" usesAttributedText="YES" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PSx-nZ-jl5">
-                        <rect key="frame" x="38" y="227" width="226" height="38"/>
+                        <rect key="frame" x="38" y="267" width="235" height="38"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="38" id="vlW-zW-2bJ"/>
+                            <constraint firstAttribute="height" constant="38" id="n2l-sS-T77"/>
                         </constraints>
                         <attributedString key="attributedText">
-                            <fragment content="Total ">
+                            <fragment content="Total  ">
                                 <attributes>
                                     <font key="NSFont" size="13" name="PingFangSC-Regular"/>
                                     <paragraphStyle key="NSParagraphStyle" alignment="left" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
@@ -320,15 +328,15 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="e7N-xm-aix">
-                        <rect key="frame" x="268" y="227" width="70" height="38"/>
+                        <rect key="frame" x="268" y="267" width="70" height="38"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gPb-s5-MtF">
-                        <rect key="frame" x="38" y="275" width="300" height="34.5"/>
+                        <rect key="frame" x="38" y="315" width="300" height="35"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="300" id="dw1-KZ-nv9"/>
+                            <constraint firstAttribute="width" constant="300" id="Zvw-Vl-MGq"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="13"/>
                         <state key="normal" title="Issue Refund">
@@ -338,38 +346,74 @@
                             <action selector="refundPressed:" destination="-1" eventType="touchUpInside" id="3p6-SA-T6L"/>
                         </connections>
                     </button>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" usesAttributedText="YES" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="I9Z-DG-KWc">
+                        <rect key="frame" x="38" y="227" width="230" height="38"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="38" id="ic1-4j-2ls"/>
+                        </constraints>
+                        <attributedString key="attributedText">
+                            <fragment content="BUMP fee  ">
+                                <attributes>
+                                    <font key="NSFont" size="13" name="PingFangSC-Regular"/>
+                                    <paragraphStyle key="NSParagraphStyle" alignment="left" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                </attributes>
+                            </fragment>
+                            <fragment content="________________________">
+                                <attributes>
+                                    <color key="NSColor" red="0.90588235294117647" green="0.90588235294117647" blue="0.90588235294117647" alpha="1" colorSpace="calibratedRGB"/>
+                                    <font key="NSFont" size="13" name="PingFangSC-Regular"/>
+                                    <paragraphStyle key="NSParagraphStyle" alignment="left" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                </attributes>
+                            </fragment>
+                        </attributedString>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="9MA-kg-hve">
+                        <rect key="frame" x="268" y="227" width="70" height="38"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="PSx-nZ-jl5" firstAttribute="firstBaseline" secondItem="e7N-xm-aix" secondAttribute="firstBaseline" id="1do-N1-cD0"/>
-                    <constraint firstItem="6uP-KJ-4zU" firstAttribute="top" secondItem="ORI-PE-hvD" secondAttribute="bottom" constant="72" id="2QS-Rf-ugI"/>
-                    <constraint firstItem="PSx-nZ-jl5" firstAttribute="baseline" secondItem="e7N-xm-aix" secondAttribute="baseline" id="6gm-qD-biH"/>
-                    <constraint firstItem="6uP-KJ-4zU" firstAttribute="top" secondItem="rKr-ac-885" secondAttribute="bottom" constant="8" symbolic="YES" id="BTz-nN-E6P"/>
-                    <constraint firstItem="6uP-KJ-4zU" firstAttribute="firstBaseline" secondItem="7KO-nG-rQw" secondAttribute="firstBaseline" id="EoF-H5-LOF"/>
-                    <constraint firstItem="rKr-ac-885" firstAttribute="leading" secondItem="6uP-KJ-4zU" secondAttribute="trailing" constant="-189" id="KgX-5X-SFT"/>
-                    <constraint firstItem="ORI-PE-hvD" firstAttribute="top" secondItem="Abe-N3-g33" secondAttribute="topMargin" constant="4" id="Mx1-Yb-51j"/>
-                    <constraint firstItem="Nyh-aj-by2" firstAttribute="top" secondItem="6uP-KJ-4zU" secondAttribute="bottom" constant="2" id="NJa-kv-f8K"/>
-                    <constraint firstItem="ORI-PE-hvD" firstAttribute="centerX" secondItem="rKr-ac-885" secondAttribute="centerX" id="PWv-m1-iEX"/>
-                    <constraint firstItem="6uP-KJ-4zU" firstAttribute="leading" secondItem="Nyh-aj-by2" secondAttribute="leading" id="QE9-GJ-1iX"/>
-                    <constraint firstItem="PSx-nZ-jl5" firstAttribute="top" secondItem="Nyh-aj-by2" secondAttribute="bottom" constant="2" id="Qpu-nm-nsH"/>
-                    <constraint firstItem="jJ1-yM-Pe5" firstAttribute="trailing" secondItem="e7N-xm-aix" secondAttribute="trailing" id="ToT-MF-ft9"/>
-                    <constraint firstItem="Nyh-aj-by2" firstAttribute="leading" secondItem="PSx-nZ-jl5" secondAttribute="leading" id="WlS-Eu-hVm"/>
-                    <constraint firstItem="7KO-nG-rQw" firstAttribute="trailing" secondItem="jJ1-yM-Pe5" secondAttribute="trailing" id="YkV-N5-Zyd"/>
-                    <constraint firstItem="rKr-ac-885" firstAttribute="top" secondItem="Abe-N3-g33" secondAttribute="topMargin" constant="61" id="a9s-0T-dy7"/>
-                    <constraint firstItem="6uP-KJ-4zU" firstAttribute="baseline" secondItem="7KO-nG-rQw" secondAttribute="baseline" id="cc1-hJ-3bs"/>
-                    <constraint firstItem="7KO-nG-rQw" firstAttribute="leading" secondItem="6uP-KJ-4zU" secondAttribute="trailing" constant="4" id="eLD-yP-O7y"/>
-                    <constraint firstItem="rKr-ac-885" firstAttribute="centerX" secondItem="gPb-s5-MtF" secondAttribute="centerX" id="hFU-cw-c7u"/>
-                    <constraint firstItem="Nyh-aj-by2" firstAttribute="firstBaseline" secondItem="jJ1-yM-Pe5" secondAttribute="firstBaseline" id="hZt-EI-gmX"/>
-                    <constraint firstItem="rKr-ac-885" firstAttribute="leading" secondItem="ORI-PE-hvD" secondAttribute="trailing" constant="-142" id="mJL-je-CXa"/>
-                    <constraint firstItem="Nyh-aj-by2" firstAttribute="trailing" secondItem="PSx-nZ-jl5" secondAttribute="trailing" id="nWg-fr-sRG"/>
-                    <constraint firstItem="gPb-s5-MtF" firstAttribute="top" secondItem="PSx-nZ-jl5" secondAttribute="bottom" constant="10" id="phJ-hy-fJg"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="gPb-s5-MtF" secondAttribute="bottom" constant="5.5" id="qcz-M2-dRg"/>
-                    <constraint firstItem="ORI-PE-hvD" firstAttribute="centerX" secondItem="Abe-N3-g33" secondAttribute="centerX" id="up2-lL-Idh"/>
-                    <constraint firstItem="jJ1-yM-Pe5" firstAttribute="leading" secondItem="e7N-xm-aix" secondAttribute="leading" id="v1z-lL-6Zx"/>
-                    <constraint firstItem="7KO-nG-rQw" firstAttribute="leading" secondItem="jJ1-yM-Pe5" secondAttribute="leading" id="xca-mX-7aC"/>
-                    <constraint firstItem="Nyh-aj-by2" firstAttribute="baseline" secondItem="jJ1-yM-Pe5" secondAttribute="baseline" id="xww-jR-raF"/>
+                    <constraint firstItem="I9Z-DG-KWc" firstAttribute="leading" secondItem="PSx-nZ-jl5" secondAttribute="leading" id="0Tk-8O-UlC"/>
+                    <constraint firstItem="Nyh-aj-by2" firstAttribute="top" secondItem="6uP-KJ-4zU" secondAttribute="bottom" constant="2" id="31M-FA-puh"/>
+                    <constraint firstItem="Nyh-aj-by2" firstAttribute="leading" secondItem="I9Z-DG-KWc" secondAttribute="leading" id="4fs-3w-2ws"/>
+                    <constraint firstItem="9MA-kg-hve" firstAttribute="trailing" secondItem="e7N-xm-aix" secondAttribute="trailing" id="6hg-42-5Nf"/>
+                    <constraint firstItem="I9Z-DG-KWc" firstAttribute="top" secondItem="Nyh-aj-by2" secondAttribute="bottom" constant="2" id="AWk-Ag-Y3Y"/>
+                    <constraint firstItem="Nyh-aj-by2" firstAttribute="top" secondItem="jJ1-yM-Pe5" secondAttribute="top" id="AvL-F6-m1A"/>
+                    <constraint firstItem="PSx-nZ-jl5" firstAttribute="leading" secondItem="gPb-s5-MtF" secondAttribute="leading" id="F7r-tS-uWM"/>
+                    <constraint firstItem="ORI-PE-hvD" firstAttribute="centerX" secondItem="rKr-ac-885" secondAttribute="centerX" id="Hkk-h9-NZD"/>
+                    <constraint firstItem="ORI-PE-hvD" firstAttribute="centerX" secondItem="Abe-N3-g33" secondAttribute="centerX" id="IzG-pt-Kx7"/>
+                    <constraint firstItem="PSx-nZ-jl5" firstAttribute="baseline" secondItem="e7N-xm-aix" secondAttribute="baseline" id="J4u-5R-aqX"/>
+                    <constraint firstItem="PSx-nZ-jl5" firstAttribute="top" secondItem="I9Z-DG-KWc" secondAttribute="bottom" constant="2" id="Jfv-30-GnU"/>
+                    <constraint firstItem="gPb-s5-MtF" firstAttribute="top" secondItem="PSx-nZ-jl5" secondAttribute="bottom" constant="10" id="MsQ-5H-Qzd"/>
+                    <constraint firstItem="7KO-nG-rQw" firstAttribute="leading" secondItem="6uP-KJ-4zU" secondAttribute="trailing" constant="4" id="PjL-zs-JN4"/>
+                    <constraint firstItem="rKr-ac-885" firstAttribute="centerX" secondItem="gPb-s5-MtF" secondAttribute="centerX" id="S50-3J-TMx"/>
+                    <constraint firstItem="rKr-ac-885" firstAttribute="leading" secondItem="Abe-N3-g33" secondAttribute="leadingMargin" constant="59" id="ShI-3e-ulH"/>
+                    <constraint firstItem="9MA-kg-hve" firstAttribute="leading" secondItem="e7N-xm-aix" secondAttribute="leading" id="Uev-ON-w9f"/>
+                    <constraint firstItem="6uP-KJ-4zU" firstAttribute="top" secondItem="rKr-ac-885" secondAttribute="bottom" constant="8" symbolic="YES" id="V6O-2G-zNC"/>
+                    <constraint firstItem="I9Z-DG-KWc" firstAttribute="top" secondItem="9MA-kg-hve" secondAttribute="top" id="Z2p-Md-N7X"/>
+                    <constraint firstItem="jJ1-yM-Pe5" firstAttribute="leading" secondItem="9MA-kg-hve" secondAttribute="leading" id="biP-GX-X83"/>
+                    <constraint firstItem="jJ1-yM-Pe5" firstAttribute="trailing" secondItem="9MA-kg-hve" secondAttribute="trailing" id="bw0-aK-cQO"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="gPb-s5-MtF" secondAttribute="bottom" constant="5" id="ey9-qZ-Lih"/>
+                    <constraint firstItem="6uP-KJ-4zU" firstAttribute="top" secondItem="ORI-PE-hvD" secondAttribute="bottom" constant="72" id="hnm-20-Kk6"/>
+                    <constraint firstItem="6uP-KJ-4zU" firstAttribute="top" secondItem="7KO-nG-rQw" secondAttribute="top" id="ism-YK-ZGF"/>
+                    <constraint firstItem="6uP-KJ-4zU" firstAttribute="baseline" secondItem="7KO-nG-rQw" secondAttribute="baseline" id="jIJ-DK-BOG"/>
+                    <constraint firstItem="e7N-xm-aix" firstAttribute="trailing" secondItem="gPb-s5-MtF" secondAttribute="trailing" id="k1m-k1-wbZ"/>
+                    <constraint firstItem="7KO-nG-rQw" firstAttribute="trailing" secondItem="jJ1-yM-Pe5" secondAttribute="trailing" id="lNj-8y-Xcg"/>
+                    <constraint firstItem="PSx-nZ-jl5" firstAttribute="top" secondItem="e7N-xm-aix" secondAttribute="top" id="lkh-fd-0GY"/>
+                    <constraint firstItem="9MA-kg-hve" firstAttribute="leading" secondItem="I9Z-DG-KWc" secondAttribute="trailing" id="moG-sZ-Ooq"/>
+                    <constraint firstItem="I9Z-DG-KWc" firstAttribute="baseline" secondItem="9MA-kg-hve" secondAttribute="baseline" id="oaM-as-Wzh"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="PSx-nZ-jl5" secondAttribute="trailing" constant="86" id="owA-yK-EN7"/>
+                    <constraint firstItem="7KO-nG-rQw" firstAttribute="leading" secondItem="jJ1-yM-Pe5" secondAttribute="leading" id="v4K-Vk-Toe"/>
+                    <constraint firstItem="6uP-KJ-4zU" firstAttribute="leading" secondItem="Nyh-aj-by2" secondAttribute="leading" id="ve3-Ss-6rw"/>
+                    <constraint firstItem="Nyh-aj-by2" firstAttribute="baseline" secondItem="jJ1-yM-Pe5" secondAttribute="baseline" id="xuf-RU-gXX"/>
+                    <constraint firstItem="rKr-ac-885" firstAttribute="top" secondItem="Abe-N3-g33" secondAttribute="topMargin" constant="61" id="y5P-AJ-wm3"/>
+                    <constraint firstItem="ORI-PE-hvD" firstAttribute="top" secondItem="Abe-N3-g33" secondAttribute="topMargin" constant="4" id="yvz-ho-u07"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-534.5" y="426"/>
+            <point key="canvasLocation" x="-535.5" y="417"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="375" id="Wdn-3p-T5l">
             <rect key="frame" x="0.0" y="0.0" width="375" height="320"/>
@@ -632,6 +676,159 @@ N1 0GL United Kingdom</string>
                 </constraints>
             </tableViewCellContentView>
             <point key="canvasLocation" x="-1002" y="868"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="375" id="xOV-eG-0aL">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="326"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="xOV-eG-0aL" id="iFq-Rn-vjg">
+                <rect key="frame" x="0.0" y="0.0" width="375" height="325.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="OrderCheck.png" translatesAutoresizingMaskIntoConstraints="NO" id="Y1W-51-u0g" customClass="PFImageView">
+                        <rect key="frame" x="157" y="15" width="60" height="60"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="60" id="Vof-gj-5qp"/>
+                            <constraint firstAttribute="width" constant="60" id="jEA-RV-hlP"/>
+                        </constraints>
+                    </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RQs-Qa-7gI">
+                        <rect key="frame" x="75" y="72" width="225" height="67"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" usesAttributedText="YES" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="o2W-Eu-VNb">
+                        <rect key="frame" x="38" y="147" width="226" height="38"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="38" id="lpj-wp-7jb"/>
+                        </constraints>
+                        <attributedString key="attributedText">
+                            <fragment content="Item price  ">
+                                <attributes>
+                                    <font key="NSFont" size="13" name="PingFangSC-Regular"/>
+                                    <paragraphStyle key="NSParagraphStyle" alignment="left" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                </attributes>
+                            </fragment>
+                            <fragment content="________________________">
+                                <attributes>
+                                    <color key="NSColor" red="0.90588235294117647" green="0.90588235294117647" blue="0.90588235294117647" alpha="1" colorSpace="calibratedRGB"/>
+                                    <font key="NSFont" size="13" name="PingFangSC-Regular"/>
+                                    <paragraphStyle key="NSParagraphStyle" alignment="left" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                </attributes>
+                            </fragment>
+                        </attributedString>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="w2I-Bn-upK">
+                        <rect key="frame" x="268" y="147" width="70" height="38"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="70" id="upV-do-ULu"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" usesAttributedText="YES" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gew-on-dWJ">
+                        <rect key="frame" x="38" y="187" width="226" height="38"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="38" id="RVJ-CK-nmU"/>
+                        </constraints>
+                        <attributedString key="attributedText">
+                            <fragment content="Shipping ">
+                                <attributes>
+                                    <font key="NSFont" size="13" name="PingFangSC-Regular"/>
+                                    <paragraphStyle key="NSParagraphStyle" alignment="left" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                </attributes>
+                            </fragment>
+                            <fragment content="__________________________">
+                                <attributes>
+                                    <color key="NSColor" red="0.90588235294117647" green="0.90588235294117647" blue="0.90588235294117647" alpha="1" colorSpace="calibratedRGB"/>
+                                    <font key="NSFont" size="13" name="PingFangSC-Regular"/>
+                                    <paragraphStyle key="NSParagraphStyle" alignment="left" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                </attributes>
+                            </fragment>
+                        </attributedString>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" usesAttributedText="YES" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="mEi-sl-anX">
+                        <rect key="frame" x="38" y="227" width="226" height="38"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="38" id="xBh-BF-TUZ"/>
+                        </constraints>
+                        <attributedString key="attributedText">
+                            <fragment content="Total ">
+                                <attributes>
+                                    <font key="NSFont" size="13" name="PingFangSC-Regular"/>
+                                    <paragraphStyle key="NSParagraphStyle" alignment="left" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                </attributes>
+                            </fragment>
+                            <fragment content="_____________________________">
+                                <attributes>
+                                    <color key="NSColor" red="0.90588235294117647" green="0.90588235294117647" blue="0.90588235294117647" alpha="1" colorSpace="calibratedRGB"/>
+                                    <font key="NSFont" size="13" name="PingFangSC-Regular"/>
+                                    <paragraphStyle key="NSParagraphStyle" alignment="left" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                </attributes>
+                            </fragment>
+                        </attributedString>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="zlU-fs-5vC">
+                        <rect key="frame" x="268" y="187" width="70" height="38"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="osQ-7i-m6D">
+                        <rect key="frame" x="268" y="227" width="70" height="38"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="o3m-Nb-A96">
+                        <rect key="frame" x="38" y="275" width="300" height="34.5"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="300" id="urY-i4-hxg"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="13"/>
+                        <state key="normal" title="Request a Refund">
+                            <color key="titleColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="refundPressed:" destination="-1" eventType="touchUpInside" id="Ia6-4d-KI6"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="gew-on-dWJ" firstAttribute="top" secondItem="o2W-Eu-VNb" secondAttribute="bottom" constant="2" id="0ba-Vl-Cyl"/>
+                    <constraint firstItem="gew-on-dWJ" firstAttribute="baseline" secondItem="zlU-fs-5vC" secondAttribute="baseline" id="2mb-zW-1Nm"/>
+                    <constraint firstItem="o2W-Eu-VNb" firstAttribute="top" secondItem="RQs-Qa-7gI" secondAttribute="bottom" constant="8" symbolic="YES" id="7In-a0-jNB"/>
+                    <constraint firstItem="w2I-Bn-upK" firstAttribute="leading" secondItem="zlU-fs-5vC" secondAttribute="leading" id="B4u-Pr-bU4"/>
+                    <constraint firstItem="mEi-sl-anX" firstAttribute="top" secondItem="gew-on-dWJ" secondAttribute="bottom" constant="2" id="D7n-tT-q8i"/>
+                    <constraint firstItem="gew-on-dWJ" firstAttribute="trailing" secondItem="mEi-sl-anX" secondAttribute="trailing" id="Lzd-Ie-d6U"/>
+                    <constraint firstItem="gew-on-dWJ" firstAttribute="firstBaseline" secondItem="zlU-fs-5vC" secondAttribute="firstBaseline" id="Nbg-Rh-z9b"/>
+                    <constraint firstItem="RQs-Qa-7gI" firstAttribute="top" secondItem="iFq-Rn-vjg" secondAttribute="topMargin" constant="61" id="OdL-nn-2Oj"/>
+                    <constraint firstItem="o2W-Eu-VNb" firstAttribute="top" secondItem="Y1W-51-u0g" secondAttribute="bottom" constant="72" id="Sao-69-Pbu"/>
+                    <constraint firstItem="w2I-Bn-upK" firstAttribute="trailing" secondItem="zlU-fs-5vC" secondAttribute="trailing" id="TFS-8K-3xU"/>
+                    <constraint firstItem="RQs-Qa-7gI" firstAttribute="centerX" secondItem="o3m-Nb-A96" secondAttribute="centerX" id="Tl9-rj-siV"/>
+                    <constraint firstItem="RQs-Qa-7gI" firstAttribute="leading" secondItem="Y1W-51-u0g" secondAttribute="trailing" constant="-142" id="VGp-G6-H73"/>
+                    <constraint firstItem="Y1W-51-u0g" firstAttribute="centerX" secondItem="iFq-Rn-vjg" secondAttribute="centerX" id="Xm4-VK-mKS"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="o3m-Nb-A96" secondAttribute="bottom" constant="5.5" id="azc-hk-I7U"/>
+                    <constraint firstItem="RQs-Qa-7gI" firstAttribute="leading" secondItem="o2W-Eu-VNb" secondAttribute="trailing" constant="-189" id="b0W-lD-AfK"/>
+                    <constraint firstItem="mEi-sl-anX" firstAttribute="baseline" secondItem="osQ-7i-m6D" secondAttribute="baseline" id="b3I-3d-xfI"/>
+                    <constraint firstItem="mEi-sl-anX" firstAttribute="firstBaseline" secondItem="osQ-7i-m6D" secondAttribute="firstBaseline" id="ekr-e5-nKE"/>
+                    <constraint firstItem="gew-on-dWJ" firstAttribute="leading" secondItem="mEi-sl-anX" secondAttribute="leading" id="fW3-q4-9qP"/>
+                    <constraint firstItem="o3m-Nb-A96" firstAttribute="top" secondItem="mEi-sl-anX" secondAttribute="bottom" constant="10" id="iOU-Xe-35E"/>
+                    <constraint firstItem="o2W-Eu-VNb" firstAttribute="baseline" secondItem="w2I-Bn-upK" secondAttribute="baseline" id="isf-hg-7VN"/>
+                    <constraint firstItem="Y1W-51-u0g" firstAttribute="centerX" secondItem="RQs-Qa-7gI" secondAttribute="centerX" id="lAe-fT-1js"/>
+                    <constraint firstItem="Y1W-51-u0g" firstAttribute="top" secondItem="iFq-Rn-vjg" secondAttribute="topMargin" constant="4" id="oWS-XN-67q"/>
+                    <constraint firstItem="w2I-Bn-upK" firstAttribute="leading" secondItem="o2W-Eu-VNb" secondAttribute="trailing" constant="4" id="pma-We-7fo"/>
+                    <constraint firstItem="o2W-Eu-VNb" firstAttribute="leading" secondItem="gew-on-dWJ" secondAttribute="leading" id="r3P-Ur-Jml"/>
+                    <constraint firstItem="zlU-fs-5vC" firstAttribute="leading" secondItem="osQ-7i-m6D" secondAttribute="leading" id="roa-qO-Yft"/>
+                    <constraint firstItem="o2W-Eu-VNb" firstAttribute="firstBaseline" secondItem="w2I-Bn-upK" secondAttribute="firstBaseline" id="s2l-hU-eqw"/>
+                    <constraint firstItem="zlU-fs-5vC" firstAttribute="trailing" secondItem="osQ-7i-m6D" secondAttribute="trailing" id="yRP-rA-Wpf"/>
+                </constraints>
+            </tableViewCellContentView>
+            <point key="canvasLocation" x="-56" y="426"/>
         </tableViewCell>
     </objects>
     <resources>

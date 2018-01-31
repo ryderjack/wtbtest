@@ -114,7 +114,7 @@
     
     if (section == 2) {
         if (!self.countryFooterView) {
-            self.countryFooterView = [[UIView alloc]initWithFrame:CGRectMake(10, 0, self.view.frame.size.width-40, 70)];
+            self.countryFooterView = [[UIView alloc]initWithFrame:CGRectMake(20, 0, self.view.frame.size.width-40, 70)];
             self.countryFooterView.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
             
             self.countryFooterLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0,self.countryFooterView.frame.size.width, 70)];
