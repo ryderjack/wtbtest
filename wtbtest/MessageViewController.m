@@ -1236,6 +1236,18 @@
         for (NSString *stringer in checkingforemailarray) {
             NSString *string = [stringer stringByReplacingOccurrencesOfString:@"?" withString:@""];
             //check for user trying to direct other user elsewhere & remind them to send an offer
+            
+            //friends & family check
+            if ([[string lowercaseString]isEqualToString:@"f&f"]) {
+                [Answers logCustomEventWithName:@"Deal on Bump warning"
+                               customAttributes:@{
+                                                  @"trigger":@"f&f",
+                                                  @"message":text,
+                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                                  }];
+                [self showFriendsAndFamAlert];
+                return;
+            }
 
             //email check
             if ([self NSStringIsValidEmail:string]) {
@@ -1345,7 +1357,7 @@
 //                return;
             }
         }
-        if ([text containsString:@"your number"]) {
+        if ([text.lowercaseString containsString:@"your number"]) {
             [Answers logCustomEventWithName:@"Deal on Bump warning"
                            customAttributes:@{
                                               @"trigger":@"phone number",
@@ -1358,6 +1370,18 @@
 //            self.emailReminderMode = YES;
 //            [self showCustomAlert];
 //            return;
+        }
+        
+        if ([text.lowercaseString containsString:@"friends and family"] || [text.lowercaseString containsString:@"friends & family"] || [text.lowercaseString containsString:@"friendsandfamily"] || [text.lowercaseString containsString:@"friend and family"]) {
+            [Answers logCustomEventWithName:@"Deal on Bump warning"
+                           customAttributes:@{
+                                              @"trigger":@"friends and family",
+                                              @"message":text,
+                                              @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                              }];
+            [self showFriendsAndFamAlert];
+            return;
+            
         }
     }
     
@@ -1790,10 +1814,10 @@
                 }
             }];
         }]];
-        
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Goto my PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [self showMyPaypal];
-        }]];
+//        
+//        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Goto my PayPal" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//            [self showMyPaypal];
+//        }]];
         
 //        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Send Pics from my Depop" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 //            BOOL seen = [[NSUserDefaults standardUserDefaults] boolForKey:@"seenDepop"];
@@ -3279,7 +3303,7 @@
     if (!self.fromOrder) {
         [self.paypalView addSubview:imgView];
         
-        introLabel.text = @"Stay protected & build your reputation by purchasing through BUMP\n\nWhen you're ready to Purchase just hit Buy on the listing and pay through PayPal\n\nIf you're still unsure check out our Help Center from Settings";
+        introLabel.text = @"Stay protected & build your reputation by purchasing through BUMP\n\nWhen you're ready to Purchase just hit Buy on the listing and pay through PayPal\n\nTo avoid getting scammed always purchase through BUMP";
     }
     else{
         //no messages sent previously and order has been created
@@ -3350,6 +3374,8 @@
         self.listingView = (ListingBannerView *)[nib objectAtIndex:0];
         self.listingView.delegate = self;
         [self.listingView.buyButton setHidden:YES];
+        self.instantBuyDisabled = NO;
+
 
         [self.listing fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
@@ -3364,7 +3390,18 @@
                     self.listingView.itemTitleLabel.text = [self.listing objectForKey:@"description"];
                 }
                 
-                if ([[self.listing objectForKey:@"instantBuy"]isEqualToString:@"YES"] && [[self.listing objectForKey:@"status"]isEqualToString:@"live"] && self.userIsBuyer) {
+                //hide buy button for proxies
+                if([[self.listing objectForKey:@"category"]isEqualToString:@"Proxy"]){
+                    self.instantBuyDisabled = YES;
+                    [self.listingView.buyButton setHidden:YES];
+                    self.listingView.priceLabel.text = @"";
+                }
+                else if ([[self.listing objectForKey:@"status"]isEqualToString:@"live"] && self.userIsBuyer) {
+                    
+                    if(![[self.listing objectForKey:@"instantBuy"]isEqualToString:@"YES"]){
+                        self.instantBuyDisabled = YES;
+                    }
+                    
                     NSLog(@"show buy button");
                     self.buyButtonOn = YES;
                     [self.listingView.buyButton setHidden:NO];
@@ -3489,14 +3526,8 @@
     
     CheckoutSummary *vc = [[CheckoutSummary alloc]init];
     vc.listingObject = self.listing;
-    
     vc.delegate = self;
-    
-    float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
-    
-    vc.salePrice = price;
-    vc.currencySymbol = self.currencySymbol;
-    vc.currency = self.currency; //we decide at earlier point in listing setup whether this is native to the listing or user
+    vc.instantBuyDisabled = self.instantBuyDisabled;
     
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
     [self.navigationController presentViewController:nav animated:YES completion:^{
@@ -3615,5 +3646,18 @@
     [self.listingView.buyButton setBackgroundImage:[UIImage imageNamed:@"soldChatBg"] forState:UIControlStateNormal];
     [self.listingView.buyButton setTitle:@"S O L D" forState:UIControlStateNormal];
 }
+
+-(void)showFriendsAndFamAlert{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Friends and Family Warning" message:@"Receiving or Sending money through PayPal Friends & Family is against our Terms of Service as this means that both buyer & seller are not covered by BUMP + PayPal Protection and are NOT entitled to a full refund should you be dissatisfied with your order\n\nAlways sell/pay through the BUMP Checkout to stay fully protected" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        self.inputToolbar.contentView.textView.text = @"";
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+    
+}
+
+
 @end
 

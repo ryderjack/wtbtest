@@ -79,6 +79,10 @@
     self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:9],NSForegroundColorAttributeName : [UIColor lightGrayColor]};
     self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0]};
     
+    self.segmentedControl.borderType = HMSegmentedControlBorderTypeBottom;
+    self.segmentedControl.borderColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+    self.segmentedControl.borderWidth = 0.5;
+    
     [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
     [self.segmentedControl setSectionTitles:@[@"F O R  S A L E",@"W A N T E D",@"P E O P L E"]];
     [self.view addSubview:self.segmentedControl];

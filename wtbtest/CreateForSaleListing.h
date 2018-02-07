@@ -262,5 +262,6 @@
 
 @property (nonatomic) int quantityEntered;
 @property (nonatomic) BOOL feeFree;
+@property (nonatomic) BOOL showingPayPalCell;
 
 @end

@@ -51,6 +51,6 @@
 @property (nonatomic) BOOL somethingChanged;
 @property (nonatomic, strong) CountryPicker *picker;
 @property (nonatomic) BOOL somethingMissing;
-
+@property (nonatomic) BOOL differentCountryNeeded;
 
 @end

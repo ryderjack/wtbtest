@@ -541,6 +541,10 @@
                     NSLog(@"updated selected sizes array %@", self.selectedSizes);
                     
                     self.lastSelectedPath = indexPath;
+                    
+                    if (self.sellListing) {
+                        [self.navigationController popViewControllerAnimated:YES];
+                    }
                 }
                 else{
                     //don't select the cell, already reached the max selection

@@ -101,88 +101,152 @@
         
     }
     else{
-        //add in this call to double check we have the listing info
-        [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        
+        //check if its even purchable first
+        if(self.instantBuyDisabled){
+            self.addAddress = YES;
+            [self showHUD];
             
-            if (object) {
-                
-                //check if listing is fee free
-                if(![self.listingObject objectForKey:@"chargeFee"] || [[self.listingObject objectForKey:@"chargeFee"]isEqualToString:@"NO"]){
-                    self.feeFree = YES;
-                }
-                
-                self.currency = [self.listingObject objectForKey:@"currency"];
-                
-                if ([self.currency isEqualToString:@"GBP"]) {
-                    self.currencySymbol = @"£";
-                }
-                else if ([self.currency isEqualToString:@"EUR"]) {
-                    self.currencySymbol = @"€";
-                }
-                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-                    self.currencySymbol = @"$";
-                }
-                else{
-                    self.sellerErrorShowing = YES;
-                    [self showAlertWithTitle:@"Price Error" andMsg:@"Please let the seller know they need to reenter a price for their listing before you can purchase"];
-                    [self.payButton setEnabled:NO];
-                    self.payButton.alpha = 0.5;
-                }
-                
-                self.salePrice = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
-                self.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol, self.salePrice];
-                self.listingCountryCode = [self.listingObject objectForKey:@"countryCode"];
-                
-                if ([[[PFUser currentUser] objectForKey:@"enteredAddress"]isEqualToString:@"YES"] && [[PFUser currentUser] objectForKey:@"shippingCountryCode"]) {
-                    self.addAddress = NO;
+            //now check if seller needs to either connect their paypal or just add shipping info (as may have connected pp before)
+            [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    PFUser *seller = [self.listingObject objectForKey:@"sellerUser"];
                     
-                    //now set address label (with bold name)
-                    NSString *addressString = [[PFUser currentUser] objectForKey:@"addressString"];
-                    NSString *fullname;
-                    
-                    if ([[PFUser currentUser] objectForKey:@"addressName"]) {
-                        fullname = [[PFUser currentUser] objectForKey:@"addressName"];
-                    }
-                    else{
-                        fullname = [[PFUser currentUser] objectForKey:@"fullname"];
-                    }
-                    
-                    NSMutableAttributedString *addressText = [[NSMutableAttributedString alloc] initWithString:addressString];
-                    [self modifyString:addressText setFontForText:fullname];
-                    self.addressLabel.attributedText = addressText;
-                    
-                    NSString *countryCode = [[PFUser currentUser] objectForKey:@"shippingCountryCode"];
-                    
-                    //now calc shipping based on this address
-                    float shipping;
-                    //recalc shipping price & total price based on country
-                    if ([self.listingCountryCode.lowercaseString isEqualToString:countryCode.lowercaseString]) {
-                        //national pricing
-                        self.isNational = YES;
-                        shipping = [[self.listingObject objectForKey:@"nationalShippingPrice"]floatValue];
-                        
-                        if (shipping == 0.00) {
-                            self.shippingPriceLabel.text = @"Free";
+                    [seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                        if (object) {
+                            
+                            //now check if seller has mechId AND PP enabled
+                            if([seller objectForKey:@"paypalMerchantId"] && [[seller objectForKey:@"paypalEnabled"]isEqualToString:@"YES"]){
+                                
+                                NSLog(@"user has connected paypal but instant buy isn't on");
+                                
+                                if([[self.listingObject objectForKey:@"quantity"]intValue] > 1){
+                                    NSLog(@"user needs to change quantity");
+
+                                    //send quantity warning
+                                    [self notifySellerWithId:seller.objectId forWarning:@"quantity"];
+                                    
+                                    [self hideHUD];
+                                    [self triggerInstantBuyDisabledWarningWithTitle:@"Listing Quantity" andMessage:@"This seller needs to change the item quantity to 1 on their listing for you to purchase this listing\n\nWe've given them a hurry up but try sending them a message so you can purchase the item"];
+                                    return;
+                                    
+                                }
+                                else{
+                                    //listing must need shipping info
+                                    NSLog(@"user needs to add shipping prices");
+
+                                    [self notifySellerWithId:seller.objectId forWarning:@"shipping"];
+                                    
+                                    [self hideHUD];
+                                    [self triggerInstantBuyDisabledWarningWithTitle:@"Shipping Info Needed" andMessage:@"The seller still needs to add shipping information to their listing\n\nWe've given them a hurry up but try sending them a message so you can purchase the item"];
+                                    return;
+                                }
+
+                            }
+                            else{
+                                //else seller needs to fully connect their PP
+                                NSLog(@"user needs to connect their paypal");
+                                [self notifySellerWithId:seller.objectId forWarning:@"connect"];
+
+                                [self hideHUD];
+                                [self triggerInstantBuyDisabledWarningWithTitle:@"Seller's PayPal" andMessage:@"The seller still needs to connect their PayPal account for you to purchase this listing\n\nWe've given them a hurry up but try sending them a message so you can purchase the item"];
+                                return;
+                            }
                         }
                         else{
-                            self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+                            //just show normal connect PP pop up
+                            
+                            NSLog(@"error fetching seller %@", error);
+                            [self notifySellerWithId:seller.objectId forWarning:@"connect"];
+
+                            [self hideHUD];
+                            [self triggerInstantBuyDisabledWarningWithTitle:@"Seller's PayPal" andMessage:@"The seller still needs to connect their PayPal account for you to purchase this listing\n\nWe've given them a hurry up but try sending them a message so you can purchase the item"];
+                            return;
                         }
-                        
-                        self.totalPrice = shipping + self.salePrice;
-                        self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
-                        
-                        //enable pay button
-                        [self.payButton setEnabled:YES];
-                        self.payButton.alpha = 1;
+                    }];
+                }
+                else{
+                    NSLog(@"error fetching listing %@", error);
+
+                    //error fetching listing so just show normal connect PP pop up
+                    PFUser *seller = [self.listingObject objectForKey:@"sellerUser"];
+                    [self notifySellerWithId:seller.objectId forWarning:@"connect"];
+
+                    [self hideHUD];
+                    [self triggerInstantBuyDisabledWarningWithTitle:@"Seller's PayPal" andMessage:@"The seller still needs to connect their PayPal account for you to purchase this listing\n\nWe've given them a hurry up but try sending them a message so you can purchase the item"];
+                    return;
+                }
+            }];
+        }
+        else{
+            //listing is fine to be purchased!
+            
+            //add in this call to double check we have the listing info
+            [self.listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                
+                if (object) {
+                    
+                    //check if listing is fee free
+                    if(![self.listingObject objectForKey:@"chargeFee"] || [[self.listingObject objectForKey:@"chargeFee"]isEqualToString:@"NO"]){
+                        self.feeFree = YES;
+                    }
+                    
+                    //setup default fee params
+                    //if a fee is charged these are set in response of createPPOrder func
+                    self.feePrice = 0.00;
+                    self.sellerTotalPrice = 0.00;
+                    self.sellerTotalLabelString = @"";
+                    self.feeLabelString = @"";
+                    
+                    self.currency = [self.listingObject objectForKey:@"currency"];
+                    
+                    if ([self.currency isEqualToString:@"GBP"]) {
+                        self.currencySymbol = @"£";
+                    }
+                    else if ([self.currency isEqualToString:@"EUR"]) {
+                        self.currencySymbol = @"€";
+                    }
+                    else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+                        self.currencySymbol = @"$";
                     }
                     else{
+                        self.sellerErrorShowing = YES;
+                        [self showAlertWithTitle:@"Price Error" andMsg:@"Please let the seller know they need to reenter a price for their listing before you can purchase"];
+                        [self.payButton setEnabled:NO];
+                        self.payButton.alpha = 0.5;
+                    }
+                    
+                    self.salePrice = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
+                    self.itemPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol, self.salePrice];
+                    self.listingCountryCode = [self.listingObject objectForKey:@"countryCode"];
+                    
+                    if ([[[PFUser currentUser] objectForKey:@"enteredAddress"]isEqualToString:@"YES"] && [[PFUser currentUser] objectForKey:@"shippingCountryCode"]) {
+                        self.addAddress = NO;
                         
-                        //now check if international shipping is even allowed
-                        if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]) {
-                            
-                            //if so, use int. pricing
-                            self.isNational = NO;
-                            shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
+                        //now set address label (with bold name)
+                        NSString *addressString = [[PFUser currentUser] objectForKey:@"addressString"];
+                        NSString *fullname;
+                        
+                        if ([[PFUser currentUser] objectForKey:@"addressName"]) {
+                            fullname = [[PFUser currentUser] objectForKey:@"addressName"];
+                        }
+                        else{
+                            fullname = [[PFUser currentUser] objectForKey:@"fullname"];
+                        }
+                        
+                        NSMutableAttributedString *addressText = [[NSMutableAttributedString alloc] initWithString:addressString];
+                        [self modifyString:addressText setFontForText:fullname];
+                        self.addressLabel.attributedText = addressText;
+                        
+                        NSString *countryCode = [[PFUser currentUser] objectForKey:@"shippingCountryCode"];
+                        
+                        //now calc shipping based on this address
+                        float shipping;
+                        //recalc shipping price & total price based on country
+                        if ([self.listingCountryCode.lowercaseString isEqualToString:countryCode.lowercaseString]) {
+                            //national pricing
+                            self.isNational = YES;
+                            shipping = [[self.listingObject objectForKey:@"nationalShippingPrice"]floatValue];
                             
                             if (shipping == 0.00) {
                                 self.shippingPriceLabel.text = @"Free";
@@ -199,37 +263,61 @@
                             self.payButton.alpha = 1;
                         }
                         else{
-                            //int shipping is not enabled
-                            self.addAddress = YES;
-                            self.shippingPriceLabel.text = @"-";
-                            self.totalPriceLabel.text = @"-";
                             
-                            [self.payButton setEnabled:NO];
-                            self.payButton.alpha = 0.5;
-                            
-                            [self showAlertWithTitle:@"National Shipping Only" andMsg:[NSString stringWithFormat:@"The seller is only willing to ship their item within %@. If you have a shipping address within this country, please enter it now", [self.listingObject objectForKey:@"country"]]];
+                            //now check if international shipping is even allowed
+                            if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]) {
+                                
+                                //if so, use int. pricing
+                                self.isNational = NO;
+                                shipping = [[self.listingObject objectForKey:@"globalShippingPrice"]floatValue];
+                                
+                                if (shipping == 0.00) {
+                                    self.shippingPriceLabel.text = @"Free";
+                                }
+                                else{
+                                    self.shippingPriceLabel.text = [NSString stringWithFormat:@"%@%.2f", self.currencySymbol,shipping];
+                                }
+                                
+                                self.totalPrice = shipping + self.salePrice;
+                                self.totalPriceLabel.text = [NSString stringWithFormat:@"%@ %@%.2f", self.currency,self.currencySymbol,self.totalPrice];
+                                
+                                //enable pay button
+                                [self.payButton setEnabled:YES];
+                                self.payButton.alpha = 1;
+                            }
+                            else{
+                                //int shipping is not enabled
+                                self.addAddress = YES;
+                                self.shippingPriceLabel.text = @"-";
+                                self.totalPriceLabel.text = @"-";
+                                
+                                [self.payButton setEnabled:NO];
+                                self.payButton.alpha = 0.5;
+                                
+                                [self showAlertWithTitle:@"National Shipping Only" andMsg:[NSString stringWithFormat:@"The seller is only willing to ship their item within %@. If you have a shipping address within this country, please enter it now", [self.listingObject objectForKey:@"country"]]];
+                            }
                         }
                     }
+                    else{
+                        self.addAddress = YES;
+                        self.shippingPriceLabel.text = @"-";
+                        self.totalPriceLabel.text = @"-";
+                        
+                        [self.payButton setEnabled:NO];
+                        self.payButton.alpha = 0.5;
+                    }
+                    
+                    [self.tableView reloadData];
                 }
                 else{
-                    self.addAddress = YES;
-                    self.shippingPriceLabel.text = @"-";
-                    self.totalPriceLabel.text = @"-";
-                    
-                    [self.payButton setEnabled:NO];
-                    self.payButton.alpha = 0.5;
+                    NSLog(@"error finding listing at checkout %@", error);
+                    [Answers logCustomEventWithName:@"Checkout listing Error"
+                                   customAttributes:@{}];
+                    self.sellerErrorShowing = YES;
+                    [self showAlertWithTitle:@"Listing Error" andMsg:@"Make sure you're connected to the internet and try again!"];
                 }
-                
-                [self.tableView reloadData];
-            }
-            else{
-                NSLog(@"error finding listing at checkout %@", error);
-                [Answers logCustomEventWithName:@"Checkout listing Error"
-                               customAttributes:@{}];
-                self.sellerErrorShowing = YES;
-                [self showAlertWithTitle:@"Listing Error" andMsg:@"Make sure you're connected to the internet and try again!"];
-            }
-        }];
+            }];
+        }
     }
 
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
@@ -252,6 +340,29 @@
     self.changeAddressPressed.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     self.paypalLabel.titleLabel.numberOfLines = 0;
     self.paypalLabel.titleLabel.textAlignment = NSTextAlignmentCenter;
+}
+
+-(void)notifySellerWithId:(NSString *)sellerId forWarning:(NSString *)warningType{
+    
+    NSDictionary *params = @{@"sellerId": sellerId, @"warningType" : warningType};
+    [PFCloud callFunctionInBackground:@"notifySellerConnectPayPal" withParameters:params block:^(NSDictionary *response, NSError *error) {
+        if (!error) {
+            NSLog(@"notify seller response %@", response);
+            [Answers logCustomEventWithName:@"Notified Seller to Connect PP"
+                           customAttributes:@{
+                                              @"status":@"success",
+                                              @"type": warningType
+                                              }];
+        }
+        else{
+            NSLog(@"notify seller error %@", error);
+            [Answers logCustomEventWithName:@"Notified Seller to Connect PP Success"
+                           customAttributes:@{
+                                              @"status":@"error",
+                                              @"type": warningType
+                                              }];
+        }
+    }];
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -666,7 +777,7 @@
             NSLog(@"response: %@", response);
             
             if (![response valueForKey:@"orderId"] || ![response valueForKey:@"actionURL"]) {
-                [self showAlertWithTitle:@"PayPal Error #800" andMsg:@"Please try again, if the error persists send us an email hello@sobump.com"];
+                [self showAlertWithTitle:@"PayPal Error #800" andMsg:@"Please try again, if the error persists hit the ? icon in the top right corner to chat to one of the team"];
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
                                                   @"type":@"no orderId or action url in create pp order"
@@ -677,6 +788,20 @@
             self.paypalOrderId = [response valueForKey:@"orderId"];
             NSString *urlString = [response valueForKey:@"actionURL"];
             
+            if ([response valueForKey:@"sellerTotal"] && [response valueForKey:@"feePrice"]) {
+                
+                //create fee & sellerTotal labels
+                self.feePrice = [[response valueForKey:@"feePrice"]floatValue];
+                self.sellerTotalPrice = [[response valueForKey:@"sellerTotal"]floatValue];
+
+                //assign to properties so can pass to createBUMPOrder func
+                self.sellerTotalLabelString = [NSString stringWithFormat:@"%@ %@%.2f", self.currency ,self.currencySymbol,self.sellerTotalPrice];
+                self.feeLabelString = [NSString stringWithFormat:@"-%@%.2f", self.currencySymbol,self.feePrice];
+                
+                NSLog(@"got fee info and labels %.2f  %.2f  %@  %@", self.feePrice, self.sellerTotalPrice, self.sellerTotalLabelString, self.feeLabelString);
+                
+            }
+            
             urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
             NSLog(@"URL: %@", urlString);
             
@@ -686,6 +811,8 @@
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(createOrderFailed) name:@"paypalCreatedOrderFailed" object:nil];
             }
             self.hitPay = YES;
+            
+            //retrieve totalSellerPrice, totalSellerPriceLabel, feePriceLabel & feePrice
             
             //trigger PayPal sign in to check order
             self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
@@ -704,7 +831,7 @@
         else{
             [self hideHUD];
             NSLog(@"error grabbing paypal order link %@", error);
-            [self showAlertWithTitle:@"PayPal Error #801" andMsg:@"Please try again, if the error persists send us an email hello@sobump.com"];
+            [self showAlertWithTitle:@"PayPal Error #801" andMsg:@"Please try again, if the error persists hit the ? icon in the top right corner to chat to one of the team"];
             [Answers logCustomEventWithName:@"PayPal Error"
                            customAttributes:@{
                                               @"type":@"Couldn't grab order link"
@@ -742,7 +869,6 @@
     
     NSLog(@"adding in params for create bump order w/ shipping %.2f", shippingPrice);
 
-    
     if (!self.pairingId) {
         [Answers logCustomEventWithName:@"Pairing ID Error"
                        customAttributes:@{}];
@@ -804,7 +930,13 @@
                              @"brand":brand,
                              
                              @"invoiceId":[NSString stringWithFormat:@"invoice_%@",self.listingObject.objectId],
-                             @"currency" : self.currency
+                             @"currency" : self.currency,
+                             
+                             @"feePrice": @(self.feePrice),
+                             @"sellerPrice": @(self.sellerTotalPrice),
+                             @"feePriceLabel":self.feeLabelString,
+                             @"sellerPriceLabel":self.sellerTotalLabelString
+                             
                              };
     
     [PFCloud callFunctionInBackground:@"createBUMPOrder" withParameters:params block:^(NSString *orderId, NSError *error) {
@@ -1068,10 +1200,24 @@
         else if(self.gotoShipping){
             ShippingController *vc = [[ShippingController alloc]init];
             vc.delegate = self;
+            vc.differentCountryNeeded = YES;
             
             [self hideBarButton];
             [self.navigationController pushViewController:vc animated:YES];
         }
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)triggerInstantBuyDisabledWarningWithTitle:(NSString *)title andMessage:(NSString *)message{
+    
+    //@"Seller's PayPal"
+    
+    //@"The seller still needs to connect their PayPal account for you to purchase this listing\n\nWe've given them a hurry up but try sending them a message so you can purchase the item"
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self dismissVC];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -1087,7 +1233,7 @@
     [self.delegate PurchasedItemCheckout];
 }
 - (IBAction)paypalFooterPressed:(id)sender {
-    SFSafariViewController *paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:@"https://www.paypal.com/us/webapps/mpp/paypal-safety-and-security"]];
+    SFSafariViewController *paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:@"https://help.sobump.com/faqs/what-is-bump-paypal-protection"]];
     if (@available(iOS 11.0, *)) {
         paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
     }

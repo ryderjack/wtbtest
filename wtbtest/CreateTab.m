@@ -594,7 +594,7 @@
     [self.successView.blueButton setTitle:@"Browse latest items for sale" forState:UIControlStateNormal];
     
     //change text label
-    self.successView.mainLabel.text = @"Sellers can now search for your wanted ad. Check out what else is for sale on Bump 👊";
+    self.successView.mainLabel.text = @"Sellers can now search for your wanted ad. Check out what else is for sale on BUMP";
     
     //change add details label
     self.successView.addDetailLabel.text = @"A D D  D E T A I L";
@@ -607,7 +607,7 @@
     [self.successView.blueButton setTitle:@"Browse latest items for sale" forState:UIControlStateNormal];
     
     //change text label
-    self.successView.mainLabel.text = @"Buyers on Bump can also create wanted listings. If you're in a hurry to sell, try searching through wanted items 🤑";
+    self.successView.mainLabel.text = @"Buyers on Bump can also create wanted listings. If you're in a hurry to sell, try searching through wanted items";
     
     //change add details label to 'edit'
     self.successView.addDetailLabel.text = @"E D I T";

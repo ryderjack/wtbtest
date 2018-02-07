@@ -1311,7 +1311,7 @@
                                               }];
             
             [PFUser logOut];
-            [Intercom reset];
+            [Intercom logout];
 
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
@@ -1345,6 +1345,10 @@
         self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0];
         self.segmentedControl.selectionIndicatorHeight = 2;
         self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:9],NSForegroundColorAttributeName : [UIColor lightGrayColor]};
+        
+        self.segmentedControl.borderType = HMSegmentedControlBorderTypeBottom;
+        self.segmentedControl.borderColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+        self.segmentedControl.borderWidth = 0.5;
         
         self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0]};
         [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];

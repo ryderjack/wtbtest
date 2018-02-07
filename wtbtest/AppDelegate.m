@@ -75,6 +75,7 @@
         NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
         [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
             if (!error) {
+                NSLog(@"hash: %@", hash);
                 [Intercom setUserHash:hash];
                 [Intercom registerUserWithUserId:[PFUser currentUser].objectId];
                 [self setupIntercomListener];

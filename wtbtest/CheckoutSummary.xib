@@ -363,29 +363,13 @@
                             <constraint firstAttribute="height" constant="23" id="vNJ-E9-qzo"/>
                         </constraints>
                     </imageView>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" hasAttributedTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dRt-g9-Lbb">
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dRt-g9-Lbb">
                         <rect key="frame" x="74" y="59" width="227" height="45.5"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="11"/>
                         <state key="normal">
-                            <attributedString key="attributedTitle">
-                                <fragment content="Learn about PayPal Buyer &amp; Fraud Protection">
-                                    <attributes>
-                                        <color key="NSColor" red="0.60784313725490191" green="0.60784313725490191" blue="0.60784313725490191" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                        <font key="NSFont" size="11" name="PingFangSC-Semibold"/>
-                                    </attributes>
-                                </fragment>
-                                <fragment content=" ">
-                                    <attributes>
-                                        <color key="NSColor" red="0.2901960784" green="0.2901960784" blue="0.2901960784" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                        <font key="NSFont" size="11" name="PingFangSC-Semibold"/>
-                                    </attributes>
-                                </fragment>
-                                <fragment content="here">
-                                    <attributes>
-                                        <color key="NSColor" red="0.30196078431372547" green="0.63921568627450975" blue="0.9882352941176471" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                        <font key="NSFont" size="11" name="PingFangSC-Semibold"/>
-                                    </attributes>
-                                </fragment>
-                            </attributedString>
+                            <string key="title">Learn more about
+BUMP + PayPal Protection</string>
+                            <color key="titleColor" red="0.30196078430000001" green="0.63921568630000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         </state>
                         <connections>
                             <action selector="paypalFooterPressed:" destination="-1" eventType="touchUpInside" id="U6f-ef-tdm"/>

@@ -131,4 +131,6 @@
 //delegate
 @property (nonatomic, weak) id <SettingsDelegate> delegate;
 
+@property (nonatomic) BOOL changePPMode;
+
 @end

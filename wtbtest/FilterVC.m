@@ -58,7 +58,8 @@
     self.categoryIconCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.priceSliderInstantBuy.selectionStyle = UITableViewCellSelectionStyleNone;
     self.locationContinentsCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    
+    self.priceSliderCell.selectionStyle = UITableViewCellSelectionStyleNone;
+
     //category swipe view
     self.categorySwipeView.delegate = self;
     self.categorySwipeView.dataSource = self;

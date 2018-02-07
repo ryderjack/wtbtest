@@ -40,13 +40,11 @@
 
 @property (strong, nonatomic) IBOutlet UITableViewCell *termsCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *rateCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *snapchatCell;
 @property (weak, nonatomic) IBOutlet UIImageView *snapSeen;
 @property (strong, nonatomic) IBOutlet UITableViewCell *defaultSizesCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *FAQCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *instaCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *logOutCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *orderSupportCell;
 
 //delegate
 @property (nonatomic, weak) id <ProfileSettingsDelegate> delegate;
@@ -73,6 +71,10 @@
 @property (weak, nonatomic) IBOutlet UILabel *goalLabel;
 @property (weak, nonatomic) IBOutlet UILabel *remainingLabel;
 @property (nonatomic) BOOL paidMod;
-@property (weak, nonatomic) IBOutlet YLProgressBar *progressBarNew;
-
+@property (nonatomic, strong) YLProgressBar *progView;
+    @property (weak, nonatomic) IBOutlet UIView *progHolderView;
+    
+//@property (weak, nonatomic) IBOutlet YLProgressBar *progressBarNew;
+    
+    
 @end

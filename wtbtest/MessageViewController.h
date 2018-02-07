@@ -164,6 +164,7 @@
 @property (nonatomic, strong) ListingBannerView *listingView;
 @property (nonatomic) BOOL showingListingBanner;
 @property (nonatomic) BOOL buyButtonOn;
+@property (nonatomic) BOOL instantBuyDisabled;
 
 @property (nonatomic) BOOL demoMode;
 @property (nonatomic) int demoMessageNumber;

@@ -36,6 +36,19 @@
     
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     
+    //below fixes bug where tab bar would cover last review if user has > 10
+    int tabBarHeight = 0;
+    
+    if (self.tabBarController.tabBar.frame.size.height == 0) {
+        tabBarHeight = self.presentingViewController.tabBarController.tabBar.frame.size.height;
+    }
+    else{
+        tabBarHeight = self.tabBarController.tabBar.frame.size.height;
+    }
+    
+    self.tableView.contentInset =  UIEdgeInsetsMake(0, 0, tabBarHeight/3, 0);
+    self.tableView.scrollIndicatorInsets = UIEdgeInsetsMake(0, 0, tabBarHeight/3, 0);
+    
     if (self.singleMode) {
         self.navigationItem.title = @"R E V I E W";
         
@@ -146,24 +159,6 @@
             NSLog(@"feedback error %@", error);
         }
     }];
-    
-    //load proxy reviews
-//    PFQuery *proxyFeedbackQuery = [PFQuery queryWithClassName:@"feedback"];
-//    [proxyFeedbackQuery whereKey:@"status" equalTo:@"live"];
-//    [proxyFeedbackQuery whereKey:@"gotFeedback" equalTo:self.user];
-//    [proxyFeedbackQuery orderByDescending:@"createdAt"];
-//    [proxyFeedbackQuery whereKey:@"proxy" equalTo:@"YES"];
-//    [proxyFeedbackQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//        if (objects) {
-//
-//            if (objects.count == 0) {
-//                //no proxy reviews
-//
-//                [self.segmentedControl setSectionTitles:@[@"P U R C H A S E D",@"S O L D", @"P R O X I E S"]];
-//
-//            }
-//        }
-//    }];
 }
 
 #pragma mark - Table view data source
@@ -361,6 +356,10 @@
         self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0];
         self.segmentedControl.selectionIndicatorHeight = 2;
         self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:9],NSForegroundColorAttributeName : [UIColor lightGrayColor]};
+        
+        self.segmentedControl.borderType = HMSegmentedControlBorderTypeBottom;
+        self.segmentedControl.borderColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+        self.segmentedControl.borderWidth = 0.5;
         
         self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0]};
         [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];

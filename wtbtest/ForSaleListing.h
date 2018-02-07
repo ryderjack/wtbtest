@@ -196,5 +196,9 @@
 
 @property (nonatomic) BOOL showingIntroBoostView;
 
+//is order actually purchasable
+@property (nonatomic) BOOL canPurchase;
+@property (nonatomic) BOOL instantBuyDisabled;
+@property (nonatomic) BOOL multipleQuantity;
 
 @end

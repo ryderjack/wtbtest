@@ -80,7 +80,6 @@
                 
                 //show buyer simplified payment cell
                 self.paymentCellHeight = 326;
-                [self.tableView reloadData]; //CHANGE need this here? we reload after fetching user too
             }
             
             if ([[self.orderObject objectForKey:@"status"] isEqualToString:@"pending"]) {
@@ -95,7 +94,7 @@
                 
                 self.paymentFailed = YES;
                 self.rowNumber = 3;
-                [self showAlertWithTitle:@"Order Cancelled" andMsg:@"PayPal was unable to process your payment so the order was cancelled. You have NOT been charged and the item has been made available for sale again. You can attempt to purchase the item again. If the problem persists please contact supportt"];
+                [self showAlertWithTitle:@"Order Cancelled" andMsg:@"PayPal was unable to process your payment so the order was cancelled. You have NOT been charged and the item has been made available for sale again. You can attempt to purchase the item again. If the problem persists please contact support"];
                 [self.messageButton setHidden:YES];
                 [self.refundButton setHidden:YES];
                 [self.buyerRefundButton setHidden:YES];
@@ -1666,23 +1665,22 @@
         [Intercom presentMessenger];
     }]];
 
-    //CHANGE
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Check Order Status" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-
-        //call check order status
-        //need paypal orderId and bump orderId
-
-        NSDictionary *params = @{@"bumpOrderId": self.orderObject.objectId, @"ppOrderId":[self.orderObject objectForKey:@"paypalOrderId"]};
-        [PFCloud callFunctionInBackground:@"checkOrderStatus" withParameters:params block:^(NSDictionary *response, NSError *error) {
-            if (!error) {
-                NSLog(@"order status response %@", response);
-
-            }
-            else{
-                NSLog(@"order status error %@", error);
-            }
-        }];
-    }]];
+//    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Check Order Status" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+//
+//        //call check order status
+//        //need paypal orderId and bump orderId
+//
+//        NSDictionary *params = @{@"bumpOrderId": self.orderObject.objectId, @"ppOrderId":[self.orderObject objectForKey:@"paypalOrderId"]};
+//        [PFCloud callFunctionInBackground:@"checkOrderStatus" withParameters:params block:^(NSDictionary *response, NSError *error) {
+//            if (!error) {
+//                NSLog(@"order status response %@", response);
+//
+//            }
+//            else{
+//                NSLog(@"order status error %@", error);
+//            }
+//        }];
+//    }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Order #ID" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [Answers logCustomEventWithName:@"Copied Order ID"

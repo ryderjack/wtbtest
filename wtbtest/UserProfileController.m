@@ -155,7 +155,13 @@ typedef void(^myCompletion)(BOOL);
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
 
+//    [[PFUser currentUser]fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+//        if (object) {
+//            NSLog(@"CURRENT: %@", [PFUser currentUser]);
+//        }
+//    }]; //CHANGE remove
     
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NewTBMessageReg"] == YES && self.tabMode == YES) {
         [self newTBMessageReg];
@@ -1473,11 +1479,10 @@ typedef void(^myCompletion)(BOOL);
             [self setupMessages];
         }]];
         
-        //CHANGE remove this
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"REACTIVATE" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-            NSDictionary *params = @{@"userId": self.user.objectId};
-            [PFCloud callFunctionInBackground:@"reactivateUser" withParameters: params block:nil];
-        }]];
+//        [actionSheet addAction:[UIAlertAction actionWithTitle:@"REACTIVATE" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+//            NSDictionary *params = @{@"userId": self.user.objectId};
+//            [PFCloud callFunctionInBackground:@"reactivateUser" withParameters: params block:nil];
+//        }]];
         
         //Copy Link
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Profile Link" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -1821,6 +1826,10 @@ typedef void(^myCompletion)(BOOL);
     self.myBar.minimumBarHeight = 114.0;
     self.myBar.backgroundColor = [UIColor whiteColor];
     self.myBar.behaviorDefiner = [SquareCashStyleBehaviorDefiner new];
+    
+    //snap to either top or bottom
+    [self.myBar.behaviorDefiner addSnappingPositionProgress:0.0 forProgressRangeStart:0.0 end:0.5];
+    [self.myBar.behaviorDefiner addSnappingPositionProgress:1.0 forProgressRangeStart:0.5 end:1.0];
     
     //create a splitter so collection view can respond to its own delegate methods AND flexibar can copy the CV's scroll view
     self.splitter = [[BLKDelegateSplitter alloc] initWithFirstDelegate:self secondDelegate:self.myBar.behaviorDefiner];
@@ -2709,7 +2718,7 @@ typedef void(^myCompletion)(BOOL);
 }
 
 -(void)showEarlyAlert{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:@"We've just sent you a confirmation email! Be sure to check your Junk Folder for an email from BUMP Customer Service\n\nIf you still can't find it, make sure your email is correct in settings then try again here in 5 mins so we can send another!\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email" message:@"We've just sent you a confirmation email! Be sure to check your Junk Folder for an email from BUMP Customer Service\n\nIf you still can't find it, make sure your email is correct in settings then try again here in 5 mins so we can send another!\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -2726,7 +2735,7 @@ typedef void(^myCompletion)(BOOL);
 }
 
 -(void)showMaxAlert{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:@"We've already sent you 3 confirmation emails!\n\nBe sure to check your Junk Folder for an email from BUMP Customer Service. If you still can't find it, send Support a message from Settings\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email" message:@"We've already sent you 3 confirmation emails!\n\nBe sure to check your Junk Folder for an email from BUMP Customer Service. If you still can't find it, send Support a message from Settings\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -2742,7 +2751,7 @@ typedef void(^myCompletion)(BOOL);
 
 -(void)showVerifyEmailAlert{
     
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email 📩" message:[NSString stringWithFormat:@"We'll send an email with a verification link to '%@'\n\nIf this is correct, hit send! Or you can change your email address in Settings\n\nRemember to check your Junk Folder!\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app ",[[PFUser currentUser]objectForKey:@"email"]] preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email" message:[NSString stringWithFormat:@"We'll send an email with a verification link to '%@'\n\nIf this is correct, hit send! Or you can change your email address in Settings\n\nRemember to check your Junk Folder!\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app ",[[PFUser currentUser]objectForKey:@"email"]] preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -2755,7 +2764,7 @@ typedef void(^myCompletion)(BOOL);
                 if (!error) {
                     NSLog(@"email response %@", response);
                     
-                    [self showAlertWithTitle:@"Email Sent! 📬" andMsg:@"Remember to check your Junk Folder!"];
+                    [self showAlertWithTitle:@"Email Sent" andMsg:@"Remember to check your Junk Folder!"];
                     
                     //increment confirmation email number count (max. = 3)
                     [[PFUser currentUser]incrementKey:@"emailsCount"];
@@ -3222,6 +3231,11 @@ typedef void(^myCompletion)(BOOL);
     self.segmentedControl.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe;
     self.segmentedControl.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationDown;
     self.segmentedControl.selectionIndicatorColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0];
+    
+    self.segmentedControl.borderType = HMSegmentedControlBorderTypeBottom;
+    self.segmentedControl.borderColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
+    self.segmentedControl.borderWidth = 0.5;
+    
     self.segmentedControl.selectionIndicatorHeight = 2;
     self.segmentedControl.titleTextAttributes = @{NSFontAttributeName : [UIFont fontWithName:@"PingFangSC-Medium" size:10],NSForegroundColorAttributeName : [UIColor lightGrayColor]};
     self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName :  [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0]};

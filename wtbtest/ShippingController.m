@@ -365,7 +365,7 @@
 }
 
 -(void)dismissVC{
-    if (self.somethingChanged) {
+    if (self.somethingChanged && !self.differentCountryNeeded) {
         [self saveStuff];
     }
     else{

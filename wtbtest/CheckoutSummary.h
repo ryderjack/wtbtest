@@ -117,5 +117,14 @@
 
 //fees
 @property (nonatomic) BOOL feeFree;
+@property (nonatomic, strong) NSString *sellerTotalLabelString;
+@property (nonatomic, strong) NSString *feeLabelString;
+@property (nonatomic) float feePrice;
+@property (nonatomic) float sellerTotalPrice;
+@property (nonatomic) NSString *merchantId;
+
+//if its a definite no from the listing just show a pop up straight away
+@property (nonatomic) BOOL canPurchase;
+@property (nonatomic) BOOL instantBuyDisabled;
 
 @end

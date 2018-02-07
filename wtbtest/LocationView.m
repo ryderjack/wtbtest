@@ -68,23 +68,45 @@
 - (void)searchForText:(NSString*)searchText
 {
     NSMutableArray *searchResults = [[NSMutableArray alloc] init];
+    
     [[HNKGooglePlacesAutocompleteQuery sharedQuery] fetchPlacesForSearchQuery:searchText
-                                                                   completion:^(NSArray *places, NSError *error)  {
-                                                                       if (error) {
-                                                                           NSLog(@"ERROR: %@", error);
-                                                                           //update table view
-                                                                           [self.tableView reloadData];
-                                                                       } else {
-                                                                           for (HNKGooglePlacesAutocompletePlace *place in places) {
-//                                                                               NSLog(@"%@", place);
-                                                                               [searchResults addObject:place];
-                                                                                self.searchResults = searchResults;
-                                                                           }
-                                                                           //update table view
-                                                                           [self.tableView reloadData];
-                                                                       }
-                                                                   }
+                                                      configurationBlock:^(HNKGooglePlacesAutocompleteQueryConfig *config) {
+                                                          config.language = @"EN";
+                                                      } completion:^(NSArray *places, NSError *error)  {
+                                                             if (error) {
+                                                                 NSLog(@"ERROR: %@", error);
+                                                                 //update table view
+                                                                 [self.tableView reloadData];
+                                                             } else {
+                                                                 for (HNKGooglePlacesAutocompletePlace *place in places) {
+                                                                     
+                                                                     NSLog(@"PLACE %@", place);
+                                                                     
+                                                                     [searchResults addObject:place];
+                                                                      self.searchResults = searchResults;
+                                                                 }
+                                                                 //update table view
+                                                                 [self.tableView reloadData];
+                                                             }
+                                                         }
      ];
+    
+//    [[HNKGooglePlacesAutocompleteQuery sharedQuery] fetchPlacesForSearchQuery:searchText
+//                                                                   completion:^(NSArray *places, NSError *error)  {
+//                                                                       if (error) {
+//                                                                           NSLog(@"ERROR: %@", error);
+//                                                                           //update table view
+//                                                                           [self.tableView reloadData];
+//                                                                       } else {
+//                                                                           for (HNKGooglePlacesAutocompletePlace *place in places) {
+//                                                                               [searchResults addObject:place];
+//                                                                                self.searchResults = searchResults;
+//                                                                           }
+//                                                                           //update table view
+//                                                                           [self.tableView reloadData];
+//                                                                       }
+//                                                                   }
+//     ];
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{

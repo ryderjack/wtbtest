@@ -202,7 +202,7 @@
             NSLog(@"invalid fb token in VDL");
             
             //invalid access token
-            [Intercom reset];
+            [Intercom logout];
             [PFUser logOut];
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             vc.delegate = self;
@@ -217,7 +217,7 @@
                                               @"user":currentUser.username
                                               }];
             [PFUser logOut];
-            [Intercom reset];
+            [Intercom logout];
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             vc.delegate = self;
             NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
@@ -240,7 +240,7 @@
             currentUser[@"completedReg"] = @"NO";
             [currentUser saveInBackground];
             [PFUser logOut];
-            [Intercom reset];
+            [Intercom logout];
 
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             vc.delegate = self;
@@ -277,7 +277,6 @@
             
             if (![[currentUser objectForKey:@"sentWelcomeMessage"]isEqualToString:@"YES"] && [currentUser.createdAt compare:combinedDate]==NSOrderedDescending){
                 //user was created later than this date
-                NSLog(@"NEED TO UPDATE THIS USERS INTERCOM STUFF");
 
                 NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
                 [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
@@ -334,10 +333,28 @@
                 }];
             }
             
-            //decide whether to show email reminder header
-//            if ([[currentUser objectForKey:@"emailIsVerified"]boolValue] != YES && ![currentUser objectForKey:@"facebookId"]) {
-//                [self setupEmailHeader];
-//            }
+            //check if user owed 10 days free fees
+            NSDateComponents *components1 = [[NSDateComponents alloc] init];
+            [components1 setYear:2018];
+            [components1 setMonth:2];
+            [components1 setDay:6]; //went live in 2.1.7
+            NSDate * combinedDate1 = [theCalendar dateFromComponents:components1];
+            
+            //did user sign up before fees came into action //CHANGE
+            if([[PFUser currentUser].createdAt compare:combinedDate1]==NSOrderedAscending && ![[PFUser currentUser]objectForKey:@"introFreeSet"] && ![[[PFUser currentUser]objectForKey:@"introFreeSet"]isEqualToString:@"YES"]){
+
+                NSLog(@"user is entitled to 10 days fee free selling");
+
+                Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                [mixpanel track:@"Added 10 Days Credit" properties:@{}];
+
+                NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+                dayComponent.day = 10;
+                NSDate *feeFreeEndDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+                [[PFUser currentUser]setObject:feeFreeEndDate forKey:@"feeFreeEndDate"];
+                [[PFUser currentUser]setObject:@"YES" forKey:@"introFreeSet"];
+                [[PFUser currentUser]saveInBackground];
+            }
 
             //user has signed up fine, do final checks & loading
             //get updated friends list if connected with FB
@@ -367,7 +384,7 @@
                         if (error.code == 8) {
                             //invalid access token
                             [PFUser logOut];
-                            [Intercom reset];
+                            [Intercom logout];
 
                             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
                             vc.delegate = self;
@@ -1339,7 +1356,7 @@
                    customAttributes:@{}];
     
     [PFUser logOut];
-    [Intercom reset];
+    [Intercom logout];
     
     Mixpanel *mixpanel = [Mixpanel sharedInstance];
     [mixpanel reset];
@@ -1406,7 +1423,7 @@
             
             
             [PFUser logOut];
-            [Intercom reset];
+            [Intercom logout];
 
             WelcomeViewController *vc = [[WelcomeViewController alloc]init];
             vc.delegate = self;
@@ -3132,7 +3149,7 @@
                                                       @"status":@"Success"
                                                       }];
                     
-                    [self showAlertWithTitle:@"Email Verified ✅" andMsg:@"Congrats, you just verified your email! If you haven't already, connect your Facebook to share listings with friends on BUMP"];
+                    [self showAlertWithTitle:@"Email Verified" andMsg:@"Congrats, you just verified your email! If you haven't already, connect your Facebook to share listings with friends on BUMP"];
                     
                     //send welcome email if haven't already signed up with fb & received it that way
                     if (![[PFUser currentUser]objectForKey:@"facebookId"]) {
@@ -3464,6 +3481,13 @@
 
             if ([[self.postingItem objectForKey:@"instantBuy"]isEqualToString:@"YES"]) {
                 
+                NSString *chargedFee = @"NO";
+                
+                if ([self.postingItem objectForKey:@"chargeFee"]) {
+                    chargedFee = [self.postingItem objectForKey:@"chargeFee"];
+                }
+                
+                
                 [Intercom logEventWithName:@"created_instant_buy_listing" metaData: @{}];
 
                 [Intercom logEventWithName:@"listed_item" metaData: @{
@@ -3480,7 +3504,8 @@
                                                                @"category":[self.postingItem objectForKey:@"category"],
                                                                @"currency":[self.postingItem objectForKey:@"currency"],
                                                                @"salePrice": @([[self.postingItem objectForKey:@"salePriceUSD"]floatValue]),
-                                                               @"shippingPrice":@([[self.postingItem objectForKey:@"nationalShippingPrice"]floatValue])
+                                                               @"shippingPrice":@([[self.postingItem objectForKey:@"nationalShippingPrice"]floatValue]),
+                                                               @"fee":chargedFee
                                                                }];
             }
             else{
@@ -4198,11 +4223,6 @@
                 self.addedPayPalObservers = YES;
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalURLReturned:) name:@"paypalOnboardingReturn" object:nil];
             }
-            
-            //update user's IC profile so they receive auto message about paypal business account
-            ICMUserAttributes *userAttributes = [ICMUserAttributes new];
-            userAttributes.customAttributes = @{@"on_paypal_signin" : @YES};
-            [Intercom updateUser:userAttributes];
             
             //trigger PayPal sign in
             if (!self.paypalSafariView) {

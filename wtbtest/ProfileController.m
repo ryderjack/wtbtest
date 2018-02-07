@@ -38,10 +38,6 @@
         [self.snapSeen setHidden:YES];
     }
     
-    if ([[[PFUser currentUser] objectForKey:@"orderNumber"]intValue] > 0) {
-        self.showOrderStuff = YES;
-    }
-    
     self.modPerformanceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     if ([[[PFUser currentUser]objectForKey:@"paidMod"]isEqualToString:@"YES"]) {
@@ -64,12 +60,15 @@
             if (object) {
                 
                 //setup progress bar
-                self.progressBarNew.type               = YLProgressBarTypeFlat;
-                self.progressBarNew.progressTintColor  = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
-                self.progressBarNew.hideStripes        = YES;
-                self.progressBarNew.uniformTintColor = YES;
-                self.progressBarNew.trackTintColor = [UIColor colorWithRed:0.86 green:0.93 blue:1.00 alpha:1.0];
-                [self.progressBarNew setProgress:0.00];
+                self.progView = [[YLProgressBar alloc]initWithFrame:CGRectMake(0, 0, self.progHolderView.frame.size.width, self.progHolderView.frame.size.height)];
+                self.progView.type               = YLProgressBarTypeFlat;
+                self.progView.progressTintColor  = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+                self.progView.hideStripes        = YES;
+                self.progView.uniformTintColor = YES;
+                self.progView.trackTintColor = [UIColor colorWithRed:0.86 green:0.93 blue:1.00 alpha:1.0];
+                [self.progView setProgress:0.00];
+                
+                [self.progHolderView addSubview:self.progView];
                 
                 NSDate *startDate = [object objectForKey:@"startDate"];
                 
@@ -152,7 +151,7 @@
                             
                             //give slight delay
                             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                                [self.progressBarNew setProgress:1.0 animated:YES];
+                                [self.progView setProgress:1.0 animated:YES];
                             });
                         }
                         else{
@@ -174,7 +173,7 @@
                             
                             //give slight delay
                             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                                [self.progressBarNew setProgress:progress animated:YES];
+                                [self.progView setProgress:progress animated:YES];
                             });
                         }
                     }
@@ -213,20 +212,13 @@
     [self setImageBorder:self.unreadView];
     [self setImageBorder:self.unreadSupportView];
 
+
     if (self.unseenTBMsg == YES) {
         [self.unreadView setHidden:NO];
     }
     else{
         [self.unreadView setHidden:YES];
     }
-    
-//    if (self.unseenSupport == YES) {
-//        //show unread icon in suport cell
-//        [self.unreadSupportView setHidden:NO];
-//    }
-//    else{
-//        [self.unreadSupportView setHidden:YES];
-//    }
     
     //dismiss Invite gesture
     self.tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
@@ -455,12 +447,9 @@
             [self.navigationController pushViewController:vc animated:YES];
         }
         else if (indexPath.row == 0) {
-            //chat w/ Bump
-//            if (self.tappedTB) {
-//                return;
-//            }
+            //message support
             
-//            self.tappedTB = YES;
+            self.tappedTB = YES;
             
             //reset profile badges & hide unread icon? or do we still display it after user has tapped & still unseen convo's
             [self.unreadView setHidden:YES];
@@ -469,46 +458,6 @@
                            customAttributes:@{}];
             
             [Intercom presentMessenger];
-            
-//
-//            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
-//            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-//            [convoQuery whereKey:@"convoId" equalTo:convoId];
-//            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-//                if (object) {
-//                    //convo exists, go there
-//                    ChatWithBump *vc = [[ChatWithBump alloc]init];
-//                    vc.convoId = [object objectForKey:@"convoId"];
-//                    vc.convoObject = object;
-//                    vc.otherUser = [PFUser currentUser];
-//                    vc.showSuggested = YES;
-//                    [self.navigationController tabBarItem].badgeValue = nil;
-//                    [self.navigationController pushViewController:vc animated:YES];
-//                }
-//                else{
-//                    //create a new one
-//                    PFObject *convoObject = [PFObject objectWithClassName:@"teamConvos"];
-//                    convoObject[@"otherUser"] = [PFUser currentUser];
-//                    convoObject[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-//                    convoObject[@"totalMessages"] = @0;
-//                    [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                        if (succeeded) {
-//                            //saved, goto VC
-//                            ChatWithBump *vc = [[ChatWithBump alloc]init];
-//                            vc.convoId = [convoObject objectForKey:@"convoId"];
-//                            vc.convoObject = convoObject;
-//                            vc.otherUser = [PFUser currentUser];
-//                            vc.showSuggested = YES;
-//                            [self.unreadView setHidden:YES];
-//                            [self.navigationController tabBarItem].badgeValue = nil;
-//                            [self.navigationController pushViewController:vc animated:YES];
-//                        }
-//                        else{
-//                            NSLog(@"error saving convo");
-//                        }
-//                    }];
-//                }
-//            }];
         }
     }
     else if (indexPath.section == 2){
@@ -547,17 +496,19 @@
             [Answers logCustomEventWithName:@"FAQs pressed"
                            customAttributes:@{}];
             
-            NSString *URLString = @"http://help.sobump.com/";
-            SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
-            if (@available(iOS 11.0, *)) {
-                safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
-            }
-
-            if (@available(iOS 10.0, *)) {
-                safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
-            }
+            [Intercom presentHelpCenter];
             
-            [self.navigationController presentViewController:safariView animated:YES completion:nil];
+//            NSString *URLString = @"http://help.sobump.com/";
+//            SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
+//            if (@available(iOS 11.0, *)) {
+//                safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+//            }
+//
+//            if (@available(iOS 10.0, *)) {
+//                safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+//            }
+//
+//            [self.navigationController presentViewController:safariView animated:YES completion:nil];
         }
         else if (indexPath.row == 4) {
             //terms pressed

@@ -600,7 +600,7 @@
                     
                     NSLog(@"current time is after next boost date so boost is available or we're from a boost push");
                     
-                    if (![[PFUser currentUser]objectForKey:@"seenBoostIntro"] || self.fromBoostPush) {
+                    if ((![[PFUser currentUser]objectForKey:@"seenBoostIntro"] || self.fromBoostPush) && [[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
                         [[PFUser currentUser] setObject:@"YES" forKey:@"seenBoostIntro"];
                         [[PFUser currentUser]saveInBackground];
                         
@@ -1327,6 +1327,9 @@
     CheckoutSummary *vc = [[CheckoutSummary alloc]init];
     vc.listingObject = self.listingObject;
     
+    vc.canPurchase = self.canPurchase;
+    vc.instantBuyDisabled = self.instantBuyDisabled;
+    
     self.anyButtonPressed = YES;
     vc.delegate = self;
 
@@ -1349,26 +1352,6 @@
             [[NSNotificationCenter defaultCenter] postNotificationName:@"removeDrop" object:nil];
         }
     }
-    
-//    if (!self.currency) {
-//        self.currency = [self.listingObject objectForKey:@"currency"];
-//    }
-//
-//    if (!self.currencySymbol) {
-//        if ([self.currency isEqualToString:@"GBP"]) {
-//            self.currencySymbol = @"£";
-//        }
-//        else if ([self.currency isEqualToString:@"EUR"]) {
-//            self.currencySymbol = @"€";
-//        }
-//        else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-//            self.currencySymbol = @"$";
-//        }
-//    }
-    
-//    vc.salePrice = self.purchasePrice;
-//    vc.currencySymbol = self.currencySymbol;
-//    vc.currency = self.currency; //we decide at earlier point in listing setup whether this is native to the listing or user
     
     NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
     [self.navigationController presentViewController:nav animated:YES completion:^{
@@ -1697,6 +1680,23 @@
                      }];
 }
 
+-(void)showPayPalAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    [self hideBarButton];
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
+    }]];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"Edit Listing" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self showBarButton];
+        [self messageBarButtonPressed];
+    }]];
+    
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
 -(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
 
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
@@ -1734,7 +1734,6 @@
     }
     else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [self.seller.objectId isEqualToString:[PFUser currentUser].objectId]){
         //don't let user edit a listing that they've sold
-//        [self setupMessageBarButton];
     }
     else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
         //don't let user message someone about a listing thats they've sold
@@ -1747,50 +1746,34 @@
         //don't let user message the seller if they're viewing from an order summary
     }
     else{
+        //always show the buy button
+        if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
+            [self setupMessageBarButton];
+            self.canPurchase = NO;
+        }
+        else{
+            [self setupTwoBarButtons];
+            self.canPurchase = YES;
+        }
+
         //check if instant buy is on & if countries are the same - if not, is global shipping enabled to show both anyway
         if ([[self.listingObject objectForKey:@"instantBuy"] isEqualToString:@"YES"] && [self.listingObject objectForKey:@"currency"]) {
-            
-            if ([self.listingObject objectForKey:@"countryCode"] && ([[PFUser currentUser]objectForKey:@"countryCode"] || [[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"])) {
-                
-                //we compare country codes to decide on whether purchase is possible
-                NSString *listingCountry = [self.listingObject objectForKey:@"countryCode"];
-                
-                //check the listing's country code against a user's country code (from their profile) and their shipping country code (if they have entered it before)
-                NSString *userCountry = [[PFUser currentUser]objectForKey:@"countryCode"];
-                NSString *userShippingCountry = [[PFUser currentUser]objectForKey:@"shippingCountryCode"];
-                
-                //check if countries are the same
-                if ([listingCountry isEqualToString:userCountry] || [listingCountry isEqualToString:userShippingCountry]) {
-                    //same so show both
-                    [self setupTwoBarButtons];
-                }
-                else if ([[self.listingObject objectForKey:@"globalShipping"]isEqualToString:@"YES"]){
-                    [self setupTwoBarButtons];
-                }
-                else{
-                    [self setupMessageBarButton];
-                }
-            }
-            else if(![self.listingObject objectForKey:@"countryCode"]){
-                
-                //CHECK monitor number of errors seen
-                //automate a message to the seller saying there's been an error with the listing?
+            self.instantBuyDisabled = NO;
+
+            if(![self.listingObject objectForKey:@"countryCode"]){
+
+                self.canPurchase = NO;
+
                 [Answers logCustomEventWithName:@"Country Code listing error"
                                customAttributes:@{
                                                   @"listingId":self.listingObject.objectId
                                                   }];
-                
-                [self setupMessageBarButton];
-            }
-            else{
-                if (![[PFUser currentUser]objectForKey:@"countryCode"]) {
-                    //show prompt to get user's country if this fails
-                    [self showAddCountryPrompt];
-                }
             }
         }
         else{
-            [self setupMessageBarButton];
+            //listing isn't setup for instant buy
+            self.canPurchase = NO;
+            self.instantBuyDisabled = YES;
         }
     }
     
@@ -1966,6 +1949,16 @@
     NSLog(@"SEND PRESSED");
     
     if (self.boostMode) {
+        
+        if( ([[self.listingObject objectForKey:@"instantBuy"]isEqualToString:@"NO"] || ![self.listingObject objectForKey:@"instantBuy"]) && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"] ){
+            //don't let user BOOST if PayPal account is not connected
+            [Answers logCustomEventWithName:@"BOOST + PayPal Warning shown"
+                           customAttributes:@{}];
+            
+            [self showPayPalAlertWithTitle:@"Connect PayPal to BOOST" andMsg:@"To make buying even safer on BUMP we're encouraging all sellers to connect their PayPal account to get paid through BUMP\n\nYou can connect your normal PayPal account or sign up for a new one if you don't have an account already\n\nJust hit 'Edit Listing' and add a PayPal account - any questions just message Support from within the app"];
+            
+            return;
+        }
         
         [Answers logCustomEventWithName:@"BOOST Button Tapped"
                        customAttributes:@{}];
@@ -2334,6 +2327,7 @@
     }
     else if ([[PFUser currentUser]objectForKey:@"facebookId"] && self.facebookUsers.count == 0){
         [self.sendBox.smallInviteButton setHidden:YES];
+        [self.sendBox.noFriendsButton setTitle:@"Invite your Facebook Friends and share listings on BUMP" forState:UIControlStateNormal];
     }
     else{
         [self.sendBox.smallInviteButton setHidden:YES];
@@ -2347,7 +2341,6 @@
     [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0]];
     [self.longSendButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
 
-    [self.sendBox.noFriendsButton setTitle:@"Connect your Facebook to share listings with Friends on BUMP" forState:UIControlStateNormal];
     
     //show
     [self.sendBox setAlpha:1.0];
@@ -3471,18 +3464,20 @@
                     [self.sendButton setImage:[UIImage imageNamed:@"BoostListingButton"] forState:UIControlStateNormal];
                     self.boostMode = YES;
                     
-                    //show edit button again
-                    self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
-                    [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
-                    
-                    [self.messageButton setTitle:@"E D I T" forState:UIControlStateNormal];
-                    [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:0.9]];
-                    [self.messageButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
-                    [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
-                    self.messageButton.alpha = 0.0f;
-                    [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
-                    
-                    [self showBarButton];
+                    if(!self.messageButton){
+                        //show edit button again
+                        self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+                        [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
+                        
+                        [self.messageButton setTitle:@"E D I T" forState:UIControlStateNormal];
+                        [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:0.9]];
+                        [self.messageButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
+                        [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+                        self.messageButton.alpha = 0.0f;
+                        [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
+                        
+                        [self showBarButton];
+                    }
                 }
             }];
         }
@@ -3492,7 +3487,7 @@
                            customAttributes:@{}];
             
             [self.reportButton setSelected:YES];
-            [self.reportLabel setTitle:@"U N M A R K  A S\nS O L D" forState:UIControlStateNormal];
+            [self.reportLabel setTitle:@"M A R K  A S\nA V A I L A B L E" forState:UIControlStateNormal];
 
             [self.listingObject setObject:@"sold" forKey:@"status"];
             [self.listingObject setObject:[NSDate date] forKey:@"soldDate"];

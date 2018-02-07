@@ -373,15 +373,18 @@
 -(void)showPayPalSheet{
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
+    actionSheet.title = @"This will update any existing listings with your new payment details";
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Disconnect PayPal Account" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-        [Answers logCustomEventWithName:@"Disconnect PayPal Pressed"
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Change PayPal Account" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Change PayPal Pressed"
                        customAttributes:@{}];
         
-        [self disconnectPressed];
+        self.changePPMode = YES;
+        [self changePayPalFunc];
+//        [self disconnectPressed];
     }]];
     
     [self presentViewController:actionSheet animated:YES completion:nil];
@@ -418,47 +421,6 @@
                                                   }];
             }
         }];
-        
-//        [self.currentUser setObject:@"NO" forKey:@"paypalEnabled"];
-//        [self.currentUser removeObjectForKey:@"paypalMerchantId"];
-//        [self.currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//            if (succeeded) {
-//
-//                PFQuery *listings = [PFQuery queryWithClassName:@"forSaleItems"];
-//                [listings whereKey:@"sellerUser" equalTo:self.currentUser];
-//                [listings whereKey:@"instantBuy" equalTo:@"YES"];
-//                [listings whereKey:@"status" equalTo:@"live"];
-//                [listings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//                    if (objects) {
-//
-//                        //remove instant buy option
-//                        for (PFObject *listingObj in objects) {
-//                            [listingObj setObject:@"NO" forKey:@"instantBuy"];
-//                            [listingObj saveInBackground];
-//                        }
-//
-//
-//                    }
-//                    else{
-//                        NSLog(@"error finding listings to disconnect from paypal %@", error);
-//
-//                        [Answers logCustomEventWithName:@"Disconnected PayPal Error finding listings"
-//                                       customAttributes:@{}];
-//
-//                        [self hideHUD];
-//                        self.paypalConnected = NO;
-//                        self.paypalAccountLabel.text = @"Add Account";
-//                    }
-//                }];
-//            }
-//            else{
-//                NSLog(@"error disconnecting user from paypal %@", error);
-//                [self hideHUD];
-//                [self showAlertWithTitle:@"Disconnect Error" andMsg:@"Make sure you're connected to the internet and then try again. If the problem persists just message Team BUMP from within the app"];
-//                [Answers logCustomEventWithName:@"Disconnect PayPal Error"
-//                               customAttributes:@{}];
-//            }
-//        }];
     }]];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -1469,6 +1431,30 @@
             if (succeeded) {
                 NSLog(@"saved paypal info on user");
                 
+                //now fire off call to update their listings with new merchantId
+                if(self.changePPMode){
+                    self.changePPMode = NO;
+                    
+                    NSDictionary *params = @{
+                                             @"userId":[PFUser currentUser].objectId
+                                             };
+                    
+                    [PFCloud callFunctionInBackground:@"updateMerchantIdListings" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                        if (!error) {
+                            NSLog(@"updated merchId on listings");
+                            [Answers logCustomEventWithName:@"Success Updating Listing MerchIds"
+                                           customAttributes:@{}];
+                        }
+                        else{
+                            NSLog(@"error updating merchId on listings %@", error);
+                            [Answers logCustomEventWithName:@"Error Updating Listing MerchIds"
+                                           customAttributes:@{
+                                                              @"error":error.description
+                                                              }];
+                        }
+                    }];
+                }
+                
                 Mixpanel *mixpanel = [Mixpanel sharedInstance];
                 [mixpanel track:@"Connected PayPal" properties:@{
                                                                  @"where":@"Settings"
@@ -1549,6 +1535,30 @@
                     [[PFUser currentUser]setObject:merchId forKey:@"paypalMerchantId"];
                     [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                         if (succeeded) {
+                            
+                            //now fire off call to update their listings with new merchantId
+                            if(self.changePPMode){
+                                self.changePPMode = NO;
+                                
+                                NSDictionary *params = @{
+                                                         @"userId":[PFUser currentUser].objectId
+                                                         };
+                                
+                                [PFCloud callFunctionInBackground:@"updateMerchantIdListings" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                                    if (!error) {
+                                        NSLog(@"updated merchId on listings");
+                                        [Answers logCustomEventWithName:@"Success Updating Listing MerchIds"
+                                                       customAttributes:@{}];
+                                    }
+                                    else{
+                                        NSLog(@"error updating merchId on listings %@", error);
+                                        [Answers logCustomEventWithName:@"Error Updating Listing MerchIds"
+                                                       customAttributes:@{
+                                                                          @"error":error.description
+                                                                          }];
+                                    }
+                                }];
+                            }
                             
                             Mixpanel *mixpanel = [Mixpanel sharedInstance];
                             [mixpanel track:@"Connected PayPal" properties:@{
@@ -1664,6 +1674,30 @@
                     [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                         if (succeeded) {
                             
+                            //now fire off call to update their listings with new merchantId
+                            if(self.changePPMode){
+                                self.changePPMode = NO;
+                                
+                                NSDictionary *params = @{
+                                                         @"userId":[PFUser currentUser].objectId
+                                                         };
+                                
+                                [PFCloud callFunctionInBackground:@"updateMerchantIdListings" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                                    if (!error) {
+                                        NSLog(@"updated merchId on listings");
+                                        [Answers logCustomEventWithName:@"Success Updating Listing MerchIds"
+                                                       customAttributes:@{}];
+                                    }
+                                    else{
+                                        NSLog(@"error updating merchId on listings %@", error);
+                                        [Answers logCustomEventWithName:@"Error Updating Listing MerchIds"
+                                                       customAttributes:@{
+                                                                          @"error":error.description
+                                                                          }];
+                                    }
+                                }];
+                            }
+                            
                             Mixpanel *mixpanel = [Mixpanel sharedInstance];
                             [mixpanel track:@"Connected PayPal" properties:@{
                                                                              @"where":@"Settings"
@@ -1735,6 +1769,67 @@
     }];
 }
 
+-(void)changePayPalFunc{
+    [self showHUD];
+    
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"paypal_connect_pressed" properties:@{
+                                                           @"where":@"Settings"
+                                                           }];
+    
+    if ([self.selectedCurrency isEqualToString:@""] || !self.selectedCurrency) {
+        self.selectedCurrency = @"USD";
+    }
+    
+    if (![[PFUser currentUser]objectForKey:@"email"]) {
+        [self hideHUD];
+        [self showAlertWithTitle:@"Email needed" andMsg:@"Please first add your email address before we can connect your PayPal"];
+        return;
+    }
+    
+    NSDictionary *params = @{
+                             @"email": [[PFUser currentUser]objectForKey:@"email"],
+                             @"currency":self.selectedCurrency,
+                             @"trackingId":[PFUser currentUser].objectId
+                             };
+    
+    NSLog(@"params going to partner %@", params);
+    [PFCloud callFunctionInBackground:@"callPartnerAPI" withParameters:params block:^(NSString *urlString, NSError *error) {
+        if (!error) {
+            [self hideHUD];
+            urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+            NSLog(@"URL: %@", urlString);
+            
+            if (!self.addedPayPalObservers) {
+                self.addedPayPalObservers = YES;
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalURLReturned:) name:@"paypalOnboardingReturn" object:nil];
+            }
+            
+            //trigger PayPal sign in
+            if (!self.paypalSafariView) {
+                self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
+                self.paypalSafariView.delegate = self;
+                if (@available(iOS 11.0, *)) {
+                    self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+                }
+                
+                if (@available(iOS 10.0, *)) {
+                    self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+                }
+            }
+            
+            [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:^{
+                //switch off when we goto merchant onboarding and only switch on if we get the signal from custom url scheme triggered observer
+            }];
+        }
+        else{
+            [self hideHUD];
+            NSLog(@"error grabbing paypal link %@", error);
+            [self showAlertWithTitle:@"PayPal Onboarding Error" andMsg:@"Please check your connection and try again"];
+        }
+    }];
+}
+
 -(void)enableBuyNow{
     if (([[[PFUser currentUser] objectForKey:@"paypalEnabled"] isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]) || self.paypalConnected) {
         NSLog(@"already have user's pp info");
@@ -1763,10 +1858,18 @@
             return;
         }
         
+        //grab a country code
+        NSLocale *locale = [NSLocale currentLocale];
+        NSString *countryCode = @"US";
+        countryCode = [locale objectForKey: NSLocaleCountryCode];
+        
+        NSLog(@"country code: %@", countryCode);
+        
         NSDictionary *params = @{
                                  @"email": [[PFUser currentUser]objectForKey:@"email"],
                                  @"currency":self.selectedCurrency,
-                                 @"trackingId":[PFUser currentUser].objectId
+                                 @"trackingId":[PFUser currentUser].objectId,
+                                 @"countryCode":countryCode
                                  };
         
         NSLog(@"params going to partner %@", params);
@@ -1780,11 +1883,6 @@
                     self.addedPayPalObservers = YES;
                     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(paypalURLReturned:) name:@"paypalOnboardingReturn" object:nil];
                 }
-                
-                //update user's IC profile so they receive auto message about paypal business account
-                ICMUserAttributes *userAttributes = [ICMUserAttributes new];
-                userAttributes.customAttributes = @{@"on_paypal_signin" : @YES};
-                [Intercom updateUser:userAttributes];
                 
                 //trigger PayPal sign in
                 if (!self.paypalSafariView) {
