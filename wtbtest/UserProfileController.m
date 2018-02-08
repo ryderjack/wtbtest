@@ -156,12 +156,6 @@ typedef void(^myCompletion)(BOOL);
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
-
-//    [[PFUser currentUser]fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-//        if (object) {
-//            NSLog(@"CURRENT: %@", [PFUser currentUser]);
-//        }
-//    }]; //CHANGE remove
     
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NewTBMessageReg"] == YES && self.tabMode == YES) {
         [self newTBMessageReg];
@@ -237,6 +231,8 @@ typedef void(^myCompletion)(BOOL);
         [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
                 
+                
+                
                 //check if user needs a badge displayed
                 if ([[self.user objectForKey:@"veriUser"] isEqualToString:@"YES"]) {
                     self.hasBadge = YES;
@@ -296,27 +292,42 @@ typedef void(^myCompletion)(BOOL);
                         
                         if (total > 0 || self.tabMode == YES || starNumber > 0) {
                             
-                            [self.myBar addSubview:self.starImageView];
-                            [self.myBar addSubview:self.reviewsButton];
                             self.noDeals = NO;
                             
+                            NSString *reviewsTitle = @"0\nReviews";
+                            
                             if (total == 0) {
-                                [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
                                 self.noDeals = YES;
                             }
                             else if (total == 1) {
-                                [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Review",total] forState:UIControlStateNormal];
+                                reviewsTitle = [NSString stringWithFormat:@"%d\nReview",total];
                             }
                             else{
-                                [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Reviews",total] forState:UIControlStateNormal];
+                                reviewsTitle = [NSString stringWithFormat:@"%d\nReviews",total];
                             }
                             
-                            if (self.tabMode == YES && starNumber == 0) {
-                                NSLog(@"no deals in tab mode");
+                            //modify reviews button colors
+                            NSMutableAttributedString *reviewString = [[NSMutableAttributedString alloc] initWithString:reviewsTitle attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+                            [self modifyNumberLabel:reviewString setFontForText:[NSString stringWithFormat:@"%d", total]];
+                            [self.reviewsButton setAttributedTitle:reviewString forState:UIControlStateNormal];
+                            
+                            //CHANGE add dummy info into followers/ing button titles
+                            NSMutableAttributedString *followingString = [[NSMutableAttributedString alloc] initWithString:@"323\nFollowing" attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+                            [self modifyNumberLabel:followingString setFontForText:@"323"];
+                            [self.followingButton setAttributedTitle:followingString forState:UIControlStateNormal];
+                            
+                            //followers button
+                            NSMutableAttributedString *followerString = [[NSMutableAttributedString alloc] initWithString:@"120\nFollowers" attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+                            [self modifyNumberLabel:followerString setFontForText:@"120"];
+                            [self.followersButton setAttributedTitle:followerString forState:UIControlStateNormal];
+                            
+                            NSLog(@"setup followers");
+                            
+                            
+                            if (starNumber == 0) {
                                 [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
                             }
-                            
-                            if (starNumber == 1){
+                            else if (starNumber == 1){
                                 [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
                             }
                             else if (starNumber == 2){
@@ -335,8 +346,11 @@ typedef void(^myCompletion)(BOOL);
                         else{
                             //looking at someone else's profile and they have zero reviews
                             self.noDeals = YES;
-                            [self.myBar addSubview:self.reviewsButton];
-                            [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
+                            NSString *reviewsTitle = @"0\nReviews";
+
+                            NSMutableAttributedString *reviewString = [[NSMutableAttributedString alloc] initWithString:reviewsTitle attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+                            [self modifyNumberLabel:reviewString setFontForText:[NSString stringWithFormat:@"%d", total]];
+                            [self.reviewsButton setAttributedTitle:reviewString forState:UIControlStateNormal];
                         }
                     }
                     else{
@@ -422,7 +436,7 @@ typedef void(^myCompletion)(BOOL);
                         
                         
                         [attString addAttribute: NSFontAttributeName
-                                          value: [UIFont fontWithName:@"PingFangSC-Medium" size:13]
+                                          value: [UIFont fontWithName:@"PingFangSC-Medium" size:16]
                                           range: NSMakeRange(0,nameString.length)];
                         
                         [attString addAttribute: NSFontAttributeName
@@ -439,7 +453,7 @@ typedef void(^myCompletion)(BOOL);
                         
                         
                         [attString addAttribute: NSFontAttributeName
-                                          value: [UIFont fontWithName:@"PingFangSC-Medium" size:13]
+                                          value: [UIFont fontWithName:@"PingFangSC-Medium" size:16]
                                           range: NSMakeRange(0,nameString.length)];
                         
                         
@@ -473,7 +487,7 @@ typedef void(^myCompletion)(BOOL);
                      initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,joinedString]];
                     
                     [attString addAttribute: NSFontAttributeName
-                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:13]
+                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:16]
                                       range: NSMakeRange(0,nameString.length)];
                     
                     [attString addAttribute: NSFontAttributeName
@@ -610,7 +624,7 @@ typedef void(^myCompletion)(BOOL);
     borderShape.path = mask.path;
     borderShape.strokeColor = [UIColor whiteColor].CGColor;
     borderShape.fillColor = nil;
-    [mask setBorderColor: [[UIColor greenColor] CGColor]]; //CHECK
+    [mask setBorderColor: [[UIColor greenColor] CGColor]]; //CHANGE
     
     if (imageView == self.userImageView) {
         borderShape.lineWidth = 6;
@@ -1864,7 +1878,7 @@ typedef void(^myCompletion)(BOOL);
     [self.myBar addSubview:self.bgView];
     
     //profile image
-    self.userImageView = [[PFImageView alloc]initWithFrame:CGRectMake(0, 0, 100, 100)];
+    self.userImageView = [[PFImageView alloc]initWithFrame:CGRectMake(15, 100, 100, 100)];
     [self.userImageView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     [self setImageBorder:self.userImageView];
     [self.myBar addSubview:self.userImageView];
@@ -1874,7 +1888,7 @@ typedef void(^myCompletion)(BOOL);
     self.nameAndLoc.numberOfLines = 2;
     self.nameAndLoc.font = [UIFont fontWithName:@"PingFangSC-Medium" size:13];
     self.nameAndLoc.textColor = [UIColor blackColor];
-    self.nameAndLoc.textAlignment = NSTextAlignmentCenter;
+    self.nameAndLoc.textAlignment = NSTextAlignmentLeft;
     //[self.nameAndLoc sizeToFit];
     [self.myBar addSubview:self.nameAndLoc];
     
@@ -1882,20 +1896,11 @@ typedef void(^myCompletion)(BOOL);
 //    self.usernameLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0,300, 50)];
     self.usernameLabel = [[UILabel alloc] init];
     self.usernameLabel.numberOfLines = 1;
-    self.usernameLabel.font = [UIFont fontWithName:@"PingFangSC-Medium" size:13];
+    self.usernameLabel.font = [UIFont fontWithName:@"PingFangSC-Medium" size:14];
     self.usernameLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
-    self.usernameLabel.textAlignment = NSTextAlignmentCenter;
+    self.usernameLabel.textAlignment = NSTextAlignmentLeft;
     
     [self.myBar addSubview:self.usernameLabel];
-    
-    //verified label
-    self.verifiedWithLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 300, 50)];
-    self.verifiedWithLabel.numberOfLines = 1;
-    self.verifiedWithLabel.font = [UIFont fontWithName:@"PingFangSC-Medium" size:13];
-    self.verifiedWithLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
-    self.verifiedWithLabel.textAlignment = NSTextAlignmentCenter;
-    self.verifiedWithLabel.text = @"Verified with:";
-    [self.myBar addSubview:self.verifiedWithLabel];
     
     //verified with image view
     self.verifiedImageView = [[PFImageView alloc]initWithFrame:CGRectMake(0, 0, 50, 18)];
@@ -1907,11 +1912,6 @@ typedef void(^myCompletion)(BOOL);
         [self.moreVeriButton addTarget:self action:@selector(moreVeriPressed) forControlEvents:UIControlEventTouchUpInside];
         [self.myBar addSubview:self.moreVeriButton];
     }
-    
-    //divider img view
-    self.dividerImgView = [[PFImageView alloc]initWithFrame:CGRectMake(0, 0, 1, 40)];
-    self.dividerImgView.backgroundColor = [UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0];
-    [self.myBar addSubview:self.dividerImgView];
     
     //nav bar buttons
     
@@ -1945,17 +1945,35 @@ typedef void(^myCompletion)(BOOL);
     [self.myBar addSubview:self.dotsButton];
     
     //stars image view
-    self.starImageView = [[PFImageView alloc]initWithFrame:CGRectMake(0, 0, 100, 18)];
-    //[self.myBar addSubview:self.starImageView];
+    self.starImageView = [[PFImageView alloc]initWithFrame:CGRectMake(0, 0, 93, 17)];
+    [self.myBar addSubview:self.starImageView];
     
-    //reviews label
-    self.reviewsButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 300, 30)];
-    self.reviewsButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+    //reviews button
+    self.reviewsButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 70, 30)];
+    self.reviewsButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
     self.reviewsButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
-    [self.reviewsButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] forState:UIControlStateNormal];
     [self.reviewsButton addTarget:self action:@selector(ReviewsPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.reviewsButton.titleLabel.numberOfLines = 2;
+//    [self.reviewsButton setBackgroundColor:[UIColor blueColor]];
+    [self.myBar addSubview:self.reviewsButton];
     
-    //[self.myBar addSubview:self.reviewsLabel];
+    //followers button
+    self.followersButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 70, 30)];
+    self.followersButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+    self.followersButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
+    [self.followersButton addTarget:self action:@selector(followersPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.followersButton.titleLabel.numberOfLines = 2;
+//    [self.followersButton setBackgroundColor:[UIColor redColor]];
+    [self.myBar addSubview:self.followersButton];
+    
+    //following
+    self.followingButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0,70, 30)];
+    self.followingButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+    self.followingButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
+    [self.followingButton addTarget:self action:@selector(followingPressed) forControlEvents:UIControlEventTouchUpInside];
+    self.followingButton.titleLabel.numberOfLines = 2;
+//    [self.followingButton setBackgroundColor:[UIColor greenColor]];
+    [self.myBar addSubview:self.followingButton];
     
     //////////
     //views for when bar collapses
@@ -1977,9 +1995,6 @@ typedef void(^myCompletion)(BOOL);
     [self.view addSubview:self.myBar];
     
     //setup subviews then add specific y values depending on if user has a bio
-    BLKFlexibleHeightBarSubviewLayoutAttributes *initialDividerView = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
-    initialDividerView.frame = self.dividerImgView.frame;
-    
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributes = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributes.size = self.userImageView.frame.size;
     
@@ -1989,9 +2004,6 @@ typedef void(^myCompletion)(BOOL);
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesUsernameLabel = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesUsernameLabel.size = self.usernameLabel.frame.size;
     
-    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesVerifiedLabel = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
-    initialLayoutAttributesVerifiedLabel.size = self.verifiedWithLabel.frame.size;
-    
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesStarView = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesStarView.size = self.starImageView.frame.size;
     
@@ -2000,9 +2012,6 @@ typedef void(^myCompletion)(BOOL);
     
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesVeriButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesVeriButton.size = self.moreVeriButton.frame.size;
-    
-    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesReviews = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
-    initialLayoutAttributesReviews.size = self.reviewsButton.frame.size;
     
     if (self.hasBio || self.tabMode) {
         //setup bar subviews with additional space for bio
@@ -2036,34 +2045,27 @@ typedef void(^myCompletion)(BOOL);
         [self.addBioButton addTarget:self action:@selector(addBioTapped) forControlEvents:UIControlEventTouchUpInside];
         [self.myBar addSubview:self.addBioButton];
         
-        //divider view
-        initialDividerView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)+65.0);//-25
-        
         //image view
-        initialLayoutAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-40.0 + adjust);//-25
+        initialLayoutAttributes.frame = CGRectMake(15, 100, 100, 100);
         
         //top username label
         if (self.hasBadge) {
             initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2)-9, CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
         }
         else{
-            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
+//            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
+            initialLayoutAttributesUsernameLabel.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 20, 100,self.usernameLabel.frame.size.width,self.usernameLabel.frame.size.height);
         }
         
-        //verified with
-        initialLayoutAttributesVerifiedLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0);//-25
-        
         //stars view
-        initialLayoutAttributesStarView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds),CGRectGetMidY(self.myBar.bounds)-(((CGRectGetMidY(self.myBar.bounds)/2)+12.5)) + adjust);//-25 .... needed to half 25 since theres a division of the midpoint happening
+//        initialLayoutAttributesStarView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds),CGRectGetMidY(self.myBar.bounds)-(((CGRectGetMidY(self.myBar.bounds)/2)+12.5)) + adjust);//-25 .... needed to half 25 since theres a division of the midpoint happening
+        initialLayoutAttributesStarView.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 20, 125, 93, 17);
         
         //verified with: img view
         initialLayoutAttributesVerifiedImageView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+65.0);//-25
         
         //verify button
         initialLayoutAttributesVeriButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+65.0);//-25
-        
-        //reviews label
-        initialLayoutAttributesReviews.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+65.0);//-25
         
         //bio label
         BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesBioLabel = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
@@ -2091,9 +2093,6 @@ typedef void(^myCompletion)(BOOL);
     else{
         //normal bar height without bio
         
-        //divider view
-        initialDividerView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)+90.0);
-        
         //image view
         initialLayoutAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-15.0 + adjust);
         
@@ -2108,9 +2107,6 @@ typedef void(^myCompletion)(BOOL);
             initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+60.0);
         }
         
-        //verified with
-        initialLayoutAttributesVerifiedLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+60.0);
-        
         //stars view
         initialLayoutAttributesStarView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds),CGRectGetMidY(self.myBar.bounds)-((CGRectGetMidY(self.myBar.bounds)/2)) + adjust);
         
@@ -2120,11 +2116,23 @@ typedef void(^myCompletion)(BOOL);
         //verify button
         initialLayoutAttributesVeriButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+90.0);
         
-        //reviews label
-        initialLayoutAttributesReviews.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+90.0);
-        
     }
     
+    //reviews button
+    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesReviews = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
+    initialLayoutAttributesReviews.size = self.reviewsButton.frame.size;
+    initialLayoutAttributesReviews.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 20, 165,self.reviewsButton.frame.size.width,self.reviewsButton.frame.size.height);
+    
+    //followers button
+    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesFollowers = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
+    initialLayoutAttributesFollowers.size = self.followersButton.frame.size;
+    initialLayoutAttributesFollowers.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 100,165 ,self.followersButton.frame.size.width,self.followersButton.frame.size.height);
+    
+    //followering button
+    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesFollowing = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
+    initialLayoutAttributesFollowing.size = self.followingButton.frame.size;
+    initialLayoutAttributesFollowing.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 180,165 ,self.followersButton.frame.size.width,self.followersButton.frame.size.height);
+
     //bg view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialBgView = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialBgView.frame = self.bgView.frame;
@@ -2147,7 +2155,7 @@ typedef void(^myCompletion)(BOOL);
     //name & loc label
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesLabel = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesLabel.size = self.nameAndLoc.frame.size;
-    initialLayoutAttributesLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), 50 + adjust);
+    initialLayoutAttributesLabel.frame = CGRectMake(20,self.userImageView.frame.origin.y + self.userImageView.frame.size.height + 5, 300, 50);
     
     //back button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesBackButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
@@ -2175,16 +2183,18 @@ typedef void(^myCompletion)(BOOL);
     
     [self.usernameLabel addLayoutAttributes:initialLayoutAttributesUsernameLabel forProgress:0.0];
 
-    [self.verifiedWithLabel addLayoutAttributes:initialLayoutAttributesVerifiedLabel forProgress:0.0];
     [self.verifiedImageView addLayoutAttributes:initialLayoutAttributesVerifiedImageView forProgress:0.0];
     [self.moreVeriButton addLayoutAttributes:initialLayoutAttributesVeriButton forProgress:0.0];
 
     [self.starImageView addLayoutAttributes:initialLayoutAttributesStarView forProgress:0.0];
+    
     [self.reviewsButton addLayoutAttributes:initialLayoutAttributesReviews forProgress:0.0];
+    [self.followingButton addLayoutAttributes:initialLayoutAttributesFollowing forProgress:0.0];
+    [self.followersButton addLayoutAttributes:initialLayoutAttributesFollowers forProgress:0.0];
+    
     [self.backButton addLayoutAttributes:initialLayoutAttributesBackButton forProgress:0.0];
     [self.FBButton addLayoutAttributes:initialLayoutAttributesfbButton forProgress:0.0];
     [self.dotsButton addLayoutAttributes:initialLayoutAttributesDotsButton forProgress:0.0];
-    [self.dividerImgView addLayoutAttributes:initialDividerView forProgress:0.0];
     
     [self.ordersButton addLayoutAttributes:initialLayoutAttributesOrdersButton forProgress:0.0];
     
@@ -2194,11 +2204,6 @@ typedef void(^myCompletion)(BOOL);
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalBgAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialBgView];
     finalBgAttributes.alpha = 0.0;
     [self.bgView addLayoutAttributes:finalBgAttributes forProgress:0.4];
-    
-    //divider view
-    BLKFlexibleHeightBarSubviewLayoutAttributes *finalDividerAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialDividerView];
-    finalDividerAttributes.alpha = 0.0;
-    [self.dividerImgView addLayoutAttributes:finalDividerAttributes forProgress:0.2];
     
     // image view final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributes];
@@ -2213,11 +2218,6 @@ typedef void(^myCompletion)(BOOL);
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesUsername = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesUsernameLabel];
     finalLayoutAttributesUsername.alpha = 0.0;
     [self.usernameLabel addLayoutAttributes:finalLayoutAttributesUsername forProgress:0.2];
-    
-    // verified label final
-    BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesVerified = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesVerifiedLabel];
-    finalLayoutAttributesVerified.alpha = 0.0;
-    [self.verifiedWithLabel addLayoutAttributes:finalLayoutAttributesVerified forProgress:0.2];
     
     //verified img view final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesVerifiedImageView = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesVerifiedImageView];
@@ -2238,6 +2238,16 @@ typedef void(^myCompletion)(BOOL);
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesReviewLabel = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesReviews];
     finalLayoutAttributesReviewLabel.alpha = 0.0;
     [self.reviewsButton addLayoutAttributes:finalLayoutAttributesReviewLabel forProgress:0.1];
+    
+    // following label final
+    BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesFollowing = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesFollowing];
+    finalLayoutAttributesFollowing.alpha = 0.0;
+    [self.followingButton addLayoutAttributes:finalLayoutAttributesFollowing forProgress:0.1];
+    
+    // followers label final
+    BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesFollowers = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesFollowers];
+    finalLayoutAttributesReviewLabel.alpha = 0.0;
+    [self.followersButton addLayoutAttributes:finalLayoutAttributesFollowers forProgress:0.1];
     
     // name label final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesNameLabel = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesLabel];
@@ -3117,6 +3127,18 @@ typedef void(^myCompletion)(BOOL);
     return mainString;
 }
 
+-(NSMutableAttributedString *)modifyNumberLabel: (NSMutableAttributedString *)mainString setFontForText:(NSString*) textToFind
+{
+    NSRange range = [mainString.mutableString rangeOfString:textToFind options:NSCaseInsensitiveSearch];
+    
+    if (range.location != NSNotFound) {
+        [mainString addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"PingFangSC-Semibold" size:14] range:range];
+        [mainString addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] range:range];
+    }
+    
+    return mainString;
+}
+
 -(void)hideFilter{
     [UIView animateWithDuration:0.2
                           delay:0
@@ -3413,5 +3435,13 @@ typedef void(^myCompletion)(BOOL);
     else{
         [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d",tabInt]];
     }
+}
+
+-(void)followersPressed{
+    
+}
+
+-(void)followingPressed{
+    
 }
 @end

@@ -103,7 +103,11 @@
 @property (nonatomic, strong) UIButton *dotsButton;
 @property (nonatomic, strong) UIButton *FBButton;
 @property (nonatomic, strong) BLKFlexibleHeightBar *myBar;
+
 @property (nonatomic, strong) UIButton *reviewsButton;
+@property (nonatomic, strong) UIButton *followersButton;
+@property (nonatomic, strong) UIButton *followingButton;
+
 @property (nonatomic, strong) UIButton *imageButton;
 @property (nonatomic, strong) PFImageView *editImageView;
 @property (nonatomic, strong) UIButton *backButton;

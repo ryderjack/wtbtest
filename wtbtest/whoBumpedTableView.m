@@ -50,17 +50,32 @@
 }
 
 -(void)loadBumps{
-    PFQuery *bumpersQuery = [PFUser query];
-    [bumpersQuery whereKey:@"objectId" containedIn:self.bumpArray];
-    [bumpersQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
+//    PFQuery *bumpersQuery = [PFUser query]; //CHANGE
+//    [bumpersQuery whereKey:@"objectId" containedIn:self.bumpArray];
+//    [bumpersQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//        if (objects) {
+//            self.results = objects;
+//            [self.tableView reloadData];
+//        }
+//        else{
+//            NSLog(@"error getting bumpers %@", error);
+//        }
+//    }];
+    
+    //use relational data
+    PFRelation *relation = [[PFUser currentUser] relationForKey:@"testRelation"];
+    [[relation query] findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
+        if (error) {
+            // There was an error
+        } else {
+            // objects has all the Posts the current user liked.
+            NSLog(@"relation objects %@", objects);
             self.results = objects;
             [self.tableView reloadData];
         }
-        else{
-            NSLog(@"error getting bumpers %@", error);
-        }
     }];
+    
+
 }
 
 #pragma mark - Table view data source

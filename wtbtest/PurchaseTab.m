@@ -565,6 +565,34 @@
     [super viewWillAppear:animated];
     
     
+    
+//    PFQuery *userQ = [PFUser query];
+//    [userQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//        if (objects) {
+//
+//            for (PFUser *user in objects) {
+//
+//                PFRelation *relation = [[PFUser currentUser] relationForKey:@"testRelation"];
+//                [relation addObject:user];
+//
+//                NSLog(@"relation: %@", relation);
+//
+//                [[PFUser currentUser]saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+//                    if (succeeded) {
+//                        NSLog(@"saved pfrelation");
+//                    }
+//                    else{
+//                        NSLog(@"error saving pfrelation %@", error);
+//                    }
+//                }];//CHANGE
+//
+//            }
+//
+//
+//        }
+//    }];
+    
+    
     self.navigationController.navigationBar.barStyle = UIBarStyleBlack;
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:12],
