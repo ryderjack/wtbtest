@@ -36,19 +36,6 @@
             self.fastCamera.cameraFlashMode = FastttCameraFlashModeOff;
         });
     }
-    
-//    if (self.offerMode == YES) {
-//        // add tag label as camera overlay
-//        // set date
-//        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-//        [dateFormatter setLocale:[NSLocale currentLocale]];
-//        [dateFormatter setDateFormat:@"MMM YY"];
-//
-//        NSDate *formattedDate = [NSDate date];
-//        self.tageLabel.text = [NSString stringWithFormat:@"%@\n%@", [PFUser currentUser].username, [dateFormatter stringFromDate:formattedDate]];
-//        dateFormatter = nil;
-//    }
-    
 }
 
 - (void)didReceiveMemoryWarning {

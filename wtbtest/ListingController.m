@@ -147,7 +147,9 @@
                 self.numberOfPics = 1;
             }
             
-            [self.carouselView reloadData];
+            if (self.carouselView) {
+                [self.carouselView reloadData];
+            }
             
             self.titleLabel.text = [self.listingObject objectForKey:@"title"];
             self.priceLabel.text = @"Negotiable";
@@ -943,7 +945,6 @@
         dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
         dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
             [self hideHUD];
-            self.hud.labelText = @"";
         });
         [self showBarButton];
     }]];
@@ -999,6 +1000,7 @@
     double delayInSeconds = 1.0;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        self.hud.labelText = @"";
         self.hud = nil;
     });
 }

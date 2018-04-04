@@ -141,6 +141,14 @@
                         AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
                         appDelegate.profileView.user = user;
                         
+                        if ([PFUser currentUser]) {
+                            if (![[PFUser currentUser] objectForKey:@"newCertDone"]) {
+                                [[PFUser currentUser] setObject:@"YES" forKey:@"newCertDone"];
+                                [[PFUser currentUser] saveInBackground];
+                            }
+                        }
+                        
+                        
                         NSDictionary *params = @{@"userId": user.objectId};
                         [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
                             if (!error) {
@@ -186,7 +194,15 @@
             }
             else{
                 NSLog(@"error logging in %@", error);
-                [self showAlertWithTitle:@"Error Logging In" andMsg:error.description];
+                
+                if (error.code == 101) {
+                    [self showAlertWithTitle:@"Error Logging In" andMsg:@"Invalid Username or Password"];
+                    self.passwordField.text = @"";
+                }
+                else{
+                    [self showAlertWithTitle:@"Error Logging In" andMsg:error.description];
+                }
+                
                 [self hideHUD];
                 [self.logInButton setEnabled:YES];
                 [self.facebookLoginButton setEnabled:YES];

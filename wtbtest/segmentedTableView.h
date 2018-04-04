@@ -35,6 +35,9 @@
 @property (nonatomic, strong) PFQuery *secondInfin;
 @property (nonatomic, strong) PFQuery *secondPull;
 
+@property (nonatomic) BOOL soldInfinEmpty;
+@property (nonatomic) BOOL purchasedInfinEmpty;
+
 @property (nonatomic) int firstSkipped;
 @property (nonatomic) int secondSkipped;
 
@@ -49,7 +52,6 @@
 //mode
 @property (nonatomic) BOOL supportMode;
 @property (nonatomic) BOOL tappedOrder;
-
 
 //no results label
 @property (nonatomic, strong) UILabel *noResultsLabel;

@@ -33,4 +33,5 @@ target 'wtbtest' do
     pod 'Mixpanel'
     pod 'Intercom'
     pod 'MZTimerLabel'
+    pod 'Branch'
 end

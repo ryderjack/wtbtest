@@ -15,5 +15,6 @@
 @property (weak, nonatomic) IBOutlet UILabel *middleLabel;
 @property (weak, nonatomic) IBOutlet UILabel *bottomLabel;
 @property (weak, nonatomic) IBOutlet UILabel *priceLabel;
+@property (weak, nonatomic) IBOutlet PFImageView *unreadIcon;
 
 @end

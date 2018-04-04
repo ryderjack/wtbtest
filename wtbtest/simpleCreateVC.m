@@ -365,11 +365,15 @@
                                           @"where":@"create"
                                           }];
         [self dismissViewControllerAnimated:YES completion:^{
-            CameraController *vc = [[CameraController alloc]init];
+//            CameraController *vc = [[CameraController alloc]init];
+//            vc.delegate = self;
+//            vc.offerMode = NO;
+//            self.shouldSave = YES;
+//            self.savingListing = YES;
+//            [self presentViewController:vc animated:YES completion:nil];
+            
+            CamVC *vc = [[CamVC alloc]init];
             vc.delegate = self;
-            vc.offerMode = NO;
-            self.shouldSave = YES;
-            self.savingListing = YES;
             [self presentViewController:vc animated:YES completion:nil];
         }];
     }]];
@@ -830,12 +834,12 @@
         }
         else if ([self.categorySelected isEqualToString:@"Footwear"] && [current objectForKey:@"UKShoeSizeArray"]){
             
-            NSArray *ukSizeArray = [current objectForKey:@"UKShoeSizeArray"];
+            NSArray *ukSizeArray = [current objectForKey:@"USShoeSizeArray"];
             [self.listing setObject:ukSizeArray forKey:@"sizeArray"];
 
             
             //set size label
-            NSString *sizeLabel = [NSString stringWithFormat:@"UK %@/%@/%@",ukSizeArray[0],ukSizeArray[1],ukSizeArray[2]];
+            NSString *sizeLabel = [NSString stringWithFormat:@"US %@/%@/%@",ukSizeArray[0],ukSizeArray[1],ukSizeArray[2]];
             [self.listing setObject:sizeLabel forKey:@"sizeLabel"];
             
             if ([[[PFUser currentUser]objectForKey:@"gender"]isEqualToString:@"male"]) {

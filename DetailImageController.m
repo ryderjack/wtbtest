@@ -62,7 +62,7 @@
     self.carousel.pagingEnabled = YES;
     self.carousel.bounceDistance = 0.3;
     
-    if (self.chosenIndex) {
+    if (self.chosenIndex && self.carousel) {
         [self.carousel scrollToItemAtIndex:self.chosenIndex animated:NO];
     }
 }

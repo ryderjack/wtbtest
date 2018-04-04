@@ -87,6 +87,8 @@
 
 //mode
 @property (nonatomic) BOOL sellingSearch;
+@property (nonatomic) BOOL infinEmpty;
+
 //wanted mode
 @property (weak, nonatomic) IBOutlet UILabel *noWantedResultsLabel;
 

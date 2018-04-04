@@ -87,7 +87,6 @@
     [self.segmentedControl setSectionTitles:@[@"F O R  S A L E",@"W A N T E D",@"P E O P L E"]];
     [self.view addSubview:self.segmentedControl];
     
-    
 //    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
 //    self.navigationItem.rightBarButtonItem = cancelButton;
     
@@ -95,7 +94,51 @@
     
     self.wantedSearchResults = [[[[PFUser currentUser]objectForKey:@"searches"] reverseObjectEnumerator] allObjects];
     self.sellingSearchResults = [[[[PFUser currentUser]objectForKey:@"sellingSearches"] reverseObjectEnumerator] allObjects];
-
+    
+    self.recentUserIds = [NSMutableArray array];
+    self.recentUsers = [NSMutableArray array];
+    
+    [self.recentUserIds addObjectsFromArray:[[[[PFUser currentUser]objectForKey:@"recentUserSearches"] reverseObjectEnumerator] allObjects]];
+    
+    if (self.recentUserIds.count > 0) {
+        
+        PFQuery *peopleQuery = [PFUser query];
+        [peopleQuery whereKey:@"objectId" containedIn:self.recentUserIds];
+        [peopleQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+            if (objects) {
+                
+                //ensure the order is same as recentIds array
+                NSMutableArray *placeholder = [NSMutableArray array];
+                
+                for (NSString *objectID in self.recentUserIds) {
+                    for (PFUser *user in objects) {
+                        if ([user.objectId isEqualToString:objectID]) {
+                            [placeholder addObject:user];
+                            break;
+                        }
+                    }
+                }
+                
+                self.recentUsers = placeholder;
+                
+                if (self.segmentedControl.selectedSegmentIndex == 2 && self.userResults.count == 0) {
+                    
+                    self.userResults = placeholder;
+                    [self.tableView reloadData];
+                }
+                else if(self.userResults.count == 0){
+                    //if user is looking at another segment AND no previous search results are there
+                    self.userResults = placeholder;
+                }
+                
+            }
+            else{
+                NSLog(@"error finding recent people %@", error);
+            }
+        }];
+        
+    }
+    
     self.userResults = [NSArray array];
     
     [self addDoneButton];
@@ -196,9 +239,12 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     SearchCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
+    
+    [cell.followButton setHidden:YES];
     cell.usernameLabel.text = @"";
     cell.nameLabel.text = @"";
     cell.userImageView.image = nil;
+    [cell.badgeImageView setHidden:YES];
     
     if (self.userSearch == YES) {
         if (self.userResults.count >=indexPath.row+1) {
@@ -209,6 +255,15 @@
             
             cell.usernameLabel.text = user.username;
             cell.nameLabel.text = [user objectForKey:@"fullname"];
+            
+            if ([[user objectForKey:@"veriUser"] isEqualToString:@"YES"]) {
+                [cell.badgeImageView setImage:[UIImage imageNamed:@"veriBadge"]];
+                [cell.badgeImageView setHidden:NO];
+            }
+            else if([[user objectForKey:@"mod"] isEqualToString:@"YES"]){
+                [cell.badgeImageView setImage:[UIImage imageNamed:@"modBadge"]];
+                [cell.badgeImageView setHidden:NO];
+            }
             
             if(![user objectForKey:@"picture"]){
                 
@@ -231,6 +286,9 @@
         [cell.userImageView setHidden:YES];
         cell.usernameLabel.text = self.sellingSearchResults[indexPath.row];
     }
+
+    [cell.usernameLabel sizeToFit];
+
     return cell;
 }
 
@@ -252,11 +310,28 @@
                 //do something? //CHECK
             }
             [mixpanel track:@"searched_user" properties:@{}];
+            
+            //do check then add this user to recents ppl array
+            if (![self.recentUserIds containsObject:user.objectId]) {
+
+                if (self.recentUserIds.count == 6) {
+                    [self.recentUserIds removeLastObject];
+                }
+                
+                [self.recentUserIds insertObject:user.objectId atIndex:0];
+                [self.recentUsers insertObject:user atIndex:0];
+                
+                NSArray *arrayToSave = [[self.recentUserIds reverseObjectEnumerator] allObjects];
+
+                [[PFUser currentUser]setObject:arrayToSave forKey:@"recentUserSearches"];
+                [[PFUser currentUser]saveInBackground];
+            }
 
             UserProfileController *vc = [[UserProfileController alloc]init];
             vc.user = user;
             vc.fromSearch = YES;
             [self.navigationController pushViewController:vc animated:YES];
+            
         }
     }
     else if(self.userSearch == NO && self.sellingSearch == NO){
@@ -329,13 +404,10 @@
 }
 
 -(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
-    NSLog(@"cancel button clicked");
     [self cancelPressed];
 }
 
 -(void)cancelPressed{
-    NSLog(@"cancel pressed");
-
     [self.searchBar resignFirstResponder];
     [self.delegate cancellingMainSearch];
     [self.noUserLabel removeFromSuperview];
@@ -344,8 +416,6 @@
 }
 
 -(void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
-    NSLog(@"did end editing");
-    
     self.searchString = searchBar.text;
     NSString *stringCheck = [self.searchString stringByReplacingOccurrencesOfString:@" " withString:@""];
     
@@ -468,7 +538,14 @@
     }
     else{
         //user selected
-//        NSLog(@"entered username");
+        if (self.noUserLabel) {
+            [self.noUserLabel removeFromSuperview];
+        }
+        
+        if (stringCheck.length == 0 && self.recentUsers.count > 0) {
+            self.userResults = self.recentUsers;
+            [self.tableView reloadData];
+        }
     }
 }
 
@@ -522,7 +599,7 @@
                         self.noUserLabel.numberOfLines = 1;
                         self.noUserLabel.textColor = [UIColor lightGrayColor];
                     }
-                    [[UIApplication sharedApplication].keyWindow addSubview:self.noUserLabel];
+                    [self.tableView addSubview:self.noUserLabel];
                 }
                 else{
                     if (self.noUserLabel) {

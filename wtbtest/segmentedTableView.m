@@ -44,10 +44,8 @@
         [self.tableView addSubview:self.refreshControl];
     }
 
-    if (!self.supportMode) {
-        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
-        self.navigationItem.leftBarButtonItem = cancelButton;
-    }
+//    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
+//    self.navigationItem.leftBarButtonItem = cancelButton;
     
     self.firstPullFinished = YES;
     self.secondPullFinished = YES;
@@ -58,51 +56,13 @@
     self.dateFormat = [[NSDateFormatter alloc] init];
     [self.dateFormat setLocale:[NSLocale currentLocale]];
 
-    if (self.supportMode) {
-        self.navigationItem.title = @"T I C K E T S";
-        [self loadTickets];
-    }
-    else{
-        self.navigationItem.title = @"O R D E R S";
-        [self loadOrders];
-    }
+    self.navigationItem.title = @"O R D E R S";
+    [self loadOrders];
+    
 }
 
-//-(void)didMoveToParentViewController:(UIViewController *)parent {
-//    [super didMoveToParentViewController:parent];
-//    
-//    //put refresh code here so it remembers correct UICollectionView insets - doesn't work in VDL
-//    __weak typeof(self) weakSelf = self;
-//    [self.tableView addPullToRefreshWithActionHandler:^{
-//        if (weakSelf.supportMode) {
-//            [weakSelf loadTickets];
-//        }
-//        else{
-//            [weakSelf loadOrders];
-//        }
-//    }];
-//    
-//    DGActivityIndicatorView *spinner = [[DGActivityIndicatorView alloc] initWithType:DGActivityIndicatorAnimationTypeBallClipRotateMultiple tintColor:[UIColor lightGrayColor] size:20.0f];
-//    [self.tableView.pullToRefreshView setCustomView:spinner forState:SVPullToRefreshStateAll];
-//    [spinner startAnimating];
-//    
-//    [self.tableView addInfiniteScrollingWithActionHandler:^{
-//        if (weakSelf.supportMode) {
-//            [weakSelf loadMoreTickets];
-//        }
-//        else{
-//            [weakSelf loadMoreOrders];
-//        }
-//    }];
-//}
-
 -(void)pullTarget{
-    if (self.supportMode) {
-        [self loadTickets];
-    }
-    else{
-        [self loadOrders];
-    }
+    [self loadOrders];
 }
 
 #pragma mark - infinite scrolling
@@ -110,7 +70,7 @@
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView{
     
     float bottom = scrollView.contentSize.height - scrollView.frame.size.height;
-    float buffer = 84 * 4;
+    float buffer = 84 * 2;
     float scrollPosition = scrollView.contentOffset.y;
     
     // Reached the bottom of the list
@@ -118,305 +78,9 @@
         // Add more dates to the bottom
         
         //infinity query
-        if (self.supportMode) {
-            [self loadMoreTickets];
-        }
-        else{
-            [self loadMoreOrders];
-        }
+        [self loadMoreOrders];
     }
 }
-
--(void)loadTickets{
-    [self loadOpenTickets];
-    [self loadClosedTickets];
-}
-
--(void)loadMoreTickets{
-    if (self.segmentedControl.selectedSegmentIndex == 0) {
-        [self loadMoreOpen];
-    }
-    else if (self.segmentedControl.selectedSegmentIndex == 1) {
-        //load buying messages only
-        [self loadMoreClosed];
-    }
-}
-
--(void)loadOpenTickets{
-    if(self.firstPullFinished != YES || ![PFUser currentUser]){
-        return;
-    }
-    
-    self.firstPullFinished = NO;
-    
-    //make sure infin is cancelled before loading pull
-//    [self.tableView.infiniteScrollingView stopAnimating];
-    
-    [self.firstInfin cancel];
-    
-    if (!self.firstPull) {
-        self.firstPull = [PFQuery queryWithClassName:@"supportConvos"];
-        [self.firstPull whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
-        [self.firstPull whereKey:@"status" equalTo:@"open"];
-        [self.firstPull whereKey:@"totalMessages" greaterThan:@0];
-        self.firstPull.limit = 20;
-        [self.firstPull orderByDescending:@"lastUpdated"];
-    }
-    
-    [self.firstPull cancel];
-    [self.firstPull findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            
-            [self.purchased removeAllObjects];
-            
-            if (objects.count == 0) {
-                NSLog(@"no open support tickets");
-                //show no results label
-                if (!self.noResultsLabel) {
-                    self.noResultsLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.tableView.frame.size.width/2) - 150, (self.tableView.frame.size.height/2) - 150, 300, 300)];
-                    self.noResultsLabel.numberOfLines = 0;
-                    self.noResultsLabel.textAlignment = NSTextAlignmentCenter;
-                    
-                    [self.noResultsLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
-                    [self.noResultsLabel setTextColor:[UIColor lightGrayColor]];
-                    [self.tableView addSubview:self.noResultsLabel];
-                }
-                if (self.segmentedControl.selectedSegmentIndex == 0) {
-                    self.noResultsLabel.text = @"No Open Tickets\n\nOpen a support ticket from an order summary page on BUMP";
-                    [self.noResultsLabel setHidden:NO];
-                }
-            }
-            else{
-                if (self.segmentedControl.selectedSegmentIndex == 0) {
-                    [self.noResultsLabel setHidden:YES];
-                }
-                [self.purchased addObjectsFromArray:objects];
-            }
-            
-            int count = (int)[objects count];
-            self.firstSkipped = count;
-            
-            if (self.segmentedControl.selectedSegmentIndex == 0) {
-                [self.tableView reloadData];
-            }
-            [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
-            
-            self.firstPullFinished = YES;
-            
-        }
-        else{
-            NSLog(@"error finding purchased orders %@", error);
-            
-            [self.refreshControl endRefreshing];
-
-//
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
-            
-            self.firstPullFinished = YES;
-        }
-    }];
-}
-
--(void)loadMoreOpen{
-    if(self.firstPullFinished != YES || ![PFUser currentUser] || self.firstInfinFinished != YES || self.purchased.count == 0){
-        
-        if (self.firstPullFinished == YES) {
-//            [self.tableView.infiniteScrollingView stopAnimating];
-        }
-        return;
-    }
-    
-    self.firstInfinFinished = NO;
-    
-    //make sure infin is cancelled before loading pull
-//    [self.tableView.infiniteScrollingView stopAnimating];
-    [self.firstInfin cancel];
-    
-    if (!self.firstInfin) {
-        self.firstInfin = [PFQuery queryWithClassName:@"supportConvos"];
-        [self.firstInfin whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
-        [self.firstInfin whereKey:@"status" equalTo:@"open"];
-        [self.firstInfin whereKey:@"totalMessages" greaterThan:@0];
-        self.firstInfin.limit = 20;
-        [self.firstInfin orderByDescending:@"lastUpdated"];
-    }
-    
-    self.firstInfin.skip = self.firstSkipped;
-    [self.firstInfin cancel];
-    
-    [self.firstInfin findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            
-            if (objects.count == 0) {
-                NSLog(@"no more open tickets");
-            }
-            else{
-                [self.purchased addObjectsFromArray:objects];
-            }
-            
-            int count = (int)[objects count];
-            self.firstSkipped += count;
-            
-            [self.tableView reloadData];
-            [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
-            
-            self.firstInfinFinished = YES;
-            
-        }
-        else{
-            NSLog(@"error finding more purchased orders %@", error);
-            [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
-            
-            self.firstInfinFinished = YES;
-        }
-    }];
-}
-
--(void)loadClosedTickets{
-    if(self.secondPullFinished != YES || ![PFUser currentUser]){
-        return;
-    }
-    
-    self.secondPullFinished = NO;
-    
-    //make sure infin is cancelled before loading pull
-//    [self.tableView.infiniteScrollingView stopAnimating];
-    [self.secondInfin cancel];
-    
-    if (!self.secondPull) {
-        self.secondPull = [PFQuery queryWithClassName:@"supportConvos"];
-        [self.secondPull whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
-        [self.secondPull whereKey:@"status" equalTo:@"closed"];
-        [self.secondPull whereKey:@"totalMessages" greaterThan:@0];
-        self.secondPull.limit = 20;
-        [self.secondPull orderByDescending:@"lastUpdated"];
-    }
-    
-    [self.secondPull cancel];
-    [self.secondPull findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            
-            [self.sold removeAllObjects];
-            
-            if (objects.count == 0) {
-                NSLog(@"no closed tickets");
-                //show no results label
-                if (!self.noResultsLabel) {
-                    self.noResultsLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.tableView.frame.size.width/2) - 150, (self.tableView.frame.size.height/2) - 150, 300, 300)];
-                    self.noResultsLabel.numberOfLines = 0;
-                    self.noResultsLabel.textAlignment = NSTextAlignmentCenter;
-                    
-                    [self.noResultsLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
-                    [self.noResultsLabel setTextColor:[UIColor lightGrayColor]];
-                    [self.tableView addSubview:self.noResultsLabel];
-                }
-                if (self.segmentedControl.selectedSegmentIndex == 1) {
-                    self.noResultsLabel.text = @"No Closed Tickets\n\nWhen your issues have been resolved, they'll appear here";
-                    [self.noResultsLabel setHidden:NO];
-                }
-            }
-            else{
-                if (self.segmentedControl.selectedSegmentIndex == 1) {
-                    [self.noResultsLabel setHidden:YES];
-                }
-                [self.sold addObjectsFromArray:objects];
-            }
-            
-            int count = (int)[objects count];
-            self.secondSkipped = count;
-            
-            if (self.segmentedControl.selectedSegmentIndex == 1) {
-                [self.tableView reloadData];
-            }
-            
-            [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
-            
-            self.secondPullFinished = YES;
-            
-        }
-        else{
-            NSLog(@"error finding closed tickets %@", error);
-            [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
-            
-            self.secondPullFinished = YES;
-        }
-    }];
-}
-
--(void)loadMoreClosed{
-    if(self.secondPullFinished != YES || ![PFUser currentUser] || self.secondInfinFinished != YES || self.sold.count == 0){
-//        [self.tableView.infiniteScrollingView stopAnimating];
-        return;
-    }
-    
-    self.secondInfinFinished = NO;
-    
-    //make sure infin is cancelled before loading pull
-//    [self.tableView.infiniteScrollingView stopAnimating];
-    [self.secondInfin cancel];
-    
-    if (!self.secondInfin) {
-        self.secondInfin = [PFQuery queryWithClassName:@"supportConvos"];
-        [self.secondInfin whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
-        [self.secondInfin whereKey:@"status" equalTo:@"closed"];
-        [self.secondInfin whereKey:@"totalMessages" greaterThan:@0];
-        self.secondInfin.limit = 20;
-        [self.secondInfin orderByDescending:@"lastUpdated"];
-    }
-    
-    self.secondInfin.skip = self.secondSkipped;
-    [self.secondInfin cancel];
-    
-    [self.secondInfin findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-        if (objects) {
-            
-            if (objects.count == 0) {
-                NSLog(@"no more closed tickets");
-            }
-            else{
-                [self.purchased addObjectsFromArray:objects];
-            }
-            
-            int count = (int)[objects count];
-            self.secondSkipped += count;
-            
-            [self.tableView reloadData];
-            [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
-            
-            self.secondInfinFinished = YES;
-            
-        }
-        else{
-            NSLog(@"error finding more closed tickets %@", error);
-            [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
-            
-            self.secondInfinFinished = YES;
-        }
-    }];
-}
-
 
 -(void)loadOrders{
     [self loadPurchased];
@@ -431,7 +95,6 @@
     self.firstPullFinished = NO;
     
     //make sure infin is cancelled before loading pull
-//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.firstInfin cancel];
     
     if (!self.firstPull) {
@@ -480,19 +143,14 @@
                 [self.tableView reloadData];
             }
             [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
-            
             self.firstPullFinished = YES;
+            self.firstInfinFinished = YES;
+            self.purchasedInfinEmpty = NO;
             
         }
         else{
             NSLog(@"error finding purchased orders %@", error);
             [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstPullFinished = YES;
         }
@@ -500,15 +158,11 @@
 }
 
 -(void)loadMorePurchased{
-    if(self.firstPullFinished != YES || ![PFUser currentUser] || self.firstInfinFinished != YES || self.purchased.count < 20){
-//        [self.tableView.infiniteScrollingView stopAnimating];
+    if(self.firstPullFinished != YES || ![PFUser currentUser] || self.firstInfinFinished != YES || self.purchased.count < 20 || self.purchasedInfinEmpty){
         return;
     }
     
     self.firstInfinFinished = NO;
-    
-    //make sure infin is cancelled before loading pull
-//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.firstInfin cancel];
     
     if (!self.firstInfin) {
@@ -527,6 +181,7 @@
             
             if (objects.count == 0) {
                 NSLog(@"no more purchased");
+                self.purchasedInfinEmpty = YES;
             }
             else{
                 [self.purchased addObjectsFromArray:objects];
@@ -537,9 +192,6 @@
             
             [self.tableView reloadData];
             [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstInfinFinished = YES;
             
@@ -547,9 +199,6 @@
         else{
             NSLog(@"error finding more purchased orders %@", error);
             [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.firstInfinFinished = YES;
         }
@@ -560,7 +209,7 @@
     if (self.segmentedControl.selectedSegmentIndex == 0) {
         [self loadMorePurchased];
     }
-    else if (self.segmentedControl.selectedSegmentIndex == 1) {
+    else if (self.segmentedControl.selectedSegmentIndex == 1 && self.secondInfinFinished == YES) {
         //load buying messages only
         [self loadMoreSold];
     }
@@ -572,9 +221,6 @@
     }
     
     self.secondPullFinished = NO;
-    
-    //make sure infin is cancelled before loading pull
-//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.secondInfin cancel];
     
     if (!self.secondPull) {
@@ -624,20 +270,15 @@
                 [self.tableView reloadData];
             }
             [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondPullFinished = YES;
+            self.soldInfinEmpty = NO;
+            self.secondInfinFinished = YES;
             
         }
         else{
             NSLog(@"error finding sold orders %@", error);
             [self.refreshControl endRefreshing];
-
-            
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondPullFinished = YES;
         }
@@ -645,15 +286,13 @@
 }
 
 -(void)loadMoreSold{
-    if(self.secondPullFinished != YES || ![PFUser currentUser] || self.secondInfinFinished != YES || self.sold.count < 20){
-//        [self.tableView.infiniteScrollingView stopAnimating];
+    if(self.secondPullFinished != YES || ![PFUser currentUser] || self.secondInfinFinished != YES || self.sold.count < 20 || self.soldInfinEmpty){
         return;
     }
     
     self.secondInfinFinished = NO;
     
     //make sure infin is cancelled before loading pull
-//    [self.tableView.infiniteScrollingView stopAnimating];
     [self.secondInfin cancel];
     
     if (!self.secondInfin) {
@@ -671,10 +310,10 @@
         if (objects) {
             
             if (objects.count == 0) {
-                NSLog(@"no more sold");
+                self.soldInfinEmpty = YES;
             }
             else{
-                [self.purchased addObjectsFromArray:objects];
+                [self.sold addObjectsFromArray:objects];
             }
             
             int count = (int)[objects count];
@@ -682,9 +321,6 @@
             
             [self.tableView reloadData];
             [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondInfinFinished = YES;
             
@@ -692,9 +328,6 @@
         else{
             NSLog(@"error finding more sold orders %@", error);
             [self.refreshControl endRefreshing];
-
-//            [self.tableView.pullToRefreshView stopAnimating];
-//            [self.tableView.infiniteScrollingView stopAnimating];
             
             self.secondInfinFinished = YES;
         }
@@ -718,33 +351,12 @@
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
-    if (self.supportMode) {
-        [Answers logCustomEventWithName:@"Viewed Support Tickets"
-                       customAttributes:@{}];
-        
-        PFQuery *convosQuery = [PFQuery queryWithClassName:@"supportConvos"];
-        [convosQuery whereKey:@"userId" equalTo:[PFUser currentUser].objectId];
-        [convosQuery whereKey:@"userUnseen" greaterThan:@0];
-        [convosQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-            if (objects) {
-                NSLog(@"support unseen %ld", objects.count);
-                
-                int count = (int)[objects count];
-                self.supportUnseen = count;
-            }
-            else{
-                NSLog(@"error finding support messages %@", error);
-            }
-        }];
-    }
-    else{
-        [Answers logCustomEventWithName:@"Viewed Orders"
-                       customAttributes:@{}];
-        
-        if (self.tappedOrder) {
-            self.tappedOrder = NO;
-            [self loadOrders];
-        }
+    [Answers logCustomEventWithName:@"Viewed Orders"
+                   customAttributes:@{}];
+    
+    if (self.tappedOrder) {
+        self.tappedOrder = NO;
+        [self loadOrders];
     }
 }
 
@@ -762,189 +374,133 @@
     }
     
     cell.itemImageView.image = nil;
+    [cell.unreadIcon setHidden:YES];
+
+    PFObject *order;
     
-    if (self.supportMode) {
-        [cell.priceLabel setTextColor:[UIColor lightGrayColor]];
+    if (self.segmentedControl.selectedSegmentIndex == 0) {
+        //first index
+        order = [self.purchased objectAtIndex:indexPath.row];
+    }
+    else{
+        //second index
+        order = [self.sold objectAtIndex:indexPath.row];
+    }
+    
+    //setup image file
+    PFFile *orderImage = [order objectForKey:@"itemImage"];
+    [cell.itemImageView setFile:orderImage];
+    [cell.itemImageView loadInBackground];
+    
+    //setup item title, price & time
+    cell.topLabel.text = [order objectForKey:@"itemTitle"];
+    cell.priceLabel.text = [order objectForKey:@"totalPriceLabel"];
+    
+    //set timestamp
+    NSDate *convoDate = order.createdAt;
+    NSCalendar* calendar = [NSCalendar currentCalendar];
+    BOOL updatedToday = [calendar isDateInToday:convoDate];
+    BOOL updatedInLastWeek = [self isInPastWeek:convoDate];
+    
+    if (updatedToday == YES) {
+        //format into the time
+        [self.dateFormat setDateFormat:@"HH:mm"];
+    }
+    else if (updatedInLastWeek){
+        [self.dateFormat setDateFormat:@"EEE"];
+    }
+    else{
+        //format into date
+        [self.dateFormat setDateFormat:@"dd MMM"];
+    }
+    
+    cell.middleLabel.text = [self.dateFormat stringFromDate:convoDate];
+    
+    if ([[order objectForKey:@"status"] isEqualToString:@"failed"]) {
+        cell.bottomLabel.text = @"Payment Failed";
+        [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+    }
+    else if ([[order objectForKey:@"status"] isEqualToString:@"pending"]) {
+        cell.bottomLabel.text = @"Payment Pending";
+        [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
         
-        PFObject *ticket;
         
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            //first index
-            ticket = [self.purchased objectAtIndex:indexPath.row];
-        }
-        else{
-            //second index
-            ticket = [self.sold objectAtIndex:indexPath.row];
-        }
-        
-        //setup image file
-        PFFile *orderImage = [ticket objectForKey:@"itemImage"];
-        [cell.itemImageView setFile:orderImage];
-        [cell.itemImageView loadInBackground];
-        
-        //setup item title, price & time
-        cell.topLabel.text = [ticket objectForKey:@"itemTitle"];
-        
-        //set timestamp
-        NSDate *convoDate = [ticket objectForKey:@"orderDate"];
-        NSCalendar* calendar = [NSCalendar currentCalendar];
-        BOOL updatedToday = [calendar isDateInToday:convoDate];
-        BOOL updatedInLastWeek = [self isInPastWeek:convoDate];
-        
-        if (updatedToday == YES) {
-            //format into the time
-            [self.dateFormat setDateFormat:@"HH:mm"];
-        }
-        else if (updatedInLastWeek){
-            [self.dateFormat setDateFormat:@"EEE"];
-        }
-        else{
-            //format into date
-            [self.dateFormat setDateFormat:@"dd MMM"];
-        }
-        
+    }
+    else if ([[order objectForKey:@"status"] isEqualToString:@"refunded"]) {
+        cell.bottomLabel.text = @"Payment Refunded";
+        [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+    }
+    else{
         //setup next action required by this user (buyer/seller)
-        if ([[ticket objectForKey:@"buyerId"] isEqualToString:[PFUser currentUser].objectId]) {
-            //user is buyer
-            cell.middleLabel.text = [NSString stringWithFormat:@"Purchased %@",[self.dateFormat stringFromDate:convoDate]];
+        if ([[order objectForKey:@"buyerId"] isEqualToString:[PFUser currentUser].objectId]) {
+            //user is buyer, to do's:
+            
+            if([[order objectForKey:@"refundStatus"] isEqualToString:@"requested"]){
+                cell.bottomLabel.text = @"Refund Requested";
+                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+            }
+            else if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
+                cell.bottomLabel.text = @"Leave Feedback";
+                [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+            }
+            else if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
+                cell.bottomLabel.text = @"Awaiting Shipment";
+                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+            }
+            else if ([[order objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
+                cell.bottomLabel.text = @"Awaiting Feedback";
+                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+            }
+            else{
+                cell.bottomLabel.text = @"Complete";
+                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+            }
         }
         else{
-            //user is seller
-            cell.middleLabel.text = [NSString stringWithFormat:@"Sold %@",[self.dateFormat stringFromDate:convoDate]];
+            //user is seller, to do's:
+            if([[order objectForKey:@"refundStatus"] isEqualToString:@"requested"]){
+                cell.bottomLabel.text = @"Refund Requested";
+                [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+            }
+            else if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
+                cell.bottomLabel.text = @"Mark as Shipped";
+                [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+            }
+            else if ([[order objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
+                cell.bottomLabel.text = @"Leave Feedback";
+                [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+            }
+            else if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
+                cell.bottomLabel.text = @"Awaiting Feedback";
+                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+            }
+            else{
+                cell.bottomLabel.text = @"Complete";
+                [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
+            }
         }
-        
-        //add timestamp of last correspondance
-        NSDate *updateDate = [ticket objectForKey:@"lastSentDate"];
-        BOOL updatedMessageToday = [calendar isDateInToday:updateDate];
-        BOOL updatedMessageInLastWeek = [self isInPastWeek:updateDate];
-        
-        if (updatedMessageToday == YES) {
-            //format into the time
-            [self.dateFormat setDateFormat:@"HH:mm"];
-        }
-        else if (updatedMessageInLastWeek){
-            [self.dateFormat setDateFormat:@"EEE"];
+    }
+    
+    if ([[order objectForKey:@"buyerId"] isEqualToString:[PFUser currentUser].objectId]) {
+        //check buyer unseen
+        int unseen = [[order objectForKey:@"buyerUnseen"]intValue];
+        if (unseen != 0) {
+            [self setCellUnread:cell];
         }
         else{
-            //format into date
-            [self.dateFormat setDateFormat:@"dd MMM"];
-        }
-        cell.priceLabel.text =[self.dateFormat stringFromDate:updateDate];
-        
-        if ([[ticket objectForKey:@"lastSentUserId"]isEqualToString:[PFUser currentUser].objectId]) {
-            cell.bottomLabel.text = @"Message Sent";
-            [cell.bottomLabel setTextColor:[UIColor darkGrayColor]];
-        }
-        else{
-            cell.bottomLabel.text = @"Awaiting Your Reply";
-            [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
+            [self setCellRead:cell];
         }
     }
     else{
-        PFObject *order;
-        
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            //first index
-            order = [self.purchased objectAtIndex:indexPath.row];
+        //check seller unseen
+        int unseen = [[order objectForKey:@"sellerUnseen"]intValue];
+        if (unseen != 0) {
+            [self setCellUnread:cell];
         }
         else{
-            //second index
-            order = [self.sold objectAtIndex:indexPath.row];
-        }
-        
-        //setup image file
-        PFFile *orderImage = [order objectForKey:@"itemImage"];
-        [cell.itemImageView setFile:orderImage];
-        [cell.itemImageView loadInBackground];
-        
-        //setup item title, price & time
-        cell.topLabel.text = [order objectForKey:@"itemTitle"];
-        cell.priceLabel.text = [order objectForKey:@"totalPriceLabel"];
-        
-        //set timestamp
-        NSDate *convoDate = order.createdAt;
-        NSCalendar* calendar = [NSCalendar currentCalendar];
-        BOOL updatedToday = [calendar isDateInToday:convoDate];
-        BOOL updatedInLastWeek = [self isInPastWeek:convoDate];
-        
-        if (updatedToday == YES) {
-            //format into the time
-            [self.dateFormat setDateFormat:@"HH:mm"];
-        }
-        else if (updatedInLastWeek){
-            [self.dateFormat setDateFormat:@"EEE"];
-        }
-        else{
-            //format into date
-            [self.dateFormat setDateFormat:@"dd MMM"];
-        }
-        
-        cell.middleLabel.text = [self.dateFormat stringFromDate:convoDate];
-        
-        if ([[order objectForKey:@"status"] isEqualToString:@"failed"]) {
-            cell.bottomLabel.text = @"Payment Failed";
-            [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
-        }
-        else if ([[order objectForKey:@"status"] isEqualToString:@"pending"]) {
-            cell.bottomLabel.text = @"Payment Pending";
-            [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-        }
-        else if ([[order objectForKey:@"status"] isEqualToString:@"refunded"]) {
-            cell.bottomLabel.text = @"Payment Refunded";
-            [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-        }
-        else{
-            //setup next action required by this user (buyer/seller)
-            if ([[order objectForKey:@"buyerId"] isEqualToString:[PFUser currentUser].objectId]) {
-                //user is buyer, to do's:
-                
-                if([[order objectForKey:@"refundStatus"] isEqualToString:@"requested"]){
-                    cell.bottomLabel.text = @"Refund Requested";
-                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-                }
-                else if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
-                    cell.bottomLabel.text = @"Leave Feedback";
-                    [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
-                }
-                else if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
-                    cell.bottomLabel.text = @"Awaiting Shipment";
-                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-                }
-                else if ([[order objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
-                    cell.bottomLabel.text = @"Awaiting Feedback";
-                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-                }
-                else{
-                    cell.bottomLabel.text = @"Complete";
-                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-                }
-            }
-            else{
-                //user is seller, to do's:
-                if([[order objectForKey:@"refundStatus"] isEqualToString:@"requested"]){
-                    cell.bottomLabel.text = @"Refund Requested";
-                    [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
-                }
-                else if([[order objectForKey:@"shipped"] isEqualToString:@"NO"]){
-                    cell.bottomLabel.text = @"Mark as Shipped";
-                    [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
-                }
-                else if ([[order objectForKey:@"sellerLeftFeedback"] isEqualToString:@"NO"]) {
-                    cell.bottomLabel.text = @"Leave Feedback";
-                    [cell.bottomLabel setTextColor:[UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0]];
-                }
-                else if ([[order objectForKey:@"buyerLeftFeedback"] isEqualToString:@"NO"]) {
-                    cell.bottomLabel.text = @"Awaiting Feedback";
-                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-                }
-                else{
-                    cell.bottomLabel.text = @"Complete";
-                    [cell.bottomLabel setTextColor:[UIColor lightGrayColor]];
-                }
-            }
+            [self setCellRead:cell];
         }
     }
-
     
     return cell;
 }
@@ -952,62 +508,22 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     PFObject *order;
     
-    if (self.supportMode) {
-        
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            //first index
-            order = [self.purchased objectAtIndex:indexPath.row];
-        }
-        else{
-            //second index
-            order = [self.sold objectAtIndex:indexPath.row];
-        }
-        
-        //if all unseen, reset the unread icon in profileController
-        //check if this ticket is unseen
-        int unseen = [[order objectForKey:@"userUnseen"]intValue];
-        
-        if (unseen > 0) {
-            self.supportUnseen =- unseen;
-            if (self.supportUnseen == 0) {
-                [self.delegate dismissUnreadSupport];
-            }
-        }
-        
-        //then minus off total
-        //if zero, call delegate to dismiss unread icon
-        
-        //convo exists, go there
-        ChatWithBump *vc = [[ChatWithBump alloc]init];
-        vc.convoId = [order objectForKey:@"ticketId"];
-        vc.convoObject = order;
-        vc.otherUser = [PFUser currentUser];
-        vc.supportMode = YES;
-        
-        if ([[order objectForKey:@"buyerId"]isEqualToString:[PFUser currentUser].objectId]) {
-            vc.isBuyer = YES;
-        }
-        
-        [self.navigationController pushViewController:vc animated:YES];
+    OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+    
+    if (self.segmentedControl.selectedSegmentIndex == 0) {
+        //first index
+        order = [self.purchased objectAtIndex:indexPath.row];
+        vc.isBuyer = YES;
     }
     else{
-        OrderSummaryView *vc = [[OrderSummaryView alloc]init];
-        
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            //first index
-            order = [self.purchased objectAtIndex:indexPath.row];
-            vc.isBuyer = YES;
-        }
-        else{
-            //second index
-            order = [self.sold objectAtIndex:indexPath.row];
-        }
-        
-        vc.orderObject = order;
-        self.tappedOrder = YES;
-        
-        [self.navigationController pushViewController:vc animated:YES];
+        //second index
+        order = [self.sold objectAtIndex:indexPath.row];
     }
+    
+    vc.orderObject = order;
+    self.tappedOrder = YES;
+    
+    [self.navigationController pushViewController:vc animated:YES];
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -1053,12 +569,34 @@
         self.segmentedControl.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0]};
         [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
         
-        if (self.supportMode) {
-            [self.segmentedControl setSectionTitles:@[@"O P E N",@"C L O S E D"]];
+        //get current user's purchase/sale totals & set as titles
+        int saleNumber = 0;
+        int purchaseNumber = 0;
+        
+        if ([[PFUser currentUser]objectForKey:@"saleNumber"]) {
+            saleNumber = [[[PFUser currentUser]objectForKey:@"saleNumber"]intValue];
         }
-        else{
-            [self.segmentedControl setSectionTitles:@[@"P U R C H A S E D",@"S O L D"]];
+        
+        if ([[PFUser currentUser]objectForKey:@"purchaseNumber"]) {
+            purchaseNumber = [[[PFUser currentUser]objectForKey:@"purchaseNumber"]intValue];
         }
+        
+        NSString *purchaseTitle = @"P U R C H A S E D";
+        NSString *soldTitle = @"S O L D";
+        
+        if (saleNumber > 0 && purchaseNumber > 0) {
+            purchaseTitle = [NSString stringWithFormat:@"%d  P U R C H A S E D", purchaseNumber];
+            soldTitle = [NSString stringWithFormat:@"%d  S O L D", saleNumber];
+        }
+        else if(saleNumber > 0 && purchaseNumber == 0){
+            soldTitle = [NSString stringWithFormat:@"%d  S O L D", saleNumber];
+        }
+        else if(saleNumber == 0 && purchaseNumber > 0){
+            purchaseTitle = [NSString stringWithFormat:@"%d  P U R C H A S E D", purchaseNumber];
+        }
+        
+        [self.segmentedControl setSectionTitles:@[purchaseTitle,soldTitle]];
+
     }
     
     [headerView.contentView addSubview:self.segmentedControl];
@@ -1161,5 +699,37 @@
 -(void)dismissVC{
     [self dismissViewControllerAnimated:YES completion:nil];
 }
+
+-(void)setCellRead: (splitTableViewCell *) cell{
+    [cell.unreadIcon setHidden:YES];
+
+    [self unboldFontForLabel:cell.topLabel];
+    [self unboldFontForLabel:cell.middleLabel];
+    cell.topLabel.textColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0];
+    cell.middleLabel.textColor = [UIColor lightGrayColor];
+}
+
+-(void)setCellUnread: (splitTableViewCell *) cell{
+    [cell.unreadIcon setHidden:NO];
+    
+    [self boldFontForLabel:cell.topLabel];
+    [self boldFontForLabel:cell.middleLabel];
+    cell.topLabel.textColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0];
+    cell.middleLabel.textColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0];
+}
+
+-(void)boldFontForLabel:(UILabel *)label{
+    UIFont *currentFont = label.font;
+    UIFont *boldFont = [UIFont fontWithName:@"PingFangSC-Semibold" size:currentFont.pointSize];
+    label.font = boldFont;
+}
+
+-(void)unboldFontForLabel:(UILabel *)label{
+    UIFont *currentFont = label.font;
+    UIFont *newFont;
+    newFont = [UIFont fontWithName:@"PingFangSC-Regular" size:currentFont.pointSize];
+    label.font = newFont;
+}
+
 
 @end

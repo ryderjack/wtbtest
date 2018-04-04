@@ -99,11 +99,12 @@
         [flowLayout setMinimumInteritemSpacing:8.0];
         
         if (self.sellingSearch) {
-            flowLayout.footerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 152);
-            flowLayout.sectionFootersPinToVisibleBounds = NO;
             [self.collectionView registerNib:[UINib nibWithNibName:@"CreateWTBPromptFooter" bundle:nil]
                   forSupplementaryViewOfKind:UICollectionElementKindSectionFooter
                          withReuseIdentifier:@"Footer"];
+            flowLayout.footerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 250);
+            flowLayout.sectionFootersPinToVisibleBounds = NO;
+
         }
 
     }
@@ -201,10 +202,10 @@
     else if (kind == UICollectionElementKindSectionFooter){
         self.promptFooterView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"Footer" forIndexPath:indexPath];
         if (self.results.count > 0) {
-            self.promptFooterView.footerLabel.text = @"Can't find what you're looking for?\n\nCreate a wanted listing on BUMP so sellers can find you and send you a message!";
+            self.promptFooterView.footerLabel.text = @"Create a wanted listing on BUMP so sellers can find you and send you a message";
         }
         else{
-            self.promptFooterView.footerLabel.text = @"No results\n\nCreate a wanted listing on BUMP so sellers can find you and send you a message!";
+            self.promptFooterView.footerLabel.text = @"No results\n\nCreate a wanted listing on BUMP so sellers can find you and send you a message";
         }
         
         [self.promptFooterView.footerButton addTarget:self action:@selector(createWantedListingPressed) forControlEvents:UIControlEventTouchUpInside];
@@ -366,17 +367,10 @@
 }
 
 -(void)queryParseInfinite{
-    if (self.pullFinished == NO || self.infinFinished == NO) {
+    if (self.pullFinished == NO || self.infinFinished == NO || self.infinEmpty || self.results.count < 20) {
         return;
     }
     
-    if (self.results.count < 20) {
-        //no point loading
-//        [self.collectionView.infiniteScrollingView stopAnimating];
-        return;
-    }
-    
-//    [self hideFilterButton];
     
     self.infinFinished = NO;
     self.showFooter = NO;
@@ -426,6 +420,7 @@
             NSLog(@"search infin count %d", count);
             
             if (count < 20) {
+                self.infinEmpty = YES;
                 self.showFooter = YES;
             }
             else{
@@ -1104,7 +1099,7 @@
     FilterVC *vc = [[FilterVC alloc]init];
     vc.delegate = self;
     vc.currencySymbol = self.currencySymbol;
-    vc.sellingSearch = self.sellingSearch;
+    vc.searchMode = self.sellingSearch;
     if (self.filtersArray.count > 0) {
         
         vc.sendArray = [NSMutableArray arrayWithArray:self.filtersArray];
@@ -1288,7 +1283,7 @@
 - (void)createWantedListingPressed{
     [self cancelPressed];
     //send notification to createTab to open WTB creater
-    [self.presentingViewController.tabBarController setSelectedIndex:1];
+    [self.presentingViewController.tabBarController setSelectedIndex:2];
     double delayInSeconds = 0.5;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){

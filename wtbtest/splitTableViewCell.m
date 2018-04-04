@@ -13,12 +13,12 @@
 - (void)awakeFromNib {
     [super awakeFromNib];
     // Initialization code
-    
-    self.topLabel.adjustsFontSizeToFitWidth = YES;
-    self.topLabel.minimumScaleFactor=0.5;
-    
+        
     self.bottomLabel.adjustsFontSizeToFitWidth = YES;
     self.bottomLabel.minimumScaleFactor=0.5;
+    
+    //round the corners
+    [self.unreadIcon.layer setCornerRadius:2.5];
 }
 
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {

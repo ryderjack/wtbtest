@@ -155,6 +155,13 @@
                         AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
                         appDelegate.profileView.user = user;
                         
+                        if ([PFUser currentUser]) {
+                            if (![[PFUser currentUser] objectForKey:@"newCertDone"]) {
+                                [[PFUser currentUser] setObject:@"YES" forKey:@"newCertDone"];
+                                [[PFUser currentUser] saveInBackground];
+                            }
+                        }
+                        
                         //update installation object w/ current user
                         PFInstallation *installation = [PFInstallation currentInstallation];
                         [installation setObject:[PFUser currentUser] forKey:@"user"];

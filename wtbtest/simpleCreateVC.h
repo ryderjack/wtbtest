@@ -19,6 +19,7 @@
 #import "CategoryDropDown.h"
 #import "boostController.h"
 #import "CreateTab.h"
+#import "CamVC.h"
 
 @class simpleCreateVC;
 
@@ -27,7 +28,7 @@
 - (void)showWantedSuccessForListing:(PFObject *)listing;
 @end
 
-@interface simpleCreateVC : UIViewController <UITextFieldDelegate,BASSquareCropperDelegate,successDelegate,UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate,JRWebViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,CameraControllerDelegate,categoryDelegate,boostDelegate>
+@interface simpleCreateVC : UIViewController <UITextFieldDelegate,BASSquareCropperDelegate,successDelegate,UICollectionViewDelegate, UICollectionViewDataSource,customAlertDelegate,JRWebViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,CameraControllerDelegate,categoryDelegate,boostDelegate,CameraVCDelegate>
 
 //UI
 @property (weak, nonatomic) IBOutlet UITextField *titleTextLabel;

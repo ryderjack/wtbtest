@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <customFonts key="customFonts">
@@ -111,13 +111,13 @@
                     </connections>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="P6f-Kr-Qxp">
-                    <rect key="frame" x="140" y="303" width="96" height="32"/>
+                    <rect key="frame" x="135" y="303" width="104" height="41"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="32" id="TZz-pc-SEd"/>
-                        <constraint firstAttribute="width" constant="96" id="s5D-Uh-NXq"/>
+                        <constraint firstAttribute="height" constant="41" id="TZz-pc-SEd"/>
+                        <constraint firstAttribute="width" constant="104" id="s5D-Uh-NXq"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
-                    <state key="normal" title="Log in" backgroundImage="filterBG2.png">
+                    <state key="normal" title="Log in" backgroundImage="filterBGS.png">
                         <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </state>
                     <connections>
@@ -132,7 +132,7 @@
                 <constraint firstItem="17t-G5-t2f" firstAttribute="centerX" secondItem="ouy-PZ-xh6" secondAttribute="centerX" id="A1m-1Z-2VD"/>
                 <constraint firstAttribute="trailing" secondItem="xf9-n3-cnP" secondAttribute="trailing" constant="16" id="AYY-3k-Qeh"/>
                 <constraint firstItem="eQ7-kf-DTK" firstAttribute="top" secondItem="TcZ-Wn-b8l" secondAttribute="bottom" constant="8" symbolic="YES" id="GfU-gt-Etv"/>
-                <constraint firstItem="17t-G5-t2f" firstAttribute="top" secondItem="P6f-Kr-Qxp" secondAttribute="bottom" constant="31" id="KMh-AY-MGN"/>
+                <constraint firstItem="17t-G5-t2f" firstAttribute="top" secondItem="P6f-Kr-Qxp" secondAttribute="bottom" constant="22" id="KMh-AY-MGN"/>
                 <constraint firstItem="q57-Pp-8Qq" firstAttribute="leading" secondItem="iac-C3-wM5" secondAttribute="leading" id="NuR-CC-RCj"/>
                 <constraint firstItem="17t-G5-t2f" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="68" id="QBr-tT-4oT"/>
                 <constraint firstItem="eQ7-kf-DTK" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="48" id="QCR-lH-ccd"/>
@@ -141,7 +141,7 @@
                 <constraint firstItem="q57-Pp-8Qq" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="32" id="ScB-KE-L8e"/>
                 <constraint firstItem="TcZ-Wn-b8l" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="46" id="T78-5b-61c"/>
                 <constraint firstItem="xf9-n3-cnP" firstAttribute="centerY" secondItem="NMT-Wb-cKB" secondAttribute="centerY" id="U05-eY-iKq"/>
-                <constraint firstItem="ouy-PZ-xh6" firstAttribute="top" secondItem="P6f-Kr-Qxp" secondAttribute="bottom" constant="63" id="UD8-iF-Szi"/>
+                <constraint firstItem="ouy-PZ-xh6" firstAttribute="top" secondItem="P6f-Kr-Qxp" secondAttribute="bottom" constant="54" id="UD8-iF-Szi"/>
                 <constraint firstItem="iac-C3-wM5" firstAttribute="centerX" secondItem="P6f-Kr-Qxp" secondAttribute="centerX" id="VES-3P-2r6"/>
                 <constraint firstItem="q57-Pp-8Qq" firstAttribute="trailing" secondItem="iac-C3-wM5" secondAttribute="trailing" id="aG6-iI-H86"/>
                 <constraint firstItem="17t-G5-t2f" firstAttribute="centerX" secondItem="P6f-Kr-Qxp" secondAttribute="centerX" id="fi7-4Q-s5l"/>
@@ -159,6 +159,6 @@
     </objects>
     <resources>
         <image name="backArrowThin.png" width="30" height="30"/>
-        <image name="filterBG2.png" width="96" height="32"/>
+        <image name="filterBGS.png" width="104" height="41"/>
     </resources>
 </document>

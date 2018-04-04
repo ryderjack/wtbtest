@@ -30,30 +30,38 @@
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="a8C-oB-8cl">
                     <rect key="frame" x="5" y="0.0" width="365" height="75"/>
                 </imageView>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="notifBolt.png" translatesAutoresizingMaskIntoConstraints="NO" id="Qsz-0c-DXf">
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="notifBolt.png" translatesAutoresizingMaskIntoConstraints="NO" id="Qsz-0c-DXf">
                     <rect key="frame" x="35" y="29" width="17" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="17" id="7tb-tB-1ZJ"/>
+                        <constraint firstAttribute="width" constant="17" id="E9j-yS-J91"/>
+                    </constraints>
                 </imageView>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Your BOOST is available" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="au4-gq-vtn">
-                    <rect key="frame" x="69" y="27" width="290" height="21"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="14"/>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="BOOST your listing now" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="au4-gq-vtn">
+                    <rect key="frame" x="69" y="28.5" width="290" height="18.5"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="290" id="ZEJ-in-pEy"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="13"/>
                     <nil key="textColor"/>
                     <nil key="highlightedColor"/>
                 </label>
             </subviews>
             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
             <constraints>
-                <constraint firstItem="a8C-oB-8cl" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="5" id="BRy-LU-SCp"/>
-                <constraint firstItem="a8C-oB-8cl" firstAttribute="centerX" secondItem="G3V-Ep-qiM" secondAttribute="centerX" id="Ew0-9g-gXt"/>
-                <constraint firstItem="a8C-oB-8cl" firstAttribute="bottom" secondItem="G3V-Ep-qiM" secondAttribute="bottom" id="SrC-3c-0Rd"/>
-                <constraint firstAttribute="bottom" secondItem="a8C-oB-8cl" secondAttribute="bottom" id="aEO-Ke-sR8"/>
-                <constraint firstItem="a8C-oB-8cl" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="cZL-p0-XtA"/>
-                <constraint firstItem="G3V-Ep-qiM" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="10" id="dqb-Rl-6Kq"/>
-                <constraint firstAttribute="trailing" secondItem="a8C-oB-8cl" secondAttribute="trailing" constant="5" id="mDi-NT-dsv"/>
-                <constraint firstItem="a8C-oB-8cl" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="sRI-Jp-u4i"/>
-                <constraint firstItem="a8C-oB-8cl" firstAttribute="top" secondItem="G3V-Ep-qiM" secondAttribute="top" id="twW-F0-VQA"/>
+                <constraint firstItem="a8C-oB-8cl" firstAttribute="centerX" secondItem="G3V-Ep-qiM" secondAttribute="centerX" id="4cq-nf-u1X"/>
+                <constraint firstItem="au4-gq-vtn" firstAttribute="leading" secondItem="Qsz-0c-DXf" secondAttribute="trailing" constant="17" id="5Bf-pU-cEZ"/>
+                <constraint firstItem="a8C-oB-8cl" firstAttribute="top" secondItem="G3V-Ep-qiM" secondAttribute="top" id="66b-DM-dxI"/>
+                <constraint firstItem="G3V-Ep-qiM" firstAttribute="centerY" secondItem="au4-gq-vtn" secondAttribute="centerY" id="BJO-eT-8Lh"/>
+                <constraint firstItem="Qsz-0c-DXf" firstAttribute="centerY" secondItem="au4-gq-vtn" secondAttribute="centerY" id="GMR-7G-Ntp"/>
+                <constraint firstItem="a8C-oB-8cl" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="T6g-Vj-z0w"/>
+                <constraint firstItem="a8C-oB-8cl" firstAttribute="bottom" secondItem="G3V-Ep-qiM" secondAttribute="bottom" id="blQ-2Z-xPE"/>
+                <constraint firstItem="a8C-oB-8cl" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="5" id="eHq-lI-zoa"/>
+                <constraint firstAttribute="bottom" secondItem="a8C-oB-8cl" secondAttribute="bottom" id="f8A-K3-71n"/>
+                <constraint firstItem="G3V-Ep-qiM" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="10" id="ibK-q3-9sS"/>
+                <constraint firstItem="Qsz-0c-DXf" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="35" id="m1c-Mt-9Pa"/>
+                <constraint firstItem="a8C-oB-8cl" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="q44-l5-OCJ"/>
             </constraints>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <connections>

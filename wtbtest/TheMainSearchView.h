@@ -24,6 +24,9 @@
 @property (nonatomic, strong) NSArray *wantedSearchResults;
 @property (nonatomic, strong) NSArray *sellingSearchResults;
 
+@property (nonatomic, strong) NSMutableArray *recentUsers;
+@property (nonatomic, strong) NSMutableArray *recentUserIds;
+
 @property (nonatomic) BOOL userSearch;
 @property (nonatomic) BOOL sellingSearch;
 
