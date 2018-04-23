@@ -98,14 +98,14 @@
         
         [flowLayout setMinimumInteritemSpacing:8.0];
         
-        if (self.sellingSearch) {
-            [self.collectionView registerNib:[UINib nibWithNibName:@"CreateWTBPromptFooter" bundle:nil]
-                  forSupplementaryViewOfKind:UICollectionElementKindSectionFooter
-                         withReuseIdentifier:@"Footer"];
-            flowLayout.footerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 250);
-            flowLayout.sectionFootersPinToVisibleBounds = NO;
-
-        }
+//        if (self.sellingSearch) {
+//            [self.collectionView registerNib:[UINib nibWithNibName:@"CreateWTBPromptFooter" bundle:nil]
+//                  forSupplementaryViewOfKind:UICollectionElementKindSectionFooter
+//                         withReuseIdentifier:@"Footer"];
+//            flowLayout.footerReferenceSize = CGSizeMake([UIApplication sharedApplication].keyWindow.frame.size.width, 250);
+//            flowLayout.sectionFootersPinToVisibleBounds = NO;
+//
+//        }
 
     }
     else{
@@ -179,54 +179,54 @@
 
 #pragma mark - custom header
 
-- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
-{
-    self.bannerHeaderView = nil;
-    if (kind == UICollectionElementKindSectionHeader) {
-        self.bannerHeaderView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"Header" forIndexPath:indexPath];
-        
-        [self.bannerHeaderView.simpleHeaderLabel setTextAlignment:NSTextAlignmentCenter];
-        [self.bannerHeaderView.simpleHeaderLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
-
-        if (self.sellingSearch) {
-            [self.bannerHeaderView setBackgroundColor:[UIColor redColor]];
-            self.bannerHeaderView.simpleHeaderLabel.text = @"For sale results";
-        }
-        else{
-            [self.bannerHeaderView setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
-            [self.bannerHeaderView.simpleHeaderLabel setTextColor:[UIColor whiteColor]];
-            self.bannerHeaderView.simpleHeaderLabel.text = @"Wanted item results";
-        }
-        return self.bannerHeaderView;
-    }
-    else if (kind == UICollectionElementKindSectionFooter){
-        self.promptFooterView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"Footer" forIndexPath:indexPath];
-        if (self.results.count > 0) {
-            self.promptFooterView.footerLabel.text = @"Create a wanted listing on BUMP so sellers can find you and send you a message";
-        }
-        else{
-            self.promptFooterView.footerLabel.text = @"No results\n\nCreate a wanted listing on BUMP so sellers can find you and send you a message";
-        }
-        
-        [self.promptFooterView.footerButton addTarget:self action:@selector(createWantedListingPressed) forControlEvents:UIControlEventTouchUpInside];
-        
-        return self.promptFooterView;
-        
-    }
-    //this can't be nil remember
-    return self.bannerHeaderView;
-}
+//- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
+//{
+//    self.bannerHeaderView = nil;
+//    if (kind == UICollectionElementKindSectionHeader) {
+//        self.bannerHeaderView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"Header" forIndexPath:indexPath];
+//
+//        [self.bannerHeaderView.simpleHeaderLabel setTextAlignment:NSTextAlignmentCenter];
+//        [self.bannerHeaderView.simpleHeaderLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:12]];
+//
+//        if (self.sellingSearch) {
+//            [self.bannerHeaderView setBackgroundColor:[UIColor redColor]];
+//            self.bannerHeaderView.simpleHeaderLabel.text = @"For sale results";
+//        }
+//        else{
+//            [self.bannerHeaderView setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
+//            [self.bannerHeaderView.simpleHeaderLabel setTextColor:[UIColor whiteColor]];
+//            self.bannerHeaderView.simpleHeaderLabel.text = @"Wanted item results";
+//        }
+//        return self.bannerHeaderView;
+//    }
+////    else if (kind == UICollectionElementKindSectionFooter){
+////        self.promptFooterView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"Footer" forIndexPath:indexPath];
+////        if (self.results.count > 0) {
+////            self.promptFooterView.footerLabel.text = @"Create a wanted listing on BUMP so sellers can find you and send you a message";
+////        }
+////        else{
+////            self.promptFooterView.footerLabel.text = @"No results";
+////        }
+////
+////        [self.promptFooterView.footerButton addTarget:self action:@selector(createWantedListingPressed) forControlEvents:UIControlEventTouchUpInside];
+////
+////        return self.promptFooterView;
+////
+////    }
+//    //this can't be nil remember
+//    return self.bannerHeaderView;
+//}
 
 -(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForFooterInSection:(NSInteger)section{
-    if (self.sellingSearch) {
-        if (self.showFooter) {
-            self.initialHeaderSizeSetup = YES;
-            return CGSizeMake(CGRectGetWidth(collectionView.bounds),152);
-        }
-        else{
-            return CGSizeZero;
-        }
-    }
+//    if (self.sellingSearch) {
+//        if (self.showFooter) {
+//            self.initialHeaderSizeSetup = YES;
+//            return CGSizeMake(CGRectGetWidth(collectionView.bounds),152);
+//        }
+//        else{
+//            return CGSizeZero;
+//        }
+//    }
     return CGSizeZero;
 }
 
@@ -288,6 +288,7 @@
     
     //reset the query to remove old constraints
     self.pullQuery = nil;
+    [self.noWantedResultsLabel setHidden:YES];
     
     if (self.sellingSearch) {
         self.pullQuery = [PFQuery queryWithClassName:@"forSaleItems"];
@@ -322,8 +323,6 @@
         [self.pullQuery whereKey:@"keywords" containedIn:self.filterBrandsArray];
     }
     
-    [self.pullQuery whereKey:@"status" equalTo:@"live"];
-    
     [self.pullQuery cancel];
     [self.pullQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
@@ -331,7 +330,7 @@
             int count = (int)[objects count];
             NSLog(@"search results %d", count);
             
-            if (!self.sellingSearch && count == 0) {
+            if (self.sellingSearch && count == 0) {
                 [self.noWantedResultsLabel setHidden:NO];
             }
             else{
@@ -389,8 +388,6 @@
     
     self.infiniteQuery.limit = 20;
     self.infiniteQuery.skip = self.lastInfinSkipped;
-
-    [self.infiniteQuery whereKey:@"status" equalTo:@"live"]; //SET set all banned users' listings to a status of banned
 
     [self setupInfinQuery];
     __block NSMutableArray *wordsToSearch = [NSMutableArray array];
@@ -498,6 +495,13 @@
         }
         else{
             cell.itemPriceLabel.text = @"";
+        }
+        
+        if ([[forSaleItem objectForKey:@"status"]isEqualToString:@"sold"]) {
+            [cell.itemPriceLabel setTextColor:[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0]];
+        }
+        else{
+            [cell.itemPriceLabel setTextColor:[UIColor lightGrayColor]];
         }
         
         NSString *condition = @"";
@@ -904,6 +908,15 @@
             [self.pullQuery whereKey:@"instantBuy" equalTo:@"YES"];
         }
         
+        //sold
+        if ([self.filtersArray containsObject:@"sold"]){
+            [self.pullQuery whereKey:@"purchased" equalTo:@"YES"];
+            [self.pullQuery whereKey:@"status" equalTo:@"sold"];
+        }
+        else{
+            [self.pullQuery whereKey:@"status" equalTo:@"live"];
+        }
+        
         //condition
         if ([self.filtersArray containsObject:@"new"]){
             [self.pullQuery whereKey:@"condition" containedIn:@[@"New", @"Any", @"BNWT", @"BNWOT",@"Deadstock"]];  //updated as we removed Deastock as an option
@@ -940,6 +953,7 @@
 
     }
     else{
+        [self.pullQuery whereKey:@"status" equalTo:@"live"];
         [self.pullQuery orderByDescending:@"lastUpdated"];
     }
 }
@@ -999,6 +1013,15 @@
             [self.infiniteQuery whereKey:@"instantBuy" equalTo:@"YES"];
         }
         
+        //sold
+        if ([self.filtersArray containsObject:@"sold"]){
+            [self.infiniteQuery whereKey:@"purchased" equalTo:@"YES"];
+            [self.infiniteQuery whereKey:@"status" equalTo:@"sold"];
+        }
+        else{
+            [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
+        }
+        
         //location
         if ([self.filtersArray containsObject:@"aroundMe"] && self.currentLocation) {
             [self.infiniteQuery whereKey:@"geopoint" nearGeoPoint:self.currentLocation withinKilometers:400];
@@ -1040,6 +1063,7 @@
         
     }
     else{
+        [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
         [self.infiniteQuery orderByDescending:@"lastUpdated"];
     }
 }

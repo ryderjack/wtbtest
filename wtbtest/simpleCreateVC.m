@@ -69,7 +69,7 @@
     [self.navigationController.navigationBar setHidden:YES];
     
     //sam and me only code for posting as someone else
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"bXiWS96gp6"]) {
         
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
             NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:@"listUser"];

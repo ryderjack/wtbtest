@@ -611,6 +611,13 @@
     
     PFUser *current = [PFUser currentUser];
     
+    if (!current) {
+        [self hideHUD];
+        [self.delegate addSizeDismissed];
+        [self dismissViewControllerAnimated:YES completion:nil];
+        return;
+    }
+    
     //footwear
     
 //    NSLog(@"CURRENT %ld",self.sneakerSwipeView.currentItemIndex);

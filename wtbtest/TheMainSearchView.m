@@ -84,7 +84,7 @@
     self.segmentedControl.borderWidth = 0.5;
     
     [self.segmentedControl addTarget:self action:@selector(segmentControlChanged) forControlEvents:UIControlEventValueChanged];
-    [self.segmentedControl setSectionTitles:@[@"F O R  S A L E",@"W A N T E D",@"P E O P L E"]];
+    [self.segmentedControl setSectionTitles:@[@"F O R  S A L E",@"P E O P L E"]];
     [self.view addSubview:self.segmentedControl];
     
 //    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
@@ -92,7 +92,7 @@
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
-    self.wantedSearchResults = [[[[PFUser currentUser]objectForKey:@"searches"] reverseObjectEnumerator] allObjects];
+//    self.wantedSearchResults = [[[[PFUser currentUser]objectForKey:@"searches"] reverseObjectEnumerator] allObjects];
     self.sellingSearchResults = [[[[PFUser currentUser]objectForKey:@"sellingSearches"] reverseObjectEnumerator] allObjects];
     
     self.recentUserIds = [NSMutableArray array];
@@ -121,7 +121,7 @@
                 
                 self.recentUsers = placeholder;
                 
-                if (self.segmentedControl.selectedSegmentIndex == 2 && self.userResults.count == 0) {
+                if (self.segmentedControl.selectedSegmentIndex == 1 && self.userResults.count == 0) {
                     
                     self.userResults = placeholder;
                     [self.tableView reloadData];
@@ -158,9 +158,9 @@
         if (self.segmentedControl.selectedSegmentIndex == 0) {
             placeholder = @"Search through items for sale";
         }
-        else if (self.segmentedControl.selectedSegmentIndex == 1) {
-            placeholder = @"Search through items people want";
-        }
+//        else if (self.segmentedControl.selectedSegmentIndex == 1) {
+//            placeholder = @"Search through items people want";
+//        }
         else{
             placeholder = @"Search for users";
         }
@@ -194,17 +194,17 @@
             self.noUserLabel = nil;
         }
     }
-    else if (self.segmentedControl.selectedSegmentIndex == 1) {
-        self.userSearch = NO;
-        self.sellingSearch = NO;
-       
-        placeholder = @"Search through wanted items";
-        
-        if (self.noUserLabel) {
-            [self.noUserLabel removeFromSuperview];
-            self.noUserLabel = nil;
-        }
-    }
+//    else if (self.segmentedControl.selectedSegmentIndex == 1) {
+//        self.userSearch = NO;
+//        self.sellingSearch = NO;
+//
+//        placeholder = @"Search through wanted items";
+//
+//        if (self.noUserLabel) {
+//            [self.noUserLabel removeFromSuperview];
+//            self.noUserLabel = nil;
+//        }
+//    }
     else{
         self.userSearch = YES;
         self.sellingSearch = NO;
