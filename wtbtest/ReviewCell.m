@@ -14,6 +14,7 @@
     [super awakeFromNib];
     // Initialization code
     self.selectionStyle = UITableViewCellSelectionStyleNone;
+    
     self.commentLabel.adjustsFontSizeToFitWidth = YES;
     self.commentLabel.minimumScaleFactor=0.5;
 
@@ -23,6 +24,9 @@
     [super setSelected:selected animated:animated];
 
     // Configure the view for the selected state
+}
+- (IBAction)reviewListingButtonPressed:(id)sender {
+    [self.delegate listingCellButtonPressed:self];
 }
 
 @end

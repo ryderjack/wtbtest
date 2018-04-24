@@ -59,6 +59,8 @@
     self.priceSliderInstantBuy.selectionStyle = UITableViewCellSelectionStyleNone;
     self.locationContinentsCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.priceSliderCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.followingCell.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.showOnlyCell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     //category swipe view
     self.categorySwipeView.delegate = self;
@@ -148,6 +150,10 @@
             
             [self updateTitle];
             
+            if ([self.filtersArray containsObject:@"following"]){
+                [self.followingButton setSelected:YES];
+            }
+            
             if ([self.filtersArray containsObject:@"hightolow"]) {
                 [self.hightolowButton setSelected:YES];
             }
@@ -164,6 +170,10 @@
             }
             if ([self.filtersArray containsObject:@"used"]){
                 [self.usedButton setSelected:YES];
+            }
+            
+            if ([self.filtersArray containsObject:@"sold"]){
+                [self.soldOnlyButton setSelected:YES];
             }
             
             for (NSString *continent in self.continentsArray) {
@@ -423,19 +433,56 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (self.sellingSearch) {
-        return 8;
+        return 9;
+    }
+    else if (self.searchMode) {
+        return 9;
     }
     else if (self.profileSearch){
-        return 7;
+        return 8;
     }
     else{
-        return 6; //colour and price filters only exist when search through for sale listings
+        return 6; //color and price filters only exist when search through for sale listings
     }
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     
     if (self.sellingSearch) {
+        if (indexPath.section == 0){
+            if (indexPath.row == 0){
+                return 121;
+            }
+            else if (indexPath.row == 1){
+                return 174;
+            }
+            else if (indexPath.row == 2){
+                return 125;
+            }
+            else if (indexPath.row == 3){
+                return 174;
+            }
+            else if (indexPath.row == 4){
+                return 179;
+            }
+            else if (indexPath.row == 5){
+                return 121;
+            }
+            else if (indexPath.row == 6){
+                return 216;
+            }
+            else if (indexPath.row == 7){
+                return 139;
+            }
+            else if (indexPath.row == 9){
+                return 60;
+            }
+        }
+        else{
+            return 44;
+        }
+    }
+    else if (self.searchMode) {
         if (indexPath.section == 0){
             if (indexPath.row == 0){
                 return 174;
@@ -447,18 +494,21 @@
                 return 174;
             }
             else if (indexPath.row == 3){
-                return 189;
+                return 179;
             }
             else if (indexPath.row == 4){
-                return 131;
+                return 121;
             }
             else if (indexPath.row == 5){
-                return 226;
+                return 216;
             }
             else if (indexPath.row == 6){
                 return 139;
             }
             else if (indexPath.row == 7){
+                return 121;
+            }
+            else if (indexPath.row == 8){
                 return 60;
             }
         }
@@ -478,13 +528,13 @@
                 return 174;
             }
             else if (indexPath.row == 3){
-                return 189;
+                return 179;
             }
             else if (indexPath.row == 4){
-                return 131;
+                return 121;
             }
             else if (indexPath.row == 5){
-                return 226;
+                return 216;
             }
             else if (indexPath.row == 6){
                 return 60;
@@ -527,6 +577,43 @@
     if (self.sellingSearch) {
         if (indexPath.section == 0){
             if (indexPath.row == 0){
+                return self.followingCell;
+            }
+            else if (indexPath.row == 1){
+                return self.brandCell;
+            }
+            else if (indexPath.row == 2){
+                return self.colourCell;
+            }
+            else if (indexPath.row == 3){
+                return self.categoryIconCell;
+            }
+            else if (indexPath.row == 4){
+                return self.sizeCell;
+            }
+            else if (indexPath.row == 5){
+                return self.conditionCell;
+            }
+            else if (indexPath.row == 6){
+                return self.priceSliderCell;
+            }
+//            else if (indexPath.row == 8){
+//                return self.showOnlyCell;
+//            }
+            else if (indexPath.row == 7){
+                return self.locationContinentsCell;
+            }
+            else if (indexPath.row == 8){
+                return self.spaceCell;
+            }
+        }
+        else{
+            return nil;
+        }
+    }
+    else if (self.searchMode) {
+        if (indexPath.section == 0){
+            if (indexPath.row == 0){
                 return self.brandCell;
             }
             else if (indexPath.row == 1){
@@ -548,6 +635,9 @@
                 return self.locationContinentsCell;
             }
             else if (indexPath.row == 7){
+                return self.showOnlyCell;
+            }
+            else if (indexPath.row == 8){
                 return self.spaceCell;
             }
         }
@@ -684,10 +774,14 @@
     [self.conditionNewButton setSelected:NO];
     [self.usedButton setSelected:NO];
     
+    [self.soldOnlyButton setSelected:NO];
+    
     [self.menButton setSelected:NO];
     [self.womenButton setSelected:NO];
     
     [self.distanceButton setSelected:NO];
+    
+    [self.followingButton setSelected:NO];
     
     [self.filtersArray removeAllObjects];
     [self.chosenBrandsArray removeAllObjects];
@@ -783,6 +877,17 @@
         [self.filtersArray addObject:@"used"];
         [self.conditionNewButton setSelected:NO];
         [self.filtersArray removeObject:@"new"];
+    }
+    [self updateTitle];
+}
+- (IBAction)soldPressed:(id)sender {
+    if(self.soldOnlyButton.selected == YES){
+        [self.soldOnlyButton setSelected:NO];
+        [self.filtersArray removeObject:@"sold"];
+    }
+    else{
+        [self.soldOnlyButton setSelected:YES];
+        [self.filtersArray addObject:@"sold"];
     }
     [self updateTitle];
 }
@@ -957,6 +1062,18 @@
                      completion:^(BOOL finished) {
                          self.statusBarBGView = nil;
                      }];
+}
+- (IBAction)followingPressed:(id)sender {
+    if (self.followingButton.selected == YES) {
+        [self.followingButton setSelected:NO];
+        [self.filtersArray removeObject:@"following"];
+    }
+    else{
+        
+        [self.followingButton setSelected:YES];
+        [self.filtersArray addObject:@"following"];
+    }
+    [self updateTitle];
 }
 
 #pragma mark - swipe view delegates
@@ -1536,7 +1653,7 @@
     [self.swipeView reloadData];
     
     //swipe to their size
-    NSArray *shoeSizeArray = [[PFUser currentUser]objectForKey:@"UKShoeSizeArray"];
+    NSArray *shoeSizeArray = [[PFUser currentUser]objectForKey:@"USShoeSizeArray"];
     if (shoeSizeArray.count > 0) {
         NSUInteger firstSize = [self.shoesArray indexOfObject:shoeSizeArray[0]];
         self.swipeView.currentItemIndex = firstSize;

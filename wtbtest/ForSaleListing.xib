@@ -55,7 +55,7 @@
         <tableView opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" bouncesZoom="NO" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="i5M-Pr-FkT">
             <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-            <color key="backgroundColor" red="0.96470588239999999" green="0.96862745100000003" blue="0.98823529409999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
             <connections>
                 <outlet property="dataSource" destination="-1" id="Tng-2m-Rnh"/>
                 <outlet property="delegate" destination="-1" id="9aC-8N-iBw"/>
@@ -153,7 +153,7 @@
                 </constraints>
             </tableViewCellContentView>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-            <point key="canvasLocation" x="-398" y="72.5"/>
+            <point key="canvasLocation" x="-398" y="14"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="117" id="GoY-mF-MxO">
             <rect key="frame" x="0.0" y="0.0" width="320" height="114"/>
@@ -248,7 +248,7 @@
                         <color key="currentPageIndicatorTintColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </pageControl>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dBB-os-hIh">
-                        <rect key="frame" x="50" y="333" width="220" height="50"/>
+                        <rect key="frame" x="50" y="335" width="220" height="49.5"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
@@ -295,12 +295,12 @@
                     <constraint firstItem="uzi-Ps-bMW" firstAttribute="centerX" secondItem="dBB-os-hIh" secondAttribute="centerX" id="2My-bv-3IW"/>
                     <constraint firstAttribute="trailingMargin" secondItem="dBB-os-hIh" secondAttribute="trailing" constant="34" id="2Tx-Bm-9wM"/>
                     <constraint firstItem="K2a-JS-7YF" firstAttribute="centerY" secondItem="Qdb-Xb-BhY" secondAttribute="centerY" id="5vs-8X-ayO"/>
-                    <constraint firstItem="dBB-os-hIh" firstAttribute="top" secondItem="dzA-hP-omO" secondAttribute="bottom" constant="18" id="99o-Ye-KWt"/>
+                    <constraint firstItem="dBB-os-hIh" firstAttribute="top" secondItem="dzA-hP-omO" secondAttribute="bottom" constant="20" id="99o-Ye-KWt"/>
                     <constraint firstItem="wum-9X-KeV" firstAttribute="top" secondItem="Qdb-Xb-BhY" secondAttribute="top" id="AKw-gL-Ua1"/>
                     <constraint firstItem="wum-9X-KeV" firstAttribute="trailing" secondItem="Qdb-Xb-BhY" secondAttribute="trailing" id="Doj-Jh-i0U"/>
                     <constraint firstItem="K2a-JS-7YF" firstAttribute="leading" secondItem="Bv3-YP-yWM" secondAttribute="leadingMargin" constant="87" id="FL4-l5-xiN"/>
                     <constraint firstItem="Qdb-Xb-BhY" firstAttribute="leading" secondItem="Xey-fa-Rnd" secondAttribute="trailing" constant="-25" id="L6b-YW-qJk"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="dBB-os-hIh" secondAttribute="bottom" constant="5.5" id="WOR-4b-dBt"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="dBB-os-hIh" secondAttribute="bottom" constant="3.5" id="WOR-4b-dBt"/>
                     <constraint firstItem="K2a-JS-7YF" firstAttribute="centerX" secondItem="uzi-Ps-bMW" secondAttribute="centerX" id="Xj2-Vw-Igw"/>
                     <constraint firstItem="uzi-Ps-bMW" firstAttribute="bottom" secondItem="Qdb-Xb-BhY" secondAttribute="bottom" id="YHM-iL-yUl"/>
                     <constraint firstItem="dzA-hP-omO" firstAttribute="centerY" secondItem="uzi-Ps-bMW" secondAttribute="centerY" id="YRr-3d-KDY"/>
@@ -308,7 +308,7 @@
                     <constraint firstItem="dBB-os-hIh" firstAttribute="centerX" secondItem="Qdb-Xb-BhY" secondAttribute="centerX" id="p1r-lH-nM1"/>
                     <constraint firstItem="dzA-hP-omO" firstAttribute="leading" secondItem="Xey-fa-Rnd" secondAttribute="trailing" constant="10" id="rjg-g4-ANH"/>
                     <constraint firstItem="wum-9X-KeV" firstAttribute="leading" secondItem="Qdb-Xb-BhY" secondAttribute="leading" id="ti4-sm-1fH"/>
-                    <constraint firstItem="dBB-os-hIh" firstAttribute="top" secondItem="Qdb-Xb-BhY" secondAttribute="bottom" constant="13" id="vVy-On-4eI"/>
+                    <constraint firstItem="dBB-os-hIh" firstAttribute="top" secondItem="Qdb-Xb-BhY" secondAttribute="bottom" constant="15" id="vVy-On-4eI"/>
                     <constraint firstItem="Xey-fa-Rnd" firstAttribute="centerY" secondItem="dzA-hP-omO" secondAttribute="centerY" id="yMw-Cb-h7q"/>
                     <constraint firstItem="Qdb-Xb-BhY" firstAttribute="top" secondItem="Bv3-YP-yWM" secondAttribute="top" id="yUF-zV-8hu"/>
                 </constraints>
@@ -335,15 +335,15 @@
                             <constraint firstAttribute="height" constant="50" id="XGl-fG-hSw"/>
                             <constraint firstAttribute="width" constant="50" id="wVt-gd-jVA"/>
                         </constraints>
-                        <state key="normal" image="envelopeSend.png"/>
+                        <state key="normal" image="shareListingIcon.png"/>
                         <connections>
                             <action selector="sendPressed:" destination="-1" eventType="touchUpInside" id="VNK-s7-4aW"/>
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="S00-EF-S0Y">
-                        <rect key="frame" x="27" y="89" width="64" height="38"/>
+                        <rect key="frame" x="27" y="94" width="64" height="26"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="9"/>
-                        <state key="normal" title="S H A R E  O N  B U M P">
+                        <state key="normal" title="S H A R E">
                             <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         </state>
                     </button>
@@ -371,7 +371,7 @@
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gIy-3w-TKF">
-                        <rect key="frame" x="120" y="89" width="80" height="38"/>
+                        <rect key="frame" x="120" y="94" width="80" height="26"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="10"/>
                         <state key="normal" title="L I K E">
                             <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -381,7 +381,7 @@
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kuR-60-b1H">
-                        <rect key="frame" x="228" y="89" width="64" height="39"/>
+                        <rect key="frame" x="228" y="94" width="64" height="27"/>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="9"/>
                         <state key="normal" title="R E P O R T">
                             <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -391,7 +391,7 @@
                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                 <constraints>
                     <constraint firstItem="kJO-Fv-diV" firstAttribute="leading" secondItem="GX1-CF-Yht" secondAttribute="leading" id="18p-SZ-fpJ"/>
-                    <constraint firstItem="S00-EF-S0Y" firstAttribute="top" secondItem="BH4-3F-0iW" secondAttribute="bottom" constant="6" id="19b-74-zyG"/>
+                    <constraint firstItem="S00-EF-S0Y" firstAttribute="top" secondItem="BH4-3F-0iW" secondAttribute="bottom" constant="11" id="19b-74-zyG"/>
                     <constraint firstItem="kuR-60-b1H" firstAttribute="leading" secondItem="gIy-3w-TKF" secondAttribute="trailing" constant="28" id="7sr-6c-H88"/>
                     <constraint firstItem="KJG-o0-j6h" firstAttribute="leading" secondItem="BH4-3F-0iW" secondAttribute="trailing" constant="35" id="BcM-cR-KOH"/>
                     <constraint firstItem="gIy-3w-TKF" firstAttribute="height" secondItem="S00-EF-S0Y" secondAttribute="height" id="ECX-uQ-qIH"/>
@@ -421,10 +421,10 @@
         </tableViewCell>
     </objects>
     <resources>
-        <image name="envelopeSend.png" width="50" height="50"/>
         <image name="listingLikeBlack.png" width="25" height="25"/>
         <image name="listingLikeBorder.png" width="25" height="25"/>
         <image name="reportIcon.png" width="50" height="50"/>
+        <image name="shareListingIcon.png" width="50" height="50"/>
         <image name="soldCheck.png" width="15" height="15"/>
     </resources>
 </document>

@@ -11,8 +11,9 @@
 #import <ParseUI/ParseUI.h>
 #import "FeedbackController.h"
 #import "HMSegmentedControl.h"
+#import "ReviewCell.h"
 
-@interface ReviewsVC : UITableViewController <feedbackDelegate>
+@interface ReviewsVC : UITableViewController <feedbackDelegate,ReviewCellDelegate>
 
 @property (nonatomic, strong) NSArray *totalFeedback;
 @property (nonatomic, strong) NSMutableArray *purchasedFeedback;

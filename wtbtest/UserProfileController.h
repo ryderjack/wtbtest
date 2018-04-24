@@ -13,7 +13,6 @@
 #import <DGActivityIndicatorView.h>
 #import <SpinKit/RTSpinKitView.h>
 #import "BLKDelegateSplitter.h"
-#import "TOJRWebView.h"
 #import "BLKFlexibleHeightBar.h"
 #import "HMSegmentedControl.h"
 #import "ProfileController.h"
@@ -29,7 +28,7 @@
 @property (nonatomic, strong) NSMutableArray *forSaleArray;
 @property (nonatomic, strong) NSMutableArray *bumpedArray;
 @property (nonatomic, strong) NSMutableArray *bumpedIds;
-
+@property (nonatomic) int cellHeight;
 
 @property (nonatomic, strong) NSMutableArray *feedbackArray;
 @property (nonatomic, strong) PFUser *user;
@@ -53,6 +52,7 @@
 @property (nonatomic) BOOL fromSearch;
 @property (nonatomic) BOOL tabMode;
 @property (nonatomic) BOOL userBlocked;
+@property (nonatomic) BOOL isBumpOfficial;
 
 //which segment is showing
 @property (nonatomic) BOOL WTBSelected;
@@ -84,10 +84,10 @@
 @property (nonatomic) BOOL setupHeader;
 @property (nonatomic) BOOL hasBadge;
 @property (nonatomic) BOOL modBadge;
-
+@property (nonatomic) BOOL smallScreen; //triggered if iPhone SE and used for setting up header bar
+@property (nonatomic) BOOL fetchedUser;
 
 @property (nonatomic,strong) UIBarButtonItem *doneButton;
-
 
 //verified section
 @property (nonatomic, strong) UILabel *verifiedWithLabel;
@@ -113,11 +113,10 @@
 @property (nonatomic, strong) UIButton *backButton;
 @property (nonatomic, strong) UIButton *ordersButton;
 
+@property (nonatomic, strong) UIButton *followButton;
+
 @property (nonatomic, strong) PFImageView *dividerImgView;
 @property (nonatomic, strong) UIView *bgView;
-
-//web view
-@property (nonatomic, strong) TOJRWebView *webView;
 
 //custom segment control
 @property (nonatomic, strong) HMSegmentedControl *segmentedControl;
@@ -144,6 +143,7 @@
 
 //orders unseen
 @property (nonatomic) int ordersUnseen;
+@property (nonatomic, strong) UIView *unseenOrdersView;
 
 @property (nonatomic) BOOL showSnap;
 
@@ -169,7 +169,12 @@
 @property (nonatomic) float filterLower;
 @property (nonatomic) float filterUpper;
 
+//for sale query
 @property (nonatomic, strong) PFQuery *saleQuery;
+@property (nonatomic, strong) PFQuery *saleInfinQuery;
+@property (nonatomic) BOOL finishedSaleInfin;
+@property (nonatomic) int saleSkipped;
+@property (nonatomic) BOOL infinEmpty;
 
 //queries
 @property (nonatomic) BOOL loadingSales;
@@ -182,5 +187,25 @@
 @property (nonatomic) BOOL changedSoldStatusOfListing;
 @property (nonatomic) BOOL deletedListing;
 @property (nonatomic) BOOL hitReport;
+
+//following
+@property (nonatomic) BOOL following;
+@property (nonatomic) int followersNumber;
+@property (nonatomic) int followingNumber;
+
+//spam follow counter
+@property (nonatomic) int followCounter;
+
+//refreshing
+@property (nonatomic, strong) UIRefreshControl *refreshControl;
+@property (nonatomic) BOOL enteredBio;
+
+//discover preload
+@property (nonatomic, strong) NSArray *suggestedArray;
+@property (nonatomic) BOOL loadedSuggested;
+
+//initial info load
+@property (nonatomic) BOOL refreshingUser;
+
 
 @end

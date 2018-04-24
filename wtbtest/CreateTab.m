@@ -137,7 +137,7 @@
         [Answers logCustomEventWithName:@"Wait for listing save alert shown"
                        customAttributes:@{}];
         
-        [self showAlertWithTitle:@"Save in progress" andMsg:@"Once your latest listing is done saving you'll be able to create another listing.\n\nCheck out the progress at the top of the home tab"];
+        [self showAlertWithTitle:@"Save in progress" andMsg:@"Once your latest listing is done saving you'll be able to create another listing.\n\nCheck out the progress at the top of the Home Feed"];
         
         return;
     }
@@ -149,8 +149,7 @@
     
     CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
     vc.delegate = self;
-    vc.fromSuccess = YES;
-    vc.introMode = self.introMode;
+//    vc.introMode = self.introMode;
     NavigationController *navController = [[NavigationController alloc] initWithRootViewController:vc];
 
     [self presentViewController:navController animated:YES completion:nil];
@@ -164,10 +163,10 @@
     self.justPostedListing = listing;
 
     //show drop down
-    self.sellingSuccessMode = NO;
-    [self setupSuccessForWTB];
-    
-    [self triggerSuccess];
+//    self.sellingSuccessMode = NO; //disable wanted ad drop down
+//    [self setupSuccessForWTB];
+//
+//    [self triggerSuccess];
 }
 #pragma wanted success delegates
 
@@ -343,7 +342,6 @@
     if (self.sellingSuccessMode) {
         CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
         vc.editMode = YES;
-        vc.fromSuccess = YES;
         vc.introMode = self.introMode;
         vc.listing = self.justPostedListing;
         NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
@@ -372,7 +370,6 @@
         vc.editMode = YES;
         vc.introMode = self.introMode;
         vc.listing = self.justPostedListing;
-        vc.fromSuccess = YES;
         NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
         [self presentViewController:nav animated:YES completion:nil];
     }

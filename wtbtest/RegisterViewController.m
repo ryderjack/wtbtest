@@ -230,6 +230,9 @@
     if (self.emailMode && self.pressedCam != YES) {
         [self.nameField becomeFirstResponder];
     }
+    else if (!self.emailMode && self.pressedCam != YES) {
+        [self.usernameField becomeFirstResponder];
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -603,6 +606,7 @@
         if ([self.profanityList containsObject:textField.text.lowercaseString]) {
             textField.text = @"";
         }
+
         if ([textField.text containsString:@" "]) {
             textField.text = @"";
         }
@@ -652,7 +656,10 @@
             return  NO;
         }
         
-        if ([string isEqualToString:@" "]) {
+        //limit usernames to letters/numbers/common punctuation symbols
+        NSCharacterSet *notAllowedChars = [[NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz._-1234567890 "]invertedSet];
+        NSRange r = [string rangeOfCharacterFromSet:notAllowedChars];
+        if (r.location != NSNotFound) {
             return NO;
         }
         
@@ -727,14 +734,18 @@
             [self.regButton setEnabled:YES];
             [self.cancelCrossButton setEnabled:YES];
             [self.helpButton setEnabled:YES];
+            
+            [Answers logCustomEventWithName:@"Initial Email Check Failed"
+                           customAttributes:@{}];
+            
             return;
         }
         else{
             [self showHUD];
             [self.spinner startAnimating];
             
-            Mixpanel *mixpanel = [Mixpanel sharedInstance];
-            [mixpanel timeEvent:@"Signup"];
+//            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+//            [mixpanel timeEvent:@"Signup"];
             
             //check email is valid
             NSString *email = [[self.emailField.text lowercaseString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -974,11 +985,15 @@
         //save password
         self.user.password = pass;
         
+        self.user[@"signupMode"] = @"email";
+        
     }
     else{
         //just need to set fullname since its fb mode
         self.user[PF_USER_FULLNAME] = [name capitalizedString];
         self.user[@"fullnameLower"] = [name lowercaseString];
+        
+        self.user[@"signupMode"] = @"facebook";
     }
     
     self.user[PF_USER_EMAIL] = email;
@@ -990,11 +1005,39 @@
     self.user[@"bumpArray"] = @[];
     [self.user setObject:[NSDate date] forKey:@"lastActive"];
     [self.user addObject:[NSDate date] forKey:@"activeSessions"];
+    [self.user setObject:@"YES" forKey:@"newCertDone"]; //users without this get logged out
+
     
     //add device token to user obj so simple to track and ban
     PFInstallation *installation = [PFInstallation currentInstallation];
     if (installation.deviceToken) {
         [self.user setObject:installation.deviceToken forKey:@"deviceToken"];
+    }
+    
+    //this is for influencers
+    NSString *affiliate = [[NSUserDefaults standardUserDefaults] objectForKey:@"affiliate"];
+    if (affiliate) {
+        [self.user setObject:affiliate forKey:@"affiliate"];
+    }
+    else{
+        //this is present when a user downloaded the app from a link (listing or profile link) another user shared
+        //we track who was the other user
+        NSString *referrer = [[NSUserDefaults standardUserDefaults] objectForKey:@"referrer"];
+        if (referrer) {
+            [self.user setObject:referrer forKey:@"referrer"];
+        }
+    }
+    
+    //we also track the channel they came from (Copied link, whatsapp, facebook messenger or could be more in future so keep outside the if/else above)
+    NSString *channel = [[NSUserDefaults standardUserDefaults] objectForKey:@"channel"];
+    if (channel) {
+        [self.user setObject:channel forKey:@"signupChannel"];
+    }
+    
+    //we and track the content they looked at to sign up
+    NSString *content = [[NSUserDefaults standardUserDefaults] objectForKey:@"content"];
+    if (content) {
+        [self.user setObject:content forKey:@"signupContent"];
     }
     
     [self.user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error)
@@ -1004,56 +1047,10 @@
              
              NSLog(@"saved user: %@", [PFUser currentUser]);
              
-             
              [Answers logCustomEventWithName:@"Selected currency"
                             customAttributes:@{
                                                @"currency":self.selectedCurrency,
                                                }];
-             
-//             //update Intercom with user info
-//             NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
-//             [PFCloud callFunctionInBackground:@"verifyIntercomUserId" withParameters:params block:^(NSString *hash, NSError *error) {
-//                 if (!error) {
-//                     [Intercom setUserHash:hash];
-//                     [Intercom registerUserWithUserId:[PFUser currentUser].objectId];
-//
-//                     //setup intercom listener
-//                     [[NSNotificationCenter defaultCenter] postNotificationName:@"registerIntercom" object:nil];
-//
-//                     //add standard info to user object
-//                     ICMUserAttributes *userAttributes = [ICMUserAttributes new];
-//                     userAttributes.email = email;
-//                     userAttributes.signedUpAt = [NSDate date];
-//                     userAttributes.name = [PFUser currentUser][PF_USER_FULLNAME];
-//
-//                     if (self.emailMode) {
-//                         //finish adding custom intercom attributes for email mode
-//                         userAttributes.customAttributes = @{@"email_sign_up" : @YES,
-//                                                             @"currency": self.selectedCurrency,
-//                                                             @"Username":[PFUser currentUser].username
-//                                                             };
-//
-//                     }
-//                     else{
-//                         //and same for facebook mode
-//                         userAttributes.customAttributes = @{@"email_sign_up" : @NO,
-//                                                             @"currency": self.selectedCurrency,
-//                                                             @"Username":[PFUser currentUser].username,
-//                                                             @"facebookId": [PFUser currentUser][PF_USER_FACEBOOKID]
-//                                                             };
-//                     }
-//
-//                     [Intercom updateUser:userAttributes];
-//
-//                 }
-//                 else{
-//                     NSLog(@"reg intercom veri error");
-//                     [Answers logCustomEventWithName:@"Intercom Verify Error"
-//                                    customAttributes:@{
-//                                                       @"where":@"registration"
-//                                                       }];
-//                 }
-//             }];
 
              //set user as tabUser
              AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -1062,15 +1059,82 @@
              Mixpanel *mixpanel = [Mixpanel sharedInstance];
              [mixpanel identify:self.user.objectId];
 
+             NSString *affiliate = [[NSUserDefaults standardUserDefaults] objectForKey:@"affiliate"];
+             NSString *channel = [[NSUserDefaults standardUserDefaults] objectForKey:@"channel"];
+             NSString *content = [[NSUserDefaults standardUserDefaults] objectForKey:@"content"];
+
              //tracking & deals data setup
              if (self.emailMode) {
-                 //setup deals data
-                 [mixpanel registerSuperProperties:@{
-                                                     @"Source": @"Email",
-                                                     @"currency": self.selectedCurrency
-                                                     }];
                  
-                 [mixpanel track:@"Signup" properties:@{}];
+                 //track where this user came from
+                 if (affiliate && channel) {
+//                     NSLog(@"aff and channel: %@ %@", affiliate, channel);
+                     
+                     //add mixpanel info
+                     [mixpanel registerSuperProperties:@{@"Source": @"Email",
+                                                         @"currency": self.selectedCurrency,
+                                                         @"signupAffiliate":affiliate,
+                                                         @"signupChannel":channel
+                                                         }];
+                     
+                     [mixpanel track:@"Signup" properties:@{
+                                                            @"affiliate":affiliate,
+                                                            @"channel":channel
+                                                            }];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"affiliate"];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"channel"];
+                 }
+                 else if(affiliate){
+//                     NSLog(@"aff: %@", affiliate);
+                     
+                     [mixpanel registerSuperProperties:@{@"Source": @"Email",
+                                                         @"currency": self.selectedCurrency,
+                                                         @"signupAffiliate":affiliate
+                                                         }];
+                     
+                     [mixpanel track:@"Signup" properties:@{
+                                                            @"affiliate":affiliate
+                                                            }];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"affiliate"];
+                 }
+                 else if(channel && content){
+                     
+                     [mixpanel registerSuperProperties:@{@"Source": @"Email",
+                                                         @"currency": self.selectedCurrency,
+                                                         @"signupContent":content,
+                                                         @"signupChannel":channel
+                                                         }];
+                     
+                     [mixpanel track:@"Signup" properties:@{
+                                                            @"channel":channel,
+                                                            @"content":content
+                                                            
+                                                            }];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"channel"];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"content"];
+                     
+                 }
+                 else if(channel){
+                     [mixpanel registerSuperProperties:@{@"Source": @"Email",
+                                                         @"currency": self.selectedCurrency,
+                                                         @"signupChannel":channel
+                                                         }];
+                     
+                     [mixpanel track:@"Signup" properties:@{
+                                                            @"channel":channel
+                                                            
+                                                            }];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"channel"];
+                 }
+                 else{
+                     
+                     [mixpanel registerSuperProperties:@{@"Source": @"Email",
+                                                         @"currency": self.selectedCurrency
+                                                         }];
+                     
+                     [mixpanel track:@"Signup" properties:@{}];
+
+                 }
                  
                  [self setupFeedback];
                  
@@ -1084,12 +1148,74 @@
              }
              else{
                  
-                 //add mixpanel info
-                 [mixpanel registerSuperProperties:@{@"Source": @"Facebook",
-                                                     @"currency": self.selectedCurrency
-                                                     }];
                  
-                 [mixpanel track:@"Signup" properties:@{}];
+                 //track where this user came from
+                 if (affiliate && channel) {
+//                     NSLog(@"aff and channel: %@ %@", affiliate, channel);
+                     
+                     //add mixpanel info
+                     [mixpanel registerSuperProperties:@{@"Source": @"Facebook",
+                                                         @"currency": self.selectedCurrency,
+                                                         @"signupAffiliate":affiliate,
+                                                         @"signupChannel":channel
+                                                         }];
+                     
+                     [mixpanel track:@"Signup" properties:@{
+                                                            @"affiliate":affiliate,
+                                                            @"channel":channel
+                                                            }];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"affiliate"];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"channel"];
+                 }
+                 else if(affiliate){
+//                     NSLog(@"aff: %@", affiliate);
+                     
+                     [mixpanel registerSuperProperties:@{@"Source": @"Facebook",
+                                                         @"currency": self.selectedCurrency,
+                                                         @"signupAffiliate":affiliate
+                                                         }];
+                     
+                     [mixpanel track:@"Signup" properties:@{
+                                                            @"affiliate":affiliate
+                                                            }];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"affiliate"];
+                 }
+                 else if(channel && content){
+                     
+                     [mixpanel registerSuperProperties:@{@"Source": @"Facebook",
+                                                         @"currency": self.selectedCurrency,
+                                                         @"signupContent":content,
+                                                         @"signupChannel":channel
+                                                         }];
+                     
+                     [mixpanel track:@"Signup" properties:@{
+                                                            @"channel":channel,
+                                                            @"content":content
+                                                            
+                                                            }];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"channel"];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"content"];
+                     
+                 }
+                 else if(channel){
+                     [mixpanel registerSuperProperties:@{@"Source": @"Facebook",
+                                                         @"currency": self.selectedCurrency,
+                                                         @"signupChannel":channel
+                                                         }];
+                     
+                     [mixpanel track:@"Signup" properties:@{
+                                                            @"channel":channel
+                                                            
+                                                            }];
+                     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"channel"];
+                 }
+                 else{
+                     [mixpanel track:@"Signup" properties:@{}];
+                     
+                     [mixpanel registerSuperProperties:@{@"Source": @"Facebook",
+                                                         @"currency": self.selectedCurrency
+                                                         }];
+                 }
                  
                  [Answers logSignUpWithMethod:@"Facebook"
                                       success:@YES
@@ -1147,7 +1273,12 @@
              [self hideHUD];
              NSLog(@"reg error %@", error);
              
-             [self showAlertWithTitle:@"Registration Error" andMsg:@"Make sure you're connected to the internet and try again!"];
+             [self showAlertWithTitle:@"Registration Error" andMsg:[NSString stringWithFormat:@"%@", error.description]];
+             
+             [Answers logCustomEventWithName:@"Reg error"
+                            customAttributes:@{
+                                               @"error":error.description
+                                               }];
          }
      }];
 }
@@ -1155,7 +1286,7 @@
 -(BOOL)textFieldShouldReturn:(UITextField*)textField
 {
     Mixpanel *mixpanel = [Mixpanel sharedInstance];
-    
+
     if (self.emailMode) {
         if (textField == self.nameField) {
             [mixpanel track:@"first_name_entered" properties:@{}];
@@ -1415,8 +1546,6 @@
 
 -(void)addSizeDismissed{
     //progress to tutorial
-//     Tut1ViewController *vc = [[Tut1ViewController alloc]init];
-//     vc.clickMode = YES;
     ExplainView *vc = [[ExplainView alloc]init];
     vc.introMode = YES;
     vc.emailIntro = self.emailMode;

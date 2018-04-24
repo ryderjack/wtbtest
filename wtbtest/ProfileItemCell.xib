@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12120" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12088"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -22,56 +21,31 @@
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="O9d-Kr-INi" customClass="PFImageView">
                         <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
                     </imageView>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="purchasedIcon2.png" translatesAutoresizingMaskIntoConstraints="NO" id="lzu-7i-uh0">
-                        <rect key="frame" x="31" y="79" width="38" height="13"/>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="soldIconShadow.png" translatesAutoresizingMaskIntoConstraints="NO" id="lzu-7i-uh0">
+                        <rect key="frame" x="31" y="80" width="39" height="17"/>
                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="38" id="bri-mA-DaH"/>
-                            <constraint firstAttribute="height" constant="13" id="sWP-wv-OC6"/>
-                        </constraints>
-                    </imageView>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="blueBoost.png" translatesAutoresizingMaskIntoConstraints="NO" id="eeU-qO-vvw">
-                        <rect key="frame" x="8" y="77" width="15" height="15"/>
-                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="15" id="xkO-bQ-7o0"/>
-                            <constraint firstAttribute="height" constant="15" id="zOi-D9-VDs"/>
-                        </constraints>
-                    </imageView>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="greenBoost.png" translatesAutoresizingMaskIntoConstraints="NO" id="FHj-Nn-lPG">
-                        <rect key="frame" x="24" y="77" width="15" height="15"/>
-                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                        <constraints>
-                            <constraint firstAttribute="height" constant="15" id="9OP-Vb-hDJ"/>
-                            <constraint firstAttribute="width" constant="15" id="SF4-HW-wec"/>
+                            <constraint firstAttribute="height" constant="17" id="UJ7-qU-aA6"/>
+                            <constraint firstAttribute="width" constant="39" id="x71-5a-Tvm"/>
                         </constraints>
                     </imageView>
                 </subviews>
             </view>
             <constraints>
-                <constraint firstItem="eeU-qO-vvw" firstAttribute="top" secondItem="FHj-Nn-lPG" secondAttribute="top" id="5zx-Yq-vUI"/>
-                <constraint firstItem="eeU-qO-vvw" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leadingMargin" id="6Nr-yI-rli"/>
-                <constraint firstItem="O9d-Kr-INi" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="9h9-Ip-nAh"/>
-                <constraint firstItem="eeU-qO-vvw" firstAttribute="bottom" secondItem="gTV-IL-0wX" secondAttribute="bottomMargin" id="Cno-5j-9HL"/>
-                <constraint firstItem="FHj-Nn-lPG" firstAttribute="leading" secondItem="eeU-qO-vvw" secondAttribute="trailing" constant="1" id="De7-ib-OON"/>
-                <constraint firstItem="O9d-Kr-INi" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="Sw0-Yh-fK8"/>
-                <constraint firstAttribute="bottom" secondItem="O9d-Kr-INi" secondAttribute="bottom" id="YyJ-Ci-YX5"/>
-                <constraint firstItem="eeU-qO-vvw" firstAttribute="bottom" secondItem="FHj-Nn-lPG" secondAttribute="bottom" id="cGg-on-wgh"/>
-                <constraint firstItem="FHj-Nn-lPG" firstAttribute="bottom" secondItem="lzu-7i-uh0" secondAttribute="bottom" id="jxe-Tk-uGx"/>
-                <constraint firstItem="O9d-Kr-INi" firstAttribute="centerX" secondItem="lzu-7i-uh0" secondAttribute="centerX" id="yQA-7U-ree"/>
-                <constraint firstAttribute="trailing" secondItem="O9d-Kr-INi" secondAttribute="trailing" id="zJc-Gs-GMO"/>
+                <constraint firstAttribute="bottom" secondItem="lzu-7i-uh0" secondAttribute="bottom" constant="3" id="1vZ-1L-1SE"/>
+                <constraint firstAttribute="trailing" secondItem="O9d-Kr-INi" secondAttribute="trailing" id="1zq-R1-fcQ"/>
+                <constraint firstAttribute="bottom" secondItem="O9d-Kr-INi" secondAttribute="bottom" id="Vfd-3U-zcv"/>
+                <constraint firstItem="O9d-Kr-INi" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="aoR-AD-S3A"/>
+                <constraint firstItem="O9d-Kr-INi" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="pk5-Xy-lnC"/>
+                <constraint firstItem="lzu-7i-uh0" firstAttribute="centerX" secondItem="gTV-IL-0wX" secondAttribute="centerX" id="zkM-Sv-FcG"/>
             </constraints>
             <connections>
-                <outlet property="boost2ImageView" destination="FHj-Nn-lPG" id="4y8-RT-RWe"/>
-                <outlet property="boostImageView" destination="eeU-qO-vvw" id="Ppu-Xj-ICx"/>
                 <outlet property="itemImageView" destination="O9d-Kr-INi" id="eHM-I9-xXR"/>
                 <outlet property="purchasedImageView" destination="lzu-7i-uh0" id="Xm4-QY-Ri1"/>
             </connections>
         </collectionViewCell>
     </objects>
     <resources>
-        <image name="blueBoost.png" width="20" height="20"/>
-        <image name="greenBoost.png" width="20" height="20"/>
-        <image name="purchasedIcon2.png" width="38" height="13"/>
+        <image name="soldIconShadow.png" width="39" height="17"/>
     </resources>
 </document>

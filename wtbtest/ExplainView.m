@@ -32,100 +32,7 @@
     
     self.mainCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
-    if (self.changedMode) {
-        //setup change gif and label
-        
-//        NSArray *imageNames = @[@"djk-1.jpg",@"djk-2.jpg",@"djk-3.jpg",@"djk-4.jpg",@"djk-5.jpg",@"djk-6.jpg",@"djk-7.jpg",@"djk-8.jpg",@"djk-9.jpg",@"djk-10.jpg",@"djk-11.jpg",@"djk-12.jpg",@"djk-13.jpg",@"djk-14.jpg",@"djk-15.jpg",@"djk-16.jpg",@"djk-17.jpg",@"djk-18.jpg",@"djk-19.jpg",@"djk-20.jpg",@"djk-21.jpg",@"djk-22.jpg",@"djk-23.jpg",@"djk-24.jpg",@"djk-25.jpg",@"djk-26.jpg",@"djk-27.jpg",@"djk-28.jpg",@"djk-29.jpg",@"djk-30.jpg",];
-//        
-//        NSMutableArray *images = [[NSMutableArray alloc] init];
-//        for (int i = 0; i < imageNames.count; i++) {
-//            [images addObject:[UIImage imageNamed:[imageNames objectAtIndex:i]]];
-//        }
-//        
-//        // Normal Animation
-//        self.imageView.animationImages = images;
-//        self.imageView.animationDuration = 6.0;
-//        [self.imageView startAnimating];
-        
-        //set title
-        self.titleLabel.text = @"B U M P ' S  C H A N G E D !";
-        
-        //hide all exlpain stuff
-        [self.firstLabel setHidden:YES];
-        [self.firstImageView setHidden:YES];
-        [self.secondLabel setHidden:YES];
-        [self.secondImageView setHidden:YES];
-        [self.thirdLabel setHidden:YES];
-        [self.thirdImageView setHidden:YES];
-        
-        //hide cancel and show button
-        [self.cancelButton setHidden:YES];
-        [self.nextButton setHidden:YES];
-        [self.higherNextButton setHidden:NO];
-    }
-    else if (self.buyingIntro){
-        //message buying intro
-        
-        [Answers logCustomEventWithName:@"Seen buying intro"
-                       customAttributes:@{}];
-        
-        // Normal Animation
-        self.imageView.image = [UIImage imageNamed:@"chatImageLarge"];
-        
-        //set title
-        self.titleLabel.text = @"B U Y I N G  O N  B U M P";
-        
-        self.welcomeBackLabel.text = @"When you’re ready to purchase something just ask the Seller to send their PayPal email address on BUMP\n\nYou can tap that message to be taken to PayPal and pay\n\nRemember to pay PayPal Goods & Services - if you’ve got any questions just send Support a message from Settings!";
-        
-        //hide all exlpain stuff
-        [self.firstLabel setHidden:YES];
-        [self.firstImageView setHidden:YES];
-        [self.secondLabel setHidden:YES];
-        [self.secondImageView setHidden:YES];
-        [self.thirdLabel setHidden:YES];
-        [self.thirdImageView setHidden:YES];
-        
-        //hide cancel and show button
-        [self.cancelButton setHidden:YES];
-        [self.nextButton setHidden:YES];
-        [self.higherNextButton setHidden:NO];
-        
-        //set button title
-        [self.higherNextButton setTitle:@"Done" forState:UIControlStateNormal];
-        
-    }
-    else if (self.sellingIntro){
-        //message selling intro
-        
-        [Answers logCustomEventWithName:@"Seen selling intro"
-                       customAttributes:@{}];
-        
-        // Normal Animation
-        self.imageView.image = [UIImage imageNamed:@"sendPayPalIcon3"];
-        
-        //set title
-        self.titleLabel.text = @"S E L L I N G  O N  B U M P";
-        
-        self.welcomeBackLabel.text = @"When you’re ready to sell something on BUMP tap the ‘Send PayPal email’ button\n\nThis makes it easy for the buyer to pay you through PayPal without leaving the app\n\nBump never handles any payment information, your transaction is only handled by PayPal, we just make everything easier!";
-        
-        //hide all exlpain stuff
-        [self.firstLabel setHidden:YES];
-        [self.firstImageView setHidden:YES];
-        [self.secondLabel setHidden:YES];
-        [self.secondImageView setHidden:YES];
-        [self.thirdLabel setHidden:YES];
-        [self.thirdImageView setHidden:YES];
-        
-        //hide cancel and show button
-        [self.cancelButton setHidden:YES];
-        [self.nextButton setHidden:YES];
-        [self.higherNextButton setHidden:NO];
-        
-        //set button title
-        [self.higherNextButton setTitle:@"Done" forState:UIControlStateNormal];
-        
-    }
-    else if (self.picAndTextMode){
+    if (self.picAndTextMode){
         //provide an image, text and title then this VC just shows that! Easyyyy
         
         //setup passed on provided info
@@ -141,28 +48,44 @@
         [self.thirdLabel setHidden:YES];
         [self.thirdImageView setHidden:YES];
         
-        //decide which cancel button to show
-        
+        [self.cancelButton setHidden:YES];
+
+        [self.higherNextButton setTitle:@"Dismiss" forState:UIControlStateNormal];
+        [self.nextButton setHidden:YES];
+        [self.higherNextButton setHidden:NO];
+
         //iPhone 7Plus users get the lower one
-        if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
-            
-            //set button title
-            [self.higherNextButton setTitle:@"Done" forState:UIControlStateNormal];
-            
-            [self.cancelButton setHidden:YES];
-            [self.nextButton setHidden:YES];
-            [self.higherNextButton setHidden:NO];
-        }
-        else{
-            [self.cancelButton setHidden:NO];
-            [self.nextButton setHidden:YES];
-            [self.higherNextButton setHidden:YES];
-        }
+//        if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
+//
+//            //set button title
+//
+//            [self.nextButton setHidden:YES];
+//            [self.higherNextButton setHidden:NO];
+//        }
+//        else{
+//            [self.nextButton setHidden:YES];
+//            [self.higherNextButton setHidden:NO];
+//        }
 
     }
     else{
         [self.imageView setHidden:YES];
         [self.welcomeBackLabel setHidden:YES];
+    }
+    
+    if (self.howWorks) {
+        
+        self.titleLabel.adjustsFontSizeToFitWidth = YES;
+        self.titleLabel.minimumScaleFactor=0.5;
+        
+        //use top cross on iPhone SE, easier to hit than scrolling
+        if([ [ UIScreen mainScreen ] bounds ].size.width != 320){
+            //use dismiss button from below not top cross
+            [self.cancelButton setHidden:YES];
+            
+            [self.nextButton setTitle:@"Dismiss" forState:UIControlStateNormal];
+            [self.nextButton setHidden:NO];
+        }
     }
 }
 
@@ -209,6 +132,9 @@
 //            vc.introMode = YES;
 //            [self.navigationController pushViewController:vc animated:YES];
 //        }
+    }
+    else if(self.howWorks){
+        [self dismissViewControllerAnimated:YES completion:nil];
     }
     else if (self.changedMode) {
         [self setupNormalExplain];
@@ -392,11 +318,18 @@
             userAttributes.signedUpAt = [NSDate date];
             userAttributes.name = [PFUser currentUser][@"fullname"];
             
+            NSString *affiliate = @"none";
+            
+            if ([PFUser currentUser][@"affiliate"]) {
+                affiliate = [PFUser currentUser][@"affiliate"];
+            }
+            
             if (self.emailIntro) {
                 //finish adding custom intercom attributes for email mode
                 userAttributes.customAttributes = @{@"email_sign_up" : @YES,
                                                     @"currency": self.currency,
-                                                    @"Username":[PFUser currentUser].username
+                                                    @"Username":[PFUser currentUser].username,
+                                                    @"affiliate":affiliate
                                                     };
                 
             }
@@ -405,7 +338,8 @@
                 userAttributes.customAttributes = @{@"email_sign_up" : @NO,
                                                     @"currency": self.currency,
                                                     @"Username":[PFUser currentUser].username,
-                                                    @"facebookId": [PFUser currentUser][@"facebookId"]
+                                                    @"facebookId": [PFUser currentUser][@"facebookId"],
+                                                    @"affiliate":affiliate
                                                     };
             }
             

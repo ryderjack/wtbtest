@@ -19,6 +19,7 @@
 #import <DGActivityIndicatorView.h>
 #import "ListingBannerView.h"
 #import "CheckoutSummary.h"
+#import "CamVC.h"
 
 @class MessageViewController;
 
@@ -26,7 +27,7 @@
 - (void)lastMessageInConvo:(NSString *)message incomingMsg:(BOOL)incoming;
 @end
 
-@interface MessageViewController : JSQMessagesViewController < CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,JRWebViewDelegate, customAlertDelegate,QBImagePickerControllerDelegate, SwipeViewDelegate, SwipeViewDataSource, feedbackDelegate,bannerDelegate, JSQMessagesComposerTextViewPasteDelegate, CheckoutDelegate>
+@interface MessageViewController : JSQMessagesViewController < CameraControllerDelegate, UICollectionViewDelegate, UIImagePickerControllerDelegate, BASSquareCropperDelegate, UINavigationControllerDelegate,JRWebViewDelegate, customAlertDelegate,QBImagePickerControllerDelegate, SwipeViewDelegate, SwipeViewDataSource, feedbackDelegate,bannerDelegate, JSQMessagesComposerTextViewPasteDelegate, CheckoutDelegate,CameraVCDelegate>
 
 //basic setup
 @property (nonatomic, strong) NSString *convoId;
@@ -45,6 +46,7 @@
 @property (nonatomic) BOOL changeKeyboard;
 @property (nonatomic) BOOL paypalMessage;
 @property (nonatomic) BOOL paypalPush;
+@property (nonatomic) BOOL disabledTrades;
 
 //Bubble tings
 @property (nonatomic, strong) JSQMessagesBubbleImage *outgoingBubbleImageData;
@@ -69,6 +71,7 @@
 
 //seller mode
 @property (nonatomic) BOOL messageSellerPressed;
+@property (nonatomic) BOOL fromActivity;
 @property (nonatomic, strong) NSString *sellerItemTitle;
 
 //nav bar buttons
@@ -76,11 +79,15 @@
 @property (nonatomic, strong) UIBarButtonItem *listingButton;
 @property (nonatomic, strong) UIBarButtonItem *reviewButton;
 
+@property (nonatomic, strong) UIBarButtonItem *followButton;
+@property (nonatomic) BOOL following;
+
 //seen labels for messages setup
 @property (nonatomic, strong) PFObject *messageObject;
 @property (nonatomic, strong) PFObject *lastMessage;
 
 @property (nonatomic) BOOL userIsBuyer;
+@property (nonatomic) BOOL userIsSeller;
 @property (nonatomic) BOOL profileBTapped;
 
 @property (nonatomic) BOOL somethingTapped;
@@ -168,6 +175,8 @@
 
 @property (nonatomic) BOOL demoMode;
 @property (nonatomic) int demoMessageNumber;
+@property (nonatomic) BOOL proxyListing;
+@property (nonatomic) BOOL itemSold;
 
 //review
 @property (nonatomic) BOOL justLeftReview;
@@ -177,8 +186,11 @@
 
 //blocked mode
 @property (nonatomic) int paypalSentCounter;
+@property (nonatomic) BOOL soldBefore;
+
 
 //refresh
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
+@property (nonatomic) BOOL triggeredPaymentWarning;
 
 @end

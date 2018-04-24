@@ -21,7 +21,7 @@
 @property (nonatomic) BOOL buyingIntro;
 @property (nonatomic) BOOL sellingIntro;
 @property (nonatomic) BOOL emailIntro;
-
+@property (nonatomic) BOOL howWorks;
 
 //helper VC mode
 @property (nonatomic) BOOL picAndTextMode;

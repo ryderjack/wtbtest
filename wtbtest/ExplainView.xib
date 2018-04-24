@@ -57,7 +57,7 @@
                         <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="12"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="List an item that you're selling or you want to buy" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lbb-ze-u24">
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="List an item that you want to sell" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lbb-ze-u24">
                         <rect key="frame" x="80" y="214" width="215" height="61"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="61" id="gzZ-1B-O1p"/>
@@ -69,7 +69,7 @@
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="yeezyImage.png" translatesAutoresizingMaskIntoConstraints="NO" id="u0B-aX-aud">
                         <rect key="frame" x="137" y="114" width="100" height="100"/>
                     </imageView>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="BUMP's search tools help you find interested buyers and limited streetwear" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="e81-5X-8xJ">
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="BUMP's search &amp; filter tools help you find limited streetwear" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="e81-5X-8xJ">
                         <rect key="frame" x="80" y="391" width="215" height="61"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="61" id="WuZ-lU-OHt"/>
@@ -81,7 +81,7 @@
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="searchExplain.png" translatesAutoresizingMaskIntoConstraints="NO" id="NXK-As-fwt">
                         <rect key="frame" x="138" y="291" width="100" height="100"/>
                     </imageView>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Once you find an item you can checkout safely with PayPal &amp; Buyer Protection" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="iob-qp-ktT">
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Once you find an item you can checkout safely with BUMP + PayPal Protection" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="iob-qp-ktT">
                         <rect key="frame" x="64" y="572" width="247" height="83"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="83" id="LvA-Xo-DH4"/>
@@ -107,13 +107,13 @@
                         </connections>
                     </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="WS7-2D-HX4">
-                        <rect key="frame" x="139" y="663" width="96" height="32"/>
+                        <rect key="frame" x="135" y="663" width="104" height="41"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="96" id="UoB-Sa-M96"/>
-                            <constraint firstAttribute="height" constant="32" id="geR-Uo-7mO"/>
+                            <constraint firstAttribute="width" constant="104" id="UoB-Sa-M96"/>
+                            <constraint firstAttribute="height" constant="41" id="geR-Uo-7mO"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
-                        <state key="normal" title="Next" backgroundImage="filterBG2.png">
+                        <state key="normal" title="Next" backgroundImage="filterBGS.png">
                             <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         </state>
                         <connections>
@@ -128,13 +128,13 @@
                         </constraints>
                     </imageView>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Tyx-cu-Zmo">
-                        <rect key="frame" x="139" y="602" width="96" height="32"/>
+                        <rect key="frame" x="135" y="602" width="104" height="41"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="96" id="Uef-iV-QwC"/>
-                            <constraint firstAttribute="height" constant="32" id="YSv-AW-5Rl"/>
+                            <constraint firstAttribute="width" constant="104" id="Uef-iV-QwC"/>
+                            <constraint firstAttribute="height" constant="41" id="YSv-AW-5Rl"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="PingFangSC-Medium" family="PingFang SC" pointSize="15"/>
-                        <state key="normal" title="Next" backgroundImage="filterBG2.png">
+                        <state key="normal" title="Next" backgroundImage="filterBGS.png">
                             <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         </state>
                         <connections>
@@ -174,7 +174,7 @@
                     <constraint firstItem="bwk-mI-dT4" firstAttribute="centerX" secondItem="u0B-aX-aud" secondAttribute="centerX" id="jjg-9s-GYn"/>
                     <constraint firstItem="3fW-rQ-LXE" firstAttribute="leading" secondItem="StG-Os-m7r" secondAttribute="leadingMargin" id="mpT-ND-Heb"/>
                     <constraint firstItem="8Lh-8J-tIw" firstAttribute="trailing" secondItem="e81-5X-8xJ" secondAttribute="trailing" constant="38" id="n5T-oW-Ytq"/>
-                    <constraint firstItem="WS7-2D-HX4" firstAttribute="top" secondItem="Tyx-cu-Zmo" secondAttribute="bottom" constant="29" id="nWL-bi-J6o"/>
+                    <constraint firstItem="WS7-2D-HX4" firstAttribute="top" secondItem="Tyx-cu-Zmo" secondAttribute="bottom" constant="20" id="nWL-bi-J6o"/>
                     <constraint firstItem="bwk-mI-dT4" firstAttribute="leading" secondItem="lbb-ze-u24" secondAttribute="leading" id="p1B-9G-2XF"/>
                     <constraint firstItem="Tyx-cu-Zmo" firstAttribute="top" secondItem="8Lh-8J-tIw" secondAttribute="bottom" constant="15" id="pB1-Ae-U2V"/>
                     <constraint firstItem="3fW-rQ-LXE" firstAttribute="top" secondItem="StG-Os-m7r" secondAttribute="topMargin" constant="22" id="rhh-PE-xWw"/>
@@ -190,7 +190,7 @@
     </objects>
     <resources>
         <image name="cancelCross.png" width="17" height="15"/>
-        <image name="filterBG2.png" width="96" height="32"/>
+        <image name="filterBGS.png" width="104" height="41"/>
         <image name="paypalExplain.png" width="100" height="100"/>
         <image name="searchExplain.png" width="100" height="100"/>
         <image name="yeezyImage.png" width="100" height="100"/>

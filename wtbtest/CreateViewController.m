@@ -145,7 +145,7 @@
     [[self navigationController] setNavigationBarHidden:NO animated:YES];
     
     //sam & jack code only
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"bXiWS96gp6"]) {
         
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
             NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:@"listUser"];
@@ -695,10 +695,14 @@
                        customAttributes:@{
                                           @"where":@"edit"
                                           }];
-        CameraController *vc = [[CameraController alloc]init];
+//        CameraController *vc = [[CameraController alloc]init];
+//        vc.delegate = self;
+//        vc.offerMode = NO;
+//        self.shouldSave = YES;
+//        [self presentViewController:vc animated:YES completion:nil];
+        
+        CamVC *vc = [[CamVC alloc]init];
         vc.delegate = self;
-        vc.offerMode = NO;
-        self.shouldSave = YES;
         [self presentViewController:vc animated:YES completion:nil];
     }]];
     

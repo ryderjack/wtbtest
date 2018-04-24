@@ -21,6 +21,9 @@
     // Do any additional setup after loading the view from its nib.
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(cancelPressed)];
     self.applicationLeftBarButtonItems = @[cancelButton];
+    
+    self.doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Camera" style:UIBarButtonItemStylePlain target:self action:@selector(CameraPressed)];
+
     self.view.backgroundColor = [UIColor whiteColor];
     
     if (self.createMode == YES || self.editMode == YES) {

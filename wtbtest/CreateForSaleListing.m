@@ -43,13 +43,18 @@
     self.globalPrice = 0.00;
     self.totalSections = 7;
     
-    self.mainRows = 3;
-    self.buyRows = 2;
-
     self.countryCode = @"";
     self.country = @"";
     
+    self.mainRows = 3;
+    self.buyRows = 2;
+    
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+    
+    //listen for this event to let user list more items
+    if (!self.editMode) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(listingFinished) name:@"justPostedSaleListing" object:nil];
+    }
 
     //hide swipe view to start (unless in edit mode)
     self.colourSwipeView.alpha = 0.0;
@@ -153,8 +158,14 @@
 
     [self.tableView setBackgroundColor:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1]];
     
-    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
-    self.navigationItem.leftBarButtonItem = cancelButton;
+    if (self.tabMode) {
+        UIBarButtonItem *resetButton = [[UIBarButtonItem alloc] initWithTitle:@"Clear" style:UIBarButtonItemStylePlain target:self action:@selector(resetForm)];
+        self.navigationItem.leftBarButtonItem = resetButton;
+    }
+    else{
+        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
+        self.navigationItem.leftBarButtonItem = cancelButton;
+    }
     
     self.spinner = [[RTSpinKitView alloc] initWithStyle:RTSpinKitViewStyleArc];
     
@@ -171,15 +182,22 @@
     self.multipleSizeAcronymArray = [NSMutableArray array];
     self.finalSizeArray = [NSMutableArray array];
     
-    if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
-        //iPhone X
-        self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-80, [UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
+    if (self.tabMode) {
+        self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height - (50 + self.tabBarController.tabBar.frame.size.height), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
     }
     else{
-        self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+        if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+            //iPhone X
+            self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height - 80, [UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
+        }
+        else{
+            self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height - 60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
+        }
     }
 
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
+    //let listingMod == YES users list on behalf of other users
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[[PFUser currentUser] objectForKey:@"listingMod"]isEqualToString:@"YES"]) {
+        
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
             NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:@"listUser"];
             
@@ -189,6 +207,19 @@
                 if (object) {
                     self.cabin = (PFUser *)object;
                     self.listingAsMode = YES;
+                    
+                    if([[self.cabin objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [self.cabin objectForKey:@"paypalMerchantId"]){
+                        
+                        self.paypalEnabled = YES;
+                        self.merchantId = [self.cabin objectForKey:@"paypalMerchantId"];
+                        self.choosePaymentMethod.text = @"Connected";
+                        
+                        NSLog(@"merch id: %@", self.merchantId);
+
+                    }
+                    else{
+                        [self showAlertWithTitle:@"User Error" andMsg:@"This user needs to first connect their PayPal before you can list items for them g"];
+                    }
                 }
                 else{
                     [self showAlertWithTitle:@"Couldn't fetch other user" andMsg:nil];
@@ -204,6 +235,9 @@
     if (self.editMode != YES) {
         self.listingSetup = YES;
         [self.itemTitleTextField becomeFirstResponder];
+        
+        //check if user has prefilled shipping prices && a location so they don't have to even visit the shipping screen
+        [self setupDefaultShipping];
     }
     
     if (!self.introMode) {
@@ -224,6 +258,13 @@
                                           @"pageName":@"Create For Sale Listing",
                                           @"mode":@"Edit"
                                           }];
+    }
+    else if(([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[[PFUser currentUser] objectForKey:@"listingMod"]isEqualToString:@"YES"]) && [[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES){
+        //listing for other person, auto set fees on
+        NSLog(@"listing for other person, fees on by default");
+        
+        [self.longButton setTitle:@"C R E A T E" forState:UIControlStateNormal];
+
     }
     else{
         
@@ -318,7 +359,12 @@
                                           }];
         
         //if user is editing a listing just never show PayPal account cell
-        if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
+        //make sure we're not listing for someone else
+        if (([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[[PFUser currentUser] objectForKey:@"listingMod"]isEqualToString:@"YES"]) && [[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
+            //merchId set earlier
+            NSLog(@"merchId was set earlier");
+        }
+        else if([[[PFUser currentUser]objectForKey:@"paypalEnabled"]isEqualToString:@"YES"] && [[PFUser currentUser]objectForKey:@"paypalMerchantId"]){
             self.paypalEnabled = YES;
             self.merchantId = [[PFUser currentUser]objectForKey:@"paypalMerchantId"];
             self.choosePaymentMethod.text = @"Connected";
@@ -333,7 +379,6 @@
             [self.tableView reloadData];
         }
     }
-
 
     //automatically let everyone sell now
     self.verified = YES;
@@ -388,9 +433,7 @@
         [self showBarButton];
     }
     
-    if (self.buttonShowing == NO) {
-        [self showBarButton];
-    }
+    [self showBarButton];
     
     self.currency = [[PFUser currentUser]objectForKey:@"currency"];
     if ([self.currency isEqualToString:@"GBP"]) {
@@ -831,8 +874,15 @@
 }
 
 -(void)dismissVC{
+    //used to retrigger the buy/message buttons when create is pressed from a listing that's been entered via the search modal VC
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"backFromCreate" object:nil];
+
     //only show warning if listing is partially completed
     if (self.somethingChanged == NO) {
+        if (self.editMode) {
+            [self.delegate dismissCreateParent];
+        }
+        
         [self dismissViewControllerAnimated:YES completion:nil];
     }
     else{
@@ -851,7 +901,13 @@
             [alertView addAction:[UIAlertAction actionWithTitle:@"Stay" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
             }]];
             [alertView addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                
+                if (self.editMode) {
+                    [self.delegate dismissCreateParent];
+                }
+                
                 [self dismissViewControllerAnimated:YES completion:nil];
+                
             }]];
             [self presentViewController:alertView animated:YES completion:nil];
         }
@@ -898,6 +954,8 @@
 }
 
 -(void)textFieldDidEndEditing:(UITextField *)textField{
+
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
 
     if (textField == self.payField) {
         if ([self.payField.text isEqualToString:self.currencySymbol]) {
@@ -994,6 +1052,10 @@
         }
         else{
             self.payField.text = [NSString stringWithFormat:@"%@%@", self.currencySymbol, priceString];
+            
+            if (!self.editMode && !self.cabin) {
+                [mixpanel track:@"item_price_entered" properties:@{}];
+            }
         }
     }
     else if (textField == self.itemTitleTextField){
@@ -1149,6 +1211,10 @@
                              }
                              completion:nil];
         }
+        
+        if (!self.editMode && !self.cabin) {
+            [mixpanel track:@"item_title_entered" properties:@{}];
+        }
     }
     else if (textField == self.quantityField || textField == self.secondQuantityField){
         NSString *check = [textField.text stringByReplacingOccurrencesOfString:@"0" withString:@""];
@@ -1196,6 +1262,7 @@
             if ([self.profanityList containsObject:string.lowercaseString]) {
                 textView.text = @"Describe the item's style, sizing, and any possible flaws";
                 textView.textColor = [UIColor lightGrayColor];
+                return;
             }
             else if ([self.flagWords containsObject:string.lowercaseString]){
                 textView.text = @"Describe the item's style, sizing, and any possible flaws";
@@ -1216,6 +1283,12 @@
                 return;
             }
         }
+        
+        if (!self.editMode && !self.cabin) {
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"item_description_entered" properties:@{}];
+        }
+
     }
 }
 
@@ -1325,32 +1398,23 @@
         [self showBarButton];
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Take a photo" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [Answers logCustomEventWithName:@"Added for sale picture"
                        customAttributes:@{
                                           @"source":@"Camera"
                                           }];
         
-        CameraController *vc = [[CameraController alloc]init];
+//        CameraController *vc = [[CameraController alloc]init];
+//        vc.delegate = self;
+//        vc.offerMode = YES;
+//        self.multipleMode = NO;
+//        [self presentViewController:vc animated:YES completion:nil];
+        
+        CamVC *vc = [[CamVC alloc]init];
         vc.delegate = self;
-        vc.offerMode = YES;
         self.multipleMode = NO;
         [self presentViewController:vc animated:YES completion:nil];
     }]];
-    
-//    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//        [Answers logCustomEventWithName:@"Added for sale picture"
-//                       customAttributes:@{
-//                                          @"source":@"Library"
-//                                          }];
-//        if (!self.picker) {
-//            self.picker = [[UIImagePickerController alloc] init];
-//            self.picker.delegate = self;
-//            self.picker.allowsEditing = NO;
-//            self.picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-//        }
-//        [self presentViewController:self.picker animated:YES completion:nil];
-//    }]];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose from library" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         
@@ -1534,14 +1598,20 @@
 -(void)popUpAlert{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Enter a Description" message:@"Tell buyers what you're selling describing the item's style, sizing and any possible flaws" preferredStyle:UIAlertControllerStyleAlert];
     
+    [self hideBarButton];
+    
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
 -(void)sizePopUp{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Choose a Category" message:@"Make sure you've first entered a category for your item" preferredStyle:UIAlertControllerStyleAlert];
+    [self hideBarButton];
+    
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -1549,7 +1619,10 @@
 -(void)locationPopUp{
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Location error" message:@"Please try again!" preferredStyle:UIAlertControllerStyleAlert];
     
+    [self hideBarButton];
+    
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [self showBarButton];
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
@@ -1557,8 +1630,16 @@
 -(void)finalImage:(UIImage *)image{
     UIImage *newImage = [image scaleImageToSize:CGSizeMake(750, 750)]; //manipulate bytes for testing here
     UIImage *smallImage = [image scaleImageToSize:CGSizeMake(200,200)];
+    
+//    NSData *imgData1 = UIImageJPEGRepresentation(newImage, 1.0);
+//    NSLog(@"BEFORE (bytes):%lu",(unsigned long)[imgData1 length]);
 
     self.somethingChanged = YES;
+    
+    if (!self.editMode && !self.cabin) {
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"item_image_added" properties:@{}];
+    }
     
     if (self.multipleMode == YES) {
         //add to CV array
@@ -1821,20 +1902,37 @@
     self.payField.inputAccessoryView = keyboardToolbar;
     self.descriptionField.inputAccessoryView = keyboardToolbar;
     self.secondQuantityField.inputAccessoryView = keyboardToolbar;
+    self.itemTitleTextField.inputAccessoryView = keyboardToolbar;
     
 }
 
 #pragma condition delegate
 
 -(void)firstConditionPressed{
+    //not called
     self.chooseCondition.text = @"Deadstock";
 }
 
 -(void)secondConditionPressed{
+    
+    if (!self.editMode && !self.cabin) {
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"item_condition_entered" properties:@{
+                                                               @"condition":@"new"
+                                                               }];
+    }
+
     self.chooseCondition.text = @"New";
 }
 
 -(void)thirdConditionPressed{
+    if (!self.editMode && !self.cabin) {
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"item_condition_entered" properties:@{
+                                                               @"condition":@"used"
+                                                               }];
+    }
+
     self.chooseCondition.text = @"Used";
 }
 
@@ -1843,7 +1941,15 @@
     //empty array
     self.multipleSizeArray = @[];
     
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+
     if ([self.selection isEqualToString:@"category"]){
+        
+        if (!self.editMode && !self.cabin) {
+            [mixpanel track:@"item_category_entered" properties:@{
+                                                                  @"category":selectionString
+                                                                  }];
+        }
         
         //reset quantity field so buy now can be switched on if poss
         self.quantityField.text = @"";
@@ -1897,6 +2003,10 @@
         if (array) {
             if (array.count == 1) {
 //                [self reenableBuyNow];
+                
+                if (!self.editMode && !self.cabin) {
+                    [mixpanel track:@"item_size_entered" properties:@{}];
+                }
                 
                 if ([array[0] isKindOfClass:[NSString class]]) {
                     if ([array[0] isEqualToString:@"Other"]) {
@@ -2310,8 +2420,22 @@
 
 - (void)savePressed{
     
+    [self removeKeyboard];
+    
     if (self.editMode == YES && self.somethingChanged != YES) {
+        
+        [self.delegate dismissCreateParent];
+        
         [self dismissViewControllerAnimated:YES completion:nil];
+        return;
+    }
+    
+    if (self.listingInProgress == YES && !self.editMode) {
+        [Answers logCustomEventWithName:@"Wait for listing save alert shown"
+                       customAttributes:@{}];
+        
+        [self showAlertWithTitle:@"Save in progress" andMsg:@"Once your latest listing is done saving you'll be able to create another listing.\n\nPlease wait a moment before trying again"];
+        
         return;
     }
     
@@ -2320,6 +2444,9 @@
     NSString *descriptionCheck = [self.descriptionField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     NSString *titleCheck = [self.itemTitleTextField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
     NSString *priceCheck = [self.payField.text stringByReplacingOccurrencesOfString:self.currencySymbol withString:@""];
+    
+    float priceFloat = [priceCheck floatValue];
+//    NSLog(@"price float %.2f", priceFloat);
     
     //check for one word titles
     NSArray *titleWordsArray = [self.itemTitleTextField.text componentsSeparatedByString:@" "];
@@ -2371,6 +2498,12 @@
 //        NSLog(@"accessories selected but haven't filled everything else in");
         
         [self showAlertWithTitle:@"Empty Fields" andMsg:@"Make sure you've added the item title, condition, description and minimum 2 images"];
+        [self.longButton setEnabled:YES];
+    }
+    
+    //stop users who are listing a non-accessory entering a $1 price
+    else if(priceFloat <= 2.00 && ![self.chooseCategroy.text isEqualToString:@"Accessories"] && ![self.chooseCategroy.text isEqualToString:@"Proxy"]){
+        [self showAlertWithTitle:@"Price" andMsg:@"Please enter an accurate price for your item. Listings with misleading prices may be removed"];
         [self.longButton setEnabled:YES];
     }
     else if ([self.chooseCategroy.text isEqualToString:@"Select"] || [self.chooseCondition.text isEqualToString:@"Select"] || [self.chooseSize.text isEqualToString:@"Select"] || [self.descriptionField.text isEqualToString:@"Describe the item's style, sizing, and any possible flaws"]|| [descriptionCheck isEqualToString:@""] || (self.photostotal < 2 && self.ignore2Pics != YES) || (self.photostotal == 0 && self.ignore2Pics == YES) || [titleCheck isEqualToString:@""] || (([self.payField.text isEqualToString:@""] || [priceCheck isEqualToString:@"0.00"]) && ![self.chooseCategroy.text isEqualToString:@"Proxy"])) {
@@ -2624,7 +2757,8 @@
         
         if (self.listingAsMode == YES) {
             [forSaleItem setObject:self.cabin forKey:@"sellerUser"];
-            
+            [forSaleItem setObject:self.cabin.objectId forKey:@"sellerId"];
+
             //use geopoint info from profile so matches to the label
             if ([self.cabin objectForKey:@"geopoint"]) {
                 [forSaleItem setObject:[self.cabin objectForKey:@"geopoint"] forKey:@"geopoint"];
@@ -2635,7 +2769,8 @@
         }
         else{
             [forSaleItem setObject:[PFUser currentUser] forKey:@"sellerUser"];
-            
+            [forSaleItem setObject:[PFUser currentUser].objectId forKey:@"sellerId"];
+
             //use geopoint info from profile so matches to the label
             if ([[PFUser currentUser] objectForKey:@"geopoint"]) {
                 [forSaleItem setObject:[[PFUser currentUser] objectForKey:@"geopoint"] forKey:@"geopoint"];
@@ -2904,13 +3039,25 @@
             [forSaleItem setObject:self.selectShippingLabel.text forKey:@"shippingSummary"];
             [forSaleItem setObject:@(self.nationalPrice) forKey:@"nationalShippingPrice"];
             
+            //save on user so we can prefill next listing with same shipping options
+            [[PFUser currentUser] setObject:@(self.nationalPrice) forKey:@"nationalShipping"];
+            
             if (self.globalEnabled) {
                 [forSaleItem setObject:@"YES" forKey:@"globalShipping"];
                 [forSaleItem setObject:@(self.globalPrice) forKey:@"globalShippingPrice"];
+                
+                //save on user so we can prefill next listing with same shipping options
+                [[PFUser currentUser] setObject:@(self.globalPrice) forKey:@"globalShipping"];
             }
             else{
                 [forSaleItem setObject:@"NO" forKey:@"globalShipping"];
+                
+                //save on user so we can prefill next listing with same shipping options
+                [[PFUser currentUser] removeObjectForKey:@"globalShipping"];
             }
+            
+            //save shipping prices
+            [[PFUser currentUser]saveInBackground];
         }
         
         if (self.editMode || self.listingAsMode) {
@@ -2948,6 +3095,12 @@
                     if (self.listingAsMode == YES) {
                         [self.cabin incrementKey:@"forSalePostNumber"];
                         [self.cabin saveInBackground];
+                        
+                        //track how many items we're listing for people
+                        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                        [mixpanel track:@"listed_item_for_someone" properties:@{
+                                                                                @"lister":[PFUser currentUser].username
+                                                                                }];
                     }
                     else{
                         
@@ -2992,7 +3145,7 @@
             
             //set the date when the listing can be boosted
             NSDateComponents *hourComponent = [[NSDateComponents alloc] init];
-            hourComponent.hour = 6;
+            hourComponent.hour = 24;
             NSCalendar *theCalendar = [NSCalendar currentCalendar];
             NSDate *nextBoostDate = [theCalendar dateByAddingComponents:hourComponent toDate:[NSDate date] options:0];
             
@@ -3001,12 +3154,24 @@
             if (self.listingAsMode) {
                 //go ahead and save listing in home VC
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne]];
+                [self listingStarted];
                 
-                AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-                appDelegate.tabBarController.selectedIndex = 0;
+                if (self.tabMode) {
+                    [self resetForm];
+                    self.tabBarController.selectedIndex = 0;
+                }
+                else{
+                    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                    appDelegate.tabBarController.selectedIndex = 0;
+                    
+                    [self dismissViewControllerAnimated:YES completion:nil];
+                }
                 
-                [self dismissViewControllerAnimated:YES completion:nil];
-
+                //re-enable button
+                [self.longButton setEnabled:YES];
+                
+                //scroll table view to top
+                [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
             }
             else{
                 int postNumber = [[[PFUser currentUser] objectForKey:@"forSalePostNumber"]intValue];
@@ -3019,16 +3184,31 @@
                     //go ahead and save listing in home VC
                     
                     [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne]];
-                    
-                    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-                    appDelegate.tabBarController.selectedIndex = 0;
-                    
-                    if (self.introMode) {
-                        [self.delegate dismissCreateParent];
+                    [self listingStarted];
+
+                    if (self.tabMode) {
+                        self.tabBarController.selectedIndex = 0;
+
+                        [self resetForm];
+                        [self setupDefaultShipping];
                     }
                     else{
-                        [self dismissViewControllerAnimated:YES completion:nil];
+                        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                        appDelegate.tabBarController.selectedIndex = 0;
+                        
+                        if (self.introMode) {
+                            [self.delegate dismissCreateParent];
+                        }
+                        else{
+                            [self dismissViewControllerAnimated:YES completion:nil];
+                        }
                     }
+                    
+                    //re-enable button
+                    [self.longButton setEnabled:YES];
+                    
+                    //scroll table view to top
+                    [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
                 }
             }
         }
@@ -3037,24 +3217,39 @@
 
 -(void)showAuthAlertWithItem:(PFObject *)forSaleItem andImg:(UIImage *)imageOne{
     
+    [self hideBarButton];
+    
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Item Authenticity" message:@"By listing this item on BUMP you are agreeing to BUMP's terms & conditions which forbid the listing of counterfeit/fake items" preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         [self.longButton setEnabled:YES];
+        [self showBarButton];
     }]];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"I Agree" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         
         [[NSNotificationCenter defaultCenter] postNotificationName:@"postingItem" object:@[forSaleItem,imageOne]];
+        [self listingStarted];
         
-        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-        appDelegate.tabBarController.selectedIndex = 0;
-        
-        if (self.introMode) {
-            [self.delegate dismissCreateParent];
+        if (self.tabMode) {
+            self.tabBarController.selectedIndex = 0;
+
+            [self resetForm];
+            [self setupDefaultShipping];
+
+            [self.tableView scrollRectToVisible:CGRectMake(0, 0, 1, 1) animated:YES];
+            [self.longButton setEnabled:YES];
         }
         else{
-            [self dismissViewControllerAnimated:YES completion:nil];
+            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+            appDelegate.tabBarController.selectedIndex = 0;
+            
+            if (self.introMode) {
+                [self.delegate dismissCreateParent];
+            }
+            else{
+                [self dismissViewControllerAnimated:YES completion:nil];
+            }
         }
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
@@ -3805,6 +4000,7 @@
 }
 
 -(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
+    [self hideBarButton];
     
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
@@ -3812,11 +4008,20 @@
         if (self.banMode) {
             self.banMode = NO;
             
-            [self dismissViewControllerAnimated:YES completion:^{
-               //change to first tab to force a check if banned which will then log the user out
-                AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-                appDelegate.tabBarController.selectedIndex = 0;
-            }];
+            if (self.tabMode) {
+                self.tabBarController.selectedIndex = 0;
+                [self resetForm];
+            }
+            else{
+                [self dismissViewControllerAnimated:YES completion:^{
+                    //change to first tab to force a check if banned which will then log the user out
+                    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                    appDelegate.tabBarController.selectedIndex = 0;
+                }];
+            }
+        }
+        else{
+            [self showBarButton];
         }
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
@@ -3854,7 +4059,7 @@
 }
 
 -(void)showBarButton{
-    [UIView animateWithDuration:0.3
+    [UIView animateWithDuration:0.2
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
                      animations:^{
@@ -3866,7 +4071,7 @@
 }
 
 -(void)hideBarButton{
-    [UIView animateWithDuration:0.3
+    [UIView animateWithDuration:0.2
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn
                      animations:^{
@@ -6442,10 +6647,20 @@
     if ((nationalPrice > 0.00 || nationalFree) && globalOn == YES && (globalPrice > 0.00 || globalFree)) {
         //done
         self.selectShippingLabel.text = @"Global";
+        
+        if (!self.editMode && !self.cabin) {
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"item_shipping_added" properties:@{}];
+        }
     }
     else if ((nationalPrice > 0.00 || nationalFree) && globalOn != YES) {
         //done w/ national shipping
         self.selectShippingLabel.text = @"National";
+        
+        if (!self.editMode && !self.cabin) {
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"item_shipping_added" properties:@{}];
+        }
     }
     else{
         self.selectShippingLabel.text = @"Select";
@@ -7175,6 +7390,137 @@
             self.totalSections = 7;
             [self.tableView insertSections:[NSIndexSet indexSetWithIndex:3] withRowAnimation:UITableViewRowAnimationFade];
         }
+    }
+}
+
+-(void)resetForm{
+    
+    //in case user hits clear thinking its the x / doesn't know how to get out of for sale listing
+    [self removeKeyboard];
+    
+    self.genderSize = @"";
+    self.itemTitleTextField.text = @"";
+    self.payField.text = @"";
+    
+    self.descriptionField.text = @"Describe the item's style, sizing, and any possible flaws";
+    self.descriptionField.textColor = [UIColor lightGrayColor];
+    
+    //quantity
+    self.quantityEntered = 1;
+    self.quantityField.text = @"";
+
+    self.chooseCondition.text = @"Select";
+    self.chooseCategroy.text = @"Select";
+    self.chooseSize.text = @"Select";
+    self.selectShippingLabel.text = @"Select";
+
+    //reset colors
+    if (self.chosenColourSArray.count > 0) {
+        self.chooseColourLabel.text = @"Optional";
+        [self.chosenColourSArray removeAllObjects];
+        [self.colourSwipeView reloadData];
+        
+        [UIView animateWithDuration:0.3
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:^{
+                             self.colourSwipeView.alpha = 0.0;
+                             self.dismissColourButton.alpha = 0.0;
+                             
+                             self.colourLabel.alpha = 1.0;
+                             self.chooseColourLabel.alpha = 1.0;
+                             
+                             self.chosenColourImageView.alpha = 0.0;
+                             self.secondChosenColourImageView.alpha = 0.0;
+                             
+                         }
+                         completion:nil];
+    }
+    
+    //reset shipping
+    self.globalFree = NO;
+    self.nationalFree = NO;
+    self.globalPrice = 0.0;
+    self.nationalPrice = 0.0;
+    
+    self.globalEnabled = YES; //default to global shipping
+    self.countryCode = @"";
+    self.country = @"";
+    
+    //reset photos
+    if (self.photostotal > 0 || self.filesArray.count > 0 || self.imagesArray.count > 0) {
+        [self.filesArray removeAllObjects];
+        [self.imagesArray removeAllObjects];
+        self.photostotal = 0;
+        [self animateCVReload];
+        
+        self.imgFooterLabel.text = @"Photos: Min 2 | Max 8";
+        [self.imgFooterView setNeedsDisplay];
+    }
+}
+
+//to prevent user trying to list an item when their previous listing is still saving
+-(void)listingStarted{
+    NSLog(@"listing started");
+    self.listingInProgress = YES;
+}
+
+-(void)listingFinished{
+    NSLog(@"listing finished");
+    self.listingInProgress = NO;
+}
+
+-(void)setupDefaultShipping{
+    if ([[PFUser currentUser] objectForKey:@"country"] && [[PFUser currentUser] objectForKey:@"countryCode"] && [[PFUser currentUser] objectForKey:@"profileLocation"] ) {
+        self.country = [[PFUser currentUser] objectForKey:@"country"];
+        self.countryCode = [[PFUser currentUser] objectForKey:@"countryCode"];
+        
+        if ([[PFUser currentUser]objectForKey:@"nationalShipping"]) {
+            
+            self.nationalPrice = [[[PFUser currentUser]objectForKey:@"nationalShipping"]floatValue];
+            if (self.nationalPrice == 0.00) {
+                self.nationalFree = YES;
+            }
+            else{
+                self.nationalFree = NO;
+            }
+            
+            if ([[PFUser currentUser]objectForKey:@"globalShipping"]) {
+
+                self.selectShippingLabel.text = @"Global";
+                self.globalEnabled = YES;
+
+                self.globalPrice = [[[PFUser currentUser]objectForKey:@"globalShipping"]floatValue];
+                
+                if (self.globalPrice == 0.00) {
+                    self.globalFree = YES;
+                }
+                else{
+                    self.globalFree = NO;
+                }
+                
+                if (!self.editMode && !self.cabin) {
+                    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                    [mixpanel track:@"item_shipping_added" properties:@{}];
+                }
+                
+            }
+            else{
+                self.globalEnabled = NO;
+                self.selectShippingLabel.text = @"National";
+                
+                if (!self.editMode && !self.cabin) {
+                    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                    [mixpanel track:@"item_shipping_added" properties:@{}];
+                }
+            }
+        }
+        else{
+            self.selectShippingLabel.text = @"Select";
+        }
+    }
+    else{
+        self.selectShippingLabel.text = @"Select";
     }
 }
 @end

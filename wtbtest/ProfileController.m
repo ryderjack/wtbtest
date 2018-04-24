@@ -20,6 +20,9 @@
 #import "ExplainView.h"
 #import "AppDelegate.h"
 #import <Intercom/Intercom.h>
+#import "supportVC.h"
+#import "Mixpanel/Mixpanel.h"
+#import "Branch.h"
 
 @interface ProfileController ()
 
@@ -29,14 +32,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
-    if (self.showSnapDot == YES) {
-        [self.snapSeen setHidden:NO];
-        [self.delegate snapSeen];
-    }
-    else{
-        [self.snapSeen setHidden:YES];
-    }
     
     self.modPerformanceCell.selectionStyle = UITableViewCellSelectionStyleNone;
     
@@ -49,8 +44,38 @@
                                           @"modName":[PFUser currentUser].username,
                                           @"modId":[PFUser currentUser].objectId
                                           }];
+        
+        //need to hard code to fix issue with YLProgressBar
+        int widthValue = 116;
+        
+        if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
+            //iPhone6/7
+            widthValue = 116;
+        }
+        else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
+            //iPhone 6 plus
+            widthValue = 156;
+        }
+        else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
+            //iPhone 4/5
+            widthValue = 71;
+        }
+        else{
+            //fall back
+
+        }
     
         //find out their performance this month
+        //setup progress bar
+        self.progView = [[YLProgressBar alloc]initWithFrame:CGRectMake(0, 0, self.goalLabel.frame.origin.x + widthValue, self.progHolderView.frame.size.height)];
+        self.progView.type               = YLProgressBarTypeFlat;
+        self.progView.progressTintColor  = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+        self.progView.hideStripes        = YES;
+        self.progView.uniformTintColor = YES;
+        self.progView.trackTintColor = [UIColor colorWithRed:0.86 green:0.93 blue:1.00 alpha:1.0];
+        [self.progView setProgress:0.00];
+        
+        [self.progHolderView addSubview:self.progView];
         
         //get difference between start date and now
         PFQuery *modQuery = [PFQuery queryWithClassName:@"modUsers"];
@@ -59,42 +84,45 @@
         [modQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
                 
-                //setup progress bar
-                self.progView = [[YLProgressBar alloc]initWithFrame:CGRectMake(0, 0, self.progHolderView.frame.size.width, self.progHolderView.frame.size.height)];
-                self.progView.type               = YLProgressBarTypeFlat;
-                self.progView.progressTintColor  = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
-                self.progView.hideStripes        = YES;
-                self.progView.uniformTintColor = YES;
-                self.progView.trackTintColor = [UIColor colorWithRed:0.86 green:0.93 blue:1.00 alpha:1.0];
-                [self.progView setProgress:0.00];
+//                NSDate *startDate = [object objectForKey:@"startDate"];
+//
+//                NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:startDate];
+//                double secondsInAMonth = 2620800;
+//
+//                //months are calculated by 7 x 52 weeks then / 12 for an average
+//                float monthsSinceSigningUp = distanceBetweenDates / secondsInAMonth;
+//
+//                //round the float down to nearest int to get the start of the month we need
+//                int startMonth = floor(monthsSinceSigningUp);
+//
+//                //now use this number to calc the start date (by incrementing when they started by the startMonth var) & end dates to query performance from
+//                NSDateComponents *component = [[NSDateComponents alloc] init];
+//                component.month = startMonth;
+//                NSCalendar *theCalendar = [NSCalendar currentCalendar];
+//                NSDate *newStartDate = [theCalendar dateByAddingComponents:component toDate:startDate options:0];
+//
+//                NSDateComponents *endComponent = [[NSDateComponents alloc] init];
+//                endComponent.month = 1;
+//                NSDate *endDate = [theCalendar dateByAddingComponents:endComponent toDate:newStartDate options:0];
                 
-                [self.progHolderView addSubview:self.progView];
+                //create period to measure mod activity within
+                NSDate *startDate = [self startOfMonth];
+                NSDate *endDate = [self endOfMonth];
                 
-                NSDate *startDate = [object objectForKey:@"startDate"];
-                
-                NSTimeInterval distanceBetweenDates = [[NSDate date] timeIntervalSinceDate:startDate];
-                double secondsInAMonth = 2620800;
-
-                //months are calculated by 7 x 52 weeks then / 12 for an average
-                float monthsSinceSigningUp = distanceBetweenDates / secondsInAMonth;
-                
-                //round the float down to nearest int to get the start of the month we need
-                int startMonth = floor(monthsSinceSigningUp);
-                
-                //now use this number to calc the start date (by incrementing when they started by the startMonth var) & end dates to query performance from
-                NSDateComponents *component = [[NSDateComponents alloc] init];
-                component.month = startMonth;
                 NSCalendar *theCalendar = [NSCalendar currentCalendar];
-                NSDate *newStartDate = [theCalendar dateByAddingComponents:component toDate:startDate options:0];
+                NSDateComponents *payComponent = [[NSDateComponents alloc] init];
+                payComponent.month = 1;
+                NSDate *payDate = [theCalendar dateByAddingComponents:payComponent toDate:startDate options:0];
                 
-                NSDateComponents *endComponent = [[NSDateComponents alloc] init];
-                endComponent.month = 1;
-                NSDate *endDate = [theCalendar dateByAddingComponents:endComponent toDate:newStartDate options:0];
+                //display pay date
+                NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+                [dateFormatter setDateFormat:@"dd MMM"];
+                self.payDateLabel.text = [NSString stringWithFormat:@"Pay Date:\n%@", [dateFormatter stringFromDate:payDate]];
 
                 PFQuery *modPerformance = [PFQuery queryWithClassName:@"ModPerformance"];
                 [modPerformance whereKey:@"status" equalTo:@"live"];
-                modPerformance.limit = 2000;
-                [modPerformance whereKey:@"createdAt" greaterThanOrEqualTo:newStartDate];
+                modPerformance.limit = 2500;
+                [modPerformance whereKey:@"createdAt" greaterThanOrEqualTo:startDate];
                 [modPerformance whereKey:@"createdAt" lessThan:endDate];
                 [modPerformance whereKey:@"unbanned" equalTo:@"NO"];
                 [modPerformance whereKey:@"modId" equalTo:[PFUser currentUser].objectId];
@@ -170,7 +198,6 @@
                             
                             NSLog(@"%.2f progress   %.2f   %.2f", progress, scoreFloat, goalFloat);
                             
-                            
                             //give slight delay
                             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
                                 [self.progView setProgress:progress animated:YES];
@@ -220,13 +247,28 @@
         [self.unreadView setHidden:YES];
     }
     
+    if ([[NSUserDefaults standardUserDefaults]objectForKey:@"SupportExpiry"]) {
+
+        //check if date has past
+        NSDate *expiry = [[NSUserDefaults standardUserDefaults]objectForKey:@"SupportExpiry"];
+        
+        if ([[NSDate date] compare:expiry]==NSOrderedDescending){
+            //now is later than expiry so remove from defaults
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"SupportExpiry"];
+        }
+        else{
+            //received last message less than an hour ago so let them reply
+            self.showSupportMessage = YES;
+        }
+    }
+    
     //dismiss Invite gesture
     self.tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(hideInviteView)];
     self.tap.numberOfTapsRequired = 1;
 }
 
 //handle new intercom messages here too in case user is on here when new message arrives
--(void)newIntercomMessage{
+-(void)newIntercomMessage{    
     self.unseenTBMsg = YES;
     [self.unreadView setHidden:NO];
 }
@@ -279,7 +321,12 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
     if (section == 0) {
-        return 1;
+        if (self.unseenTBMsg == YES || self.showSupportMessage) {
+            return 2;
+        }
+        else{
+            return 1;
+        }
     }
     else if (section == 1){
         return 3;
@@ -313,11 +360,15 @@
     }
     else if (indexPath.section == 0){
         if (indexPath.row == 0) {
-            return self.feedbackCell;
+            return self.viewSupportCell;
         }
-//        else if (indexPath.row == 1) {
-//            return self.orderSupportCell;
-//        }
+        //only display ability to open new chats when a user has unread chats from us
+        if (self.unseenTBMsg == YES || self.showSupportMessage) {
+            if (indexPath.row == 1) {
+                return self.feedbackCell;
+            }
+        }
+
     }
     else if (indexPath.section == 2){
         if (indexPath.row == 0) {
@@ -434,30 +485,47 @@
         }
     }
     else if (indexPath.section == 0){
-        if (indexPath.row == 1) {
-            [Answers logCustomEventWithName:@"Support Pressed in Settings"
+
+        if (indexPath.row == 0) {
+            
+            
+            [Answers logCustomEventWithName:@"View Support VC Pressed"
                            customAttributes:@{}];
             
-            //show the unread when any support tickets are unread
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"Support Pressed" properties:@{}];
             
-            //goto support tickets table view
-            segmentedTableView *vc = [[segmentedTableView alloc]init];
-            vc.supportMode = YES;
-            vc.delegate = self;
+            supportVC *vc = [[supportVC alloc]init];
+            vc.tier1Mode = YES;
             [self.navigationController pushViewController:vc animated:YES];
         }
-        else if (indexPath.row == 0) {
+        else if (indexPath.row == 1) { //this is for feedback cell
             //message support
             
             self.tappedTB = YES;
             
-            //reset profile badges & hide unread icon? or do we still display it after user has tapped & still unseen convo's
+            //get rid of unread icon
             [self.unreadView setHidden:YES];
-
+            
             [Answers logCustomEventWithName:@"Chat with Bump pressed"
                            customAttributes:@{}];
             
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"Tapped Support Chat" properties:@{
+                                                                @"source":@"Settings"
+                                                                }];
+            
             [Intercom presentMessenger];
+            
+            //we keep the ability to instantly message support open for 5 hours after they click this for the first time
+            //store current date&time user pressed this button + 5 hours in userdefaults
+            //then in VDL here we compare current time against this and if its after we remove the nsuserdefaults object
+            NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+            dayComponent.hour = 5;
+            NSCalendar *theCalendar = [NSCalendar currentCalendar];
+            NSDate *endDate = [theCalendar dateByAddingComponents:dayComponent toDate:[NSDate date] options:0];
+            
+            [[NSUserDefaults standardUserDefaults]setObject:endDate forKey:@"SupportExpiry"];
         }
     }
     else if (indexPath.section == 2){
@@ -481,13 +549,12 @@
         }
         else if (indexPath.row == 2) {
             //how it works pressed
-//            ContainerViewController *vc = [[ContainerViewController alloc]init];
-//            vc.explainMode = YES;
             [Answers logCustomEventWithName:@"How works pressed"
                            customAttributes:@{}];
             
             ExplainView *vc = [[ExplainView alloc]init];
             vc.introMode = NO;
+            vc.howWorks = YES;
             [self presentViewController:vc animated:YES
                              completion:nil];
         }
@@ -496,19 +563,19 @@
             [Answers logCustomEventWithName:@"FAQs pressed"
                            customAttributes:@{}];
             
-            [Intercom presentHelpCenter];
+//            [Intercom presentHelpCenter]; //bug with the sdk not accessing https check here for updates https://github.com/intercom/intercom-ios/issues/352
             
-//            NSString *URLString = @"http://help.sobump.com/";
-//            SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
-//            if (@available(iOS 11.0, *)) {
-//                safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
-//            }
-//
-//            if (@available(iOS 10.0, *)) {
-//                safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
-//            }
-//
-//            [self.navigationController presentViewController:safariView animated:YES completion:nil];
+            NSString *URLString = @"https://help.sobump.com/";
+            SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
+            if (@available(iOS 11.0, *)) {
+                safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+            }
+
+            if (@available(iOS 10.0, *)) {
+                safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+            }
+
+            [self.navigationController presentViewController:safariView animated:YES completion:nil];
         }
         else if (indexPath.row == 4) {
             //terms pressed
@@ -533,15 +600,19 @@
             //log out pressed
             [Answers logCustomEventWithName:@"Log Out Pressed"
                            customAttributes:@{}];
-            [self dismissViewControllerAnimated:YES completion:^{
-                
+           
+            [self.navigationController popViewControllerAnimated:YES];
+            
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
                 AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
                 appDelegate.tabBarController.selectedIndex = 0;
                 
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
                     [[NSNotificationCenter defaultCenter] postNotificationName:@"invalidSessionNotification" object:nil];
                 });
-            }];
+            });
+
+            
         }
     }
 }
@@ -720,11 +791,65 @@
     
     [Intercom logEventWithName:@"invite_whatsapp_pressed" metaData: @{}];
     
-    NSString *shareString = @"Check out BUMP for iOS - Safely Buy & Sell Streetwear\n\nAvailable here: https://sobump.com";
-    NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
-    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
-        [[UIApplication sharedApplication] openURL: whatsappURL];
-    }
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"Tapped Share" properties:@{
+                                                 @"channel":@"whatsapp",
+                                                 @"content":@"invite"
+                                                 }];
+    
+    BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:[PFUser currentUser].objectId];
+    BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+    linkProperties.feature = @"invite";
+    linkProperties.channel = @"whatsapp";
+    [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+    
+    [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+        if (!error) {
+            NSLog(@"whatsapp share link %@", url);
+            
+            NSString * msg = [NSString stringWithFormat:@"Safely Buy & Sell Streetwear on BUMP %@",url];
+            
+            msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+            msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+            
+            NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+            NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+            
+            if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                [[UIApplication sharedApplication] openURL: whatsappURL];
+            }
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"Whatsapp Link Error"
+                           customAttributes:@{
+                                              @"link":@"invite",
+                                              @"error":error.description
+                                              }];
+            
+            NSString * msg = [NSString stringWithFormat:@"Safely Buy & Sell Streetwear on BUMP https://sobump.com"];
+            
+            msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+            msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+            
+            NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+            NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+            
+            if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                [[UIApplication sharedApplication] openURL: whatsappURL];
+            }
+        }
+    }];
 }
 
 -(void)messengerPressed{
@@ -735,10 +860,40 @@
     
     [Intercom logEventWithName:@"invite_messenger_pressed" metaData: @{}];
 
-    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=https://sobump.com"];
-    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
-        [[UIApplication sharedApplication] openURL: messengerURL];
-    }
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"Tapped Share" properties:@{
+                                                 @"channel":@"messenger",
+                                                 @"content":@"invite"
+                                                 }];
+    
+    BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:[PFUser currentUser].objectId];
+    BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+    linkProperties.feature = @"invite";
+    linkProperties.channel = @"messenger";
+    [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+    
+    [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+        if (!error) {
+            NSLog(@"messenger invite link %@", url);
+            NSString *urlString = [NSString stringWithFormat:@"fb-messenger://share/?link=%@",url];
+            NSURL *messengerURL = [NSURL URLWithString:urlString];
+            if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                [[UIApplication sharedApplication] openURL: messengerURL];
+            }
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"Messenger Link Error"
+                           customAttributes:@{
+                                              @"link":@"invite",
+                                              @"error":error.description
+                                              }];
+            NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=https://sobump.com"];
+            if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                [[UIApplication sharedApplication] openURL: messengerURL];
+            }
+        }
+    }];
 }
 
 -(void)textPressed{
@@ -749,11 +904,46 @@
                                       }];
     
     [Intercom logEventWithName:@"invite_text_pressed" metaData: @{}];
-
-    NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out BUMP for iOS - Safely Buy & Sell Streetwear\n\nAvailable here: http://sobump.com"];
-    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
-    [self presentViewController:activityController animated:YES completion:nil];
+    
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"Tapped Share" properties:@{
+                                                 @"channel":@"more",
+                                                 @"content":@"invite"
+                                                 }];
+    
+    BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:[PFUser currentUser].objectId];
+    BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+    linkProperties.feature = @"invite";
+    linkProperties.channel = @"more";
+    [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+    
+    [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+        if (!error) {
+            NSLog(@"more share link %@", url);
+            
+            NSString * msg = [NSString stringWithFormat:@"Safely Buy & Sell Streetwear on BUMP %@",url];
+            
+            NSMutableArray *items = [NSMutableArray new];
+            [items addObject:msg];
+            UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+            [self presentViewController:activityController animated:YES completion:nil];
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"More Link Error"
+                           customAttributes:@{
+                                              @"link":@"invite",
+                                              @"error":error.description
+                                              }];
+            
+            NSString * msg = [NSString stringWithFormat:@"Safely Buy & Sell Streetwear on BUMP https://sobump.com"];
+            
+            NSMutableArray *items = [NSMutableArray new];
+            [items addObject:msg];
+            UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+            [self presentViewController:activityController animated:YES completion:nil];
+        }
+    }];
 }
 
 - (void)shuffle:(NSMutableArray *)array
@@ -792,4 +982,26 @@
     [self.delegate supportTapped];
 }
 
+- (NSDate*) startOfMonth {
+    NSCalendar* calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    
+    NSDateComponents* components = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth fromDate:[NSDate date]];
+    
+    return [calendar dateFromComponents:components];
+}
+
+- (NSDate*) endOfMonth {
+    NSCalendar* calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    
+    NSDateComponents* components = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth fromDate:[NSDate date]];
+    
+    NSRange dayRange = [calendar rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:[NSDate date]];
+    
+    [components setDay:dayRange.length];
+    [components setHour:23];
+    [components setMinute:59];
+    [components setSecond:59];
+    
+    return [calendar dateFromComponents:components];
+}
 @end

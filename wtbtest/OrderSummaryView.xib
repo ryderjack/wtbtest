@@ -22,6 +22,7 @@
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="OrderSummaryView">
             <connections>
                 <outlet property="addressLabel" destination="ljo-u1-ozs" id="Enm-LZ-jyH"/>
+                <outlet property="addressView" destination="14v-Gs-rJ2" id="d1I-sG-LWm"/>
                 <outlet property="buyerItemPriceLabel" destination="w2I-Bn-upK" id="cdd-U0-S5x"/>
                 <outlet property="buyerPaymentCell" destination="xOV-eG-0aL" id="dDx-93-qvk"/>
                 <outlet property="buyerPaymentImageView" destination="Y1W-51-u0g" id="jxX-sA-o6P"/>
@@ -88,6 +89,7 @@
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="PmH-Gj-ciX" customClass="PFImageView">
                         <rect key="frame" x="158" y="21" width="60" height="60"/>
                         <constraints>
+                            <constraint firstAttribute="width" constant="60" id="2lw-9k-6El"/>
                             <constraint firstAttribute="height" constant="60" id="ZrV-VF-haE"/>
                         </constraints>
                     </imageView>
@@ -145,7 +147,6 @@
                 </subviews>
                 <constraints>
                     <constraint firstItem="RnY-r6-DMT" firstAttribute="trailing" secondItem="x2x-Ti-cGC" secondAttribute="trailing" id="4O4-cv-Zl0"/>
-                    <constraint firstItem="sIT-P7-mpT" firstAttribute="top" secondItem="PmH-Gj-ciX" secondAttribute="bottom" constant="8" symbolic="YES" id="5AM-GY-dKa"/>
                     <constraint firstItem="x2x-Ti-cGC" firstAttribute="top" secondItem="RnY-r6-DMT" secondAttribute="top" id="7QO-s0-qPg"/>
                     <constraint firstAttribute="bottomMargin" secondItem="gOY-Zo-RRB" secondAttribute="bottom" constant="-5" id="8kh-pE-JiQ"/>
                     <constraint firstItem="sIT-P7-mpT" firstAttribute="centerX" secondItem="x2x-Ti-cGC" secondAttribute="centerX" id="EIY-X7-Dai"/>
@@ -436,7 +437,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nxf-ez-mfb">
-                        <rect key="frame" x="8" y="263.5" width="359" height="40"/>
+                        <rect key="frame" x="8" y="264" width="359" height="40"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="359" id="5Mu-KR-270"/>
                             <constraint firstAttribute="height" constant="40" id="AHZ-WG-LOK"/>
@@ -455,14 +456,25 @@
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
+                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" editable="NO" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="14v-Gs-rJ2">
+                        <rect key="frame" x="16" y="139" width="343" height="115"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <fontDescription key="fontDescription" name="PingFangSC-Regular" family="PingFang SC" pointSize="13"/>
+                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                        <dataDetectorType key="dataDetectorTypes" address="YES" shipmentTrackingNumber="YES"/>
+                    </textView>
                 </subviews>
                 <constraints>
                     <constraint firstAttribute="bottomMargin" secondItem="nxf-ez-mfb" secondAttribute="bottom" constant="5.5" id="8s9-PU-8ci"/>
+                    <constraint firstItem="14v-Gs-rJ2" firstAttribute="leading" secondItem="ljo-u1-ozs" secondAttribute="leading" id="9a3-Z7-60p"/>
+                    <constraint firstItem="14v-Gs-rJ2" firstAttribute="trailing" secondItem="ljo-u1-ozs" secondAttribute="trailing" id="LX5-2L-nbR"/>
                     <constraint firstItem="nxf-ez-mfb" firstAttribute="top" secondItem="ljo-u1-ozs" secondAttribute="bottom" constant="10" id="NST-jJ-FeF"/>
                     <constraint firstItem="JeR-bD-lcb" firstAttribute="centerX" secondItem="nxf-ez-mfb" secondAttribute="centerX" id="ObT-Cl-odU"/>
                     <constraint firstItem="QDP-Q2-dSH" firstAttribute="leading" secondItem="ljo-u1-ozs" secondAttribute="leading" constant="67" id="TfJ-mx-kaP"/>
                     <constraint firstItem="JeR-bD-lcb" firstAttribute="centerX" secondItem="AWT-IX-ibm" secondAttribute="centerX" id="U3I-0k-uCd"/>
+                    <constraint firstItem="14v-Gs-rJ2" firstAttribute="bottom" secondItem="ljo-u1-ozs" secondAttribute="bottom" id="UF8-2Z-8GQ"/>
                     <constraint firstItem="JeR-bD-lcb" firstAttribute="top" secondItem="AWT-IX-ibm" secondAttribute="topMargin" constant="4" id="boV-af-DsB"/>
+                    <constraint firstItem="14v-Gs-rJ2" firstAttribute="top" secondItem="ljo-u1-ozs" secondAttribute="top" id="l3K-69-DFp"/>
                     <constraint firstItem="ljo-u1-ozs" firstAttribute="top" secondItem="JeR-bD-lcb" secondAttribute="bottom" constant="64" id="lUG-Iu-qA1"/>
                     <constraint firstItem="ljo-u1-ozs" firstAttribute="top" secondItem="QDP-Q2-dSH" secondAttribute="bottom" id="nI5-YC-gXQ"/>
                     <constraint firstItem="QDP-Q2-dSH" firstAttribute="leading" secondItem="AWT-IX-ibm" secondAttribute="leadingMargin" constant="67" id="oFW-ON-f46"/>
@@ -471,7 +483,7 @@
                     <constraint firstItem="JeR-bD-lcb" firstAttribute="centerX" secondItem="QDP-Q2-dSH" secondAttribute="centerX" id="z6F-TJ-KI7"/>
                 </constraints>
             </tableViewCellContentView>
-            <point key="canvasLocation" x="-535.5" y="860"/>
+            <point key="canvasLocation" x="-578" y="851"/>
         </tableViewCell>
         <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="178" id="zid-GV-iv9">
             <rect key="frame" x="0.0" y="0.0" width="375" height="195"/>

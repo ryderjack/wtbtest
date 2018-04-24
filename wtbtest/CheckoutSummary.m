@@ -33,8 +33,8 @@
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"cancelCross"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissVC)];
     self.navigationItem.leftBarButtonItem = cancelButton;
     
-    UIBarButtonItem *helpButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"questionCircle"] style:UIBarButtonItemStylePlain target:self action:@selector(triggerSupport)];
-    self.navigationItem.rightBarButtonItem = helpButton;
+//    UIBarButtonItem *helpButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"questionCircle"] style:UIBarButtonItemStylePlain target:self action:@selector(triggerSupport)];
+//    self.navigationItem.rightBarButtonItem = helpButton;
     
     self.itemTitleLabel.text = [self.listingObject objectForKey:@"itemTitle"];
     
@@ -305,6 +305,8 @@
                         
                         [self.payButton setEnabled:NO];
                         self.payButton.alpha = 0.5;
+                        
+                        [self.payButton setTitle:@"Add Shipping Address" forState:UIControlStateNormal];
                     }
                     
                     [self.tableView reloadData];
@@ -324,8 +326,8 @@
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
-    self.itemTitleLabel.adjustsFontSizeToFitWidth = YES;
-    self.itemTitleLabel.minimumScaleFactor=0.5;
+//    self.itemTitleLabel.adjustsFontSizeToFitWidth = YES;
+//    self.itemTitleLabel.minimumScaleFactor=0.5;
     
     self.addressCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.addShippingAddressCell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -455,7 +457,7 @@
         }
         else{
             self.payButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
-            [self.payButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+            [self.payButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:14]];
         }
         
         
@@ -465,7 +467,12 @@
             [self.payButton addTarget:self action:@selector(dismissVC) forControlEvents:UIControlEventTouchUpInside];
         }
         else{
-            [self.payButton setTitle:@"Pay with PayPal" forState:UIControlStateNormal];
+            if (self.addAddress) {
+                [self.payButton setTitle:@"Add Shipping Address" forState:UIControlStateNormal];
+            }
+            else{
+                [self.payButton setTitle:@"Pay with PayPal" forState:UIControlStateNormal];
+            }
             [self.payButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:1.0]];
             [self.payButton addTarget:self action:@selector(payPressed) forControlEvents:UIControlEventTouchUpInside];
         }
@@ -683,8 +690,17 @@
     self.paypalOrderId = @"";
     
     if (self.addAddress == YES) {
-        self.gotoShipping = YES;
-        [self showAlertWithTitle:@"Shipping Address" andMsg:@"Make sure to add your full shipping address"];
+//        self.gotoShipping = YES;
+//        [self showAlertWithTitle:@"Shipping Address" andMsg:@"Make sure to add your full shipping address"];
+        
+        //take user to shipping
+        ShippingController *vc = [[ShippingController alloc]init];
+        vc.delegate = self;
+        vc.differentCountryNeeded = YES;
+        
+        [self hideBarButton];
+        [self.navigationController pushViewController:vc animated:YES];
+        
         return;
     }
     
@@ -768,6 +784,7 @@
                              @"postCode":postCode,
                              
                              @"chargeFee":chargeFee
+                             
                          };
     
     [PFCloud callFunctionInBackground:@"createPPOrder" withParameters:params block:^(NSDictionary *response, NSError *error) {
@@ -777,7 +794,7 @@
             NSLog(@"response: %@", response);
             
             if (![response valueForKey:@"orderId"] || ![response valueForKey:@"actionURL"]) {
-                [self showAlertWithTitle:@"PayPal Error #800" andMsg:@"Please try again, if the error persists hit the ? icon in the top right corner to chat to one of the team"];
+                [self showAlertWithTitle:@"PayPal Error #800" andMsg:@"Please ensure your shipping address is correct, contains no accented characters and your zipcode/postcode contains numbers"];
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
                                                   @"type":@"no orderId or action url in create pp order"
@@ -789,7 +806,7 @@
             NSString *urlString = [response valueForKey:@"actionURL"];
             
             if ([response valueForKey:@"sellerTotal"] && [response valueForKey:@"feePrice"]) {
-                
+
                 //create fee & sellerTotal labels
                 self.feePrice = [[response valueForKey:@"feePrice"]floatValue];
                 self.sellerTotalPrice = [[response valueForKey:@"sellerTotal"]floatValue];
@@ -797,9 +814,9 @@
                 //assign to properties so can pass to createBUMPOrder func
                 self.sellerTotalLabelString = [NSString stringWithFormat:@"%@ %@%.2f", self.currency ,self.currencySymbol,self.sellerTotalPrice];
                 self.feeLabelString = [NSString stringWithFormat:@"-%@%.2f", self.currencySymbol,self.feePrice];
-                
+
                 NSLog(@"got fee info and labels %.2f  %.2f  %@  %@", self.feePrice, self.sellerTotalPrice, self.sellerTotalLabelString, self.feeLabelString);
-                
+
             }
             
             urlString = [urlString stringByReplacingOccurrencesOfString:@"\"" withString:@""];
@@ -811,27 +828,27 @@
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(createOrderFailed) name:@"paypalCreatedOrderFailed" object:nil];
             }
             self.hitPay = YES;
-            
+
             //retrieve totalSellerPrice, totalSellerPriceLabel, feePriceLabel & feePrice
-            
+
             //trigger PayPal sign in to check order
             self.paypalSafariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:urlString]];
             self.paypalSafariView.delegate = self;
-            
+
             if (@available(iOS 11.0, *)) {
                 self.paypalSafariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
             }
-            
+
             if (@available(iOS 10.0, *)) {
                 self.paypalSafariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
             }
-            
+
             [self.navigationController presentViewController:self.paypalSafariView animated:YES completion:nil];
         }
         else{
             [self hideHUD];
             NSLog(@"error grabbing paypal order link %@", error);
-            [self showAlertWithTitle:@"PayPal Error #801" andMsg:@"Please try again, if the error persists hit the ? icon in the top right corner to chat to one of the team"];
+            [self showAlertWithTitle:@"PayPal Error #801" andMsg:@"Please ensure your shipping address is correct, contains no accented characters and your zipcode/postcode contains numbers"];
             [Answers logCustomEventWithName:@"PayPal Error"
                            customAttributes:@{
                                               @"type":@"Couldn't grab order link"
@@ -971,13 +988,28 @@
                     NSArray *keywords = [self.listingObject objectForKey:@"keywords"];
                     
                     Mixpanel *mixpanel = [Mixpanel sharedInstance];
-                    [mixpanel track:@"purchased_item" properties:@{
-                                                                      @"category":category,
-                                                                      @"totalPrice":@(self.totalPrice),
-                                                                      @"currency":self.currency,
-                                                                      @"nationalShipping": [NSNumber numberWithBool:self.isNational],
-                                                                      @"keywords": keywords
-                                                                      }];
+                    
+                    //protect against potential crashes
+                    if (self.source) {
+                        [mixpanel track:@"purchased_item" properties:@{
+                                                                       @"category":category,
+                                                                       @"totalPrice":@(self.totalPrice),
+                                                                       @"currency":self.currency,
+                                                                       @"nationalShipping": [NSNumber numberWithBool:self.isNational],
+                                                                       @"keywords": keywords,
+                                                                       @"source":self.source
+                                                                       }];
+                    }
+                    else{
+                        [mixpanel track:@"purchased_item" properties:@{
+                                                                       @"category":category,
+                                                                       @"totalPrice":@(self.totalPrice),
+                                                                       @"currency":self.currency,
+                                                                       @"nationalShipping": [NSNumber numberWithBool:self.isNational],
+                                                                       @"keywords": keywords
+                                                                       }];
+                    }
+
                     
                     [Intercom logEventWithName:@"order_placed" metaData: @{
                                                                              @"totalPrice":@(self.totalPrice),
@@ -1011,6 +1043,8 @@
             }];
         }
         else{
+            [self hideHUD];
+
             if ([error.description containsString:@"Item no longer available"]) {
                 NSLog(@"error creating BUMP order %@", error);
                 [self showAlertWithTitle:@"Item Unavailable #2" andMsg:@"This item is no longer available on BUMP - Don't worry, you haven't been charged. Check out what else is for sale on BUMP"];
@@ -1019,7 +1053,7 @@
             }
             else{
                 NSLog(@"error creating BUMP order %@", error);
-                [self showAlertWithTitle:@"PayPal Error #802" andMsg:@"You haven't been charged as there was an error creating your PayPal order. Please try again and if the error persists just send us an email to hello@sobump.com"];
+                [self showAlertWithTitle:@"PayPal Error #802" andMsg:@"Please ensure your shipping address is correct, contains no accented characters and your zipcode/postcode contains numbers"];
                 
                 [Answers logCustomEventWithName:@"PayPal Error"
                                customAttributes:@{
@@ -1033,12 +1067,21 @@
     ShippingController *vc = [[ShippingController alloc]init];
     vc.delegate = self;
     
+    if (self.addAddress) {
+        //means no address entered so trigger keyboard
+        //in next vc
+        vc.showKeyboard = YES;
+    }
+    
     [self hideBarButton];
     [self.navigationController pushViewController:vc animated:YES];
 }
 
 -(void)addedAddress:(NSString *)address withName:(NSString *)name withLineOne:(NSString *)one withLineTwo:(NSString *)two withCity:(NSString *)city withCountry:(NSString *)country fullyEntered:(BOOL)complete{
     if (complete) {
+        
+        [self.payButton setTitle:@"Pay with PayPal" forState:UIControlStateNormal];
+
         NSLog(@"done with address %@", address);
         float shipping;
         
@@ -1122,6 +1165,10 @@
     }
     else{
         NSLog(@"address unfinished");
+        
+        if (self.addAddress) {
+            [self.payButton setTitle:@"Add Shipping Address" forState:UIControlStateNormal];
+        }
     }
 }
 
@@ -1194,6 +1241,7 @@
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         if (self.sellerErrorShowing) {
+            NSLog(@"seller error!!");
             self.sellerErrorShowing = NO;
             [self dismissVC];
         }

@@ -23,6 +23,10 @@
 #import "LocationView.h"
 #import "BoostViewController.h"
 #import <MZTimerLabel/MZTimerLabel.h>
+#import <StoreKit/StoreKit.h>
+#import "CreateForSaleListing.h"
+#import "CustomCopyActivity.h"
+#import <SafariServices/SafariServices.h>
 
 @class ForSaleListing;
 
@@ -31,10 +35,11 @@
 - (void)changedSoldStatus; //could mark as sold or unsold
 - (void)deletedItem;
 - (void)likedItem;
+- (void)boostedItem;
 
 @end
 
-@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate, UIGestureRecognizerDelegate, CheckoutDelegate, LocationViewControllerDelegate,BOOSTViewDelegate,MZTimerLabelDelegate>
+@interface ForSaleListing : UITableViewController <iCarouselDataSource, iCarouselDelegate,FBSDKAppInviteDialogDelegate,UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate,customAlertDelegate,inviteDelegate,JRWebViewDelegate,DetailImageDelegate,BumpingIntroDelegate, UIGestureRecognizerDelegate, CheckoutDelegate, LocationViewControllerDelegate,BOOSTViewDelegate,MZTimerLabelDelegate, SKProductsRequestDelegate, CreateForSaleDelegate, CustomCopyActivityDelegate, SFSafariViewControllerDelegate>
 
 @property (nonatomic, strong) PFObject *listingObject;
 
@@ -78,6 +83,7 @@
 @property (nonatomic, strong) PFUser *seller;
 @property (nonatomic) BOOL fetchedListing;
 @property (nonatomic) BOOL fetchedUser;
+@property (nonatomic) BOOL proxyListing;
 
 //spinner
 @property (nonatomic, strong) RTSpinKitView *spinner;
@@ -95,8 +101,10 @@
 @property (nonatomic, strong) UIBarButtonItem *infoButton;
 
 //mode
+@property (nonatomic) BOOL isBuyer;
 @property (nonatomic) BOOL fromBuyNow;
 @property (nonatomic) BOOL fromOrder;
+@property (nonatomic) BOOL fromReviews;
 
 @property (nonatomic, strong) NSString *source;
 @property (nonatomic) BOOL pureWTS;
@@ -104,6 +112,8 @@
 @property (nonatomic) BOOL affiliateMode;
 @property (nonatomic) BOOL fromCreate;
 @property (nonatomic) BOOL markAsSoldMode;
+
+@property (nonatomic) BOOL lowerSharePressed;
 
 //message & buy buttons
 @property (nonatomic, strong) UIButton *messageButton;
@@ -117,6 +127,8 @@
 @property (nonatomic) BOOL buyButtonShowing;
 @property (nonatomic) BOOL sendButtonShowing;
 
+//for our own store
+@property (nonatomic) BOOL bumpListing;
 
 //carousel
 @property (weak, nonatomic) IBOutlet iCarousel *carouselView;
@@ -180,6 +192,7 @@
 //purchase
 @property (nonatomic) float purchasePrice;
 @property (nonatomic) BOOL purchased;
+@property (nonatomic) BOOL sold;
 
 //boost
 @property (nonatomic) BOOL boostMode;
@@ -200,5 +213,23 @@
 @property (nonatomic) BOOL canPurchase;
 @property (nonatomic) BOOL instantBuyDisabled;
 @property (nonatomic) BOOL multipleQuantity;
+
+//spam like counter
+@property (nonatomic) int likeCounter;
+
+//app store
+@property (nonatomic, strong) SKProductsRequest *request;
+@property (nonatomic, strong) NSArray *products;
+@property (nonatomic, strong) NSArray *productIdentifiersArray;
+
+@property (nonatomic, strong) SKProduct *BOOSTProduct;
+@property (nonatomic, strong) NSString *boostPriceString;
+@property (nonatomic, strong) NSTimer *IAPTimer;
+
+@property (nonatomic) BOOL triggeredFreeBoost;
+@property (nonatomic) int freeBOOSTs;
+@property (nonatomic) BOOL setupIAP;
+@property (nonatomic) BOOL addPurchaseObservers;
+
 
 @end

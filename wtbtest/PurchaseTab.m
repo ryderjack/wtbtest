@@ -30,6 +30,7 @@
 #import <Transcontinental/HZCountryToContinentDecoder.h>
 #import "Mixpanel/Mixpanel.h"
 #import <Intercom/Intercom.h>
+#import "Branch.h"
 
 @interface PurchaseTab ()
 
@@ -159,6 +160,9 @@
 
     //someone liked your listing drop down
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBumpDrop:) name:@"showBumpedDropDown" object:nil];
+    
+    //someone followed you drop down
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleFollowDrop:) name:@"showFollowedDropDown" object:nil];
 
     //message sent drop down
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(messageSentDrop:) name:@"messageSentDropDown" object:nil];
@@ -166,13 +170,16 @@
     //screenshot taken
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showScreenShot:) name:@"screenshotDropDown" object:nil];
     
+    //seller we've subscribed to has listed an item
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(subscriberPostedDrop:) name:@"showSubListingdDrop" object:nil];
+
     //dismiss current notification drop down
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dismissDrop) name:@"removeDrop" object:nil];
 
     //fb friend just listed an item
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDrop:) name:@"showDropDown" object:nil];
     
-    //boost just became available
+    //boost reminder triggered
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBOOSTDrop:) name:@"showBOOSTDropDown" object:nil];
     
     //pop up triggers
@@ -181,6 +188,10 @@
     
     //verify email
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(verifyEmailInHome) name:@"verifyEmail" object:nil];
+    
+    //in-app purchase observers
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(purchaseComplete:) name:@"purchaseComplete" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(purchaseFailedHome:) name:@"purchaseFailed" object:nil];
     
     //location stuff
     if ([[NSUserDefaults standardUserDefaults]boolForKey:@"askedForLocationPermission"] || [[[PFUser currentUser]objectForKey:@"completedReg"]isEqualToString:@"YES"]) {
@@ -238,7 +249,9 @@
                                               }];
             
             currentUser[@"completedReg"] = @"NO";
+            [currentUser setObject:@"YES" forKey:@"newCertDone"];
             [currentUser saveInBackground];
+            
             [PFUser logOut];
             [Intercom logout];
 
@@ -248,6 +261,38 @@
             [self presentViewController:navController animated:NO completion:nil];
         }
         else{
+            //since we changed over certificates to S94 Inc. this invalidates the keychain and in turn a user's session
+            //lets force a log out for users without this variable
+            //added to new signups
+            if (![currentUser objectForKey:@"newCertDone"]) {
+                //user doesn't have this var so must have been from old version
+                [currentUser setObject:@"YES" forKey:@"newCertDone"];
+                [currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        NSLog(@"log out here");
+                        [self bigLogOut];
+                        
+                        [Answers logCustomEventWithName:@"Forced Logout S94 Inc"
+                                       customAttributes:@{}];
+                    }
+                    else{
+                        NSLog(@"log out here 1");
+
+                        //this deffs won't work if we have the 'cant modify user' error
+                        [Answers logCustomEventWithName:@"Error forcing log out"
+                                       customAttributes:@{
+                                                          @"error":error
+                                                          }];
+                        
+                        //log out anyway, logging back in will prevent happening again
+                        [self bigLogOut];
+                    }
+                }];
+            }
+            else{
+                NSLog(@"already got");
+            }
+            
             [self getLatestForSale];
             
             //since 2.0.23 we now save geopoints on users to then set on their listings
@@ -263,17 +308,16 @@
             
             //check if user has been registered with intercom
             //only do this check for people who signed up with this update / signed up after it was released ~ 13th January
-            //check if should ignore 2 photos requirement
             NSDateComponents *components = [[NSDateComponents alloc] init];
-            NSCalendar *theCalendar = [NSCalendar currentCalendar];
-            
+            NSCalendar *theCalendar1 = [NSCalendar currentCalendar];
+
             [components setYear:2018];
             [components setMonth:1];
             [components setDay:13]; //this is after v2.1.3 went live
             [components setHour:00];
             
             //generate the start date where this should be YES for everyone
-            NSDate * combinedDate = [theCalendar dateFromComponents:components];
+            NSDate * combinedDate = [theCalendar1 dateFromComponents:components];
             
             if (![[currentUser objectForKey:@"sentWelcomeMessage"]isEqualToString:@"YES"] && [currentUser.createdAt compare:combinedDate]==NSOrderedDescending){
                 //user was created later than this date
@@ -299,19 +343,34 @@
                             currencyStr = [PFUser currentUser][@"currency"];
                         }
                         
+                        //add attribution info to Intercom
+                        NSString *affiliate = @"none";
+                        if ([PFUser currentUser][@"affiliate"]) {
+                            affiliate = [PFUser currentUser][@"affiliate"];
+                        }
+                        
+                        NSString *channel = @"none";
+                        if ([PFUser currentUser][@"channel"]) {
+                            channel = [PFUser currentUser][@"channel"];
+                        }
+                        
                         if([PFUser currentUser][@"facebookId"]){
                             //and same for facebook mode
                             userAttributes.customAttributes = @{@"email_sign_up" : @NO,
                                                                 @"currency": currencyStr,
                                                                 @"Username":[PFUser currentUser].username,
-                                                                @"facebookId": [PFUser currentUser][@"facebookId"]
+                                                                @"facebookId": [PFUser currentUser][@"facebookId"],
+                                                                @"affiliate":affiliate,
+                                                                @"channel":channel
                                                                 };
                         }
                         else{
                             //finish adding custom intercom attributes for email mode
                             userAttributes.customAttributes = @{@"email_sign_up" : @YES,
                                                                 @"currency": currencyStr,
-                                                                @"Username":[PFUser currentUser].username
+                                                                @"Username":[PFUser currentUser].username,
+                                                                @"affiliate":affiliate,
+                                                                @"channel":channel
                                                                 };
                             
                         }
@@ -334,13 +393,14 @@
             }
             
             //check if user owed 10 days free fees
+            NSCalendar *theCalendar = [NSCalendar currentCalendar];
             NSDateComponents *components1 = [[NSDateComponents alloc] init];
             [components1 setYear:2018];
             [components1 setMonth:2];
             [components1 setDay:6]; //went live in 2.1.7
             NSDate * combinedDate1 = [theCalendar dateFromComponents:components1];
             
-            //did user sign up before fees came into action //CHANGE
+            //did user sign up before fees came into action
             if([[PFUser currentUser].createdAt compare:combinedDate1]==NSOrderedAscending && ![[PFUser currentUser]objectForKey:@"introFreeSet"] && ![[[PFUser currentUser]objectForKey:@"introFreeSet"]isEqualToString:@"YES"]){
 
                 NSLog(@"user is entitled to 10 days fee free selling");
@@ -563,36 +623,7 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    
-    
-    
-//    PFQuery *userQ = [PFUser query];
-//    [userQ findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-//        if (objects) {
-//
-//            for (PFUser *user in objects) {
-//
-//                PFRelation *relation = [[PFUser currentUser] relationForKey:@"testRelation"];
-//                [relation addObject:user];
-//
-//                NSLog(@"relation: %@", relation);
-//
-//                [[PFUser currentUser]saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//                    if (succeeded) {
-//                        NSLog(@"saved pfrelation");
-//                    }
-//                    else{
-//                        NSLog(@"error saving pfrelation %@", error);
-//                    }
-//                }];//CHANGE
-//
-//            }
-//
-//
-//        }
-//    }];
-    
-    
+        
     self.navigationController.navigationBar.barStyle = UIBarStyleBlack;
     
     NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Regular" size:12],
@@ -667,17 +698,12 @@
                 }
             }
             else{
+                //follow suggested users after sign up
+                [self triggerAutoFollow];
+
                 //set this to yes so user sees filter demo next time they visit the home tab
                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"secondTimeOnHome"];
             }
-
-            
-            //decide whether to show email reminder header
-//            if ([[[PFUser currentUser] objectForKey:@"emailIsVerified"]boolValue] != YES && ![[PFUser currentUser] objectForKey:@"facebookId"]) {
-////                NSLog(@"SETUP EMAIL HEADER CALLED 2");
-//
-//                [self setupEmailHeader];
-//            }
         }
         //if user redownloaded - ask for push/location permissions again
         else if ([[NSUserDefaults standardUserDefaults]boolForKey:@"askedForPushPermission"] == NO && [[[PFUser currentUser] objectForKey:@"completedReg"]isEqualToString:@"YES"] && [[NSUserDefaults standardUserDefaults]boolForKey:@"declinedPushPermissions"] != YES && modalPresent != YES) {
@@ -691,21 +717,6 @@
         else if (![[PFUser currentUser]objectForKey:@"sizeCountry"] && modalPresent != YES) {
             AddSizeController *vc = [[AddSizeController alloc]init];
             [self.navigationController presentViewController:vc animated:YES completion:nil];
-        }
-        //showPPConnect is for users who created proxy first time around, this added if clause stops these guys being prompted now. They must wait till their next proper listing
-        else if ([[PFUser currentUser]objectForKey:@"forSalePostNumber"] && ![[PFUser currentUser]objectForKey:@"seenConnectPP"] && (![[PFUser currentUser]objectForKey:@"paypalEnabled"] || [[[PFUser currentUser]objectForKey:@"paypalEnabled"] isEqualToString:@"NO"]) && ![[PFUser currentUser]objectForKey:@"showPPConnect"] &&  modalPresent != YES) {
-            
-            NSLog(@"existing user has triggered paypal connect drop down");
-            
-            //user has created a listing
-            //user has NOT seen connect dialog before
-            //user does NOT have paypal already enabled
-            
-            //won't get triggered during a user's first listing coz their forsalepostnumber won't have been updated
-            
-            //do we need to do a signup date check?
-            self.existingUserPPAlert = YES;
-            [self showConnectPayPalDrop];
         }
         else{
             //get location for filter searches only if we don't already have one
@@ -766,6 +777,13 @@
     else{
         cell.itemPriceLabel.text = @"";
     }
+    
+//    if ([[forSaleItem objectForKey:@"status"]isEqualToString:@"sold"]) {
+//        [cell.itemPriceLabel setTextColor:[UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:1.0]];
+//    }
+//    else{
+//        [cell.itemPriceLabel setTextColor:[UIColor lightGrayColor]];
+//    }
     
     NSString *condition = @"";
     
@@ -882,7 +900,7 @@
     
     ForSaleListing *vc = [[ForSaleListing alloc]init];
     vc.listingObject = itemObject;
-    vc.source = @"latest";
+    vc.source = @"home";
     vc.fromBuyNow = YES;
     vc.pureWTS = YES;
     
@@ -897,8 +915,6 @@
 {
     self.headerView = nil;
     if (kind == UICollectionElementKindSectionHeader) {
-        NSLog(@"setup dat header");
-        
         self.headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"Header" forIndexPath:indexPath];
         
         if (!self.postingMode) {
@@ -1072,8 +1088,6 @@
     self.pullQuery = [PFQuery queryWithClassName:@"forSaleItems"];
     
     [self setupPullQuery];
-
-    [self.pullQuery whereKey:@"status" equalTo:@"live"];
     
     self.pullQuery.limit = 20;
     
@@ -1153,8 +1167,6 @@
     
     self.infiniteQuery = nil;
     self.infiniteQuery = [PFQuery queryWithClassName:@"forSaleItems"];
-    
-    [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
     [self.infiniteQuery whereKey:@"objectId" notContainedIn:self.productIds];
 
     [self.infiniteQuery orderByDescending:@"lastUpdated"];
@@ -1223,6 +1235,22 @@
             //don't do anything as it's global
         }
         
+        if ([self.filtersArray containsObject:@"following"]) {
+            
+            NSDictionary *followingDic = [[PFUser currentUser]objectForKey:@"followingDic"];
+            NSArray *followingIds = [followingDic allValues];
+
+            if (!self.followingArray) {
+                self.followingArray = [NSArray arrayWithArray:followingIds];
+            }
+            else{
+                self.followingArray = followingIds;
+            }
+            
+            [self.pullQuery whereKey:@"sellerId" containedIn:followingIds];
+            
+        }
+        
         //price
         if ([self.filtersArray containsObject:@"price"]) {
             [self.pullQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThanOrEqualTo:@(self.filterLower)];
@@ -1244,6 +1272,14 @@
         //instant buy
         if ([self.filtersArray containsObject:@"instantBuy"]){
             [self.pullQuery whereKey:@"instantBuy" equalTo:@"YES"];
+        }
+        
+        if ([self.filtersArray containsObject:@"sold"]){
+            [self.pullQuery whereKey:@"purchased" equalTo:@"YES"];
+            [self.pullQuery whereKey:@"status" equalTo:@"sold"];
+        }
+        else{
+            [self.pullQuery whereKey:@"status" equalTo:@"live"];
         }
         
         //condition
@@ -1282,6 +1318,7 @@
         
     }
     else{
+        [self.pullQuery whereKey:@"status" equalTo:@"live"];
         [self.pullQuery orderByDescending:@"lastUpdated"];
     }
 }
@@ -1312,6 +1349,10 @@
             //don't do anything as it's global
         }
         
+        if ([self.filtersArray containsObject:@"following"]) {
+            [self.infiniteQuery whereKey:@"sellerId" containedIn:self.followingArray];
+        }
+        
         //price
         if ([self.filtersArray containsObject:@"price"]) {
             [self.infiniteQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThanOrEqualTo:@(self.filterLower)];
@@ -1333,6 +1374,14 @@
         //instant buy
         if ([self.filtersArray containsObject:@"instantBuy"]){
             [self.infiniteQuery whereKey:@"instantBuy" equalTo:@"YES"];
+        }
+        
+        if ([self.filtersArray containsObject:@"sold"]){
+            [self.infiniteQuery whereKey:@"purchased" equalTo:@"YES"];
+            [self.infiniteQuery whereKey:@"status" equalTo:@"sold"];
+        }
+        else{
+            [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
         }
         
         //condition
@@ -1372,6 +1421,7 @@
         
     }
     else{
+        [self.infiniteQuery whereKey:@"status" equalTo:@"live"];
         [self.infiniteQuery orderByDescending:@"lastUpdated"];
     }
 }
@@ -1380,6 +1430,14 @@
 
 -(void)bigLogOut{
     
+    //to avoid duplicate forced log outs
+    if ([PFUser currentUser]) {
+        if (![[PFUser currentUser] objectForKey:@"newCertDone"]) {
+            [[PFUser currentUser] setObject:@"YES" forKey:@"newCertDone"];
+            [[PFUser currentUser] saveInBackground];
+        }
+    }
+
     [Answers logCustomEventWithName:@"BIG LOG OUT"
                    customAttributes:@{}];
     
@@ -2005,7 +2063,7 @@
                          self.searchBgView = nil;
                      }];
     
-    [UIView animateWithDuration:0.5
+    [UIView animateWithDuration:0.8
                           delay:0.0
          usingSpringWithDamping:0.1
           initialSpringVelocity:0.5
@@ -2292,11 +2350,68 @@
                    customAttributes:@{
                                       @"type":@"whatsapp"
                                       }];
-    NSString *shareString = @"Check out BUMP for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com";
-    NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",[self urlencode:shareString]]];
-    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
-        [[UIApplication sharedApplication] openURL: whatsappURL];
-    }
+    
+    [Intercom logEventWithName:@"invite_whatsapp_pressed" metaData: @{}];
+    
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"Tapped Share" properties:@{
+                                                 @"channel":@"whatsapp",
+                                                 @"content":@"invite"
+                                                 }];
+    
+    BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:[PFUser currentUser].objectId];
+    BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+    linkProperties.feature = @"invite";
+    linkProperties.channel = @"whatsapp";
+    [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+    
+    [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+        if (!error) {
+            NSLog(@"whatsapp share link %@", url);
+            
+            NSString * msg = [NSString stringWithFormat:@"Safely Buy & Sell Streetwear on BUMP %@",url];
+            
+            msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+            msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+            
+            NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+            NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+            
+            if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                [[UIApplication sharedApplication] openURL: whatsappURL];
+            }
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"Whatsapp Link Error"
+                           customAttributes:@{
+                                              @"link":@"invite",
+                                              @"error":error.description
+                                              }];
+            
+            NSString * msg = [NSString stringWithFormat:@"Safely Buy & Sell Streetwear on BUMP https://sobump.com"];
+            
+            msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+            msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+            
+            NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+            NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+            
+            if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                [[UIApplication sharedApplication] openURL: whatsappURL];
+            }
+        }
+    }];
 }
 
 -(void)messengerPressed{
@@ -2304,10 +2419,43 @@
                    customAttributes:@{
                                       @"type":@"messenger"
                                       }];
-    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=http://sobump.com"];
-    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
-        [[UIApplication sharedApplication] openURL: messengerURL];
-    }
+    
+    [Intercom logEventWithName:@"invite_messenger_pressed" metaData: @{}];
+
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"Tapped Share" properties:@{
+                                                 @"channel":@"messenger",
+                                                 @"content":@"invite"
+                                                 }];
+    
+    BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:[PFUser currentUser].objectId];
+    BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+    linkProperties.feature = @"invite";
+    linkProperties.channel = @"messenger";
+    [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+    
+    [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+        if (!error) {
+            NSLog(@"messenger invite link %@", url);
+            NSString *urlString = [NSString stringWithFormat:@"fb-messenger://share/?link=%@",url];
+            NSURL *messengerURL = [NSURL URLWithString:urlString];
+            if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                [[UIApplication sharedApplication] openURL: messengerURL];
+            }
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"Messenger Link Error"
+                           customAttributes:@{
+                                              @"link":@"invite",
+                                              @"error":error.description
+                                              }];
+            NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://share/?link=https://sobump.com"];
+            if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                [[UIApplication sharedApplication] openURL: messengerURL];
+            }
+        }
+    }];
 }
 
 -(void)textPressed{
@@ -2316,10 +2464,48 @@
                    customAttributes:@{
                                       @"type":@"share sheet"
                                       }];
-    NSMutableArray *items = [NSMutableArray new];
-    [items addObject:@"Check out BUMP for iOS - buy & sell streetwear safely\n\nAvailable here: http://sobump.com"];
-    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
-    [self presentViewController:activityController animated:YES completion:nil];
+    
+    [Intercom logEventWithName:@"invite_text_pressed" metaData: @{}];
+    
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"Tapped Share" properties:@{
+                                                 @"channel":@"more",
+                                                 @"content":@"invite"
+                                                 }];
+    
+    BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:[PFUser currentUser].objectId];
+    BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+    linkProperties.feature = @"invite";
+    linkProperties.channel = @"more";
+    [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+    
+    [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+        if (!error) {
+            NSLog(@"more share link %@", url);
+            
+            NSString * msg = [NSString stringWithFormat:@"Safely Buy & Sell Streetwear on BUMP %@",url];
+            
+            NSMutableArray *items = [NSMutableArray new];
+            [items addObject:msg];
+            UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+            [self presentViewController:activityController animated:YES completion:nil];
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"More Link Error"
+                           customAttributes:@{
+                                              @"link":@"invite",
+                                              @"error":error.description
+                                              }];
+            
+            NSString * msg = [NSString stringWithFormat:@"Safely Buy & Sell Streetwear on BUMP https://sobump.com"];
+            
+            NSMutableArray *items = [NSMutableArray new];
+            [items addObject:msg];
+            UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+            [self presentViewController:activityController animated:YES completion:nil];
+        }
+    }];
 }
 
 #pragma mark - observer callbacks
@@ -2353,17 +2539,56 @@
     }
     else if (self.justAMessage == YES){
         //do nothing
+        self.justAMessage = NO;
+    }
+    else if(self.justASubListing){
+        NSLog(@"sub'd tapped");
+        
+        self.justASubListing = NO;
+        
+        [Answers logCustomEventWithName:@"Tapped in app Push"
+                       customAttributes:@{
+                                          @"type":@"Subscriber Item"
+                                          }];
+        
+        ForSaleListing *vc = [[ForSaleListing alloc]init];
+        vc.listingObject = self.dropDown.listing;
+        vc.source = @"subscriber";
+        vc.fromBuyNow = YES;
+        vc.pureWTS = YES;
+        vc.fromPush = YES;
+        
+        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+        
+        if (nav.visibleViewController.presentedViewController) {
+            
+            //nav bar is showing something
+            if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+        }
+        else{
+            //no other VC showing so push!
+            [nav pushViewController:vc animated:YES];
+        }
     }
     //boost is now available
     else if (self.justABOOST == YES) {
+        NSLog(@"boost drop tapped");
+
+        self.justABOOST = NO;
         
-        if (!self.boostListing) {
-            NSLog(@"no boost listing so return");
-            return;
-        }
+        [Answers logCustomEventWithName:@"Tapped in app Push"
+                       customAttributes:@{
+                                          @"type":@"Boost Now"
+                                          }];
+        
         
         ForSaleListing *vc = [[ForSaleListing alloc]init];
-        vc.listingObject = self.boostListing;
+        vc.listingObject = self.dropDown.listing;
         vc.source = @"boost";
         vc.fromBuyNow = YES;
         vc.pureWTS = YES;
@@ -2389,8 +2614,43 @@
             [nav pushViewController:vc animated:YES];
         }
     }
+    else if(self.justAFollow == YES){
+        self.justAFollow = NO;
+        
+        NSLog(@"tapped follow drop down %@", self.dropDown.listing);
+        
+        [Answers logCustomEventWithName:@"Tapped in app Push"
+                       customAttributes:@{
+                                          @"type":@"Followed"
+                                          }];
+        
+        
+        UserProfileController *vc = [[UserProfileController alloc]init];
+        vc.user = (PFUser *) self.dropDown.listing;
+        
+        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
+        //            [nav pushViewController:vc animated:YES];
+        
+        if (nav.visibleViewController.presentedViewController) {
+            
+            //nav bar is showing something
+            if ([nav.visibleViewController.presentedViewController isKindOfClass:[NavigationController class]]) {
+                
+                //2nd nav is showing so push from there instead of tab bar nav
+                NavigationController *presenter = (NavigationController*)nav.visibleViewController.presentedViewController;
+                [presenter pushViewController:vc animated:YES];
+            }
+        }
+        else{
+            //no other VC showing so push!
+            [nav pushViewController:vc animated:YES];
+        }
+        
+    }
     //fb friend posted
     else if (self.justABump == NO) {
+        NSLog(@"fb friend posted drop tapped");
+        
         [Answers logCustomEventWithName:@"Tapped in app Push"
                        customAttributes:@{
                                           @"type":@"fb friend posted"
@@ -2422,18 +2682,15 @@
             //no other VC showing so push!
             [nav pushViewController:vc animated:YES];
         }
-        
-//        BumpVC *vc = [[BumpVC alloc]init];
-//        vc.listingID = listing;
-//        [self presentViewController:vc animated:YES completion:nil];
-        
     }
-    //my listing got bumped
+    //my listing got liked
     else{
+        NSLog(@"liked item drop tapped");
+
         //goto that listing
         [Answers logCustomEventWithName:@"Tapped in app Push"
                        customAttributes:@{
-                                          @"type":@"Bump"
+                                          @"type":@"Like"
                                           }];
         if (self.wantedListing) {
             PFObject *listingObj = [PFObject objectWithoutDataWithClassName:@"wantobuys" objectId:listing];
@@ -2470,7 +2727,6 @@
             vc.fromPush = YES;
 
             NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-//            [nav pushViewController:vc animated:YES];
             
             if (nav.visibleViewController.presentedViewController) {
                 
@@ -2621,6 +2877,8 @@
             self.justAMessage = NO;
             self.sendMode = NO;
             self.justABOOST = NO;
+            self.justASubListing = NO;
+            self.justAFollow = NO;
 
             //animate down
             [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
@@ -2767,6 +3025,83 @@
     } completion:^(BOOL finished) {}];
 }
 
+-(void)handleFollowDrop:(NSNotification*)note {
+    NSArray *info = [note object];
+    
+    //prevent crashes with wrongly formatted pushes
+    if (info.count <1) {
+        return;
+    }
+    
+    NSString *userId = info[0];
+    
+    [Answers logCustomEventWithName:@"Received in app push"
+                   customAttributes:@{
+                                      @"type":@"Received a Follow"
+                                      }];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
+    self.dropDown = nil;
+    self.dropDown = (notificatView *)[nib objectAtIndex:0];
+    self.dropDown.delegate = self;
+    self.dropDown.listingID = userId;
+    
+    UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.dropDown addGestureRecognizer:swipeGesture];
+    [self.dropDown setFrame:CGRectMake(0, -75, self.view.frame.size.width, 75)];
+    
+    PFQuery *userQ = [PFUser query];
+    [userQ whereKey:@"objectId" equalTo:userId];
+    [userQ getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            self.dropDown.listing = object;
+            
+            PFUser *user = (PFUser *)object;
+
+            self.dropDown.mainLabel.text = [NSString stringWithFormat:@"@%@ started following you", user.username];
+            [self.dropDown.smallImageView setImage:[UIImage imageNamed:@"notifFollow"]];
+            
+            self.justABump = NO;
+            self.justAMessage = NO;
+            self.sendMode = NO;
+            self.wantedListing = NO;
+            self.justABOOST = NO;
+            self.justAFollow = YES;
+            self.justASubListing = NO;
+
+            //animate down
+            [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+            
+            [UIView animateWithDuration:1.0
+                                  delay:0.0
+                 usingSpringWithDamping:0.5
+                  initialSpringVelocity:0.5
+                                options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                    //Animations
+                                    int adjust = 17;
+                                    //iPhone X has a bigger status bar - was 20px now 44px
+                                    
+                                    if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+                                        //iPhone X
+                                        adjust = 37;
+                                    }
+                                    
+                                    [self.dropDown setFrame:CGRectMake(0, adjust, self.view.frame.size.width, 75)];
+                                }
+                             completion:^(BOOL finished) {
+                                 //schedule auto dismiss
+                                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                     [self dismissDrop];
+                                 });
+                             }];
+        }
+        else{
+            NSLog(@"error finding user from follow drop");
+        }
+    }];
+}
+
 -(void)handleBumpDrop:(NSNotification*)note {
     NSArray *info = [note object];
     
@@ -2810,6 +3145,8 @@
                 self.sendMode = NO;
                 self.wantedListing = YES;
                 self.justABOOST = NO;
+                self.justAFollow = NO;
+                self.justASubListing = NO;
 
                 //animate down
                 [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
@@ -2861,6 +3198,8 @@
                 self.sendMode = NO;
                 self.wantedListing = NO;
                 self.justABOOST = NO;
+                self.justAFollow = NO;
+                self.justASubListing = NO;
 
                 //animate down
                 [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
@@ -2895,6 +3234,89 @@
     }
 }
 
+-(void)subscriberPostedDrop:(NSNotification*)note {
+    NSLog(@"sub drop loading");
+    
+    NSArray *info = [note object];
+    
+    //prevent crashes with wrongly formatted pushes
+    if (info.count <2) {
+        return;
+    }
+    
+    NSString *listingID = info[0];
+    NSString *message = info[1];
+    
+    [Answers logCustomEventWithName:@"Received in app push"
+                   customAttributes:@{
+                                      @"type":@"Subscriber Listed an Item"
+                                      }];
+    
+    NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"notView" owner:self options:nil];
+    self.dropDown = nil;
+    self.dropDown = (notificatView *)[nib objectAtIndex:0];
+    self.dropDown.delegate = self;
+    self.dropDown.listingID = listingID;
+    
+    UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDrop)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.dropDown addGestureRecognizer:swipeGesture];
+    [self.dropDown setFrame:CGRectMake(0, -75, self.view.frame.size.width, 75)];
+    
+    //sale listing bumped
+    NSLog(@"sub listed an item");
+    
+    PFQuery *listingQ = [PFQuery queryWithClassName:@"forSaleItems"];
+    [listingQ whereKey:@"objectId" equalTo:listingID];
+    [listingQ getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            PFObject *listing = object;
+            self.dropDown.listing = listing;
+            
+            self.dropDown.mainLabel.text = message;
+            [self.dropDown.smallImageView setImage:[UIImage imageNamed:@"notifTag"]];
+            
+            self.justASubListing = YES;
+            self.justABump = NO;
+            self.justAMessage = NO;
+            self.sendMode = NO;
+            self.wantedListing = NO;
+            self.justABOOST = NO;
+            self.justAFollow = NO;
+            
+            //animate down
+            [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
+            
+            [UIView animateWithDuration:1.0
+                                  delay:0.0
+                 usingSpringWithDamping:0.5
+                  initialSpringVelocity:0.5
+                                options:UIViewAnimationOptionCurveEaseIn animations:^{
+                                    //Animations
+                                    int adjust = 17;
+                                    //iPhone X has a bigger status bar - was 20px now 44px
+                                    
+                                    if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+                                        //iPhone X
+                                        adjust = 37;
+                                    }
+                                    
+                                    [self.dropDown setFrame:CGRectMake(0, adjust, self.view.frame.size.width, 75)];
+                                }
+                             completion:^(BOOL finished) {
+                                 //schedule auto dismiss
+                                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                     [self dismissDrop];
+                                 });
+                             }];
+        }
+        else{
+            NSLog(@"error finding listing");
+        }
+    }];
+    
+}
+
 -(void)messageSentDrop:(NSNotification*)note {
     PFUser *friend = [note object];
     
@@ -2916,7 +3338,10 @@
             //setup what happens when user taps notification
             self.justAMessage = YES;
             self.justABOOST = NO;
-
+            self.justAFollow = NO;
+            self.justASubListing = NO;
+            self.justABump = NO;
+            
             //animate down
             [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
             
@@ -3011,7 +3436,7 @@
     
     [listingQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
-            self.dropDown.mainLabel.text = @"Your BOOST is now available";
+            self.dropDown.mainLabel.text = @"BOOST your listing now";
             [self.dropDown.smallImageView setImage:[UIImage imageNamed:@"notifBolt"]];
             self.dropDown.listing = object;
             
@@ -3022,7 +3447,8 @@
             self.wantedListing = NO;
             self.justABOOST = YES;
             self.boostListing = object;
-            
+            self.justAFollow = NO;
+
             [Answers logCustomEventWithName:@"Showing Boost Available Drop"
                            customAttributes:@{}];
             
@@ -3090,7 +3516,8 @@
     self.justAMessage = YES;
     self.sendMode = YES;
     self.justABOOST = NO;
-    
+    self.justAFollow = NO;
+
     //animate down
     [self.dropDown setFrame:CGRectMake(0, -75, self.view.frame.size.width, 75)];
     [[UIApplication sharedApplication].keyWindow addSubview:self.dropDown];
@@ -3254,6 +3681,13 @@
                    customAttributes:@{
                                       @"page":@"Home"
                                       }];
+    
+    //so user doesn't see filter intro if they've already filtered
+    if (![[PFUser currentUser]objectForKey:@"filterIntro"]) {
+        [[PFUser currentUser]setObject:@"YES" forKey:@"filterIntro"];
+        [[PFUser currentUser]saveInBackground];
+    }
+    
     FilterVC *vc = [[FilterVC alloc]init];
     vc.delegate = self;
     vc.sellingSearch = YES;
@@ -3490,11 +3924,11 @@
         return;
     }
     
-    NSLog(@"posting item!");
+    NSLog(@"posting item %@!", [self.postingItem class]);
     
     [self.postingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
         if (succeeded) {
-            
+                        
             NSDictionary *params = @{@"listingId":self.postingItem.objectId};
             [PFCloud callFunctionInBackground:@"updateLastUpdated" withParameters:params block:^(NSDictionary *response, NSError *error) {
                 if (error) {
@@ -3565,14 +3999,10 @@
             [Answers logCustomEventWithName:@"Created for sale listing"
                            customAttributes:@{}];
             
-            //show paypal drop down
-//            if (self.showConnectPPPopUp) {
-//                NSLog(@"show connect pp pop up after posting item");
-//                [self showConnectPayPalDrop];
-//            }
-            
             //schedule local notif. for first listing
             if (![[PFUser currentUser] objectForKey:@"forSalePostNumber"]) {
+                
+                [[PFUser currentUser] setObject:@"YES" forKey:@"seenPaidBoostPush"]; //saved below
                 
                 [self.postingItem setObject:@"YES" forKey:@"firstListing"];
                 [self.postingItem saveInBackground];
@@ -3592,6 +4022,10 @@
                 
                 [self scheduleBoostPush];
 
+            }
+            else if(![[PFUser currentUser] objectForKey:@"seenPaidBoostPush"]){
+                [[PFUser currentUser] setObject:@"YES" forKey:@"seenPaidBoostPush"]; //saved below
+                [self scheduleBoostPush];
             }
             
             if (([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] || [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) && [[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
@@ -3657,13 +4091,42 @@
                     }];
                 }
             }
+            
+            //send push to subscribers (if any)
+            NSDictionary *pushParams = @{@"username": [PFUser currentUser].username, @"userId": [PFUser currentUser].objectId,@"listingId": self.postingItem.objectId};
+            [PFCloud callFunctionInBackground:@"sendSubscriberPush" withParameters: pushParams block:^(id  _Nullable object, NSError * _Nullable error) {
+                if (error) {
+                    NSLog(@"error sending push params: %@", error);
+                    
+                    [Answers logCustomEventWithName:@"Error Sending Subscriber Push"
+                                   customAttributes:@{
+                                                      @"error":error.description
+                                                      }];
+                }
+                else{
+                    NSLog(@"called sub push func");
+                    
+                    [Answers logCustomEventWithName:@"Success Sending Subscriber Push"
+                                   customAttributes:@{}];
+                }
+            }];
         }
         else{
             //error saving listing
-            [Answers logCustomEventWithName:@"Error Saving Sale Listing"
-                           customAttributes:@{
-                                              @"error":[NSString stringWithFormat:@"%@", error]
-                                              }];
+            if ([self.postingItem class]) {
+                [Answers logCustomEventWithName:@"Error Saving New Sale Listing" //didn't used to have the 'new' in it
+                               customAttributes:@{
+                                                  @"error":[NSString stringWithFormat:@"%@", error],
+                                                  @"post object class":[self.postingItem class]
+                                                  }];
+            }
+            else{
+                [Answers logCustomEventWithName:@"Error Saving New Sale Listing" //didn't used to have the 'new' in it
+                               customAttributes:@{
+                                                  @"error":[NSString stringWithFormat:@"%@", error],
+                                                  @"post object class":@"no class"
+                                                  }];
+            }
             
             [self.progressBar setProgress:0.0 animated:YES];
             
@@ -3712,7 +4175,7 @@
     NSDate *nextBoostDate = [theCalendar dateByAddingComponents:hourComponent toDate:[NSDate date] options:0];
     
     UILocalNotification *localNotification = [[UILocalNotification alloc]init];
-    [localNotification setAlertBody:@"Congrats on your first listing - your BOOST is now available"];
+    [localNotification setAlertBody:@"Sell faster and BOOST your listing now ⚡️"];
     [localNotification setFireDate: nextBoostDate];
     
     //set listingId so we can find listing when it returns to the app
@@ -4691,7 +5154,7 @@
                                                                              @"userType":[NSNumber numberWithBool:self.existingUserPPAlert]
                                                                              }];
                             
-                            [Intercom logEventWithName:@"paypal_connected" metaData: @{}];
+                            [Intercom logEventWithName:@"paypal_connected"];
                             
                             NSLog(@"saved paypal info on user");
                             [Answers logCustomEventWithName:@"Saved PayPal info on User"
@@ -4923,8 +5386,186 @@
     }
 }
 
+-(void)triggerAutoFollow{
+    //auto follow top sellers
+    NSLog(@"triggering auto follow");
+    NSDictionary *params = @{@"userId": [PFUser currentUser].objectId};
+    [PFCloud callFunctionInBackground:@"autoFollowTopSellers" withParameters: params block:^(NSArray *followingArray, NSError *error) {
+        if (!error) {
+            
+            NSLog(@"following %@", followingArray);
+            
+            if ([[PFUser currentUser]objectForKey:@"followingDic"]) {
+                //add to existing
+                NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:[[PFUser currentUser]objectForKey:@"followingDic"]];
+                
+                for (NSString *sellerId in followingArray) {
+                    //check if value already exists in dictionary before adding
+                    if (![dic valueForKey:sellerId]) {
+                        dic[sellerId] = sellerId;
+                    }
+                }
+                [[PFUser currentUser]setObject:dic forKey:@"followingDic"];
+                [[PFUser currentUser]saveInBackground];
+            }
+            else{
+                //create one
+                NSMutableDictionary *dic = [[NSMutableDictionary alloc]init];
+                for (NSString *sellerId in followingArray) {
+                    //check if value already exists in dictionary before adding
+                    if (![dic valueForKey:sellerId]) {
+                        dic[sellerId] = sellerId;
+                    }
+                }
+                
+                [[PFUser currentUser]setObject:dic forKey:@"followingDic"];
+                [[PFUser currentUser]saveInBackground];
+            }
+            
+            int count = (int)followingArray.count;
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"showDummyFollowing"];
+            [[NSUserDefaults standardUserDefaults] setObject:@(count) forKey:@"dummyFollowing"];
+            
+        }
+        else{
+            NSLog(@"auto follow push error %@", error);
+            [Answers logCustomEventWithName:@"Auto Follow error"
+                           customAttributes:@{
+                                              @"error":error.description
+                                              }];
+        }
+    }];
+}
 
+#pragma mark - in app purchase call backs
 
+-(void)purchaseComplete:(NSNotification*)note {
+    
+    NSLog(@"purchase complete called");
+    
+    SKPaymentTransaction *transaction = [note object];
+    NSString *productId = transaction.payment.productIdentifier;
+    
+    //get listing that has been boosted
+    //we retrieve the listing from defaults and turn off processing purchase
+    
+    NSString *listingId = [[NSUserDefaults standardUserDefaults]objectForKey:@"pendingListingPurchase"];
+    
+    if ([productId isEqualToString:@"BOOST0001"]) {
+        [self completeBOOSTPurchaseForItem:listingId andTransaction:transaction];
+    }
+}
 
+-(void)completeBOOSTPurchaseForItem:(NSString *)listingId andTransaction:(SKPaymentTransaction *)transaction{
+    
+    NSLog(@"complete boost purchase in home");
+    
+    //save featured boost onto object
+    PFObject *listingObject = [PFObject objectWithoutDataWithClassName:@"forSaleItems" objectId:listingId];
+    
+    if (!listingId) {
+        
+        [Answers logCustomEventWithName:@"Paid Boost Error"
+                       customAttributes:@{
+                                          @"type":@"No listing ID"
+                                          }];
+        
+        //this means was an error saving listing ID to user defaults
+        //we need to end the transaction now because it will never work
+        //also should credit user with a free future boost
+        
+        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseError" object:nil];
+        return;
+    }
+    
+    [listingObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            
+            //update lastUpdated
+            NSDictionary *params = @{@"listingId":listingObject.objectId};
+            [PFCloud callFunctionInBackground:@"triggerPaidBoost" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                if (error) {
+                    
+                    [Answers logCustomEventWithName:@"Paid Boost Error"
+                                   customAttributes:@{
+                                                      @"type":@"triggerPaidBoost Func Error"
+                                                      }];
+                    
+                    //communicate error to boost controller in case its still showing
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"boostPurchased" object:[NSNumber numberWithBool:NO]];
 
+                }
+                else{
+                    NSLog(@"boosted from IAP!");
+                    [Answers logCustomEventWithName:@"Paid Boost triggered"
+                                   customAttributes:@{}];
+                    
+                    [Intercom logEventWithName:@"boost_triggered" metaData: @{}];
+                    [Intercom logEventWithName:@"paid_boost_triggered" metaData: @{}];
+                    
+                    //track info on the user
+                    float waitHours = [[[NSUserDefaults standardUserDefaults]objectForKey:@"freeBoostWait"]floatValue];
+
+                    [[PFUser currentUser]incrementKey:@"paidBoosts"];
+                    [[PFUser currentUser] addObject:@(waitHours) forKey:@"paidBoostWaitHours"];
+                    [[PFUser currentUser]saveInBackground];
+
+                    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                    [mixpanel track:@"BOOST triggered" properties:@{
+                                                                    @"paid":@"YES",
+                                                                    @"waitHours":@(waitHours)
+                                                                    }];
+                    
+                    //place listing at the top of the home feed
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"justBoostedListing" object:listingObject];
+                    
+                    [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+                    
+                    //communicate save to boost controller in case its still showing (should be)
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"boostPurchased" object:[NSNumber numberWithBool:YES]];
+                }
+            }];
+            
+        }
+        else{
+            NSLog(@"error fetching listing for IAP boost %@", error);
+            
+            //check if we have a listing ID
+            if (!listingId) {
+                
+                [Answers logCustomEventWithName:@"Paid Boost Error"
+                               customAttributes:@{
+                                                  @"type":@"No listing ID"
+                                                  }];
+                
+                //this means was an error saving listing ID to user defaults
+                //we need to end the transaction now because it will never work
+                //also should credit user with a free future boost
+                
+                [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseError" object:nil];
+            }
+            
+            //communicate save to boost controller in case its still showing
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"boostPurchased" object:[NSNumber numberWithBool:NO]];
+            
+        }
+    }];
+}
+
+-(void)purchaseFailedHome:(NSNotification*)note {
+    
+    [Answers logCustomEventWithName:@"Paid Boost Error"
+                   customAttributes:@{
+                                      @"type":@"Purchase Failed"
+                                      }];
+
+    NSLog(@"purchase failed so finish transaction and fail");
+    SKPaymentTransaction *transaction = [note object];
+    [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"purchaseError" object:nil];
+
+}
 @end

@@ -10,7 +10,6 @@
 #import <DGActivityIndicatorView.h>
 #import "MessageViewController.h"
 #import "UserProfileController.h"
-#import "CreateForSaleListing.h"
 #import <Crashlytics/Crashlytics.h>
 #import "NavigationController.h"
 #import "SendToUserCell.h"
@@ -26,6 +25,8 @@
 #import "OrderSummaryView.h"
 #import "Mixpanel/Mixpanel.h"
 #import <Intercom/Intercom.h>
+#import <CommonCrypto/CommonCrypto.h>
+#import "Branch.h"
 
 @interface ForSaleListing ()
 
@@ -39,11 +40,12 @@
     [self.pageIndicator setHidden:YES];
     [self.sellerTextLabel setTextColor:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]];
     
-    self.navigationItem.title = @"S E L L I N G";
+//    self.navigationItem.title = @"S E L L I N G";
     [self.zoomPromptLabel setHidden:YES];
     [self.soldbannerButton setHidden:YES];
 
     self.countryLabel.text = @"";
+    self.likeCounter = 0;
     
     self.sendLabel.titleLabel.numberOfLines = 0;
     self.upVoteLabel.titleLabel.numberOfLines = 0;
@@ -70,7 +72,7 @@
     [self.soldLabel setHidden:YES];
     [self.soldCheckImageVoew setHidden:YES];
         
-    self.infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"dotsIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
+    self.infoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"arrowShareIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(showAlertView)];
     self.navigationItem.rightBarButtonItem = self.infoButton;
     
     if (self.fromBuyNow != YES) {
@@ -171,7 +173,6 @@
                    customAttributes:@{
                                       @"pageName":@"Sale Listing"
                                       }];
-    
 }
 
 -(void)hideZoomPrompt{
@@ -307,6 +308,48 @@
 //            NSLog(@"Listing %@", self.listingObject);
             self.seller = [self.listingObject objectForKey:@"sellerUser"];
             
+            if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && !self.setupIAP) {
+                self.setupIAP = YES;
+                
+                //check if have any free boosts
+                if ([[[PFUser currentUser]objectForKey:@"freeBoosts"]intValue] > 0) {
+                    self.freeBOOSTs = [[[PFUser currentUser]objectForKey:@"freeBoosts"]intValue];
+                }
+                
+                //setup IAP
+                AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                
+                if (appDelegate.BOOSTProduct && appDelegate.boostPriceString) {
+                    [Answers logCustomEventWithName:@"Delegate already fetched BOOST Product"
+                                   customAttributes:nil];
+                    
+                    self.BOOSTProduct = appDelegate.BOOSTProduct;
+                    self.boostPriceString = appDelegate.boostPriceString;
+                }
+                else{
+                    //delegate didn't fetch IAP so get on the listing
+                    [Answers logCustomEventWithName:@"Sale Listing Fetching BOOST Product"
+                                   customAttributes:nil];
+                    
+                    self.products = [NSArray array];
+                    self.productIdentifiersArray = @[@"BOOST0001"];
+                    
+                    [self validateProductIdentifiers:self.productIdentifiersArray];
+                }
+                
+                self.addPurchaseObservers = YES;
+                
+                [[NSNotificationCenter defaultCenter] removeObserver:self name:@"boostPurchased" object:nil];
+                [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseStarted" object:nil];
+                [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseDeferred" object:nil];
+                [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseError" object:nil];
+
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(purchasedNormalBOOST:) name:@"boostPurchased" object:nil];
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showIAPHUD) name:@"purchaseStarted" object:nil];
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(hideHUD) name:@"purchaseDeferred" object:nil];
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showPurchaseError) name:@"purchaseError" object:nil];
+            }
+            
             [self.seller fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
                 if (object) {
                     self.fetchedUser = YES; //to help stop messages infinite spinner
@@ -329,6 +372,11 @@
                 }
             }];
             
+            //for our own store we only show the buy button
+            if ([[self.listingObject objectForKey:@"bumpListing"] isEqualToString:@"YES"]) {
+                self.bumpListing = YES;
+            }
+        
             if (self.buttonsShowing == NO && !self.purchased) {
                 if (!self.setupButtons) {
                     [self decideButtonSetup];
@@ -346,7 +394,7 @@
                         [self setupTwoBarButtons];
                     }
                     else if (!self.messageButton){
-                        [self setupMessageBarButton];
+                        [self decideButtonSetup];
                     }
                 }                
                 [self showBarButton];
@@ -424,24 +472,23 @@
                 self.numberOfPics = 1;
                 
             }
-            [self.carouselView reloadData];
+            
+            if (self.carouselView) {
+                [self.carouselView reloadData];
+            }
             
             if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && ![[self.listingObject objectForKey:@"payment"]isEqualToString:@"pending"]) {
                 
+                
                 if ([[self.listingObject objectForKey:@"buyerId"]isEqualToString:[PFUser currentUser].objectId]) {
-//                    self.soldLabel.text = @"P U R C H A S E D";
-//                    [self.soldLabel setHidden:YES];
-//                    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
-//                    [self.soldCheckImageVoew setHidden:YES];
-                    
-                    [self.soldbannerButton setTitle:@"P U R C H A S E D" forState:UIControlStateNormal];
-                    [self.soldbannerButton setHidden:NO];
+                    //update banner at top of listing
+                    self.purchased = YES;
+                    self.sold = NO;
                 }
                 else{
-//                    self.soldLabel.text = @"S O L D";
-                    [self.soldbannerButton setHidden:NO];
-//                    [self.soldLabel setHidden:YES];
-//                    [self.soldCheckImageVoew setHidden:YES];
+                    //update banner at top of listing
+                    self.sold = YES;
+                    self.purchased = NO;
                 }
             }
             else if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"deleted"] && !self.fromOrder){
@@ -449,67 +496,13 @@
             }
             
             if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"proxy"]) {
+                self.proxyListing = YES;
+                
                 if ([[NSUserDefaults standardUserDefaults]boolForKey:@"seenProxyWarning"] != YES) {
                     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenProxyWarning"];
                     [self normalShowAlertWithTitle:@"Proxy Warning" andMsg:@"A proxy is when someone is willing to queue up for unreleased items on your behalf, it's like a preorder. Usually, you will pay someone proxying for you the retail price of the item plus a fee for the service.\n\nBe careful, always pay via PayPal Goods & Services and ask the user proxying for references so you can be sure they're legitimate. If a user claims they need the payment to be gifted in order to access the funds faster, it's better to decline and find someone that will accept PayPal Goods & Services.\n\nIf you're ever unsure about a proxy, message Support from Settings and we'll help you out 🤝"];
                 }
             }
-            
-//            //set title label
-//            NSString *titleString = [self.listingObject objectForKey:@"itemTitle"];
-//            NSString *titleLabelText = [NSString stringWithFormat:@"%@\n",titleString];
-//
-//            float price;
-//            NSString *priceText = @"";
-//
-//            //do we need to show native currency?
-//            if(self.buyButtonShowing) {
-//                self.currency = [self.listingObject objectForKey:@"currency"];
-//
-//                price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
-//
-//                if ([self.currency isEqualToString:@"GBP"]) {
-//                    self.currencySymbol = @"£";
-//                }
-//                else if ([self.currency isEqualToString:@"EUR"]) {
-//                    self.currencySymbol = @"€";
-//                }
-//                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-//                    self.currencySymbol = @"$";
-//                }
-//                priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
-//                self.purchasePrice = price;
-//
-////                [self.buyButton setTitle:[NSString stringWithFormat:@"Purchase for %@", priceText] forState:UIControlStateNormal];
-//            }
-//            else{
-//                self.currency = [[PFUser currentUser]objectForKey:@"currency"];
-//
-//                if ([self.currency isEqualToString:@"GBP"]) {
-//                    self.currencySymbol = @"£";
-//                }
-//                else if ([self.currency isEqualToString:@"EUR"]) {
-//                    self.currencySymbol = @"€";
-//                }
-//                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-//                    self.currencySymbol = @"$";
-//                }
-//
-//                price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
-//
-//            }
-//
-//            if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
-//                priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
-//
-//                //we have a price so add onto title label
-//                titleLabelText = [NSString stringWithFormat:@"%@%@", titleLabelText, priceText];
-//            }
-//
-//            //bold the title
-//            NSMutableAttributedString *titleTxt = [[NSMutableAttributedString alloc] initWithString:titleLabelText];
-//            [self modifyString:titleTxt setFontForText:titleString];
-//            self.itemTitle.attributedText = titleTxt;
             
             NSString *descLabelText = [NSString stringWithFormat:@"Details %@",[self.listingObject objectForKey:@"description"]];
             
@@ -548,9 +541,6 @@
                 else if([sizeLabel isEqualToString:@"Other"]){
                     sizeLabel = sizeLabel;
                 }
-//                else if ([self.listingObject objectForKey:@"sizeGender"] && [[self.listingObject objectForKey:@"category"]isEqualToString:@"footwear"]){
-//                    sizeLabel = [NSString stringWithFormat:@"Size %@ %@",[self.listingObject objectForKey:@"sizeGender"], [self.listingObject objectForKey:@"sizeLabel"]];
-//                }
                 else{
                 
                     if ([[self.listingObject objectForKey:@"sizeLabel"] isEqualToString:@"XXL"]){
@@ -588,19 +578,22 @@
             [self calcPostedDate];
             
             if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                self.isBuyer = NO;
                 
                 NSDate *safeDate = [self.listingObject objectForKey:@"nextBoostDate"];
+                                
+                //check if they have a free boost available
+                //if so we auto show the intro free boost pop up
+                //otherwise check if they're here from a boost push - in that case auto show the count down screen
                 
-                //seen boost intro?
-                //check if current time is after the next boost date first
-                if (([[NSDate date] compare:safeDate]==NSOrderedDescending) || self.fromBoostPush) {
+                if ([[NSDate date] compare:safeDate]==NSOrderedDescending) {
                     
                     //remove observers to stop sendbox appearing when shouldn't
                     [self removeSendBoxKeyboardObservers];
                     
                     NSLog(@"current time is after next boost date so boost is available or we're from a boost push");
                     
-                    if ((![[PFUser currentUser]objectForKey:@"seenBoostIntro"] || self.fromBoostPush) && [[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
+                    if (![[PFUser currentUser]objectForKey:@"seenBoostIntro"] && [[self.listingObject objectForKey:@"status"]isEqualToString:@"live"]) {
                         [[PFUser currentUser] setObject:@"YES" forKey:@"seenBoostIntro"];
                         [[PFUser currentUser]saveInBackground];
                         
@@ -609,6 +602,11 @@
                     
                     [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
                     [self.listingObject saveInBackground];
+                }
+                else if (self.fromBoostPush){
+                    //this is if user has seen boost push (in/out of app) and free boost is not available yet
+                    NSLog(@"from boost push");
+                    [self showCountdownBoostViewWithBg:YES];
                 }
                 
                 if (![[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]) {
@@ -624,6 +622,7 @@
                 [self.reportButton setImage:[UIImage imageNamed:@"soldButtonFill"] forState:UIControlStateSelected];
                 
                 if (![[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
+                    
                     [self.reportButton setSelected:NO];
                     [self.reportLabel setTitle:@"M A R K  A S\nS O L D" forState:UIControlStateNormal];
                     
@@ -657,16 +656,18 @@
                 }
             }
             else{
+                self.isBuyer = YES;
+
                 //only show like tutorial if user isn't seller
-                if (![[PFUser currentUser]objectForKey:@"seenBumpingIntro"]) {
-                    //show bumping tutorial
-                    [self hideBarButton];
-                    
-                    BumpingIntroVC *vc = [[BumpingIntroVC alloc]init];
-                    vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
-                    vc.delegate = self;
-                    [self presentViewController:vc animated:YES completion:nil];
-                }
+//                if (![[PFUser currentUser]objectForKey:@"seenBumpingIntro"]) {
+//                    //show bumping tutorial
+//                    [self hideBarButton];
+//
+//                    BumpingIntroVC *vc = [[BumpingIntroVC alloc]init];
+//                    vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
+//                    vc.delegate = self;
+//                    [self presentViewController:vc animated:YES completion:nil];
+//                }
                 
                 //not the seller
                 [self.listingObject incrementKey:@"views"];
@@ -680,6 +681,12 @@
                     //disable report button
                     [self.reportButton setEnabled:NO];
                     [self.reportLabel setTitle:@"R E P O R T E D" forState:UIControlStateNormal];
+                }
+                else if(self.bumpListing){
+                    [self.reportButton setEnabled:NO];
+                }
+                else if(self.fromReviews || self.fromOrder){
+                    [self.reportButton setEnabled:NO];
                 }
                 else if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"]) {
                     [self.reportLabel setTitle:@"B A N" forState:UIControlStateNormal];
@@ -808,6 +815,12 @@
     self.introBoostView = nil;
     self.counterBoostView = nil;
     self.successBoostView = nil;
+    
+    //remove observers
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"boostPurchased" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseStarted" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseDeferred" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseError" object:nil];
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -819,11 +832,6 @@
     [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
     [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center removeObserver:self name:@"showSendBox" object:nil]; /////adding observers to for sale now for screenshots
-    
-    if(!self.boostMode){
-        [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
-        [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
-    }
     
     [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center addObserver:self selector:@selector(sendFBPressed) name:@"showSendBox" object:nil];
@@ -843,22 +851,22 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 4;
+    return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0){
-        return 1;
+        return 6;
     }
-    else if (section ==1){
-        return 3;
-    }
-    else if (section ==2){
-        return 1;
-    }
-    else if (section ==3){
-        return 1;
-    }
+//    else if (section ==1){
+//        return 3;
+//    }
+//    else if (section ==2){
+//        return 1;
+//    }
+//    else if (section ==3){
+//        return 1;
+//    }
     return 1;
 }
 
@@ -868,28 +876,43 @@
         if (indexPath.row == 0) {
             return self.carouselCell;
         }
-    }
-    else if (indexPath.section == 1){
-        if (indexPath.row == 0) {
+        else if (indexPath.row == 1) {
             return self.infoCell;
         }
-        else if (indexPath.row == 1){
+        else if (indexPath.row == 2){
             return self.descriptionCell;
         }
-        else if (indexPath.row == 2){
+        else if (indexPath.row == 3){
             return self.extraInfoCell;
         }
-    }
-    else if (indexPath.section == 2){
-        if (indexPath.row == 0) {
+        else if (indexPath.row == 4) {
             return self.sendCell;
         }
-    }
-    else if (indexPath.section == 3){
-        if (indexPath.row == 0) {
+        else if (indexPath.row == 5) {
             return self.spaceCell;
         }
     }
+//    else if (indexPath.section == 1){
+//        if (indexPath.row == 0) {
+//            return self.infoCell;
+//        }
+//        else if (indexPath.row == 1){
+//            return self.descriptionCell;
+//        }
+//        else if (indexPath.row == 2){
+//            return self.extraInfoCell;
+//        }
+//    }
+//    else if (indexPath.section == 2){
+//        if (indexPath.row == 0) {
+//            return self.sendCell;
+//        }
+//    }
+//    else if (indexPath.section == 3){
+//        if (indexPath.row == 0) {
+//            return self.spaceCell;
+//        }
+//    }
     return nil;
 }
 
@@ -899,28 +922,43 @@
         if (indexPath.row == 0) {
             return 399;
         }
-    }
-    else if (indexPath.section == 1){
-        if (indexPath.row == 0) {
+        else if (indexPath.row == 1) {
             return 101;
         }
-        else if (indexPath.row == 1){
+        else if (indexPath.row == 2){
             return 114;
         }
-        else if (indexPath.row == 1){
+        else if (indexPath.row == 3){
             return 110;
         }
-    }
-    else if (indexPath.section == 2){
-        if (indexPath.row == 0) {
+        else if (indexPath.row == 4) {
             return 143;
         }
-    }
-    else if (indexPath.section == 3){
-        if (indexPath.row == 0) {
+        else if (indexPath.row == 5) {
             return 90;
         }
     }
+//    else if (indexPath.section == 1){
+//        if (indexPath.row == 0) {
+//            return 101;
+//        }
+//        else if (indexPath.row == 1){
+//            return 114;
+//        }
+//        else if (indexPath.row == 1){
+//            return 110;
+//        }
+//    }
+//    else if (indexPath.section == 2){
+//        if (indexPath.row == 0) {
+//            return 143;
+//        }
+//    }
+//    else if (indexPath.section == 3){
+//        if (indexPath.row == 0) {
+//            return 90;
+//        }
+//    }
     return 44;
 }
 
@@ -945,10 +983,65 @@
 //hide the first header in table view
 - (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    if(section == 1){
-        return 20.0f;
+    if(section == 0){
+        return 50.0f;
     }
     return 0.0f;
+}
+
+-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+    
+    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+    
+    if (self.purchased || self.sold) {
+        
+        view.backgroundColor = [UIColor colorWithRed:0.31 green:0.89 blue:0.76 alpha:0.8];
+        
+        UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 200, 50)];
+        label.textAlignment = NSTextAlignmentCenter;
+        
+        if (self.purchased) {
+            label.text = @"Item Purchased";
+        }
+        else{
+            label.text = @"Item Sold";
+        }
+        [label setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:13]];
+        label.numberOfLines = 1;
+        label.textColor = [UIColor whiteColor];
+        label.center = view.center;
+        [view addSubview:label];
+        
+    }
+    else{
+        view.backgroundColor = [UIColor colorWithRed:0.00 green:0.00 blue:0.00 alpha:0.8];
+        
+        UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(([UIApplication sharedApplication].keyWindow.frame.size.width/2) - 95, 0, 200, 50)];
+        label.textAlignment = NSTextAlignmentCenter;
+        
+        if (self.isBuyer) {
+            label.text = @"Buyer Protection Guarantee";
+        }
+        else{
+            label.text = @"Seller Protection Guarantee";
+        }
+        
+        [label setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:13]];
+        label.numberOfLines = 1;
+        label.textColor = [UIColor whiteColor];
+        [view addSubview:label];
+        
+        UIImageView *shieldView = [[UIImageView alloc] initWithFrame:CGRectMake(label.frame.origin.x-5,18, 13, 15)];
+        [shieldView setImage:[UIImage imageNamed:@"shieldIcon"]];
+        [view addSubview:shieldView];
+        
+        UIButton *headerButton = [[UIButton alloc] initWithFrame:view.frame];
+        [headerButton addTarget:self action:@selector(headerTapped) forControlEvents:UIControlEventTouchUpInside];
+        [view addSubview:headerButton];
+
+    }
+
+    return view;
 }
 
 //-(NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section{
@@ -959,9 +1052,12 @@
 //    return 0.0f;
 //}
 
-- (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
-    UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
-    header.contentView.backgroundColor = [UIColor colorWithRed:0.96 green:0.97 blue:0.99 alpha:1.0];
+//- (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
+//    UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
+////    header.contentView.backgroundColor = [UIColor colorWithRed:0.96 green:0.97 blue:0.99 alpha:1.0];
+//
+//    header.contentView.backgroundColor = [UIColor blackColor];
+
 
 //    if (self.hasMultiple) {
 //        header.textLabel.textColor = [UIColor grayColor];
@@ -972,7 +1068,7 @@
 //            header.textLabel.text =  [NSString stringWithFormat:@" %@ Available", [self.listingObject objectForKey:@"quantity"]];
 //        }
 //    }
-}
+//}
 //
 //-(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
 //
@@ -1070,7 +1166,6 @@
                                               @"listingId":self.listingObject.objectId,
                                               @"reason":reason
                                               }];
-            
         }
         else{
             NSLog(@"mod delete error %@", error);
@@ -1078,15 +1173,385 @@
     }];
 }
 
+//-(void)showShareSheet{
+//
+//    [self hideBarButton];
+//
+//    NSMutableArray *items = [NSMutableArray new];
+//    [items addObject:[NSString stringWithFormat:@"For sale on BUMP 🏷\n\n'%@'\n\nhttps://sobump.com/p?selling=%@",[self.listingObject objectForKey:@"itemTitle" ],self.listingObject.objectId]];
+//
+////    CustomCopyActivity *customCopyAction = [[CustomCopyActivity alloc]init];
+////    customCopyAction.delegate = self;
+////
+////    NSArray *customAs = @[customCopyAction];
+//
+//    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+//
+//    activityController.excludedActivityTypes = @[UIActivityTypePostToWeibo, UIActivityTypeAssignToContact, UIActivityTypePrint, UIActivityTypeSaveToCameraRoll];
+//
+//    [self presentViewController:activityController animated:YES completion:nil];
+//
+//    [activityController setCompletionWithItemsHandler:
+//     ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+//         [self showBarButton];
+//     }];
+//}
+
 -(void)showAlertView{
+    
     [self hideBarButton];
+    
+    if (self.lowerSharePressed) {
+        self.lowerSharePressed = NO;
+        [Answers logCustomEventWithName:@"Listing Share Pressed"
+                       customAttributes:@{
+                                          @"button":@"bottom"
+                                          }];
+    }
+    else{
+        [Answers logCustomEventWithName:@"Listing Share Pressed"
+                       customAttributes:@{
+                                          @"button":@"top"
+                                          }];
+    }
+    
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         [self showBarButton];
     }]];
+
+    //Share on Whatsapp
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share on Whatsapp" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Shared on Whatsapp"
+                       customAttributes:@{
+                                          @"link":@"forsale listing"
+                                          }];
+        
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"Tapped Share" properties:@{
+                                                     @"channel":@"whatsapp",
+                                                     @"source":@"button",
+                                                     @"content":@"listing"
+                                                     }];
+        
+        NSString *routeString = [NSString stringWithFormat:@"selling/%@",self.listingObject.objectId];
+        BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.listingObject.objectId];
+        BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+        linkProperties.feature = @"sharingListing";
+        linkProperties.channel = @"whatsapp";
+        [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+        [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+        
+        [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+            if (!error) {
+                NSLog(@"whatsapp share link %@", url);
+
+                NSString * msg = [NSString stringWithFormat:@"'%@' for sale on BUMP %@", [self.listingObject objectForKey:@"itemTitle"],url];
+                
+                msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+                msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+                msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+                msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+                msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+                msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+                msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+                
+                NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+                NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+                
+                if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                    [self showBarButton]; //trigger this here so if user comes back and searched this item, appear delegate method wont fire and bar button still hidden
+                    [[UIApplication sharedApplication] openURL: whatsappURL];
+                }
+                
+            }
+            else{
+                [Answers logCustomEventWithName:@"Whatsapp Link Error"
+                               customAttributes:@{
+                                                  @"link":@"forsale listing",
+                                                  @"error":error.description
+                                                  }];
+                
+                NSString *urlString = [NSString stringWithFormat:@"https://sobump.com/p?selling=%@",self.listingObject.objectId];
+                NSString * msg = [NSString stringWithFormat:@"'%@' for sale on BUMP %@", [self.listingObject objectForKey:@"itemTitle"],urlString];
+                
+                msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+                msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+                msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+                msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+                msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+                msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+                msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+                
+                NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+                NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+                
+                if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                    [self showBarButton]; //trigger this here so if user comes back and searched this item, appear delegate method wont fire and bar button still hidden
+                    [[UIApplication sharedApplication] openURL: whatsappURL];
+                }
+            }
+        }];
+    }]];
     
-    if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"] && ![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+    //Share on Messenger
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share on Messenger" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Shared on Messenger"
+                       customAttributes:@{
+                                          @"link":@"forsale listing"
+                                          }];
+        
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"Tapped Share" properties:@{
+                                                     @"channel":@"messenger",
+                                                     @"source":@"button",
+                                                     @"content":@"listing"
+                                                     }];
+        
+        NSString *routeString = [NSString stringWithFormat:@"selling/%@",self.listingObject.objectId];
+        BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.listingObject.objectId];
+        BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+        linkProperties.feature = @"sharingListing";
+        linkProperties.channel = @"messenger";
+        [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+        [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+        
+        [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+            if (!error) {
+                NSLog(@"messenger share link %@", url);
+                NSString *urlString = [NSString stringWithFormat:@"fb-messenger://share/?link=%@",url];
+                NSURL *messengerURL = [NSURL URLWithString:urlString];
+                if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                    [self showBarButton]; //trigger this here so if user comes back and searched this item, appear delegate method wont fire and bar button still hidden
+                    [[UIApplication sharedApplication] openURL: messengerURL];
+                }
+
+            }
+            else{
+                [Answers logCustomEventWithName:@"Messenger Link Error"
+                               customAttributes:@{
+                                                  @"link":@"forsale listing",
+                                                  @"error":error.description
+                                                  }];
+                NSString *urlString = [NSString stringWithFormat:@"fb-messenger://share/?link=https://sobump.com/p?selling=%@",self.listingObject.objectId];
+                NSURL *messengerURL = [NSURL URLWithString:urlString];
+                if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                    [self showBarButton]; //trigger this here so if user comes back and searched this item, appear delegate method wont fire and bar button still hidden
+                    [[UIApplication sharedApplication] openURL: messengerURL];
+                }
+            }
+        }];
+    }]];
+    
+    //Share on BUMP
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share on BUMP" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"Tapped Share" properties:@{
+                                                     @"channel":@"bump",
+                                                     @"source":@"button",
+                                                     @"content":@"listing"
+                                                     }];
+        
+        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+        [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
+        [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
+        
+        [self showBarButton];
+        [self sendFBPressed];
+    }]];
+    
+    //Copy Link
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Link" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"Tapped Share" properties:@{
+                                                     @"channel":@"link",
+                                                     @"source":@"button",
+                                                     @"content":@"listing"
+                                                     }];
+
+        NSString *routeString = [NSString stringWithFormat:@"selling/%@",self.listingObject.objectId];
+        BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.listingObject.objectId];
+        BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+        linkProperties.feature = @"sharingListing";
+        linkProperties.channel = @"link";
+        [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+        [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+
+        [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+            if (!error) {
+                NSLog(@"copied link %@", url);
+                [Answers logCustomEventWithName:@"Copied Link"
+                               customAttributes:@{
+                                                  @"link":@"forsale listing",
+                                                  @"error":@NO
+                                                  }];
+
+                UIPasteboard *pb = [UIPasteboard generalPasteboard];
+                [pb setString:url];
+            }
+            else{
+                NSLog(@"error copying link %@", error);
+                [Answers logCustomEventWithName:@"Copied Link"
+                               customAttributes:@{
+                                                  @"link":@"forsale listing",
+                                                  @"error":@YES
+                                                  }];
+                
+                NSString *urlString = [NSString stringWithFormat:@"https://sobump.com/p?selling=%@",self.listingObject.objectId];
+                UIPasteboard *pb = [UIPasteboard generalPasteboard];
+                [pb setString:urlString];
+            }
+        }];
+        
+        //show HUD
+        [self showHUDInMode:@"copy"];
+        
+        double delayInSeconds = 1.0; // number of seconds to wait
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            [self hideHUD];
+        });
+        [self showBarButton];
+    }]];
+    
+    //General Share
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"More" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [Answers logCustomEventWithName:@"Shared item"
+                       customAttributes:@{
+                                          @"link":@"forsale listing"
+                                          }];
+        
+        //remove observers so we don't trigger share on bump dialog
+        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+        [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+        [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+        
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        
+        NSMutableArray *items = [NSMutableArray new];
+        
+        NSString *routeString = [NSString stringWithFormat:@"selling/%@",self.listingObject.objectId];
+        BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.listingObject.objectId];
+        BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+        linkProperties.feature = @"sharingListing";
+        linkProperties.channel = @"more";
+        [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+        [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+        
+        [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+            if (!error) {
+                NSLog(@"more link %@", url);
+                
+                [items addObject:[NSString stringWithFormat:@"For sale on BUMP 🏷\n\n'%@'\n\n%@",[self.listingObject objectForKey:@"itemTitle" ],url]];
+                UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+                [self presentViewController:activityController animated:YES completion:nil];
+                
+                [activityController setCompletionWithItemsHandler:
+                 ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+                     [self showBarButton];
+                     
+                     if (activityType) {
+                         [mixpanel track:@"Tapped Share" properties:@{
+                                                                      @"channel":activityType,
+                                                                      @"source":@"button",
+                                                                      @"content":@"listing",
+                                                                      @"more":@"YES"
+                                                                      }];
+                     }
+                     else{
+                         [mixpanel track:@"Tapped Share" properties:@{
+                                                                      @"channel":@"more",
+                                                                      @"source":@"button",
+                                                                      @"content":@"listing"
+                                                                      }];
+                     }
+
+                 }];
+
+            }
+            else{
+                NSLog(@"error w/ more link %@", error);
+                [Answers logCustomEventWithName:@"More Share Link Error"
+                               customAttributes:@{
+                                                  @"link":@"forsale listing",
+                                                  @"error":error.description
+                                                  }];
+                
+                [items addObject:[NSString stringWithFormat:@"For sale on BUMP 🏷\n\n'%@'\n\nhttps://sobump.com/p?selling=%@",[self.listingObject objectForKey:@"itemTitle" ],self.listingObject.objectId]];
+                UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+                [self presentViewController:activityController animated:YES completion:nil];
+                
+                [activityController setCompletionWithItemsHandler:
+                 ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+                     [self showBarButton];
+                     
+                     if (activityType) {
+                         [mixpanel track:@"Tapped Share" properties:@{
+                                                                      @"channel":activityType,
+                                                                      @"source":@"button",
+                                                                      @"content":@"listing",
+                                                                      @"more":@"YES"
+                                                                      }];
+                     }
+                     else{
+                         [mixpanel track:@"Tapped Share" properties:@{
+                                                                      @"channel":@"more",
+                                                                      @"source":@"button",
+                                                                      @"content":@"listing"
+                                                                      }];
+                     }
+                 }];
+
+            }
+        }];
+    }]];
+    
+    if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+        
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
+            
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self showBarButton];
+            }]];
+            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+                [self.listingObject setObject:@"deleted" forKey:@"status"];
+                [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
+                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                    if (succeeded) {
+                        
+                        //check if this listing has a reminder setup and cancel if set
+                        NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
+                        for(UILocalNotification *notification in notificationArray){
+                            if ([[notification userInfo]valueForKey:@"listingId"]) {
+                                NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
+                                if ([listingId isEqualToString:self.listingObject.objectId]) {
+                                    // delete this notification
+                                    [[UIApplication sharedApplication] cancelLocalNotification:notification];
+                                }
+                            }
+                        }
+                        
+                        //decrement forSalePostNumber
+                        if (![[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] && ![[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
+                            [[PFUser currentUser]incrementKey:@"forSalePostNumber" byAmount:@-1];
+                            [[PFUser currentUser] saveInBackground];
+                        }
+                        
+                        [self.delegate deletedItem];
+                        [self.navigationController popViewControllerAnimated:YES];
+                    }
+                }];
+            }]];
+            
+            [self presentViewController:alertView animated:YES completion:nil];
+        }]];
+    }
+    
+    if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"] && ![self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && !self.bumpListing) {
         
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete Listing (without banning)" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete listing" message:@"Why would you like to delete this listing? (reason will be sent to the user)" preferredStyle:UIAlertControllerStyleAlert];
@@ -1140,10 +1605,23 @@
                 [self deleteListingForReason:@"Spamming"];
             }]];
             
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Tagged Images Needed" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self showBarButton];
-                [self deleteListingForReason:@"Please add tagged images to your listing. Visit https://help.sobump.com for more info"];
-            }]];
+            if (!self.proxyListing) {
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Stock Images" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self showBarButton];
+                    [self deleteListingForReason:@"Stock Images"];
+                }]];
+                
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Needs Confirmation email with name visible" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self showBarButton];
+                    [self deleteListingForReason:@"Confirmation email required with profile name visible"];
+                }]];
+            }
+            else{
+                [alertView addAction:[UIAlertAction actionWithTitle:@"Not a Proxy" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self showBarButton];
+                    [self deleteListingForReason:@"Not a Proxy"];
+                }]];
+            }
             
             [alertView addAction:[UIAlertAction actionWithTitle:@"Other" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
                 [self enterDeleteComment];
@@ -1153,133 +1631,24 @@
             
         }]];
     }
-    if ([[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                [self showBarButton];
-            }]];
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-                [self.listingObject setObject:@"deleted" forKey:@"status"];
-                [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
-                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-                        
-                        //check if this listing has a reminder setup and cancel if set
-                        NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
-                        for(UILocalNotification *notification in notificationArray){
-                            if ([[notification userInfo]valueForKey:@"listingId"]) {
-                                NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
-                                if ([listingId isEqualToString:self.listingObject.objectId]) {
-                                    // delete this notification
-                                    [[UIApplication sharedApplication] cancelLocalNotification:notification];
-                                }
-                            }
-                        }
-                        
-                        //decrement forSalePostNumber
-                        if (![[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] && ![[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] && ![[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
-                            [[PFUser currentUser]incrementKey:@"forSalePostNumber" byAmount:@-1];
-                            [[PFUser currentUser] saveInBackground];
-                        }
-                        
-                        [self.delegate deletedItem];
-                        [self.navigationController popViewControllerAnimated:YES];
-                    }
-                }];
-            }]];
-            
-            [self presentViewController:alertView animated:YES completion:nil];
-        }]];
-    }
-    
-    
-    else if ([self.seller.objectId isEqualToString:[PFUser currentUser].objectId] || [[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
- 
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-            UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Delete" message:@"Are you sure you want to delete your listing?" preferredStyle:UIAlertControllerStyleAlert];
-            
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                [self showBarButton];
-            }]];
-            [alertView addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-                [self.listingObject setObject:@"deleted" forKey:@"status"];
-                [self.listingObject setObject:@"NO" forKey:@"boostReminderSet"];
-                [self.listingObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-                    if (succeeded) {
-                        
-                        //check if this listing has a reminder setup and cancel if set
-                        NSArray *notificationArray = [[UIApplication sharedApplication] scheduledLocalNotifications];
-                        for(UILocalNotification *notification in notificationArray){
-                            if ([[notification userInfo]valueForKey:@"listingId"]) {
-                                    NSString *listingId = [[notification userInfo]valueForKey:@"listingId"];
-                                    if ([listingId isEqualToString:self.listingObject.objectId]) {
-                                        // delete this notification
-                                        [[UIApplication sharedApplication] cancelLocalNotification:notification];
-                                    }
-                                }
-                        }
-                        
-                        //decrement forSalePostNumber
-                        if (![[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"] && ![[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"]) {
-                            [[PFUser currentUser]incrementKey:@"forSalePostNumber" byAmount:@-1];
-                            [[PFUser currentUser] saveInBackground];
-                        }
-                        
-                        [self.delegate deletedItem];
-                        [self.navigationController popViewControllerAnimated:YES];
-                    }
-                }];
-            }]];
-            
-            [self presentViewController:alertView animated:YES completion:nil];
-        }]];
-    }
-    
-    //Share
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share Listing" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [Answers logCustomEventWithName:@"Shared item"
-                       customAttributes:@{
-                                          @"link":@"forsale listing"
-                                          }];
-        
-        
-        NSMutableArray *items = [NSMutableArray new];
-        [items addObject:[NSString stringWithFormat:@"For sale on BUMP 🏷\n\n'%@'\n\nhttp://sobump.com/p?selling=%@",[self.listingObject objectForKey:@"itemTitle" ],self.listingObject.objectId]];
-        UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
-        [self presentViewController:activityController animated:YES completion:nil];
-        
-        [activityController setCompletionWithItemsHandler:
-         ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
-             [self showBarButton];
-         }];
-    }]];
-    
-    //Copy Link
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Link" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [Answers logCustomEventWithName:@"Copied Link"
-                       customAttributes:@{
-                                          @"link":@"forsale listing"
-                                          }];
-        
-        NSString *urlString = [NSString stringWithFormat:@"http://sobump.com/p?selling=%@",self.listingObject.objectId];
-        UIPasteboard *pb = [UIPasteboard generalPasteboard];
-        [pb setString:urlString];
-        
-        //show HUD
 
-        [self showHUDInMode:@"copy"];
-        
-        double delayInSeconds = 1.0; // number of seconds to wait
-        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-            [self hideHUD];
-        });
-        [self showBarButton];
-    }]];
-    
     [self presentViewController:actionSheet animated:YES completion:nil];
+
+}
+
+-(void)showIAPHUD{
+    self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+    self.hud.square = YES;
+    self.hud.mode = MBProgressHUDModeCustomView;
+    self.hud.customView = self.spinner;
+    [self.spinner startAnimating];
+    
+    if (self.IAPTimer) {
+        [self.IAPTimer invalidate];
+    }
+
+    //create a timer so user doesn't get stuck trying to buy something
+    self.IAPTimer = [NSTimer scheduledTimerWithTimeInterval:30.0 target:self selector:@selector(stopPurchase) userInfo:nil repeats:NO];
 }
 
 -(void)showHUDInMode:(NSString *)mode{
@@ -1304,7 +1673,19 @@
     }
 }
 
+-(void)stopPurchase{
+    //just hide the hud to free up UI for user to do other stuff
+    NSLog(@"stop purchase called");
+    [self hideHUD];
+}
+
 -(void)hideHUD{
+    
+    if (self.IAPTimer) {
+        [self.IAPTimer invalidate];
+        self.IAPTimer = nil;
+    }
+    
     dispatch_async(dispatch_get_main_queue(), ^{
         [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
     });
@@ -1332,6 +1713,9 @@
     
     self.anyButtonPressed = YES;
     vc.delegate = self;
+    
+    //we track where the sale came from - home/message/search
+    vc.source = self.source;
 
     if (self.tabBarController.tabBar.frame.size.height == 0) {
         [self hideBarButton];
@@ -1450,6 +1834,7 @@
             CreateForSaleListing *vc = [[CreateForSaleListing alloc]init];
             vc.editMode = YES;
             vc.listing = self.listingObject;
+            vc.delegate = self;
             NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
             [self presentViewController:nav animated:YES completion:^{
                 [self.messageButton setEnabled:YES];
@@ -1528,6 +1913,11 @@
                 
                 return;
             }
+            
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"Created Convo" properties:@{
+                                                          @"source":@"listing"
+                                                          }];
             
             //create a new convo and goto it
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
@@ -1633,6 +2023,11 @@
                      }];
 }
 
+-(void)showBarButtonFromCreate{
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"backFromCreate" object:nil];
+    [self showBarButton];
+}
+
 -(void)showBarButton{
     NSLog(@"SHOW BAR BUTTON");
     self.buttonsShowing = YES;
@@ -1699,6 +2094,7 @@
 
 -(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
 
+    
     UIAlertController *alertView = [UIAlertController alertControllerWithTitle:title message:msg preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -1734,9 +2130,15 @@
     }
     else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [self.seller.objectId isEqualToString:[PFUser currentUser].objectId]){
         //don't let user edit a listing that they've sold
+        
+        //set title label
+        [self setupItemTitle];
     }
     else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"] && [[self.listingObject objectForKey:@"purchased"]isEqualToString:@"YES"]){
         //don't let user message someone about a listing thats they've sold
+        
+        //set title label
+        [self setupItemTitle];
     }
     else if([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]){
         //just show message button if item has been sold
@@ -1744,12 +2146,19 @@
     }
     else if(self.fromOrder){
         //don't let user message the seller if they're viewing from an order summary
+        
+        //set title label
+        [self setupItemTitle];
     }
     else{
         //always show the buy button
         if ([[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
             [self setupMessageBarButton];
             self.canPurchase = NO;
+        }
+        else if(self.bumpListing){
+            [self setupMessageBarButton];
+            self.canPurchase = YES;
         }
         else{
             [self setupTwoBarButtons];
@@ -1781,6 +2190,8 @@
 }
 
 -(void)setupOrderBarButton{
+    self.messageButton = nil;
+
     self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
     [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
     [self.messageButton setTitle:@"V I E W  O R D E R" forState:UIControlStateNormal];
@@ -1791,51 +2202,31 @@
 }
 
 -(void)setupMessageBarButton{
+    self.messageButton = nil;
+    
     self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
     [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
-    [self.messageButton setTitle:@"M E S S A G E" forState:UIControlStateNormal];
+    
+    if (self.bumpListing) {
+        [self.messageButton setTitle:@"B U Y" forState:UIControlStateNormal];
+        [self.messageButton addTarget:self action:@selector(buyButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+    }
+    else{
+        [self.messageButton setTitle:@"M E S S A G E" forState:UIControlStateNormal];
+        [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+    }
+    
     [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:0.9]];
-    [self.messageButton addTarget:self action:@selector(messageBarButtonPressed) forControlEvents:UIControlEventTouchUpInside];
     self.messageButton.alpha = 0.0f;
     [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
     
     //set title label
-    NSString *titleString = [self.listingObject objectForKey:@"itemTitle"];
-    NSString *titleLabelText = [NSString stringWithFormat:@"%@\n",titleString];
-
-    float price;
-    NSString *priceText = @"";
-
-    //show in buyer's currency
-    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
-    
-    if ([self.currency isEqualToString:@"GBP"]) {
-        self.currencySymbol = @"£";
-    }
-    else if ([self.currency isEqualToString:@"EUR"]) {
-        self.currencySymbol = @"€";
-    }
-    else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-        self.currencySymbol = @"$";
-    }
-    
-    price = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
-
-    if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
-        priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
-
-        //we have a price so add onto title label
-        titleLabelText = [NSString stringWithFormat:@"%@%@", titleLabelText, priceText];
-    }
-
-    //bold the title
-    NSMutableAttributedString *titleTxt = [[NSMutableAttributedString alloc] initWithString:titleLabelText];
-    [self modifyString:titleTxt setFontForText:titleString];
-    self.itemTitle.attributedText = titleTxt;
-    
+    [self setupItemTitle];
     
 }
 -(void)setupSendBarButton{
+    self.longSendButton = nil;
+
     self.longSendButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
     [self.longSendButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:12]];
     [self.longSendButton setBackgroundColor:[UIColor colorWithRed:0.24 green:0.59 blue:1.00 alpha:0.9]];
@@ -1848,6 +2239,8 @@
     self.buyButtonShowing = YES;
     
     //setup message button
+    self.messageButton = nil;
+
     self.messageButton = [[UIButton alloc]initWithFrame:CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width/2, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width/2, 50)];
     [self.messageButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:11]];
     [self.messageButton setBackgroundColor:[UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:0.9]];
@@ -1857,6 +2250,8 @@
     [[UIApplication sharedApplication].keyWindow addSubview:self.messageButton];
     
     //setup buy button
+    self.buyButton = nil;
+
     self.buyButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-(50 +self.tabBarHeightInt), [UIApplication sharedApplication].keyWindow.frame.size.width/2, 50)];
     [self.buyButton.titleLabel setFont:[UIFont fontWithName:@"PingFangSC-Semibold" size:11]];
     [self.buyButton setTitle:@"B U Y" forState:UIControlStateNormal];
@@ -1868,12 +2263,19 @@
     [[UIApplication sharedApplication].keyWindow addSubview:self.buyButton];
 
     //create separating view
+    self.buttonLine = nil;
+
     self.buttonLine = [[UIView alloc]initWithFrame:CGRectMake(self.buyButton.frame.size.width-1, self.buyButton.frame.origin.y, 2, self.buyButton.frame.size.height)];
     [self.buttonLine setBackgroundColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:0.9]];
     self.buttonLine.alpha = 0.0f;
     
     [[UIApplication sharedApplication].keyWindow addSubview:self.buttonLine];
     
+    //set title label
+    [self setupItemTitle];
+}
+
+-(void)setupItemTitle{
     //set title label
     NSString *titleString = [self.listingObject objectForKey:@"itemTitle"];
     NSString *titleLabelText = [NSString stringWithFormat:@"%@\n",titleString];
@@ -1898,9 +2300,39 @@
     priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
     self.purchasePrice = price;
     
+//    NSString *estimatePriceString = @"";
+    
     if (price != 0.00 && ![[self.listingObject objectForKey:@"category"]isEqualToString:@"Proxy"]) {
-        priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
         
+        //check if user's currency is different to listing's. If so we should show an estimated price in their currency
+        
+//        if (![[[PFUser currentUser]objectForKey:@"currency"] isEqualToString:self.currency]) {
+//
+//            NSString *userCurrency = [[PFUser currentUser]objectForKey:@"currency"];
+//            float estimatePriceFloat = [[self.listingObject objectForKey:[NSString stringWithFormat:@"salePrice%@", userCurrency]]floatValue];
+//            estimatePriceString = [NSString stringWithFormat:@"%.2f",estimatePriceFloat];
+//            NSString *userCurrencySymbol = @"";
+//
+//            if ([userCurrency isEqualToString:@"GBP"]) {
+//                userCurrencySymbol = @"£";
+//            }
+//            else if ([userCurrency isEqualToString:@"EUR"]) {
+//                userCurrencySymbol = @"€";
+//            }
+//            else if ([userCurrency isEqualToString:@"USD"] || [userCurrency isEqualToString:@"AUD"]) {
+//                userCurrencySymbol = @"$";
+//            }
+//
+//            estimatePriceString = [NSString stringWithFormat:@"(%@%@)", userCurrencySymbol, estimatePriceString];
+//            priceText = [NSString stringWithFormat:@"%@%.2f %@",self.currencySymbol ,price, estimatePriceString];
+//
+//        }
+//        else{
+//            priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+//        }
+        
+        priceText = [NSString stringWithFormat:@"%@%.2f",self.currencySymbol ,price];
+
         //we have a price so add onto title label
         titleLabelText = [NSString stringWithFormat:@"%@%@", titleLabelText, priceText];
     }
@@ -1908,8 +2340,8 @@
     //bold the title
     NSMutableAttributedString *titleTxt = [[NSMutableAttributedString alloc] initWithString:titleLabelText];
     [self modifyString:titleTxt setFontForText:titleString];
+//    [self modifyString:titleTxt setColorForText:estimatePriceString withColor:[UIColor lightGrayColor]];
     self.itemTitle.attributedText = titleTxt;
-
 }
 
 #pragma marl - send box delegates
@@ -1972,13 +2404,18 @@
             
             if([[NSDate date] compare:self.nextBoostDate]==NSOrderedAscending){
                 //current time is before next safe boost time
-                //show countdown timer
+                //show wait boost screen
                 [self showCountdownBoostViewWithBg:YES];
             }
             else{
                 //let user boost
-                [self triggerBoost];
-                [self showSuccessBoostViewWithBg:YES];
+//                [self triggerBoost];
+//                [self showSuccessBoostViewWithBg:YES];
+                
+                //we want user to read they can pay if needs be for more boosts
+                //instead of just boosting straight away
+                [self showIntroBoostViewWithBg:YES];
+
             }
         }
         else{
@@ -1987,18 +2424,13 @@
                 
                 [[PFUser currentUser] setObject:@"YES" forKey:@"seenBoostIntro"];
                 [[PFUser currentUser]saveInBackground];
-                
-                [self showIntroBoostViewWithBg:YES];
-            }
-            else{
-                //let user boost
-                [self triggerBoost];
-                [self showSuccessBoostViewWithBg:YES];
-            }
+            }            
+            [self showIntroBoostViewWithBg:YES];
         }
     }
     else{
-        [self sendFBPressed];
+        self.lowerSharePressed = YES;
+        [self showAlertView];
     }
 }
 
@@ -2396,6 +2828,8 @@
 }
 
 -(void)goneToBackground{
+    //invalidate timer
+    
     //block further keyboard changes
     self.changeKeyboard = NO;
     
@@ -2456,6 +2890,9 @@
     }
     [[PFUser currentUser]saveInBackground];
     
+    self.dropShowing = YES;
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"messageSentDropDown" object:selectedUser];
+    
     //possible convoIDs
     NSString *possID = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId,selectedUser.objectId];
     NSString *otherId = [NSString stringWithFormat:@"%@%@",selectedUser.objectId,[PFUser currentUser].objectId];
@@ -2472,7 +2909,6 @@
     [comboConvoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             //convo exists
-
             PFObject *convo = object;
             
             //send image
@@ -2558,9 +2994,7 @@
                             [convo incrementKey:@"totalMessages"];
                             [convo setObject:[NSDate date] forKey:@"lastSentDate"];
                             [convo saveInBackground];
-                            
-                            self.dropShowing = YES;
-                            [[NSNotificationCenter defaultCenter] postNotificationName:@"messageSentDropDown" object:selectedUser];
+                        
                         }
                         else{
                             NSLog(@"error sending message %@", error);
@@ -2576,10 +3010,14 @@
             convoObject[@"buyerUser"] = selectedUser;
             convoObject[@"convoId"] = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId,selectedUser.objectId];
             convoObject[@"profileConvo"] = @"YES";
+            
+            convoObject[@"buyerDeleted"] = @"NO";
+            convoObject[@"sellerDeleted"] = @"NO";
+
             convoObject[@"totalMessages"] = @0;
             convoObject[@"buyerUnseen"] = @0;
             convoObject[@"sellerUnseen"] = @0;
-            
+
             ///extra fields for new inbox logic
             convoObject[@"buyerUsername"] = selectedUser.username;
             convoObject[@"buyerId"] = selectedUser.objectId;
@@ -2683,10 +3121,14 @@
                             [convo setObject:lastSent forKey:@"lastSent"];
                             [convo incrementKey:@"totalMessages"];
                             [convo setObject:[NSDate date] forKey:@"lastSentDate"];
-                            [convo saveInBackground];
-                            
-                            self.dropShowing = YES;
-                            [[NSNotificationCenter defaultCenter] postNotificationName:@"messageSentDropDown" object:selectedUser];
+                            [convo saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
+                                if (succeeded) {
+                                    NSLog(@"saved convo!");
+                                }
+                                else{
+                                    NSLog(@"error saving convo: %@", error);
+                                }
+                            }];
                             
                             [self.listingObject incrementKey:@"shares"];
                             [self.listingObject saveInBackground];
@@ -2994,10 +3436,71 @@
                                       @"type":@"whatsapp"
                                       }];
 
-    NSURL *whatsappURL = [NSURL URLWithString:@"whatsapp://"];
-    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
-        [[UIApplication sharedApplication] openURL: whatsappURL];
-    }
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"Tapped Share" properties:@{
+                                                 @"channel":@"whatsapp",
+                                                 @"source":@"screenshot",
+                                                 @"content":@"listing"
+                                                 }];
+    
+    NSString *routeString = [NSString stringWithFormat:@"selling/%@",self.listingObject.objectId];
+    BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.listingObject.objectId];
+    BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+    linkProperties.feature = @"sharingListing";
+    linkProperties.channel = @"whatsapp";
+    [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+    [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+    
+    [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+        if (!error) {
+            NSLog(@"whatsapp share link %@", url);
+            
+            NSString * msg = [NSString stringWithFormat:@"'%@' for sale on BUMP %@", [self.listingObject objectForKey:@"itemTitle"],url];
+            
+            msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+            msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+            
+            NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+            NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+            
+            if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                [self showBarButton]; //trigger this here so if user comes back and searched this item, appear delegate method wont fire and bar button still hidden
+                [[UIApplication sharedApplication] openURL: whatsappURL];
+            }
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"Whatsapp Link Error"
+                           customAttributes:@{
+                                              @"link":@"forsale listing",
+                                              @"error":error.description
+                                              }];
+            
+            NSString *urlString = [NSString stringWithFormat:@"https://sobump.com/p?selling=%@",self.listingObject.objectId];
+            NSString * msg = [NSString stringWithFormat:@"'%@' for sale on BUMP %@", [self.listingObject objectForKey:@"itemTitle"],urlString];
+            
+            msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+            msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+            msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+            
+            NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+            NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+            
+            if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                [self showBarButton]; //trigger this here so if user comes back and searched this item, appear delegate method wont fire and bar button still hidden
+                [[UIApplication sharedApplication] openURL: whatsappURL];
+            }
+        }
+    }];
     
     [self hideInviteView];
 }
@@ -3007,10 +3510,46 @@
                    customAttributes:@{
                                       @"type":@"messenger"
                                       }];
-    NSURL *messengerURL = [NSURL URLWithString:@"fb-messenger://"];
-    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
-        [[UIApplication sharedApplication] openURL: messengerURL];
-    }
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"Tapped Share" properties:@{
+                                                 @"channel":@"messenger",
+                                                 @"source":@"screenshot",
+                                                 @"content":@"listing"
+                                                }];
+    
+    NSString *routeString = [NSString stringWithFormat:@"selling/%@",self.listingObject.objectId];
+    BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.listingObject.objectId];
+    BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+    linkProperties.feature = @"sharingListing";
+    linkProperties.channel = @"messenger";
+    [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+    [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+    
+    [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+        if (!error) {
+            NSLog(@"messenger share link %@", url);
+            NSString *urlString = [NSString stringWithFormat:@"fb-messenger://share/?link=%@",url];
+            NSURL *messengerURL = [NSURL URLWithString:urlString];
+            if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                [self showBarButton]; //trigger this here so if user comes back and searched this item, appear delegate method wont fire and bar button still hidden
+                [[UIApplication sharedApplication] openURL: messengerURL];
+            }
+            
+        }
+        else{
+            [Answers logCustomEventWithName:@"Messenger Link Error"
+                           customAttributes:@{
+                                              @"link":@"forsale listing",
+                                              @"error":error.description
+                                              }];
+            NSString *urlString = [NSString stringWithFormat:@"fb-messenger://share/?link=https://sobump.com/p?selling=%@",self.listingObject.objectId];
+            NSURL *messengerURL = [NSURL URLWithString:urlString];
+            if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                [self showBarButton]; //trigger this here so if user comes back and searched this item, appear delegate method wont fire and bar button still hidden
+                [[UIApplication sharedApplication] openURL: messengerURL];
+            }
+        }
+    }];
     
     [self hideInviteView];
 }
@@ -3030,6 +3569,9 @@
     activityController.completionWithItemsHandler = ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *error){
         //called when dismissed
         [self showBarButton];
+        
+        NSLog(@"activity type: %@", activityType);
+
     };
     
     [self presentViewController:activityController animated:YES completion:nil];
@@ -3072,7 +3614,7 @@
     NSLog(@"switching");
     
     self.anyButtonPressed = YES;
-
+    
     UIViewController *viewController = [note object];
     if ([viewController isKindOfClass:[NavigationController class]]) {
         
@@ -3087,6 +3629,12 @@
             }
         }
         else{
+            
+            if([vc.visibleViewController isKindOfClass:[CreateTab class]]){
+                //register for observer so we know when create is dismissed (from x or successful listing) since VDA isn't called and a tab isn't actually switched since this is blocked delegate
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showBarButtonFromCreate) name:@"backFromCreate" object:nil];
+            }
+            
             //pretty much same as view will disappear but for when viewed from search
             [self hideBarButton];
             [self removeListingObservers];
@@ -3113,6 +3661,14 @@
     [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
     [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center removeObserver:self name:@"showSendBox" object:nil]; /////adding observers to for sale now for screenshots
+    
+    //purchase observers
+    if (self.addPurchaseObservers) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"boostPurchased" object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseStarted" object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseDeferred" object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseError" object:nil];
+    }
 }
 
 -(void)addListingObservers{
@@ -3123,14 +3679,21 @@
     [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
     [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center removeObserver:self name:@"showSendBox" object:nil];
-    
-    if (!self.boostMode) {
-        [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
-        [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
-    }
-    
     [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
     [center addObserver:self selector:@selector(sendFBPressed) name:@"showSendBox" object:nil];
+    
+    //purchase observers
+    if (self.addPurchaseObservers) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"boostPurchased" object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseStarted" object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseDeferred" object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"purchaseError" object:nil];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(purchasedNormalBOOST:) name:@"boostPurchased" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showIAPHUD) name:@"purchaseStarted" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(hideHUD) name:@"purchaseDeferred" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showPurchaseError) name:@"purchaseError" object:nil];
+    }
 }
 
 #pragma mark - web view delegates
@@ -3194,6 +3757,13 @@
         return;
     }
     
+    //track people who never like
+//    if (![[PFUser currentUser]objectForKey:@"seenBumpingIntro"]) {
+//        [[PFUser currentUser]setObject:@"YES" forKey:@"seenBumpingIntro"];
+//        [[PFUser currentUser]saveInBackground];
+//    }
+
+    
     [Answers logCustomEventWithName:@"Bumped a listing"
                    customAttributes:@{
                                       @"where":@"Listing",
@@ -3254,6 +3824,18 @@
         if ([generalBumpedArray containsObject:self.listingObject.objectId]) {
             [generalBumpedArray removeObject:self.listingObject.objectId];
         }
+        
+        //unlike
+        NSDictionary *params = @{@"senderId":[PFUser currentUser].objectId,@"listingId": self.listingObject.objectId};
+        [PFCloud callFunctionInBackground:@"unlikedListing" withParameters:params block:^(NSDictionary *response, NSError *error) {
+            if (!error) {
+                NSLog(@"unlike response %@", response);
+
+            }
+            else{
+                NSLog(@"unlike listing error %@", error);
+            }
+        }];
     }
     else{
         NSLog(@"bumped");
@@ -3288,28 +3870,31 @@
             [generalBumpedArray addObject:self.listingObject.objectId];
         }
         
-        //send push to the seller notifying them of the Bump
-        NSString *pushText = [NSString stringWithFormat:@"@%@ just liked your listing", [PFUser currentUser].username];
-        
-        if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId]) {
+        //create activity object server side that sends push too - not if liking own listing
+        if (![self.seller.objectId isEqualToString:[PFUser currentUser].objectId] && self.dontLikePush != YES && self.likeCounter < 3) {
             
-            NSDictionary *params = @{@"userId": [[self.listingObject objectForKey:@"sellerUser"]objectId], @"message": pushText, @"sender": [PFUser currentUser].username, @"bumpValue": @"NO", @"listingID": self.listingObject.objectId};
-            
-            if (self.dontLikePush != YES && self.likedAlready != YES) {
-                self.likedAlready = YES;
-                [PFCloud callFunctionInBackground:@"sendNewPush" withParameters:params block:^(NSDictionary *response, NSError *error) {
-                    if (!error) {
-                        NSLog(@"push response %@", response);
-                        [Answers logCustomEventWithName:@"Push Sent"
-                                       customAttributes:@{
-                                                          @"Type":@"Bump"
-                                                          }];
-                    }
-                    else{
-                        NSLog(@"push error %@", error);
-                    }
-                }];
+            //if user has liked/unliked more than twice then don't send an activity push
+            self.likeCounter++;
+
+            NSString *ignorePush = @"NO";
+            if (self.dontLikePush) {
+                ignorePush = @"YES";
             }
+
+            //like the item
+            NSDictionary *params = @{@"userId": [[self.listingObject objectForKey:@"sellerUser"]objectId], @"senderId":[PFUser currentUser].objectId, @"username": [PFUser currentUser].username, @"listingId": self.listingObject.objectId, @"ignorePush": ignorePush};
+            [PFCloud callFunctionInBackground:@"likedListing" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                if (!error) {
+                    [Answers logCustomEventWithName:@"Push Sent"
+                                   customAttributes:@{
+                                                      @"Type":@"Like"
+                                                      }];
+                }
+                else{
+                    NSLog(@"liked listing error %@", error);
+                }
+            }];
+            
         }
         else{
             [Answers logCustomEventWithName:@"Bumped own listing"
@@ -3353,6 +3938,7 @@
     
     whoBumpedTableView *vc = [[whoBumpedTableView alloc]init];
     vc.bumpArray = [self.listingObject objectForKey:@"bumpArray"];
+//    vc.listingId = self.listingObject.objectId;
     [self.navigationController pushViewController:vc animated:YES];
 }
 
@@ -3412,6 +3998,10 @@
             [self normalShowAlertWithTitle:@"Sale Pending" andMsg:@"A buyer is currently purchasing your product, we've reserved the item for them and we'll let you know when their payment is successful.\n\nAs a result, you can't mark the item as sold at this time. If you're seeing this message frequently then please message Support from within the app"];
         }
         else if ([[self.listingObject objectForKey:@"status"]isEqualToString:@"sold"]) {
+            //update banner at top of listing
+            self.sold = NO;
+            self.purchased = NO;
+            
             //mark as live again
             [Answers logCustomEventWithName:@"Unmark as sold pressed"
                            customAttributes:@{}];
@@ -3447,17 +4037,17 @@
                     }];
                     
                     //hide label
-                    self.soldbannerButton.alpha = 1.0;
-                    
-                    [UIView animateWithDuration:0.3
-                                          delay:0
-                                        options:UIViewAnimationOptionCurveEaseIn
-                                     animations:^{
-                                         self.soldbannerButton.alpha = 0.0;
-                                     }
-                                     completion:^(BOOL finished) {
-                                         [self.soldbannerButton setHidden:YES];
-                                     }];
+//                    self.soldbannerButton.alpha = 1.0;
+//
+//                    [UIView animateWithDuration:0.3
+//                                          delay:0
+//                                        options:UIViewAnimationOptionCurveEaseIn
+//                                     animations:^{
+//                                         self.soldbannerButton.alpha = 0.0;
+//                                     }
+//                                     completion:^(BOOL finished) {
+//                                         [self.soldbannerButton setHidden:YES];
+//                                     }];
                     
                     //show boost button
                     [self.sendLabel setTitle:@"B O O S T" forState:UIControlStateNormal];
@@ -3486,6 +4076,10 @@
             [Answers logCustomEventWithName:@"Mark as sold pressed"
                            customAttributes:@{}];
             
+            //update banner at top of listing
+            self.sold = YES;
+            self.purchased = NO;
+            
             [self.reportButton setSelected:YES];
             [self.reportLabel setTitle:@"M A R K  A S\nA V A I L A B L E" forState:UIControlStateNormal];
 
@@ -3507,25 +4101,27 @@
                     }];
                     
                     //unhide sold banner
-                    self.soldbannerButton.alpha = 0.0;
-                    [self.soldbannerButton setHidden:NO];
-                    
-                    [UIView animateWithDuration:0.3
-                                          delay:0
-                                        options:UIViewAnimationOptionCurveEaseIn
-                                     animations:^{
-                                         self.soldbannerButton.alpha = 1.0;
-                                         
-                                     }
-                                     completion:nil];
+//                    self.soldbannerButton.alpha = 0.0;
+//                    [self.soldbannerButton setHidden:NO];
+//
+//                    [UIView animateWithDuration:0.3
+//                                          delay:0
+//                                        options:UIViewAnimationOptionCurveEaseIn
+//                                     animations:^{
+//                                         self.soldbannerButton.alpha = 1.0;
+//
+//                                     }
+//                                     completion:nil];
                     
                     //hide boost button
-                    [self.sendLabel setTitle:@"S H A R E  O N\nB U M P" forState:UIControlStateNormal];
-                    [self.sendButton setImage:[UIImage imageNamed:@"envelopeSend"] forState:UIControlStateNormal];
+                    [self.sendLabel setTitle:@"S H A R E" forState:UIControlStateNormal];
+                    [self.sendButton setImage:[UIImage imageNamed:@"shareListingIcon"] forState:UIControlStateNormal];
                     self.boostMode = NO;
                 }
             }];
         }
+        
+        [self.tableView reloadData];
         
     }
     else{
@@ -3922,60 +4518,6 @@
             messageString = [NSString stringWithFormat:@"Hey,\n\nThanks for reporting an issue with the following listing: '%@'\n\nReason: %@\n\nWe'll get in touch if we have any more questions 👊\n\nSophie\nBUMP Customer Service",[self.listingObject objectForKey:@"itemTitle"],reason];
         }
     }
-
-    
-    //now save report message
-//    PFObject *messageObject1 = [PFObject objectWithClassName:@"teamBumpMsgs"];
-//    messageObject1[@"message"] = messageString;
-//    messageObject1[@"sender"] = [PFUser currentUser];
-//    messageObject1[@"senderId"] = @"BUMP";
-//    messageObject1[@"senderName"] = @"Team Bump";
-//    messageObject1[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-//    messageObject1[@"status"] = @"sent";
-//    messageObject1[@"mediaMessage"] = @"NO";
-//    [messageObject1 saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//        if (succeeded) {
-//
-//            //update profile tab bar badge
-//            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-//            [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
-//            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
-//
-//            //update convo
-//            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
-//            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-//            [convoQuery whereKey:@"convoId" equalTo:convoId];
-//            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-//                if (object) {
-//
-//                    //got the convo
-//                    [object incrementKey:@"totalMessages"];
-//                    [object setObject:messageObject1 forKey:@"lastSent"];
-//                    [object setObject:[NSDate date] forKey:@"lastSentDate"];
-//                    [object incrementKey:@"userUnseen"];
-//                    [object saveInBackground];
-//
-//                    [Answers logCustomEventWithName:@"Sent Report Message"
-//                                   customAttributes:@{
-//                                                      @"status":@"SENT"
-//                                                      }];
-//                }
-//                else{
-//                    [Answers logCustomEventWithName:@"Sent Report Message"
-//                                   customAttributes:@{
-//                                                      @"status":@"Failed getting convo"
-//                                                      }];
-//                }
-//            }];
-//        }
-//        else{
-//            NSLog(@"error saving report message %@", error);
-//            [Answers logCustomEventWithName:@"Sent Report Message"
-//                           customAttributes:@{
-//                                              @"status":@"Failed saving message"
-//                                              }];
-//        }
-//    }];
 }
 
 #pragma mark - bumping intro delegate
@@ -4158,8 +4700,6 @@
         [center removeObserver:self name:UIApplicationUserDidTakeScreenshotNotification object:nil];
         [center removeObserver:self name:@"showSendBox" object:nil]; /////adding observers to for sale now for screenshots
         
-        [center addObserver:self selector:@selector(listingKeyboardOnScreen:) name:UIKeyboardWillShowNotification object:nil];
-        [center addObserver:self selector:@selector(listingKeyboardOFFScreen:) name:UIKeyboardWillHideNotification object:nil];
         [center addObserver:self selector:@selector(userDidTakeScreenshot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
         [center addObserver:self selector:@selector(sendFBPressed) name:@"showSendBox" object:nil];
     }
@@ -4174,14 +4714,16 @@
     self.messageButton = nil;
     self.buttonLine = nil;
     
+    [self.tableView reloadData]; //this reloads header
+    
 //    [self setupMessageBarButton];
     
     //show purchased icon
 //    self.soldLabel.text = @"P U R C H A S E D";
 //    [self.soldLabel setHidden:NO];
     
-    [self.soldbannerButton setTitle:@"P U R C H A S E D" forState:UIControlStateNormal];
-    [self.soldbannerButton setHidden:NO];
+//    [self.soldbannerButton setTitle:@"P U R C H A S E D" forState:UIControlStateNormal];
+//    [self.soldbannerButton setHidden:NO];
     
 //    [self.soldCheckImageVoew setImage:[UIImage imageNamed:@"soldCheck"]];
 //    [self.soldCheckImageVoew setHidden:NO];
@@ -4303,10 +4845,18 @@
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"BoostView" owner:self options:nil];
     self.introBoostView = (BoostViewController *)[nib objectAtIndex:0];
     self.introBoostView.delegate = self;
-    [self.introBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -337, 300, 337)];
+    [self.introBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -287, 300, 287)];
     
     self.boostViewMode = @"boost";
     self.introBoostView.mode = @"boost";
+    
+    if (self.boostPriceString) {
+        self.introBoostView.priceString = self.boostPriceString;
+    }
+    else{
+        [Answers logCustomEventWithName:@"Missing Boost price string"
+                       customAttributes:@{}];
+    }
     
     self.introBoostView.layer.cornerRadius = 10;
     self.introBoostView.layer.masksToBounds = YES;
@@ -4319,7 +4869,7 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.introBoostView setFrame:CGRectMake(0, 0, 300, 337)];
+                            [self.introBoostView setFrame:CGRectMake(0, 0, 300, 287)];
                             self.introBoostView.center = self.view.center;
                         }
                      completion:^(BOOL finished) {
@@ -4355,7 +4905,7 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.introBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 337)];
+                            [self.introBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 287)];
                         }
                      completion:^(BOOL finished) {
                          //Completion Block
@@ -4368,14 +4918,23 @@
 }
 
 -(void)showCountdownBoostViewWithBg:(BOOL)showBg{
-    [Answers logCustomEventWithName:@"Boost Showing"
-                   customAttributes:@{
-                                      @"where": @"listing"
-                                      }];
     
     if (self.inviteAlertShowing == YES) {
         return;
     }
+    
+    if (!self.boostPriceString || !self.BOOSTProduct) {
+        [Answers logCustomEventWithName:@"Missing BOOST Product on pop up"
+                       customAttributes:@{}];
+        
+        [self normalShowAlertWithTitle:@"BOOST Fetch Error" andMsg:@"Please wait until we've finished fetching data from the App Store"];
+        return;
+    }
+    
+    [Answers logCustomEventWithName:@"Boost Showing"
+                   customAttributes:@{
+                                      @"where": @"listing"
+                                      }];
     
     self.inviteAlertShowing = YES;
 
@@ -4398,24 +4957,69 @@
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"BoostView" owner:self options:nil];
     self.counterBoostView = (BoostViewController *)[nib objectAtIndex:0];
     self.counterBoostView.delegate = self;
-    [self.counterBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -337, 300, 337)];
+    [self.counterBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -287, 300, 287)];
     
     self.counterBoostView.mode = @"countdown";
     self.boostViewMode = @"countdown";
     
-    if (self.reminderSet == YES) {
-        [self.counterBoostView.mainButton setTitle:@"C A N C E L  R E M I N D E R" forState:UIControlStateNormal];
+    if (self.freeBOOSTs > 0) {
+        self.counterBoostView.priceString = @"FREE";
     }
     else{
-        [self.counterBoostView.mainButton setTitle:@"S E T  R E M I N D E R" forState:UIControlStateNormal];
+        self.counterBoostView.priceString = self.boostPriceString;
     }
     
-    self.counterBoostView.timerLabel.delegate = nil;
-    self.counterBoostView.timerLabel.delegate = self;
+    //calc hours until free boost
+    NSTimeInterval distanceBetweenDates = [self.nextBoostDate timeIntervalSinceDate:[NSDate date]];
+    double secondsInAnHour = 3600;
+    float hoursBetweenDates = (distanceBetweenDates / secondsInAnHour);
+    float minsTillBoost = hoursBetweenDates * 60;
+    float secsTillBoost = minsTillBoost * 60;
     
-    self.counterBoostView.timerLabel.timerType = MZTimerLabelTypeTimer;
-    [self.counterBoostView.timerLabel setCountDownToDate:self.nextBoostDate];
-    [self.counterBoostView.timerLabel start];
+    NSString *waitString = [NSString stringWithFormat:@"%.0f hours", hoursBetweenDates];
+    
+    //check if wait time is in hours/mins/seconds
+    if (hoursBetweenDates >= 1) {
+        //hours
+        if ([waitString isEqualToString:@"1 hours"]){
+            waitString = @"1 hour";
+        }
+    }
+    else if(minsTillBoost >= 1){
+        //mins
+        waitString = [NSString stringWithFormat:@"%.0f mins", minsTillBoost];
+        if ([waitString isEqualToString:@"1 mins"]){
+            waitString = @"1 min";
+        }
+    }
+    else{
+        //seconds
+        waitString = [NSString stringWithFormat:@"%.0f secs", secsTillBoost];
+        if ([waitString isEqualToString:@"1 secs"]){
+            waitString = @"1 sec";
+        }
+    }
+    
+    NSLog(@"hours till boost: %.2f", hoursBetweenDates);
+    
+    //store for tracking if user purchases a boost
+    [[NSUserDefaults standardUserDefaults] setObject:@(hoursBetweenDates) forKey:@"freeBoostWait"];
+    
+    self.counterBoostView.waitHoursString = waitString;
+    
+//    if (self.reminderSet == YES) {
+//        [self.counterBoostView.mainButton setTitle:@"C A N C E L  R E M I N D E R" forState:UIControlStateNormal];
+//    }
+//    else{
+//        [self.counterBoostView.mainButton setTitle:@"S E T  R E M I N D E R" forState:UIControlStateNormal];
+//    }
+    
+//    self.counterBoostView.timerLabel.delegate = nil;
+//    self.counterBoostView.timerLabel.delegate = self;
+//
+//    self.counterBoostView.timerLabel.timerType = MZTimerLabelTypeTimer;
+//    [self.counterBoostView.timerLabel setCountDownToDate:self.nextBoostDate];
+//    [self.counterBoostView.timerLabel start];
     
     self.counterBoostView.layer.cornerRadius = 10;
     self.counterBoostView.layer.masksToBounds = YES;
@@ -4428,7 +5032,7 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.counterBoostView setFrame:CGRectMake(0, 0, 300, 337)];
+                            [self.counterBoostView setFrame:CGRectMake(0, 0, 300, 287)];
                             self.counterBoostView.center = self.view.center;
                         }
                      completion:^(BOOL finished) {
@@ -4459,14 +5063,13 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.counterBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 337)];
+                            [self.counterBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 287)];
                         }
                      completion:^(BOOL finished) {
                          //Completion Block
                          self.inviteAlertShowing = NO;
                          [self.counterBoostView setAlpha:0.0];
                          
-                         self.counterBoostView.timerLabel.delegate = nil;
                          self.counterBoostView = nil;
                      }];
 }
@@ -4501,14 +5104,14 @@
     NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"BoostView" owner:self options:nil];
     self.successBoostView = (BoostViewController *)[nib objectAtIndex:0];
     self.successBoostView.delegate = self;
-    [self.successBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -337, 300, 337)];
+    [self.successBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, -287, 300, 287)];
     
     self.boostViewMode = @"success";
     self.successBoostView.mode = @"success";
 
-    self.successBoostView.lowerTimerLabel.timerType = MZTimerLabelTypeTimer;
-    [self.successBoostView.lowerTimerLabel setCountDownToDate:self.nextBoostDate];
-    [self.successBoostView.lowerTimerLabel start];
+//    self.successBoostView.lowerTimerLabel.timerType = MZTimerLabelTypeTimer;
+//    [self.successBoostView.lowerTimerLabel setCountDownToDate:self.nextBoostDate];
+//    [self.successBoostView.lowerTimerLabel start];
     
     self.successBoostView.layer.cornerRadius = 10;
     self.successBoostView.layer.masksToBounds = YES;
@@ -4521,7 +5124,7 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.successBoostView setFrame:CGRectMake(0, 0, 300, 337)];
+                            [self.successBoostView setFrame:CGRectMake(0, 0, 300, 287)];
                             self.successBoostView.center = self.view.center;
                         }
                      completion:^(BOOL finished) {
@@ -4552,7 +5155,7 @@
           initialSpringVelocity:0.5
                         options:UIViewAnimationOptionCurveEaseIn animations:^{
                             //Animations
-                            [self.successBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 337)];
+                            [self.successBoostView setFrame:CGRectMake((self.view.frame.size.width/2)-150, 1000, 300, 287)];
                         }
                      completion:^(BOOL finished) {
                          //Completion Block
@@ -4562,6 +5165,74 @@
                      }];
 }
 
+-(void)PaidBOOSTPressed{
+    
+    //check if have free boost
+    if (self.freeBOOSTs > 0) {
+        self.triggeredFreeBoost = YES;
+        [self hideCountdownBoostViewWithBg:NO];
+        
+        [self triggerBoost];
+        self.inviteAlertShowing = NO;
+        [self showSuccessBoostViewWithBg:NO];
+    }
+    else{
+        [Answers logCustomEventWithName:@"Pressed Pay for BOOST"
+                       customAttributes:@{}];
+        
+        //check if already processing a payment
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"processingPurchase"]) {
+            [Answers logCustomEventWithName:@"Pressed Pay whilst Processing"
+                           customAttributes:@{}];
+            
+            [self hideCountdownBoostViewWithBg:YES];
+            self.inviteAlertShowing = NO;
+            [self hideHUD];
+            
+            [self normalShowAlertWithTitle:@"Purchase in Progress" andMsg:@"Please wait until your outstanding purchase has complete before purchasing another BOOST"];
+            return;
+        }
+        
+        //take to App Store
+        //block out further purchaes whilst this is processing
+        [[NSUserDefaults standardUserDefaults]setBool:YES forKey:@"processingPurchase"];
+        [[NSUserDefaults standardUserDefaults] setObject:self.listingObject.objectId forKey:@"pendingListingPurchase"];
+        
+        NSLog(@"wait time: %@", self.counterBoostView.waitHoursString);
+        [[NSUserDefaults standardUserDefaults] setObject:self.counterBoostView.waitHoursString forKey:@"freeBoostWait"];
+        
+        SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:self.BOOSTProduct];
+        payment.quantity = 1;
+        payment.applicationUsername = [self hashedValueForAccountName:[PFUser currentUser].objectId];
+        [[SKPaymentQueue defaultQueue] addPayment:payment];
+        
+        NSLog(@"IAP added to payment queue");
+    }
+}
+
+-(void)WaitBOOSTPressed{
+    [Answers logCustomEventWithName:@"Wait BOOST Pressed"
+                   customAttributes:@{}];
+    
+    [self hideCountdownBoostViewWithBg:YES];
+}
+
+-(void)FreeBoostPressed{
+    //boost triggered
+    self.triggeredFreeBoost = NO;
+    
+    [self hideIntroBoostViewWithBg:NO];
+    
+    [self triggerBoost];
+    self.inviteAlertShowing = NO;
+    [self showSuccessBoostViewWithBg:NO];
+}
+
+-(void)DismissBOOSTPressed{
+    [self hideSuccessBoostViewWithBg:YES];
+}
+
+//deprecated after intro'ing
 -(void)BoostMainButtonPressedRemindMode:(BOOL)remind{
 
     if (remind) {
@@ -4705,6 +5376,9 @@
 
 -(void)generalHideBoost{
     if ([self.boostViewMode isEqualToString:@"countdown"]) {
+        [Answers logCustomEventWithName:@"Dismissed Wait via Gesture"
+                       customAttributes:@{}];
+        
         [self hideCountdownBoostViewWithBg:YES];
     }
     else if ([self.boostViewMode isEqualToString:@"boost"]) {
@@ -4720,7 +5394,9 @@
     [Intercom logEventWithName:@"boost_triggered" metaData: @{}];
     
     Mixpanel *mixpanel = [Mixpanel sharedInstance];
-    [mixpanel track:@"BOOST triggered" properties:@{}];
+    [mixpanel track:@"BOOST triggered" properties:@{
+                                                    @"paid":@"Free"
+                                                    }];
     
     [Answers logCustomEventWithName:@"BOOST Reminder Set"
                    customAttributes:@{}];
@@ -4728,22 +5404,44 @@
     //place listing at the top of the home feed
     [[NSNotificationCenter defaultCenter] postNotificationName:@"justBoostedListing" object:self.listingObject];
 
-    //save new boost date 6 hours away
-    NSDateComponents *hourComponent = [[NSDateComponents alloc] init];
-    hourComponent.hour = 6;
-
-    NSCalendar *theCalendar = [NSCalendar currentCalendar];
-    NSDate *nextBoostDate = [theCalendar dateByAddingComponents:hourComponent toDate:[NSDate date] options:0];
-    self.nextBoostDate = nextBoostDate;
+    //if user has a free boost credit then don't change the next free boost date all users get by default
+    if (!self.triggeredFreeBoost) {
+        //save new boost date 6 hours away
+        NSDateComponents *hourComponent = [[NSDateComponents alloc] init];
+        hourComponent.hour = 24;
+        
+        NSCalendar *theCalendar = [NSCalendar currentCalendar];
+        NSDate *nextBoostDate = [theCalendar dateByAddingComponents:hourComponent toDate:[NSDate date] options:0];
+        self.nextBoostDate = nextBoostDate;
+    }
     
     //update lastUpdated
-    NSDictionary *params = @{@"listingId":self.listingObject.objectId, @"date":nextBoostDate};
+    NSDictionary *params = @{@"listingId":self.listingObject.objectId};
     [PFCloud callFunctionInBackground:@"triggerBoost" withParameters:params block:^(NSDictionary *response, NSError *error) {
         if (error) {
+            self.triggeredFreeBoost = NO;
+
             [self normalShowAlertWithTitle:@"BOOST Error" andMsg:@"Ensure you have a strong Internet connection and try again"];
             
             [Answers logCustomEventWithName:@"Error triggering Boost"
                            customAttributes:@{}];
+        }
+        else{
+            //update number of free boosts a user has remaining if this was triggered from a free boost
+            if (self.triggeredFreeBoost) {
+                [Answers logCustomEventWithName:@"Used Free Boost Credit"
+                               customAttributes:@{}];
+                
+                self.triggeredFreeBoost = NO;
+                self.freeBOOSTs--;
+                
+                if (self.freeBOOSTs >= 0) {
+                    [[PFUser currentUser]setObject:[NSNumber numberWithInt:self.freeBOOSTs] forKey:@"freeBoosts"];
+                    [[PFUser currentUser]saveInBackground];
+                }
+            }
+            
+            [self.delegate boostedItem];
         }
     }];
 }
@@ -4776,4 +5474,181 @@
     [center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
     [center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
 }
+
+#pragma mark - in app purchase logic
+
+-(void)purchasedNormalBOOST:(NSNotification*)note {
+    
+    BOOL success = [[note object]boolValue];
+    
+    [self hideHUD];
+    
+    if (success ==  YES) {
+        //boost saved!
+        
+        [self hideCountdownBoostViewWithBg:NO];
+    
+        self.inviteAlertShowing = NO;
+        [self showSuccessBoostViewWithBg:NO];
+        NSLog(@"boost saved");
+    }
+    else{
+        //error saving
+        [self hideCountdownBoostViewWithBg:YES];
+        
+        self.inviteAlertShowing = NO;
+        
+        [self hideHUD];
+        NSLog(@"error saving purchase");
+        [self normalShowAlertWithTitle:@"Error Saving Purchase" andMsg:@"Make sure you're connected to the internet and then restart BUMP to access your purchase. Don't worry your BOOST will be credited to your listing next time your restart the app."];
+    }
+}
+
+-(void)showPurchaseError{
+    //dismiss spinner & drop down
+    [self hideCountdownBoostViewWithBg:YES];
+    self.inviteAlertShowing = NO;
+    [self hideHUD];
+    
+    [self normalShowAlertWithTitle:@"Error Purchasing Item" andMsg:@"Your purchase failed, don't worry you have not been charged. Please try again and if the problem persists just contact support in-app"];
+}
+
+- (void)validateProductIdentifiers:(NSArray *)productIdentifiers
+{
+    SKProductsRequest *productsRequest = [[SKProductsRequest alloc]
+                                          initWithProductIdentifiers:[NSSet setWithArray:productIdentifiers]];
+    
+    // Keep a strong reference to the request.
+    self.request = productsRequest;
+    productsRequest.delegate = self;
+    [productsRequest start];
+}
+
+// SKProductsRequestDelegate protocol method
+- (void)productsRequest:(SKProductsRequest *)request
+     didReceiveResponse:(SKProductsResponse *)response
+{
+    NSLog(@"got product request response %@", response);
+    
+    self.products = response.products;
+    
+    for (SKProduct *product in self.products) {
+        
+        if ([product.localizedTitle isEqualToString:@"BOOST"]) {
+            
+            //set button title w/ price
+            NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
+            [numberFormatter setFormatterBehavior:NSNumberFormatterBehavior10_4];
+            [numberFormatter setNumberStyle:NSNumberFormatterCurrencyStyle];
+            [numberFormatter setLocale:product.priceLocale];
+            
+            self.boostPriceString = [numberFormatter stringFromNumber:product.price];
+            
+            NSLog(@"boost price string: %@", self.boostPriceString);
+            
+            self.BOOSTProduct = product;
+            
+        }
+    }    
+}
+
+// Custom method to calculate the SHA-256 hash using Common Crypto
+- (NSString *)hashedValueForAccountName:(NSString*)userAccountName
+{
+    const int HASH_SIZE = 32;
+    unsigned char hashedChars[HASH_SIZE];
+    const char *accountName = [userAccountName UTF8String];
+    size_t accountNameLen = strlen(accountName);
+    
+    // Confirm that the length of the user name is small enough
+    // to be recast when calling the hash function.
+    if (accountNameLen > UINT32_MAX) {
+        NSLog(@"Account name too long to hash: %@", userAccountName);
+        return nil;
+    }
+    CC_SHA256(accountName, (CC_LONG)accountNameLen, hashedChars);
+    
+    // Convert the array of bytes into a string showing its hex representation.
+    NSMutableString *userAccountHash = [[NSMutableString alloc] init];
+    for (int i = 0; i < HASH_SIZE; i++) {
+        // Add a dash every four bytes, for readability.
+        if (i != 0 && i%4 == 0) {
+            [userAccountHash appendString:@"-"];
+        }
+        [userAccountHash appendFormat:@"%02x", hashedChars[i]];
+    }
+    
+    return userAccountHash;
+}
+
+-(void)dealloc{
+    self.IAPTimer = nil;
+    self.carouselView.delegate = nil; //added
+    
+    self.request.delegate = nil;
+    [self.request cancel];
+    self.request = nil;
+}
+
+#pragma mark - create for sale listing delegates
+
+-(void)dismissCreateParent{
+    //called when user finishes editing their listing
+    //when user has searched for their own listing then appear delegate methods won't fire
+    //so manuall show bar button again
+    NSLog(@"dismiss edit vc");
+    if (self.tabBarController.tabBar.frame.size.height == 0) {
+        //means we got here from search
+        [self showBarButton];
+    }
+}
+
+-(void)headerTapped{
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"protection_header_tapped" properties:@{}];
+    
+    NSString *URLString = @"https://help.sobump.com/faqs/what-is-bump-paypal-protection";
+    SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
+    if (@available(iOS 11.0, *)) {
+        safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+    }
+    
+    if (@available(iOS 10.0, *)) {
+        safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+    }
+    
+    if (self.tabBarController.tabBar.frame.size.height == 0) {
+        safariView.delegate = self;
+        [self hideBarButton];
+    }
+    
+    [self.navigationController presentViewController:safariView animated:YES completion:nil];
+}
+
+-(void)safariViewControllerDidFinish:(SFSafariViewController *)controller{
+    [self showBarButton];
+}
+
+#pragma mark - custom activity objects' delegates
+-(void)copiedLinkPressed{
+    [Answers logCustomEventWithName:@"Copied Link"
+                   customAttributes:@{
+                                      @"link":@"forsale listing"
+                                      }];
+    
+    NSString *urlString = [NSString stringWithFormat:@"https://sobump.com/p?selling=%@",self.listingObject.objectId];
+    UIPasteboard *pb = [UIPasteboard generalPasteboard];
+    [pb setString:urlString];
+    
+    //show HUD
+    
+    [self showHUDInMode:@"copy"];
+    
+    double delayInSeconds = 1.0; // number of seconds to wait
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        [self hideHUD];
+    });
+}
+
 @end

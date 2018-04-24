@@ -18,8 +18,9 @@
 #import <StoreKit/StoreKit.h>
 #import "CreateTab.h"
 #import "CreateForSaleListing.h"
+#import "activityVC.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate, UITabBarControllerDelegate, JRWebViewDelegate,SKPaymentTransactionObserver>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, UITabBarControllerDelegate, JRWebViewDelegate,SKPaymentTransactionObserver,SKProductsRequestDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 @property (strong, nonatomic) UITabBarController *tabBarController;
@@ -32,12 +33,29 @@
 @property (nonatomic, strong) PurchaseTab *purchaseView;
 @property (nonatomic, strong) CreateTab *createTabView;
 @property (nonatomic, strong) CreateForSaleListing *createSaleListing;
+@property (nonatomic, strong) activityVC *activityView;
 
 @property (nonatomic, strong) NSMutableArray *unseenMessages;
 
 //web view
 @property (nonatomic, strong) TOJRWebView *web;
 
+//fetch IAPs
+@property (nonatomic, strong) SKProductsRequest *request;
+@property (nonatomic, strong) SKProduct *BOOSTProduct;
+
+@property (nonatomic, strong) NSArray *products;
+@property (nonatomic, strong) NSArray *productIdentifiersArray;
+
+@property (nonatomic, strong) NSString *boostPriceString;
+
+//timers
+@property (nonatomic, strong) NSTimer *messagesTimer;
+@property (nonatomic, strong) NSTimer *ordersTimer;
+@property (nonatomic, strong) NSTimer *activityTimer;
+
+//listing
+@property (nonatomic) BOOL savingListing;
 
 @end
 

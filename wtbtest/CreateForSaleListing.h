@@ -24,6 +24,7 @@
 #import <SafariServices/SafariServices.h>
 #import "mediumSizeAlertViewClass.h"
 #import "SettingsController.h"
+#import "CamVC.h"
 
 @class CreateForSaleListing;
 
@@ -33,7 +34,7 @@
 
 @end
 
-@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate,UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate,ConditionsDelegate,SwipeViewDelegate, SwipeViewDataSource,UIGestureRecognizerDelegate, shippingDelegate,SFSafariViewControllerDelegate,mediumSizeAVDelegate,SettingsDelegate>
+@interface CreateForSaleListing : UITableViewController<UIAlertViewDelegate, UITextFieldDelegate, UITextViewDelegate, SelectViewControllerDelegate, CameraControllerDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIWebViewDelegate, BASSquareCropperDelegate,JRWebViewDelegate,QBImagePickerControllerDelegate,UICollectionViewDelegate, LXReorderableCollectionViewDataSource,LXReorderableCollectionViewDelegateFlowLayout,AddImageCellDelegate,ConditionsDelegate,SwipeViewDelegate, SwipeViewDataSource,UIGestureRecognizerDelegate, shippingDelegate,SFSafariViewControllerDelegate,mediumSizeAVDelegate,SettingsDelegate,CameraVCDelegate>
 
 //delegate
 @property (nonatomic, weak) id <CreateForSaleDelegate> delegate;
@@ -52,6 +53,9 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *firstListingPriceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *sizeQuantityCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *paymentMethodCell;
+
+//tab mode
+@property (nonatomic) BOOL tabMode;
 
 //purchase cells
 @property (strong, nonatomic) IBOutlet UITableViewCell *instantBuyCell;
@@ -121,7 +125,6 @@
 
 //edit
 @property (nonatomic) BOOL editMode;
-@property (nonatomic) BOOL fromSuccess;
 
 @property (nonatomic, strong) PFObject *listing;
 
@@ -263,5 +266,8 @@
 @property (nonatomic) int quantityEntered;
 @property (nonatomic) BOOL feeFree;
 @property (nonatomic) BOOL showingPayPalCell;
+
+//state of listing thats being posted
+@property (nonatomic) BOOL listingInProgress;
 
 @end

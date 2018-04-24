@@ -7,11 +7,11 @@
 //
 
 #import "ReviewsVC.h"
-#import "ReviewCell.h"
 #import "UserProfileController.h"
 #import "NavigationController.h"
 #import <Crashlytics/Crashlytics.h>
 #import "UIImageView+Letters.h"
+#import "ForSaleListing.h"
 
 @interface ReviewsVC ()
 
@@ -35,17 +35,18 @@
     self.soldFeedback = [NSMutableArray array];
     
     self.tableView.rowHeight = UITableViewAutomaticDimension;
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
     
     //below fixes bug where tab bar would cover last review if user has > 10
     int tabBarHeight = 0;
-    
+
     if (self.tabBarController.tabBar.frame.size.height == 0) {
         tabBarHeight = self.presentingViewController.tabBarController.tabBar.frame.size.height;
     }
     else{
         tabBarHeight = self.tabBarController.tabBar.frame.size.height;
     }
-    
+
     self.tableView.contentInset =  UIEdgeInsetsMake(0, 0, tabBarHeight/3, 0);
     self.tableView.scrollIndicatorInsets = UIEdgeInsetsMake(0, 0, tabBarHeight/3, 0);
     
@@ -187,9 +188,13 @@
     if (!cell) {
         cell = [[ReviewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
     }
+    cell.delegate = self;
+    
     cell.userImageView.image = nil;
     cell.itemImageView.image = nil;
     cell.userImageView.file = nil;
+    
+    [cell.listingButton setHidden:YES];
 
     [self setImageBorder:cell.userImageView withNumber:30];
     
@@ -229,6 +234,7 @@
         [cell.starImageView setImage:[UIImage imageNamed:@"5star"]];
     }
     
+    //set picture
     if([feedbackObject objectForKey:@"gavePicture"]){
         
         [cell.userImageView setFile:[feedbackObject objectForKey:@"gavePicture"]];
@@ -241,11 +247,18 @@
         [cell.userImageView setImageWithString:[feedbackObject objectForKey:@"gaveUsername"] color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
     }
     
+    //check if there's a listing saved on this review
+    if([feedbackObject objectForKey:@"listingId"]){
+        [cell.listingButton setHidden:NO];
+    }
+    
     cell.commentLabel.text = [feedbackObject objectForKey:@"comment"];
     cell.usernameLabel.text = [feedbackObject objectForKey:@"gaveUsername"] ;
     
     [cell.itemImageView setFile:[feedbackObject objectForKey:@"thumbnail"]];
     [cell.itemImageView loadInBackground];
+    
+//    NSLog(@"CELL FRSME: %@", NSStringFromCGRect(cell.frame));
     
     return cell;
 }
@@ -435,12 +448,8 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView estimatedHeightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 132;
+    return 154;
 }
-
-//-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-//    return 186;
-//}
 
 #pragma mark - feedback delegates
 
@@ -497,5 +506,37 @@
             NSLog(@"error getting users deals data %@",error);
         }
     }];
+}
+
+#pragma mark - review cell delegate
+-(void)listingCellButtonPressed:(ReviewCell *)cell{
+    NSIndexPath *indexPath = [self.tableView indexPathForCell:(ReviewCell*)cell];
+    
+    PFObject *feedbackObject;
+    
+    if (self.singleMode) {
+        feedbackObject = [self.totalFeedback objectAtIndex:indexPath.row];
+    }
+    else{
+        if (self.segmentedControl.selectedSegmentIndex == 0) {
+            feedbackObject = [self.purchasedFeedback objectAtIndex:indexPath.row];
+        }
+        else{
+            feedbackObject = [self.soldFeedback objectAtIndex:indexPath.row];
+        }
+    }
+    
+    if ([feedbackObject objectForKey:@"listingId"]) {
+        PFObject *listing = [PFObject objectWithoutDataWithClassName:@"forSaleItems" objectId:[feedbackObject objectForKey:@"listingId"]];
+        
+        ForSaleListing *vc = [[ForSaleListing alloc]init];
+        vc.listingObject = listing;
+        vc.source = @"reviews";
+        vc.fromBuyNow = YES;
+        vc.pureWTS = YES;
+        vc.fromPush = YES;
+        vc.fromReviews = YES;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
 }
 @end

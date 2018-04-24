@@ -127,4 +127,8 @@
 @property (nonatomic) BOOL canPurchase;
 @property (nonatomic) BOOL instantBuyDisabled;
 
+//tracking
+@property (nonatomic) NSString *source;
+
+
 @end

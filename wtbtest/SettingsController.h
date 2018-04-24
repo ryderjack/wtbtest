@@ -23,7 +23,7 @@
 - (void)dismissedSettings;
 @end
 
-@interface SettingsController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,customAlertDelegate,LocationViewControllerDelegate,SwipeViewDataSource,SwipeViewDelegate,SFSafariViewControllerDelegate>
+@interface SettingsController : UITableViewController <UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,customAlertDelegate,LocationViewControllerDelegate,SwipeViewDataSource,SwipeViewDelegate,SFSafariViewControllerDelegate,ShippingControllerDelegate>
 
 @property (strong, nonatomic) IBOutlet UITableViewCell *addressCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *emailCell;
@@ -39,12 +39,14 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *locationLabelCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *bioCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *currencySwipeCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *tradesCell;
 
 //textfields
 @property (weak, nonatomic) IBOutlet UITextField *firstNameField;
 @property (weak, nonatomic) IBOutlet UITextField *lastNameField;
 @property (weak, nonatomic) IBOutlet UILabel *addLabel;
 @property (weak, nonatomic) IBOutlet UITextField *contactEmailField;
+@property (weak, nonatomic) IBOutlet UILabel *addressLabel;
 
 @property (nonatomic, strong) PFUser *currentUser;
 
@@ -96,6 +98,7 @@
 @property (weak, nonatomic) IBOutlet UISwitch *likeSwitch;
 @property (strong, nonatomic) IBOutlet UITableViewCell *notificationsCell;
 @property (weak, nonatomic) IBOutlet UISwitch *fbFriendSwitch;
+@property (weak, nonatomic) IBOutlet UISwitch *followSwitch;
 
 //push prompt
 @property (nonatomic, strong, nullable) customAlertViewClass *pushAlert;
@@ -132,5 +135,9 @@
 @property (nonatomic, weak) id <SettingsDelegate> delegate;
 
 @property (nonatomic) BOOL changePPMode;
+
+//trades cell
+@property (weak, nonatomic) IBOutlet UISwitch *tradeSwitch;
+
 
 @end

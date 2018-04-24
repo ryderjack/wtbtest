@@ -546,6 +546,42 @@
                         [self.navigationController popViewControllerAnimated:YES];
                     }
                 }
+                else if(limit == 1){
+                    [self.selectedSizes removeAllObjects];
+                    
+                    //select cell, got space left in the selection array
+                    UITableViewCell *currentCell = [tableView cellForRowAtIndexPath:indexPath];
+                    currentCell.accessoryType = UITableViewCellAccessoryCheckmark;
+                    
+                    //update selected sizes array
+                    
+                    if ([self.setting isEqualToString:@"sizefoot"]) {
+                        if (indexPath.row == 0) {
+                            //segment control so don't add anything
+                        }
+                        else{
+                            //add adjusted index path (due to segment control at 0 ^
+                            if ([self.genderSelected isEqualToString:@"Mens"]) {
+                                [self.selectedSizes addObject:[self.mensSizeUKArray objectAtIndex:indexPath.row-1]];
+                            }
+                            else{
+                                [self.selectedSizes addObject:[self.femaleSizeUKArray objectAtIndex:indexPath.row-1]];
+                            }
+                        }
+                    }
+                    else if ([self.setting isEqualToString:@"sizeclothing"]) {
+                        [self.selectedSizes addObject:[self.clothingyArray objectAtIndex:indexPath.row]];
+                    }
+                    
+                    NSLog(@"updated selected sizes array %@", self.selectedSizes);
+                    
+                    self.lastSelectedPath = indexPath;
+                    
+                    if (self.sellListing) {
+                        [self.navigationController popViewControllerAnimated:YES];
+                    }
+                    
+                }
                 else{
                     //don't select the cell, already reached the max selection
                     NSLog(@"array is full! need to deselect something");

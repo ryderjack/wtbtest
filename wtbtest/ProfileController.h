@@ -11,6 +11,7 @@
 #import "inviteViewClass.h"
 #import "segmentedTableView.h"
 #import <YLProgressBar/YLProgressBar.h>
+#import <SafariServices/SafariServices.h>
 
 @class ProfileController;
 
@@ -33,6 +34,7 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *feedbackCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *savedLaterCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *inviteCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *viewSupportCell;
 
 @property (strong, nonatomic) IBOutlet UITableViewCell *modPerformanceCell;
 @property (weak, nonatomic) IBOutlet UIImageView *unreadView;
@@ -59,6 +61,7 @@
 
 @property (nonatomic) BOOL showSnapDot;
 @property (nonatomic) BOOL tappedTB;
+@property (nonatomic) BOOL showSupportMessage;
 
 //invite pop up
 @property (nonatomic, strong) inviteViewClass *inviteView;
@@ -73,7 +76,8 @@
 @property (nonatomic) BOOL paidMod;
 @property (nonatomic, strong) YLProgressBar *progView;
     @property (weak, nonatomic) IBOutlet UIView *progHolderView;
-    
+@property (weak, nonatomic) IBOutlet UILabel *payDateLabel;
+
 //@property (weak, nonatomic) IBOutlet YLProgressBar *progressBarNew;
     
     

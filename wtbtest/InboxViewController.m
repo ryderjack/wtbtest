@@ -8,7 +8,6 @@
 
 #import "InboxViewController.h"
 #import "MessageViewController.h"
-//#import <SVPullToRefresh/SVPullToRefresh.h>
 #import <Crashlytics/Crashlytics.h>
 #import <DGActivityIndicatorView.h>
 #import "WelcomeViewController.h"
@@ -189,7 +188,7 @@
                         if (!self.topLabel && !self.bottomLabel) {
                             self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                             self.topLabel.textAlignment = NSTextAlignmentCenter;
-                            self.topLabel.text = @"No messages";
+                            self.topLabel.text = @"Inbox";
                             [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
                             self.topLabel.numberOfLines = 1;
                             self.topLabel.textColor = [UIColor lightGrayColor];
@@ -197,7 +196,7 @@
                             
                             self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+80, 250, 200)];
                             self.bottomLabel.textAlignment = NSTextAlignmentCenter;
-                            self.bottomLabel.text = @"Explore the Home tab and message sellers or list your items for sale so buyers can get in touch";
+                            self.bottomLabel.text = @"Explore the Home Feed and message sellers or list your items for sale so buyers can get in touch";
                             [self.bottomLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:15]];
                             self.bottomLabel.numberOfLines = 0;
                             self.bottomLabel.textColor = [UIColor lightGrayColor];
@@ -212,16 +211,15 @@
                         [self.convoObjects removeAllObjects];
                         
                         [self.tableView reloadData];
-//                        [self.tableView.pullToRefreshView stopAnimating];
                         [self.refreshControl endRefreshing];
-
-//                        [self.tableView.infiniteScrollingView stopAnimating];
                     }
 
                     self.pullFinished = YES;
                     
                 }
                 else{
+//                    NSLog(@"ALL CONVOS: %@", objects);
+                    
                     if (self.segmentedControl.selectedSegmentIndex == 0) {
                         [self.topLabel setHidden:YES];
                         [self.bottomLabel setHidden:YES];
@@ -312,7 +310,7 @@
                 //use that on the tab
                 
                 //check if tab bar was zero then if it was, reload everything
-                UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[2];
+                UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[3];
                 int currentTabValue = [itemToBadge.badgeValue intValue];
                 
                 [self.unseenConvos removeAllObjects];
@@ -363,17 +361,17 @@
                     }
                     
                     if (totalUnseen > 0) {
-                        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
+                        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", totalUnseen]];
                         self.currentInstallation.badge = totalUnseen;
                         [self.currentInstallation saveEventually];
                         
                     }
                     else{
-                        [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+                        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
                     }
                 }
                 else{
-                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+                    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
                     
                     if (self.currentInstallation.badge != 0) {
                         self.currentInstallation.badge = 0;
@@ -389,7 +387,7 @@
             else{
                 //no convos
                 NSLog(@"error getting convos %@", error);
-                [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+                [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
             }
     }];
 }
@@ -900,7 +898,7 @@
         unseen = [[convoObject objectForKey:@"sellerUnseen"] intValue];
     }
     
-    UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[2];
+    UITabBarItem *itemToBadge = self.tabBarController.tabBar.items[3];
     int currentTabValue = [itemToBadge.badgeValue intValue];
     int newTabValue = currentTabValue - unseen;
     
@@ -1412,7 +1410,7 @@
             if (!self.topLabel && !self.bottomLabel) {
                 self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                 self.topLabel.textAlignment = NSTextAlignmentCenter;
-                self.topLabel.text = @"No messages";
+                self.topLabel.text = @"Inbox";
                 [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
                 self.topLabel.numberOfLines = 1;
                 self.topLabel.textColor = [UIColor lightGrayColor];
@@ -1420,14 +1418,14 @@
 
                 self.bottomLabel = [[UILabel alloc]initWithFrame:CGRectMake(self.topLabel.frame.origin.x, self.topLabel.frame.origin.y+80, 250, 200)];
                 self.bottomLabel.textAlignment = NSTextAlignmentCenter;
-                self.bottomLabel.text = @"Explore the Home tab and message sellers or list your items for sale so buyers can get in touch";
+                self.bottomLabel.text = @"Explore the Home Feed and message sellers or list your items for sale so buyers can get in touch";
                 [self.bottomLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:15]];
                 self.bottomLabel.numberOfLines = 0;
                 self.bottomLabel.textColor = [UIColor lightGrayColor];
                 [self.view addSubview:self.bottomLabel];
             }
             else{
-                self.bottomLabel.text = @"Explore the Home tab and message sellers or list your items for sale so buyers can get in touch";
+                self.bottomLabel.text = @"Explore the Home Feed and message sellers or list your items for sale so buyers can get in touch";
 
                 [self.topLabel setHidden:NO];
                 [self.bottomLabel setHidden:NO];
@@ -1445,7 +1443,7 @@
             if (!self.topLabel && !self.bottomLabel) {
                 self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                 self.topLabel.textAlignment = NSTextAlignmentCenter;
-                self.topLabel.text = @"No messages";
+                self.topLabel.text = @"Inbox";
                 [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
                 self.topLabel.numberOfLines = 1;
                 self.topLabel.textColor = [UIColor lightGrayColor];
@@ -1478,7 +1476,7 @@
             if (!self.topLabel && !self.bottomLabel) {
                 self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                 self.topLabel.textAlignment = NSTextAlignmentCenter;
-                self.topLabel.text = @"No messages";
+                self.topLabel.text = @"Inbox";
                 [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
                 self.topLabel.numberOfLines = 1;
                 self.topLabel.textColor = [UIColor lightGrayColor];
@@ -1549,7 +1547,7 @@
                         if (!self.topLabel && !self.bottomLabel) {
                             self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                             self.topLabel.textAlignment = NSTextAlignmentCenter;
-                            self.topLabel.text = @"No messages";
+                            self.topLabel.text = @"Inbox";
                             [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
                             self.topLabel.numberOfLines = 1;
                             self.topLabel.textColor = [UIColor lightGrayColor];
@@ -1712,7 +1710,7 @@
                         if (!self.topLabel && !self.bottomLabel) {
                             self.topLabel = [[UILabel alloc]initWithFrame:CGRectMake((self.view.frame.size.width/2)-125, self.view.frame.size.height/5, 250, 200)];
                             self.topLabel.textAlignment = NSTextAlignmentCenter;
-                            self.topLabel.text = @"No messages";
+                            self.topLabel.text = @"Inbox";
                             [self.topLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:20]];
                             self.topLabel.numberOfLines = 1;
                             self.topLabel.textColor = [UIColor lightGrayColor];
@@ -1852,6 +1850,15 @@
     else if (self.segmentedControl.selectedSegmentIndex == 2 && self.sellingConvos.count > 0) {
         //load selling messages only
         [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UITableViewScrollPositionTop animated:YES];
+    }
+    
+    if (![PFUser currentUser]) {
+        self.tabBarController.selectedIndex = 0;
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"invalidSessionNotification" object:nil];
+        });
+        return;
     }
 
     [self updateUnseenCount];

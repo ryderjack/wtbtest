@@ -53,4 +53,14 @@
 @property (nonatomic) BOOL somethingMissing;
 @property (nonatomic) BOOL differentCountryNeeded;
 
+@property (nonatomic, strong) NSString *zipcodeString;
+
+//long button
+@property (nonatomic, strong) UIButton *longButton;
+@property (nonatomic) BOOL longShowing;
+
+//other
+@property (nonatomic) BOOL showKeyboard;
+
+
 @end

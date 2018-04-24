@@ -10,7 +10,6 @@
 #import <MBProgressHUD.h>
 #import <DGActivityIndicatorView.h>
 #import <Parse/Parse.h>
-#import <iCarousel.h>
 #import "PurchaseTabHeader.h"
 #import "droppingTodayView.h"
 #import "simpleBannerHeader.h"
@@ -124,6 +123,8 @@
 
 @property (nonatomic) BOOL justABump;
 @property (nonatomic) BOOL justAMessage;
+@property (nonatomic) BOOL justAFollow;
+@property (nonatomic) BOOL justASubListing;
 
 //boost
 @property (nonatomic) BOOL justABOOST;
@@ -190,4 +191,8 @@
 //refresh control
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (nonatomic) int cellHeight;
+
+//following
+@property (nonatomic, strong) NSArray *followingArray;
+
 @end

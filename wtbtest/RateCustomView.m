@@ -107,6 +107,9 @@
         [self.secondStar setSelected:YES];
         [self.thirdStar setSelected:YES];
         [self.fourthStar setSelected:YES];
+        
+        [self.delegate ratePressedWithNumber:self.starNumber];
+
     }
 }
 

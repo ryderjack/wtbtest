@@ -26,5 +26,10 @@
 
     // Configure the view for the selected state
 }
+- (IBAction)followPressed:(id)sender {
+    NSLog(@"sender: %@", sender);
+    
+    [self.delegate followButtonPressed:self];
+}
 
 @end

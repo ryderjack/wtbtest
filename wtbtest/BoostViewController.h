@@ -11,7 +11,11 @@
 
 @class BoostViewController;
 @protocol BOOSTViewDelegate <NSObject>
-- (void)BoostMainButtonPressedRemindMode:(BOOL)remind;
+- (void)PaidBOOSTPressed;
+- (void)FreeBoostPressed;
+- (void)WaitBOOSTPressed;
+- (void)DismissBOOSTPressed;
+
 @end
 
 @interface BoostViewController : UIView
@@ -20,7 +24,12 @@
 @property (weak, nonatomic) IBOutlet UILabel *lowerWaitLabel;
 @property (weak, nonatomic) IBOutlet UIButton *mainButton;
 
-@property (weak, nonatomic) IBOutlet MZTimerLabel *timerLabel;
+//pay screen
+@property (weak, nonatomic) IBOutlet UIButton *leftButton;
+@property (weak, nonatomic) IBOutlet UIButton *rightButton;
+@property (weak, nonatomic) IBOutlet UILabel *payExplainLabel;
+@property (nonatomic, strong) NSString *priceString;
+@property (nonatomic, strong) NSString *waitHoursString;
 
 //modes
 @property (nonatomic,strong) NSString *mode;
@@ -28,13 +37,10 @@
 //delegate
 @property (nonatomic, weak) id <BOOSTViewDelegate> delegate;
 
-
 //intro boost mode
 @property (weak, nonatomic) IBOutlet UIImageView *bolttImageView;
 @property (weak, nonatomic) IBOutlet UILabel *introLowerLabel;
 
-//success mode
-@property (weak, nonatomic) IBOutlet MZTimerLabel *lowerTimerLabel;
-@property (weak, nonatomic) IBOutlet UILabel *successLowerLabel;
+
 
 @end

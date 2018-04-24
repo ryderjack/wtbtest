@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13173"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -67,13 +67,13 @@
                     </constraints>
                 </imageView>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="22l-aR-kYi">
-                    <rect key="frame" x="139" y="615" width="96" height="32"/>
+                    <rect key="frame" x="135" y="613" width="104" height="41"/>
                     <constraints>
-                        <constraint firstAttribute="width" constant="96" id="4S2-GR-3Us"/>
-                        <constraint firstAttribute="height" constant="32" id="wZp-F1-vR2"/>
+                        <constraint firstAttribute="width" constant="104" id="4S2-GR-3Us"/>
+                        <constraint firstAttribute="height" constant="41" id="wZp-F1-vR2"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="15"/>
-                    <state key="normal" title="Create" backgroundImage="filterBG2.png">
+                    <state key="normal" title="Create" backgroundImage="filterBGS.png">
                         <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </state>
                     <connections>
@@ -81,13 +81,13 @@
                     </connections>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fnc-Nb-g9H">
-                    <rect key="frame" x="140" y="615" width="96" height="32"/>
+                    <rect key="frame" x="135" y="613" width="104" height="41"/>
                     <constraints>
-                        <constraint firstAttribute="width" constant="96" id="0kr-7q-K1v"/>
-                        <constraint firstAttribute="height" constant="32" id="R9d-Jg-zCH"/>
+                        <constraint firstAttribute="width" constant="104" id="0kr-7q-K1v"/>
+                        <constraint firstAttribute="height" constant="41" id="R9d-Jg-zCH"/>
                     </constraints>
                     <fontDescription key="fontDescription" name="PingFangSC-Semibold" family="PingFang SC" pointSize="9"/>
-                    <state key="normal" title="F I L T E R" backgroundImage="filterBG2.png">
+                    <state key="normal" title="F I L T E R" backgroundImage="filterBGS.png">
                         <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </state>
                     <connections>
@@ -107,9 +107,9 @@
                 <constraint firstItem="ATt-K1-CsL" firstAttribute="centerX" secondItem="BD6-gL-jeP" secondAttribute="centerX" id="S5w-VI-WXt"/>
                 <constraint firstItem="BD6-gL-jeP" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="VoA-wW-bXF"/>
                 <constraint firstItem="ATt-K1-CsL" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="16" id="fGs-Ks-coT"/>
-                <constraint firstAttribute="bottom" secondItem="22l-aR-kYi" secondAttribute="bottom" constant="20" id="fdG-h2-8pi"/>
+                <constraint firstAttribute="bottom" secondItem="22l-aR-kYi" secondAttribute="bottom" constant="13" id="fdG-h2-8pi"/>
                 <constraint firstItem="fnc-Nb-g9H" firstAttribute="centerX" secondItem="ATt-K1-CsL" secondAttribute="centerX" id="lyX-IM-kdS"/>
-                <constraint firstItem="22l-aR-kYi" firstAttribute="top" secondItem="LCs-Y4-duq" secondAttribute="bottom" constant="8" symbolic="YES" id="rq5-Kq-9hZ"/>
+                <constraint firstItem="22l-aR-kYi" firstAttribute="top" secondItem="LCs-Y4-duq" secondAttribute="bottom" constant="6" id="rq5-Kq-9hZ"/>
                 <constraint firstItem="LCs-Y4-duq" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="68" id="rsb-Wr-qSV"/>
                 <constraint firstItem="22l-aR-kYi" firstAttribute="centerX" secondItem="ATt-K1-CsL" secondAttribute="centerX" id="s7Z-RZ-92S"/>
             </constraints>
@@ -119,6 +119,6 @@
     </objects>
     <resources>
         <image name="bumpDemo.png" width="122" height="146"/>
-        <image name="filterBG2.png" width="96" height="32"/>
+        <image name="filterBGS.png" width="104" height="41"/>
     </resources>
 </document>

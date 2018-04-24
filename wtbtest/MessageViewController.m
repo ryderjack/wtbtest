@@ -19,12 +19,12 @@
 #import "CustomMessagesCollectionViewCell.h"
 #import "CustomMessagesCollectionViewCellIncoming.h"
 #import "ForSaleListing.h"
-//#import <SVPullToRefresh/SVPullToRefresh.h>
 #import "ExplainView.h"
 #import "AppDelegate.h"
 #import "JRMessage.h"
 #import "Mixpanel/Mixpanel.h"
 #import <Intercom/Intercom.h>
+#import "OrderSummaryView.h"
 
 @interface MessageViewController ()
 
@@ -54,6 +54,69 @@
     [self.otherUser fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
         if (object) {
             self.title = [NSString stringWithFormat:@"@%@",self.otherUser.username];
+            
+            //check if seller has disabled trades
+            if (self.userIsBuyer) {
+                
+                if ([[self.otherUser objectForKey:@"tradesDisabled"]isEqualToString:@"YES"] && !self.fromOrder) {
+                    self.disabledTrades = YES;
+                    
+                    [self.suggestedMessagesArray removeAllObjects];
+                    
+                    //load messages left
+                    if ([self.convoObject objectForKey:@"buyerSuggestedMessages"]) {
+                        [self.suggestedMessagesArray addObjectsFromArray:[self.convoObject objectForKey:@"buyerSuggestedMessages"]];
+                    }
+                    else{
+                        if (self.messageSellerPressed == YES) {
+                            [self.suggestedMessagesArray addObjectsFromArray:@[@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks"]];
+                        }
+                        else{
+                            [self.suggestedMessagesArray addObjectsFromArray:@[@"What are you selling?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks"]];
+                        }
+                    }
+                    
+                    //remove dismiss button so can't get rid of caoursel and dismiss NO trades label if its showing
+                    [self.suggestedMessagesArray removeObject:@"Dismiss"];
+                    
+                    if (![self.suggestedMessagesArray containsObject:@"Trades NOT Accepted"]) {
+                        [self.suggestedMessagesArray insertObject:@"Trades NOT Accepted" atIndex:0];
+                    }
+                    
+                    if (self.showSuggested != YES) {
+                        
+                        self.showSuggested = YES;
+                        
+                        self.carousel = nil;
+                        
+                        //check if from latest VC - y point seems to be off on here so need special treatment - works fine from search
+                        self.carousel = [[SwipeView alloc]initWithFrame:CGRectMake(0, self.inputToolbar.frame.origin.y-50, [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
+                        self.carousel.delegate = self;
+                        self.carousel.dataSource = self;
+                        self.carousel.clipsToBounds = YES;
+                        self.carousel.pagingEnabled = NO;
+                        self.carousel.truncateFinalPage = YES;
+                        [self.carousel setBackgroundColor:[UIColor whiteColor]];
+                        [self.carousel reloadData];
+                        [self.view addSubview:self.carousel];
+                        
+                        //scroll to fix bug which populates swipeview with 1 item
+                        [self.carousel scrollToOffset:0.0 duration:0.1];
+                        
+                        self.changeKeyboard = YES;
+                        
+                        [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidBecomeActiveNotification object:nil]; //ADDED
+                        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                                 selector:@selector(comeBackToForeground)
+                                                                     name:UIApplicationDidBecomeActiveNotification
+                                                                   object:[UIApplication sharedApplication]];
+                    }
+                    else{
+                        [self.carousel reloadData];
+                    }
+                }
+                
+            }
             
             //check if banned - if so show alert
             PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
@@ -109,8 +172,33 @@
         [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.listingButton, self.profileButton, nil]];
     }
     else{
-        [self.navigationItem setRightBarButtonItem:self.profileButton];
+        //decide on whether to show follow button
+        
+        NSDictionary *followingDic = [[PFUser currentUser]objectForKey:@"followingDic"];
+        
+        if ([followingDic valueForKey:self.otherUser.objectId]) {
+            //following
+            self.following = YES;
+            
+            [self.navigationItem setRightBarButtonItem:self.profileButton];
+
+        }
+        else{
+            //not following
+            self.following = NO;
+
+            self.followButton = [[UIBarButtonItem alloc] initWithTitle:@"Follow" style:UIBarButtonItemStylePlain target:self action:@selector(followUser)];
+            NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:15],
+                                            NSFontAttributeName, nil];
+            [self.followButton setTitleTextAttributes:textAttributes forState:UIControlStateNormal];
+            [self.followButton setTitleTextAttributes:textAttributes forState:UIControlStateHighlighted];
+            
+            [self.followButton setTintColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
+            
+            [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:self.profileButton, self.followButton, nil]];
+        }
     }
+    
     self.collectionView.collectionViewLayout.messageBubbleFont = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
     
     self.inputToolbar.contentView.textView.font = [UIFont fontWithName:@"PingFangSC-Regular" size:15];
@@ -168,7 +256,9 @@
         }
         else{
             //should we show?
-            if (![[self.convoObject objectForKey:@"buyerShowSuggested"]isEqualToString:@"NO"]) {
+            
+            //always show at least 1 if trades disabled
+            if (self.disabledTrades) {
                 self.showSuggested = YES;
                 
                 //load messages left
@@ -177,20 +267,58 @@
                 }
                 else{
                     if (self.messageSellerPressed == YES) {
-                        [self.suggestedMessagesArray addObjectsFromArray:@[@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks", @"Dismiss"]];
+                        [self.suggestedMessagesArray addObjectsFromArray:@[@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks"]];
                     }
                     else{
-                        [self.suggestedMessagesArray addObjectsFromArray:@[@"What are you selling?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks", @"Dismiss"]];
+                        [self.suggestedMessagesArray addObjectsFromArray:@[@"What are you selling?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks"]];
                     }
+                }
+                
+                //remove dismiss button so can't get rid of caoursel and dismiss NO trades label if its showing
+                [self.suggestedMessagesArray removeObject:@"Dismiss"];
+                
+                if (![self.suggestedMessagesArray containsObject:@"Trades NOT Accepted"]) {
+                    [self.suggestedMessagesArray insertObject:@"Trades NOT Accepted" atIndex:0];
                 }
             }
             else{
-                self.showSuggested = NO;
+                if (![[self.convoObject objectForKey:@"buyerShowSuggested"]isEqualToString:@"NO"]) {
+                    self.showSuggested = YES;
+                    
+                    //load messages left
+                    if ([self.convoObject objectForKey:@"buyerSuggestedMessages"]) {
+                        [self.suggestedMessagesArray addObjectsFromArray:[self.convoObject objectForKey:@"buyerSuggestedMessages"]];
+                    }
+                    else{
+                        if (self.messageSellerPressed == YES) {
+                            [self.suggestedMessagesArray addObjectsFromArray:@[@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks", @"Dismiss"]];
+                        }
+                        else{
+                            [self.suggestedMessagesArray addObjectsFromArray:@[@"What are you selling?",@"What size?",@"Yeah I'm interested", @"Got photos?", @"How's the fit?",@"What's your price?",@"Price negotiable?", @"Not interested thanks", @"Dismiss"]];
+                        }
+                    }
+                    
+                    if ([self.suggestedMessagesArray containsObject:@"Trades NOT Accepted"]) {
+                        [self.suggestedMessagesArray removeObject:@"Trades NOT Accepted"];
+                    }
+                    
+                    if (![self.suggestedMessagesArray containsObject:@"Dismiss"]) {
+                        [self.suggestedMessagesArray addObject:@"Dismiss"];
+                    }
+                }
+                else{
+                    self.showSuggested = NO;
+                }
             }
         }
     }
     else{
         //seller
+        
+        if ([[[PFUser currentUser]objectForKey:@"saleNumber"]intValue] > 0) {
+            self.soldBefore = YES;
+        }
+        
         if (self.fromOrder) {
             //order chat should hold different suggested messages
             //should we show?
@@ -261,7 +389,7 @@
     self.receivedNew = NO;
     
     //setup suggested message bubbles
-    if (self.showSuggested == YES) {
+    if (self.showSuggested == YES && !self.carousel) {
         
         //check if from latest VC - y point seems to be off on here so need special treatment - works fine from search
         self.carousel = [[SwipeView alloc]initWithFrame:CGRectMake(0, self.inputToolbar.frame.origin.y-50, [UIApplication sharedApplication].keyWindow.frame.size.width, 50)];
@@ -628,8 +756,6 @@
 {
     [super viewWillAppear:animated];
     
-    NSLog(@"will appear");
-    
     [self.navigationController.navigationBar setTranslucent:YES]; //watch out, setting this to no throws the listing banner's constraints off!
     [self.navigationController.navigationBar setHidden:NO];
     
@@ -685,8 +811,41 @@
     //to prevent double tapping profile button
     self.profileBTapped = NO;
     
-    //decide whether to show review banner
+    //decide whether to show 'load more'
     int messageTotal = [[self.convoObject objectForKey:@"totalMessages"]intValue];
+    
+    //add the other user to this user's recentConvoUsersArray
+    //so if they report them we know an interaction has at least happened and give the report a greater weighting
+//    if (messageTotal > 1 && self.otherUser.objectId) {
+//
+//        if ([[PFUser currentUser]objectForKey:@"recentConvoUsers"]) {
+//
+//            NSMutableArray *convoArray = [[PFUser currentUser]objectForKey:@"recentConvoUsers"];
+//
+////            NSLog(@"convo array: %@", convoArray);
+//
+//            //check if otherUser is already in the recents
+//            if(![convoArray containsObject:self.otherUser.objectId]){
+//
+//                //need to add, check if need to remove any first
+//                if (convoArray.count >= 20) {
+//                    //remove index 0
+//                    [convoArray removeObjectAtIndex:0];
+//                }
+//
+//                //add
+//                [convoArray addObject:self.otherUser.objectId];
+//                [[PFUser currentUser]setObject:convoArray forKey:@"recentConvoUsers"];
+//                [[PFUser currentUser]saveInBackground];
+//            }
+//        }
+//        else{
+//            //just add other user's objectId as this is first time
+//            NSArray *convoArray = [NSArray arrayWithObject:self.otherUser.objectId];
+//            [[PFUser currentUser]setObject:convoArray forKey:@"recentConvoUsers"];
+//            [[PFUser currentUser]saveInBackground];
+//        }
+//    }
     
     if (messageTotal > 10) {
         self.showPull = YES;
@@ -712,20 +871,6 @@
         self.checkPayPalTapped = NO;
     }
     else{
-        
-        self.currency = [[PFUser currentUser]objectForKey:@"currency"];
-        if ([self.currency isEqualToString:@"GBP"]) {
-            self.currencySymbol = @"£";
-        }
-        else if ([self.currency isEqualToString:@"EUR"]) {
-            self.currencySymbol = @"€";
-        }
-        else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-            self.currencySymbol = @"$";
-        }
-        
-//        NavigationController *nav = (NavigationController*)self.tabBarController.selectedViewController;
-//        if (self.pureWTS && messageTotal > 0 && self.listing && (!self.fromLatest || (self.tabBarController.selectedIndex != 0 && nav.visibleViewController == nil)))
         if (self.pureWTS && messageTotal > 0 && self.listing)
         {
             double delayInSeconds = 0;
@@ -736,34 +881,6 @@
             });
         }
     }
-    
-//    if ([[self.listing objectForKey:@"category"] isEqualToString:@"Proxy"] && messageTotal >= 20) {
-//
-//        if (self.userIsBuyer == YES) {
-//            if (![self.convoObject objectForKey:@"buyerHasReviewed"]) {
-//                //show rate banner
-//                if (!self.reviewButton && self.justLeftReview != YES) {
-//                    self.reviewButton = [[UIBarButtonItem alloc] initWithTitle:@"Review" style:UIBarButtonItemStylePlain target:self action:@selector(gotoReview)];
-//                    [self.reviewButton setTintColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
-//                    NSMutableArray *currentItems = [NSMutableArray arrayWithArray:self.navigationItem.rightBarButtonItems];
-//                    [currentItems addObject:self.reviewButton];
-//                    [self.navigationItem setRightBarButtonItems:currentItems];
-//                }
-//            }
-//        }
-//        else{
-//            if (![self.convoObject objectForKey:@"sellerHasReviewed"]) {
-//                //show rate banner
-//                if (!self.reviewButton && self.justLeftReview != YES) {
-//                    self.reviewButton = [[UIBarButtonItem alloc] initWithTitle:@"Review" style:UIBarButtonItemStylePlain target:self action:@selector(gotoReview)];
-//                    [self.reviewButton setTintColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0]];
-//                    NSMutableArray *currentItems = [NSMutableArray arrayWithArray:self.navigationItem.rightBarButtonItems];
-//                    [currentItems addObject:self.reviewButton];
-//                    [self.navigationItem setRightBarButtonItems:currentItems];
-//                }
-//            }
-//        }
-//    }
 }
 
 - (void)viewDidLayoutSubviews
@@ -1022,12 +1139,12 @@
                 PFInstallation *current = [PFInstallation currentInstallation];
                 
                 if (updatedBadge == 0) {
-                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:nil];
+                    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
                     current.badge = 0;
                 }
                 //only set updated badge if its a +ve no.
                 else if (updatedBadge > 0){
-                    [[self.tabBarController.tabBar.items objectAtIndex:2] setBadgeValue:[NSString stringWithFormat:@"%d", updatedBadge]];
+                    [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d", updatedBadge]];
                     current.badge = updatedBadge;
                 }
                 [current saveEventually];
@@ -1064,14 +1181,27 @@
     //the drag gesture to dismiss keyboard is handled all by JSQMVC
     //so would need to look there more for a solution to momentatry stranded carousel
     
-    if (self.messageSellerPressed == YES) {
-        self.messageSellerPressed = NO;
-        
-        self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Hey, is your '%@' still available?", self.sellerItemTitle];
-        
-        self.savedString = self.inputToolbar.contentView.textView.text;
-        [self.inputToolbar.contentView.rightBarButtonItem setHidden:NO];
-        [self.inputToolbar toggleSendButtonEnabled];
+    int messageTotal = [[self.convoObject objectForKey:@"totalMessages"]intValue];
+    
+    if (messageTotal == 0) {
+        if (self.messageSellerPressed == YES) {
+            self.messageSellerPressed = NO;
+            
+            self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Hey, is your %@ still available?", self.sellerItemTitle];
+            
+            self.savedString = self.inputToolbar.contentView.textView.text;
+            [self.inputToolbar.contentView.rightBarButtonItem setHidden:NO];
+            [self.inputToolbar toggleSendButtonEnabled];
+        }
+        else if(self.fromActivity){
+            self.fromActivity = NO;
+            
+            self.inputToolbar.contentView.textView.text = [NSString stringWithFormat:@"Hey, are you interested in my %@?", self.sellerItemTitle];
+            
+            self.savedString = self.inputToolbar.contentView.textView.text;
+            [self.inputToolbar.contentView.rightBarButtonItem setHidden:NO];
+            [self.inputToolbar toggleSendButtonEnabled];
+        }
     }
         
     [self resetCarouselHeight];
@@ -1230,158 +1360,13 @@
          senderDisplayName:(NSString *)senderDisplayName
                       date:(NSDate *)date
 {
-    //CHECK check if instant buy is available to this user first before we prompt them to buy on bump
-    if (self.promptedBefore != YES && self.paypalMessage != YES) {
-        NSArray *checkingforemailarray = [text componentsSeparatedByString:@" "];
-        for (NSString *stringer in checkingforemailarray) {
-            NSString *string = [stringer stringByReplacingOccurrencesOfString:@"?" withString:@""];
-            //check for user trying to direct other user elsewhere & remind them to send an offer
-            
-            //friends & family check
-            if ([[string lowercaseString]isEqualToString:@"f&f"]) {
-                [Answers logCustomEventWithName:@"Deal on Bump warning"
-                               customAttributes:@{
-                                                  @"trigger":@"f&f",
-                                                  @"message":text,
-                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
-                                                  }];
-                [self showFriendsAndFamAlert];
-                return;
-            }
-
-            //email check
-            if ([self NSStringIsValidEmail:string]) {
-                [Answers logCustomEventWithName:@"Deal on Bump warning"
-                               customAttributes:@{
-                                                  @"trigger":@"email",
-                                                  @"message":text,
-                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
-                                                  }];
-                
-                [self.convoObject setObject:@"YES" forKey:@"emailExchanged"];
-
-
-                //present 'Send Offer' reminder alert
-//                self.promptedBefore = YES;
-//                self.offerReminderMode = YES;
-//                self.emailReminderMode = YES;
-//
-//                [self showCustomAlert];
-//                return;
-            }
-
-            //facebook check
-            if ([[string lowercaseString] isEqualToString:@"facebook"]) {
-                [Answers logCustomEventWithName:@"Deal on Bump warning"
-                               customAttributes:@{
-                                                  @"trigger":@"facebook",
-                                                  @"message":text,
-                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
-                                                  }];
-                //present 'Send Offer' reminder alert
-//                self.promptedBefore = YES;
-//                self.offerReminderMode = YES;
-//                self.emailReminderMode = YES;
-//                [self showCustomAlert];
-//                return;
-            }
-
-            //check for number
-            NSError *error = NULL;
-            NSDataDetector *detector = [NSDataDetector dataDetectorWithTypes:NSTextCheckingTypePhoneNumber error:&error];
-            NSArray *matches = [detector matchesInString:string options:0 range:NSMakeRange(0, [string length])];
-            if (matches != nil) {
-                for (NSTextCheckingResult *match in matches) {
-                    if ([match resultType] == NSTextCheckingTypePhoneNumber) {
-                        [Answers logCustomEventWithName:@"Deal on Bump warning"
-                                       customAttributes:@{
-                                                          @"trigger":@"phone number",
-                                                          @"message":text,
-                                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
-                                                          }];
-                         //present 'Send Offer' reminder alert
-//                         self.promptedBefore = YES;
-//                         self.offerReminderMode = YES;
-//                        self.emailReminderMode = YES;
-//                         [self showCustomAlert];
-//                        return;
-                    }
-                }
-            }
-
-            //depop
-            if ([[string lowercaseString] isEqualToString:@"depop"]) {
-                [Answers logCustomEventWithName:@"Deal on Bump warning"
-                               customAttributes:@{
-                                                  @"trigger":@"depop",
-                                                  @"message":text,
-                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
-                                                  }];
-                //present 'Send Offer' reminder alert
-//                self.promptedBefore = YES;
-//                self.offerReminderMode = YES;
-//                self.emailReminderMode = YES;
-//                [self showCustomAlert];
-//                return;
-            }
-
-            //instagram
-            if ([[string lowercaseString] isEqualToString:@"instagram"]) {
-                [Answers logCustomEventWithName:@"Deal on Bump warning"
-                               customAttributes:@{
-                                                  @"trigger":@"instagram",
-                                                  @"message":text,
-                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
-                                                  }];
-                //present 'Send Offer' reminder alert
-//                self.promptedBefore = YES;
-//                self.offerReminderMode = YES;
-//                self.emailReminderMode = YES;
-//                [self showCustomAlert];
-//                return;
-            }
-
-            //big cartel
-            if ([[string lowercaseString] containsString:@".bigcartel"]) {
-                [Answers logCustomEventWithName:@"Deal on Bump warning"
-                               customAttributes:@{
-                                                  @"trigger":@"bigcartel",
-                                                  @"message":text,
-                                                  @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
-                                                  }];
-                //present 'Send Offer' reminder alert
-//                self.promptedBefore = YES;
-//                self.offerReminderMode = YES;
-//                self.emailReminderMode = YES;
-//                [self showCustomAlert];
-//                return;
-            }
-        }
-        if ([text.lowercaseString containsString:@"your number"]) {
-            [Answers logCustomEventWithName:@"Deal on Bump warning"
-                           customAttributes:@{
-                                              @"trigger":@"phone number",
-                                              @"message":text,
-                                              @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
-                                              }];
-            //present 'Send Offer' reminder alert
-//            self.promptedBefore = YES;
-//            self.offerReminderMode = YES;
-//            self.emailReminderMode = YES;
-//            [self showCustomAlert];
-//            return;
-        }
+    //check for using trying to complete sale outside bump
+    BOOL shouldStillSend = [self checkForOutsideTransactionMessages:text];
+    
+    if (!shouldStillSend) {
         
-        if ([text.lowercaseString containsString:@"friends and family"] || [text.lowercaseString containsString:@"friends & family"] || [text.lowercaseString containsString:@"friendsandfamily"] || [text.lowercaseString containsString:@"friend and family"]) {
-            [Answers logCustomEventWithName:@"Deal on Bump warning"
-                           customAttributes:@{
-                                              @"trigger":@"friends and family",
-                                              @"message":text,
-                                              @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
-                                              }];
-            [self showFriendsAndFamAlert];
+        if (![[[PFUser currentUser] objectForKey:@"paidMod"]isEqualToString:@"YES"]) {
             return;
-            
         }
     }
     
@@ -1390,12 +1375,7 @@
     }
     
     //for instant reload in inbox after tapping send, pass the sent message back to inboxVC
-    if (self.paypalMessage) {
-        [self.delegate lastMessageInConvo:@"You sent your PayPal 💰" incomingMsg:NO];
-    }
-    else{
-        [self.delegate lastMessageInConvo:[NSString stringWithFormat:@"You: %@", text] incomingMsg:NO];
-    }
+    [self.delegate lastMessageInConvo:[NSString stringWithFormat:@"You: %@", text] incomingMsg:NO];
     
     //hide intro paypal view
     if (self.paypalView && self.messages.count == 0) {
@@ -1771,7 +1751,7 @@
                                               @"where":@"MessageVC"
                                               }];
             
-            CameraController *vc = [[CameraController alloc]init];
+            CamVC *vc = [[CamVC alloc]init];
             vc.delegate = self;
             [self presentViewController:vc animated:YES completion:nil];
         }]];
@@ -1994,18 +1974,18 @@
 }
 
 -(void)showMyPaypal{
-    NSString *URLString = @"https://www.paypal.com/myaccount/";
-    self.webViewController = nil;
-    self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
-    self.webViewController.title = @"My PayPal";
-    self.webViewController.showUrlWhileLoading = YES;
-    self.webViewController.showPageTitles = NO;
-    self.webViewController.doneButtonTitle = @"";
-//    self.webViewController.infoMode = NO;
-    self.checkPayPalTapped = YES;
-    self.webViewController.delegate = self;
-    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
-    [self presentViewController:navigationController animated:YES completion:nil];
+//    NSString *URLString = @"https://www.paypal.com/myaccount/";
+//    self.webViewController = nil;
+//    self.webViewController = [[TOJRWebView alloc] initWithURL:[NSURL URLWithString:URLString]];
+//    self.webViewController.title = @"My PayPal";
+//    self.webViewController.showUrlWhileLoading = YES;
+//    self.webViewController.showPageTitles = NO;
+//    self.webViewController.doneButtonTitle = @"";
+////    self.webViewController.infoMode = NO;
+//    self.checkPayPalTapped = YES;
+//    self.webViewController.delegate = self;
+//    NavigationController *navigationController = [[NavigationController alloc] initWithRootViewController:self.webViewController];
+//    [self presentViewController:navigationController animated:YES completion:nil];
 }
 
 -(void)payOnPayPal{
@@ -2209,11 +2189,6 @@
 
 -(void)dismissPressed:(BOOL)yesorno{
     //do nothing
-}
-
--(void)tagString:(NSString *)tag{
-    self.tagString = tag;
-    NSLog(@"tag %@", self.tagString);
 }
 
 #pragma mark - JSQMessages CollectionView DataSource
@@ -2669,7 +2644,7 @@
             UIPasteboard *pb = [UIPasteboard generalPasteboard];
             [pb setString:[self.otherUser objectForKey:@"paypal"]];
             
-            [self payOnPayPal];
+//            [self payOnPayPal];
         }
     }
     else{
@@ -2981,7 +2956,6 @@
         messageLabel.layer.cornerRadius = 15;
         messageLabel.layer.masksToBounds = YES;
         messageLabel.textAlignment = NSTextAlignmentCenter;
-        [messageLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:13]];
         [view addSubview:messageLabel];
         
     }
@@ -2990,17 +2964,20 @@
         messageLabel = [[view subviews] lastObject];
     }
     
+    [messageLabel setFont:[UIFont fontWithName:@"PingFangSC-Regular" size:13]];
+
     //check if last in the array
-    if (index == self.suggestedMessagesArray.count-1) {
+    if ([[self.suggestedMessagesArray objectAtIndex:index] isEqualToString:@"Dismiss"]) {
         messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
         messageLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
         messageLabel.backgroundColor = [UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0];
     }
-//    else if ([[self.suggestedMessagesArray objectAtIndex:index] isEqualToString:@"Send PayPal email"]) {
-//        messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
-//        messageLabel.textColor = [UIColor whiteColor];
-//        messageLabel.backgroundColor = [UIColor colorWithRed:0.42 green:0.42 blue:0.84 alpha:1.0];
-//    }
+    else if ([[self.suggestedMessagesArray objectAtIndex:index] containsString:@"Trades"]) {
+        messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
+        [messageLabel setFont:[UIFont fontWithName:@"PingFangSC-Medium" size:13]];
+        messageLabel.textColor = [UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:1.0];
+        messageLabel.backgroundColor = [UIColor whiteColor];
+    }
     else{
         messageLabel.text = [self.suggestedMessagesArray objectAtIndex:index];
         messageLabel.textColor = [UIColor whiteColor];
@@ -3056,32 +3033,9 @@
                              [self.carousel removeFromSuperview];
                          }];
     }
-//    else if ([messageString isEqualToString:@"Send PayPal email"]){
-//
-//        if (![[[PFUser currentUser]objectForKey:@"paypalUpdated"]isEqualToString:@"YES"]) {
-//            //show paypal alert to confirm
-//            [self showPayPalAlert];
-//        }
-//        else{
-//            NSString *messageString;
-//
-//            //this is in case user has updated paypal but for some reason it hasn't saved immediately
-//            if (self.updatedPayPal) {
-//                messageString = [NSString stringWithFormat:@"@%@ sent their PayPal email %@",[PFUser currentUser].username,self.updatedPayPal];
-//            }
-//            else{
-//                messageString = [NSString stringWithFormat:@"@%@ sent their PayPal email %@",[PFUser currentUser].username,[[PFUser currentUser] objectForKey:@"paypal"]];
-//            }
-//
-//            [self.convoObject setObject:@"YES" forKey:@"paypalSent"];
-//            [self.convoObject saveInBackground];
-//
-//            UIButton *button = [[UIButton alloc]init];
-//            self.paypalMessage = YES;
-//            self.paypalPush = YES;
-//            [self didPressSendButton:button withMessageText:messageString senderId:self.senderId senderDisplayName:self.senderDisplayName date:[NSDate date]];
-//        }
-//    }
+    else if ([messageString containsString:@"Trades"]){
+        [self showTradeWarning];
+    }
     else{
         //send message
         UIButton *button = [[UIButton alloc]init];
@@ -3110,16 +3064,20 @@
         [self.convoObject saveInBackground];
         
         if (self.suggestedMessagesArray.count == 1) {
-            //hide carousel as only has dismiss left in it (only possible for buyers)
-            [UIView animateWithDuration:0.5
-                                  delay:0
-                                options:UIViewAnimationOptionCurveEaseIn
-                             animations:^{
-                                 self.carousel.alpha = 0.0f;
-                             }
-                             completion:^(BOOL finished) {
-                                 [self.carousel removeFromSuperview];
-                             }];
+            
+            if(![self.suggestedMessagesArray[0] containsString:@"Trades"]){
+                //hide carousel as only has dismiss left in it (only possible for buyers)
+                [UIView animateWithDuration:0.5
+                                      delay:0
+                                    options:UIViewAnimationOptionCurveEaseIn
+                                 animations:^{
+                                     self.carousel.alpha = 0.0f;
+                                 }
+                                 completion:^(BOOL finished) {
+                                     [self.carousel removeFromSuperview];
+                                 }];
+            }
+
         }
         else{
             [self.carousel reloadData];
@@ -3375,8 +3333,6 @@
         self.listingView.delegate = self;
         [self.listingView.buyButton setHidden:YES];
         self.instantBuyDisabled = NO;
-
-
         [self.listing fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
             if (object) {
 
@@ -3390,8 +3346,23 @@
                     self.listingView.itemTitleLabel.text = [self.listing objectForKey:@"description"];
                 }
                 
+                //set currency and symbol
+                self.currency = [self.listing objectForKey:@"currency"];
+
+                if ([self.currency isEqualToString:@"GBP"]) {
+                    self.currencySymbol = @"£";
+                }
+                else if ([self.currency isEqualToString:@"EUR"]) {
+                    self.currencySymbol = @"€";
+                }
+                else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+                    self.currencySymbol = @"$";
+                }
+                
                 //hide buy button for proxies
                 if([[self.listing objectForKey:@"category"]isEqualToString:@"Proxy"]){
+                    self.proxyListing = YES;
+                    
                     self.instantBuyDisabled = YES;
                     [self.listingView.buyButton setHidden:YES];
                     self.listingView.priceLabel.text = @"";
@@ -3406,24 +3377,30 @@
                     self.buyButtonOn = YES;
                     [self.listingView.buyButton setHidden:NO];
                     
-                    NSString *listingCurrency = [self.listing objectForKey:@"currency"];
-                    
-                    float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@",listingCurrency]]floatValue];
+                    float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@",self.currency]]floatValue];
                     self.listingView.priceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
                 }
                 else if([[self.listing objectForKey:@"status"]isEqualToString:@"sold"]){
                     NSLog(@"show sold button");
-                    [self.listingView.buyButton setHidden:NO];
-
-                    //show item as sold
-                    NSString *listingCurrency = [self.listing objectForKey:@"currency"];
-
-                    [self.listingView.buyButton setBackgroundImage:[UIImage imageNamed:@"soldChatBg"] forState:UIControlStateNormal];
-                    [self.listingView.buyButton setTitle:@"S O L D" forState:UIControlStateNormal];
-                    
+                    self.itemSold = YES;
                     [self.listingView.buyButton setHidden:NO];
                     
-                    float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", listingCurrency]]floatValue];
+                    
+                    //decide which button to show in listing banner
+                    if ([[self.listing objectForKey:@"buyerId"]isEqualToString:[PFUser currentUser].objectId] || [[self.listing objectForKey:@"sellerId"]isEqualToString:[PFUser currentUser].objectId] && [self.listing objectForKey:@"orderId"]) {
+                        //let buyer or seller view order from chat
+                        self.buyButtonOn = YES;
+                        [self.listingView.buyButton setTitle:@"O R D E R" forState:UIControlStateNormal];
+                        [self.listingView.buyButton setBackgroundImage:[UIImage imageNamed:@"orderChatBg"] forState:UIControlStateNormal];
+                    }
+                    else{
+                        //show item as sold
+                        self.buyButtonOn = NO;
+                        [self.listingView.buyButton setBackgroundImage:[UIImage imageNamed:@"soldChatBg"] forState:UIControlStateNormal];
+                        [self.listingView.buyButton setTitle:@"S O L D" forState:UIControlStateNormal];
+                    }
+                    
+                    float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
                     self.listingView.priceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
                 }
                 else{
@@ -3432,8 +3409,6 @@
                     float price = [[self.listing objectForKey:[NSString stringWithFormat:@"salePrice%@", self.currency]]floatValue];
                     self.listingView.priceLabel.text = [NSString stringWithFormat:@"%@%.0f",self.currencySymbol ,price];
                 }
-                
-                
             }
             else{
                 [self showAlertWithTitle:@"Error fetching listing" andMsg:@"Make sure you have a good internet connection!"];
@@ -3442,52 +3417,8 @@
     }
     
     [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+[UIApplication sharedApplication].statusBarFrame.size.height,[UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
-
-//    if (@available(iOS 11.0, *)) {
-//        if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
-//            //iPhone7 - done
-//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, [UIApplication sharedApplication].keyWindow.frame.size.width, 15)];
-//        }
-//        else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
-//            //iPhone 7 plus
-//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,[UIApplication sharedApplication].keyWindow.frame.size.width, 15)];
-//        }
-//        else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
-//            //iPhone SE
-//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,375, 15)];
-//        }
-//        else{
-//            //fall back
-//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, [UIApplication sharedApplication].keyWindow.frame.size.width, 15)];
-//        }
-//    }
-//    else{
-//        NSLog(@"not 11 ");
-//
-//        if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
-//            //iPhone7 - done
-//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, [UIApplication sharedApplication].keyWindow.frame.size.width, 30)];
-//        }
-//        else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
-//            //iPhone 7 plus
-//            NSLog(@"6/7 plus ");
-//
-//
-////            [self.listingView setNeedsLayout];
-//        }
-//        else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
-//            //iPhone SE
-//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20,375, 129)];
-//        }
-//        else{
-//            //fall back
-//            [self.listingView setFrame:CGRectMake(0,self.navigationController.navigationBar.frame.size.height+20, [UIApplication sharedApplication].keyWindow.frame.size.width, 15)];
-//        }
-//    }
     
     [self.view addSubview:self.listingView];
-
-//    NSLog(@"listing view %@", NSStringFromCGRect(self.listingView.frame));
     
     [self.listingView setAlpha:1.0];
     self.listingBannerShowing = YES;
@@ -3515,24 +3446,36 @@
         return;
     }
     
-    NSLog(@"checkout gonna show in msgs");
-    
-    [self.listingView.buyButton setEnabled:NO];
-    
-    Mixpanel *mixpanel = [Mixpanel sharedInstance];
-    [mixpanel track:@"tapped_buy_listing" properties:@{
-                                                       @"source":@"conversation"
-                                                       }];
-    
-    CheckoutSummary *vc = [[CheckoutSummary alloc]init];
-    vc.listingObject = self.listing;
-    vc.delegate = self;
-    vc.instantBuyDisabled = self.instantBuyDisabled;
-    
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-    [self.navigationController presentViewController:nav animated:YES completion:^{
-        [self.listingView.buyButton setEnabled:YES];
-    }];
+    if (self.itemSold) {
+        OrderSummaryView *vc = [[OrderSummaryView alloc]init];
+        
+        if (self.userIsBuyer) {
+            vc.isBuyer = YES;
+        }
+        
+        vc.orderObject = [PFObject objectWithoutDataWithClassName:@"saleOrders" objectId:[self.listing objectForKey:@"orderId"]];
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else{
+        [self.listingView.buyButton setEnabled:NO];
+        
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"tapped_buy_listing" properties:@{
+                                                           @"source":@"conversation"
+                                                           }];
+        
+        CheckoutSummary *vc = [[CheckoutSummary alloc]init];
+        vc.listingObject = self.listing;
+        vc.delegate = self;
+        vc.instantBuyDisabled = self.instantBuyDisabled;
+        vc.source = @"convo";
+        
+        NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+        [self.navigationController presentViewController:nav animated:YES completion:^{
+            [self.listingView.buyButton setEnabled:YES];
+        }];
+    }
+ 
 }
 
 -(void)sendDemoMessage{
@@ -3647,17 +3590,395 @@
     [self.listingView.buyButton setTitle:@"S O L D" forState:UIControlStateNormal];
 }
 
--(void)showFriendsAndFamAlert{
+-(void)showTradeWarning{
+    [Answers logCustomEventWithName:@"Triggered Trade Warning"
+                   customAttributes:@{}];
     
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Friends and Family Warning" message:@"Receiving or Sending money through PayPal Friends & Family is against our Terms of Service as this means that both buyer & seller are not covered by BUMP + PayPal Protection and are NOT entitled to a full refund should you be dissatisfied with your order\n\nAlways sell/pay through the BUMP Checkout to stay fully protected" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Seller NOT Accepting Trades" message:@"This seller is not accepting trades, if you have an item to trade, try listing it for sale on BUMP so you can buy more!\n\nYou can disable trades in Settings" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [Intercom logEventWithName:@"trade_warning_seen"];
+    }]];
+    [self presentViewController:alertView animated:YES completion:nil];
+}
+
+-(void)showPaymentWarning{
+    
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Payment Warning" message:@"Receiving or sending money outside of the BUMP Checkout (PayPal Friends & Family, Venmo etc.) is against our Terms of Service as this means that both buyer & seller are not covered by BUMP + PayPal Protection and are NOT entitled to a full refund should you be dissatisfied with your order\n\nAlways sell and pay through the BUMP Checkout to stay fully protected\n\nIf you're found to be selling outside of the BUMP Checkout your accout will be permanently closed." preferredStyle:UIAlertControllerStyleAlert];
     
     [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         self.inputToolbar.contentView.textView.text = @"";
+        
+        [Intercom logEventWithName:@"trying_sell_convo"];
+        
+        NSString *buyerId = @"";
+        
+        if (self.userIsBuyer) {
+            buyerId = [PFUser currentUser].objectId;
+            
+            [[PFUser currentUser]incrementKey:@"tryingConvoPurchase"];
+        }
+        else{
+            buyerId = self.otherUser.objectId;
+            [[PFUser currentUser]incrementKey:@"tryingConvoSale"];
+        }
+        [[PFUser currentUser]saveInBackground];
+        
+        if (!self.triggeredPaymentWarning) {
+            self.triggeredPaymentWarning = YES;
+            //trigger auto warning message to buyer
+            NSDictionary *params = @{@"buyerId": buyerId};
+            [PFCloud callFunctionInBackground:@"buyerIntercomWarning" withParameters:params block:^(NSDictionary *response, NSError *error) {
+                if (!error) {
+                    [Answers logCustomEventWithName:@"Triggered Buyer IC Warning"
+                                   customAttributes:@{}];
+                }
+                else{
+                    [Answers logCustomEventWithName:@"Triggered Buyer IC Warning"
+                                   customAttributes:@{
+                                                      @"error":error.description
+                                                      }];
+                }
+            }];
+        }
+        
     }]];
     [self presentViewController:alertView animated:YES completion:nil];
     
 }
 
+-(void)followUser{
+    //tracking
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"follow_pressed" properties:@{
+                                                   @"source":@"convo"
+                                                   }];
+    
+    self.following = YES;
+    
+    //hide follow button
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         [self.followButton setTintColor:[UIColor colorWithRed:0.30 green:0.64 blue:0.99 alpha:0.0]];
+                     }
+                     completion:^(BOOL finished) {
+                         [self.navigationItem setRightBarButtonItem:self.profileButton];
+                     }];
+    
+    //update current user's followingDic locally
+    if ([[PFUser currentUser]objectForKey:@"followingDic"]) {
+        //add to existing
+        NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:[[PFUser currentUser]objectForKey:@"followingDic"]];
+        
+        //check if value already exists in dictionary before adding
+        if (![dic valueForKey:self.otherUser.objectId]) {
+            dic[self.otherUser.objectId] = self.otherUser.objectId;
+            [[PFUser currentUser]setObject:dic forKey:@"followingDic"];
+            [[PFUser currentUser]saveInBackground];
+        }
+    }
+    else{
+        //create one
+        NSMutableDictionary *dic = [[NSMutableDictionary alloc]init];
+        dic[self.otherUser.objectId] = self.otherUser.objectId;
+        [[PFUser currentUser]setObject:dic forKey:@"followingDic"];
+        [[PFUser currentUser]saveInBackground];
+    }
+    
+    NSDictionary *params = @{@"followedId": self.otherUser.objectId, @"followingId": [PFUser currentUser].objectId};
+    [PFCloud callFunctionInBackground:@"followUser" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+        if (error) {
+            NSLog(@"error following user: %@", error);
+            
+            
+            [Answers logCustomEventWithName:@"Error Following User"
+                           customAttributes:@{
+                                              @"error":error.description,
+                                              @"where":@"convo"
+                                              }];
+            
+            if ([[PFUser currentUser]objectForKey:@"followingDic"]) {
+                //remove from existing
+                NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:[[PFUser currentUser]objectForKey:@"followingDic"]];
+                
+                if ([dic valueForKey:self.otherUser.objectId]) {
+                    [dic removeObjectForKey:self.otherUser.objectId];
+                    [[PFUser currentUser]setObject:dic forKey:@"followingDic"];
+                    [[PFUser currentUser]saveInBackground];
+                }
+            }
+            
+            //reset button
+            self.following = NO;
+            
+            //show alert
+            [self showAlertWithTitle:@"Follow Error" andMsg:@"Make sure you're connected to the internet. If you keep seeing this issue please send a screenshot to support from within the app"];
+        }
+        else{
+            NSLog(@"success following user!");
+            
+            [Answers logCustomEventWithName:@"Followed User"
+                           customAttributes:@{
+                                              @"where":@"convo"
+                                              }];
+        }
+    }];
+}
+
+-(BOOL)checkForOutsideTransactionMessages:(NSString *)text{
+    
+    //remove all spaces, punctuation & special characters in message text and check entire text for bad keywords
+    
+    NSString *noSpacesText = [text.lowercaseString stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
+    NSCharacterSet *notAllowedChars = [[NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@."] invertedSet];
+    NSString *noSpaceText = [[noSpacesText componentsSeparatedByCharactersInSet:notAllowedChars] componentsJoinedByString:@""];
+    
+    NSString *noDotsText = [noSpaceText stringByReplacingOccurrencesOfString:@"." withString:@""];
+
+    NSLog (@"no space string: %@", noSpaceText);
+    
+    //check if known bad keywords are present
+    
+    //friends & family check
+    if ([[noDotsText lowercaseString]containsString:@"f&f"] || [[noDotsText lowercaseString]containsString:@"fandf"]) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"f&f",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        [self showPaymentWarning];
+        return NO;
+    }
+    
+    if ([[noDotsText lowercaseString]containsString:@"venmo"]) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"venmo",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        [self showPaymentWarning];
+        return NO;
+    }
+    
+    if (([[noDotsText lowercaseString]containsString:@"trade"] || [[noDotsText lowercaseString]containsString:@"exchange"] || [[noDotsText lowercaseString]containsString:@"trad"] || [[noDotsText lowercaseString]containsString:@"tradde"]) && self.disabledTrades) {
+        [Answers logCustomEventWithName:@"Trade warning"
+                       customAttributes:@{
+                                          @"trigger":@"trade",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        self.inputToolbar.contentView.textView.text = @"";
+        [self showTradeWarning];
+        return NO;
+    }
+    
+//    if (!self.proxyListing && [[noSpaceText lowercaseString]containsString:@".co"]) {
+//        [Answers logCustomEventWithName:@"Deal on Bump warning"
+//                       customAttributes:@{
+//                                          @"trigger":@".co",
+//                                          @"message":text,
+//                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+//                                          }];
+//
+////        [self showPaymentWarning];
+//        return NO;
+//    }
+    
+    //facebook check
+    if ([[noDotsText lowercaseString] containsString:@"facebook"]) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"facebook",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+//        [self showPaymentWarning];
+        return YES;
+    }
+    
+    //depop
+    if ([[noDotsText lowercaseString] containsString:@"depop"]) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"depop",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        [self showPaymentWarning];
+        return NO;
+    }
+    
+    //grailed
+    if ([[noDotsText lowercaseString] containsString:@"grailed"]) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"grailed",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        [self showPaymentWarning];
+        return NO;
+    }
+    
+    //instagram
+    if ( ([[noDotsText lowercaseString] containsString:@"instagram"] || [[noDotsText lowercaseString] containsString:@"insta"]) && !self.proxyListing) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"instagram",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+//        [self showPaymentWarning];
+        return YES;
+    }
+    
+    //big cartel
+    if ([[noDotsText lowercaseString] containsString:@"bigcartel"]) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"bigcartel",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        [self showPaymentWarning];
+        return NO;
+    }
+    
+    //invoice
+    if ([[noDotsText lowercaseString] containsString:@"invoice"] && !self.proxyListing) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"invoice",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        [self showPaymentWarning];
+        return NO;
+    }
+    
+    if ([[noDotsText lowercaseString] containsString:@"paypal"]  && !self.proxyListing && !self.soldBefore) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"paypal",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        [self showPaymentWarning];
+        return NO;
+    }
+    
+//    if (([noDotsText.lowercaseString containsString:@"phone"] || [noDotsText.lowercaseString containsString:@"cell"] || [noDotsText.lowercaseString containsString:@"mobile"]) && !self.proxyListing  && !self.itemSold) {
+//        [Answers logCustomEventWithName:@"Deal on Bump warning"
+//                       customAttributes:@{
+//                                          @"trigger":@"phone number",
+//                                          @"message":text,
+//                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+//                                          }];
+//
+////        [self showPaymentWarning];
+//        return YES;
+//    }
+    
+    if ([noDotsText.lowercaseString containsString:@"your email"] && !self.proxyListing) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"your email",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        
+        [self showPaymentWarning];
+        return NO;
+    }
+    
+    if (!self.itemSold && [noDotsText.lowercaseString containsString:@"bank"]) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"bank",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        
+        [self showPaymentWarning];
+        return NO;
+    }
+    
+    if ([noDotsText.lowercaseString containsString:@"friends and family"] || [noDotsText.lowercaseString containsString:@"friends & family"] || [noDotsText.lowercaseString containsString:@"friendsandfamily"] || [noDotsText.lowercaseString containsString:@"friend and family"]) {
+        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                       customAttributes:@{
+                                          @"trigger":@"friends and family",
+                                          @"message":text,
+                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                          }];
+        [self showPaymentWarning];
+        return NO;
+
+    }
+    
+    //check individual strings in the text for email or phone number
+    NSArray *words = [text.lowercaseString componentsSeparatedByString:@" "];
+
+    for (NSString *string in words) {
+        //email check
+        if ([self NSStringIsValidEmail:string] && ![string isEqualToString:@"hello@sobump.com"]) {
+            [Answers logCustomEventWithName:@"Deal on Bump warning"
+                           customAttributes:@{
+                                              @"trigger":@"email",
+                                              @"message":text,
+                                              @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                              }];
+            [self showPaymentWarning];
+            
+            //still track
+            [self.convoObject setObject:@"YES" forKey:@"emailExchanged"];
+            [self.convoObject saveInBackground];
+            
+            return NO;
+        }
+        
+        if ([string isEqualToString:@"pp"] && !self.soldBefore) {
+            [Answers logCustomEventWithName:@"Deal on Bump warning"
+                           customAttributes:@{
+                                              @"trigger":@"pp",
+                                              @"message":text,
+                                              @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                              }];
+            
+            [self showPaymentWarning];
+            return NO;
+        }
+        
+        //check for number
+        if (!self.itemSold) {
+            NSError *error = NULL;
+            NSDataDetector *detector = [NSDataDetector dataDetectorWithTypes:NSTextCheckingTypePhoneNumber error:&error];
+            NSArray *matches = [detector matchesInString:string options:0 range:NSMakeRange(0, [string length])];
+            if (matches != nil) {
+                for (NSTextCheckingResult *match in matches) {
+                    if ([match resultType] == NSTextCheckingTypePhoneNumber) {
+                        [Answers logCustomEventWithName:@"Deal on Bump warning"
+                                       customAttributes:@{
+                                                          @"trigger":@"phone number",
+                                                          @"message":text,
+                                                          @"buyer":[NSNumber numberWithBool:self.userIsBuyer]
+                                                          }];
+                        [self showPaymentWarning];
+                        return NO;
+                    }
+                }
+            }
+        }
+
+    }
+    
+    //if we get this far we're good!
+    return YES;
+}
 
 @end
 

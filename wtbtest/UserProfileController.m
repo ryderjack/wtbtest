@@ -7,7 +7,6 @@
 //
 
 #import "UserProfileController.h"
-//#import <SVPullToRefresh/SVPullToRefresh.h>
 #import "CreateForSaleListing.h"
 #import "NavigationController.h"
 #import "ProfileItemCell.h"
@@ -25,6 +24,9 @@
 #import "AppDelegate.h"
 #import "segmentedTableView.h"
 #import <Intercom/Intercom.h>
+#import "whoBumpedTableView.h"
+#import "Mixpanel/Mixpanel.h"
+#import "Branch.h"
 
 @interface UserProfileController ()
 
@@ -62,6 +64,20 @@ typedef void(^myCompletion)(BOOL);
     self.numberOfSegments = 0;
     
     self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:self.navigationItem.backBarButtonItem.style target:nil action:nil];
+    
+    self.refreshControl = [[UIRefreshControl alloc]init];
+    self.refreshControl.backgroundColor = [UIColor clearColor];
+    self.refreshControl.tintColor = [UIColor lightGrayColor];
+    [self.refreshControl addTarget:self action:@selector(refreshUser) forControlEvents:UIControlEventAllEvents];
+    
+    //implement pull to refresh
+    if (@available(iOS 10.0, *)) {
+        self.collectionView.refreshControl = self.refreshControl;
+        
+    }
+    else{
+        [self.collectionView addSubview:self.refreshControl];
+    }
 
     // Register cell classes
     [self.collectionView registerClass:[ProfileItemCell class] forCellWithReuseIdentifier:@"Cell"];
@@ -74,18 +90,23 @@ typedef void(^myCompletion)(BOOL);
     if ([ [ UIScreen mainScreen ] bounds ].size.width == 375) {
         //iPhone6/7
         [flowLayout setItemSize:CGSizeMake(124,124)];
+        self.cellHeight = 124;
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.width == 414){
         //iPhone 6 plus
         [flowLayout setItemSize:CGSizeMake(137, 137)];
+        self.cellHeight = 137;
     }
     else if([ [ UIScreen mainScreen ] bounds ].size.width == 320){
         //iPhone 4/5
+        self.smallScreen = YES;
         [flowLayout setItemSize:CGSizeMake(106, 106)];
+        self.cellHeight = 106;
     }
     else{
         //fall back
         [flowLayout setItemSize:CGSizeMake(124,124)];
+        self.cellHeight = 124;
     }
     
     [flowLayout setMinimumInteritemSpacing:1.0];
@@ -100,7 +121,6 @@ typedef void(^myCompletion)(BOOL);
     self.forSaleArray = [[NSMutableArray alloc]init];
     self.bumpedIds = [[NSMutableArray alloc]init];
     self.filterCategory = @"";
-
     
 //    NSLog(@"USER %@", self.user);
     
@@ -118,7 +138,9 @@ typedef void(^myCompletion)(BOOL);
         //for showing unseen order updates
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateOrderBadge:) name:@"UnseenOrders" object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(removeOrderBadge) name:@"clearOrders" object:nil];
-
+        
+        //if user posts a listing we want to auto refresh their profile feed
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loadWTSListings) name:@"justPostedSaleListing" object:nil];
     }
     
     if (self.user) { //added in this check as saw a crash when querying a null user
@@ -155,8 +177,7 @@ typedef void(^myCompletion)(BOOL);
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    
-    
+        
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NewTBMessageReg"] == YES && self.tabMode == YES) {
         [self newTBMessageReg];
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NewTBMessageReg"];
@@ -168,14 +189,39 @@ typedef void(^myCompletion)(BOOL);
                                     NSFontAttributeName, nil];
     self.navigationController.navigationBar.titleTextAttributes = textAttributes;
     
+    //check current user's dic to see if they're following this person, we don't need to fetch user for this
+    if (!self.tabMode) {
+        NSDictionary *followingDic = [[PFUser currentUser]objectForKey:@"followingDic"];
+        
+        if ([followingDic valueForKey:self.user.objectId]) {
+            //following
+            NSLog(@"following!");
+            
+            self.following = YES;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self setFollowingButton];
+            });
+        }
+        else{
+            //not following
+            NSLog(@"not following");
+            
+            self.following = NO;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self setFollowButton];
+            });
+        }
+    }
+    
     //check if must show unread icon on cog icon
     if (self.tabMode && self.setupHeader) {
         [self calcTabBadge];
     }
     
-    //refresh listings when user taps on profile tab
-    if (self.tabMode == YES && self.user && self.segmentedControl.selectedSegmentIndex == 0) {
-        [self loadWTSListings];
+    //refresh user after they enter a bio
+    if (self.enteredBio == YES) {
+        self.enteredBio = NO;
+        [self refreshUser];
     }
     
     if (self.tappedListing == YES) {
@@ -184,7 +230,7 @@ typedef void(^myCompletion)(BOOL);
         if (self.changedSoldStatusOfListing == YES){
             self.changedSoldStatusOfListing = NO;
             
-            if (self.segmentedControl.selectedSegmentIndex == 2) {
+            if (self.segmentedControl.selectedSegmentIndex == 1) {
                 //don't remove anything from liked segment, just do instant updates on wanted and for sale
             }
             
@@ -198,16 +244,16 @@ typedef void(^myCompletion)(BOOL);
         if (self.deletedListing){
             self.deletedListing = NO;
             
-            if (self.segmentedControl.selectedSegmentIndex == 2) {
+            if (self.segmentedControl.selectedSegmentIndex == 1) {
                 //don't instant update bump tab when items deleted
             }
             
             //when one item left to delete we just reload
             else if (self.lastSelected.row == 0) {
-                if (self.segmentedControl.selectedSegmentIndex == 1) {
-                    [self loadWTBListings];
-                }
-                else if (self.segmentedControl.selectedSegmentIndex == 0) {
+//                if (self.segmentedControl.selectedSegmentIndex == 1) {
+////                    [self loadWTBListings];
+//                }
+                if (self.segmentedControl.selectedSegmentIndex == 0) {
                     [self loadWTSListings];
                 }
             }
@@ -228,381 +274,10 @@ typedef void(^myCompletion)(BOOL);
     
     //protect against (null) user crash
     else if (self.user) {
-        [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-            if (object) {
-                
-                
-                
-                //check if user needs a badge displayed
-                if ([[self.user objectForKey:@"veriUser"] isEqualToString:@"YES"]) {
-                    self.hasBadge = YES;
-                    self.modBadge = NO;
-                }
-                else if([[self.user objectForKey:@"mod"] isEqualToString:@"YES"]){
-                    self.hasBadge = YES;
-                    self.modBadge = YES;
-                }
-                
-                if ([self.user objectForKey:@"bio"]) {
-                    if (![[self.user objectForKey:@"bio"]isEqualToString:@""]) {
-                        self.hasBio = YES;
-                        
-                        self.bioLabel.text = [self.user objectForKey:@"bio"];
-                        self.bioLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
-                    }
-                    else{
-                        //put this check in, incase user had a bio but then deleted it
-                        self.hasBio = NO;
-                        
-                        self.bioLabel.text = @"Tap to add a bio";
-                        self.bioLabel.textColor = [UIColor lightGrayColor];
-                    }
-                }
-                else{
-                    //fail safe
-                    self.hasBio = NO;
-                    
-                    self.bioLabel.text = @"Tap to add a bio";
-                    self.bioLabel.textColor = [UIColor lightGrayColor];
-                }
-                
-                if (!self.setupHeader) {
-                    self.setupHeader = YES;
-                    __weak typeof(self) weakSelf = self;
-
-                    [self addHeaderView:^(BOOL finished) {
-                        if (finished) {
-                            if (![weakSelf.usernameLabel.text isEqualToString:weakSelf.user.username]) {
-                                weakSelf.usernameLabel.text = [NSString stringWithFormat:@"@%@", weakSelf.user.username];
-                                [weakSelf.usernameLabel sizeToFit];
-                            }
-                        }
-                    }];
-                }
-                
-                PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
-                [dealsQuery whereKey:@"User" equalTo:self.user];
-                [dealsQuery orderByAscending:@"createdAt"];
-                [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                    if (object) {
-                        int starNumber = [[object objectForKey:@"currentRating"] intValue];
-                        int total = [[object objectForKey:@"dealsTotal"]intValue];
-                        
-                        NSLog(@"deals total: %d", total);
-                        
-                        if (total > 0 || self.tabMode == YES || starNumber > 0) {
-                            
-                            self.noDeals = NO;
-                            
-                            NSString *reviewsTitle = @"0\nReviews";
-                            
-                            if (total == 0) {
-                                self.noDeals = YES;
-                            }
-                            else if (total == 1) {
-                                reviewsTitle = [NSString stringWithFormat:@"%d\nReview",total];
-                            }
-                            else{
-                                reviewsTitle = [NSString stringWithFormat:@"%d\nReviews",total];
-                            }
-                            
-                            //modify reviews button colors
-                            NSMutableAttributedString *reviewString = [[NSMutableAttributedString alloc] initWithString:reviewsTitle attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
-                            [self modifyNumberLabel:reviewString setFontForText:[NSString stringWithFormat:@"%d", total]];
-                            [self.reviewsButton setAttributedTitle:reviewString forState:UIControlStateNormal];
-                            
-                            //CHANGE add dummy info into followers/ing button titles
-                            NSMutableAttributedString *followingString = [[NSMutableAttributedString alloc] initWithString:@"323\nFollowing" attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
-                            [self modifyNumberLabel:followingString setFontForText:@"323"];
-                            [self.followingButton setAttributedTitle:followingString forState:UIControlStateNormal];
-                            
-                            //followers button
-                            NSMutableAttributedString *followerString = [[NSMutableAttributedString alloc] initWithString:@"120\nFollowers" attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
-                            [self modifyNumberLabel:followerString setFontForText:@"120"];
-                            [self.followersButton setAttributedTitle:followerString forState:UIControlStateNormal];
-                            
-                            NSLog(@"setup followers");
-                            
-                            
-                            if (starNumber == 0) {
-                                [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
-                            }
-                            else if (starNumber == 1){
-                                [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
-                            }
-                            else if (starNumber == 2){
-                                [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
-                            }
-                            else if (starNumber == 3){
-                                [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
-                            }
-                            else if (starNumber == 4){
-                                [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
-                            }
-                            else if (starNumber == 5){
-                                [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
-                            }
-                        }
-                        else{
-                            //looking at someone else's profile and they have zero reviews
-                            self.noDeals = YES;
-                            NSString *reviewsTitle = @"0\nReviews";
-
-                            NSMutableAttributedString *reviewString = [[NSMutableAttributedString alloc] initWithString:reviewsTitle attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
-                            [self modifyNumberLabel:reviewString setFontForText:[NSString stringWithFormat:@"%d", total]];
-                            [self.reviewsButton setAttributedTitle:reviewString forState:UIControlStateNormal];
-                        }
-                    }
-                    else{
-                        NSLog(@"error getting deals data!");
-                    }
-                }];
-                
-                //check if banned - if so show alert (not on tab mode though)
-                if (self.tabMode != YES) {
-                    PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
-                    [bannedInstallsQuery whereKey:@"user" equalTo:self.user];
-                    [bannedInstallsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-                        if (object){
-                            //this user is banned
-                            self.banMode = YES;
-                            [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restricted this user's account for violating our terms"];
-                        }
-                    }];
-                }
-                else{
-                    //tab mode
-//                    if ([[self.user objectForKey:@"orderNumber"]intValue] > 0 || self.ordersUnseen > 0) {
-//                        self.showOrderButton = YES;
-//                        [self.myBar addSubview:self.ordersButton];
-//                    }
-                }
-                
-                [self loadBumpedListings];
-                [self loadWTBListings];
-                
-                if (self.tabMode != YES && self.user && self.segmentedControl.selectedSegmentIndex != 0) {
-                    [self loadWTSListings];
-                }
-
-                if(![self.user objectForKey:@"picture"]){
-                    
-                    NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:30],
-                                                    NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
-                    
-                    [self.userImageView setImageWithString:self.user.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
-                    
-                    NSDictionary *textAttributes1 = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:10],
-                                                    NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
-                    
-                    [self.smallImageView setImageWithString:self.user.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes1];
-                }
-                else{
-                    PFFile *img = [self.user objectForKey:@"picture"];
-                    
-                    [self.userImageView setFile:img];
-                    [self.userImageView loadInBackground];
-                    
-                    [self.smallImageView setFile:img];
-                    [self.smallImageView loadInBackground];
-                }
-                
-                if ([self.user objectForKey:@"profileLocation"]) {
-                    
-                    //setup correct font weights for main name/loc label
-                    NSString *nameString = @"";
-                    
-                    if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
-                        nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
-                    }
-                    else{
-                        nameString = [self.user objectForKey:@"fullname"];
-                    }
-                    
-                    NSString *locString = [self.user objectForKey:@"profileLocation"];
-
-                    if ([locString containsString:@"null"] || [locString containsString:@"(null)"]) {
-                        //if been an error saving the loc then don't display the null
-                        //display 'Joined June 2017' underneath instead to keep label alignment / height
-                        
-                        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-                        dateFormatter.dateFormat = @"MMM yy";
-                        NSString *dateJoined = [dateFormatter stringFromDate:self.user.createdAt];
-                        NSString *joinedString = [NSString stringWithFormat:@"Joined %@",dateJoined];
-                        
-                        NSMutableAttributedString *attString =
-                        [[NSMutableAttributedString alloc]
-                         initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,joinedString]];
-                        
-                        
-                        [attString addAttribute: NSFontAttributeName
-                                          value: [UIFont fontWithName:@"PingFangSC-Medium" size:16]
-                                          range: NSMakeRange(0,nameString.length)];
-                        
-                        [attString addAttribute: NSFontAttributeName
-                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:13]
-                                          range: NSMakeRange(nameString.length+1,joinedString.length)];
-                        
-                        self.nameAndLoc.attributedText = attString;
-                        self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@",nameString];
-                    }
-                    else{
-                        NSMutableAttributedString *attString =
-                        [[NSMutableAttributedString alloc]
-                         initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,locString]];
-                        
-                        
-                        [attString addAttribute: NSFontAttributeName
-                                          value: [UIFont fontWithName:@"PingFangSC-Medium" size:16]
-                                          range: NSMakeRange(0,nameString.length)];
-                        
-                        
-                        [attString addAttribute: NSFontAttributeName
-                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:13]
-                                          range: NSMakeRange(nameString.length+1,locString.length)];
-                        
-                        self.nameAndLoc.attributedText = attString;
-                        self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@\n%@",nameString,locString];
-                    }
-                }
-                else{
-                    
-                    //setup correct font weights for main name/loc label
-                    NSString *nameString = @"";
-                    
-                    if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
-                        nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
-                    }
-                    else{
-                        nameString = [self.user objectForKey:@"fullname"];
-                    }
-                    
-                    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-                    dateFormatter.dateFormat = @"MMM yy";
-                    NSString *dateJoined = [dateFormatter stringFromDate:self.user.createdAt];
-                    NSString *joinedString = [NSString stringWithFormat:@"Joined %@",dateJoined];
-                    
-                    NSMutableAttributedString *attString =
-                    [[NSMutableAttributedString alloc]
-                     initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,joinedString]];
-                    
-                    [attString addAttribute: NSFontAttributeName
-                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:16]
-                                      range: NSMakeRange(0,nameString.length)];
-                    
-                    [attString addAttribute: NSFontAttributeName
-                                      value:  [UIFont fontWithName:@"PingFangSC-Regular" size:13]
-                                      range: NSMakeRange(nameString.length+1,joinedString.length)];
-                    
-                    self.nameAndLoc.attributedText = attString;
-                    self.smallNameAndLoc.text = [NSString stringWithFormat:@"%@", nameString];
-                }
-                
-                //check how user is verified
-                [self refreshVeri];
-                
-                if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
-                    // looking at other user's profile
-                    NSArray *friends = [[PFUser currentUser] objectForKey:@"friends"];
-                    if ([friends containsObject:[self.user objectForKey:@"facebookId"]]) {
-                        [self.FBButton setImage:[UIImage imageNamed:@"FbFriends"] forState:UIControlStateNormal];
-                    }
-                }
-            }
-            else{
-                NSLog(@"couldn't fetch user");
-                [self showError];
-            }
-        }];
         
-//        PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
-//        [dealsQuery whereKey:@"User" equalTo:self.user];
-//        [dealsQuery orderByDescending:@"createdAt"];
-//        [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-//            if (object) {
-//                int starNumber = [[object objectForKey:@"currentRating"] intValue];
-//                int total = [[object objectForKey:@"dealsTotal"]intValue];
-//
-//                NSLog(@"total %d and star number %d", total, starNumber);
-//
-//                if (total > 0 || self.tabMode == YES || starNumber > 0) {
-//                    NSLog(@"yoyo");
-//
-//                    NSLog(@"starview: %@", self.starImageView);
-//
-//                    [self.myBar addSubview:self.starImageView];
-//                    [self.myBar addSubview:self.reviewsButton];
-//                    self.noDeals = NO;
-//
-//                    if (total == 0) {
-//                        [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
-//                    }
-//                    else if (total == 1) {
-//                        [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Review",total] forState:UIControlStateNormal];
-//                    }
-//                    else{
-//                        [self.reviewsButton setTitle:[NSString stringWithFormat:@"%d Reviews",total] forState:UIControlStateNormal];
-//                    }
-//
-//                    if (total == 0 && self.tabMode == YES && starNumber == 0) {
-//                        NSLog(@"no deals in tab mode");
-//                        self.noDeals = YES;
-//                        [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
-//                        [self.reviewsButton setHidden:YES];
-//                    }
-//
-//                    if (starNumber == 1){
-//                        [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
-//                    }
-//                    else if (starNumber == 2){
-//                        [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
-//                    }
-//                    else if (starNumber == 3){
-//                        [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
-//                    }
-//                    else if (starNumber == 4){
-//                        [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
-//                    }
-//                    else if (starNumber == 5){
-//                        [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
-//                    }
-//                }
-//                else{
-//                    NSLog(@"zero reviews");
-//                    //looking at someone else's profile and they have zero reviews
-//                    self.noDeals = YES;
-//                    [self.myBar addSubview:self.reviewsButton];
-//                    [self.reviewsButton setTitle:@"No Reviews" forState:UIControlStateNormal];
-//                }
-//            }
-//            else{
-//                NSLog(@"error getting deals data!");
-//            }
-//        }];
-        
-        self.currency = [[PFUser currentUser]objectForKey:@"currency"];
-        if ([self.currency isEqualToString:@"GBP"]) {
-            self.currencySymbol = @"£";
-        }
-        else if ([self.currency isEqualToString:@"EUR"]) {
-            self.currencySymbol = @"€";
-        }
-        else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
-            self.currencySymbol = @"$";
-        }
-        
-        if (self.segmentedControl.selectedSegmentIndex == 0) {
-            [self segmentControlChanged];
-            [self loadWTSListings];
-            
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 1) {
-            self.WTBPressed = NO;
-            [self loadWTBListings];
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 2) {
-            self.bumpedPressed = NO;
-            [self loadBumpedListings];
+        //if already retrieved a user and its not tab mode don't fetch again
+        if (!self.fetchedUser) {
+            [self loadUser];
         }
     }
 }
@@ -624,7 +299,6 @@ typedef void(^myCompletion)(BOOL);
     borderShape.path = mask.path;
     borderShape.strokeColor = [UIColor whiteColor].CGColor;
     borderShape.fillColor = nil;
-    [mask setBorderColor: [[UIColor greenColor] CGColor]]; //CHANGE
     
     if (imageView == self.userImageView) {
         borderShape.lineWidth = 6;
@@ -648,6 +322,8 @@ typedef void(^myCompletion)(BOOL);
     [wtbQuery orderByDescending:@"createdAt"];
     [wtbQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
+            [self.refreshControl endRefreshing];
+
             //put the sold listings at the end
             NSSortDescriptor *sortDescriptorStatus = [[NSSortDescriptor alloc]
                                                       initWithKey: @"status" ascending: YES];
@@ -694,126 +370,223 @@ typedef void(^myCompletion)(BOOL);
             }
         }
         else{
+            [self.refreshControl endRefreshing];
+
             NSLog(@"error getting WTBs %@", error);
         }
     }];
 }
 
 -(void)loadBumpedListings{
-    NSLog(@"load bumped listings");
+    NSLog(@"load liked listings");
     
     __block NSArray *totalBumped = [self.user objectForKey:@"totalBumpArray"];
     __block NSMutableArray *totalBumpedObjects = [NSMutableArray array];
-
-    NSArray *wantedBumped = [self.user objectForKey:@"wantedBumpArray"];
-
-    PFQuery *bumpedListings = [PFQuery queryWithClassName:@"wantobuys"];
-    [bumpedListings whereKey:@"status" containedIn:@[@"live",@"purchased"]];
-    [bumpedListings whereKey:@"objectId" containedIn:wantedBumped];
+    NSArray *saleBumped = [self.user objectForKey:@"saleBumpArray"];
     
-    [bumpedListings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+    PFQuery *bumpedSaleListings = [PFQuery queryWithClassName:@"forSaleItems"];
+    [bumpedSaleListings whereKey:@"status" containedIn:@[@"live",@"sold"]];
+    [bumpedSaleListings whereKey:@"objectId" containedIn:saleBumped];
+    bumpedSaleListings.limit = 2000;
+    [bumpedSaleListings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (objects) {
-            
             [totalBumpedObjects addObjectsFromArray:objects];
             
-            //now retrieve WTS Bumps
-            NSArray *saleBumped = [self.user objectForKey:@"saleBumpArray"];
+            //reset arrays
+            [self.bumpedArray removeAllObjects];
+            [self.bumpedIds removeAllObjects];
             
-            PFQuery *bumpedSaleListings = [PFQuery queryWithClassName:@"forSaleItems"];
-            [bumpedSaleListings whereKey:@"status" containedIn:@[@"live",@"sold"]];
-            [bumpedSaleListings whereKey:@"objectId" containedIn:saleBumped];
+            //display correct label
+            if (self.tabMode == YES && self.segmentedControl.selectedSegmentIndex == 1 && totalBumpedObjects.count == 0) {
+                //bump selected on own profile & nothing to show
+                [self.createButton setHidden:YES];
+                [self.actionLabel setHidden:NO];
+                self.actionLabel.text = @"Like listings to save them for later";
+                
+                [self.bumpLabel setHidden:YES];
+                [self.bumpImageView setHidden:YES];
+                
+            }
+            else if(self.segmentedControl.selectedSegmentIndex == 1 && totalBumpedObjects.count == 0 && self.tabMode != YES){
+                [self.actionLabel setHidden:NO];
+                self.actionLabel.text = @"nothing to show";
+                
+                [self.createButton setHidden:YES];
+                [self.bumpImageView setHidden:YES];
+                [self.bumpLabel setHidden:YES];
+            }
+            else if (totalBumpedObjects.count != 0 && self.segmentedControl.selectedSegmentIndex == 1) {
+                [self.createButton setHidden:YES];
+                [self.actionLabel setHidden:YES];
+                
+                [self.bumpImageView setHidden:YES];
+                [self.bumpLabel setHidden:YES];
+            }
             
-            [bumpedSaleListings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
-                if (objects) {
-                    [totalBumpedObjects addObjectsFromArray:objects];
-
-                    //reset arrays
-                    [self.bumpedArray removeAllObjects];
-                    [self.bumpedIds removeAllObjects];
-                    
-                    //display correct label
-                    if (self.tabMode == YES && self.segmentedControl.selectedSegmentIndex == 2 && totalBumpedObjects.count == 0) {
-                        //bump selected on own profile & nothing to show
-                        [self.createButton setHidden:YES];
-                        [self.actionLabel setHidden:NO];
-                        self.actionLabel.text = @"Like listings to save them for later";
-                        
-                        [self.bumpLabel setHidden:YES];
-                        [self.bumpImageView setHidden:YES];
-                        
-                    }
-                    else if(self.segmentedControl.selectedSegmentIndex == 2 && totalBumpedObjects.count == 0 && self.tabMode != YES){
-                        [self.actionLabel setHidden:NO];
-                        self.actionLabel.text = @"nothing to show";
-                        
-                        [self.createButton setHidden:YES];
-                        [self.bumpImageView setHidden:YES];
-                        [self.bumpLabel setHidden:YES];
-                    }
-                    else if (totalBumpedObjects.count != 0 && self.segmentedControl.selectedSegmentIndex == 2) {
-                        [self.createButton setHidden:YES];
-                        [self.actionLabel setHidden:YES];
-                        
-                        [self.bumpImageView setHidden:YES];
-                        [self.bumpLabel setHidden:YES];
-                    }
-                    
-                    if (totalBumpedObjects.count == 0) {
-                        if (self.bumpsSelected == YES) {
-                            [self.collectionView performBatchUpdates:^{
-                                [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
-                            } completion:nil];
-                        }
-                        return;
-                    }
-                    
-                    NSMutableArray *placeholderBumps = [NSMutableArray array];
-                    
-                    //check for duplicates
-                    for (PFObject *listing in totalBumpedObjects) {
-                        if (![self.bumpedIds containsObject:listing.objectId]) {
-                            [placeholderBumps addObject:listing];
-                            [self.bumpedIds addObject:listing.objectId];
-                        }
-                    }
-                    
-                    //order array based on personal total bump array (includes WTB & WTS bumps)
-                    for (NSString *objectID in totalBumped) {
-                        for (PFObject *listing in placeholderBumps) {
-                            if ([listing.objectId isEqualToString:objectID]) {
-                                [self.bumpedArray addObject:listing];
-                                break;
-                            }
-                        }
-                    }
-                    
-                    //reverse order
-                    NSArray* reversedArray = [[self.bumpedArray reverseObjectEnumerator] allObjects];
-                    [self.bumpedArray removeAllObjects];
-                    [self.bumpedArray addObjectsFromArray:reversedArray];
-                    
-                    if (self.segmentedControl.selectedSegmentIndex == 2) {
-                        [self.collectionView performBatchUpdates:^{
-                            [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
-                        } completion:nil];
-                    }
-                    else if (self.bumpsSelected == NO && self.WTBSelected == NO && self.WTSSelected == NO){
-                        //fail safe reload
-                        [self.collectionView reloadData];
-                    }
-                    
+            if (totalBumpedObjects.count == 0) {
+                if (self.bumpsSelected == YES) {
+                    [self.collectionView performBatchUpdates:^{
+                        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+                    } completion:nil];
                 }
-                else{
-                    NSLog(@"error getting WTS bumped objects %@", error);
-                }
-            }];
+                return;
+            }
             
+            NSMutableArray *placeholderBumps = [NSMutableArray array];
+            
+            //check for duplicates
+            for (PFObject *listing in totalBumpedObjects) {
+                if (![self.bumpedIds containsObject:listing.objectId]) {
+                    [placeholderBumps addObject:listing];
+                    [self.bumpedIds addObject:listing.objectId];
+                }
+            }
+            
+            //order array based on personal total bump array (includes WTB & WTS bumps)
+            for (NSString *objectID in totalBumped) {
+                for (PFObject *listing in placeholderBumps) {
+                    if ([listing.objectId isEqualToString:objectID]) {
+                        [self.bumpedArray addObject:listing];
+                        break;
+                    }
+                }
+            }
+            
+            //reverse order
+            NSArray* reversedArray = [[self.bumpedArray reverseObjectEnumerator] allObjects];
+            [self.bumpedArray removeAllObjects];
+            [self.bumpedArray addObjectsFromArray:reversedArray];
+            
+            if (self.segmentedControl.selectedSegmentIndex == 1) {
+                [self.collectionView performBatchUpdates:^{
+                    [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+                } completion:nil];
+            }
+            else if (self.bumpsSelected == NO && self.WTBSelected == NO && self.WTSSelected == NO){
+                //fail safe reload
+                [self.collectionView reloadData];
+            }
             
         }
         else{
-            NSLog(@"error getting wanted bumped %@", error);
+            [self.refreshControl endRefreshing];
+            NSLog(@"error getting WTS bumped objects %@", error);
         }
     }];
+
+//    NSArray *wantedBumped = [self.user objectForKey:@"wantedBumpArray"];
+//
+//    PFQuery *bumpedListings = [PFQuery queryWithClassName:@"wantobuys"];
+//    [bumpedListings whereKey:@"status" containedIn:@[@"live",@"purchased"]];
+//    [bumpedListings whereKey:@"objectId" containedIn:wantedBumped];
+//    bumpedListings.limit = 1000;
+//
+//    [bumpedListings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//        if (objects) {
+//            [self.refreshControl endRefreshing];
+//
+//            [totalBumpedObjects addObjectsFromArray:objects];
+//
+//            //now retrieve WTS Bumps
+//            NSArray *saleBumped = [self.user objectForKey:@"saleBumpArray"];
+//
+//            PFQuery *bumpedSaleListings = [PFQuery queryWithClassName:@"forSaleItems"];
+//            [bumpedSaleListings whereKey:@"status" containedIn:@[@"live",@"sold"]];
+//            [bumpedSaleListings whereKey:@"objectId" containedIn:saleBumped];
+//            bumpedSaleListings.limit = 1000;
+//            [bumpedSaleListings findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+//                if (objects) {
+//                    [totalBumpedObjects addObjectsFromArray:objects];
+//
+//                    //reset arrays
+//                    [self.bumpedArray removeAllObjects];
+//                    [self.bumpedIds removeAllObjects];
+//
+//                    //display correct label
+//                    if (self.tabMode == YES && self.segmentedControl.selectedSegmentIndex == 2 && totalBumpedObjects.count == 0) {
+//                        //bump selected on own profile & nothing to show
+//                        [self.createButton setHidden:YES];
+//                        [self.actionLabel setHidden:NO];
+//                        self.actionLabel.text = @"Like listings to save them for later";
+//
+//                        [self.bumpLabel setHidden:YES];
+//                        [self.bumpImageView setHidden:YES];
+//
+//                    }
+//                    else if(self.segmentedControl.selectedSegmentIndex == 2 && totalBumpedObjects.count == 0 && self.tabMode != YES){
+//                        [self.actionLabel setHidden:NO];
+//                        self.actionLabel.text = @"nothing to show";
+//
+//                        [self.createButton setHidden:YES];
+//                        [self.bumpImageView setHidden:YES];
+//                        [self.bumpLabel setHidden:YES];
+//                    }
+//                    else if (totalBumpedObjects.count != 0 && self.segmentedControl.selectedSegmentIndex == 2) {
+//                        [self.createButton setHidden:YES];
+//                        [self.actionLabel setHidden:YES];
+//
+//                        [self.bumpImageView setHidden:YES];
+//                        [self.bumpLabel setHidden:YES];
+//                    }
+//
+//                    if (totalBumpedObjects.count == 0) {
+//                        if (self.bumpsSelected == YES) {
+//                            [self.collectionView performBatchUpdates:^{
+//                                [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+//                            } completion:nil];
+//                        }
+//                        return;
+//                    }
+//
+//                    NSMutableArray *placeholderBumps = [NSMutableArray array];
+//
+//                    //check for duplicates
+//                    for (PFObject *listing in totalBumpedObjects) {
+//                        if (![self.bumpedIds containsObject:listing.objectId]) {
+//                            [placeholderBumps addObject:listing];
+//                            [self.bumpedIds addObject:listing.objectId];
+//                        }
+//                    }
+//
+//                    //order array based on personal total bump array (includes WTB & WTS bumps)
+//                    for (NSString *objectID in totalBumped) {
+//                        for (PFObject *listing in placeholderBumps) {
+//                            if ([listing.objectId isEqualToString:objectID]) {
+//                                [self.bumpedArray addObject:listing];
+//                                break;
+//                            }
+//                        }
+//                    }
+//
+//                    //reverse order
+//                    NSArray* reversedArray = [[self.bumpedArray reverseObjectEnumerator] allObjects];
+//                    [self.bumpedArray removeAllObjects];
+//                    [self.bumpedArray addObjectsFromArray:reversedArray];
+//
+//                    if (self.segmentedControl.selectedSegmentIndex == 2) {
+//                        [self.collectionView performBatchUpdates:^{
+//                            [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+//                        } completion:nil];
+//                    }
+//                    else if (self.bumpsSelected == NO && self.WTBSelected == NO && self.WTSSelected == NO){
+//                        //fail safe reload
+//                        [self.collectionView reloadData];
+//                    }
+//
+//                }
+//                else{
+//                    [self.refreshControl endRefreshing];
+//                    NSLog(@"error getting WTS bumped objects %@", error);
+//                }
+//            }];
+//
+//
+//        }
+//        else{
+//            [self.refreshControl endRefreshing];
+//            NSLog(@"error getting wanted bumped %@", error);
+//        }
+//    }];
 }
 
 -(void)loadWTSListings{
@@ -842,9 +615,12 @@ typedef void(^myCompletion)(BOOL);
         [self.saleQuery orderByDescending:@"createdAt"];
     }
     
+    self.saleQuery.limit = 1000;
+    
     [self.saleQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
         if (!error) {
-
+            [self.refreshControl endRefreshing];
+            
             //put the sold listings at the end
             NSSortDescriptor *sortDescriptorStatus = [[NSSortDescriptor alloc]
                                                 initWithKey: @"status" ascending: YES];
@@ -891,16 +667,81 @@ typedef void(^myCompletion)(BOOL);
                 self.forSalePressed = NO;
             }
             
+            self.infinEmpty = NO;
             self.loadingSales = NO;
+            self.finishedSaleInfin = YES;
+            self.saleSkipped = (int)objects.count;
 
             if (self.WTSSelected == YES) {
-                NSLog(@"SHOULD RELOAD");
                 [self.collectionView performBatchUpdates:^{
                     [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
                 } completion:nil];
             }
         }
         else{
+            self.loadingSales = NO;
+            [self.refreshControl endRefreshing];
+            NSLog(@"error getting infin WTSs %@", error);
+        }
+    }];
+}
+
+-(void)loadMoreSaleListings{
+    NSLog(@"load more items");
+    
+    if (!self.user || self.loadingSales == YES || self.forSaleArray.count < 42 || !self.finishedSaleInfin || self.infinEmpty) {
+        return;
+    }
+    
+    self.finishedSaleInfin = NO;
+    
+    self.saleInfinQuery = nil;
+    self.saleInfinQuery = [PFQuery queryWithClassName:@"forSaleItems"];
+    [self.saleInfinQuery whereKey:@"sellerUser" equalTo:self.user];
+    [self.saleInfinQuery whereKey:@"status" containedIn:@[@"live",@"sold"]];
+    
+    if (self.filtersArray.count > 0) {
+        [self setupInfinQuery];
+        
+        //brand filter
+        if (self.filterBrandsArray.count > 0) {
+            [self.saleInfinQuery whereKey:@"keywords" containedIn:self.filterBrandsArray];
+        }
+    }
+    else{
+        [self.saleInfinQuery orderByDescending:@"createdAt"];
+    }
+    
+    self.saleInfinQuery.limit = 42;
+    self.saleInfinQuery.skip = self.saleSkipped;
+    [self.saleInfinQuery findObjectsInBackgroundWithBlock:^(NSArray * _Nullable objects, NSError * _Nullable error) {
+        if (!error) {
+            [self.refreshControl endRefreshing];
+            
+            //put the sold listings at the end
+            NSSortDescriptor *sortDescriptorStatus = [[NSSortDescriptor alloc]
+                                                      initWithKey: @"status" ascending: YES];
+            NSSortDescriptor *sortDescriptorUpdated = [[NSSortDescriptor alloc] initWithKey:@"createdAt" ascending:NO];
+            NSArray *sortedArray = [objects sortedArrayUsingDescriptors: [NSArray arrayWithObjects:sortDescriptorStatus,sortDescriptorUpdated,nil]];
+            
+            [self.forSaleArray addObjectsFromArray:sortedArray];
+            
+            int count = (int)objects.count;
+            
+            if (count == 0) {
+                self.infinEmpty = YES;
+            }
+            
+            self.saleSkipped += count;
+            
+            self.finishedSaleInfin = YES;
+            
+            if (self.WTSSelected == YES) {
+                [self.collectionView reloadData];
+            }
+        }
+        else{
+            [self.refreshControl endRefreshing];
             NSLog(@"error getting WTSs %@", error);
         }
     }];
@@ -920,10 +761,10 @@ typedef void(^myCompletion)(BOOL);
     if (self.segmentedControl.selectedSegmentIndex == 0) {
         return self.forSaleArray.count;
     }
+//    else if (self.segmentedControl.selectedSegmentIndex == 1){
+//        return self.WTBArray.count;
+//    }
     else if (self.segmentedControl.selectedSegmentIndex == 1){
-        return self.WTBArray.count;
-    }
-    else if (self.segmentedControl.selectedSegmentIndex == 2){
         return self.bumpedArray.count;
     }
     else{
@@ -938,6 +779,7 @@ typedef void(^myCompletion)(BOOL);
     
     [cell.boostImageView setHidden:YES];
     [cell.boost2ImageView setHidden:YES];
+    [cell.topRightImageView setHidden:YES];
 
     cell.itemImageView.image = nil;
     cell.backgroundColor = [UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1];
@@ -948,11 +790,11 @@ typedef void(^myCompletion)(BOOL);
 //        NSLog(@"WTS selected");
         listingObject = [self.forSaleArray objectAtIndex:indexPath.row];
     }
+//    else if (self.segmentedControl.selectedSegmentIndex == 1){
+////        NSLog(@"WTB selected");
+//        listingObject = [self.WTBArray objectAtIndex:indexPath.row];
+//    }
     else if (self.segmentedControl.selectedSegmentIndex == 1){
-//        NSLog(@"WTB selected");
-        listingObject = [self.WTBArray objectAtIndex:indexPath.row];
-    }
-    else if (self.segmentedControl.selectedSegmentIndex == 2){
 //        NSLog(@"Bump selected");
         listingObject = [self.bumpedArray objectAtIndex:indexPath.row];
     }
@@ -970,12 +812,12 @@ typedef void(^myCompletion)(BOOL);
     [cell.itemImageView loadInBackground];
     
     //don't show purchased on bumped listings section
-    if ([[listingObject objectForKey:@"status"]isEqualToString:@"purchased"] && self.segmentedControl.selectedSegmentIndex != 2) {
+    if ([[listingObject objectForKey:@"status"]isEqualToString:@"purchased"] && self.segmentedControl.selectedSegmentIndex != 1) {
         cell.itemImageView.alpha = 0.5;
-        [cell.purchasedImageView setImage:[UIImage imageNamed:@"purchasedIcon2"]];
+        [cell.purchasedImageView setImage:[UIImage imageNamed:@"purchasedIconS"]];
         [cell.purchasedImageView setHidden:NO];
     }
-    else if ([[listingObject objectForKey:@"status"]isEqualToString:@"sold"] && self.segmentedControl.selectedSegmentIndex != 2) {
+    else if ([[listingObject objectForKey:@"status"]isEqualToString:@"sold"] && self.segmentedControl.selectedSegmentIndex != 1) {
         
         if ([[listingObject objectForKey:@"payment"]isEqualToString:@"pending"]) {
             //listing is pending a successful payment so pretend to seller it hasn't been purchased yet
@@ -984,7 +826,7 @@ typedef void(^myCompletion)(BOOL);
         }
         else{
             cell.itemImageView.alpha = 0.5;
-            [cell.purchasedImageView setImage:[UIImage imageNamed:@"soldIcon2"]];
+            [cell.purchasedImageView setImage:[UIImage imageNamed:@"soldIconShadow"]];
             [cell.purchasedImageView setHidden:NO];
         }
     }
@@ -1022,26 +864,27 @@ typedef void(^myCompletion)(BOOL);
         if (self.tabMode) {
             vc.delegate = self;
         }
+        vc.source = @"profile";
 
         [self.navigationController pushViewController:vc animated:YES];
     }
+//    else if (self.segmentedControl.selectedSegmentIndex == 1){
+//        [Answers logCustomEventWithName:@"Profile Item Selected"
+//                       customAttributes:@{
+//                                          @"type": @"WTB"
+//                                          }];
+//
+//        NSLog(@"WTB selected");
+//        PFObject *listing = [self.WTBArray objectAtIndex:indexPath.row];
+//        self.WTBPressed = YES;
+//        ListingController *vc = [[ListingController alloc]init];
+//        vc.listingObject = listing;
+//        if (self.tabMode) {
+//            vc.delegate = self;
+//        }
+//        [self.navigationController pushViewController:vc animated:YES];
+//    }
     else if (self.segmentedControl.selectedSegmentIndex == 1){
-        [Answers logCustomEventWithName:@"Profile Item Selected"
-                       customAttributes:@{
-                                          @"type": @"WTB"
-                                          }];
-        
-        NSLog(@"WTB selected");
-        PFObject *listing = [self.WTBArray objectAtIndex:indexPath.row];
-        self.WTBPressed = YES;
-        ListingController *vc = [[ListingController alloc]init];
-        vc.listingObject = listing;
-        if (self.tabMode) {
-            vc.delegate = self;
-        }
-        [self.navigationController pushViewController:vc animated:YES];
-    }
-    else if (self.segmentedControl.selectedSegmentIndex == 2){
         
         NSLog(@"Bump selected");
         selected = [self.bumpedArray objectAtIndex:indexPath.row];
@@ -1089,29 +932,42 @@ typedef void(^myCompletion)(BOOL);
 
 -(void)fbPressed{
     if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
-        [Answers logCustomEventWithName:@"Facebook Profile Pressed"
-                       customAttributes:@{
-                                          @"ownProfile": @"YES"
-                                          }];
+        [Answers logCustomEventWithName:@"Discover Pressed"
+                       customAttributes:@{}];
+        
+        //goto discover
+        whoBumpedTableView *vc = [[whoBumpedTableView alloc]init];
+        vc.mode = @"discover";
+        [self.navigationController pushViewController:vc animated:YES];
+        
+        //set image to read if needs be
+        if(![[NSUserDefaults standardUserDefaults] boolForKey:@"seenDiscover"]){
+            //mark as seen discover
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"seenDiscover"];
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.FBButton setImage:[UIImage imageNamed:@"discoverIcon"] forState:UIControlStateNormal];
+            });
+        }
     }
     else{
         [Answers logCustomEventWithName:@"Facebook Profile Pressed"
                        customAttributes:@{
                                           @"ownProfile": @"NO"
                                           }];
+        
+        NSString *URLString = [NSString stringWithFormat:@"https://facebook.com/%@", [self.user objectForKey:@"facebookId"]];
+        SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
+        if (@available(iOS 11.0, *)) {
+            safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
+        }
+        
+        if (@available(iOS 10.0, *)) {
+            safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
+        }
+        
+        [self.navigationController presentViewController:safariView animated:YES completion:nil];
     }
-    
-    NSString *URLString = [NSString stringWithFormat:@"https://facebook.com/%@", [self.user objectForKey:@"facebookId"]];
-    SFSafariViewController *safariView = [[SFSafariViewController alloc]initWithURL:[NSURL URLWithString:URLString]];
-    if (@available(iOS 11.0, *)) {
-        safariView.dismissButtonStyle = UIBarButtonSystemItemCancel;
-    }
-    
-    if (@available(iOS 10.0, *)) {
-        safariView.preferredControlTintColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1];
-    }
-    
-    [self.navigationController presentViewController:safariView animated:YES completion:nil];
 }
 
 -(void)selectedReportReason:(NSString *)reason{
@@ -1129,6 +985,9 @@ typedef void(^myCompletion)(BOOL);
                                           }];
         
         NSString *mod = @"NO";
+        BOOL recentConvoUser = NO;
+        BOOL recentOrderUser = NO;
+        
         if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
             mod = @"YES";
             
@@ -1139,19 +998,72 @@ typedef void(^myCompletion)(BOOL);
                                               @"user":self.user.objectId
                                               }];
         }
+        else{
+            //check if user is in recent orders or recent convos arrays
+//            if ([[PFUser currentUser]objectForKey:@"recentOrderUsers"]) {
+//
+//                NSArray *recents = [[PFUser currentUser]objectForKey:@"recentOrderUsers"];
+//                if ([recents containsObject:self.user.objectId]) {
+//                    recentOrderUser = YES;
+//                }
+//            }
+//            else if ([[PFUser currentUser]objectForKey:@"recentConvoUsers"]) {
+//                NSArray *recents = [[PFUser currentUser]objectForKey:@"recentConvoUsers"];
+//                if ([recents containsObject:self.user.objectId]) {
+//                    recentConvoUser = YES;
+//                }
+//            }
+        }
         
-        NSDictionary *params = @{@"userId": self.user.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod, @"modName":[PFUser currentUser].username};
-        [PFCloud callFunctionInBackground:@"reportUserFunction" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
-            if (error) {
-                NSLog(@"error reporting user: %@", error);
-                
-                [Answers logCustomEventWithName:@"Error Reporting User"
-                               customAttributes:@{
-                                                  @"error":error.description
-                                                  }];
-            }
-        }];
+        //only pass the 1 which is positive
+        if (recentOrderUser) {
+            NSDictionary *params = @{@"userId": self.user.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod, @"modName":[PFUser currentUser].username, @"recentOrder": @"YES"};
+            [PFCloud callFunctionInBackground:@"reportUserFunction" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+                if (error) {
+                    NSLog(@"error reporting user: %@", error);
+                    
+                    [Answers logCustomEventWithName:@"Error Reporting User"
+                                   customAttributes:@{
+                                                      @"error":error.description
+                                                      }];
+                }
+            }];
+
+        }
+        else if (recentConvoUser){
+            NSLog(@"recent convo user");
+            
+            NSDictionary *params = @{@"userId": self.user.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod, @"modName":[PFUser currentUser].username, @"recentConvo": @"YES"};
+            [PFCloud callFunctionInBackground:@"reportUserFunction" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+                if (error) {
+                    NSLog(@"error reporting user: %@", error);
+                    
+                    [Answers logCustomEventWithName:@"Error Reporting User"
+                                   customAttributes:@{
+                                                      @"error":error.description
+                                                      }];
+                }
+                else{
+                    NSLog(@"success reporting");
+                }
+            }];
+        }
+        else{
+            NSDictionary *params = @{@"userId": self.user.objectId, @"reporterId": [PFUser currentUser].objectId, @"reason": reason, @"mod":mod, @"modName":[PFUser currentUser].username};
+            [PFCloud callFunctionInBackground:@"reportUserFunction" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+                if (error) {
+                    NSLog(@"error reporting user: %@", error);
+                    
+                    [Answers logCustomEventWithName:@"Error Reporting User"
+                                   customAttributes:@{
+                                                      @"error":error.description
+                                                      }];
+                }
+            }];
+        }
+
     }
+    //we let mods report multiple times if needs be
     else if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"]) {
         
         [Answers logCustomEventWithName:[NSString stringWithFormat:@"Mod Reported Profile %@ %@", [PFUser currentUser].objectId,[PFUser currentUser].username]
@@ -1198,64 +1110,6 @@ typedef void(^myCompletion)(BOOL);
             messageString = [NSString stringWithFormat:@"Hey,\n\nThanks for helping to keep the Bump community safe and reporting user @%@\n\nReason: %@\n\nWe'll get in touch if we have any more questions 👊\n\nSophie\nBUMP Customer Service",self.user.username, reason];
         }
     }
-    
-    //now save report message
-//    PFObject *messageObject1 = [PFObject objectWithClassName:@"teamBumpMsgs"];
-//    messageObject1[@"message"] = messageString;
-//    messageObject1[@"sender"] = [PFUser currentUser];
-//    messageObject1[@"senderId"] = @"BUMP";
-//    messageObject1[@"senderName"] = @"Team Bump";
-//    messageObject1[@"convoId"] = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-//    messageObject1[@"status"] = @"sent";
-//    messageObject1[@"offer"] = @"NO";
-//    messageObject1[@"mediaMessage"] = @"NO";
-//    messageObject1[@"boostMessage"] = @"YES";
-//    [messageObject1 saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
-//        if (succeeded) {
-//
-//            //update profile tab bar badge
-//            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-//            [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
-//            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
-//
-//            //update convo
-//            PFQuery *convoQuery = [PFQuery queryWithClassName:@"teamConvos"];
-//            NSString *convoId = [NSString stringWithFormat:@"BUMP%@", [PFUser currentUser].objectId];
-//            [convoQuery whereKey:@"convoId" equalTo:convoId];
-//            [convoQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
-//                if (object) {
-//
-//                    //got the convo
-//                    [object incrementKey:@"totalMessages"];
-//                    [object setObject:messageObject1 forKey:@"lastSent"];
-//                    [object setObject:[NSDate date] forKey:@"lastSentDate"];
-//                    [object incrementKey:@"userUnseen"];
-//                    [object saveInBackground];
-//
-//                    [Answers logCustomEventWithName:@"Sent Report Message"
-//                                   customAttributes:@{
-//                                                      @"status":@"SENT",
-//                                                      @"type":@"User"
-//                                                      }];
-//                }
-//                else{
-//                    [Answers logCustomEventWithName:@"Sent Report Message"
-//                                   customAttributes:@{
-//                                                      @"status":@"Failed getting convo",
-//                                                      @"type":@"User"
-//                                                      }];
-//                }
-//            }];
-//        }
-//        else{
-//            NSLog(@"error saving report message %@", error);
-//            [Answers logCustomEventWithName:@"Sent Report Message"
-//                           customAttributes:@{
-//                                              @"status":@"Failed saving message",
-//                                              @"type":@"User"
-//                                              }];
-//        }
-//    }];
 }
 
 -(void)SetupListing{
@@ -1304,7 +1158,7 @@ typedef void(^myCompletion)(BOOL);
 }
 
 -(void)ReviewsPressed{
-    if (self.noDeals == YES) {
+    if (self.noDeals == YES || self.isBumpOfficial) {
         return;
     }
     ReviewsVC *vc = [[ReviewsVC alloc]init];
@@ -1330,23 +1184,23 @@ typedef void(^myCompletion)(BOOL);
         [self hideFilter];
 
         // all 3
-        if (self.segmentedControl.selectedSegmentIndex == 1) {
-            //wanted
-            self.WTBSelected = YES;
-            self.WTSSelected = NO;
-            self.bumpsSelected = NO;
-            
-            if (self.WTBArray.count == 0) {
-                [self.createButton setHidden:NO];
-                self.actionLabel.text = @"Let sellers know what you want";
-                [self.actionLabel setHidden:NO];
-                
-                [self.bumpImageView setHidden:YES];
-                [self.bumpLabel setHidden:YES];
-            }
-            
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 0) {
+//        if (self.segmentedControl.selectedSegmentIndex == 1) {
+//            //wanted
+//            self.WTBSelected = YES;
+//            self.WTSSelected = NO;
+//            self.bumpsSelected = NO;
+//
+//            if (self.WTBArray.count == 0) {
+//                [self.createButton setHidden:NO];
+//                self.actionLabel.text = @"Let sellers know what you want";
+//                [self.actionLabel setHidden:NO];
+//
+//                [self.bumpImageView setHidden:YES];
+//                [self.bumpLabel setHidden:YES];
+//            }
+//
+//        }
+        if (self.segmentedControl.selectedSegmentIndex == 0) {
             //selling
             self.WTBSelected = NO;
             self.WTSSelected = YES;
@@ -1398,25 +1252,25 @@ typedef void(^myCompletion)(BOOL);
     else{
 
         // all 3
-        if (self.segmentedControl.selectedSegmentIndex == 1) {
-            [self hideFilter];
-
-            //wanted
-            self.WTBSelected = YES;
-            self.WTSSelected = NO;
-            self.bumpsSelected = NO;
-            
-            if (self.WTBArray.count == 0) {
-                [self.actionLabel setHidden:NO];
-                self.actionLabel.text = @"nothing to show";
-                
-                [self.createButton setHidden:YES];
-                [self.bumpImageView setHidden:YES];
-                [self.bumpLabel setHidden:YES];
-            }
-            
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 0) {
+//        if (self.segmentedControl.selectedSegmentIndex == 1) {
+//            [self hideFilter];
+//
+//            //wanted
+//            self.WTBSelected = YES;
+//            self.WTSSelected = NO;
+//            self.bumpsSelected = NO;
+//
+//            if (self.WTBArray.count == 0) {
+//                [self.actionLabel setHidden:NO];
+//                self.actionLabel.text = @"nothing to show";
+//
+//                [self.createButton setHidden:YES];
+//                [self.bumpImageView setHidden:YES];
+//                [self.bumpLabel setHidden:YES];
+//            }
+//
+//        }
+        if (self.segmentedControl.selectedSegmentIndex == 0) {
             if (self.forSaleArray.count > 29 && self.filtersArray.count == 0) {
                 [self showFilter];
             }
@@ -1477,7 +1331,10 @@ typedef void(^myCompletion)(BOOL);
                                   alertControllerWithTitle:@"Error Fetching User"
                                   message:@"Make sure you're connected to the internet!"
                                   preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+    UIAlertAction* ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [self backPressed];
+    }];
+    
     [alert addAction:ok];
     [self presentViewController:alert animated:YES completion:nil];
 }
@@ -1489,14 +1346,147 @@ typedef void(^myCompletion)(BOOL);
     
     if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
         
-        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Message" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-            [self setupMessages];
+        if (!self.isBumpOfficial) {
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Message" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+                [self setupMessages];
+            }]];
+        }
+        
+        //Share on Whatsapp
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share on Whatsapp" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Shared on Whatsapp"
+                           customAttributes:@{
+                                              @"link":@"profile"
+                                              }];
+            
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            
+            if (self.tabMode) {
+                [mixpanel track:@"Tapped Share" properties:@{
+                                                             @"channel":@"whatsapp",
+                                                             @"content":@"own profile"
+                                                             }];
+            }
+            else{
+                [mixpanel track:@"Tapped Share" properties:@{
+                                                             @"channel":@"whatsapp",
+                                                             @"content":@"profile"
+                                                             }];
+            }
+            
+            NSString *routeString = [NSString stringWithFormat:@"profile/%@",self.user.objectId];
+            BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.user.objectId];
+            BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+            linkProperties.feature = @"sharingProfile";
+            linkProperties.channel = @"whatsapp";
+            [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+            [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+            
+            [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+                if (!error) {
+                    NSLog(@"whatsapp link %@", url);
+                    
+                    NSString * msg = [NSString stringWithFormat:@"@%@ is on BUMP %@", self.user.username,url];
+                    
+                    msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+                    
+                    NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+                    NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+                    
+                    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                        [[UIApplication sharedApplication] openURL: whatsappURL];
+                    }
+                }
+                else{
+                    NSLog(@"error w/ whatsapp link %@", error);
+                    [Answers logCustomEventWithName:@"Whatsapp Link Error"
+                                   customAttributes:@{
+                                                      @"link":@"profile"
+                                                      }];
+                    
+                    NSString *urlString = [NSString stringWithFormat:@"https://sobump.com/p?profile=%@",self.user.username];
+                    NSString * msg = [NSString stringWithFormat:@"@%@ is on BUMP %@", self.user.username,urlString];
+                    
+                    msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+                    
+                    NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+                    NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+                    
+                    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                        [[UIApplication sharedApplication] openURL: whatsappURL];
+                    }
+                }
+            }];
+            
+            
         }]];
         
-//        [actionSheet addAction:[UIAlertAction actionWithTitle:@"REACTIVATE" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-//            NSDictionary *params = @{@"userId": self.user.objectId};
-//            [PFCloud callFunctionInBackground:@"reactivateUser" withParameters: params block:nil];
-//        }]];
+        //Share on Messenger
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share on Messenger" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Shared on Messenger"
+                           customAttributes:@{
+                                              @"link":@"profile"
+                                              }];
+            
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            
+            if (self.tabMode) {
+                [mixpanel track:@"Tapped Share" properties:@{
+                                                             @"channel":@"messenger",
+                                                             @"content":@"own profile"
+                                                             }];
+            }
+            else{
+                [mixpanel track:@"Tapped Share" properties:@{
+                                                             @"channel":@"messenger",
+                                                             @"content":@"profile"
+                                                             }];
+            }
+            
+            NSString *routeString = [NSString stringWithFormat:@"profile/%@",self.user.objectId];
+            BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.user.objectId];
+            BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+            linkProperties.feature = @"sharingProfile";
+            linkProperties.channel = @"messenger";
+            [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+            [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+            
+            [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+                if (!error) {
+                    NSLog(@"messenger share link %@", url);
+                    NSString *urlString = [NSString stringWithFormat:@"fb-messenger://share/?link=%@",url];
+                    NSURL *messengerURL = [NSURL URLWithString:urlString];
+                    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                        [[UIApplication sharedApplication] openURL: messengerURL];
+                    }
+                    
+                }
+                else{
+                    [Answers logCustomEventWithName:@"Messenger Link Error"
+                                   customAttributes:@{
+                                                      @"link":@"forsale listing",
+                                                      @"error":error.description
+                                                      }];
+                    NSString *urlString = [NSString stringWithFormat:@"fb-messenger://share/?link=https://sobump.com/p?profile=%@",self.user.username];
+                    NSURL *messengerURL = [NSURL URLWithString:urlString];
+                    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                        [[UIApplication sharedApplication] openURL: messengerURL];
+                    }
+                }
+            }];
+        }]];
         
         //Copy Link
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Profile Link" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -1505,22 +1495,257 @@ typedef void(^myCompletion)(BOOL);
                                               @"link":@"profile"
                                               }];
             
-            NSString *urlString = [NSString stringWithFormat:@"http://sobump.com/p?profile=%@",self.user.username];
-            UIPasteboard *pb = [UIPasteboard generalPasteboard];
-            [pb setString:urlString];
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            
+            if (self.tabMode) {
+                [mixpanel track:@"Tapped Share" properties:@{
+                                                             @"channel":@"link",
+                                                             @"content":@"own profile"
+                                                             }];
+            }
+            else{
+                [mixpanel track:@"Tapped Share" properties:@{
+                                                             @"channel":@"link",
+                                                             @"content":@"profile"
+                                                             }];
+            }
+            
+            NSString *routeString = [NSString stringWithFormat:@"profile/%@",self.user.objectId];
+            BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.user.objectId];
+            BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+            linkProperties.feature = @"sharingProfile";
+            linkProperties.channel = @"link";
+            [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+            [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+            
+            [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+                if (!error) {
+                    NSLog(@"copied link %@", url);
+                    [Answers logCustomEventWithName:@"Copied Link"
+                                   customAttributes:@{
+                                                      @"link":@"profile",
+                                                      @"error":@NO
+                                                      }];
+                    
+                    UIPasteboard *pb = [UIPasteboard generalPasteboard];
+                    [pb setString:url];
+                }
+                else{
+                    NSLog(@"error copying link %@", error);
+                    [Answers logCustomEventWithName:@"Copied Link"
+                                   customAttributes:@{
+                                                      @"link":@"profile",
+                                                      @"error":@YES
+                                                      }];
+                    
+                    NSString *urlString = [NSString stringWithFormat:@"http://sobump.com/p?profile=%@",self.user.username];
+                    UIPasteboard *pb = [UIPasteboard generalPasteboard];
+                    [pb setString:urlString];
+                }
+            }];
             
             //show HUD
-            [self showHUDForCopy:YES];
+            [self showHUDWithLabel:@"Copied"];
             
             double delayInSeconds = 2.0; // number of seconds to wait
             dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
             dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
                 [self hideHUD];
-                self.hud.labelText = @"";
             });
         }]];
+        
+        //General Share
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"More" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Shared Profile"
+                           customAttributes:@{
+                                              @"link":@"profile"
+                                              }];
+            
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            NSMutableArray *items = [NSMutableArray new];
+            
+            NSString *routeString = [NSString stringWithFormat:@"profile/%@",self.user.objectId];
+            BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.user.objectId];
+            BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+            linkProperties.feature = @"sharingProfile";
+            linkProperties.channel = @"more";
+            [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+            [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+            
+            [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+                if (!error) {
+                    NSLog(@"more link %@", url);
+                    
+                    [items addObject:[NSString stringWithFormat:@"@%@ is on BUMP  %@",self.user.username,url]];
+                    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+                    [self presentViewController:activityController animated:YES completion:nil];
+                    
+                    [activityController setCompletionWithItemsHandler:
+                     ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+                         
+                         if (activityType) {
+                             if (self.tabMode) {
+                                 [mixpanel track:@"Tapped Share" properties:@{
+                                                                              @"channel":activityType,
+                                                                              @"content":@"own profile",
+                                                                              @"more":@"YES"
+                                                                              }];
+                             }
+                             else{
+                                 [mixpanel track:@"Tapped Share" properties:@{
+                                                                              @"channel":activityType,
+                                                                              @"content":@"profile",
+                                                                              @"more":@"YES"
+                                                                              }];
+                             }
+                         }
+                         else{
+                             if (self.tabMode) {
+                                 [mixpanel track:@"Tapped Share" properties:@{
+                                                                              @"channel":@"more",
+                                                                              @"content":@"own profile"
+                                                                              }];
+                             }
+                             else{
+                                 [mixpanel track:@"Tapped Share" properties:@{
+                                                                              @"channel":@"more",
+                                                                              @"content":@"profile"
+                                                                              }];
+                             }
+                         }
+                     }];
+                }
+                else{
+                    NSLog(@"error w/ more link %@", error);
+                    [Answers logCustomEventWithName:@"More Share Link Error"
+                                   customAttributes:@{
+                                                      @"link":@"profile",
+                                                      @"error":error.description
+                                                      }];
+                    
+                    [items addObject:[NSString stringWithFormat:@"@%@ is on BUMP  https://sobump.com/p?profile=%@",self.user.username,self.user.username]];
+                    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+                    [self presentViewController:activityController animated:YES completion:nil];
+                    
+                    [activityController setCompletionWithItemsHandler:
+                     ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+                         if (activityType) {
+                             if (self.tabMode) {
+                                 [mixpanel track:@"Tapped Share" properties:@{
+                                                                              @"channel":activityType,
+                                                                              @"content":@"own profile",
+                                                                              @"more":@"YES"
+                                                                              }];
+                             }
+                             else{
+                                 [mixpanel track:@"Tapped Share" properties:@{
+                                                                              @"channel":activityType,
+                                                                              @"content":@"profile",
+                                                                              @"more":@"YES"
+                                                                              }];
+                             }
+                         }
+                         else{
+                             if (self.tabMode) {
+                                 [mixpanel track:@"Tapped Share" properties:@{
+                                                                              @"channel":@"more",
+                                                                              @"content":@"own profile"
+                                                                              }];
+                             }
+                             else{
+                                 [mixpanel track:@"Tapped Share" properties:@{
+                                                                              @"channel":@"more",
+                                                                              @"content":@"profile"
+                                                                              }];
+                             }
+                         }
+                     }];
+                }
+            }];
+        }]];
+        
+        //subscribe to post notifications
+        PFInstallation *currentInstall = [PFInstallation currentInstallation];
+        
+        if ([currentInstall.channels containsObject:self.user.objectId]) {
+            NSLog(@"already subscribed to this seller");
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Turn off Post Notifications" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [Answers logCustomEventWithName:@"Disabled Post Notifications"
+                               customAttributes:@{}];
                 
-        if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"] && !self.hitReport) {
+                [currentInstall removeObject:self.user.objectId forKey:@"channels"];
+                [currentInstall saveInBackground];
+                
+                [Intercom logEventWithName:@"disabled_post_notification" metaData: @{}];
+                
+                [self showHUDWithLabel:@"Unsubscribed"];
+                
+                Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                [mixpanel track:@"Disabled Post Notifications" properties:@{}];
+                
+                //update this user's sub count
+                NSDictionary *params = @{@"userId": self.user.objectId, @"increment":@"NO"};
+                [PFCloud callFunctionInBackground:@"changeSubCount" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+                    if (error) {
+                        NSLog(@"error decrementing subcount: %@", error);
+                        
+                        [Answers logCustomEventWithName:@"Error Decrementing Sub Count"
+                                       customAttributes:@{
+                                                          @"error":error.description
+                                                          }];
+                    }
+                }];
+                
+                double delayInSeconds = 1.0; // number of seconds to wait
+                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+                dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                    [self hideHUD];
+                });
+            }]];
+            
+        }
+        else{
+            NSLog(@"not subscribed yet");
+            [actionSheet addAction:[UIAlertAction actionWithTitle:@"Turn on Post Notifications" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                
+                [Answers logCustomEventWithName:@"Enabled Post Notifications"
+                               customAttributes:@{}];
+                
+                [currentInstall addUniqueObject:self.user.objectId forKey:@"channels"];
+                [currentInstall saveInBackground];
+                
+                [Intercom logEventWithName:@"enabled_post_notification" metaData: @{}];
+                
+                [self showHUDWithLabel:@"Subscribed"];
+                
+                Mixpanel *mixpanel = [Mixpanel sharedInstance];
+                [mixpanel track:@"Enabled Post Notifications" properties:@{}];
+                
+                //update this user's sub count
+                NSDictionary *params = @{@"userId": self.user.objectId, @"increment":@"YES"};
+                [PFCloud callFunctionInBackground:@"changeSubCount" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+                    if (error) {
+                        NSLog(@"error incrementing subcount: %@", error);
+                        
+                        [Answers logCustomEventWithName:@"Error Incrementing Sub Count"
+                                       customAttributes:@{
+                                                          @"error":error.description
+                                                          }];
+                    }
+                }];
+                
+                double delayInSeconds = 1.0; // number of seconds to wait
+                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+                dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                    [self hideHUD];
+                });
+            }]];
+        }
+        
+        if(self.isBumpOfficial){
+           //dont let them report
+        }
+        else if ([[[PFUser currentUser] objectForKey:@"mod"]isEqualToString:@"YES"] && ![[[PFUser currentUser] objectForKey:@"fod"]isEqualToString:@"YES"] && !self.hitReport) {
             //user is a mod so prompt for a reason
             [actionSheet addAction:[UIAlertAction actionWithTitle:@"Ban" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action){
                 
@@ -1627,6 +1852,124 @@ typedef void(^myCompletion)(BOOL);
         }
     }
     else{
+        //Share on Whatsapp
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share on Whatsapp" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Shared on Whatsapp"
+                           customAttributes:@{
+                                              @"link":@"profile"
+                                              }];
+            
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"Tapped Share" properties:@{
+                                                         @"channel":@"whatsapp",
+                                                         @"content":@"profile"
+                                                         }];
+            
+            NSString *routeString = [NSString stringWithFormat:@"profile/%@",self.user.objectId];
+            BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.user.objectId];
+            BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+            linkProperties.feature = @"sharingProfile";
+            linkProperties.channel = @"whatsapp";
+            [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+            [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+            
+            [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+                if (!error) {
+                    NSLog(@"whatsapp link %@", url);
+                    
+                    NSString * msg = [NSString stringWithFormat:@"@%@ is on BUMP %@", self.user.username,url];
+                    
+                    msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+                    
+                    NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+                    NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+                    
+                    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                        [[UIApplication sharedApplication] openURL: whatsappURL];
+                    }
+                }
+                else{
+                    NSLog(@"error w/ whatsapp link %@", error);
+                    [Answers logCustomEventWithName:@"Whatsapp Link Error"
+                                   customAttributes:@{
+                                                      @"link":@"profile"
+                                                      }];
+                    
+                    NSString *urlString = [NSString stringWithFormat:@"https://sobump.com/p?profile=%@",self.user.username];
+                    NSString * msg = [NSString stringWithFormat:@"@%@ is on BUMP %@", self.user.username,urlString];
+                    
+                    msg = [msg stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@":" withString:@"%3A"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"/" withString:@"%2F"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"?" withString:@"%3F"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"," withString:@"%2C"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"=" withString:@"%3D"];
+                    msg = [msg stringByReplacingOccurrencesOfString:@"&" withString:@"%26"];
+                    
+                    NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",msg];
+                    NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+                    
+                    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+                        [[UIApplication sharedApplication] openURL: whatsappURL];
+                    }
+                }
+            }];
+            
+
+        }]];
+        
+        //Share on Messenger
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"Share on Messenger" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Shared on Messenger"
+                           customAttributes:@{
+                                              @"link":@"profile"
+                                              }];
+            
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"Tapped Share" properties:@{
+                                                         @"channel":@"messenger",
+                                                         @"content":@"profile"
+                                                         }];
+            
+            NSString *routeString = [NSString stringWithFormat:@"profile/%@",self.user.objectId];
+            BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.user.objectId];
+            BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+            linkProperties.feature = @"sharingProfile";
+            linkProperties.channel = @"messenger";
+            [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+            [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+            
+            [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+                if (!error) {
+                    NSLog(@"messenger share link %@", url);
+                    NSString *urlString = [NSString stringWithFormat:@"fb-messenger://share/?link=%@",url];
+                    NSURL *messengerURL = [NSURL URLWithString:urlString];
+                    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                        [[UIApplication sharedApplication] openURL: messengerURL];
+                    }
+                    
+                }
+                else{
+                    [Answers logCustomEventWithName:@"Messenger Link Error"
+                                   customAttributes:@{
+                                                      @"link":@"forsale listing",
+                                                      @"error":error.description
+                                                      }];
+                    NSString *urlString = [NSString stringWithFormat:@"fb-messenger://share/?link=https://sobump.com/p?profile=%@",self.user.username];
+                    NSURL *messengerURL = [NSURL URLWithString:urlString];
+                    if ([[UIApplication sharedApplication] canOpenURL: messengerURL]) {
+                        [[UIApplication sharedApplication] openURL: messengerURL];
+                    }
+                }
+            }];
+        }]];
+        
         //Copy Link
         [actionSheet addAction:[UIAlertAction actionWithTitle:@"Copy Profile Link" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [Answers logCustomEventWithName:@"Copied Link"
@@ -1634,19 +1977,109 @@ typedef void(^myCompletion)(BOOL);
                                               @"link":@"profile"
                                               }];
             
-            NSString *urlString = [NSString stringWithFormat:@"http://sobump.com/p?profile=%@",self.user.username];
-            UIPasteboard *pb = [UIPasteboard generalPasteboard];
-            [pb setString:urlString];
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"Tapped Share" properties:@{
+                                                         @"channel":@"link",
+                                                         @"content":@"profile"
+                                                         }];
+            
+            NSString *routeString = [NSString stringWithFormat:@"profile/%@",self.user.objectId];
+            BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.user.objectId];
+            BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+            linkProperties.feature = @"sharingProfile";
+            linkProperties.channel = @"link";
+            [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+            [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+            
+            [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+                if (!error) {
+                    NSLog(@"copied link %@", url);
+                    [Answers logCustomEventWithName:@"Copied Link"
+                                   customAttributes:@{
+                                                      @"link":@"profile",
+                                                      @"error":@NO
+                                                      }];
+                    
+                    UIPasteboard *pb = [UIPasteboard generalPasteboard];
+                    [pb setString:url];
+                }
+                else{
+                    NSLog(@"error copying link %@", error);
+                    [Answers logCustomEventWithName:@"Copied Link"
+                                   customAttributes:@{
+                                                      @"link":@"profile",
+                                                      @"error":@YES
+                                                      }];
+                    
+                    NSString *urlString = [NSString stringWithFormat:@"http://sobump.com/p?profile=%@",self.user.username];
+                    UIPasteboard *pb = [UIPasteboard generalPasteboard];
+                    [pb setString:urlString];
+                }
+            }];
             
             //show HUD
-            [self showHUDForCopy:YES];
-            
+            [self showHUDWithLabel:@"Copied"];
+
             double delayInSeconds = 2.0; // number of seconds to wait
             dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
             dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
                 [self hideHUD];
-                self.hud.labelText = @"";
             });
+        }]];
+        
+        //General Share
+        [actionSheet addAction:[UIAlertAction actionWithTitle:@"More" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [Answers logCustomEventWithName:@"Shared Profile"
+                           customAttributes:@{
+                                              @"link":@"profile"
+                                              }];
+            
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"Tapped Share" properties:@{
+                                                         @"channel":@"more",
+                                                         @"content":@"profile"
+                                                         }];
+            
+            NSMutableArray *items = [NSMutableArray new];
+            
+            NSString *routeString = [NSString stringWithFormat:@"profile/%@",self.user.objectId];
+            BranchUniversalObject *buo = [[BranchUniversalObject alloc] initWithCanonicalIdentifier:self.user.objectId];
+            BranchLinkProperties *linkProperties = [[BranchLinkProperties alloc] init];
+            linkProperties.feature = @"sharingProfile";
+            linkProperties.channel = @"more";
+            [linkProperties addControlParam:@"$deeplink_path" withValue:routeString];
+            [linkProperties addControlParam:@"referrer" withValue:[PFUser currentUser].objectId];
+            
+            [buo getShortUrlWithLinkProperties:linkProperties andCallback:^(NSString* url, NSError* error) {
+                if (!error) {
+                    NSLog(@"more link %@", url);
+                    
+                    [items addObject:[NSString stringWithFormat:@"@%@ is on BUMP  %@",self.user.username,url]];
+                    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+                    [self presentViewController:activityController animated:YES completion:nil];
+                    
+                    [activityController setCompletionWithItemsHandler:
+                     ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+                     }];
+                    
+                }
+                else{
+                    NSLog(@"error w/ more link %@", error);
+                    [Answers logCustomEventWithName:@"More Share Link Error"
+                                   customAttributes:@{
+                                                      @"link":@"profile",
+                                                      @"error":error.description
+                                                      }];
+                    
+                    [items addObject:[NSString stringWithFormat:@"@%@ is on BUMP  https://sobump.com/p?profile=%@",self.user.username,self.user.username]];
+                    UIActivityViewController *activityController = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+                    [self presentViewController:activityController animated:YES completion:nil];
+                    
+                    [activityController setCompletionWithItemsHandler:
+                     ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+                     }];
+                }
+            }];
         }]];
     }
     
@@ -1710,8 +2143,8 @@ typedef void(^myCompletion)(BOOL);
 }
 
 -(void)setupMessages{
-    [self showHUDForCopy:NO];
-    
+    [self showHUDWithLabel:nil];
+
     //possible convoIDs
     NSString *possID = [NSString stringWithFormat:@"%@%@", [PFUser currentUser].objectId, self.user.objectId];
     NSString *otherId = [NSString stringWithFormat:@"%@%@",self.user.objectId,[PFUser currentUser].objectId];
@@ -1747,6 +2180,11 @@ typedef void(^myCompletion)(BOOL);
             [self.navigationController pushViewController:vc animated:YES];
         }
         else{
+            Mixpanel *mixpanel = [Mixpanel sharedInstance];
+            [mixpanel track:@"Created Convo" properties:@{
+                                                          @"source":@"Profile"
+                                                          }];
+            
             //create a new convo and goto it
             PFObject *convoObject = [PFObject objectWithClassName:@"convos"];
             convoObject[@"sellerUser"] = [PFUser currentUser];
@@ -1775,7 +2213,7 @@ typedef void(^myCompletion)(BOOL);
             
             [convoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * _Nullable error) {
                 if (succeeded) {
-                    NSLog(@"saved new convo");
+//                    NSLog(@"saved new convo");
                     //saved
                     MessageViewController *vc = [[MessageViewController alloc]init];
                     vc.convoId = [convoObject objectForKey:@"convoId"];
@@ -1797,16 +2235,16 @@ typedef void(^myCompletion)(BOOL);
     }];
 }
 
--(void)showHUDForCopy:(BOOL)copying{
+-(void)showHUDWithLabel:(NSString *)label{
     self.hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
     self.hud.square = YES;
     self.hud.mode = MBProgressHUDModeCustomView;
-    if (!copying) {
+    if (!label) {
         self.hud.customView = self.spinner;
         [self.spinner startAnimating];
     }
     else{
-        self.hud.labelText = @"Copied";
+        self.hud.labelText = label;
     }
 }
 
@@ -1818,6 +2256,7 @@ typedef void(^myCompletion)(BOOL);
     double delayInSeconds = 1.0;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        self.hud.labelText = @"";
         self.hud = nil;
     });
 }
@@ -1830,14 +2269,15 @@ typedef void(^myCompletion)(BOOL);
     int heightInt = 0;
     
     if (self.hasBio || self.tabMode) {
-        heightInt = 390;
+//        heightInt = 390;
+        heightInt = 335;
     }
     else{
-        heightInt = 340;
+        //was 340
+        heightInt = 285;
     }
 
     self.myBar = [[BLKFlexibleHeightBar alloc] initWithFrame:CGRectMake(0.0, 0.0, [UIApplication sharedApplication].keyWindow.frame.size.width,heightInt)]; //was 340
-    self.myBar.minimumBarHeight = 114.0;
     self.myBar.backgroundColor = [UIColor whiteColor];
     self.myBar.behaviorDefiner = [SquareCashStyleBehaviorDefiner new];
     
@@ -1857,23 +2297,23 @@ typedef void(^myCompletion)(BOOL);
         
         if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
             //iPhone X has a bigger status bar - was 20px now 44px so 24pt bigger
-            adjust = 12;
+            adjust = 17; //was 120-
+            self.myBar.minimumBarHeight = 120.0;
+        }
+        else{
+            self.myBar.minimumBarHeight = 115.0;
         }
         self.collectionView.contentInset = UIEdgeInsetsMake(self.myBar.maximumBarHeight-[UIApplication sharedApplication].statusBarFrame.size.height, 0.0, 0.0, 0.0);
     }
     else{
+        self.myBar.minimumBarHeight = 115.0;
+
         //seeing odd behaviour with collection view. Same sizes on iOS 10 & 11 but 11 has a larger top inset..
         self.collectionView.contentInset = UIEdgeInsetsMake(self.myBar.maximumBarHeight, 0.0, 0.0, 0.0);
     }
     
     //bg colour view
-    if (self.hasBio || self.tabMode) {
-        self.bgView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.myBar.frame.size.width, (self.myBar.frame.size.height/2-40) + adjust)];//-25
-    }
-    else{
-        self.bgView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.myBar.frame.size.width, (self.myBar.frame.size.height/2-15) + adjust)];
-    }
-    
+    self.bgView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.myBar.frame.size.width, 130)];
     self.bgView.backgroundColor = [UIColor colorWithRed:0.96 green:0.97 blue:0.99 alpha:1.0];
     [self.myBar addSubview:self.bgView];
     
@@ -1884,22 +2324,33 @@ typedef void(^myCompletion)(BOOL);
     [self.myBar addSubview:self.userImageView];
     
     //name & location
-    self.nameAndLoc = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 300, 50)];
+    if (self.smallScreen) {
+        self.nameAndLoc = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 160, 45)];
+        self.nameAndLoc.font = [UIFont fontWithName:@"PingFangSC-Medium" size:12];
+    }
+    else{
+        self.nameAndLoc = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 175, 45)];
+        self.nameAndLoc.font = [UIFont fontWithName:@"PingFangSC-Medium" size:13];
+    }
+    
     self.nameAndLoc.numberOfLines = 2;
-    self.nameAndLoc.font = [UIFont fontWithName:@"PingFangSC-Medium" size:13];
     self.nameAndLoc.textColor = [UIColor blackColor];
     self.nameAndLoc.textAlignment = NSTextAlignmentLeft;
+    
+    self.nameAndLoc.adjustsFontSizeToFitWidth = YES;
+    self.nameAndLoc.minimumScaleFactor=0.5;
+    
+//    [self.nameAndLoc setBackgroundColor:[UIColor redColor]];
+    
     //[self.nameAndLoc sizeToFit];
     [self.myBar addSubview:self.nameAndLoc];
     
     //top username
-//    self.usernameLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0,300, 50)];
     self.usernameLabel = [[UILabel alloc] init];
     self.usernameLabel.numberOfLines = 1;
     self.usernameLabel.font = [UIFont fontWithName:@"PingFangSC-Medium" size:14];
     self.usernameLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
     self.usernameLabel.textAlignment = NSTextAlignmentLeft;
-    
     [self.myBar addSubview:self.usernameLabel];
     
     //verified with image view
@@ -1929,16 +2380,51 @@ typedef void(^myCompletion)(BOOL);
     [self.myBar addSubview:self.backButton];
     
     if (self.tabMode) {
-        self.ordersButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 35, 35)];
-        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon2"] forState:UIControlStateNormal];
-        [self.ordersButton addTarget:self action:@selector(ordersButtonPressed) forControlEvents:UIControlEventTouchUpInside];
-        [self.myBar addSubview:self.ordersButton];
+//        self.ordersButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 35, 35)];
+//        [self.ordersButton setImage:[UIImage imageNamed:@"ordersIcon2"] forState:UIControlStateNormal];
+//        [self.ordersButton addTarget:self action:@selector(ordersButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+//        [self.myBar addSubview:self.ordersButton];
+        
+        //change following buttong to the order button
+        self.followButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 150, 28)];
+        self.followButton.clipsToBounds = YES;
+        
+        [self setOrdersButton];
+        
+        self.followButton.showsTouchWhenHighlighted = NO;
+        self.followButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Semibold" size:13];
+        [self.followButton addTarget:self action:@selector(ordersButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+        [self.myBar addSubview:self.followButton];
     }
+    else if(![self.user.objectId isEqualToString:[PFUser currentUser].objectId]){
+        //don't show follow button on own profile
+        self.followButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 150, 28)];
+        self.followButton.clipsToBounds = YES;
+
+        if (self.following) {
+            [self setFollowingButton];
+        }
+        else{
+            [self setFollowButton];
+        }
+        
+        self.followButton.showsTouchWhenHighlighted = NO;
+        self.followButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Semibold" size:13];
+        [self.followButton addTarget:self action:@selector(followButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+        [self.myBar addSubview:self.followButton];
+    }
+
     
     //facebook button
-    self.FBButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
-    [self.FBButton setImage:[UIImage imageNamed:@"FBFillBlk"] forState:UIControlStateNormal];
+    self.FBButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 35, 35)];
+    [self.FBButton setImage:[UIImage imageNamed:@"FBFillBlk1"] forState:UIControlStateNormal];
     [self.FBButton addTarget:self action:@selector(fbPressed) forControlEvents:UIControlEventTouchUpInside];
+    
+    if (self.tabMode) {
+        if ([[[PFUser currentUser] objectForKey:@"followingCount"]intValue] < 2000) {
+            [self.myBar addSubview:self.FBButton]; //this turns into the discover button
+        }
+    }
     
     //dots button
     self.dotsButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
@@ -1946,30 +2432,53 @@ typedef void(^myCompletion)(BOOL);
     
     //stars image view
     self.starImageView = [[PFImageView alloc]initWithFrame:CGRectMake(0, 0, 93, 17)];
+    [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]]; //placeholder
     [self.myBar addSubview:self.starImageView];
     
     //reviews button
-    self.reviewsButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 70, 30)];
+    if (self.smallScreen) {
+        self.reviewsButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 60, 30)];
+        self.reviewsButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:11];
+    }
+    else{
+        self.reviewsButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 70, 30)];
+        self.reviewsButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
+    }
+    
     self.reviewsButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-    self.reviewsButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
     [self.reviewsButton addTarget:self action:@selector(ReviewsPressed) forControlEvents:UIControlEventTouchUpInside];
     self.reviewsButton.titleLabel.numberOfLines = 2;
 //    [self.reviewsButton setBackgroundColor:[UIColor blueColor]];
     [self.myBar addSubview:self.reviewsButton];
     
     //followers button
-    self.followersButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 70, 30)];
+
+    if (self.smallScreen) {
+        self.followersButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 60, 30)];
+        self.followersButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:11];
+    }
+    else{
+        self.followersButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 70, 30)];
+        self.followersButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
+    }
+    
     self.followersButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-    self.followersButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
     [self.followersButton addTarget:self action:@selector(followersPressed) forControlEvents:UIControlEventTouchUpInside];
     self.followersButton.titleLabel.numberOfLines = 2;
 //    [self.followersButton setBackgroundColor:[UIColor redColor]];
     [self.myBar addSubview:self.followersButton];
     
     //following
-    self.followingButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0,70, 30)];
+    if (self.smallScreen) {
+        self.followingButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0,60, 30)]; //review/followers/following labels are separated by their width not dead spacing
+        self.followingButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:11];
+    }
+    else{
+        self.followingButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0,70, 30)];
+        self.followingButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
+    }
+    
     self.followingButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-    self.followingButton.titleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
     [self.followingButton addTarget:self action:@selector(followingPressed) forControlEvents:UIControlEventTouchUpInside];
     self.followingButton.titleLabel.numberOfLines = 2;
 //    [self.followingButton setBackgroundColor:[UIColor greenColor]];
@@ -1986,6 +2495,11 @@ typedef void(^myCompletion)(BOOL);
     
     //small name / loc label
     self.smallNameAndLoc = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 150, 30)];
+    
+    if (self.smallScreen) {
+        [self.smallNameAndLoc setFrame:CGRectMake(0, 0, 90, 30)];
+    }
+    
     self.smallNameAndLoc.numberOfLines = 2;
     self.smallNameAndLoc.font = [UIFont fontWithName:@"PingFangSC-Medium" size:10];
     self.smallNameAndLoc.textColor = [UIColor blackColor];
@@ -2017,60 +2531,43 @@ typedef void(^myCompletion)(BOOL);
         //setup bar subviews with additional space for bio
         
         //bio label
-        self.bioLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 400, 25)];
-        self.bioLabel.numberOfLines = 1;
+        self.bioLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 400, 30)];
+        self.bioLabel.numberOfLines = 2;
         self.bioLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:13];
-        self.bioLabel.textAlignment = NSTextAlignmentCenter;
+        self.bioLabel.textAlignment = NSTextAlignmentLeft;
+        self.bioLabel.textColor = [UIColor lightGrayColor];
+        
+//        [self.bioLabel setBackgroundColor:[UIColor greenColor]];
+
         [self.myBar addSubview:self.bioLabel];
         
         //set bio upon start (also in fetch for if user updates)
         if ([self.user objectForKey:@"bio"]) {
             if (![[self.user objectForKey:@"bio"]isEqualToString:@""]) {
                 self.bioLabel.text = [self.user objectForKey:@"bio"];
-                self.bioLabel.textColor = [UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0];
+
             }
             else{
                 //put this check in, incase user had a bio but then deleted it
-                self.bioLabel.text = @"Tap to add a bio";
-                self.bioLabel.textColor = [UIColor lightGrayColor];
+                self.bioLabel.text = @"Tap to add a bio and let buyers know more about you";
             }
         }
         else{
             //fail safe
-            self.bioLabel.text = @"Tap to add a bio";
-            self.bioLabel.textColor = [UIColor lightGrayColor];
+            self.bioLabel.text = @"Tap to add a bio and let buyers know more about you";
         }
         
-        self.addBioButton = [[UIButton alloc]initWithFrame:self.bioLabel.frame];
-        [self.addBioButton addTarget:self action:@selector(addBioTapped) forControlEvents:UIControlEventTouchUpInside];
-        [self.myBar addSubview:self.addBioButton];
-        
-        //image view
-        initialLayoutAttributes.frame = CGRectMake(15, 100, 100, 100);
-        
-        //top username label
-        if (self.hasBadge) {
-            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2)-9, CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
+        //onky add button for user's own page
+        if (self.tabMode) {
+            self.addBioButton = [[UIButton alloc]initWithFrame:self.bioLabel.frame];
+            [self.addBioButton addTarget:self action:@selector(addBioTapped) forControlEvents:UIControlEventTouchUpInside];
+            [self.myBar addSubview:self.addBioButton];
         }
-        else{
-//            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+35.0 );//-25
-            initialLayoutAttributesUsernameLabel.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 20, 100,self.usernameLabel.frame.size.width,self.usernameLabel.frame.size.height);
-        }
-        
-        //stars view
-//        initialLayoutAttributesStarView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds),CGRectGetMidY(self.myBar.bounds)-(((CGRectGetMidY(self.myBar.bounds)/2)+12.5)) + adjust);//-25 .... needed to half 25 since theres a division of the midpoint happening
-        initialLayoutAttributesStarView.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 20, 125, 93, 17);
-        
-        //verified with: img view
-        initialLayoutAttributesVerifiedImageView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+65.0);//-25
-        
-        //verify button
-        initialLayoutAttributesVeriButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+65.0);//-25
         
         //bio label
         BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesBioLabel = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
         initialLayoutAttributesBioLabel.size = self.bioLabel.frame.size;
-        initialLayoutAttributesBioLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)+115.0);//-25
+        initialLayoutAttributesBioLabel.frame = CGRectMake(15, 80 + self.userImageView.frame.size.height + 5 + self.nameAndLoc.frame.size.height, [UIApplication sharedApplication].keyWindow.frame.size.width - 30, 50);
         
         [self.bioLabel addLayoutAttributes:initialLayoutAttributesBioLabel forProgress:0.0];
         
@@ -2082,7 +2579,7 @@ typedef void(^myCompletion)(BOOL);
         //bio button
         BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesBioButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
         initialLayoutAttributesBioButton.size = self.addBioButton.frame.size;
-        initialLayoutAttributesBioButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)+115.0);//-25
+        initialLayoutAttributesBioButton.frame = CGRectMake(15,80 + self.userImageView.frame.size.height + 5 + self.nameAndLoc.frame.size.height, [UIApplication sharedApplication].keyWindow.frame.size.width - 20, 60);
         [self.addBioButton addLayoutAttributes:initialLayoutAttributesBioButton forProgress:0.0];
         
         //bio button final
@@ -2092,46 +2589,61 @@ typedef void(^myCompletion)(BOOL);
     }
     else{
         //normal bar height without bio
-        
-        //image view
-        initialLayoutAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-15.0 + adjust);
-        
-        //top username label
-        initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+60.0);
-        
-        //top username label
-        if (self.hasBadge) {
-            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2) -9, CGRectGetMidY(self.myBar.bounds)+60.0);
-        }
-        else{
-            initialLayoutAttributesUsernameLabel.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+60.0);
-        }
-        
-        //stars view
-        initialLayoutAttributesStarView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds),CGRectGetMidY(self.myBar.bounds)-((CGRectGetMidY(self.myBar.bounds)/2)) + adjust);
-        
-        //verified with: img view
-        initialLayoutAttributesVerifiedImageView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+90.0);
-        
-        //verify button
-        initialLayoutAttributesVeriButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)-(CGRectGetMidX(self.myBar.bounds)/2), CGRectGetMidY(self.myBar.bounds)+90.0);
-        
     }
+    
+    //image view
+    initialLayoutAttributes.frame = CGRectMake(10, 80, 100, 100);
+    
+    //top username label
+    initialLayoutAttributesUsernameLabel.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 5, 130 - (17 + 15 +self.usernameLabel.frame.size.height),self.usernameLabel.frame.size.width,self.usernameLabel.frame.size.height);
+    
+    //verified image view
+    initialLayoutAttributesVerifiedImageView.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 20 + self.starImageView.frame.size.width, 130 - (17 + 10 + 1), self.verifiedImageView.frame.size.width, self.verifiedImageView.frame.size.height);
+    
+    //verify button
+    initialLayoutAttributesVeriButton.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 20 + self.starImageView.frame.size.width,130 - (17 + 10 + 1), self.verifiedImageView.frame.size.width, self.verifiedImageView.frame.size.height);
+    
+    //stars view
+    initialLayoutAttributesStarView.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 5, 130 - (17 + 10), 93, 17);
     
     //reviews button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesReviews = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesReviews.size = self.reviewsButton.frame.size;
-    initialLayoutAttributesReviews.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 20, 165,self.reviewsButton.frame.size.width,self.reviewsButton.frame.size.height);
+    initialLayoutAttributesReviews.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 5, 140,self.reviewsButton.frame.size.width,self.reviewsButton.frame.size.height);
     
     //followers button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesFollowers = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesFollowers.size = self.followersButton.frame.size;
-    initialLayoutAttributesFollowers.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 100,165 ,self.followersButton.frame.size.width,self.followersButton.frame.size.height);
     
-    //followering button
+    if (self.smallScreen) {
+        initialLayoutAttributesFollowers.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 5 + self.reviewsButton.frame.size.width,140 ,self.followersButton.frame.size.width,self.followersButton.frame.size.height);
+    }
+    else{
+        initialLayoutAttributesFollowers.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 85,140 ,self.followersButton.frame.size.width,self.followersButton.frame.size.height);
+    }
+    
+    //following button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesFollowing = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesFollowing.size = self.followingButton.frame.size;
-    initialLayoutAttributesFollowing.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 180,165 ,self.followersButton.frame.size.width,self.followersButton.frame.size.height);
+    
+    if (self.smallScreen) {
+        initialLayoutAttributesFollowing.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 125,140,self.followersButton.frame.size.width,self.followersButton.frame.size.height);
+    }
+    else{
+        initialLayoutAttributesFollowing.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 165,140,self.followersButton.frame.size.width,self.followersButton.frame.size.height);
+    }
+    
+    //THE follow/unfollow button
+    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesFollowButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
+    initialLayoutAttributesFollowButton.size = self.followButton.frame.size;
+    
+    if (self.smallScreen) {
+        initialLayoutAttributesFollowButton.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 5 + self.reviewsButton.frame.size.width,80 + self.userImageView.frame.size.height + 5 + 8.5 ,115,28);
+    }
+    else{//its 87 coz we're 5 short of the height of nameandloc label
+        initialLayoutAttributesFollowButton.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 87.5, 80 + self.userImageView.frame.size.height + 5 + 8.5,150,28);
+    }
+    [self.followButton addLayoutAttributes:initialLayoutAttributesFollowButton forProgress:0.0];
 
     //bg view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialBgView = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
@@ -2148,14 +2660,14 @@ typedef void(^myCompletion)(BOOL);
     //small username /loc view
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesSmallName = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesSmallName.size = self.smallNameAndLoc.frame.size;
-    initialLayoutAttributesSmallName.frame = CGRectMake(135, 25 + adjust, 150, 30);
+    initialLayoutAttributesSmallName.frame = CGRectMake(135, 25 + adjust, self.smallNameAndLoc.frame.size.width, 30);
     initialLayoutAttributesSmallName.alpha = 0.0f;
     [self.smallNameAndLoc addLayoutAttributes:initialLayoutAttributesSmallName forProgress:0.0];
     
     //name & loc label
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesLabel = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesLabel.size = self.nameAndLoc.frame.size;
-    initialLayoutAttributesLabel.frame = CGRectMake(20,self.userImageView.frame.origin.y + self.userImageView.frame.size.height + 5, 300, 50);
+    initialLayoutAttributesLabel.frame = CGRectMake(15,80 + self.userImageView.frame.size.height + 5, self.nameAndLoc.frame.size.width, self.nameAndLoc.frame.size.height);
     
     //back button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesBackButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
@@ -2165,7 +2677,7 @@ typedef void(^myCompletion)(BOOL);
     //fb button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesfbButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
     initialLayoutAttributesfbButton.size = self.FBButton.frame.size;
-    initialLayoutAttributesfbButton.frame = CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width-85, 25 + adjust, 30, 30);
+    initialLayoutAttributesfbButton.frame = CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width-80, 20 + adjust, 35, 35);
     
     //dots button
     BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesDotsButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
@@ -2173,9 +2685,9 @@ typedef void(^myCompletion)(BOOL);
     initialLayoutAttributesDotsButton.frame = CGRectMake([UIApplication sharedApplication].keyWindow.frame.size.width-40, 25 + adjust, 30, 30);
     
     //orders button
-    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesOrdersButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
-    initialLayoutAttributesOrdersButton.size = self.ordersButton.frame.size;
-    initialLayoutAttributesOrdersButton.frame = CGRectMake(50, 20 + adjust, 35, 35); //minus 5 off x value and y due to new frame
+//    BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesOrdersButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
+//    initialLayoutAttributesOrdersButton.size = self.ordersButton.frame.size;
+//    initialLayoutAttributesOrdersButton.frame = CGRectMake(50, 20 + adjust, 35, 35); //minus 5 off x value and y due to new frame
     
     // This is what we want the bar to look like at its maximum height (progress == 0.0)
     [self.userImageView addLayoutAttributes:initialLayoutAttributes forProgress:0.0];
@@ -2196,7 +2708,7 @@ typedef void(^myCompletion)(BOOL);
     [self.FBButton addLayoutAttributes:initialLayoutAttributesfbButton forProgress:0.0];
     [self.dotsButton addLayoutAttributes:initialLayoutAttributesDotsButton forProgress:0.0];
     
-    [self.ordersButton addLayoutAttributes:initialLayoutAttributesOrdersButton forProgress:0.0];
+//    [self.ordersButton addLayoutAttributes:initialLayoutAttributesOrdersButton forProgress:0.0];
     
     // small mode
     
@@ -2212,47 +2724,52 @@ typedef void(^myCompletion)(BOOL);
     //CGAffineTransform scale = CGAffineTransformMakeScale(0.2, 0.2);
     //finalLayoutAttributes.transform = CGAffineTransformConcat(scale, translation);
     // This is what we want the bar to look like at its minimum height (progress == 1.0)
-    [self.userImageView addLayoutAttributes:finalLayoutAttributes forProgress:0.4];
+    [self.userImageView addLayoutAttributes:finalLayoutAttributes forProgress:0.3];
     
     // top username final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesUsername = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesUsernameLabel];
     finalLayoutAttributesUsername.alpha = 0.0;
-    [self.usernameLabel addLayoutAttributes:finalLayoutAttributesUsername forProgress:0.2];
+    [self.usernameLabel addLayoutAttributes:finalLayoutAttributesUsername forProgress:0.5];
     
     //verified img view final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesVerifiedImageView = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesVerifiedImageView];
     finalLayoutAttributesVerifiedImageView.alpha = 0.0;
-    [self.verifiedImageView addLayoutAttributes:finalLayoutAttributesVerifiedImageView forProgress:0.1];
+    [self.verifiedImageView addLayoutAttributes:finalLayoutAttributesVerifiedImageView forProgress:0.4];
     
     //veri button
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesVeriButton = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesVeriButton];
     finalLayoutAttributesVeriButton.alpha = 0.0;
-    [self.moreVeriButton addLayoutAttributes:finalLayoutAttributesVeriButton forProgress:0.2];
+    [self.moreVeriButton addLayoutAttributes:finalLayoutAttributesVeriButton forProgress:0.4];
     
     // star view final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesStar = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesStarView];
     finalLayoutAttributesStar.alpha = 0.0;
-    [self.starImageView addLayoutAttributes:finalLayoutAttributesStar forProgress:0.6];
+    [self.starImageView addLayoutAttributes:finalLayoutAttributesStar forProgress:0.4];
     
     // reviews label final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesReviewLabel = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesReviews];
     finalLayoutAttributesReviewLabel.alpha = 0.0;
-    [self.reviewsButton addLayoutAttributes:finalLayoutAttributesReviewLabel forProgress:0.1];
+    [self.reviewsButton addLayoutAttributes:finalLayoutAttributesReviewLabel forProgress:0.3];
     
     // following label final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesFollowing = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesFollowing];
     finalLayoutAttributesFollowing.alpha = 0.0;
-    [self.followingButton addLayoutAttributes:finalLayoutAttributesFollowing forProgress:0.1];
+    [self.followingButton addLayoutAttributes:finalLayoutAttributesFollowing forProgress:0.3];
     
     // followers label final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesFollowers = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesFollowers];
-    finalLayoutAttributesReviewLabel.alpha = 0.0;
-    [self.followersButton addLayoutAttributes:finalLayoutAttributesFollowers forProgress:0.1];
+    finalLayoutAttributesFollowers.alpha = 0.0;
+    [self.followersButton addLayoutAttributes:finalLayoutAttributesFollowers forProgress:0.3];
     
     // name label final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesNameLabel = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesLabel];
     finalLayoutAttributesNameLabel.alpha = 0.0;
-    [self.nameAndLoc addLayoutAttributes:finalLayoutAttributesNameLabel forProgress:0.6];
+    [self.nameAndLoc addLayoutAttributes:finalLayoutAttributesNameLabel forProgress:0.1];
+    
+    //follow button
+    BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesFollowButton = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesFollowButton];
+    finalLayoutAttributesFollowButton.alpha = 0.0;
+    [self.followButton addLayoutAttributes:finalLayoutAttributesFollowButton forProgress:0.3];
     
     // small username label final
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesSmallLabel = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesSmallName];
@@ -2264,48 +2781,22 @@ typedef void(^myCompletion)(BOOL);
     finalLayoutAttributesSmallImage.alpha = 1.0;
     [self.smallImageView addLayoutAttributes:finalLayoutAttributesSmallImage forProgress:0.6];
     
-    if ([self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+    if (self.tabMode) {
         //profile image button
-        self.imageButton = [[UIButton alloc]initWithFrame:self.userImageView.frame];
+        self.imageButton = [[UIButton alloc]initWithFrame:CGRectMake(15, 100, 100, 100)];
         [self.imageButton addTarget:self action:@selector(profileImagePressed) forControlEvents:UIControlEventTouchUpInside];
         [self.myBar addSubview:self.imageButton];
         
-        //editImageView
-        self.editImageView = [[PFImageView alloc]initWithFrame:CGRectMake(0,0, 30, 30)];
-        [self.editImageView setImage:[UIImage imageNamed:@"editButton"]];
-//        [self.myBar addSubview:self.editImageView];
-        
-        //image view button initial
+        //image button initial
         BLKFlexibleHeightBarSubviewLayoutAttributes *initialImageButton = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
-        
-        //edit button initial attributes
-        BLKFlexibleHeightBarSubviewLayoutAttributes *editAttributes = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
-
-        if (self.hasBio || self.tabMode) {
-            initialImageButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-40.0 + adjust);//-25
-            editAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+40, CGRectGetMidY(self.myBar.bounds)-5.0 + adjust);//-25
-            
-        }
-        else{
-            initialImageButton.center = CGPointMake(CGRectGetMidX(self.myBar.bounds), CGRectGetMidY(self.myBar.bounds)-15.0 + adjust);
-            editAttributes.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+40, CGRectGetMidY(self.myBar.bounds)+20.0 + adjust);
-        }
-        
-        initialImageButton.size = self.userImageView.frame.size;
+        initialImageButton.frame = CGRectMake(10, 80, 100, 100);
+        initialImageButton.size = self.imageButton.frame.size;
         [self.imageButton addLayoutAttributes:initialImageButton forProgress:0.0];
-        
-        editAttributes.size = self.editImageView.frame.size;
-        [self.editImageView addLayoutAttributes:editAttributes forProgress:0.0];
         
         // image button final
         BLKFlexibleHeightBarSubviewLayoutAttributes *finalImageButtonAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialImageButton];
         finalImageButtonAttributes.alpha = 0.0;
-        [self.imageButton addLayoutAttributes:finalImageButtonAttributes forProgress:0.4];
-
-        //final attributes
-        BLKFlexibleHeightBarSubviewLayoutAttributes *finalEditAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:editAttributes];
-        finalEditAttributes.alpha = 0.0;
-        [self.editImageView addLayoutAttributes:finalEditAttributes forProgress:0.4];
+        [self.imageButton addLayoutAttributes:finalImageButtonAttributes forProgress:0.3];
     }
     
     if (self.tabMode){
@@ -2352,7 +2843,7 @@ typedef void(^myCompletion)(BOOL);
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     
-    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Choose picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Change Profile Picture" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         if (!self.picker) {
             self.picker = [[UIImagePickerController alloc] init];
             self.picker.delegate = self;
@@ -2367,7 +2858,7 @@ typedef void(^myCompletion)(BOOL);
 
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
     self.profileImage = info[UIImagePickerControllerOriginalImage];
-    [self showHUDForCopy:NO];
+    [self showHUDWithLabel:nil];
 //    UIImage *imageToSave = [self.profileImage resizedImageWithContentMode:UIViewContentModeScaleAspectFit bounds:CGSizeMake(750.0, 750.0) interpolationQuality:kCGInterpolationHigh];
     UIImage *imageToSave = [self.profileImage scaleImageToSize:CGSizeMake(400, 400)];
 
@@ -2424,19 +2915,14 @@ typedef void(^myCompletion)(BOOL);
 
 -(void)profileCogPressed{
     ProfileController *profile = [[ProfileController alloc]init];
-    profile.modal = YES;
+    profile.modal = NO;
     profile.delegate = self;
     
     if (self.messagesUnseen > 0) {
         profile.unseenTBMsg = YES;
     }
     
-//    if (self.supportUnseen > 0) {
-//        profile.unseenSupport = YES;
-//    }
-    
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:profile];
-    [self presentViewController:nav animated:YES completion:nil];
+    [self.navigationController pushViewController:profile animated:YES];
 }
 
 -(void)newTBMessage{
@@ -2470,19 +2956,19 @@ typedef void(^myCompletion)(BOOL);
 }
 
 - (IBAction)createPressed:(id)sender {
-    [self.tabBarController setSelectedIndex:1];
-    double delayInSeconds = 0.5;
-    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-        if (self.segmentedControl.selectedSegmentIndex == 0){
-            //selling
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"openSell" object:nil];
-        }
-        else if (self.segmentedControl.selectedSegmentIndex == 1){
-            //wanted
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"openWTB" object:nil];
-        }
-    });
+    [self.tabBarController setSelectedIndex:2];
+//    double delayInSeconds = 0.5;
+//    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+//    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+//        if (self.segmentedControl.selectedSegmentIndex == 0){
+//            //selling
+//            [[NSNotificationCenter defaultCenter] postNotificationName:@"openSell" object:nil];
+//        }
+//        else if (self.segmentedControl.selectedSegmentIndex == 1){
+//            //wanted
+//            [[NSNotificationCenter defaultCenter] postNotificationName:@"openWTB" object:nil];
+//        }
+//    });
 }
 
 -(void)showAlertWithTitle:(NSString *)title andMsg:(NSString *)msg{
@@ -2549,7 +3035,7 @@ typedef void(^myCompletion)(BOOL);
                     [Answers logCustomEventWithName:@"Failed to Link Facebook Account"
                                    customAttributes:@{}];
                     
-                    [self showAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for Bump with your Facebook account\n\nSend Support a message from Settings and we'll get it sorted!"];
+                    [self showAlertWithTitle:@"Linking Error" andMsg:@"You may have already signed up for BUMP with your Facebook account\n\nSend Support a message from Settings and we'll get it sorted!"];
                 }
             }
         }];
@@ -2608,7 +3094,7 @@ typedef void(^myCompletion)(BOOL);
                  
                  //create bumped object so can know when friends create listings
                  PFObject *bumpedObj = [PFObject objectWithClassName:@"Bumped"];
-                 [bumpedObj setObject:[self.user objectForKey:@"facebookId"] forKey:@"facebookId"];
+                 [bumpedObj setObject:[userData objectForKey:@"id"] forKey:@"facebookId"];
                  [bumpedObj setObject:self.user forKey:@"user"];
                  [bumpedObj setObject:@"live" forKey:@"status"];
                  [bumpedObj setObject:[NSDate date] forKey:@"safeDate"];
@@ -2745,17 +3231,11 @@ typedef void(^myCompletion)(BOOL);
 }
 
 -(void)showMaxAlert{
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email" message:@"We've already sent you 3 confirmation emails!\n\nBe sure to check your Junk Folder for an email from BUMP Customer Service. If you still can't find it, send Support a message from Settings\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"Verify Email" message:@"We've already sent you 3 confirmation emails!\n\nCheck your information in Settings to ensure you've entered the correct email address. Also be sure to check your Junk Folder for an email from BUMP Customer Service. If you still can't find it, send Support an email hello@sobump.com\n\nPs the Gmail app doesn't like links! Try opening the email in the native iPhone Mail app" preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:@"Message Support" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [Answers logCustomEventWithName:@"Message Team Bump Pressed from Max Email Alert"
-                       customAttributes:@{}];
-        
-        [Intercom presentMessenger];
-    }]];
     [self presentViewController:alertView animated:YES completion:nil];
 }
 
@@ -3114,6 +3594,70 @@ typedef void(^myCompletion)(BOOL);
     }
 }
 
+-(void)setupInfinQuery{
+    if (self.filtersArray.count > 0) {
+        
+        //price
+        if ([self.filtersArray containsObject:@"price"]) {
+            [self.saleInfinQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] greaterThanOrEqualTo:@(self.filterLower)];
+            [self.saleInfinQuery whereKey:[NSString stringWithFormat:@"salePrice%@", self.currency] lessThanOrEqualTo:@(self.filterUpper)];
+        }
+        
+        if ([self.filtersArray containsObject:@"hightolow"]) {
+            [self.saleInfinQuery orderByDescending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
+        }
+        else if ([self.filtersArray containsObject:@"lowtohigh"]){
+            [self.saleInfinQuery orderByAscending:[NSString stringWithFormat:@"salePrice%@", self.currency]];
+        }
+        else{
+            [self.saleInfinQuery orderByDescending:@"createdAt"];
+        }
+        
+        //instant buy
+        if ([self.filtersArray containsObject:@"instantBuy"]){
+            [self.saleInfinQuery whereKey:@"instantBuy" equalTo:@"YES"];
+        }
+        
+        //condition
+        if ([self.filtersArray containsObject:@"new"]){
+            [self.saleInfinQuery whereKey:@"condition" containedIn:@[@"New", @"Any", @"BNWT", @"BNWOT"]];
+        }
+        else if ([self.filtersArray containsObject:@"used"]){
+            [self.saleInfinQuery whereKey:@"condition" containedIn:@[@"Used", @"Any"]];
+        }
+        else if ([self.filtersArray containsObject:@"deadstock"]){
+            [self.saleInfinQuery whereKey:@"condition" containedIn:@[@"Deadstock", @"Any"]];
+        }
+        
+        //category filters
+        if (![self.filterCategory isEqualToString:@""]) {
+            [self.saleInfinQuery whereKey:@"category" equalTo:self.filterCategory];
+        }
+        
+        //gender
+        if ([self.filtersArray containsObject:@"male"]){
+            [self.saleInfinQuery whereKey:@"sizeGender" equalTo:@"Mens"];
+        }
+        else if ([self.filtersArray containsObject:@"female"]){
+            [self.saleInfinQuery whereKey:@"sizeGender" equalTo:@"Womens"];
+        }
+        
+        //all sizes filters
+        if (self.filterSizesArray.count > 0) {
+            [self.saleInfinQuery whereKey:@"sizeArray" containedIn:self.filterSizesArray];
+        }
+        
+        //colour filters
+        if (self.filterColoursArray.count > 0) {
+            [self.saleInfinQuery whereKey:@"coloursArray" containedIn:self.filterColoursArray];
+        }
+        
+    }
+    else{
+        [self.saleInfinQuery orderByDescending:@"createdAt"];
+    }
+}
+
 #pragma mark - colour part of label
 
 -(NSMutableAttributedString *)modifyString: (NSMutableAttributedString *)mainString setColorForText:(NSString*) textToFind withColor:(UIColor*) color
@@ -3132,7 +3676,14 @@ typedef void(^myCompletion)(BOOL);
     NSRange range = [mainString.mutableString rangeOfString:textToFind options:NSCaseInsensitiveSearch];
     
     if (range.location != NSNotFound) {
-        [mainString addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"PingFangSC-Semibold" size:14] range:range];
+        
+        if (self.smallScreen) {
+            [mainString addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"PingFangSC-Semibold" size:13] range:range];
+        }
+        else{
+            [mainString addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"PingFangSC-Semibold" size:14] range:range];
+        }
+        
         [mainString addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1.0] range:range];
     }
     
@@ -3183,6 +3734,11 @@ typedef void(^myCompletion)(BOOL);
 -(void)snapSeen{
     //ignore
 }
+
+-(void)boostedItem{
+    [self loadWTSListings];
+}
+
 
 #pragma mark - wanted listing delegates for reloading CV
 
@@ -3269,12 +3825,24 @@ typedef void(^myCompletion)(BOOL);
     
     BLKFlexibleHeightBarSubviewLayoutAttributes *finalSegAttributes = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialSegAttributes];
     
-    if (self.hasBio || self.tabMode) {
-        finalSegAttributes.transform = CGAffineTransformMakeTranslation(0, -276);
+    if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
+        //iPhone X has a bigger status bar - so we lower top buttons slightly, therefore minimum bar height is bit bigger
+        if (self.hasBio || self.tabMode) {
+            finalSegAttributes.transform = CGAffineTransformMakeTranslation(0, -215);
+        }
+        else{
+            finalSegAttributes.transform = CGAffineTransformMakeTranslation(0, -165); //to get this number just minus small bar height (120) from new max bar height
+        }
     }
     else{
-        finalSegAttributes.transform = CGAffineTransformMakeTranslation(0, -226);
+        if (self.hasBio || self.tabMode) {
+            finalSegAttributes.transform = CGAffineTransformMakeTranslation(0, -220);
+        }
+        else{
+            finalSegAttributes.transform = CGAffineTransformMakeTranslation(0, -170); //to get this number just minus small bar height (115) from new max bar height
+        }
     }
+
     [self.segmentedControl addLayoutAttributes:finalSegAttributes forProgress:1.0];
     [self.myBar addSubview:self.segmentedControl];
     
@@ -3282,8 +3850,8 @@ typedef void(^myCompletion)(BOOL);
     [self.dotsButton setImage:[UIImage imageNamed:@"profileDots"] forState:UIControlStateNormal];
     [self.dotsButton addTarget:self action:@selector(showAlertView) forControlEvents:UIControlEventTouchUpInside];
     
-    [self.segmentedControl setSectionTitles:@[@"S E L L I N G", @"W A N T E D", @"L I K E S"]];
-    self.numberOfSegments = 3;
+    [self.segmentedControl setSectionTitles:@[@"S E L L I N G", @"L I K E S"]];
+    self.numberOfSegments = 2;
     
     self.WTBSelected = NO;
     self.WTSSelected = YES;
@@ -3305,24 +3873,14 @@ typedef void(^myCompletion)(BOOL);
         BLKFlexibleHeightBarSubviewLayoutAttributes *initialLayoutAttributesBadgeView = [BLKFlexibleHeightBarSubviewLayoutAttributes new];
         initialLayoutAttributesBadgeView.size = self.badgeView.frame.size;
         
-        if (self.hasBio || self.tabMode) {
-            initialLayoutAttributesBadgeView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2) + ((self.usernameLabel.frame.size.width/2) + 3), CGRectGetMidY(self.myBar.bounds)+35.0);
-            
-            // so to ensure we place the badge directly after the username label we do a few things:
-            //1. get the mid point of the username label
-            //2. add half of the username label's width to it
-            //3. minus half of the badgeView's width from the usernameLabel's X origin (at this point the badge is directly after the usernameLabel)
-            //4. we add a gap of 3px here and subtract 3px from the usernameLabel's X origin to create a gap in the centre of the 2 objects
-        }
-        else{
-            initialLayoutAttributesBadgeView.center = CGPointMake(CGRectGetMidX(self.myBar.bounds)+(CGRectGetMidX(self.myBar.bounds)/2) + ((self.usernameLabel.frame.size.width/2) + 3), CGRectGetMidY(self.myBar.bounds)+60.0);
-        }
-        
-        [self.badgeView addLayoutAttributes:initialLayoutAttributesBadgeView forProgress:0.0];
+        float usernameYVal = 130 - (17 + 15 + self.usernameLabel.frame.size.height);
 
+        initialLayoutAttributesBadgeView.frame = CGRectMake(self.userImageView.frame.origin.x + self.userImageView.frame.size.width + 10 + self.usernameLabel.frame.size.width,(usernameYVal + (self.usernameLabel.frame.size.height/2))-7.5,self.badgeView.frame.size.width,self.badgeView.frame.size.height);
+        [self.badgeView addLayoutAttributes:initialLayoutAttributesBadgeView forProgress:0.0];
+        
         BLKFlexibleHeightBarSubviewLayoutAttributes *finalLayoutAttributesBadgeView = [[BLKFlexibleHeightBarSubviewLayoutAttributes alloc] initWithExistingLayoutAttributes:initialLayoutAttributesBadgeView];
         finalLayoutAttributesBadgeView.alpha = 0.0;
-        [self.badgeView addLayoutAttributes:finalLayoutAttributesBadgeView forProgress:0.2];
+        [self.badgeView addLayoutAttributes:finalLayoutAttributesBadgeView forProgress:0.5];
     }
 }
 
@@ -3331,6 +3889,7 @@ typedef void(^myCompletion)(BOOL);
         [Answers logCustomEventWithName:@"Add bio pressed"
                        customAttributes:@{}];
         
+        self.enteredBio = YES;
         SettingsController *vc = [[SettingsController alloc]init];
         vc.bioMode = YES;
         [self.navigationController pushViewController:vc animated:YES];
@@ -3390,8 +3949,8 @@ typedef void(^myCompletion)(BOOL);
 
 -(void)ordersButtonPressed{
     segmentedTableView *vc = [[segmentedTableView alloc]init];
-    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
-    [self presentViewController:nav animated:YES completion:nil];
+//    NavigationController *nav = [[NavigationController alloc]initWithRootViewController:vc];
+    [self.navigationController pushViewController:vc animated:YES];
 }
 
 -(void)updateOrderBadge:(NSNotification*)note {
@@ -3400,10 +3959,10 @@ typedef void(^myCompletion)(BOOL);
 
 -(void)removeOrderBadge{
     [self.ordersButton setImage:[UIImage imageNamed:@"ordersNormalNew"] forState:UIControlStateNormal];
+    [self.unseenOrdersView setHidden:YES];
 }
 
 -(void)calcTabBadge{
-    NSLog(@"calc tab badge");
     
     //check if any support or team bump messages unseen
     int tabInt = 0;
@@ -3420,28 +3979,1044 @@ typedef void(^myCompletion)(BOOL);
     if (self.ordersUnseen > 0) {
         tabInt+= self.ordersUnseen;
         [self.ordersButton setImage:[UIImage imageNamed:@"ordersUnreadNew"] forState:UIControlStateNormal];
+        [self.unseenOrdersView setHidden:NO];
     }
     else{
         [self.ordersButton setImage:[UIImage imageNamed:@"ordersNormalNew"] forState:UIControlStateNormal];
+        [self.unseenOrdersView setHidden:YES];
     }
     
     //add all together and set tab badge
     if (tabInt == 0) {
-        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:nil];
+        [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:nil];
     }
     else if(tabInt > 9){
-        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"9+"];
+        [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:@"9+"];
     }
     else{
-        [[self.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:[NSString stringWithFormat:@"%d",tabInt]];
+        [[self.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:[NSString stringWithFormat:@"%d",tabInt]];
     }
 }
 
 -(void)followersPressed{
-    
+    if (self.followersNumber > 0 && !self.isBumpOfficial) {
+        whoBumpedTableView *vc = [[whoBumpedTableView alloc]init];
+        vc.mode = @"followers";
+        vc.user = self.user;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
 }
 
 -(void)followingPressed{
+    if (self.followingNumber > 0) {
+        whoBumpedTableView *vc = [[whoBumpedTableView alloc]init];
+        vc.mode = @"following";
+        vc.user = self.user;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+}
+
+-(void)presentUnfollowSheet{
+    UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    actionSheet.title = [NSString stringWithFormat:@"Unfollow %@?", self.user.username];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Unfollow" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        self.following = NO;
+        
+        //tracking
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"unfollow_pressed" properties:@{
+                                                       @"source":@"profile"
+                                                       }];
+        
+        //update current user's followingDic locally
+        if ([[PFUser currentUser]objectForKey:@"followingDic"]) {
+            //remove from existing
+            NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:[[PFUser currentUser]objectForKey:@"followingDic"]];
+            
+            if ([dic valueForKey:self.user.objectId]) {
+                [dic removeObjectForKey:self.user.objectId];
+                [[PFUser currentUser]setObject:dic forKey:@"followingDic"];
+                [[PFUser currentUser]saveInBackground];
+            }
+        }
+        
+        //change follow button
+        [self setFollowButton];
+        
+        //decrement followers badge
+        if (self.followersNumber > 0) {
+            self.followersNumber--;
+            NSString *followersNumberString = [self shortenNumberToString:self.followersNumber];
+            
+            NSMutableAttributedString *followerString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\nFollowers",followersNumberString] attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+            [self modifyNumberLabel:followerString setFontForText:followersNumberString];
+            [self.followersButton setAttributedTitle:followerString forState:UIControlStateNormal];
+        }
+        
+        NSDictionary *params = @{@"followedId": self.user.objectId, @"followingId": [PFUser currentUser].objectId};
+        [PFCloud callFunctionInBackground:@"unfollowUser" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+            if (error) {
+                NSLog(@"error unfollowing user: %@", error);
+                
+                [Answers logCustomEventWithName:@"Error Unfollowing User"
+                               customAttributes:@{
+                                                  @"error":error.description
+                                                  }];
+                
+                //add user back into the local following array
+                if ([[PFUser currentUser]objectForKey:@"followingDic"]) {
+                    //add to existing
+                    NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:[[PFUser currentUser]objectForKey:@"followingDic"]];
+                    
+                    //check if value already exists in dictionary before adding
+                    if (![dic valueForKey:self.user.objectId]) {
+                        dic[self.user.objectId] = self.user.objectId;
+                        [[PFUser currentUser]setObject:dic forKey:@"followingDic"];
+                        [[PFUser currentUser]saveInBackground];
+                    }
+                }
+                
+                //reset button
+                self.following = YES;
+                [self setFollowButton];
+                
+                //show alert
+                [self showAlertWithTitle:@"Follow Error" andMsg:@"Make sure you're connected to the internet. If you keep seeing this issue please send a screenshot to support from within the app"];
+                
+                //reset followers badge
+                self.followersNumber++;
+                NSString *followersNumberString = [self shortenNumberToString:self.followersNumber];
+                
+                NSMutableAttributedString *followerString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\nFollowers",followersNumberString] attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+                [self modifyNumberLabel:followerString setFontForText:followersNumberString];
+                [self.followersButton setAttributedTitle:followerString forState:UIControlStateNormal];
+                
+            }
+            else{
+                NSLog(@"success unfollowing user!");
+                
+                [Answers logCustomEventWithName:@"Unfollowed User"
+                               customAttributes:@{
+                                                  @"where":@"profile"
+                                                  }];
+            }
+        }];
+    }]];
+    
+    [self presentViewController:actionSheet animated:YES completion:nil];
+}
+
+-(void)followButtonPressed{
+    
+    if (self.following) {
+        //unfollow
+        [self presentUnfollowSheet];
+    }
+    else{
+        //follow
+        NSLog(@"follow pressed");
+        
+        //tracking
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"follow_pressed" properties:@{
+                                                       @"source":@"profile"
+                                                       }];
+
+        self.following = YES;
+        
+        //change follow button
+        [self setFollowingButton];
+        
+        //increment followers badge
+        self.followersNumber++;
+        NSString *followersNumberString = [self shortenNumberToString:self.followersNumber];
+        
+        NSMutableAttributedString *followerString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\nFollowers",followersNumberString] attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+        [self modifyNumberLabel:followerString setFontForText:followersNumberString];
+        [self.followersButton setAttributedTitle:followerString forState:UIControlStateNormal];
+        
+        //if someone re-following over 3 times then we stop processing the follows
+        if (self.followCounter > 3) {
+            return;
+        }
+        
+        self.followCounter++;
+
+        //update current user's followingDic locally
+        if ([[PFUser currentUser]objectForKey:@"followingDic"]) {
+            //add to existing
+            NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:[[PFUser currentUser]objectForKey:@"followingDic"]];
+            
+            //check if value already exists in dictionary before adding
+            if (![dic valueForKey:self.user.objectId]) {
+                dic[self.user.objectId] = self.user.objectId;
+                [[PFUser currentUser]setObject:dic forKey:@"followingDic"];
+                [[PFUser currentUser]saveInBackground];
+            }
+        }
+        else{
+            //create one
+            NSMutableDictionary *dic = [[NSMutableDictionary alloc]init];
+            dic[self.user.objectId] = self.user.objectId;
+            [[PFUser currentUser]setObject:dic forKey:@"followingDic"];
+            [[PFUser currentUser]saveInBackground];
+        }
+        
+        NSDictionary *params = @{@"followedId": self.user.objectId, @"followingId": [PFUser currentUser].objectId};
+        [PFCloud callFunctionInBackground:@"followUser" withParameters: params block:^(id  _Nullable object, NSError * _Nullable error) {
+            if (error) {
+                NSLog(@"error following user: %@", error);
+                
+                
+                [Answers logCustomEventWithName:@"Error Following User"
+                               customAttributes:@{
+                                                  @"error":error.description
+                                                  }];
+                
+                if ([[PFUser currentUser]objectForKey:@"followingDic"]) {
+                    //remove from existing
+                    NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:[[PFUser currentUser]objectForKey:@"followingDic"]];
+                    
+                    if ([dic valueForKey:self.user.objectId]) {
+                        [dic removeObjectForKey:self.user.objectId];
+                        [[PFUser currentUser]setObject:dic forKey:@"followingDic"];
+                        [[PFUser currentUser]saveInBackground];
+                    }
+                }
+                
+                //reset button
+                self.following = NO;
+                [self setFollowButton];
+                
+                //show alert
+                [self showAlertWithTitle:@"Follow Error" andMsg:@"Make sure you're connected to the internet. If you keep seeing this issue please send a screenshot to support from within the app"];
+
+                //reset followers badge
+                self.followersNumber--;
+                NSString *followersNumberString = [self shortenNumberToString:self.followersNumber];
+                
+                NSMutableAttributedString *followerString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\nFollowers",followersNumberString] attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+                [self modifyNumberLabel:followerString setFontForText:followersNumberString];
+                [self.followersButton setAttributedTitle:followerString forState:UIControlStateNormal];
+            }
+            else{
+                NSLog(@"success following user!");
+                
+                [Answers logCustomEventWithName:@"Followed User"
+                               customAttributes:@{
+                                                  @"where":@"profile"
+                                                  }];
+            }
+        }];
+    }
     
 }
+
+//helpers to quickly change follow button
+-(void)setFollowingButton{
+    [self.followButton setBackgroundImage:nil forState:UIControlStateNormal];
+    
+    [self.followButton setTitle:@"Following" forState:UIControlStateNormal];
+    self.followButton.layer.borderWidth = 1.1;
+    self.followButton.layer.borderColor = [UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0].CGColor;
+    self.followButton.layer.cornerRadius = 3;
+    [self.followButton setTitleColor:[UIColor colorWithRed:0.29 green:0.29 blue:0.29 alpha:1] forState:UIControlStateNormal];
+}
+
+-(void)setOrdersButton{
+    [self.followButton setBackgroundImage:nil forState:UIControlStateNormal];
+    
+    [self.followButton setTitle:@"Orders" forState:UIControlStateNormal];
+    self.followButton.layer.borderWidth = 1.1;
+    self.followButton.layer.borderColor = [UIColor colorWithRed:0.91 green:0.91 blue:0.91 alpha:1.0].CGColor;
+
+    self.followButton.layer.cornerRadius = 3;
+    [self.followButton setTitleColor: [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:1.0] forState:UIControlStateNormal];
+    
+    //setup unread dot
+    self.unseenOrdersView = [[UIView alloc]initWithFrame:CGRectMake(self.followButton.titleLabel.frame.origin.x + 25, self.followButton.titleLabel.frame.origin.y-7, 5,5)];
+    [self.unseenOrdersView.layer setCornerRadius:2.5];
+    self.unseenOrdersView.backgroundColor = [UIColor colorWithRed:1.00 green:0.31 blue:0.39 alpha:1.0];
+    [self.unseenOrdersView setHidden:YES];
+    [self.followButton addSubview:self.unseenOrdersView];
+}
+
+-(void)setFollowButton{
+    self.followButton.layer.borderWidth = 0;
+    [self.followButton setBackgroundImage:[UIImage imageNamed:@"followBg"] forState:UIControlStateNormal];
+    [self.followButton setTitle:@"Follow" forState:UIControlStateNormal];
+    
+    if (self.fetchedUser && self.user && !self.tabMode) {
+        if ([[self.user objectForKey:@"followingDic"]valueForKey:[PFUser currentUser].objectId] && [self.followButton.titleLabel.text isEqualToString:@"Follow"]) {
+            [self.followButton setTitle:@"Follow back" forState:UIControlStateNormal];
+        }
+    }
+    [self.followButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+}
+
+-(NSString *)shortenNumberToString:(int)number{
+    
+    NSString *returnString = [NSString stringWithFormat:@"%d", number];
+    
+    //for over 10K
+    if (number > 9999 && number <= 999999) {
+        float numberFloat = (float)number/1000;
+        
+        //ensure we only show the decimal place when number after point is != 0
+        numberFloat = numberFloat*10;
+        numberFloat = floor(numberFloat);
+        numberFloat = numberFloat/10;
+        
+        NSString *floatString = [NSString stringWithFormat:@"%.3f", numberFloat];
+        NSArray *stringsArray = [floatString componentsSeparatedByString:@"."];
+        
+        if (stringsArray.count > 1) {
+            if ([stringsArray[1] hasPrefix:@"0"]) {
+                returnString = [NSString stringWithFormat:@"%.0fk", numberFloat];
+            }
+            else{
+                returnString = [NSString stringWithFormat:@"%.1fk", numberFloat];
+            }
+        }
+        else{
+            returnString = [NSString stringWithFormat:@"%.1fk", numberFloat];
+        }
+        
+    }
+    //for over 1m
+    else if (number > 999999) {
+        float numberFloat = (float)number/1000000;
+        //ensure we only show the decimal place when number after point is != 0
+        numberFloat = numberFloat*10;
+        numberFloat = floor(numberFloat);
+        numberFloat = numberFloat/10;
+        
+        NSString *floatString = [NSString stringWithFormat:@"%.3f", numberFloat];
+        NSArray *stringsArray = [floatString componentsSeparatedByString:@"."];
+        
+        if (stringsArray.count > 1) {
+            if ([stringsArray[1] hasPrefix:@"0"]) {
+                returnString = [NSString stringWithFormat:@"%.0fm", numberFloat];
+            }
+            else{
+                returnString = [NSString stringWithFormat:@"%.1fm", numberFloat];
+            }
+        }
+        else{
+            returnString = [NSString stringWithFormat:@"%.1fm", numberFloat];
+        }
+    }
+    
+    return returnString;
+}
+
+-(void)loadUser{
+    [self.user fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            
+//            NSLog(@"obj %@",self.user);
+            
+            self.fetchedUser = YES;
+            
+            //if its bump's official account disable messaging/reporting/tapping followers!
+            if ([[self.user objectForKey:@"bumpOfficial"]isEqualToString:@"YES"]) {
+                self.isBumpOfficial = YES;
+            }
+            
+            //check if user needs a badge displayed
+            if ([[self.user objectForKey:@"veriUser"] isEqualToString:@"YES"]) {
+                self.hasBadge = YES;
+                self.modBadge = NO;
+            }
+            else if([[self.user objectForKey:@"mod"] isEqualToString:@"YES"]){
+                self.hasBadge = YES;
+                self.modBadge = YES;
+            }
+            
+            if ([self.user objectForKey:@"bio"]) {
+                if (![[self.user objectForKey:@"bio"]isEqualToString:@""]) {
+                    self.hasBio = YES;
+                    
+                    self.bioLabel.text = [self.user objectForKey:@"bio"];
+                }
+                else{
+                    //put this check in, incase user had a bio but then deleted it
+                    self.hasBio = NO;
+                    
+                    self.bioLabel.text = @"Tap to add a bio and let buyers know more about you";
+                }
+            }
+            else{
+                //fail safe
+                self.hasBio = NO;
+                
+                self.bioLabel.text = @"Tap to add a bio and let buyers know more about you";
+            }
+            
+            if (!self.setupHeader) {
+                self.setupHeader = YES;
+                __weak typeof(self) weakSelf = self;
+                
+                [self addHeaderView:^(BOOL finished) {
+                    if (finished) {
+                        if (![weakSelf.usernameLabel.text isEqualToString:weakSelf.user.username]) {
+                            weakSelf.usernameLabel.text = [NSString stringWithFormat:@"@%@", weakSelf.user.username];
+                            [weakSelf.usernameLabel sizeToFit];
+                        }
+                    }
+                }];
+            }
+            
+            //initial load
+            [self loadWTSListings];
+            [self loadBumpedListings];
+//            [self loadWTBListings];
+            
+            //setup followers
+            self.followingNumber = [[self.user objectForKey:@"followingCount"]intValue];
+            
+            BOOL showDummyFollowing = [[NSUserDefaults standardUserDefaults]boolForKey:@"showDummyFollowing"];
+            
+            if (showDummyFollowing) {
+                NSLog(@"show dummy following");
+
+                [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"showDummyFollowing"];
+                int dummyCount = [[[NSUserDefaults standardUserDefaults]objectForKey:@"dummyFollowing"]intValue];
+                
+                if (self.followingNumber < dummyCount) {
+                    NSLog(@"dummy: %d", dummyCount);
+                    NSLog(@"following: %d", self.followingNumber);
+
+                    self.followingNumber = dummyCount;
+                }
+
+            }
+            NSString *followingNumberString = [self shortenNumberToString:self.followingNumber];
+            
+            NSMutableAttributedString *followingString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\nFollowing", followingNumberString] attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+            [self modifyNumberLabel:followingString setFontForText:followingNumberString];
+            [self.followingButton setAttributedTitle:followingString forState:UIControlStateNormal];
+            
+            //followers button
+            self.followersNumber = [[self.user objectForKey:@"followerCount"]intValue];
+            NSString *followersNumberString = [self shortenNumberToString:self.followersNumber];
+            
+            NSMutableAttributedString *followerString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\nFollowers",followersNumberString] attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+            [self modifyNumberLabel:followerString setFontForText:followersNumberString];
+            [self.followersButton setAttributedTitle:followerString forState:UIControlStateNormal];
+            
+            //setup reviews
+            PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+            [dealsQuery whereKey:@"User" equalTo:self.user];
+            [dealsQuery orderByAscending:@"createdAt"];
+            [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    int starNumber = [[object objectForKey:@"currentRating"] intValue];
+                    int total = [[object objectForKey:@"dealsTotal"]intValue];
+                    
+                    NSLog(@"deals total: %d", total);
+                    
+                    if (total == 0) {
+                        self.noDeals = YES;
+                    }
+                    else{
+                        self.noDeals = NO;
+                    }
+                    
+                    NSString *reviewsTitle = @"0\nReviews";
+                    
+                    if (total == 0) {
+                        self.noDeals = YES;
+                    }
+                    else if (total == 1) {
+                        reviewsTitle = [NSString stringWithFormat:@"%d\nReview",total];
+                    }
+                    else{
+                        reviewsTitle = [NSString stringWithFormat:@"%d\nReviews",total];
+                    }
+                    
+                    //modify reviews button colors
+                    NSMutableAttributedString *reviewString = [[NSMutableAttributedString alloc] initWithString:reviewsTitle attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+                    [self modifyNumberLabel:reviewString setFontForText:[NSString stringWithFormat:@"%d", total]];
+                    [self.reviewsButton setAttributedTitle:reviewString forState:UIControlStateNormal];
+                    
+                    if (self.isBumpOfficial) {
+                        [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
+                    }
+                    else if (starNumber == 0) {
+                        [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
+                    }
+                    else if (starNumber == 1){
+                        [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
+                    }
+                    else if (starNumber == 2){
+                        [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
+                    }
+                    else if (starNumber == 3){
+                        [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
+                    }
+                    else if (starNumber == 4){
+                        [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
+                    }
+                    else if (starNumber == 5){
+                        [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
+                    }
+                }
+                else{
+                    NSLog(@"error getting deals data!");
+                    
+                    [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
+                    NSString *reviewsTitle = @"0\nReviews";
+                    
+                    NSMutableAttributedString *reviewString = [[NSMutableAttributedString alloc] initWithString:reviewsTitle attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+                    [self modifyNumberLabel:reviewString setFontForText:@"0"];
+                    [self.reviewsButton setAttributedTitle:reviewString forState:UIControlStateNormal];
+                }
+            }];
+            
+            //check if banned - if so show alert (not on tab mode though)
+            if (self.tabMode != YES) {
+                PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+                [bannedInstallsQuery whereKey:@"user" equalTo:self.user];
+                [bannedInstallsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                    if (object){
+                        //this user is banned
+                        self.banMode = YES;
+                        [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restricted this user's account for violating our terms"];
+                    }
+                }];
+            }
+            
+
+//            if (self.tabMode != YES && self.user && self.segmentedControl.selectedSegmentIndex != 0) {
+//            }
+            
+            if(![self.user objectForKey:@"picture"]){
+                
+                NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:30],
+                                                NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+                
+                [self.userImageView setImageWithString:self.user.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
+                
+                NSDictionary *textAttributes1 = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:10],
+                                                 NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+                
+                [self.smallImageView setImageWithString:self.user.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes1];
+            }
+            else{
+                PFFile *img = [self.user objectForKey:@"picture"];
+                
+                [self.userImageView setFile:img];
+                [self.userImageView loadInBackground];
+                
+                [self.smallImageView setFile:img];
+                [self.smallImageView loadInBackground];
+            }
+            
+            if ([self.user objectForKey:@"profileLocation"]) {
+                
+                //setup correct font weights for main name/loc label
+                NSString *nameString = @"";
+                
+                if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
+                    nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
+                }
+                else{
+                    nameString = [self.user objectForKey:@"fullname"];
+                }
+                
+                NSString *locString = [self.user objectForKey:@"profileLocation"];
+                
+                if ([locString containsString:@"null"] || [locString containsString:@"(null)"]) {
+                    //if been an error saving the loc then don't display the null
+                    //display 'Joined June 2017' underneath instead to keep label alignment / height
+                    
+                    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+                    dateFormatter.dateFormat = @"MMM yy";
+                    NSString *dateJoined = [dateFormatter stringFromDate:self.user.createdAt];
+                    NSString *joinedString = [NSString stringWithFormat:@"Joined %@",dateJoined];
+                    
+                    NSMutableAttributedString *attString =
+                    [[NSMutableAttributedString alloc]
+                     initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,joinedString]];
+                    
+                    
+                    [attString addAttribute: NSFontAttributeName
+                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
+                                      range: NSMakeRange(0,nameString.length)];
+                    
+                    if (self.smallScreen) {
+                        [attString addAttribute: NSFontAttributeName
+                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:11]
+                                          range: NSMakeRange(nameString.length+1,joinedString.length)];
+                    }
+                    else{
+                        [attString addAttribute: NSFontAttributeName
+                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:12]
+                                          range: NSMakeRange(nameString.length+1,joinedString.length)];
+                    }
+                    
+                    self.nameAndLoc.attributedText = attString;
+                    self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@",nameString];
+                }
+                else{
+                    NSMutableAttributedString *attString =
+                    [[NSMutableAttributedString alloc]
+                     initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,locString]];
+                    
+                    [attString addAttribute: NSFontAttributeName
+                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
+                                      range: NSMakeRange(0,nameString.length)];
+                    
+                    if (self.smallScreen) {
+                        [attString addAttribute: NSFontAttributeName
+                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:11]
+                                          range: NSMakeRange(nameString.length+1,locString.length)];
+                    }
+                    else{
+                        [attString addAttribute: NSFontAttributeName
+                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:12]
+                                          range: NSMakeRange(nameString.length+1,locString.length)];
+                    }
+                    
+                    self.nameAndLoc.attributedText = attString;
+                    self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@\n%@",nameString,locString];
+                }
+            }
+            else{
+                
+                //setup correct font weights for main name/loc label
+                NSString *nameString = @"";
+                
+                if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
+                    nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
+                }
+                else{
+                    nameString = [self.user objectForKey:@"fullname"];
+                }
+                
+                NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+                dateFormatter.dateFormat = @"MMM yy";
+                NSString *dateJoined = [dateFormatter stringFromDate:self.user.createdAt];
+                NSString *joinedString = [NSString stringWithFormat:@"Joined %@",dateJoined];
+                
+                NSMutableAttributedString *attString =
+                [[NSMutableAttributedString alloc]
+                 initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,joinedString]];
+                
+                [attString addAttribute: NSFontAttributeName
+                                  value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
+                                  range: NSMakeRange(0,nameString.length)];
+                
+                [attString addAttribute: NSFontAttributeName
+                                  value:  [UIFont fontWithName:@"PingFangSC-Regular" size:12]
+                                  range: NSMakeRange(nameString.length+1,joinedString.length)];
+                
+                self.nameAndLoc.attributedText = attString;
+                self.smallNameAndLoc.text = [NSString stringWithFormat:@"%@", nameString];
+            }
+            
+            //check how user is verified
+            [self refreshVeri];
+            
+            if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                // looking at other user's profile
+                NSArray *friends = [[PFUser currentUser] objectForKey:@"friends"];
+                if ([friends containsObject:[self.user objectForKey:@"facebookId"]]) {
+                    [self.FBButton setImage:[UIImage imageNamed:@"FbFriends1"] forState:UIControlStateNormal];
+                }
+            }
+            else{
+                if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenDiscover"] == YES) {
+                    [self.FBButton setImage:[UIImage imageNamed:@"discoverIcon"] forState:UIControlStateNormal];
+                }
+                else{
+                    [self.FBButton setImage:[UIImage imageNamed:@"discoverIconUnread"] forState:UIControlStateNormal];
+                }
+            }
+        }
+        else{
+            NSLog(@"couldn't fetch user");
+            [self showError];
+        }
+    }];
+    
+    //setup currency and listings
+    self.currency = [[PFUser currentUser]objectForKey:@"currency"];
+    if ([self.currency isEqualToString:@"GBP"]) {
+        self.currencySymbol = @"£";
+    }
+    else if ([self.currency isEqualToString:@"EUR"]) {
+        self.currencySymbol = @"€";
+    }
+    else if ([self.currency isEqualToString:@"USD"] || [self.currency isEqualToString:@"AUD"]) {
+        self.currencySymbol = @"$";
+    }
+    
+    if (self.segmentedControl.selectedSegmentIndex == 0) {
+        [self segmentControlChanged];
+//        [self loadWTSListings];
+    }
+    else if (self.segmentedControl.selectedSegmentIndex == 1) {
+        self.bumpedPressed = NO;
+    }
+//    else if (self.segmentedControl.selectedSegmentIndex == 2) {
+//        self.bumpedPressed = NO;
+////        [self loadBumpedListings];
+//    }
+}
+
+-(void)refreshUser{
+    NSLog(@"REFRESH USER CALLED");
+    
+    if (self.refreshingUser || !self.user) {
+        return;
+    }
+    
+    self.refreshingUser = YES;
+    
+    [self.user fetchInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (object) {
+            [self.refreshControl endRefreshing];
+            
+            self.fetchedUser = YES;
+            
+            //check if user needs a badge displayed
+            if ([[self.user objectForKey:@"veriUser"] isEqualToString:@"YES"]) {
+                self.hasBadge = YES;
+                self.modBadge = NO;
+            }
+            else if([[self.user objectForKey:@"mod"] isEqualToString:@"YES"]){
+                self.hasBadge = YES;
+                self.modBadge = YES;
+            }
+            
+            if ([self.user objectForKey:@"bio"]) {
+                if (![[self.user objectForKey:@"bio"]isEqualToString:@""]) {
+                    self.hasBio = YES;
+                    
+                    self.bioLabel.text = [self.user objectForKey:@"bio"];
+                }
+                else{
+                    //put this check in, incase user had a bio but then deleted it
+                    self.hasBio = NO;
+                    
+                    self.bioLabel.text = @"Tap to add a bio and let buyers know more about you";
+                }
+            }
+            else{
+                //fail safe
+                self.hasBio = NO;
+                
+                self.bioLabel.text = @"Tap to add a bio and let buyers know more about you";
+            }
+            
+            if (!self.setupHeader) {
+                self.setupHeader = YES;
+                __weak typeof(self) weakSelf = self;
+                
+                [self addHeaderView:^(BOOL finished) {
+                    if (finished) {
+                        if (![weakSelf.usernameLabel.text isEqualToString:weakSelf.user.username]) {
+                            weakSelf.usernameLabel.text = [NSString stringWithFormat:@"@%@", weakSelf.user.username];
+                            [weakSelf.usernameLabel sizeToFit];
+                        }
+                    }
+                }];
+            }
+            
+            //reload items
+            [self loadWTSListings];
+            [self loadBumpedListings];
+//            [self loadWTBListings];
+            
+            //setup followers
+            self.followingNumber = [[self.user objectForKey:@"followingCount"]intValue];
+            NSString *followingNumberString = [self shortenNumberToString:self.followingNumber];
+            
+            NSMutableAttributedString *followingString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\nFollowing", followingNumberString] attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+            [self modifyNumberLabel:followingString setFontForText:followingNumberString];
+            [self.followingButton setAttributedTitle:followingString forState:UIControlStateNormal];
+            
+            //followers button
+            self.followersNumber = [[self.user objectForKey:@"followerCount"]intValue];
+            NSString *followersNumberString = [self shortenNumberToString:self.followersNumber];
+            
+            NSMutableAttributedString *followerString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\nFollowers",followersNumberString] attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+            [self modifyNumberLabel:followerString setFontForText:followersNumberString];
+            [self.followersButton setAttributedTitle:followerString forState:UIControlStateNormal];
+            
+            //setup reviews
+            PFQuery *dealsQuery = [PFQuery queryWithClassName:@"deals"];
+            [dealsQuery whereKey:@"User" equalTo:self.user];
+            [dealsQuery orderByAscending:@"createdAt"];
+            [dealsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                if (object) {
+                    int starNumber = [[object objectForKey:@"currentRating"] intValue];
+                    int total = [[object objectForKey:@"dealsTotal"]intValue];
+                    
+//                    NSLog(@"deals total: %d", total);
+                    
+                    if (total == 0) {
+                        self.noDeals = YES;
+                    }
+                    else{
+                        self.noDeals = NO;
+                    }
+                    
+                    NSString *reviewsTitle = @"0\nReviews";
+                    
+                    if (total == 0) {
+                        self.noDeals = YES;
+                    }
+                    else if (total == 1) {
+                        reviewsTitle = [NSString stringWithFormat:@"%d\nReview",total];
+                    }
+                    else{
+                        reviewsTitle = [NSString stringWithFormat:@"%d\nReviews",total];
+                    }
+                    
+                    //modify reviews button colors
+                    NSMutableAttributedString *reviewString = [[NSMutableAttributedString alloc] initWithString:reviewsTitle attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+                    [self modifyNumberLabel:reviewString setFontForText:[NSString stringWithFormat:@"%d", total]];
+                    [self.reviewsButton setAttributedTitle:reviewString forState:UIControlStateNormal];
+                    
+                    if (starNumber == 0) {
+                        [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
+                    }
+                    else if (starNumber == 1){
+                        [self.starImageView setImage:[UIImage imageNamed:@"1star"]];
+                    }
+                    else if (starNumber == 2){
+                        [self.starImageView setImage:[UIImage imageNamed:@"2star"]];
+                    }
+                    else if (starNumber == 3){
+                        [self.starImageView setImage:[UIImage imageNamed:@"3star"]];
+                    }
+                    else if (starNumber == 4){
+                        [self.starImageView setImage:[UIImage imageNamed:@"4star"]];
+                    }
+                    else if (starNumber == 5){
+                        [self.starImageView setImage:[UIImage imageNamed:@"5star"]];
+                    }
+                }
+                else{
+                    NSLog(@"error getting deals data!");
+                    
+                    [self.starImageView setImage:[UIImage imageNamed:@"emptyStars"]];
+                    NSString *reviewsTitle = @"0\nReviews";
+                    
+                    NSMutableAttributedString *reviewString = [[NSMutableAttributedString alloc] initWithString:reviewsTitle attributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:0.61 green:0.61 blue:0.61 alpha:1.0]}];
+                    [self modifyNumberLabel:reviewString setFontForText:@"0"];
+                    [self.reviewsButton setAttributedTitle:reviewString forState:UIControlStateNormal];
+                }
+            }];
+            
+            //check if banned - if so show alert (not on tab mode though)
+            if (self.tabMode != YES) {
+                PFQuery *bannedInstallsQuery = [PFQuery queryWithClassName:@"bannedUsers"];
+                [bannedInstallsQuery whereKey:@"user" equalTo:self.user];
+                [bannedInstallsQuery getFirstObjectInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+                    if (object){
+                        //this user is banned
+                        self.banMode = YES;
+                        [self showAlertWithTitle:@"User Restricted" andMsg:@"For your safety we've restricted this user's account for violating our terms"];
+                    }
+                }];
+            }
+            
+            if(![self.user objectForKey:@"picture"]){
+                
+                NSDictionary *textAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:30],
+                                                NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+                
+                [self.userImageView setImageWithString:self.user.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes];
+                
+                NSDictionary *textAttributes1 = [NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"PingFangSC-Medium" size:10],
+                                                 NSFontAttributeName, [UIColor lightGrayColor],NSForegroundColorAttributeName, nil];
+                
+                [self.smallImageView setImageWithString:self.user.username color:[UIColor colorWithRed:0.965 green:0.969 blue:0.988 alpha:1] circular:NO textAttributes:textAttributes1];
+            }
+            else{
+                PFFile *img = [self.user objectForKey:@"picture"];
+                
+                [self.userImageView setFile:img];
+                [self.userImageView loadInBackground];
+                
+                [self.smallImageView setFile:img];
+                [self.smallImageView loadInBackground];
+            }
+            
+            if ([self.user objectForKey:@"profileLocation"]) {
+                
+                //setup correct font weights for main name/loc label
+                NSString *nameString = @"";
+                
+                if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
+                    nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
+                }
+                else{
+                    nameString = [self.user objectForKey:@"fullname"];
+                }
+                
+                NSString *locString = [self.user objectForKey:@"profileLocation"];
+                
+                if ([locString containsString:@"null"] || [locString containsString:@"(null)"]) {
+                    //if been an error saving the loc then don't display the null
+                    //display 'Joined June 2017' underneath instead to keep label alignment / height
+                    
+                    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+                    dateFormatter.dateFormat = @"MMM yy";
+                    NSString *dateJoined = [dateFormatter stringFromDate:self.user.createdAt];
+                    NSString *joinedString = [NSString stringWithFormat:@"Joined %@",dateJoined];
+                    
+                    NSMutableAttributedString *attString =
+                    [[NSMutableAttributedString alloc]
+                     initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,joinedString]];
+                    
+                    
+                    [attString addAttribute: NSFontAttributeName
+                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
+                                      range: NSMakeRange(0,nameString.length)];
+                    
+                    if (self.smallScreen) {
+                        [attString addAttribute: NSFontAttributeName
+                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:11]
+                                          range: NSMakeRange(nameString.length+1,joinedString.length)];
+                    }
+                    else{
+                        [attString addAttribute: NSFontAttributeName
+                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:12]
+                                          range: NSMakeRange(nameString.length+1,joinedString.length)];
+                    }
+                    
+                    self.nameAndLoc.attributedText = attString;
+                    self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@",nameString];
+                }
+                else{
+                    NSMutableAttributedString *attString =
+                    [[NSMutableAttributedString alloc]
+                     initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,locString]];
+                    
+                    [attString addAttribute: NSFontAttributeName
+                                      value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
+                                      range: NSMakeRange(0,nameString.length)];
+                    
+                    if (self.smallScreen) {
+                        [attString addAttribute: NSFontAttributeName
+                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:11]
+                                          range: NSMakeRange(nameString.length+1,locString.length)];
+                    }
+                    else{
+                        [attString addAttribute: NSFontAttributeName
+                                          value:  [UIFont fontWithName:@"PingFangSC-Regular" size:12]
+                                          range: NSMakeRange(nameString.length+1,locString.length)];
+                    }
+                    
+                    self.nameAndLoc.attributedText = attString;
+                    self.smallNameAndLoc.text =[NSString stringWithFormat:@"%@\n%@",nameString,locString];
+                }
+            }
+            else{
+                
+                //setup correct font weights for main name/loc label
+                NSString *nameString = @"";
+                
+                if ([self.user objectForKey:@"firstName"] && [self.user objectForKey:@"lastName"]) {
+                    nameString = [NSString stringWithFormat:@"%@ %@",[self.user objectForKey:@"firstName"],[self.user objectForKey:@"lastName"]];
+                }
+                else{
+                    nameString = [self.user objectForKey:@"fullname"];
+                }
+                
+                NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+                dateFormatter.dateFormat = @"MMM yy";
+                NSString *dateJoined = [dateFormatter stringFromDate:self.user.createdAt];
+                NSString *joinedString = [NSString stringWithFormat:@"Joined %@",dateJoined];
+                
+                NSMutableAttributedString *attString =
+                [[NSMutableAttributedString alloc]
+                 initWithString:[NSString stringWithFormat:@"%@\n%@",nameString,joinedString]];
+                
+                [attString addAttribute: NSFontAttributeName
+                                  value: [UIFont fontWithName:@"PingFangSC-Medium" size:15]
+                                  range: NSMakeRange(0,nameString.length)];
+                
+                [attString addAttribute: NSFontAttributeName
+                                  value:  [UIFont fontWithName:@"PingFangSC-Regular" size:12]
+                                  range: NSMakeRange(nameString.length+1,joinedString.length)];
+                
+                self.nameAndLoc.attributedText = attString;
+                self.smallNameAndLoc.text = [NSString stringWithFormat:@"%@", nameString];
+            }
+            
+            //check how user is verified
+            [self refreshVeri];
+            
+            if (![self.user.objectId isEqualToString:[PFUser currentUser].objectId]) {
+                // looking at other user's profile
+                NSArray *friends = [[PFUser currentUser] objectForKey:@"friends"];
+                if ([friends containsObject:[self.user objectForKey:@"facebookId"]]) {
+                    [self.FBButton setImage:[UIImage imageNamed:@"FbFriends1"] forState:UIControlStateNormal];
+                }
+            }
+            else{
+                if ([[NSUserDefaults standardUserDefaults] boolForKey:@"seenDiscover"] == YES) {
+                    [self.FBButton setImage:[UIImage imageNamed:@"discoverIcon"] forState:UIControlStateNormal];
+                }
+                else{
+                    [self.FBButton setImage:[UIImage imageNamed:@"discoverIconUnread"] forState:UIControlStateNormal];
+                }
+            }
+            
+            self.refreshingUser = NO;
+        }
+        else{
+            self.refreshingUser = NO;
+            
+            [self.refreshControl endRefreshing];
+            NSLog(@"couldn't fetch user");
+            [self showError];
+        }
+    }];
+    
+    if (self.segmentedControl.selectedSegmentIndex == 0) {
+        [self segmentControlChanged];
+//        [self loadWTSListings];
+    }
+//    else if (self.segmentedControl.selectedSegmentIndex == 1) {
+//        self.WTBPressed = NO;
+////        [self loadWTBListings];
+//    }
+    else if (self.segmentedControl.selectedSegmentIndex == 1) {
+        self.bumpedPressed = NO;
+//        [self loadBumpedListings];
+    }
+    
+}
+
+#pragma mark - infinite scrolling
+
+//-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
+//
+//    float bottom = scrollView.contentSize.height - scrollView.frame.size.height;
+//    float buffer = self.cellHeight * 2;
+//    float scrollPosition = scrollView.contentOffset.y;
+//
+//    // Reached the bottom of the list
+//    if (scrollPosition > (bottom - buffer)) {
+//        // Add more dates to the bottom
+//
+//        if (self.finishedSaleInfin == YES && self.segmentedControl.selectedSegmentIndex == 0) {
+//            //infinity query
+//            [self loadMoreSaleListings];
+//        }
+//    }
+//}
+
 @end

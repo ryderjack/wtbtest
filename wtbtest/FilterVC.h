@@ -47,6 +47,8 @@
 @property (strong, nonatomic) IBOutlet UITableViewCell *priceSliderCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *locationContinentsCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *priceSliderInstantBuy;
+@property (strong, nonatomic) IBOutlet UITableViewCell *followingCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *showOnlyCell;
 
 //price buttons
 @property (weak, nonatomic) IBOutlet UIButton *hightolowButton;
@@ -69,6 +71,10 @@
 @property (strong, nonatomic) NSString *chosenCategory;
 @property (nonatomic, strong) NSArray *categoryImagesArray;
 @property (nonatomic, strong) NSArray *categorySelectedImagesArray;
+
+//show only buttons
+@property (weak, nonatomic) IBOutlet UIButton *soldOnlyButton;
+
 
 //location buttons
 @property (weak, nonatomic) IBOutlet UIButton *distanceButton;
@@ -113,5 +119,10 @@
 
 //status bar background view
 @property (nonatomic, strong) UIView *statusBarBGView;
+
+//seller filters
+@property (weak, nonatomic) IBOutlet UIButton *followingButton;
+@property (nonatomic) BOOL searchMode;
+
 
 @end

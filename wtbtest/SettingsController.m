@@ -43,7 +43,8 @@
     self.locationLabelCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.bioCell.selectionStyle = UITableViewCellSelectionStyleNone;
     self.currencySwipeCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    
+    self.tradesCell.selectionStyle = UITableViewCellSelectionStyleNone;
+
     self.contactEmailField.delegate = self;
     self.firstNameField.delegate = self;
     self.lastNameField.delegate = self;
@@ -114,7 +115,6 @@
     }
     
     //check if got profile location
-    
     if ([self.currentUser objectForKey:@"profileLocation"]) {
         self.locLabel.text = [NSString stringWithFormat:@"%@",[self.currentUser objectForKey:@"profileLocation"]];
     }
@@ -122,16 +122,32 @@
         self.locLabel.text = @"Enter";
     }
     
+    //check if added a shipping address
+    if ([[self.currentUser objectForKey:@"enteredAddress"]isEqualToString:@"YES"] && [self.currentUser objectForKey:@"addressString"]) {
+        
+        NSString *addressName = [NSString stringWithFormat:@"%@\n",[self.currentUser objectForKey:@"addressName"]];
+        NSString *addressString = [self.currentUser objectForKey:@"addressString"];
+        
+        addressString = [addressString stringByReplacingOccurrencesOfString:addressName withString:@""];
+        addressString = [addressString stringByReplacingOccurrencesOfString:@"\n" withString:@", "];
+        
+        self.addressLabel.text = addressString;
+    }
+    else{
+        self.addressLabel.text = @"Add";
+    }
+    
+    //check if trades are disabled
+    if ([[self.currentUser objectForKey:@"tradesDisabled"]isEqualToString:@"YES"]) {
+        [self.tradeSwitch setOn:YES];
+    }
+    else{
+        [self.tradeSwitch setOn:NO];
+    }
+    
     self.contactEmailField.text = [NSString stringWithFormat:@"%@",self.currentContact];
     
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
-        //CMO switch setup
-        if ([[NSUserDefaults standardUserDefaults]boolForKey:@"CMOModeOn"]==YES) {
-            [self.cmoSwitch setOn:YES];
-        }
-        else{
-            [self.cmoSwitch setOn:NO];
-        }
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[[PFUser currentUser] objectForKey:@"listingMod"]isEqualToString:@"YES"]) {
         
         //list as X setup
         if ([[NSUserDefaults standardUserDefaults]boolForKey:@"listMode"]==YES) {
@@ -197,6 +213,14 @@
             [self.fbFriendSwitch setEnabled:NO];
         }
         
+        //check if already ignoring follow pushes
+        if ([[self.currentUser objectForKey:@"ignoreFollowPushes"]isEqualToString:@"YES"]) {
+            [self.followSwitch setOn:NO];
+        }
+        else{
+            [self.followSwitch setOn:YES];
+        }
+        
     }
     else{
         //push is off
@@ -205,6 +229,7 @@
         
         [self.likeSwitch setEnabled:NO];
         [self.fbFriendSwitch setEnabled:NO];
+        [self.followSwitch setEnabled:NO];
     }
     
     
@@ -240,7 +265,7 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[PFUser currentUser].objectId isEqualToString:@"xD4xViQCUe"]) {
+    if ([[PFUser currentUser].objectId isEqualToString:@"qnxRRxkY2O"]|| [[PFUser currentUser].objectId isEqualToString:@"IIEf7cUvrO"] || [[[PFUser currentUser] objectForKey:@"listingMod"]isEqualToString:@"YES"]) {
         return 5;
     }
     else{
@@ -250,10 +275,10 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return 5;
+        return 6;
     }
     else if (section == 1){
-        return 3;
+        return 4;
     }
     else if (section == 2){
         return 1;
@@ -262,7 +287,7 @@
         return 1;
     }
     else if (section == 4){
-        return 3;
+        return 1;
     }
     else{
         return 0;
@@ -284,6 +309,9 @@
             return self.locationLabelCell;
         }
         else if (indexPath.row == 4) {
+            return self.addressCell;
+        }
+        else if (indexPath.row == 5) {
             return self.bioCell;
         }
     }
@@ -295,6 +323,9 @@
             return self.emailCell;
         }
         else if (indexPath.row == 2) {
+            return self.tradesCell;
+        }
+        else if (indexPath.row == 3) {
             return self.pictureCelll;
         }
     }
@@ -315,14 +346,14 @@
     }
     else if (indexPath.section == 4){
         if (indexPath.row == 0) {
-            return self.cmoCell;
-        }
-        else if (indexPath.row == 1) {
             return self.listAsCell;
         }
-        else if (indexPath.row == 2) {
-            return self.sellerModeCell;
-        }
+//        else if (indexPath.row == 1) {
+//            return self.;
+//        }
+//        else if (indexPath.row == 2) {
+//            return self.sellerModeCell;
+//        }
     }
     return nil;
 }
@@ -332,11 +363,6 @@
     
     if (indexPath.section == 1) {
         if (indexPath.row == 1) {
-            //            //goto shipping controller
-            //            ShippingController *vc = [[ShippingController alloc]init];
-            //            vc.delegate = self;
-            //            vc.settingsMode = YES;
-            //            [self.navigationController pushViewController:vc animated:YES];
             if (self.paypalConnected) {
                 [self showPayPalSheet];
             }
@@ -345,11 +371,9 @@
                                customAttributes:@{}];
                 
                 [self enableBuyNow];
-                
-//                [self showAlertWithTitle:@"Connect PayPal" andMsg:@"Just enable Buy Now when you next list an item for sale on BUMP and you'll be prompted to sign into PayPal & grant the relevant permissions. Got any questions? Just message Support from within the app or email hello@sobump.com"];
             }
         }
-        else if (indexPath.row == 2){
+        else if (indexPath.row == 3){
             if (!self.picker) {
                 self.picker = [[UIImagePickerController alloc] init];
                 self.picker.delegate = self;
@@ -367,13 +391,21 @@
             vc.delegate = self;
             [self.navigationController pushViewController:vc animated:YES];
         }
+        else if (indexPath.row == 4){
+            //goto shipping address
+            ShippingController *vc = [[ShippingController alloc]init];
+            vc.settingsMode = YES;
+            vc.delegate = self;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
     }
 }
 
 -(void)showPayPalSheet{
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
-    actionSheet.title = @"This will update any existing listings with your new payment details";
+    actionSheet.title = [NSString stringWithFormat:@"Merchant ID: %@", [self.currentUser objectForKey:@"paypalMerchantId"]];
+    actionSheet.message = @"This will update any existing listings with your new payment details";
     
     [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];
@@ -685,7 +717,7 @@
         return NO;
     }
     NSUInteger newLength = [textField.text length] + [string length] - range.length;
-    return newLength <= 30;
+    return newLength <= 100;
 }
 
 -(void)viewDidDisappear:(BOOL)animated{
@@ -697,6 +729,7 @@
 -(void)viewWillDisappear:(BOOL)animated{
     //fail safe
     [self hideHUD];
+    [self removeKeyboard];
     
     if (self.currencyChanged) {
         [self.currentUser  setObject:self.selectedCurrency forKey:@"currency"];
@@ -747,6 +780,8 @@
             }
         }];
     }
+    
+    
 }
 
 - (IBAction)GBPPressed:(id)sender {
@@ -897,7 +932,7 @@
 }
 
 -(void)setImageBorder:(UIImageView *)imageView{
-    imageView.layer.cornerRadius = 20;
+    imageView.layer.cornerRadius = 18.5;
     imageView.layer.masksToBounds = YES;
     imageView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth);
     imageView.contentMode = UIViewContentModeScaleAspectFill;
@@ -1009,7 +1044,7 @@
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     if (indexPath.section == 3) {
-        return 130;
+        return 181;
     }
     else{
         return 44;
@@ -1060,6 +1095,30 @@
                                           }];
     }
 }
+
+- (IBAction)followSwitchPressed:(id)sender {
+    self.changedPush = YES;
+    
+    if (self.followSwitch.isOn == YES) {
+        //switched on
+        [self.currentUser setObject:@"NO" forKey:@"ignoreFollowPushes"];
+        
+        [Answers logCustomEventWithName:@"Turned on Specific Push"
+                       customAttributes:@{
+                                          @"type":@"Follow",
+                                          }];
+    }
+    else{
+        //switched off
+        [self.currentUser setObject:@"YES" forKey:@"ignoreFollowPushes"];
+        
+        [Answers logCustomEventWithName:@"Turned off Specific Push"
+                       customAttributes:@{
+                                          @"type":@"Follow",
+                                          }];
+    }
+}
+
 - (IBAction)pushEnablePressed:(id)sender {
     //if user has declined then show normal dialog, or take to settings
     [Answers logCustomEventWithName:@"Enable Push Pressed"
@@ -1921,6 +1980,53 @@
     }]];
     
     [self presentViewController:alertView animated:YES completion:nil];
+}
+- (IBAction)tradeSwitchChanged:(id)sender {
+    ICMUserAttributes *userAttributes = [ICMUserAttributes new];
+
+    if (self.tradeSwitch.isOn) {
+        
+        userAttributes.customAttributes = @{@"disabled_trading" : @YES};
+        [self.currentUser setObject:@"YES" forKey:@"tradesDisabled"];
+        
+        Mixpanel *mixpanel = [Mixpanel sharedInstance];
+        [mixpanel track:@"Disabled_trading_messages" properties:@{}];
+    }
+    else{
+        userAttributes.customAttributes = @{@"disabled_trading" : @NO};
+        [self.currentUser setObject:@"NO" forKey:@"tradesDisabled"];
+    }
+    [self.currentUser saveInBackground];
+    
+    [Intercom updateUser:userAttributes];
+
+}
+- (IBAction)disableTradeExplainPressed:(id)sender {
+    [self showAlertWithTitle:@"Disable Trades" andMsg:@"Enable this switch to prevent users sending you messages about trading.\n\nTrading is discouraged on BUMP because you are NOT covered by BUMP + PayPal Protection.\n\nNote this will only work for buyers who are messaging you on version 2.3.1 or later"];
+}
+
+-(void)removeKeyboard{
+    [self.firstNameField resignFirstResponder];
+    [self.lastNameField resignFirstResponder];
+    [self.bioField resignFirstResponder];
+    [self.contactEmailField resignFirstResponder];
+}
+
+#pragma mark - shipping controller delegate
+
+-(void)addedAddress:(NSString *)address withName:(NSString *)name withLineOne:(NSString *)one withLineTwo:(NSString *)two withCity:(NSString *)city withCountry:(NSString *)country fullyEntered:(BOOL)complete{
+    
+    if (complete) {
+        NSString *addressName = [NSString stringWithFormat:@"%@\n",name];
+        
+        address = [address stringByReplacingOccurrencesOfString:addressName withString:@""];
+        address = [address stringByReplacingOccurrencesOfString:@"/n" withString:@", "];
+        
+        self.addressLabel.text = address;
+    }
+    else{
+//        NSLog(@"address unfinished");
+    }
 }
 @end
 

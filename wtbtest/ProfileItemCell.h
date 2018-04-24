@@ -15,4 +15,5 @@
 @property (weak, nonatomic) IBOutlet UIImageView *boostImageView;
 @property (weak, nonatomic) IBOutlet UIImageView *boost2ImageView;
 
+@property (weak, nonatomic) IBOutlet UIImageView *topRightImageView;
 @end

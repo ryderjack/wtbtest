@@ -55,7 +55,7 @@
     
     if ([ [ UIScreen mainScreen ] bounds ].size.height == 812) {
         //iPhone X
-        self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-80, [UIApplication sharedApplication].keyWindow.frame.size.width, 80)];
+        self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-90, [UIApplication sharedApplication].keyWindow.frame.size.width, 90)];
     }
     else{
         self.longButton = [[UIButton alloc]initWithFrame:CGRectMake(0, [UIApplication sharedApplication].keyWindow.frame.size.height-60, [UIApplication sharedApplication].keyWindow.frame.size.width, 60)];
@@ -145,9 +145,9 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == 2) {
-        return 2;
-    }
+//    if (section == 2) {
+//        return 2;
+//    }
     return 1;
 }
 
@@ -160,10 +160,10 @@
         return self.commentCell;
     }
     else if (indexPath.section == 2){
+//        if (indexPath.row == 0) {
+//            return self.supportCell;
+//        }
         if (indexPath.row == 0) {
-            return self.supportCell;
-        }
-        else if (indexPath.row == 1) {
             return self.spaceCell;
         }
     }
@@ -640,7 +640,7 @@
             
             //update profile tab bar badge
             AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-            [[appDelegate.tabBarController.tabBar.items objectAtIndex:3] setBadgeValue:@"1"];
+            [[appDelegate.tabBarController.tabBar.items objectAtIndex:4] setBadgeValue:@"1"];
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NewTBMessageReg"];
             
             //update convo
